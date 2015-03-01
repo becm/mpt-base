@@ -1,0 +1,82 @@
+# layout objects
+# type name { attrib = value; }
+
+# layout name
+name = lay1;
+
+line laaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaang {
+    x1 = .2;
+    x2 = .8;
+    y1 = .2;
+    y2 = .8;
+    color = magenta;
+    width = 10;
+}
+
+xaxis ax1 {
+    title = X;
+}
+yaxis ax2 {
+    tpos = 4;
+    decimals = 2;
+    title=Y;
+}
+
+graph grf1 {
+    axes = ax1 ax2;
+    worlds = wld1 wld3;
+    shape = 5;
+    clip = zx;
+
+    pos = 0.25 0.25;
+    scale = 0.5 0.5;
+
+    line l1 {
+        x1 = 0;
+        y1 = 1;
+        x2 = 1;
+        y2 = 0;
+        color = #44aa44aa;
+        width = 7;
+    }
+}
+
+text tx {
+    x = .2; y = .4;
+    angle = 70;
+    size = 20;
+    align = 5;
+    value = Hallö_xy;
+    #font = DejaVuSans;
+}
+text tx1 : tx {
+    align = 6;
+    color = #aa000060;
+    value = Hallö_xy1;
+}
+text tx2 : tx {
+    align = 8;
+    color = #00aa0060;
+    value = Hallö_xy2;
+}
+text tx3 : tx {
+    align = 4;
+    color = #0000aa60;
+    value = Hallö_xy3;
+}
+
+world wld1 {
+    color = #aa00aa60;
+    width = 2;
+    symbol = 1;
+    size = 8;
+}
+
+world wld3:wld1 {
+    alias = Aloha;
+    color = red;
+}
+
+legend leg {
+    worlds = wld3;
+}

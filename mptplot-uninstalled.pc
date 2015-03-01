@@ -1,0 +1,14 @@
+# mptplot package configuration
+version=2015.02
+prefix=${pc_top_builddir} # /opt/mpt-${version}
+arch=x86_64
+sys=linux-gnu
+libdir=${prefix}/lib/${arch}-${sys}
+includedir=${prefix}/include
+
+Name: mptplot
+Description: Message Passing Toolkit plotting library
+Version: ${version}
+Libs: -L${libdir} -lmptplot
+Cflags: -I${includedir}
+Requires: mptcore

@@ -1,0 +1,14 @@
+# mpt++ package configuration
+version=2015.02
+prefix=${pc_top_builddir} # /opt/mpt-${version}
+arch=x86_64
+sys=linux-gnu
+libdir=${prefix}/lib/${arch}-${sys}
+includedir=${prefix}/include
+
+Name: mpt++
+Description: Message Passing Toolkit C++ library
+Version: ${version}
+Libs: -L${libdir} -lmpt++
+Cflags: -I${includedir}
+Requires: mptplot

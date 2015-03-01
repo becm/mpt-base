@@ -1,0 +1,37 @@
+# create core library
+cmake_minimum_required(VERSION 2.6)
+
+set(headers core.h)
+
+include_directories(../mptplot)
+
+set(subdirs
+  array
+  config
+  event
+  message
+  node
+  parse
+  queue
+  convert
+  stream
+  notify
+)
+
+# submodules have headers
+foreach(dir IN ITEMS ${subdirs})
+  aux_source_directory(${dir} sources)
+  set(headers ${dir}.h ${headers})
+endforeach(dir)
+
+# metatype operations defined in core.h
+aux_source_directory(meta sources)
+
+aux_source_directory(. sources)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} .)
+
+add_library(mptcore SHARED ${sources})
+set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)
+
+install(TARGETS mptcore  DESTINATION ${MPT_INSTALL_LIB})
+install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

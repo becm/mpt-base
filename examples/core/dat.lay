@@ -1,0 +1,5 @@
+!LF
+eins;
+{
+  txt = `world_\`#;"1_3 &Diag 3`;
+}

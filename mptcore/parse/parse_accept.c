@@ -1,0 +1,62 @@
+/*!
+ * set name restrictions from description string.
+ */
+
+#include <ctype.h>
+
+#include "parse.h"
+
+/*!
+ * \ingroup mptParse
+ * \brief set accepted characters
+ * 
+ * Use string to describe accepted characters
+ * in section and option names.
+ * 
+ * \param flg  parser flags
+ * \param name description for accepted characters
+ * 
+ * \return parser code for next element
+ */
+extern int mpt_parse_accept(MPT_STRUCT(parseflg) *flg, const char *name)
+{
+	const char *end = name;
+	uint8_t sect = 0, opt = 0;
+	
+	if (!end) {
+		flg->sect = flg->opt = 0xff;
+		return 0;
+	}
+	if (!*end) {
+		flg->sect = flg->opt = MPT_ENUM(NameNumCont);
+		return 0;
+	}
+	while (*end) {
+		int type;
+		
+		if (isspace(*end)) {
+			break;
+		}
+		switch (type = tolower(*end)) {
+		  case 'f': type = MPT_ENUM(NameNumStart); break;
+		  case 'c': type = MPT_ENUM(NameNumCont); break;
+		  case 'n': type = MPT_ENUM(NameNumeral); break;
+		  case 's': type = MPT_ENUM(NameSpecial); break;
+		  case 'w': type = MPT_ENUM(NameSpace); break;
+		  
+		  case 'e': type = MPT_ENUM(NameEmpty); break;
+		  case 'b': type = MPT_ENUM(NameBinary); break;
+		  default: return -2;
+		}
+		if (isupper(*end)) {
+			sect |= type;
+		} else {
+			opt |= type;
+		}
+		++end;
+	}
+	flg->sect = sect;
+	flg->opt  = opt;
+	
+	return end - name;
+}

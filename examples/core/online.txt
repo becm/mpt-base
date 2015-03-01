@@ -1,0 +1,15 @@
+!LF
+eins { 1 = 1; 2 = 3; } zwei {mal=alles;ohne=leerzeichen;} !kommentar
+# neue zeile
+freiform
+{
+	sub{ein = trag;
+}
+}
+{
+nichts = niemand;
+}
+{
+  txt = `world_\`#;"1_3 &Diag 3`;
+  txt = world_1_4&Diag 4;
+}

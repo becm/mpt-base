@@ -1,0 +1,29 @@
+/* send MPT messages */
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <mpt/core.h>
+
+int main(int argc, char *argv[], char *env[])
+{
+	struct mpt_socket sock = MPT_SOCKET_INIT;
+	char text[128];
+	int len;
+	
+	if ((len = mpt_connect(&sock, argv[1], 0)) < 0) {
+		perror("connect");
+		return 1;
+	}
+	while (fgets(text, sizeof(text), stdin)) {
+		size_t len = strlen(text);
+		if (write(sock._id, text, len) < 0) {
+			perror("write");
+			return 1;
+		}
+	}
+	return 0;
+}

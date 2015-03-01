@@ -1,0 +1,18 @@
+!IF
+#
+# Starten das Client-Programm
+#
+ SIM: pde
+#
+# Starten das Client-Programm mit dem Debugger
+#
+#SIM: pde -d
+#
+# Starten das Client-Programm mit dem Grafik-Debugger
+#
+#SIM: pde -g
+#
+# Beschreibung des Layouts
+#
+LAY: heat_trans.lay
+LAY: lay_trans.lay

@@ -1,0 +1,167 @@
+
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+
+#include <fnmatch.h>
+
+#include "node.h"
+#include "config.h"
+
+extern char **environ;
+extern MPT_STRUCT(node) *_mpt_config_root(void);
+
+struct Config {
+	MPT_INTERFACE(config) conf;
+	MPT_STRUCT(node) *node;
+};
+static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, MPT_STRUCT(path) *path)
+{
+	struct Config *conf = (void *) ptr;
+	MPT_STRUCT(node) *curr;
+	
+	if (!(curr = mpt_node_query(conf->node, path))) {
+		return 0;
+	}
+	if (!conf->node) {
+		conf->node = curr;
+	}
+	if (path->len && !(curr = mpt_node_get(curr, path))) {
+		return 0;
+	}
+	return &curr->_meta;
+}
+
+static const MPT_INTERFACE_VPTR(config) nodeQuery = {
+	0, (MPT_INTERFACE(metatype) **(*)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *)) queryNode, 0
+};
+
+/*!
+ * \ingroup mptConfig
+ * \brief set node children from environment.
+ * 
+ * use pattern matching to only include wanted
+ * environment variables.
+ * 
+ * \param base     root node
+ * \param pattern  regular expression
+ * \param sep      path separator
+ * \param env      special environment settings
+ * 
+ * \return number of accepted elements
+ */
+extern int mpt_node_environ(MPT_STRUCT(node) *base, const char *pattern, int sep, char * const env[])
+{
+	struct Config conf = { { &nodeQuery }, 0 };
+	
+	if (!base) {
+		errno = EFAULT;
+		return -1;
+	}
+	conf.node = base->children;
+	
+	/* process environment settings */
+	sep = mpt_config_environ(&conf.conf, pattern, sep, env);
+	base->children = conf.node;
+	
+	return sep;
+}
+
+/*!
+ * \ingroup mptConfig
+ * \brief set contiguration from environment.
+ * 
+ * use pattern matching to only include wanted
+ * environment variables.
+ * 
+ * \param conf     configuration target
+ * \param pattern  regular expression
+ * \param sep      path separator
+ * \param env      changed environment variables
+ * 
+ * \return number of accepted elements
+ */
+extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, int sep, char * const env[])
+{
+	MPT_STRUCT(node) *root = 0;
+	const char *var;
+	int accept = 0;
+	
+	if (!env) env = environ;
+	if (!sep) sep = '_';
+	if (!pattern) pattern = "mpt_*";
+	
+	/* (re)evaluate environment */
+	while ((var = *(env++))) {
+		MPT_INTERFACE(metatype) **mt;
+		MPT_STRUCT(path) path;
+		char *end, *pos, tmp[1024];
+		size_t vlen;
+		
+		if (!(end = strchr(var, '='))) {
+			continue;
+		}
+		path.base = pos = tmp;
+		
+		/* valid length too big */
+		if ((vlen = strlen(end+1)) >= UINT16_MAX) {
+			errno = ERANGE;
+			continue;
+		}
+		/* path,sep,value,end > total */
+		if (((size_t) (end - var) + 1) >= sizeof(tmp)) {
+			errno = ERANGE;
+			continue;
+		}
+		
+		/* normalize path */
+		while (var < end) { *(pos++) = tolower(*(var++)); }
+		*(pos++) = '\0';
+		
+		/* path matches filter */
+		if (fnmatch(pattern, path.base, 0)) {
+			continue;
+		}
+		path.off   = 0;
+		path.len   = pos - tmp;
+		path.valid = vlen+1;
+		
+		path.sep = '_';
+		path.assign = '=';
+		path.flags = 0;
+		path.first = 0;
+		
+		var++;
+		accept++;
+		
+		if (!conf) {
+			MPT_STRUCT(node) *n;
+			
+			if (!root) {
+				root = mpt_node_get(0, 0);
+			}
+			if (!(n = mpt_node_query(root, &path))) {
+				errno = EINVAL;
+				return -accept;
+			}
+			if (path.len) n = mpt_node_get(n->children, &path);
+			
+			if (!n->_meta) {
+				errno = EINVAL;
+				return -accept;
+			}
+			mt = &n->_meta;
+		}
+		else if (!(mt = conf->_vptr->query(conf, &path)) || !mt) {
+			errno = EINVAL;
+			return -accept;
+		}
+		if (mpt_meta_set(*mt, "", 0, end+1) < 0) {
+			errno = ENOTSUP;
+			return -accept;
+		}
+	}
+	
+	return accept;
+}
+

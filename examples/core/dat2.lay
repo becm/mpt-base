@@ -1,0 +1,72 @@
+!LF
+{
+  name = "lay_1";
+  qualifier = layout;
+  format = L;
+}
+{
+  name = X_axis_1;
+  qualifier = axis;
+  vmin = 1;
+  vmax = 5;
+  x = 0.12;
+  y = 0.15;
+  len = 0.83;
+  intv = 8;
+  titel = X-Axis{1};
+}
+{
+  name = Y_axis_1;
+  qualifier = axis;
+  typ = Y;
+  vmax = 3;
+  x = 0.12;
+  y = 0.15;
+  mode = 1; !comment
+  len = 0.8;
+  intv = 6;
+  lpos = L;
+  titel = "Y-Axis_1";
+}
+{
+  name = world_1_1;
+  qualifier = world;
+  lw = 2;
+}
+{
+  name = world_1_2;
+  qualifier = world;
+  color = 2;
+  lw = 2;
+}
+{
+  name = world_1_3;
+  qualifier = world;
+  color = 3;
+  lw = 2;
+}
+{
+  name = world_1_4;
+  qualifier = world;
+  color = 4;
+  lw = 2;
+}
+{
+  name = graph_1;
+  qualifier = graph;
+  ref_axes = X_axis_1,Y_axis_1; !fdsfsdgsdghdfghfghdgjghdj
+  ref_worlds = world_1_1,world_1_2,world_1_3,world_1_4;
+  shp = 7;
+  lt = 1;
+  anderer { ein = trag;}
+}
+{
+  name = leg_1;
+  qualifier = legend;
+  x = 0.6;
+  y = 0.9;
+  txt = world_1_1&Diag 1;
+  txt = world_1_2&Diag 2;!fdsg
+  txt = `world_\`#;"1_3 &Diag 3`;
+  txt = world_1_4&Diag 4;
+}

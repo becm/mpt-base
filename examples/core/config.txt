@@ -1,0 +1,12 @@
+
+[first]
+	@ghdfgfd =f# ohne namen
+	a6778 = 67 56;
+	name = first  ;
+	param1 = 3
+	param2 = 4 #567757
+	
+[ nextsection ]
+	eins = 1 !erstes
+	ghdfgfd =f # ohne namen
+[]	zwei = 2
