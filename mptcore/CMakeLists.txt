@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(headers core.h)
 
-include_directories(../mptplot)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} . .. ../mptplot)
 
 set(subdirs
   array
@@ -28,7 +28,6 @@ endforeach(dir)
 aux_source_directory(meta sources)
 
 aux_source_directory(. sources)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} .)
 
 add_library(mptcore SHARED ${sources})
 set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)
