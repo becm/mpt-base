@@ -87,20 +87,20 @@ protected:
 # else
 #  define MPT_OUTDATA_INIT { MPT_SOCKET_INIT,  0,0,0,0,  MPT_ARRAY_INIT, { 0, MPT_CODESTATE_INIT }, 0 }
 # endif
-	MPT_STRUCT(socket)     sock;
-	uint8_t               _sflg;    /* socket flags */
-	uint8_t                state;   /* output state */
-	uint8_t                level;   /* output level */
-	uint8_t                curr;    /* type of active message */
-	MPT_STRUCT(array)     _buf;
+	MPT_STRUCT(socket) sock;
+	uint8_t           _sflg;    /* socket flags */
+	uint8_t            state;   /* output state */
+	uint8_t            level;   /* output level */
+	uint8_t            curr;    /* type of active message */
+	MPT_STRUCT(array) _buf;
 	struct {
 		MPT_TYPE(DataEncoder) fcn;
 		MPT_STRUCT(codestate) info;
 	} _enc;
 # ifdef _STDIO_H
-	FILE                  *hist;
+	FILE  *hist;
 # else
-	void                  *hist;
+	void  *hist;
 # endif
 }
 #endif

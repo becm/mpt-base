@@ -2,7 +2,7 @@
 LIB = mpt++
 #
 # additional header directories
-INC = .. ../mptcore ../mptplot
+INC = .. ../mptcore ../mptplot ../mptio
 #
 # header to export
 HEADER = object.h graphic.h
@@ -13,7 +13,7 @@ SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 SHLIB_OBJS = libinfo.o
 LINK = ${CXX}
-LDLIBS = -lmptplot -lmptcore
+LDLIBS = -lmptplot -lmptio -lmptcore
 #
 # source summary
 SRCS := $(wildcard *.cpp)

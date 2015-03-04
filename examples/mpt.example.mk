@@ -13,20 +13,27 @@ LDFLAGS += $(LDDIRS:%=-L%) $(DLDIRS:%=-Wl,-R%)
 LINK    ?= ${CC}
 #
 # auto-generated content
-OUTPUT ?= $(PROGS:%=%.out)
+CLEAR_FILES ?= ${PROGS} ${TESTS} $(PROGS:%=%.out)
+CLEAN_FILES ?= $(CLEAR_FILES:%=%.o)
 #
 # general rules
 .PHONY: run clear clean all static
 all : ${PROGS}
 
-test : ${PROGS}
-	@for prog in ${PROGS}; do \
-		printf "\033[01;34m%s\033[0m %s\n" "./$$prog" "$$prog.conf" 1>&2; \
-		./$${prog} $${prog}.conf < /dev/null || break; \
+test : ${TESTS}
+	@for prog in ${TESTS}; do \
+		printf "\033[01;34m%s\033[0m %s\n" "./$${prog}" "$${prog}.conf" 1>&2; \
+		"./$${prog}" "$${prog}.conf" < /dev/null || break; \
 		printf "\n"; \
 	done
 
 clear :
-	rm -f ${PROGS} ${OUTPUT} *~
+	rm -f ${CLEAR_FILES} *~
 clean : clear
-	rm -f ${OBJS}
+	rm -f ${CLEAN_FILES}
+
+.PHONY : sub_% ${DIRS}
+${DIRS} :
+	${MAKE} -C "${@}"
+sub_% :
+	@for d in ${DIRS}; do if ! ${MAKE} -C "$${d}" $(@:sub_%=%); then break; fi; done;

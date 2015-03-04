@@ -1,25 +1,19 @@
-# Makefile: MPT core library example programs
+# Makefile: MPT I/O library example programs
 #
 DIR_BIN = .
 
 progs = \
-	parse
-
-tests = \
-	cobs \
-	ident \
-	axis \
-	environ
+	swrite sread \
+	mserver mclient \
+	pipe
 
 PROGS = $(progs:%=${DIR_BIN}/%)
 TESTS = $(tests:%=${DIR_BIN}/%)
-LDLIBS = -lmptcore
 
-# general creation rules
-all : ${PROGS} ${TESTS}
+LDLIBS = -lmptio
 
 # additional libraries needed
-axis mclient : LDLIBS+=-lmptplot
+sread mclient : LDLIBS+=-lmptcore
 
 # general targets and definitions
 include ../mpt.example.mk

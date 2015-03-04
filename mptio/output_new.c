@@ -367,10 +367,11 @@ static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
 	    || !(dec = mpt_message_decoder(rtype))) {
 		return -3;
 	}
+	else {
+		od->out._enc.fcn = enc;
+		od->dec.fcn = dec;
+	}
 	od->_coding = rtype;
-	
-	od->out._enc.fcn = enc;
-	od->dec.fcn = dec;
 	
 	return type;
 }

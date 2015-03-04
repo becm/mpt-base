@@ -8,9 +8,6 @@
 #include <netinet/in.h>
 
 #include "array.h"
-#include "message.h"
-
-#include "stream.h"
 
 /*!
  * \ingroup mptArray

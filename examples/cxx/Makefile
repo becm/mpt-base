@@ -2,7 +2,7 @@
 #
 DIR_BIN = .
 
-programs = \
+tests = \
 	object \
 	buffer \
 	config \
@@ -11,25 +11,18 @@ programs = \
 	layout \
 	map
 
-interact = \
+progs = \
 	comp
 
-PROGS = $(programs:%=${DIR_BIN}/%)
-INTERACT = $(interact:%=${DIR_BIN}/%)
+PROGS = $(progs:%=${DIR_BIN}/%)
+TESTS = $(tests:%=${DIR_BIN}/%)
 LDLIBS = -lmpt++
-
-CORE = static output comp ident
-
-# general creation rules
-all     : ${PROGS} ${INTERACT}
-output  : LDLIBS+=-lmptplot
-${CORE} : LDLIBS+=-lmptcore
-graphic : LDLIBS=-lmptQt -lmpt++ $(shell pkg-config --libs QtGui)
-graphic : CPPFLAGS+=$(shell pkg-config --cflags QtGui QtNetwork)
-clear clean : PROGS+=${INTERACT}
 
 # general targets and definitions
 include ../mpt.example.mk
+
+output : LDLIBS+=-lmptio -lmptcore
+comp   : LDLIBS+=-lmptio
 
 # additional targets
 static : ${PROGS} ${DIR_BIN}/layout ${DIR_BIN}/comp

@@ -1,25 +1,20 @@
 # Makefile: create base MPT modules
-MODULES = mptcore mpt++ mptplot mptclient lua examples
+MODULES = mptcore mptplot mptio mpt++ mptclient lua
 #
 # creation targets
-.PHONY : default ${MODULES}
-default : ${MODULES}
-mpt++ mptplot : mptcore
+.PHONY : ${MODULES} examples
+examples : ${MODULES}
+mpt++ mptplot mptio : mptcore
 mpt++ : mptplot
-${MODULES} : release.h
+${MODULES} examples : release.h
 	@${MAKE} -C "${@}"
 #
 # release information
-release.h :
-	@if [ -n "${MPT_RELEASE}" ]; then \
-		echo "#define MPT_RELEASE \"${MPT_RELEASE}\"" > release.h; \
-	else \
-		echo "#define __MPT_DATE__ \"`date +%F`\"" > release.h; \
-	fi
+include mpt.release.mk
 #
 # dispatch target to modules
 .DEFAULT :
-	@for m in ${MODULES}; do \
+	@for m in ${MODULES} examples; do \
 		if ! ${MAKE} -C "$${m}" ${@}; then break; fi; \
 	done
 #

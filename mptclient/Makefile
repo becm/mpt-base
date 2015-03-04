@@ -2,7 +2,7 @@
 LIB = mptclient
 #
 # additional header directories
-INC = . .. ../mptcore ../mptplot
+INC = . .. ../mptcore ../mptplot ../mptio
 #
 # header to export
 HEADER = client.h
@@ -12,7 +12,7 @@ SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 SHLIB_OBJS := libinfo.o
-LDLIBS = -lmptcore -ldl
+LDLIBS = -lmptio -ldl
 #
 # source summary
 subdirs = event loader

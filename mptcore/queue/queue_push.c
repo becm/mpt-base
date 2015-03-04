@@ -86,8 +86,12 @@ extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *qu, MPT_TYPE(DataEncoder) enc, 
 		if ((low - len) >= info->scratch) {
 			push = enc(info, &vec, from);
 		}
+		/* exceed temporary buffer */
+		else if (info->scratch >= 256) {
+			push = -1;
+		}
 		/* try out-of-band wrapping */
-		else if (info->scratch < 256) {
+		else {
 			uint8_t buf[256];
 			size_t max = qu->max - len;
 			

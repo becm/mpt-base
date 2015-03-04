@@ -22,7 +22,6 @@ if (path->len) node = mpt_node_get(node, path);
  * 
  * \return root of created elements
  */
-
 extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(node) *match, *parent;
@@ -35,6 +34,7 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 		return 0;
 	}
 	parent = 0;
+	match = 0;
 	
 	base = path->base;
 	curr = base + path->off;
@@ -59,7 +59,8 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			MPT_STRUCT(path) tmp = *path;
 			
 			if (!(match->children = mpt_node_query(0, &tmp))) {
-				(void) mpt_node_destroy(match); return 0;
+				(void) mpt_node_destroy(match);
+				return 0;
 			}
 			match->children->parent = match;
 		}

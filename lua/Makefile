@@ -4,7 +4,7 @@
 LUA = 5.2
 #
 # include lua and MPT core header
-INC = /usr/include/lua${LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot
+INC = /usr/include/lua${LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
 #
 # import global settings
 include ${MPT_PREFIX}/src/base/mpt.conf.mk
@@ -20,7 +20,7 @@ INTERPRETER = ./interp${LUA}
 #
 # link parameters
 LDFLAGS = -L${DIR_LIB} -R \$$ORIGIN
-LDLIBS  = mptcore
+LDLIBS  = mptio mptcore
 #
 # service targets
 .PHONY : clear clean test devel shared
@@ -40,7 +40,7 @@ ${LIBRARY} : ${OBJS}
 	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} $(LDLIBS:%=-l%)
 
 ${INTERPRETER} : ${IOBJS} ${OBJS}
-	${CC} -L${DIR_LIB} -o ${@} ${IOBJS} ${OBJS} -Wl,-R,${DIR_LIB} -llua${LUA} -lmptcore
+	${CC} -L${DIR_LIB} -o ${@} ${IOBJS} ${OBJS} -Wl,-R,${DIR_LIB} -llua${LUA} $(LDLIBS:%=-l%)
 
 %_lua${LUA}.o : lua%.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
