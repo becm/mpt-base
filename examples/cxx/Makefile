@@ -18,11 +18,15 @@ PROGS = $(progs:%=${DIR_BIN}/%)
 TESTS = $(tests:%=${DIR_BIN}/%)
 LDLIBS = -lmpt++
 
-# general targets and definitions
-include ../mpt.example.mk
+# general creation rules
+all : ${PROGS} ${TESTS}
 
+# additional libraries
 output : LDLIBS+=-lmptio -lmptcore
 comp   : LDLIBS+=-lmptio
+
+# general targets and definitions
+include ../mpt.example.mk
 
 # additional targets
 static : ${PROGS} ${DIR_BIN}/layout ${DIR_BIN}/comp

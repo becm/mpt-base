@@ -9,8 +9,10 @@ progs = \
 
 PROGS = $(progs:%=${DIR_BIN}/%)
 TESTS = $(tests:%=${DIR_BIN}/%)
-
 LDLIBS = -lmptio
+
+# general creation rules
+all : ${PROGS} ${TESTS}
 
 # additional libraries needed
 sread mclient : LDLIBS+=-lmptcore

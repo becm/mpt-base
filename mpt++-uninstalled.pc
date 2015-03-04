@@ -11,4 +11,4 @@ Description: Message Passing Toolkit C++ library
 Version: ${version}
 Libs: -L${libdir} -lmpt++
 Cflags: -I${includedir}
-Requires: mptplot
+Requires: mptplot mptio

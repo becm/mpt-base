@@ -13,11 +13,11 @@ LDFLAGS += $(LDDIRS:%=-L%) $(DLDIRS:%=-Wl,-R%)
 LINK    ?= ${CC}
 #
 # auto-generated content
-CLEAR_FILES ?= ${PROGS} ${TESTS} $(PROGS:%=%.out)
+CLEAR_FILES ?= ${PROGS} ${TESTS} $(PROGS:%=%.out) $(TESTS:%=%.out)
 CLEAN_FILES ?= $(CLEAR_FILES:%=%.o)
 #
 # general rules
-.PHONY: run clear clean all static
+.PHONY: clear clean all static
 all : ${PROGS}
 
 test : ${TESTS}
