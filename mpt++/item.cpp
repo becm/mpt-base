@@ -13,7 +13,8 @@
 #include "message.h"
 #include "convert.h"
 #include "array.h"
-#include "layout.h"
+
+#include "plot.h"
 
 #include "object.h"
 

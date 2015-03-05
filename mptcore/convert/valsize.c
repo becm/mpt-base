@@ -9,7 +9,7 @@
 #include <limits.h>
 
 #include "array.h"
-#include "layout.h"
+#include "plot.h"
 #include "convert.h"
 
 static const struct {
@@ -80,7 +80,7 @@ static void ptypes_finish(void)
  * 
  * get size of builtin or user type registered by mpt_valtype_add()
  * 
- * \param type	type identifier
+ * \param type  type identifier
  * 
  * \return size of registered type (0 if pointer type)
  */
@@ -114,7 +114,7 @@ extern ssize_t mpt_valsize(int type)
  * 
  * register new user type to use with mpt_valsize()
  * 
- * \param csize	size of new type (0 for pointer type)
+ * \param csize  size of new type (0 for pointer type)
  * 
  * \return type code of new user type
  */

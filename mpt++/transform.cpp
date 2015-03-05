@@ -10,7 +10,7 @@
 #include <math.h>
 
 #include "array.h"
-#include "layout.h"
+#include "plot.h"
 
 __MPT_NAMESPACE_BEGIN
 

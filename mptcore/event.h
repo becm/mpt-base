@@ -131,6 +131,10 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
+
+/* setup graphic(data) output channel */
+extern int mpt_output_graphic(MPT_INTERFACE(output) *, MPT_STRUCT(event) *);
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus

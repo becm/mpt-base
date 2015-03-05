@@ -1,5 +1,5 @@
 # Makefile: create base MPT modules
-MODULES = mptcore mptplot mptio mpt++ mptclient lua
+MODULES = mptcore mptplot mptio mpt++ lua
 #
 # creation targets
 .PHONY : ${MODULES} examples

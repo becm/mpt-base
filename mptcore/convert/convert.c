@@ -6,7 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "layout.h"
+#include "plot.h"
 #include "convert.h"
 
 /*!

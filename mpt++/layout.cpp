@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "array.h"
-#include "layout.h"
+#include "plot.h"
 #include "convert.h"
 #include "node.h"
 #include "parse.h"

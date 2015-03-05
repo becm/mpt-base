@@ -7,7 +7,7 @@
 
 #include <sys/uio.h>
 
-#include "layout.h"
+#include "plot.h"
 #include "message.h"
 
 #include "output.h"

@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "config.h"
-#include "layout.h"
+#include "plot.h"
 #include "message.h"
 
 #include "output.h"

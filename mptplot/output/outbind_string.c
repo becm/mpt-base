@@ -9,7 +9,7 @@
 #include <sys/uio.h>
 
 #include "message.h"
-#include "layout.h"
+#include "plot.h"
 
 #include "output.h"
 

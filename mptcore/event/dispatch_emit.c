@@ -177,21 +177,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	/* modify default command */
 	if (state & MPT_ENUM(EventDefault)) {
 		state &= ~MPT_ENUM(EventDefault);
-		if (!ev->id) {
-			if (disp->_def) {
-				mpt_output_log(disp->_out, __func__, MPT_ENUM(LogInfo), "%s (%"PRIxPTR")",
-				               MPT_tr("cleared default command"), disp->_def);
-			}
-			disp->_def = 0;
-		}
-		else if (!(cmd = mpt_command_get(&disp->_cmd, ev->id))) {
-			mpt_output_log(disp->_out, __func__, MPT_ENUM(LogWarning), "%s (%"PRIxPTR")",
-			               MPT_tr("invalid default command id"), ev->id);
-		} else {
-			disp->_def = ev->id;
-			mpt_output_log(disp->_out, __func__, MPT_ENUM(LogInfo), "%s (%"PRIxPTR")",
-			               MPT_tr("assigned default command id"), ev->id);
-		}
+		disp->_def = ev->id;
 	}
 	/* propagate default call availability */
 	if (disp->_def) {

@@ -8,11 +8,11 @@ OBJS = $(PROGS:%=%.o)
 # .PHONY : all devel clear clean static test distclean
 all : ${PROGS} sub_all
 
-client : LDLIBS=-lmpt++ -lmptclient -lmptcore
+client : LDLIBS=-lmptio -lmptcore
 client : CC=${CXX}
 client : client.o
 
-readline : LDLIBS=-lmptclient
+readline : LDLIBS=-lmptio
 readline : readline.o
 
 plot : LDLIBS=-lmptplot

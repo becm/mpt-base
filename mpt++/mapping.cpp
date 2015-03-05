@@ -6,7 +6,7 @@
 
 #include <limits>
 
-#include "layout.h"
+#include "plot.h"
 #include "message.h"
 
 #include "output.h"

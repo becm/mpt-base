@@ -19,7 +19,7 @@
 class MyClient : public mpt::client
 {
 public:
-    MyClient() : mpt::client(new mpt::Stream) { }
+    MyClient() : mpt::client(0) { }
     virtual ~MyClient() { }
     
     int unref();
@@ -37,7 +37,7 @@ int main()
     mtrace();
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
-    o->set(mpt::property("", "w:/dev/stdout"));
+//     o->set(mpt::property("", "w:/dev/stdout"));
     o->push(6, "hallo\n");
     c->init();
     c->unref();

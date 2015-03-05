@@ -8,7 +8,7 @@
 #include <sys/uio.h>
 
 #include "array.h"
-#include "layout.h"
+#include "plot.h"
 
 // basic type overrride
 extern "C" mpt::polyline *mpt_pline_create()

@@ -14,7 +14,7 @@ LINK    ?= ${CC}
 #
 # auto-generated content
 CLEAR_FILES ?= ${PROGS} ${TESTS} $(PROGS:%=%.out) $(TESTS:%=%.out)
-CLEAN_FILES ?= $(CLEAR_FILES:%=%.o)
+CLEAN_FILES ?= $(OBJS)
 #
 # general rules
 .PHONY: clear clean all static

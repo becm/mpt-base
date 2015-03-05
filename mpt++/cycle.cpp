@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "array.h"
-#include "layout.h"
+#include "plot.h"
 
 extern "C" mpt::cycle *mpt_cycle_create(void)
 {

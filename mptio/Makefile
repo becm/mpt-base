@@ -2,20 +2,21 @@
 LIB = mptio
 #
 # additional header directories
-INC = . .. ../mptplot ../mptcore
+INC = . .. ../mptplot ../mptclient ../mptcore
 #
 # header to export
-HEADER = $(wildcard *.h)
+HEADER = notify.h stream.h
 #
 # source summary
-SRCS := $(wildcard */*.c) connect.c output_new.o
+sources = connect.c init.c output_new.o readline.c
+SRCS := $(wildcard */*.c) ${sources}
 #
 # shared library options
 SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 SHLIB_OBJS = libinfo.o
-LDLIBS = -lmptcore
+LDLIBS = -lmptcore -ldl
 #
 # import library creation settings
 include ../mpt.lib.mk
