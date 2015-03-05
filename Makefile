@@ -3,14 +3,11 @@ MODULES = mptcore mptplot mptio mpt++ lua
 #
 # creation targets
 .PHONY : ${MODULES} examples
-examples : ${MODULES}
+all examples : ${MODULES}
 mpt++ mptplot mptio : mptcore
 mpt++ : mptplot
-${MODULES} examples : release.h
+${MODULES} examples :
 	@${MAKE} -C "${@}"
-#
-# release information
-include mpt.release.mk
 #
 # dispatch target to modules
 .DEFAULT :

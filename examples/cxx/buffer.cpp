@@ -10,7 +10,8 @@
 
 #include <mpt/queue.h>
 #include <mpt/array.h>
-#include <mpt/layout.h>
+
+#include <mpt/plot.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>

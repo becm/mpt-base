@@ -146,7 +146,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 			}
 			if (path.len) n = mpt_node_get(n->children, &path);
 			
-			if (!n->_meta) {
+			if (!n->_meta && !(n->_meta = mpt_meta_new(path.valid+1))) {
 				errno = EINVAL;
 				return -accept;
 			}

@@ -5,8 +5,9 @@
 #include <iostream>
 
 #include <mpt/node.h>
-#include <mpt/layout.h>
 #include <mpt/parse.h>
+
+#include <mpt/plot.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>

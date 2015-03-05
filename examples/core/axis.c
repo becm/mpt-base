@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <mpt/config.h>
-#include <mpt/layout.h>
+#include <mpt/plot.h>
 #include <mpt/convert.h>
 
 int printm(void *out, struct mpt_property *prop)

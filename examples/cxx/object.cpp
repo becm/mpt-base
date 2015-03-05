@@ -7,9 +7,10 @@
 
 #include <mpt/node.h>
 #include <mpt/config.h>
-#include <mpt/layout.h>
 #include <mpt/message.h>
 #include <mpt/convert.h>
+
+#include <mpt/plot.h>
 
 #include <mpt/object.h>
 

@@ -3,20 +3,14 @@
 DIRS = core io cxx
 PROGS = client readline
 TESTS = plot
-OBJS = $(PROGS:%=%.o)
+OBJS = $(PROGS:%=%.o) $(TESTS:%=%.o)
 
 # .PHONY : all devel clear clean static test distclean
 all : ${PROGS} sub_all
 
-client : LDLIBS=-lmptio -lmptcore
-client : CC=${CXX}
-client : client.o
-
+client : LDLIBS=-lmptcore
 readline : LDLIBS=-lmptio
-readline : readline.o
-
 plot : LDLIBS=-lmptplot
-plot : plot.o
 
 include mpt.example.mk
 

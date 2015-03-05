@@ -5,7 +5,7 @@ LIB = mptplot
 INC = . .. ../mptcore
 #
 # header to export
-HEADER = $(wildcard *.h)
+HEADER = output.h plot.h values.h
 #
 # source summary
 SRCS := $(wildcard */*.c)
