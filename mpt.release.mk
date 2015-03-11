@@ -1,5 +1,6 @@
 # mpt.release.mk: create release information
-release.h :
+RELEASE_HEADER ?= release.h
+${RELEASE_HEADER} :
 	@if [ -n "${MPT_RELEASE}" ]; then \
 		echo "#define MPT_RELEASE \"${MPT_RELEASE}\"" > "${@}"; \
 	else \
@@ -7,4 +8,4 @@ release.h :
 	fi
 #
 # add to auto-remove
-CLEAN_FILES += release.h
+CLEAN_FILES += ${RELEASE_HEADER}

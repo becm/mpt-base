@@ -5,7 +5,7 @@ MODULES = mptcore mptplot mptio mpt++ lua
 .PHONY : ${MODULES} examples
 all examples : ${MODULES}
 mpt++ mptplot mptio : mptcore
-mpt++ : mptplot
+mpt++ : mptplot mptio
 ${MODULES} examples :
 	@${MAKE} -C "${@}"
 #

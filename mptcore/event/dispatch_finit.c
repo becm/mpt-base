@@ -43,10 +43,10 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
  */
 extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
 {
-	static const MPT_STRUCT(array) def;
 	disp->_out = 0;
+	disp->_cmd._buf = 0;
 	
-	disp->_cmd = def;
+	disp->_def = 0;
 	
 	disp->_err.cmd = unknownEvent;
 	disp->_err.arg = disp;

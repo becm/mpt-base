@@ -21,7 +21,8 @@ LDLIBS = -lmptcore
 include ../mpt.lib.mk
 #
 # additional dependencies
-libinfo.o : ../libinfo.h ../version.h release.h
+RELEASE_HEADER = ../release.h
+libinfo.o : ../libinfo.h ../version.h ${RELEASE_HEADER}
 #
 # import release creation settings
 include ../mpt.release.mk
