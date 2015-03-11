@@ -264,7 +264,10 @@ static int outputUnref(MPT_INTERFACE(metatype) *mt)
 	}
 	mpt_outdata_fini(&odata->out);
 	mpt_command_clear(&odata->_wait);
+	
 	free(odata->in.base);
+	
+	mpt_history_setfmt(&odata->hist, 0);
 	
 	free(mt);
 	return 0;
@@ -404,7 +407,10 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return ret;
 	}
 	if (!strcasecmp(name, "histfmt")) {
-		if ((ret = mpt_history_setfmt(&odata->hist, src)) < 0) {
+		if (!src) {
+			ret = odata->hist.fmt ? 1 : 0;
+		}
+		else if ((ret = mpt_history_setfmt(&odata->hist, src)) < 0) {
 			return ret;
 		}
 		prop->name = "histfmt";

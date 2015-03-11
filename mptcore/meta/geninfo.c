@@ -168,10 +168,10 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen, uint32_t ref)
 {
 	struct metaInfo *info = raw;
 	
-	if (dlen < sizeof(*raw)) {
+	if (dlen < sizeof(*info)) {
 		return -2;
 	}
-	dlen -= sizeof(*raw);
+	dlen -= sizeof(*info);
 	if (dlen > UINT8_MAX) {
 		dlen = UINT8_MAX;
 	}

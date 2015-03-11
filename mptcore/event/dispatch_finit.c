@@ -62,15 +62,15 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
  */
 extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 {
-	if (disp->_out) {
-		disp->_out->_vptr->_mt.unref((void *) disp->_out);
-		disp->_out = 0;
-	}
 	/* dereference registered commands */
 	disp->_def  = 0;
 	mpt_command_clear(&disp->_cmd);
 	mpt_array_clone(&disp->_cmd, 0);
 	
+	if (disp->_out) {
+		disp->_out->_vptr->_mt.unref((void *) disp->_out);
+		disp->_out = 0;
+	}
 	if (disp->_err.cmd) {
 		disp->_err.cmd(disp->_err.arg, 0);
 		disp->_err.cmd = 0;

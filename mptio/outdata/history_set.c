@@ -29,7 +29,8 @@ extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(source) 
 	int16_t *fmt = 0;
 	
 	if (!src) {
-		return hist->fmt ? 1 : 0;
+		free(hist->fmt);
+		return 0;
 	}
 	if ((len = src->_vptr->conv(src, 's', &from)) < 0) {
 		return len;

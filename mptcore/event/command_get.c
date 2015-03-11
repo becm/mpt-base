@@ -27,7 +27,7 @@ extern void mpt_command_clear(const MPT_STRUCT(array) *arr)
 	cmd = (void *) (arr->_buf + 1);
 	
 	for (i = 0; i < len; ++i) {
-		if (!cmd[i].cmd) {
+		if (cmd[i].cmd) {
 			cmd[i].cmd(cmd[i].arg, 0);
 		}
 	}
@@ -40,8 +40,8 @@ extern void mpt_command_clear(const MPT_STRUCT(array) *arr)
  * Get pointer to command without control handler
  * indicating unused element.
  * 
- * \param cmd	command array base address
- * \param elem	number of consecutive command elements
+ * \param cmd  command array base address
+ * \param elem number of consecutive command elements
  * 
  * \return pointer to first unused element
  */
@@ -62,9 +62,9 @@ extern MPT_STRUCT(command) *mpt_command_empty(const MPT_STRUCT(command) *cmd, si
  * 
  * Get pointer to command with control handler and matching id.
  * 
- * \param cmd	command array base address
- * \param elem	number of consecutive command elements
- * \param id	identifier of requested command
+ * \param cmd  command array base address
+ * \param elem number of consecutive command elements
+ * \param id   identifier of requested command
  * 
  * \return pointer to matching element
  */
@@ -85,18 +85,18 @@ extern MPT_STRUCT(command) *mpt_command_find(const MPT_STRUCT(command) *cmd, siz
  * 
  * Get pointer to command with control handler and matching id.
  * 
- * \param arr	array containgin command elements
- * \param id	identifier of requested command
+ * \param arr  array containgin command elements
+ * \param id   identifier of requested command
  * 
  * \return pointer to matching element
  */
 extern MPT_STRUCT(command) *mpt_command_get(const MPT_STRUCT(array) *arr, uintptr_t id)
 {
 	MPT_STRUCT(buffer) *buf = arr->_buf;
-	size_t	len;
+	size_t len;
 	
-	if (!buf || !(len = buf->used / sizeof(MPT_STRUCT(command))))
+	if (!buf || !(len = buf->used / sizeof(MPT_STRUCT(command)))) {
 		return 0;
-	
+	}
 	return mpt_command_find((void *) (buf + 1), len, id);
 }
