@@ -2,13 +2,15 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+#include "unistd.h"
+
 int luaopen_mpt(lua_State *);
 
 const char *stdRead(lua_State *L, void *data, size_t *size)
 {
-	size_t len = fread(data, 1, 256, stdin);
+	ssize_t len = read(0, data, 256);
 	(void) L;
-	if (!len) return 0;
+	if (len < 0) return 0;
 	*size = len;
 	return data;
 }

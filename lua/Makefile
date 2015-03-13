@@ -10,8 +10,8 @@ INC = /usr/include/lua${LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mp
 include ${MPT_PREFIX}/src/base/mpt.conf.mk
 #
 # library sources
-SRCS = luampt.c
-OBJS = $(SRCS:lua%.c=%_lua${LUA}.o)
+SRCS = mpt.c
+OBJS = $(SRCS:mpt%.c=mpt%_lua${LUA}.o)
 IOBJS = main_lua${LUA}.o
 #
 # library destination
@@ -33,7 +33,7 @@ clear :
 	${RM} ${DIR_LIB}/liblua*-mpt.so interp*
 
 clean : clear
-	${RM} mpt_lua*.o main_*.o
+	${RM} *_lua?.?.o
 #
 # file creation
 ${LIBRARY} : ${OBJS}
@@ -42,7 +42,7 @@ ${LIBRARY} : ${OBJS}
 ${INTERPRETER} : ${IOBJS} ${OBJS}
 	${CC} -L${DIR_LIB} -o ${@} ${IOBJS} ${OBJS} -Wl,-R,${DIR_LIB} -llua${LUA} $(LDLIBS:%=-l%)
 
-%_lua${LUA}.o : lua%.c
+%_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 
 main_lua${LUA}.o : main.c
