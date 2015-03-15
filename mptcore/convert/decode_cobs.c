@@ -32,33 +32,26 @@ extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 	size_t flen, tlen, slen, off;
 	
 	if (!source) {
-		info->_ctx = 0;
-		info->done = 0;
-		info->scratch = 0;
+		if (!sourcelen) {
+			info->_ctx = 0;
+			info->done = 0;
+			info->scratch = 0;
+		}
 		return 0;
 	}
 	
-	/* decoded data end */
-	slen = info->_ctx;
+	/* decoder data sizes */
+	slen = info->_ctx & ~_MPT_COBS_MSG_COMPLETE;
 	off  = info->done;
 	flen = info->scratch;
 	
-	/* consule previous message */
-	if (slen & _MPT_COBS_MSG_COMPLETE) {
-		slen &= ~_MPT_COBS_MSG_COMPLETE;
-		info->_ctx = 0;
-		if (slen < flen) {
-			info->done += slen;
-			info->scratch -= slen;
-		} else {
-			slen = flen;
-			info->done += flen;
-			info->scratch = 0;
-		}
-	}
-	/* peek at new data */
-	else if (!sourcelen) {
-		uint8_t *end  = source->iov_base;
+	to.base = 0;
+	to.used = 0;
+	to.cont = (void *) source;
+	to.clen = sourcelen;
+	
+	/* peek at message data */
+	if (!sourcelen) {
 		size_t max = source->iov_len;
 		
 		if (!max) {
@@ -67,49 +60,52 @@ extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 		if (off >= max) {
 			return 0;
 		}
-		end += off;
 		max -= off;
 		
 		if (slen) {
 			return slen < max ? slen : max;
 		}
+		to.clen = 1;
 	}
-	/* skip decoded space */
-	off  += slen;
-	flen -= slen;
-	
-	/* save target start */
-	to.base = 0;
-	to.used = 0;
-	to.cont = (void *) source;
-	to.clen = sourcelen ? sourcelen : 1;
-	
-	while (!to.used) {
-		if (!to.clen--) return -2;
-		to.base = to.cont->iov_base;
-		to.used = to.cont->iov_len;
-		++to.cont;
-	}
-	/* TODO:target align condition
-	if (!info->_ctx) {
-		size_t skip, shift;
+	/* consume previous message */
+	else if (info->_ctx & _MPT_COBS_MSG_COMPLETE) {
+		size_t shift;
 		
-		skip = off + flen;
-		
-		for (shift = 0x10; shift > to.used; shift /= 2) {
-			size_t pre = shift - (((uintptr_t) to.base) & (shift - 1));
-			if (flen < pre) {
+		/* find last valid part */
+		if (off && (mpt_message_read(&to, off, 0) < off)) {
+			return sourcelen ? -1 : 0;
+		}
+		shift = 0;
+		while (flen > to.used) {
+			shift += to.used;
+			flen  -= to.used;
+			mpt_message_read(&to, to.used, 0);
+			if (!to.used) {
+				return -1;
+			}
+			continue;
+		}
+		/* target alignment */
+		for (off = 0x10; off; off /= 2) {
+			const uint8_t *addr = to.base;
+			size_t post = ((uintptr_t) (addr + flen)) & (off - 1);
+			if (flen < post) {
 				continue;
 			}
-			off = skip - pre;
-			flen = pre;
-			
-			info->done = off;
-			info->scratch = skip;
+			off = flen - post;
+			flen = post;
+			shift += off;
 			break;
 		}
-	} */
-	
+		info->_ctx = 0;
+		info->done += shift;
+		info->scratch = flen;
+	}
+	/* skip decoded space */
+	else {
+		off  += slen;
+		flen -= slen;
+	}
 	/* consume empty segments and processed data */
 	if (off && (mpt_message_read(&to, off, 0) < off)) {
 		return sourcelen ? -1 : 0;
@@ -246,6 +242,8 @@ extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 			/* save decoded data */
 			info->scratch += flen;
 			info->_ctx += slen;
+			
+			tlen = to.used;
 			
 			/* consume source data */
 			mpt_message_read(&from, flen, 0);
