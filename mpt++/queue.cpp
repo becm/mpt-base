@@ -42,11 +42,7 @@ bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
     if (!pendingMessage()) {
         return false;
     }
-    msgindex idx;
-
-    idx.off = _state.done;
-    idx.len = _mlen;
-    mpt_message_get(&_d, &idx, &msg, cont);
+    mpt_message_get(&_d, _state.done, _mlen, &msg, cont);
     _mlen = -1;
 
     return true;

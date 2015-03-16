@@ -18,7 +18,7 @@
  * \param[out] msg message data
  * \param[out] vec upper message data
  */
-extern int mpt_message_get(const MPT_STRUCT(queue) *qu, const MPT_STRUCT(msgindex) *idx, MPT_STRUCT(message) *msg, struct iovec *vec)
+extern int mpt_message_get(const MPT_STRUCT(queue) *qu, size_t off, size_t take, MPT_STRUCT(message) *msg, struct iovec *vec)
 {
 	uint8_t *base;
 	size_t low, high, len;
@@ -26,12 +26,12 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *qu, const MPT_STRUCT(msginde
 	base = mpt_queue_data(qu, &low);
 	high = qu->len - low;
 	
-	if (idx->off < low) {
-		base += idx->off;
-		low  -= idx->off;
+	if (off < low) {
+		base += off;
+		low  -= off;
 	}
 	else {
-		len = idx->off - low;
+		len = off - low;
 		base = qu->base + len;
 		if (len > high) {
 			errno = EINVAL;
@@ -40,13 +40,13 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *qu, const MPT_STRUCT(msginde
 		low  = high - len;
 		high = 0;
 	}
-	if (idx->len > (len = low + high)) {
+	if (take > (len = low + high)) {
 		errno = ERANGE;
 		return -2;
 	}
-	if (idx->len <= low) {
+	if (take <= low) {
 		msg->base = base;
-		msg->used = idx->len;
+		msg->used = take;
 		msg->clen = 0;
 		return 0;
 	}
@@ -60,7 +60,7 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *qu, const MPT_STRUCT(msginde
 		msg->clen = 1;
 		msg->cont = vec;
 		vec->iov_base = qu->base;
-		vec->iov_len  = idx->len - low;
+		vec->iov_len  = take - low;
 		return 1;
 	}
 }

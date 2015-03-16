@@ -64,9 +64,9 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 {
 	struct iovec vec;
 	MPT_STRUCT(message) msg;
-	MPT_STRUCT(msgindex) idx;
 	MPT_STRUCT(event) ev;
-	ssize_t raw;
+	ssize_t len;
+	size_t off;
 	int ret;
 	
 	if (idlen && !srm->_dec.fcn) {
@@ -78,14 +78,13 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 		errno = EAGAIN;
 		return -2;
 	}
-	if ((raw = srm->_dec.mlen) < 0
-	    && (srm->_dec.mlen = raw = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) < 0) {
+	if ((len = srm->_dec.mlen) < 0
+	    && (srm->_dec.mlen = len = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) < 0) {
 		return -2;
 	}
-	idx.len = raw;
-	idx.off = raw = srm->_dec.info.done;
+	off = srm->_dec.info.done;
 	srm->_dec.info.done = 0;
-	mpt_message_get(&srm->_rd, &idx, &msg, &vec);
+	mpt_message_get(&srm->_rd, off, len, &msg, &vec);
 	
 	ev.id = 0;
 	ev.msg = &msg;
@@ -102,13 +101,13 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 			pos = idlen;
 		}
 		else if (mpt_message_length(&msg) < idlen) {
-			mpt_queue_crop(&srm->_rd, 0, raw);
+			mpt_queue_crop(&srm->_rd, 0, off);
 			return -1;
 		}
 		tmp = msg;
 		/* read (first part of) message id */
 		if (mpt_message_read(&msg, pos, rbuf) < pos) {
-			mpt_queue_crop(&srm->_rd, 0, raw);
+			mpt_queue_crop(&srm->_rd, 0, off);
 			return -1;
 		}
 		/* marked as reply */
@@ -148,10 +147,10 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 			/* push reply id */
 			while (1) {
 				if (mpt_stream_push(srm, pos, rbuf) < 0) {
-					mpt_queue_crop(&srm->_rd, 0, raw);
+					mpt_queue_crop(&srm->_rd, 0, off);
 					return -3;
 				}
-				raw -= pos;
+				off -= pos;
 				if (!(idlen -= pos)) {
 					break;
 				}
@@ -172,7 +171,7 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 		ret &= MPT_ENUM(EventFlags);
 	}
 	/* remove message data from queue */
-	mpt_queue_crop(&srm->_rd, 0, raw);
+	mpt_queue_crop(&srm->_rd, 0, off);
 	
 	/* finalize reply */
 	if (idlen) {

@@ -189,13 +189,11 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 				return -3;
 			}
 			if ((raw = mpt_queue_recv(&od->in, &od->dec.info, od->dec.fcn)) >= 0) {
-				MPT_STRUCT(msgindex) idx;
 				MPT_STRUCT(message) msg;
+				size_t off;
 				
-				idx.len = raw;
-				idx.off = raw = od->dec.info.done;
-				
-				mpt_message_get(&od->in, &idx, &msg, &vec);
+				off = od->dec.info.done;
+				mpt_message_get(&od->in, off, raw, &msg, &vec);
 				
 				/* consume message ID */
 				mpt_message_read(&msg, sizeof(*buf), 0);
@@ -203,7 +201,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 				/* process reply and clear wait state */
 				ret = ans->cmd(ans->arg, &msg);
 				ans->cmd = 0;
-				mpt_queue_crop(&od->in, 0, raw);
+				mpt_queue_crop(&od->in, 0, off);
 				if (ret < 0) {
 					return -4;
 				}
@@ -677,12 +675,12 @@ extern int replySet(void *con, const MPT_STRUCT(message) *src)
 static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	MPT_STRUCT(event) ev;
-	MPT_STRUCT(msgindex) idx;
 	MPT_STRUCT(message) msg;
 	struct iovec vec;
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
 	MPT_STRUCT(outdata) *od = &odata->out;
-	ssize_t raw;
+	ssize_t len;
+	size_t off;
 	int ret;
 	uint16_t rid;
 	
@@ -696,18 +694,16 @@ static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	}
 	
 	/* get next message */
-	idx.off = idx.len = 0;
-	if ((raw = mpt_queue_recv(&odata->in, &odata->dec.info, odata->dec.fcn)) < 0) {
-		return raw;
+	if ((len = mpt_queue_recv(&odata->in, &odata->dec.info, odata->dec.fcn)) < 0) {
+		return len;
 	}
-	idx.len = raw;
-	idx.off = raw = odata->dec.info.done;
-	mpt_message_get(&odata->in, &idx, &msg, &vec);
+	off = odata->dec.info.done;
+	mpt_message_get(&odata->in, off, len, &msg, &vec);
 	
 	/* remove message id */
 	if (mpt_message_read(&msg, sizeof(rid), &rid) < sizeof(rid)) {
-		if ((raw = odata->dec.info.done)) {
-			mpt_queue_crop(&odata->in, 0, raw);
+		if (off) {
+			mpt_queue_crop(&odata->in, 0, off);
 			odata->dec.info.done = 0;
 		}
 		return -2;
@@ -763,12 +759,12 @@ static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 		replySet(odata, 0);
 	}
 	/* remove message data from queue */
-	if ((raw =odata->dec.info.done)) {
-		mpt_queue_crop(&odata->in, 0, raw);
+	if (off) {
+		mpt_queue_crop(&odata->in, 0, off);
 		odata->dec.info.done = 0;
 	}
 	/* further message on queue */
-	if ((raw = mpt_queue_peek(&odata->in, &odata->dec.info, odata->dec.fcn, 0)) >= 0) {
+	if ((len = mpt_queue_peek(&odata->in, &odata->dec.info, odata->dec.fcn, 0)) >= 0) {
 		ret |= MPT_ENUM(EventRetry);
 	}
 	return ret;

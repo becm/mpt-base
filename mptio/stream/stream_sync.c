@@ -64,9 +64,8 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 		
 		struct iovec vec;
 		MPT_STRUCT(message) msg;
-		MPT_STRUCT(msgindex) idx;
-		ssize_t raw;
-		size_t i;
+		ssize_t len;
+		size_t off, i;
 		int ret;
 		
 		if (idlen > sizeof(id)) {
@@ -77,7 +76,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 		vec.iov_len  = sizeof(buf);
 		
 		/* get handler for message */
-		if ((raw = mpt_queue_peek(&stream->_rd, &stream->_dec.info, stream->_dec.fcn, &vec)) < 0) {
+		if ((len = mpt_queue_peek(&stream->_rd, &stream->_dec.info, stream->_dec.fcn, &vec)) < 0) {
 			if (!timeout) {
 				return count;
 			}
@@ -97,14 +96,12 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 			return count;
 		}
 		/* get message data */
-		idx.off = idx.len = 0;
-		if ((raw = mpt_queue_recv(&stream->_rd, &stream->_dec.info, stream->_dec.fcn)) < 0) {
+		if ((len = mpt_queue_recv(&stream->_rd, &stream->_dec.info, stream->_dec.fcn)) < 0) {
 			return count;
 		}
-		idx.len = raw;
-		idx.off = raw = stream->_dec.info.done;
+		off = stream->_dec.info.done;
 		/* initial message data */
-		mpt_message_get(&stream->_rd, &idx, &msg, &vec);
+		mpt_message_get(&stream->_rd, off, len, &msg, &vec);
 		
 		/* consume/create message id */
 		mpt_message_read(&msg, idlen, buf);
@@ -115,7 +112,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 		/* find command */
 		if (!(mc = mpt_command_find(cmd, len, id))) {
 			if (!(mc = mpt_command_find(cmd, len, 0))) {
-				mpt_queue_crop(&stream->_rd, 0, raw);
+				mpt_queue_crop(&stream->_rd, 0, off);
 				return -4;
 			}
 			ret = mc->cmd(mc->arg, &msg);
@@ -128,7 +125,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 				--count;
 			}
 		}
-		mpt_queue_crop(&stream->_rd, 0, raw);
+		mpt_queue_crop(&stream->_rd, 0, off);
 		
 		if (ret < 0) {
 			break;

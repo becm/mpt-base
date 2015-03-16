@@ -141,15 +141,6 @@ MPT_STRUCT(message)
 	struct iovec *cont;  /* remaining elements */
 	size_t        clen;  /* number of remaining elements */
 };
-MPT_STRUCT(msgindex)
-{
-#ifdef __cplusplus
-	inline msgindex(void) : off(0), len(0)
-	{ }
-#endif
-	size_t off;  /* message offset */
-	size_t len;  /* message length */
-};
 
 #ifndef __cplusplus
 MPT_INTERFACE(output);
@@ -245,7 +236,7 @@ extern int mpt_output_file(uint8_t arg, int min);
 extern const char *mpt_output_prefix(uint8_t);
 
 /* get message on queue */
-extern int mpt_message_get(const MPT_STRUCT(queue) *, const MPT_STRUCT(msgindex) *, MPT_STRUCT(message) *, struct iovec *);
+extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);
 
 
 /* access to output/error functions */
