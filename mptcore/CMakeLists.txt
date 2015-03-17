@@ -1,9 +1,9 @@
-# create core library
+# create MPT core library
 cmake_minimum_required(VERSION 2.6)
 
 set(headers core.h)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} . .. ../mptplot)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} . .. ../mptplot ../mptio)
 
 set(subdirs
   array
@@ -14,8 +14,7 @@ set(subdirs
   parse
   queue
   convert
-  stream
-  notify
+  client
 )
 
 # submodules have headers
