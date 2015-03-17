@@ -3,47 +3,39 @@
 # lua version to build for
 LUA = 5.2
 #
+LIB = ${DIR_LIB}/liblua${LUA}-mpt.so
+#
 # include lua and MPT core header
 INC = /usr/include/lua${LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
 #
 # import global settings
-include ${MPT_PREFIX}/src/base/mpt.conf.mk
+include ../mpt.conf.mk
 #
 # library sources
 SRCS = mpt.c
-OBJS = $(SRCS:mpt%.c=mpt%_lua${LUA}.o)
-IOBJS = main_lua${LUA}.o
-#
-# library destination
-LIBRARY = ${DIR_LIB}/liblua${LUA}-mpt.so
-INTERPRETER = ./interp${LUA}
+OBJS = $(SRCS:%.c=%_lua${LUA}.o)
 #
 # link parameters
 LDFLAGS = -L${DIR_LIB} -R \$$ORIGIN
-LDLIBS  = mptio mptcore
+LDLIBS  = -lmptio -lmptcore
 #
 # service targets
 .PHONY : clear clean test devel shared
-devel shared : ${LIBRARY}
-test : ${LIBRARY} ${INTERPRETER}
-	@lua${LUA} -l test -e 'print(testmpt()); testmath([[user.lua]])' && \
-	${INTERPRETER} "user.lua"
-
-clear :
-	${RM} ${DIR_LIB}/liblua*-mpt.so interp*
-
-clean : clear
-	${RM} *_lua?.?.o
-#
 # file creation
-${LIBRARY} : ${OBJS}
-	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} $(LDLIBS:%=-l%)
-
-${INTERPRETER} : ${IOBJS} ${OBJS}
-	${CC} -L${DIR_LIB} -o ${@} ${IOBJS} ${OBJS} -Wl,-R,${DIR_LIB} -llua${LUA} $(LDLIBS:%=-l%)
+all devel : ${LIB} ${DIR_SHARE}/mpt/mpt.lua ${DIR_SHARE}/mpt/mathbox.lua
+shared : ${LIB}
+${LIB} : ${OBJS}
+	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 
-main_lua${LUA}.o : main.c
-	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
+${DIR_SHARE}/mpt/% :
+	install -d '${@D}'
+	install -C -m 644 -t '${@D}' '${@F}'
+
+clear :
+	${RM} ${LIB}
+
+clean : clear
+	${RM} ${OBJS}

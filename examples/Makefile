@@ -1,6 +1,6 @@
 # Makefile: MPT base example programs
 #
-DIRS = core io cxx
+DIRS = core io cxx lua
 PROGS = client readline
 TESTS = plot
 OBJS = $(PROGS:%=%.o) $(TESTS:%=%.o)

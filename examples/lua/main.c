@@ -2,7 +2,8 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
-#include "unistd.h"
+#include <stdlib.h>
+#include <unistd.h>
 
 int luaopen_mpt(lua_State *);
 
@@ -17,7 +18,7 @@ const char *stdRead(lua_State *L, void *data, size_t *size)
 
 int main(int argc, char *argv[])
 {
-	const char *err;
+	const char *str;
 	int i, ret;
 	
 	lua_State *L = luaL_newstate();
@@ -37,9 +38,10 @@ int main(int argc, char *argv[])
 	*/
 	ret = 0;
 	
-	if (luaL_dofile(L, "mathbox.lua")) {
-		if ((err = lua_tostring(L, -1))) {
-			fputs(err, stderr);
+	if ((str = getenv("MPT_MATHBOX"))
+	    && luaL_dofile(L, str)) {
+		if ((str = lua_tostring(L, -1))) {
+			fputs(str, stderr);
 			fputc('\n', stderr);
 		}
 		return 2;
@@ -53,15 +55,15 @@ int main(int argc, char *argv[])
 		if ((lua_load(L, stdRead, buf, "<stdin>", 0)
 #endif
 		     || lua_pcall(L, 0, LUA_MULTRET, 0))
-		    && (err = lua_tostring(L, -1))) {
-			fputs(err, stderr);
+		    && (str = lua_tostring(L, -1))) {
+			fputs(str, stderr);
 			fputc('\n', stderr);
 		};
 	}
 	else for (i = 1; i < argc; ++i) {
 		if (luaL_dofile(L, argv[i])) {
-			if ((err = lua_tostring(L, -1))) {
-				fputs(err, stderr);
+			if ((str = lua_tostring(L, -1))) {
+				fputs(str, stderr);
 				fputc('\n', stderr);
 			}
 			ret = 1;

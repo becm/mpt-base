@@ -1,19 +1,20 @@
 # Makefile: create base MPT modules
 MODULES = mptcore mptplot mptio mpt++
-SUB = ${MODULES} lua examples
+SUB = ${MODULES} lua
 #
 # creation targets
 .PHONY : ${SUB} all clear clean static static_clear sub_%
-all : ${MODULES} lua
+devel : SUB=${MODULES}
+all devel : sub_devel
+shared : sub_shared
 examples : all
+clear clean : SUB=${MODULES} examples
 clear : static_clear sub_clear
 clean : static_clear sub_clean
 static : "${MPT_PREFIX_LIB}/libmpt.a"
 mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
 lua : mptio
-${SUB} :
-	@${MAKE} -C "${@}"
 #
 # dispatch target to subdirectories
 sub_% :

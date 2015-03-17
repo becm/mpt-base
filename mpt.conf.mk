@@ -3,6 +3,7 @@ DIR_INC ?= ${MPT_PREFIX}/include/mpt
 ARCH ?= $(shell uname -m)-$(shell uname -s | tr A-Z a-z)-gnu
 DIR_LIB ?= ${MPT_PREFIX}/lib/${ARCH}
 DIR_BIN ?= ${MPT_PREFIX}/bin
+DIR_SHARE ?= ${MPT_PREFIX}/share
 
 # get current directory
 DIR_BASE := $(dir $(lastword $(MAKEFILE_LIST)))

@@ -29,7 +29,7 @@ end
 
 -- test math loading
 function testmath(...)
-  local m = io.open('mathbox.lua')
+  local m = io.open(os.getenv('MPT_MATHBOX'))
   m = m:read('*a')
   
   for i,v in pairs({...}) do
