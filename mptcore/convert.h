@@ -17,20 +17,20 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCompress)     = 0x4,   /* compress data */
 };
 
-MPT_STRUCT(extflt)
+MPT_STRUCT(float80)
 {
 #ifdef __cplusplus
 public:
-	inline extflt()
+	inline float80()
 	{ for (size_t i = 0; i < sizeof(_d); i++) _d[i] = 0; }
-	inline extflt(const extflt &v)
+	inline float80(const float80 &v)
 	{ for (size_t i = 0; i < sizeof(_d); i++) _d[i] = v._d[i]; }
-	inline extflt(const long double &v)
+	inline float80(const long double &v)
 	{ *this = v; }
 	
-	extflt &operator =(const long double &);
+	float80 &operator =(const long double &);
 	long double value(void) const;
-	extflt &swapOrder(void);
+	float80 &swapOrder(void);
 private:
 #endif
 	uint8_t _d[10];
@@ -45,13 +45,13 @@ extern int mpt_convert(const char *, int , void *);
 extern int mpt_data_convert(const void **, int , void *, int );
 
 /* extended double conversions */
-extern void mpt_extflt_decode(size_t , const MPT_STRUCT(extflt) *, long double *);
-extern void mpt_extflt_encode(size_t , const long double *, MPT_STRUCT(extflt) *);
+extern void mpt_float80_decode(size_t , const MPT_STRUCT(float80) *, long double *);
+extern void mpt_float80_encode(size_t , const long double *, MPT_STRUCT(float80) *);
 /* byte order conversion */
-extern void mpt_swaporder_80(size_t , MPT_STRUCT(extflt) *);
-extern void mpt_swaporder_64(size_t , uint64_t *);
-extern void mpt_swaporder_32(size_t , uint32_t *);
-extern void mpt_swaporder_16(size_t , uint16_t *);
+extern void mpt_bswap_80(size_t , MPT_STRUCT(float80) *);
+extern void mpt_bswap_64(size_t , uint64_t *);
+extern void mpt_bswap_32(size_t , uint32_t *);
+extern void mpt_bswap_16(size_t , uint16_t *);
 
 /* get keyword/type from text */
 extern const char *mpt_convert_key(const char **, const char *, size_t *);

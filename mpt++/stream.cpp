@@ -29,20 +29,20 @@ __MPT_NAMESPACE_BEGIN
 int convert(const void **from, int ft, void *dest, int dt)
 { return mpt_data_convert(from, ft, dest, dt); }
 
-extflt &extflt::swapOrder(void)
+float80 &float80::swapOrder(void)
 {
-    mpt_swaporder_80(1, this);
+    mpt_bswap_80(1, this);
     return *this;
 }
-extflt & extflt::operator= (const long double &val)
+float80 & float80::operator= (const long double &val)
 {
-    mpt_extflt_encode(1, &val, this);
+    mpt_float80_encode(1, &val, this);
     return *this;
 }
-long double extflt::value() const
+long double float80::value() const
 {
     long double v;
-    mpt_extflt_decode(1, this, &v);
+    mpt_float80_decode(1, this, &v);
     return v;
 }
 

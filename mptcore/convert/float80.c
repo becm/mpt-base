@@ -7,7 +7,7 @@
 
 /*!
  * \ingroup mptConvert
- * \brief get extfloat values
+ * \brief get extended precision float values
  * 
  * Convert shortened to native long double format.
  * 
@@ -15,7 +15,7 @@
  * \param src 10 byte float values
  * \param dst native long double values
  */
-extern void mpt_extflt_decode(size_t len, const MPT_STRUCT(extflt) *src, long double *dst)
+extern void mpt_float80_decode(size_t len, const MPT_STRUCT(float80) *src, long double *dst)
 {
 	while (len--) {
 		uint8_t *ptr = (uint8_t *) dst++;
@@ -26,7 +26,7 @@ extern void mpt_extflt_decode(size_t len, const MPT_STRUCT(extflt) *src, long do
 }
 /*!
  * \ingroup mptConvert
- * \brief compact extfloat values
+ * \brief compact extended precision float values
  * 
  * Convert native long double to shortened format.
  * 
@@ -34,7 +34,7 @@ extern void mpt_extflt_decode(size_t len, const MPT_STRUCT(extflt) *src, long do
  * \param src native long double values
  * \param dst 10 byte float values
  */
-extern void mpt_extflt_encode(size_t len, const long double *src, MPT_STRUCT(extflt) *dst)
+extern void mpt_float80_encode(size_t len, const long double *src, MPT_STRUCT(float80) *dst)
 {
 	while (len--) {
 		uint8_t *ptr = (uint8_t *) src++;
