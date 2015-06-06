@@ -125,7 +125,7 @@ extern void *mpt_path_append(MPT_STRUCT(path) *, size_t);
 /* set valid length */
 extern int mpt_path_valid(MPT_STRUCT(path) *);
 
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 /* print path to standard stream */
 extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *, const char *);
 #endif

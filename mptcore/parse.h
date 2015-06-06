@@ -120,7 +120,7 @@ extern int mpt_parse_endline(MPT_STRUCT(parse) *);
 /* get character from file */
 extern int mpt_getchar_file(void *);
 /* get character from stdio stream */
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 extern int mpt_getchar_stdio(FILE *);
 #endif
 /* get character from IO vector */

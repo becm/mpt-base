@@ -75,7 +75,7 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(const char *);
 extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *);
 extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(const char *);
 
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */
 extern int mpt_conf_file(FILE *, int , int , double *);
 #endif

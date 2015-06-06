@@ -130,7 +130,7 @@ extern int main(int argc, char *argv[])
 	opt->setMeta(lo);
 	
 	double t = -.3e-5;
-	mpt::extflt v = t;
+	mpt::float80 v = t;
 	
 	std::cout << t << " " << v.value() << std::endl;
 	

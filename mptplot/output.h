@@ -97,7 +97,7 @@ protected:
 		MPT_TYPE(DataEncoder) fcn;
 		MPT_STRUCT(codestate) info;
 	} _enc;
-# ifdef _STDIO_H
+# if defined(_STDIO_H) || defined(_STDIO_H_)
 	FILE  *hist;
 # else
 	void  *hist;
@@ -179,7 +179,7 @@ extern int mpt_output_plot(MPT_INTERFACE(output) *, const MPT_STRUCT(laydest) *,
 /* history operations */
 extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *, MPT_INTERFACE(source) *);
 extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgbind) *);
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
 
 /* printing values */

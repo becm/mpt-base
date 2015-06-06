@@ -16,16 +16,21 @@
 # include <sys/endian.h>
 #elif defined(sun)
 # include <sys/byteorder.h>
-# define __BYTE_ORDER     _BYTE_ORDER
-# define __LITTLE_ENDIAN  _LITTLE_ENDIAN
-# define __BIG_ENDIAN     _BIG_ENDIAN
 #else
 # include <endian.h>
 #endif
 
 #if !defined(__BYTE_ORDER)
-# error no byte order defined
-#elif (__BYTE_ORDER != __LITTLE_ENDIAN) && (__BYTE_ORDER != __BIG_ENDIAN)
+# if !defined(_BYTE_ORDER)
+#  error no byte order defined
+# else
+#  define __BYTE_ORDER     _BYTE_ORDER
+#  define __LITTLE_ENDIAN  _LITTLE_ENDIAN
+#  define __BIG_ENDIAN     _BIG_ENDIAN
+# endif
+#endif
+
+#if (__BYTE_ORDER != __LITTLE_ENDIAN) && (__BYTE_ORDER != __BIG_ENDIAN)
 # error bad byte order definition
 #endif
 
@@ -226,7 +231,7 @@ extern int mpt_outfmt_set(const char **);
 extern int16_t *mpt_outfmt_parse(const char *, char **);
 
 /* value to string conversion */
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
 #endif
 
