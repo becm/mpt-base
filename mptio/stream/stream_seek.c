@@ -2,7 +2,9 @@
  * seek operations on MPT stream.
  */
 
-#ifndef _LARGEFILE64_SOURCE
+#if defined(__FreeBSD__)
+# define lseek64(f,p,m)  lseek(f,p,m)
+#elif !defined(_LARGEFILE64_SOURCE)
 # define _LARGEFILE64_SOURCE
 #endif
 
@@ -26,7 +28,7 @@
  * \retval >=0 position in stream
  * \retval <0  error
  */
-extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, off64_t pos, int mode)
+extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode)
 {
 	off_t add = 0;
 	int flags, file = -1;

@@ -201,7 +201,7 @@ extern void mpt_array_callunref(const MPT_STRUCT(array) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );
-#if defined(_VA_LIST) && (!defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L)
+#if (defined(_VA_LIST) || defined(_VA_LIST_DECLARED)) && (!defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L)
 extern int mpt_vprintf(MPT_STRUCT(array) *, const char *, va_list );
 #endif
 /* return zero-terminated buffer data */
@@ -211,7 +211,7 @@ extern char *mpt_array_string(MPT_STRUCT(array) *);
 extern ssize_t mpt_array_push(MPT_STRUCT(array) *, MPT_STRUCT(codestate) *, MPT_TYPE(DataEncoder), const struct iovec *);
 
 /* write/send array data */
-#ifdef _SYS_SOCKET_H
+#if defined(_SYS_SOCKET_H) || defined(_SYS_SOCKET_H_)
 extern ssize_t mpt_array_flush(int , const MPT_STRUCT(slice) *, const struct sockaddr *, socklen_t);
 #endif
 

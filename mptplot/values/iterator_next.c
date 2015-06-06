@@ -42,13 +42,17 @@ extern int mpt_iterator_next(MPT_INTERFACE(iterator) *it, double *last)
 	int steps = 0;
 	
 	if (!last) {
-		return isnan(it->_vptr->next(it, 1)) ? 0 : 1;
+		curr = it->_vptr->next(it, 1);
+		return isnan(curr) ? 0 : 1;
 	}
 	curr = it->_vptr->next(it, 0);
 	ref = *last;
 	while (curr <= ref) {
 		double	save = curr;
-		if (isnan(curr = it->_vptr->next(it, 1))) {
+		
+		curr = it->_vptr->next(it, 1);
+		
+		if (isnan(curr)) {
 			return -2;
 		}
 		if (curr <= save) {

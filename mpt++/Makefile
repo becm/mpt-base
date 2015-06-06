@@ -13,7 +13,7 @@ SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 SHLIB_OBJS = libinfo.o
 LINK = ${CXX}
-LDLIBS = -lmptplot -lmptio -lmptcore
+LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
 # source summary
 SRCS := $(wildcard *.cpp)

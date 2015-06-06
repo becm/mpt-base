@@ -3,6 +3,7 @@
  *   graphic instance operations
  */
 
+#define __STDC_LIMIT_MACROS
 #include <limits>
 
 #include <sys/uio.h>

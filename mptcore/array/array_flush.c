@@ -1,10 +1,13 @@
 
 #include <errno.h>
 #include <unistd.h>
-#include <sys/uio.h>
 #include <string.h>
 
+#include <sys/uio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/un.h>
+
 #include <netinet/in.h>
 
 #include "array.h"

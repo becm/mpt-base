@@ -2,6 +2,7 @@
  * MPT transformation routines
  */
 
+#define __STDC_LIMIT_MACROS
 #include <limits>
 
 #include <string.h>
@@ -13,6 +14,10 @@
 #include "plot.h"
 
 __MPT_NAMESPACE_BEGIN
+
+#if defined(__FreeBSD__)
+# define exp10(x)  exp(M_LN10 * (x))
+#endif
 
 transform::transform(AxisFlag flg)
 { mpt_trans_init(this, flg); }

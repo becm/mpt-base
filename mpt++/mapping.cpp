@@ -3,7 +3,7 @@
  *   cycle target mapping
  */
 
-
+#define __STDC_LIMIT_MACROS
 #include <limits>
 
 #include "plot.h"

@@ -2,8 +2,10 @@
  * MPT C++ buffer implementation
  */
 
-#include <errno.h>
+#define __STDC_LIMIT_MACROS
 #include <limits.h>
+
+#include <errno.h>
 #include <string.h>
 
 #include <sys/uio.h>

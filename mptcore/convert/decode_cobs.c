@@ -1,4 +1,7 @@
 #include <string.h>
+
+#include <sys/uio.h>
+
 #include <arpa/inet.h>
 
 #include "message.h"
