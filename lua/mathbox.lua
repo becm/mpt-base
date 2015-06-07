@@ -37,7 +37,7 @@ setmetatable(math.format, {
       local fmt = self.type
       
       if dec == nil then dec = 10 end
-      if tp  == nil then fmt = 'e' end
+      if fmt == nil then fmt = 'e' end
       local fmt = '% .' .. dec .. fmt
       for i, v in pairs({...}) do
         ret = ret .. ' ' .. string.format(fmt, v)

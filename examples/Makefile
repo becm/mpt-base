@@ -1,14 +1,14 @@
 # Makefile: MPT base example programs
 #
 DIRS = core io cxx lua
-PROGS = client readline
 TESTS = plot
-OBJS = $(PROGS:%=%.o) $(TESTS:%=%.o)
+PROGS = client readline ${TESTS}
+OBJS = $(PROGS:%=%.o)
 
 # .PHONY : all devel clear clean static test distclean
 all : ${PROGS} sub_all
 
-client : LDLIBS=-lmptcore
+client : LDLIBS=-lmpt++ -lmptio -lmptcore
 readline : LDLIBS=-lmptio
 plot : LDLIBS=-lmptplot
 

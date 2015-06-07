@@ -5,6 +5,7 @@
 #include <mpt/queue.h>
 #include <mpt/array.h>
 #include <mpt/event.h>
+#include <mpt/output.h>
 #include <mpt/message.h>
 #include <mpt/stream.h>
 
@@ -19,7 +20,7 @@
 class MyClient : public mpt::client
 {
 public:
-    MyClient() : mpt::client(0) { }
+    MyClient() : mpt::client(mpt::mpt_output_new()) { }
     virtual ~MyClient() { }
     
     int unref();
@@ -37,8 +38,8 @@ int main()
     mtrace();
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
-//     o->set(mpt::property("", "w:/dev/stdout"));
-    o->push(6, "hallo\n");
+    o->set(mpt::property("history", "/dev/stdout"), 0);
+    o->message(0, mpt::LogMessage, "hallo");
     c->init();
     c->unref();
 }

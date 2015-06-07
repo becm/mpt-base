@@ -38,12 +38,6 @@ private:
 
 __MPT_EXTDECL_BEGIN
 
-/* get basic types from string */
-extern int mpt_convert(const char *, int , void *);
-
-/* get data from pointer and description */
-extern int mpt_data_convert(const void **, int , void *, int );
-
 /* extended double conversions */
 extern void mpt_float80_decode(size_t , const MPT_STRUCT(float80) *, long double *);
 extern void mpt_float80_encode(size_t , const long double *, MPT_STRUCT(float80) *);
@@ -52,6 +46,12 @@ extern void mpt_bswap_80(size_t , MPT_STRUCT(float80) *);
 extern void mpt_bswap_64(size_t , uint64_t *);
 extern void mpt_bswap_32(size_t , uint32_t *);
 extern void mpt_bswap_16(size_t , uint16_t *);
+
+/* get data from pointer and description */
+extern int mpt_data_convert(const void **, int , void *, int );
+
+/* get number type from string */
+extern int mpt_convert_number(const char *, int , void *);
 
 /* get keyword/type from text */
 extern const char *mpt_convert_key(const char **, const char *, size_t *);

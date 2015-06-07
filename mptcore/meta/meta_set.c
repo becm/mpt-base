@@ -17,7 +17,6 @@ struct propParam {
 	int (*conv)(const char **, int , void *);
 };
 
-#ifndef MPT_NO_CONVERT
 static int stringConvert(const char **from, const char *sep, int type, void *dest)
 {
 	if (type == 'k') {
@@ -27,8 +26,13 @@ static int stringConvert(const char **from, const char *sep, int type, void *des
 		if (dest) ((const char **) dest)[0] = txt;
 		return klen;
 	}
+#ifdef MPT_NO_CONVERT
+	return -2;
+#else
 	return mpt_convert_string(from, type, dest);
+#endif
 }
+#ifndef MPT_NO_CONVERT
 static int fromText(struct propParam *par, int type, void *dest)
 {
 	const char *txt;
@@ -75,7 +79,7 @@ static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
 	if (src->val.fmt) {
 		const void *from = src->val.ptr;
 #ifdef MPT_NO_CONVERT
-		if (!src->fmt[0] || type != src->fmt[0]) {
+		if (!src->val.fmt[0] || type != src->val.fmt[0]) {
 			return -1;
 		}
 		if ((len = mpt_valsize(type)) <= 0) {
@@ -104,15 +108,8 @@ static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
 		if (dest) ((char **) dest)[0] = 0;
 		return 0;
 	}
-	if (src->conv) {
-		len = src->conv(&txt, type, dest);
-	} else {
-#ifdef MPT_NO_CONVERT
-		return -1;
-#else
-		len = stringConvert(&txt, src->sep, type, dest);
-#endif
-	}
+	len = src->conv ? src->conv(&txt, type, dest) : stringConvert(&txt, src->sep, type, dest);
+	
 	if (len <= 0 || !dest) {
 		return len;
 	}

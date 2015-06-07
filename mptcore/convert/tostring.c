@@ -130,7 +130,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void **ptr)
 		break;
 	    case 'l':
 		size = sizeof(int64_t);
-		len = snprintf(dest, left, "%"PRIu64, *((int64_t*)arg));
+		len = snprintf(dest, left, "%"PRIi64, *((int64_t*)arg));
 		break;
 	    case 'L':
 		size = sizeof(uint64_t);
@@ -189,7 +189,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void **ptr)
 	}
 	if (len < 0) return len;
 	if ((size_t) len >= left) return -2;
-	*ptr = ((char *)arg) + size;
+	*ptr = ((uint8_t *) arg) + size;
 	return len;
 }
 

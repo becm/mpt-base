@@ -11,9 +11,9 @@
 
 /*!
  * \ingroup mptConvert
- * \brief type from string
+ * \brief number from string
  * 
- * Convert text data to simple type.
+ * Convert text data to simple number type.
  * 
  * \param src  source text
  * \param fmt  target dype
@@ -21,7 +21,7 @@
  * 
  * \return consumed length
  */
-extern int mpt_convert(const char *src, int fmt, void *dest)
+extern int mpt_convert_number(const char *src, int fmt, void *dest)
 {
 	if (!src) {
 		return 0;

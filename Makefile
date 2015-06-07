@@ -21,6 +21,9 @@ sub_% :
 	@for m in ${SUB}; do \
 		if ! ${MAKE} -C "$${m}" $(@:sub_%=%); then break; fi; \
 	done
+
+${SUB} :
+	${MAKE} -C "${@}"
 #
 # combined static library
 static_clear :

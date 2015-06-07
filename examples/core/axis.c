@@ -5,28 +5,25 @@
 #include <mpt/plot.h>
 #include <mpt/convert.h>
 
-int printm(void *out, struct mpt_property *prop)
+static int printm(void *out, struct mpt_property *prop)
 {
-	if (prop->fmt) return fprintf(out, "org <%s> %p\n", prop->fmt, prop->data);
-	return fprintf(out, "%s = %s;\n", prop->name, (char *) prop->data);
+	if (prop->val.fmt) return fprintf(out, "org <%s> %p\n", prop->val.fmt, prop->val.ptr);
+	return fprintf(out, "%s = %s;\n", prop->name, (char *) prop->val.ptr);
 }
 
-int getter(void *addr, struct mpt_property *pr)
+static int getter(void *addr, struct mpt_property *pr)
 { return mpt_axis_pget(addr, pr, 0); }
 
-int convert(MPT_INTERFACE(source) *src, int type, void *dest)
+static int convert(MPT_INTERFACE(source) *src, int type, void *dest)
 {
-	const char **txt = (void *) (src+1);
-	int len = mpt_convert(*txt, type, dest);
-	if (len > 0 && dest) *txt += len;
-	return len;
+	return mpt_convert_string((void *) (src+1), type, dest);
 }
 
 static MPT_INTERFACE_VPTR(source) src_vptr = { convert };
 
 int main(int argc, char *argv[])
 {
-	struct mpt_axis	obj;
+	struct mpt_axis obj;
 	struct mpt_property pr;
 	struct {
 		MPT_INTERFACE(source) src;

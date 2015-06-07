@@ -22,13 +22,13 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 	int	len = 0;
 	if (!(txt = *from)) return -1;
 	if (type == 'k') {
-		size_t	klen;
+		size_t klen;
 		if (!(txt = mpt_convert_key(from, 0, &klen))) return -2;
 		if (dest) ((const char **) dest)[0] = txt;
 		return klen;
 	}
 	if (type != 's') {
-		if ((len = mpt_convert(txt, type, dest)) > 0) *from = txt + len;
+		if ((len = mpt_convert_number(txt, type, dest)) > 0) *from = txt + len;
 		return len;
 	}
 	while (*txt && isspace(*txt)) {

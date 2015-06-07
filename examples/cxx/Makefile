@@ -14,12 +14,12 @@ tests = \
 progs = \
 	comp
 
-PROGS = $(progs:%=${DIR_BIN}/%)
 TESTS = $(tests:%=${DIR_BIN}/%)
+PROGS = $(progs:%=${DIR_BIN}/%) ${TESTS}
 LDLIBS = -lmpt++
 
 # general creation rules
-all : ${PROGS} ${TESTS}
+all : ${PROGS}
 
 # additional libraries
 output : LDLIBS+=-lmptio -lmptcore
