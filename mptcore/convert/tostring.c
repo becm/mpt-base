@@ -26,8 +26,10 @@
  * 
  * \return number of processed elements (0 = all)
  */
-extern int mpt_tostring(const void *data, const char *fmt, int (*save)(void *, const char *, size_t ), void *dest)
+extern int mpt_tostring(const MPT_STRUCT(value) *val, int (*save)(void *, const char *, size_t ), void *dest)
 {
+	const char *fmt = val->fmt;
+	const void *data = val->ptr;
 	int cont = 0;
 	
 	if (!fmt) {

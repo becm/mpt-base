@@ -127,7 +127,7 @@ extern int mpt_generic_print(MPT_TYPE(PropertyHandler) , void *, MPT_TYPE(Proper
 /* convert structured data to string */
 extern int mpt_data_print(char *, size_t , int , const void **);
 /* output data */
-extern int mpt_tostring(const void *, const char *, int (*)(void *, const char *, size_t ), void *);
+extern int mpt_tostring(const MPT_STRUCT(value) *, int (*)(void *, const char *, size_t ), void *);
 
 
 /* get type position from data description */
