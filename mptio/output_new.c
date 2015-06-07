@@ -400,8 +400,8 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		}
 		prop->name = "history";
 		prop->desc = MPT_tr("history data output file");
-		prop->fmt  = "";
-		prop->data = od->hist;
+		prop->val.fmt = "";
+		prop->val.ptr = od->hist;
 		return ret;
 	}
 	if (!strcasecmp(name, "histfmt")) {
@@ -413,8 +413,8 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		}
 		prop->name = "histfmt";
 		prop->desc = "history data output format";
-		prop->fmt  = "";
-		prop->data = odata->hist.fmt;
+		prop->val.fmt = "";
+		prop->val.ptr = odata->hist.fmt;
 		return ret;
 	}
 	if (!strcasecmp(name, "encoding")) {
@@ -423,8 +423,8 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		}
 		prop->name = "encoding";
 		prop->desc = "socket stream encoding";
-		prop->fmt  = "B";
-		prop->data = &odata->_coding;
+		prop->val.fmt = "B";
+		prop->val.ptr = &odata->_coding;
 		return ret;
 	}
 	if ((ret = mpt_outdata_property(od, prop, src)) < 0) {
@@ -434,7 +434,7 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return ret;
 	}
 	/* conditions for notification change */
-	if (prop->data == &od->sock) {
+	if (prop->val.ptr == &od->sock) {
 		if (od->_enc.fcn) od->_enc.fcn(&od->_enc.info, 0, 0);
 		if (odata->dec.fcn) od->_enc.fcn(&odata->dec.info, 0, 0);
 		od->_enc.fcn = 0;

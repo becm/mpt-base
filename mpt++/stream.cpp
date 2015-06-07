@@ -224,10 +224,10 @@ int Stream::property(struct property *pr, source *src)
     }
     if (!*name) {
         if ((ret = mpt_stream_setter(this, src)) < 0) return ret;
-        pr->fmt  = "";
-        pr->data = static_cast<stream *>(this);
         pr->name = "stream";
         pr->desc = "generic data stream";
+        pr->val.fmt = "";
+        pr->val.ptr = static_cast<stream *>(this);
         return ret;
     }
     intptr_t id = 0;
@@ -241,10 +241,10 @@ int Stream::property(struct property *pr, source *src)
                 errno = ERANGE; return -2;
             }
         }
-        pr->fmt  = "C";
-        pr->data = &_idlen;
         pr->name = "idlen";
         pr->desc = "message id length";
+        pr->val.fmt = "C";
+        pr->val.ptr = &_idlen;
         return ret;
     }
     errno = EINVAL;

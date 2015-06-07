@@ -143,8 +143,8 @@ int Queue::property(struct property *pr, source *src)
 
     pr->name = "queue";
     pr->desc = "FIFO data structure";
-    pr->fmt  = "p";
-    pr->data = &_d;
+    pr->val.fmt = "p";
+    pr->val.ptr = &_d;
 
     return ret;
 }

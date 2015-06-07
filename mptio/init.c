@@ -85,24 +85,27 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			pr.name = "print";
-			pr.desc = pr.fmt  = 0;
-			pr.data = cname;
+			pr.desc = 0;
+			pr.val.fmt = 0;
+			pr.val.ptr = cname;
 			mpt_meta_pset(out, &pr, 0);
 		}
 		/* set debug parameter */
 		else if ((conf = mpt_config_get(0, "mpt.debug", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			pr.name = "debug";
-			pr.desc = pr.fmt  = 0;
-			pr.data = cname;
+			pr.desc = 0;
+			pr.val.fmt = 0;
+			pr.val.ptr = cname;
 			mpt_meta_pset(out, &pr, 0);
 		}
 		/* set answer parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.answer", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			pr.name = "answer";
-			pr.desc = pr.fmt  = 0;
-			pr.data = cname;
+			pr.desc = 0;
+			pr.val.fmt = 0;
+			pr.val.ptr = cname;
 			mpt_meta_pset(out, &pr, 0);
 		}
 	}

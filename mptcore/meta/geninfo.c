@@ -101,10 +101,10 @@ static int geninfoSet(struct metaInfo *info, MPT_INTERFACE(source) *src)
 extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *src)
 {
 	static const MPT_STRUCT(property) metaProp[] = {
-		{ "store", "default storage element", "", 0 },
-		{ "line",  "origin line", "H", 0 },
-		{ "used",  "current data usage", "B", 0 },
-		{ "size",  "max. available size", "B", 0 }
+		{ "store", "default storage element", { "", 0 } },
+		{ "line",  "origin line", { "H", 0 } },
+		{ "used",  "current data usage", { "B", 0 } },
+		{ "size",  "max. available size", { "B", 0 } }
 	};
 	struct metaInfo *info = (void *) raw;
 	
@@ -122,8 +122,8 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 		
 		prop->name = metaProp[0].name;
 		prop->desc = metaProp[0].desc;
-		prop->fmt  = 0;
-		prop->data = info->used ? info + 1 : 0;
+		prop->val.fmt = 0;
+		prop->val.ptr = info->used ? info + 1 : 0;
 		return ret;
 	}
 	if (!(strcasecmp(prop->name, metaProp[1].name))) {
@@ -132,7 +132,7 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 			return ret;
 		}
 		*prop = metaProp[1];
-		prop->data = &info->line;
+		prop->val.ptr = &info->line;
 		return ret;
 	}
 	if (src) {
@@ -140,12 +140,12 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 	}
 	if (!strcasecmp(prop->name, metaProp[2].name)) {
 		*prop = metaProp[2];
-		prop->data = &info->used;
+		prop->val.ptr = &info->used;
 		return 1;
 	}
 	if (!strcasecmp(prop->name, metaProp[3].name)) {
 		*prop = metaProp[3];
-		prop->data = &info->size;
+		prop->val.ptr = &info->size;
 		return 1;
 	}
 	errno = ENOTSUP;

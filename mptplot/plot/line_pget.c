@@ -49,15 +49,15 @@ static int set_line(MPT_STRUCT(line) *line, MPT_INTERFACE(source) *src)
 extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",	"line color",	(char *) mpt_color_pset,	(void *) MPT_offset(line,color)		},
-		{"x1",		"line start",	(char *) set_pos,		(void *) MPT_offset(line,from.x)	},
-		{"x2",		"line end (x)",	(char *) set_pos,		(void *) MPT_offset(line,to.x)		},
-		{"y1",		"line start (y)", (char *) set_pos,		(void *) MPT_offset(line,from.y)	},
-		{"y2",		"line end (y)",	(char *) set_pos,		(void *) MPT_offset(line,to.y)		},
-		{"width",	"line width",	(char *) mpt_lattr_width,	(void *) MPT_offset(line,attr.width)	}, /* pass line::attr to setter */
-		{"style",	"line style",	(char *) mpt_lattr_style,	(void *) MPT_offset(line,attr.style)	},
-		{"symbol",	"symbol type",	(char *) mpt_lattr_symbol,	(void *) MPT_offset(line,attr.symbol)	},
-		{"size",	"symbol size",	(char *) mpt_lattr_size,	(void *) MPT_offset(line,attr.size)	}
+		{"color",  "line color",     { (char *) mpt_color_pset,   (void *) MPT_offset(line,color)} },
+		{"x1",     "line start",     { (char *) set_pos,          (void *) MPT_offset(line,from.x)} },
+		{"x2",     "line end (x)",   { (char *) set_pos,          (void *) MPT_offset(line,to.x)} },
+		{"y1",     "line start (y)", { (char *) set_pos,          (void *) MPT_offset(line,from.y)} },
+		{"y2",     "line end (y)",   { (char *) set_pos,          (void *) MPT_offset(line,to.y)} },
+		{"width",  "line width",     { (char *) mpt_lattr_width,  (void *) MPT_offset(line,attr.width)} }, /* pass line::attr to setter */
+		{"style",  "line style",     { (char *) mpt_lattr_style,  (void *) MPT_offset(line,attr.style)} },
+		{"symbol", "symbol type",    { (char *) mpt_lattr_symbol, (void *) MPT_offset(line,attr.symbol)} },
+		{"size",   "symbol size",    { (char *) mpt_lattr_size,   (void *) MPT_offset(line,attr.size)} }
 	};
 	static const char format[] = {
 		MPT_ENUM(TypeColor),
@@ -80,8 +80,8 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 			}
 			pr->name = "line";
 			pr->desc = "mpt line data";
-			pr->fmt  = format;
-			pr->data = line;
+			pr->val.fmt = format;
+			pr->val.ptr = line;
 			
 			return pos;
 		}
@@ -95,24 +95,24 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
 		return -1;
 	}
-	set = (int (*)()) elem[pos].fmt;
+	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
 	self.desc = elem[pos].desc;
-	self.data = ((uint8_t *) line) + (intptr_t) elem[pos].data;
+	self.val.ptr = ((uint8_t *) line) + (intptr_t) elem[pos].val.ptr;
 	
 	if (pos < 1) {
-		self.fmt = "#";
+		self.val.fmt = "#";
 	}
 	else if (pos < 5) {
-		self.fmt = "g";
+		self.val.fmt = "g";
 	}
 	else {
-		self.fmt = "C";
 		if (line && (pos = set(&line->attr, src)) < 0) return -2;
+		self.val.fmt = "C";
 		*pr = self;
 		return pos;
 	}
-	if (line && (pos = set(self.data, src)) < 0) return -2;
+	if (line && (pos = set(self.val.ptr, src)) < 0) return -2;
 	*pr = self;
 	return pos;
 }

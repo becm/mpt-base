@@ -25,8 +25,8 @@ Property & Property::operator= (metatype &meta)
 {
     property pr;
     if (meta.property(&pr) < 0) { this->name = 0; return *this; }
-    this->fmt = pr.fmt;
-    this->data = pr.data;
+    this->val.fmt = pr.val.fmt;
+    this->val.ptr = pr.val.ptr;
     metatype *mt = *this;
     if (!mt || mpt_meta_pset(mt, this) < 0) this->name = 0;
     return *this;
@@ -43,8 +43,8 @@ Property & Property::operator= (const double & val)
 Property & Property::operator= (const char *val)
 {
     if (!invalid()) {
-        this->fmt = 0;
-        this->data = val;
+        this->val.fmt = 0;
+        this->val.ptr = val;
         metatype *mt = *this;
         if (!mt || mpt_meta_pset(mt, this) < 0) this->name = 0;
     }
@@ -193,9 +193,9 @@ static int metaPropertySet(void *addr, property *pr)
     if (!pr->name) {
         return con->check ? con->check(con->cdata, pr) : 1;
     }
-    if (!pr->data) {
+    if (!pr->val.ptr) {
         if (!con->check) {
-            if (!pr->fmt) return 2;
+            if (!pr->val.fmt) return 2;
         }
         else {
             int ret = con->check(con->cdata, pr);
@@ -233,8 +233,8 @@ public:
         if (p->name || p->desc) return -1;
         p->name = globName;
         p->desc = globDesc;
-        p->fmt  = globName+8;
-        p->data = this;
+        p->val.fmt = globName+8;
+        p->val.ptr = this;
         return s ? -1 : 0;
     }
     void *typecast(int type)

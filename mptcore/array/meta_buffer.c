@@ -13,9 +13,9 @@
 #include "array.h"
 
 MPT_STRUCT(metaBuffer) {
-	MPT_STRUCT(array)	arr;
-	MPT_INTERFACE(metatype)	_meta;
-	uint64_t		_info;
+	MPT_STRUCT(array)        arr;
+	MPT_INTERFACE(metatype) _meta;
+	uint64_t                _info;
 };
 
 static int bufferUnref(MPT_INTERFACE(metatype) *meta)
@@ -48,10 +48,13 @@ static int setArray(MPT_STRUCT(array) *arr, MPT_INTERFACE(source) *src)
 		if (len) ++len;
 	}
 	else {
-		errno = ENOTSUP; return -1;
+		errno = ENOTSUP;
+		return -1;
 	}
 	
-	if (!(base = mpt_array_slice(arr, 0, len))) return len ? -1 : 0;
+	if (!(base = mpt_array_slice(arr, 0, len))) {
+		return len ? -1 : 0;
+	}
 	memcpy(base, data, len);
 	
 	return arr->_buf->used = len;
@@ -76,8 +79,8 @@ static int bufferProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *p
 			return -3;
 		}
 		prop->desc = "buffer metatype";
-		prop->fmt  = "L";
-		prop->data = mb->arr._buf ? &mb->arr._buf->used : &_size;
+		prop->val.fmt = "L";
+		prop->val.ptr = mb->arr._buf ? &mb->arr._buf->used : &_size;
 		return 0;
 	}
 	else {
@@ -86,8 +89,8 @@ static int bufferProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *p
 		if (src && (ret = setArray(&mb->arr, src)) < 0) {
 			return ret;
 		}
-		prop->data = &mb->arr;
-		prop->fmt  = fmt;
+		prop->val.fmt = fmt;
+		prop->val.ptr = &mb->arr;
 	}
 	
 	prop->name = "array";

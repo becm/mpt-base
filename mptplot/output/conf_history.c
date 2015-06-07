@@ -42,8 +42,9 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 	}
 	
 	pr.name = "histfmt";
-	pr.desc = pr.fmt = 0;
-	pr.data = data;
+	pr.desc = 0;
+	pr.val.fmt = 0;
+	pr.val.ptr = data;
 	
 	e1 = mpt_meta_pset((void *) out, &pr, 0);
 	
@@ -55,8 +56,9 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 	}
 	
 	pr.name = "histfile";
-	pr.desc = pr.fmt = 0;
-	pr.data = data;
+	pr.desc = 0;
+	pr.val.fmt = 0;
+	pr.val.ptr = data;
 	
 	e2 = mpt_meta_pset((void *) out, &pr, 0);
 	

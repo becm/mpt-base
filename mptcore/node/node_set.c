@@ -26,8 +26,8 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 	
 	prop.name = "";
 	prop.desc = 0;
-	prop.fmt  = 0;
-	prop.data = data;
+	prop.val.fmt = 0;
+	prop.val.ptr = data;
 	
 	if ((old && (ret = mpt_meta_pset(old, &prop, 0)) >= 0) || !data) {
 		return ret;
@@ -37,8 +37,8 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 	}
 	prop.name = "";
 	prop.desc = 0;
-	prop.fmt  = 0;
-	prop.data = data;
+	prop.val.fmt = 0;
+	prop.val.ptr = data;
 	
 	if ((ret = mpt_meta_pset(replace, &prop, 0)) < 0) {
 		replace->_vptr->unref(replace);

@@ -312,8 +312,8 @@ int Buffer::property(struct property *pr, source *src)
     // set self info
     else {
         static const char fmt[4] = { array::Type, 0 };
-        pr->data = static_cast<const array *>(&_d);
-        pr->fmt  = fmt;
+        pr->val.fmt = fmt;
+        pr->val.ptr = static_cast<const array *>(&_d);
     }
     pr->name = "buffer";
     pr->desc = "FIFO data structure";

@@ -40,8 +40,8 @@ static int sliceConv(MPT_INTERFACE(source) *src, int type, void *data)
 			
 			pr->name = base;
 			pr->desc = 0;
-			pr->fmt  = 0;
-			pr->data = end + 1;
+			pr->val.fmt = 0;
+			pr->val.ptr = end + 1;
 			s->_off += len;
 			s->_len -= len;
 		}

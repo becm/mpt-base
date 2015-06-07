@@ -28,16 +28,16 @@ extern int mpt_message_pset(MPT_STRUCT(message) *msg, int type, MPT_TYPE(Propert
 {
 	MPT_STRUCT(message) tmp;
 	MPT_STRUCT(property) prop;
-	char	buf[1024], *sep;
-	ssize_t	part, len;
+	char buf[1024], *sep;
+	ssize_t part, len;
 	
 	tmp = *msg;
 	if ((part = mpt_message_argv(&tmp, type)) <= 0) {
 		return -2;
 	}
-	if (part >= (ssize_t) sizeof(buf))
+	if (part >= (ssize_t) sizeof(buf)) {
 		return -1;
-	
+	}
 	mpt_message_read(&tmp, part, buf);
 	buf[part] = '\0';
 	
@@ -48,8 +48,8 @@ extern int mpt_message_pset(MPT_STRUCT(message) *msg, int type, MPT_TYPE(Propert
 	
 	prop.name = buf;
 	prop.desc = 0;
-	prop.data = ++sep;
-	prop.fmt  = 0;
+	prop.val.fmt = 0;
+	prop.val.ptr = ++sep;
 	
 	len = part - (sep - buf);
 	
@@ -62,7 +62,7 @@ extern int mpt_message_pset(MPT_STRUCT(message) *msg, int type, MPT_TYPE(Propert
 	else if (*sep == '\'' || *buf == '"') {
 		if (*sep == sep[len-1]) {
 			sep[len-1] = '\0';
-			prop.data = ++sep;
+			prop.val.ptr = ++sep;
 		}
 	}
 	*msg = tmp;

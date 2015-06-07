@@ -468,8 +468,8 @@ int Layout::property(struct property *pr, source *src)
     if (name ? !*name : !pr->desc) {
         pr->name = "layout";
         pr->desc = "mpt layout data";
-        pr->fmt  = 0;
-        pr->data = _alias;
+        pr->val.fmt = 0;
+        pr->val.ptr = _alias;
         return 0;
     }
     if (name ? (!strcasecmp(name, "alias") || !strcasecmp(name, "name")) : ((uintptr_t) pr->desc == 1)) {
@@ -480,8 +480,8 @@ int Layout::property(struct property *pr, source *src)
         }
         pr->name = "alias";
         pr->desc = "layout alias";
-        pr->fmt  = 0;
-        pr->data = _alias;
+        pr->val.fmt = 0;
+        pr->val.ptr = _alias;
 
         return len;
     }
@@ -493,8 +493,8 @@ int Layout::property(struct property *pr, source *src)
         }
         pr->name = "font";
         pr->desc = "layout default font";
-        pr->fmt  = 0;
-        pr->data = _font;
+        pr->val.fmt = 0;
+        pr->val.ptr = _font;
 
         return len;
     }

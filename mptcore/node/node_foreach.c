@@ -24,8 +24,8 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 			continue;
 		}
 		prop.desc = 0;
-		prop.fmt  = 0;
-		prop.data = 0;
+		prop.val.fmt = 0;
+		prop.val.ptr = 0;
 		
 		/* get current identifier */
 		if (!(name = mpt_identifier_data(&head->ident, 0))) {
@@ -34,8 +34,8 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 				continue;
 			}
 			prop.name = 0;
-			prop.fmt  = fmt;
-			prop.data = (void *) head;
+			prop.val.fmt = fmt;
+			prop.val.ptr = (void *) head;
 			if (!proc || (skip = proc(parg, &prop)) < 0) {
 				return head;
 			}
@@ -48,9 +48,9 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 			prop.name = norm;
 			skip = curr->_vptr->property(curr, &prop, 0);
 			
-			if (skip < 0 || !prop.data || (prop.fmt && !*prop.fmt)) {
-				prop.data = curr->_vptr->typecast(curr, 's');
-				prop.fmt  = 0;
+			if (skip < 0 || !prop.val.ptr || (prop.val.fmt && !*prop.val.fmt)) {
+				prop.val.ptr = curr->_vptr->typecast(curr, 's');
+				prop.val.fmt  = 0;
 			}
 			else if (!skip && (mask & MPT_ENUM(TraverseDefault))) {
 				continue;
@@ -59,7 +59,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 		prop.name = name;
 		
 		/* get data from current metatype */
-		if (!prop.data) {
+		if (!prop.val.ptr) {
 			if (mask & MPT_ENUM(TraverseDefault)) {
 				continue;
 			}
@@ -69,7 +69,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 			if (skip) {
 				continue;
 			}
-			prop.data = norm;
+			prop.val.ptr = norm;
 		}
 		/* set property data */
 		if (mask & MPT_ENUM(TraverseChange)) {

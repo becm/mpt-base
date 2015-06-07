@@ -140,6 +140,19 @@ MPT_STRUCT(codestate)
 typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
 typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
 
+/*! generic struct reference */
+MPT_STRUCT(value)
+{
+#ifdef __cplusplus
+	inline value(const char *f = 0, const void *v = 0) : fmt(f), ptr(v)
+	{ }
+	inline void set(const struct value &v)
+	{ fmt = v.fmt; ptr = v.ptr; }
+#endif
+	const char *fmt;  /* data format */
+	const void *ptr;  /* formated data */
+};
+
 /*! single property information */
 MPT_STRUCT(property)
 {
@@ -147,20 +160,22 @@ MPT_STRUCT(property)
     public:
 	enum { Type = TypeProperty };
 	
-	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), fmt(0), data(v)
+	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(0, v)
 	{ }
-	inline property(const char *n, const char *f, const void *d) : name(n), desc(0), fmt(f), data(d)
+	inline property(const char *n, const char *f, const void *d) : name(n), desc(0), val(f, d)
 	{ }
-	inline property(size_t pos) : name(0), desc((char *) pos), fmt(0), data(0)
+	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
 	inline bool invalid() const
 	{ return !name; }
+	inline const struct value &value() const
+	{ return val; }
+	inline void set(const struct value &v)
+	{ val.set(v); }
 #endif
-	const char *name;  /* property name */
-	const char *desc;  /* property [index->]description */
-	
-	const char *fmt;   /* data format */
-	const void *data;  /* formated data */
+	const char *name;      /* property name */
+	const char *desc;      /* property [index->]description */
+	MPT_STRUCT(value) val; /* element value */
 };
 typedef int (*MPT_TYPE(PropertyHandler))(void *, MPT_STRUCT(property) *);
 

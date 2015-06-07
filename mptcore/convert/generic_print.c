@@ -21,14 +21,14 @@ static int mprint(void *data, MPT_STRUCT(property) *prop)
 	
 	*buf = 0;
 	
-	if (!(fmt = pr.fmt)) {
-		if (!pr.data) { pr.data = buf; *buf = 0; }
+	if (!(fmt = pr.val.fmt)) {
+		if (!pr.val.ptr) { pr.val.ptr = buf; *buf = 0; }
 		return par->h(par->p, &pr);
 	}
-	if (!(base = pr.data)) {
+	if (!(base = pr.val.ptr)) {
 		return *fmt ? -1 : 0;
 	}
-	while (*fmt && (adv = mpt_data_print(buf+pos, sizeof(buf)-pos, *pr.fmt, &base)) >= 0) {
+	while (*fmt && (adv = mpt_data_print(buf+pos, sizeof(buf)-pos, *pr.val.fmt, &base)) >= 0) {
 		pos += adv;
 		if (*(++fmt) && pos < (int) (sizeof(buf)-2)) {
 			buf[pos++] = ' '; buf[pos] = 0;
@@ -38,8 +38,8 @@ static int mprint(void *data, MPT_STRUCT(property) *prop)
 	if (adv < 0 || (pos + adv) >= (int) sizeof(buf)) {
 		return par->h(par->p, &pr);
 	}
-	pr.data = buf;
-	pr.fmt  = 0;
+	pr.val.ptr = buf;
+	pr.val.fmt = 0;
 	
 	return par->h(par->p, &pr);
 }

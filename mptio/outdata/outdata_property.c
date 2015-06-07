@@ -166,8 +166,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		}
 		prop->name = "outdata";
 		prop->desc = "output data context";
-		prop->fmt  = fmt;
-		prop->data = &od->sock;
+		prop->val.fmt = fmt;
+		prop->val.ptr = &od->sock;
 		return ret;
 	}
 	if (name ? !strcasecmp(name, "color") : pos == id++) {
@@ -176,8 +176,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		}
 		prop->name = "color";
 		prop->desc = MPT_tr("colorized message output");
-		prop->fmt  = 0;
-		prop->data = od->state & MPT_ENUM(OutputPrintColor) ? "true" : "false";
+		prop->val.fmt = 0;
+		prop->val.ptr = od->state & MPT_ENUM(OutputPrintColor) ? "true" : "false";
 		return ret;
 	}
 	if (name ? !strcasecmp(name, "level") : pos == id++) {
@@ -197,8 +197,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		}
 		prop->name = "level";
 		prop->desc = MPT_tr("output level");
-		prop->fmt  = "B";
-		prop->data = &od->level;
+		prop->val.fmt = "B";
+		prop->val.ptr = &od->level;
 		return ret;
 	}
 	if (name && !strcasecmp(name, "debug")) {
@@ -212,8 +212,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		od->level = (od->level & 0xf0) | (v & 0xf);
 		prop->name = "level";
 		prop->desc = MPT_tr("output level");
-		prop->fmt  = "B";
-		prop->data = &od->level;
+		prop->val.fmt = "B";
+		prop->val.ptr = &od->level;
 		return ret;
 	}
 	if (name && !strcasecmp(name, "print")) {
@@ -224,8 +224,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		od->level = (od->level & 0xf0) | (v & 0xf);
 		prop->name = "level";
 		prop->desc = MPT_tr("output level");
-		prop->fmt  = "B";
-		prop->data = &od->level;
+		prop->val.fmt = "B";
+		prop->val.ptr = &od->level;
 		return ret;
 	}
 	else if (name && !strcasecmp(name, "answer")) {
@@ -236,8 +236,8 @@ extern int mpt_outdata_property(MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *p
 		od->level = (od->level & 0xf) | ((v & 0xf) << 4);
 		prop->name = "level";
 		prop->desc = MPT_tr("output level");
-		prop->fmt  = "B";
-		prop->data = &od->level;
+		prop->val.fmt = "B";
+		prop->val.ptr = &od->level;
 		return ret;
 	}
 	return -1;

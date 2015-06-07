@@ -42,19 +42,20 @@ extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 	if (meta->_vptr->property(meta, &pr, 0) < 0) {
 		return 0;
 	}
-	base = pr.data;
-	if (!pr.fmt) {
+	base = pr.val.ptr;
+	if (!pr.val.fmt) {
+		if (len) *len = 0;
 		return base;
 	}
 	if (len
-	    && (pos = mpt_position(pr.fmt, MPT_ENUM(TypeVector))) >= 0
-	    && (pos = mpt_offset(pr.fmt, pos)) >= 0) {
+	    && (pos = mpt_position(pr.val.fmt, MPT_ENUM(TypeVector))) >= 0
+	    && (pos = mpt_offset(pr.val.fmt, pos)) >= 0) {
 		vec = (void *) (base + pos);
 		*len = vec->iov_len;
 		return vec->iov_base;
 	}
-	if ((pos = mpt_position(pr.fmt, 's')) >= 0
-	    && (pos = mpt_offset(pr.fmt, pos)) >= 0) {
+	if ((pos = mpt_position(pr.val.fmt, 's')) >= 0
+	    && (pos = mpt_offset(pr.val.fmt, pos)) >= 0) {
 		base = *((void **) (base + pos));
 		if (len) {
 			static const char def[] = "\0";

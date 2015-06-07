@@ -21,12 +21,12 @@ static int setConfig(void *udata, MPT_STRUCT(property) *pr)
 	where.sep = '.';
 	where.assign = 0;
 	
-	if (pr->fmt) {
+	if (pr->val.fmt) {
 		return -1;
 	}
 	
 	len = mpt_path_set(&where, pr->name, -1);
-	len = strlen(pr->data);
+	len = strlen(pr->val.ptr);
 	/* max length exceeded */
 	if (++len > UINT16_MAX) return -2;
 	where.valid = len;
@@ -50,7 +50,7 @@ static int setConfig(void *udata, MPT_STRUCT(property) *pr)
 	if (where.len && !(conf = mpt_node_get(conf->children, &where))) {
 		MPT_ABORT("failed to get created node");
 	}
-	if (mpt_node_set(conf, pr->data) < 0) {
+	if (mpt_node_set(conf, pr->val.ptr) < 0) {
 		return -1;
 	}
 	return 0;

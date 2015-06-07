@@ -11,7 +11,7 @@
 static int setCycle(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
 {
 	uint16_t cyc;
-	int	len;
+	int len;
 	
 	if (!src) return wld->cyc;
 	if ((len = src->_vptr->conv(src, 'H', &cyc)) >= 0) {
@@ -30,12 +30,12 @@ static int setWorld(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
 		mpt_world_init(wld, from);
 		return len;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) > 0)
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) > 0) {
 		return len;
-	
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) > 0)
+	}
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) > 0) {
 		return len;
-	
+	}
 	errno = ENOTSUP;
 	return -1;
 }
@@ -55,13 +55,13 @@ static int setWorld(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
 extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",	"world color",		(char *) mpt_color_pset,	(void *) MPT_offset(world,color)	},
-		{"cycles",	"cycle count",		(char *) setCycle,		(void *) MPT_offset(world,cyc)		},
-		{"width",	"line width",		(char *) mpt_lattr_width,	(void *) MPT_offset(world,attr.width)	}, /* pass world::attr to setter */
-		{"style",	"line style",		(char *) mpt_lattr_style,	(void *) MPT_offset(world,attr.style)	},
-		{"symbol",	"symbol type",		(char *) mpt_lattr_symbol,	(void *) MPT_offset(world,attr.symbol)	},
-		{"size",	"symbol size",		(char *) mpt_lattr_size,	(void *) MPT_offset(world,attr.size)	},
-		{"alias",	"display name",		(char *) mpt_text_pset,		(void *) MPT_offset(world,_alias)	},
+		{"color",   "world color",   { (char *) mpt_color_pset,   (void *) MPT_offset(world,color) } },
+		{"cycles",  "cycle count",   { (char *) setCycle,         (void *) MPT_offset(world,cyc) } },
+		{"width",   "line width",    { (char *) mpt_lattr_width,  (void *) MPT_offset(world,attr.width) } }, /* pass world::attr to setter */
+		{"style",   "line style",    { (char *) mpt_lattr_style,  (void *) MPT_offset(world,attr.style) } },
+		{"symbol",  "symbol type",   { (char *) mpt_lattr_symbol, (void *) MPT_offset(world,attr.symbol) } },
+		{"size",    "symbol size",   { (char *) mpt_lattr_size,   (void *) MPT_offset(world,attr.size) } },
+		{"alias",   "display name",  { (char *) mpt_text_pset,    (void *) MPT_offset(world,_alias) } },
 	};
 	static const char format[] = {
 		's',
@@ -71,7 +71,7 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 		0
 	};
 	MPT_STRUCT(property) self;
-	int	pos, (*set)();
+	int pos, (*set)();
 	
 	if (!pr) {
 		return src && world ? setWorld(world, src) : MPT_ENUM(TypeWorld);
@@ -85,8 +85,8 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 			}
 			pr->name = "world";
 			pr->desc = "mpt world data";
-			pr->fmt  = format;
-			pr->data = world;
+			pr->val.fmt = format;
+			pr->val.ptr = world;
 			
 			return pos;
 		}
@@ -101,30 +101,30 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 		return -1;
 	}
 	
-	set = (int (*)()) elem[pos].fmt;
+	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
 	self.desc = elem[pos].desc;
-	self.data = ((uint8_t *) world) + (intptr_t) elem[pos].data;
+	self.val.ptr = ((uint8_t *) world) + (intptr_t) elem[pos].val.ptr;
 	
 	if (pos < 1) {
-		self.fmt = "#";
-		if (world && (pos = set(self.data, src)) < 0) return -2;
+		self.val.fmt = "#";
+		if (world && (pos = set(self.val.ptr, src)) < 0) return -2;
 	}
 	else if (pos < 2) {
-		self.fmt = "I";
+		self.val.fmt = "I";
 		if (world && (pos = set(world, src)) < 0) return -2;
 	}
 	else if (pos < 6) {
-		self.fmt = "C";
+		self.val.fmt = "C";
 		if (world && (pos = set(&world->attr, src)) < 0) return -2;
 	}
 	else if (!world) {
-		self.fmt = "s";
+		self.val.fmt = "s";
 	}
 	else {
-		if ((pos = set(self.data, src)) < 0) return -2;
-		self.fmt = 0;
-		self.data = world->_alias;
+		if ((pos = set(self.val.ptr, src)) < 0) return -2;
+		self.val.fmt = 0;
+		self.val.ptr = world->_alias;
 	}
 	*pr = self;
 	return pos;

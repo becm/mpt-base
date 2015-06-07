@@ -117,18 +117,18 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         }
 
         // set property
-        if ((pr.data = (const char *) mpt_meta_data(from))) {
+        if ((pr.val.ptr = (const char *) mpt_meta_data(from))) {
             pr.desc = 0;
-            pr.fmt = 0;
+            pr.val.fmt = 0;
             set(pr, out);
             continue;
         }
         // get item type
         size_t len;
-        pr.fmt = pr.desc = pr.name;
+        pr.val.fmt = pr.desc = pr.name;
         pr.name = mpt_convert_key(&pr.desc, 0, &len);
         if (!pr.name || !*pr.name) {
-            if (out) out->warning(fcnName, "%s: %s", MPT_tr("bad object name"), pr.fmt);
+            if (out) out->warning(fcnName, "%s: %s", MPT_tr("bad object name"), pr.val.fmt);
             continue;
         }
 
@@ -197,14 +197,14 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         for (node *sub = head->children; sub; sub = sub->next) {
             metatype *mt;
             property pr;
-            if (!(mt = sub->_meta) || mt->property(&pr) < 0 || !pr.data) continue;
+            if (!(mt = sub->_meta) || mt->property(&pr) < 0 || !pr.val.ptr) continue;
             // skip invalid configuration
             if (!(pr.name = mpt_node_ident(sub)) || !*pr.name || it->set(pr, out) || !out) continue;
             // error handling
-            if (!pr.data) {
+            if (!pr.val.ptr) {
                 if (out) out->warning(fcnName, "%s: %s: %s", MPT_tr("bad property"), ni->name(), pr.name);
             } else {
-                if (out) out->warning(fcnName, "%s: %s: %s = %s", MPT_tr("bad property value"), ni->name(), pr.name, pr.data);
+                if (out) out->warning(fcnName, "%s: %s: %s = %s", MPT_tr("bad property value"), ni->name(), pr.name, pr.val.ptr);
             }
         }
     }

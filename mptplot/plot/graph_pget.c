@@ -172,20 +172,20 @@ static int set_graph(MPT_STRUCT(graph) *gr, MPT_INTERFACE(source) *src)
 extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
 	static const MPT_STRUCT(property) elem[] = {
-		{"axes",	"axis names to bind",		(char *) mpt_text_pset,	(void *) MPT_offset(graph,_axes)},
-		{"worlds",	"world names to bind",		(char *) mpt_text_pset,	(void *) MPT_offset(graph,_worlds)},
+		{"axes",       "axis names to bind",  { (char *) mpt_text_pset,  (void *) MPT_offset(graph,_axes)} },
+		{"worlds",     "world names to bind", { (char *) mpt_text_pset,  (void *) MPT_offset(graph,_worlds)} },
 		
-		{"foreground",	"foreground color",		(char *) set_fg,	(void *) MPT_offset(graph,fg)},
-		{"background",	"background color",		(char *) set_bg,	(void *) MPT_offset(graph,bg)},
+		{"foreground", "foreground color",    { (char *) set_fg,         (void *) MPT_offset(graph,fg)} },
+		{"background", "background color",    { (char *) set_bg,         (void *) MPT_offset(graph,bg)} },
 		
-		{"pos",		"origin point",			(char *) set_pos,	(void *) MPT_offset(graph,pos)},
-		{"scale",	"scale factor",			(char *) set_scale,	(void *) MPT_offset(graph,scale)},
+		{"pos",        "origin point",        { (char *) set_pos,        (void *) MPT_offset(graph,pos)} },
+		{"scale",      "scale factor",        { (char *) set_scale,      (void *) MPT_offset(graph,scale)} },
 		
-		{"grid",	"grid type",			(char *) set_type,	(void *) MPT_offset(graph,grid)},
-		{"align",	"axis alignment",		(char *) set_align,	(void *) MPT_offset(graph,align)},
-		{"clip",	"clip data display",		(char *) set_clip,	(void *) MPT_offset(graph,clip)},
+		{"grid",       "grid type",           { (char *) set_type,       (void *) MPT_offset(graph,grid)} },
+		{"align",      "axis alignment",      { (char *) set_align,      (void *) MPT_offset(graph,align)} },
+		{"clip",       "clip data display",   { (char *) set_clip,       (void *) MPT_offset(graph,clip)} },
 		
-		{"lpos",	"legend position",		(char *) set_type,	(void *) MPT_offset(graph,lpos)}
+		{"lpos",       "legend position",     { (char *) set_type,       (void *) MPT_offset(graph,lpos)} }
 	};
 	static const char format[] = {
 		's', 's',
@@ -211,8 +211,8 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 			}
 			pr->name = "graph";
 			pr->desc = "mpt graph data";
-			pr->fmt  = format;
-			pr->data = graph;
+			pr->val.fmt = format;
+			pr->val.ptr = graph;
 			
 			return pos;
 		}
@@ -228,29 +228,29 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 	}
 	if (!graph) {
 		*pr = elem[pos];
-		pr->fmt = "";
+		pr->val.fmt = "";
 		return pos;
 	}
-	set = (int (*)()) elem[pos].fmt;
+	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
 	self.desc = elem[pos].desc;
-	self.data = ((uint8_t *) graph) + (intptr_t) elem[pos].data;
+	self.val.ptr = ((uint8_t *) graph) + (intptr_t) elem[pos].val.ptr;
 	
 	if (pos < 2) {
-		self.fmt = "s";
+		self.val.fmt = "s";
 	}
 	else if (pos < 4) {
-		self.fmt = "#";
+		self.val.fmt = "#";
 	}
 	else {
-		self.fmt = "";
+		self.val.fmt = "";
 	}
 	if (!graph) {
 		*pr = elem[pos];
-		pr->fmt = self.fmt;
+		pr->val.fmt = self.val.fmt;
 		return pos;
 	}
-	if ((ret = set(self.data, src, &self.fmt, &self.data)) < 0) {
+	if ((ret = set(self.val.ptr, src, &self.val.fmt, &self.val.ptr)) < 0) {
 		return -2;
 	}
 	*pr = self;

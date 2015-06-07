@@ -144,15 +144,15 @@ bool metatype::set(const struct property &porg, logger *out)
     pr.name = "";
     pr.desc = 0;
     if (property(&pr) < 0) pr.name = "metatype";
-    pr.fmt = porg.fmt;
-    if (!(pr.data = porg.data)) { pr.data = ""; pr.fmt = 0; }
+    pr.val.fmt = porg.val.fmt;
+    if (!(pr.val.ptr = porg.val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
 
     if (ret < -2) {
         out->error(_fname, "%s: %s.%s", MPT_tr("bad property"), pr.name, porg.name);
-    } else if (!pr.fmt) {
-        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, porg.name, pr.data);
+    } else if (!pr.val.fmt) {
+        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, porg.name, pr.val.ptr);
     } else {
-        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, porg.name, pr.fmt);
+        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, porg.name, pr.val.fmt);
     }
     return false;
 }
@@ -211,9 +211,9 @@ Slice<const char> MetatypeGeneric::data() const
 
     int len = _mpt_geninfo_property(const_cast<uint64_t *>(&_info), &pr, 0);
 
-    if (len >= 0 && !pr.fmt) {
-        if (!len) len = pr.data ? strlen((const char *) pr.data) : 0;
-        return Slice<const char>((const char *) pr.data, len);
+    if (len >= 0 && !pr.val.fmt) {
+        if (!len) len = pr.val.ptr ? strlen((const char *) pr.val.ptr) : 0;
+        return Slice<const char>((const char *) pr.val.ptr, len);
     }
     return Slice<const char>(0, 0);
 }
@@ -323,8 +323,8 @@ int Metatype::property(struct property *prop, source *src)
     }
     prop->name = "store";
     prop->desc = "default data store";
-    prop->fmt  = 0;
-    prop->data = 0;
+    prop->val.fmt = 0;
+    prop->val.ptr = 0;
 
     return 0;
 }

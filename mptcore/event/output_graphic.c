@@ -69,13 +69,13 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 		}
 		pr.name = "";
 		pr.desc = 0;
-		pr.fmt  = 0;
+		pr.val.fmt = 0;
 		if ((size_t) part < msg.used) {
-			pr.data = msg.base;
+			pr.val.ptr = msg.base;
 		} else if (part < (ssize_t) sizeof(buf)) {
 			buf[part] = 0;
 			part = mpt_message_read(&msg, part, buf);
-			pr.data = buf;
+			pr.val.ptr = buf;
 		} else {
 			return MPT_event_fail(ev, MPT_tr("unaligned connect argument"));
 		}
@@ -89,8 +89,8 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 	else if (part >= 5 && !strncmp("close", buf, part)) {
 		pr.name = "";
 		pr.desc = 0;
-		pr.fmt  = 0;
-		pr.data = 0;
+		pr.val.fmt = 0;
+		pr.val.ptr = 0;
 		
 		if (mpt_meta_pset((void *) out, &pr, 0) < 0) {
 			return MPT_event_fail(ev, MPT_tr("error on graphic close"));
