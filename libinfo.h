@@ -4,8 +4,6 @@
 
 #include <unistd.h>
 
-#include "version.h"
-
 #ifdef __GNUC__
 # ifdef __linux
 #  ifdef __x86_64__
@@ -24,16 +22,12 @@ static void _library_ident(const char *ident)
 	while (ident[len]) len++;
 	len = write(STDOUT_FILENO, ident, len);
 	
-#ifdef MPT_RELEASE
-	ident = " (release "MPT_RELEASE")";
-#elif defined(__MPT_DATE__)
-	ident = " (developer build: "__MPT_DATE__")";
-#else
-	ident = " (developer build)";
-#endif
+#ifdef SHLIB_VERSION
+	ident = " ("SHLIB_VERSION")\0";
 	len = 0;
 	while (ident[len]) len++;
 	len = write(STDOUT_FILENO, ident, len);
+#endif
 	len = write(STDOUT_FILENO, "\n", 1);
 }
 static void _library_task(const char *task)

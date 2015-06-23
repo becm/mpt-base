@@ -22,3 +22,13 @@
 #else
 # define MPT_VERSION "developer build"
 #endif
+
+#ifndef SHLIB_VERSION
+# ifdef MPT_RELEASE
+#  define SHLIB_VERSION "release "MPT_RELEASE
+# elif defined(__MPT_DATE__)
+#  define SHLIB_VERSION "developer build: "__MPT_DATE__
+# else
+#  define SHLIB_VERSION "developer build"
+# endif
+#endif
