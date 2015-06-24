@@ -102,7 +102,7 @@ bool config::set(const char *p, const char *val, int sep)
     if (!(r = query(&where)) || !(m = *r)) {
         return false;
     }
-    return (mpt_meta_set(m, "", 0, val) < 0) ? false : true;
+    return (mpt_meta_set(m, 0, "s", val) < 0) ? false : true;
 }
 metatype *config::get(const char *base, int sep, int len)
 {

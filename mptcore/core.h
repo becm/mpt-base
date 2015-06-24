@@ -295,11 +295,11 @@ public:
 	static logger *defaultInstance(void);
 	
 	virtual int unref() = 0;
-	virtual int log(const char *, int, const char *, va_list ) = 0;
+	virtual int log(const char *, int, const char *, va_list) = 0;
 #else
 ; MPT_INTERFACE_VPTR(logger) {
 	int (*unref)(MPT_INTERFACE(logger) *);
-	int (*log)  (MPT_INTERFACE(logger) *, const char *, int , const char *, va_list );
+	int (*log)  (MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
 # define MPT_LOGGER(l) ((MPT_INTERFACE(logger) *) ((l) ? (l)->_vptr->typecast((l), MPT_ENUM(TypeLogger)) : 0))
@@ -590,7 +590,8 @@ extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, 
 
 /* set metatype property to match argument */
 extern int mpt_meta_pset(MPT_INTERFACE(metatype) *, MPT_STRUCT(property) *, int (*)(const char **, int ,void *) __MPT_DEFPAR(0));
-extern int mpt_meta_set(MPT_INTERFACE(metatype) *, const char *, const char *, const void *);
+extern int mpt_meta_vset(MPT_INTERFACE(metatype) *, const char *, const char *, va_list);
+extern int mpt_meta_set (MPT_INTERFACE(metatype) *, const char *, const char *, ... );
 /* get node/metatype text/raw data */
 extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 /* get metatype name */

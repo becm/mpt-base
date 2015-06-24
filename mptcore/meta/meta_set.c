@@ -5,6 +5,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <stdarg.h>
+#include <errno.h>
+
 #include <sys/uio.h>
 
 #include "convert.h"
@@ -150,23 +153,92 @@ extern int mpt_meta_pset(MPT_INTERFACE(metatype) *meta, MPT_INTERFACE(property) 
 
 /*!
  * \ingroup mptMeta
- * \brief set solver property
+ * \brief set metatype property
  * 
- * Set solver parameter.
+ * Create contigous data format from argument list and set property.
  * 
  * \param gen  solver descriptor
  * \param par  parameter to change
- * \param fmt  data format
- * \param data address of data to set
+ * \param fmt  argument format
+ * \param va   argument list
  */
-extern int mpt_meta_set(MPT_INTERFACE(metatype) *m, const char *par, const char *fmt, const void *data)
+extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char *fmt, va_list va)
 {
 	MPT_STRUCT(property) prop;
+	uint8_t buf[1024];
+	size_t len = 0;
 	
 	prop.name = par ? par : "";
 	prop.desc = 0;
 	prop.val.fmt = fmt;
-	prop.val.ptr = data;
+	prop.val.ptr = buf;
 	
+	while (*fmt) {
+		int curr;
+		
+		if ((curr = mpt_valsize(*fmt)) < 0) {
+			if ((curr = m->_vptr->property(m, &prop, 0)) < 0) {
+				return curr;
+			}
+			errno = EINVAL;
+			return -2;
+		}
+		if (!curr) {
+			curr = sizeof(void*);
+		}
+		if ((sizeof(buf) - len) < (size_t) curr) {
+			if ((curr = m->_vptr->property(m, &prop, 0)) < 0) {
+				return curr;
+			}
+			errno = EOVERFLOW;
+			return -2;
+		}
+		switch (curr) {
+		  case sizeof(uint8_t):  *((uint8_t  *) (buf+len)) = va_arg(va, int); break;
+		  case sizeof(uint16_t): *((uint16_t *) (buf+len)) = va_arg(va, int); break;
+		  case sizeof(uint32_t): *((uint32_t *) (buf+len)) = va_arg(va, uint32_t); break;
+		  case sizeof(uint64_t): *((uint64_t *) (buf+len)) = va_arg(va, uint64_t); break;
+#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+		  case sizeof(long double): *((long double *) (buf+len)) = va_arg(va, long double); break;
+#endif
+		  default: errno = EINVAL; return -2;
+		}
+		len += curr;
+		++fmt;
+	}
 	return mpt_meta_pset(m, &prop, 0);
+}
+
+/*!
+ * \ingroup mptMeta
+ * \brief set metatype property
+ * 
+ * Create contigous data format from argument list and set property.
+ * 
+ * \param gen  solver descriptor
+ * \param par  parameter to change
+ * \param fmt  argument format
+ * \param va   argument list
+ */
+extern int mpt_meta_set(MPT_INTERFACE(metatype) *m, const char *par, const char *fmt, ...)
+{
+	va_list va;
+	int ret;
+	
+	va_start(va, fmt);
+	if (fmt[0] == 's' && !fmt[1]) {
+		MPT_STRUCT(property) prop;
+		
+		prop.name = par ? par : "";
+		prop.desc = 0;
+		prop.val.fmt = 0;
+		prop.val.ptr = va_arg(va, void *);
+		
+		ret = mpt_meta_pset(m, &prop, 0);
+	} else {
+		ret = mpt_meta_vset(m, par, fmt, va);
+	}
+	va_end(va);
+	
+	return ret;
 }

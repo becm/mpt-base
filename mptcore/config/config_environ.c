@@ -156,7 +156,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 			errno = EINVAL;
 			return -accept;
 		}
-		if (mpt_meta_set(*mt, "", 0, end+1) < 0) {
+		if (mpt_meta_set(*mt, 0, "s", end+1) < 0) {
 			errno = ENOTSUP;
 			return -accept;
 		}

@@ -77,7 +77,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	else if (!(mt = conf->_vptr->query(conf, &where)) || !mt) {
 		return 0;
 	}
-	if (mpt_meta_set(*mt, "", 0, val) < 0) {
+	if (mpt_meta_set(*mt, 0, "s", val) < 0) {
 		errno = ENOTSUP;
 		return -1;
 	}
