@@ -32,7 +32,7 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 		return len;
 	}
 	while (*txt && isspace(*txt)) {
-		++txt; ++from;
+		++txt;
 	}
 	if (dest) *(const char **) dest = txt;
 	len = strlen(txt);
