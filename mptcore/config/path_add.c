@@ -19,8 +19,8 @@
 extern int mpt_path_add(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(array) arr;
-	char	*data;
-	size_t	post, len, pre;
+	size_t post, len, pre;
+	char *data;
 	
 	if (!(data = (char *) path->base)) return -1;
 	len = path->off + path->len;
@@ -72,8 +72,9 @@ extern int mpt_path_add(MPT_STRUCT(path) *path)
 		len += path->valid;
 		data[len++] = path->assign;
 	}
-	path->base = data;
-	path->len  = len - path->off;
+	path->base  = data;
+	path->len   = len - path->off;
+	path->valid = 0;
 	
-	return path->valid = 0;
+	return 0;
 }

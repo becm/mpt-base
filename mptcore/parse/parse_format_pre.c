@@ -41,9 +41,9 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 			break;
 		}
 		/* parse option name */
-		if (curr == fmt->ostart)
+		if (curr == fmt->ostart) {
 			return mpt_parse_option(parse, path);
-		
+		}
 		/* parse option data */
 		if (curr == fmt->assign) {
 			if (parse->check.ctl &&
@@ -53,6 +53,9 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 			if (mpt_path_add(path) < 0) {
 				return -(MPT_ENUM(ParseInternal) | MPT_ENUM(ParseOption));
 			}
+			/* clear trailing path data */
+			mpt_path_invalidate(path);
+			
 			if ((curr = mpt_parse_data(parse, path)) < 0) {
 				return curr;
 			}

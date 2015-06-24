@@ -42,6 +42,9 @@ extern int mpt_parse_option(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 				if (mpt_path_add(path) < 0) {
 					return -MPT_ENUM(ParseOption);
 				}
+				/* clear trailing path data */
+				mpt_path_invalidate(path);
+				
 				if ((curr = mpt_parse_data(parse, path)) < 0) {
 					return curr;
 				}
@@ -65,6 +68,9 @@ extern int mpt_parse_option(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 			if (mpt_path_add(path) < 0) {
 				return -MPT_ENUM(ParseOption);
 			}
+			/* clear trailing path data */
+			mpt_path_invalidate(path);
+			
 			if ((curr = mpt_parse_data(parse, path)) < 0) {
 				return curr;
 			}
