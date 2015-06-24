@@ -20,6 +20,7 @@ static const struct {
 	{ MPT_ENUM(TypeAddress), 0 },
 	
 	/* data copy types */
+	{ MPT_ENUM(TypeValue),    sizeof(MPT_STRUCT(value)) },
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
 	
 	/* data pointer types */
@@ -37,20 +38,24 @@ static const struct {
 	{ MPT_ENUM(TypeText),   0 },
 	
 	/* basic types */
-	{ 'c', sizeof(char) },
-	{ 'C', sizeof(unsigned char) },
-	{ 'b', sizeof(int8_t) },
-	{ 'B', sizeof(uint8_t) },
-	{ 'h', sizeof(int16_t) },
-	{ 'H', sizeof(uint16_t) },
-	{ 'i', sizeof(int32_t) },
-	{ 'I', sizeof(uint32_t) }, { 'o', sizeof(uint32_t) }, { 'x', sizeof(uint32_t) },
-	{ 'l', sizeof(int64_t) },
-	{ 'L', sizeof(uint64_t) }, { 'O', sizeof(uint64_t) }, { 'X', sizeof(uint64_t) },
-	{ 'f', sizeof(float) },    { 'g', sizeof(float) },
-	{ 'd', sizeof(double) },   { 'G', sizeof(double) },   { 'F', sizeof(double) },
+	{ 'c', sizeof(char) }, { 'C', sizeof(char) },
+	
+	{ 'b', sizeof(int8_t)  }, { 'B', sizeof(uint8_t) },
+	{ 'y', sizeof(uint8_t) }, { 'Y', sizeof(uint8_t) },
+	
+	{ 'h', sizeof(int16_t)  }, { 'H', sizeof(uint16_t) },
+	{ 'n', sizeof(uint32_t) }, { 'N', sizeof(uint32_t) },
+	
+	{ 'i', sizeof(int32_t)  }, { 'I', sizeof(uint32_t) },
+	{ 'u', sizeof(uint32_t) }, { 'U', sizeof(uint32_t) },
+	
+	{ 'l', sizeof(int64_t)  }, { 'L', sizeof(uint64_t) },
+	{ 'x', sizeof(uint64_t) }, { 'X', sizeof(uint64_t) }, { 't', sizeof(uint64_t) },
+	
+	{ 'f', sizeof(float) },       { 'F', sizeof(float) },
+	{ 'd', sizeof(double) },      { 'D', sizeof(double) },
 #if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
-	{ 'D', sizeof(long double) },
+	{ 'e', sizeof(long double) }, { 'E', sizeof(long double) },
 #endif
 	/* different string representations */
 	{ 's', 0 },

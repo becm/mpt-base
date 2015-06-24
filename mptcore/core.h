@@ -68,6 +68,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeSocket)   = 0x2,   /* STX */
 	
 	/* data copy types */
+	MPT_ENUM(TypeValue)    = 0x4,   /* EOT */
 	MPT_ENUM(TypeProperty) = 0x5,   /* ENQ */
 	
 	/* data pointer types */

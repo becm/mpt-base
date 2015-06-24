@@ -125,7 +125,7 @@ extern int mpt_generic_foreach(MPT_TYPE(PropertyHandler) , void *, MPT_TYPE(Prop
 extern int mpt_generic_print(MPT_TYPE(PropertyHandler) , void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 /* convert structured data to string */
-extern int mpt_data_print(char *, size_t , int , const void **);
+extern int mpt_data_print(char *, size_t , int , const void *);
 /* output data */
 extern int mpt_tostring(const MPT_STRUCT(value) *, int (*)(void *, const char *, size_t ), void *);
 

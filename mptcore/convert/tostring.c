@@ -48,8 +48,17 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, int (*save)(void *, const 
 			adv = (txt = *ptr) ? strlen(txt) : 0;
 			data = ptr + 1;
 		}
-		else if ((adv = mpt_data_print(buf, sizeof(buf), *fmt, &data)) < 0) {
+		else if ((adv = mpt_data_print(buf, sizeof(buf), *fmt, data)) < 0) {
 			return -1;
+		}
+		else {
+			int len;
+			if ((len = mpt_valsize(*fmt)) < 0) {
+				return -1;
+			}
+			if (!len) len = sizeof(void *);
+			
+			data = ((uint8_t *) data) + len;
 		}
 		if (cont && save(dest, " ", 1) < 1) return -2;
 		if (save(dest, txt, adv) < adv) return cont ? cont : -2;
@@ -73,123 +82,112 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, int (*save)(void *, const 
  * 
  * \return consumed buffer size
  */
-extern int mpt_data_print(char *dest, size_t left, int type, const void **ptr)
+extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 {
-	char * const *arg = *ptr;
-	size_t size;
 	int len;
 	
-	switch ( type ) {
+	switch (type) {
 	    case '#':
-		size = 4 * sizeof(uint8_t);
-		if ( ((char *)arg)[0] != -1 ) {
-			MPT_STRUCT(color) *c = (void *) arg;
+		if (((const MPT_STRUCT(color) *)arg)->alpha != 0xff) {
+			const MPT_STRUCT(color) *c = arg;
 			len = snprintf(dest, left, "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
 		} else {
 			MPT_STRUCT(color) *c = (void *) arg;
 			len = snprintf(dest, left, "#%02x%02x%02x", c->red, c->green, c->blue);
 		}
 		break;
-	    case 'c':
-		size = sizeof(char);
+	    case 'c': case 'C':
 		len = snprintf(dest, left, "%c", *((char*)arg));
 		break;
-	    case 'C':
-		size = sizeof(unsigned char);
-		len = snprintf(dest, left, "%u", *((unsigned char*)arg));
-		break;
+		
+	/* 8bit formats */
 	    case 'b':
-		size = sizeof(int8_t);
 		len = snprintf(dest, left, "%"PRIi8, *((int8_t*)arg));
 		break;
 	    case 'B':
-		size = sizeof(uint8_t);
 		len = snprintf(dest, left, "%"PRIu8, *((uint8_t*)arg));
 		break;
+	    case 'y':
+		len = snprintf(dest, left, "%"PRIx8, *((uint8_t*)arg));
+		break;
+	    case 'Y':
+		len = snprintf(dest, left, "%"PRIo8, *((uint8_t*)arg));
+		break;
+		
+	/* 16bit formats */
 	    case 'h':
-		size = sizeof(int16_t);
+		len = snprintf(dest, left, "%"PRIi16, *((int16_t*)arg));
+		break;
 	    case 'H':
-		size = sizeof(uint16_t);
 		len = snprintf(dest, left, "%"PRIu16, *((uint16_t*)arg));
 		break;
+	    case 'n':
+		len = snprintf(dest, left, "%"PRIx16, *((uint16_t*)arg));
+		break;
+	    case 'N':
+		len = snprintf(dest, left, "%"PRIo16, *((uint16_t*)arg));
+		break;
+		
+	/* 32bit formats */
 	    case 'i':
-		size = sizeof(int32_t);
 		len = snprintf(dest, left, "%"PRIi32, *((int32_t*)arg));
 		break;
 	    case 'I':
-		size = sizeof(uint32_t);
 		len = snprintf(dest, left, "%"PRIu32, *((uint32_t*)arg));
 		break;
-	    case 'o':
-		size = sizeof(uint32_t);
-		len = snprintf(dest, left, "0%"PRIo32, *((uint32_t*)arg));
+	    case 'u':
+		len = snprintf(dest, left, "%"PRIx32, *((uint32_t*)arg));
 		break;
-	    case 'x':
-		size = sizeof(uint32_t);
-		len = snprintf(dest, left, "0x%"PRIx32, *((uint32_t*)arg));
+	    case 'U':
+		len = snprintf(dest, left, "%"PRIo32, *((uint32_t*)arg));
 		break;
+		
+	/* 64bit formats */
 	    case 'l':
-		size = sizeof(int64_t);
 		len = snprintf(dest, left, "%"PRIi64, *((int64_t*)arg));
 		break;
 	    case 'L':
-		size = sizeof(uint64_t);
 		len = snprintf(dest, left, "%"PRIu64, *((uint64_t*)arg));
 		break;
-	    case 'O':
-		size = sizeof(uint64_t);
-		len = snprintf(dest, left, "0%"PRIo64, *((uint64_t*)arg));
+	    case 'x':
+		len = snprintf(dest, left, "%"PRIx64, *((uint64_t*)arg));
 		break;
 	    case 'X':
-		size = sizeof(uint64_t);
-		len = snprintf(dest, left, "0x%"PRIx64, *((uint64_t*)arg));
+		len = snprintf(dest, left, "%"PRIo64, *((uint64_t*)arg));
 		break;
-	    case 'g':
-		size = sizeof(float);
+		
+	/* floating point formats */
+	    case 'F':
 		len = snprintf(dest, left, "%g", *((float*)arg));
 		break;
 	    case 'f':
-		size = sizeof(float);
-		len = snprintf(dest, left, "%f", *((float*)arg));
-		break;
-	    case 'e':
-		size = sizeof(float);
 		len = snprintf(dest, left, "%e", *((float*)arg));
 		break;
-	    case 'a':
-		size = sizeof(float);
-		len = snprintf(dest, left, "%a", *((float*)arg));
-		break;
-	    case 'G':
-		size = sizeof(double);
+	    case 'D':
 		len = snprintf(dest, left, "%g", *((double*)arg));
 		break;
 	    case 'd':
-		size = sizeof(double);
-		len = snprintf(dest, left, "%f", *((double*)arg));
+		len = snprintf(dest, left, "%e", *((double*)arg));
 		break;
 	    case 'E':
-		size = sizeof(double);
-		len = snprintf(dest, left, "%E", *((double*)arg));
+		len = snprintf(dest, left, "%g", (double) *((long double*)arg));
 		break;
-	    case 'A':
-		size = sizeof(double);
-		len = snprintf(dest, left, "%A", *((double*)arg));
+	    case 'e':
+		len = snprintf(dest, left, "%e", (double) *((long double*)arg));
 		break;
+		
+	/* string pointers */
 	    case 's':
-		size = sizeof(char*);
-		len = *arg ? snprintf(dest, left, "%s", *arg) : 0;
+		len = (*(char **)arg) ? snprintf(dest, left, "%s", *(char **)arg) : 0;
 		break;
 	    case 'S':
-		size = sizeof(char**);
-		len = (*arg && **((char ***)arg)) ? snprintf(dest, left, "%s", **((char ***)arg)) : 0;
+		len = (*(char **)arg && **((char ***)arg)) ? snprintf(dest, left, "%s", **((char ***)arg)) : 0;
 		break;
 	    default:
 		return -1;
 	}
 	if (len < 0) return len;
 	if ((size_t) len >= left) return -2;
-	*ptr = ((uint8_t *) arg) + size;
 	return len;
 }
 

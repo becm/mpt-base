@@ -13,7 +13,7 @@ SHLIB_TEENY ?= 0
 # linker and link options
 LINK ?= ${CC}
 LDDIRS ?= "${DIR_LIB}"
-LDFLAGS = -shared ${CFLAGS} $(LDDIRS:%=-L%) '-Wl,-hlib${LIB}.so.${SHLIB_MAJOR}' -Wl,-rpath=\$$ORIGIN
+LDFLAGS = -shared ${CFLAGS} $(LDDIRS:%=-L%) '-Wl,-hlib${LIB}.so.${SHLIB_MAJOR}' -Wl,-z,origin -Wl,-rpath=\$$ORIGIN
 #
 OBJS ?= $(SRCS:%.c=%.o)
 #
@@ -25,8 +25,8 @@ LIB_FULLNAME = ${DIR_LIB}/lib${LIB}
 #
 # general library rules
 .PHONY: shared devel static header
-devel  : ${LIB_FULLNAME}.so header
 shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
+devel  : ${LIB_FULLNAME}.so header
 static : ${LIB_FULLNAME}.a
 
 ${LIB_FULLNAME}.a : ${OBJS} ${KEEP_OBJS} ${STATIC_OBJS} ${LIB_FULLNAME}.a(${OBJS} ${KEEP_OBJS} ${STATIC_OBJS})

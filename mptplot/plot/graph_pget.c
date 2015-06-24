@@ -22,7 +22,7 @@ static int set_bg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char 
 static int set_pos(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int l1, l2;
-	*fmt = "gg";
+	*fmt = "DD";
 	if (!src) return (val[0] != 0.0 || val[1] != 0.0) ? 1 : 0;
 	if ((l1 = src->_vptr->conv(src, 'f', val)) < 0) return l1;
 	if ((l2 = src->_vptr->conv(src, 'f', val+1)) <= 0) {
@@ -34,7 +34,7 @@ static int set_pos(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_scale(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int l1, l2;
-	*fmt = "gg";
+	*fmt = "DD";
 	if (!src) return (val[0] != 1.0 || val[1] != 1.0) ? 1 : 0;
 	if ((l1 = src->_vptr->conv(src, 'f', val)) < 0) return l1;
 	if ((l2 = src->_vptr->conv(src, 'f', val+1)) <= 0) {
@@ -192,7 +192,7 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeColor),
 		'f', 'f', 'f', 'f',
-		'C', 'C', 'C', 'C',
+		'B', 'B', 'B', 'B',
 		'c',
 		0
 	};

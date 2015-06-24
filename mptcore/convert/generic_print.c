@@ -15,28 +15,30 @@ static int mprint(void *data, MPT_STRUCT(property) *prop)
 	char buf[1024];
 	struct outData *par = data;
 	MPT_STRUCT(property) pr = *prop;
-	const char *fmt;
-	const void *base;
 	int pos = 0, adv = 0;
 	
 	*buf = 0;
 	
-	if (!(fmt = pr.val.fmt)) {
+	if (!pr.val.fmt) {
 		if (!pr.val.ptr) { pr.val.ptr = buf; *buf = 0; }
 		return par->h(par->p, &pr);
 	}
-	if (!(base = pr.val.ptr)) {
-		return *fmt ? -1 : 0;
+	if (!pr.val.ptr) {
+		return *pr.val.fmt ? -1 : 0;
 	}
-	while (*fmt && (adv = mpt_data_print(buf+pos, sizeof(buf)-pos, *pr.val.fmt, &base)) >= 0) {
+	while (*pr.val.fmt && (adv = mpt_data_print(buf+pos, sizeof(buf)-pos, *pr.val.fmt, pr.val.ptr)) >= 0) {
+		int len;
+		if ((len = mpt_valsize(*pr.val.fmt)) < 0) {
+			return par->h(par->p, prop);
+		}
 		pos += adv;
-		if (*(++fmt) && pos < (int) (sizeof(buf)-2)) {
+		pr.val.ptr = ((uint8_t *) pr.val.ptr) + len;
+		if (*(++pr.val.fmt) && pos < (int) (sizeof(buf)-2)) {
 			buf[pos++] = ' '; buf[pos] = 0;
 		}
-		adv = 0;
 	}
 	if (adv < 0 || (pos + adv) >= (int) sizeof(buf)) {
-		return par->h(par->p, &pr);
+		return par->h(par->p, prop);
 	}
 	pr.val.ptr = buf;
 	pr.val.fmt = 0;

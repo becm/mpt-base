@@ -7,7 +7,7 @@
 
 static int printm(void *out, struct mpt_property *prop)
 {
-	if (prop->val.fmt) return fprintf(out, "org <%s> %p\n", prop->val.fmt, prop->val.ptr);
+	if (prop->val.fmt) return fprintf(out, "%s: <%s> %p\n", prop->name, prop->val.fmt, prop->val.ptr);
 	return fprintf(out, "%s = %s;\n", prop->name, (char *) prop->val.ptr);
 }
 

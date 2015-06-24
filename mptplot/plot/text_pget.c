@@ -21,7 +21,7 @@ static int set_pos2(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 	int l1, l2;
 	float tmp;
 	
-	*fmt = "gg";
+	*fmt = "FF";
 	
 	if (!src) {
 		l1 = (val[0] == (float) 0.5) ? 0 : 1;
@@ -65,7 +65,7 @@ static int set_align(char *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_angle(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "G";
+	*fmt = "F";
 	if (!src) return (*val != 0.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 0.0;
 	return len;
@@ -115,15 +115,15 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		{"font",   "text font",      { (char *) mpt_text_pset,  (void *) MPT_offset(text,_font) } },
 	};
 	static const MPT_STRUCT(property) elem_xy[] = {
-		{"x",  "x start position",  { "g", (void *) MPT_offset(text, pos.x)} },
-		{"y",  "y start position",  { "g", (void *) MPT_offset(text, pos.y)} }
+		{"x",  "x start position",  { "F", (void *) MPT_offset(text, pos.x)} },
+		{"y",  "y start position",  { "F", (void *) MPT_offset(text, pos.y)} }
 	};
 	static const char format[] = {
-		's', 's',		/* value, font */
+		's', 's',            /* value, font */
 		MPT_ENUM(TypeColor),
-		'B', 'B',  'B',  'B',	/* style, weight, size, alignment */
-		'f', 'f',		/* position */
-		'd',			/* angle */
+		'B', 'B', 'B', 'B',  /* style, weight, size, alignment */
+		'f', 'f',            /* position */
+		'd',                 /* angle */
 		0
 	};
 	MPT_STRUCT(property) self;

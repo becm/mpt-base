@@ -81,13 +81,17 @@ static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operatio
 		if (end && save) {
 			*end = save;
 		}
-		if (len < 0) {
-			return len;
+		switch (len) {
+		  case 0: break;
+		  case EAI_AGAIN: return -2;
+		  case EAI_SYSTEM: return -1;
+		  default: return -3;
 		}
 		curr = res;
+		sock = -1;
 		
 		while (curr) {
-			mode->family     = curr->ai_family;
+			mode->family           = curr->ai_family;
 			mode->param.sock.type  = curr->ai_socktype;
 			mode->param.sock.proto = curr->ai_protocol;
 			
@@ -103,8 +107,9 @@ static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operatio
 			(void) close(sock);
 			sock = -1;
 		}
-		freeaddrinfo(res);
-		
+		if (res) {
+			freeaddrinfo(res);
+		}
 		mode->stream = MPT_ENUM(SocketRead) | MPT_ENUM(SocketWrite);
 		
 		if (mode->param.sock.type == SOCK_STREAM) {

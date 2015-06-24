@@ -11,7 +11,7 @@
 static int set_begin(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "G";
+	*fmt = "D";
 	if (!src) return (*val != 0.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 0.0;
 	return len;
@@ -19,7 +19,7 @@ static int set_begin(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_end(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "G";
+	*fmt = "D";
 	if (!src) return (*val != 1.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 1.0;
 	return len;
@@ -29,7 +29,7 @@ static int set_tlen(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 	float tlen;
 	int   len;
 	
-	*fmt = "g";
+	*fmt = "F";
 	if (!src) return (*val == 0.3f) ? 0 : 1;
 	
 	if ((len = src->_vptr->conv(src, 'f', &tlen)) > 0) {
@@ -77,7 +77,7 @@ static int set_exp(int16_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 	int len;
 	*fmt = "h";
 	if (!src) return (*val != 0) ? (*val < 1 ? 2 : 1) : 0;
-	if (!(len = src->_vptr->conv(src, 'H', val))) *val = 0;
+	if (!(len = src->_vptr->conv(src, 'h', val))) *val = 0;
 	return len;
 }
 static int set_sub(int8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
@@ -106,12 +106,12 @@ static int set_direction(char *val, MPT_INTERFACE(source) *src, const char **fmt
 	if (!src) {
 		return *val ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, 'c', val)) >= 0) {
-		return len;
-	}
 	if ((len = src->_vptr->conv(src, 's', &s)) >= 0) {
 		*val = s ? *s : 0;
 		return 1;
+	}
+	if ((len = src->_vptr->conv(src, 'c', val)) >= 0) {
+		return len;
 	}
 	return len;
 }
@@ -162,7 +162,7 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 		'B', 'B', /* intervals, subintervals */
 		'B',      /* axis flags */
 		'B',      /* decimals */
-		'B', 'B', /* label/ title direction */
+		'c', 'c', /* label/title direction */
 		0
 	};
 	MPT_STRUCT(property) self = *pr;
