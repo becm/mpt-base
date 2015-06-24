@@ -20,27 +20,18 @@
  */
 extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 {
-	MPT_INTERFACE(metatype) *old = node->_meta, *replace;
-	MPT_STRUCT(property) prop;
+	MPT_INTERFACE(metatype) *old, *replace;
 	int ret = 0;
 	
-	prop.name = "";
-	prop.desc = 0;
-	prop.val.fmt = 0;
-	prop.val.ptr = data;
-	
-	if ((old && (ret = mpt_meta_pset(old, &prop, 0)) >= 0) || !data) {
+	if (((old = node->_meta)
+	     && (ret = mpt_meta_set(old, 0, "s", data)) >= 0)
+	    || !data) {
 		return ret;
 	}
 	if (!(replace = mpt_meta_new(strlen(data)))) {
 		return -1;
 	}
-	prop.name = "";
-	prop.desc = 0;
-	prop.val.fmt = 0;
-	prop.val.ptr = data;
-	
-	if ((ret = mpt_meta_pset(replace, &prop, 0)) < 0) {
+	if ((ret = mpt_meta_set(replace, 0, "s", data)) < 0) {
 		replace->_vptr->unref(replace);
 		return -3;
 	}

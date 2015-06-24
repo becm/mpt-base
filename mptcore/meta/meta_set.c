@@ -168,7 +168,7 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 	uint8_t buf[1024];
 	size_t len = 0;
 	
-	prop.name = par ? par : "";
+	prop.name = par;
 	prop.desc = 0;
 	prop.val.fmt = fmt;
 	prop.val.ptr = buf;
@@ -177,7 +177,7 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 		int curr;
 		
 		if ((curr = mpt_valsize(*fmt)) < 0) {
-			if ((curr = m->_vptr->property(m, &prop, 0)) < 0) {
+			if (par && (curr = m->_vptr->property(m, &prop, 0)) < 0) {
 				return curr;
 			}
 			errno = EINVAL;
@@ -187,15 +187,27 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 			curr = sizeof(void*);
 		}
 		if ((sizeof(buf) - len) < (size_t) curr) {
-			if ((curr = m->_vptr->property(m, &prop, 0)) < 0) {
+			if (par && (curr = m->_vptr->property(m, &prop, 0)) < 0) {
 				return curr;
 			}
 			errno = EOVERFLOW;
 			return -2;
 		}
 		switch (curr) {
-		  case sizeof(uint8_t):  *((uint8_t  *) (buf+len)) = va_arg(va, int); break;
-		  case sizeof(uint16_t): *((uint16_t *) (buf+len)) = va_arg(va, int); break;
+		  case sizeof(uint8_t):
+			if (isupper(*fmt)) {
+				*((uint8_t *) (buf+len)) = va_arg(va, uint32_t);
+			} else {
+				*((int8_t  *) (buf+len)) = va_arg(va, int32_t);
+			}
+			break;
+		  case sizeof(uint16_t):
+			if (isupper(*fmt)) {
+				*((uint16_t *) (buf+len)) = va_arg(va, uint32_t);
+			} else {
+				*((int16_t  *) (buf+len)) = va_arg(va, int32_t);
+			}
+			break;
 		  case sizeof(uint32_t): *((uint32_t *) (buf+len)) = va_arg(va, uint32_t); break;
 		  case sizeof(uint64_t): *((uint64_t *) (buf+len)) = va_arg(va, uint64_t); break;
 #if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
@@ -206,7 +218,21 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 		len += curr;
 		++fmt;
 	}
-	return mpt_meta_pset(m, &prop, 0);
+	if (par) {
+		return mpt_meta_pset(m, &prop, 0);
+	} else {
+		struct {
+			MPT_INTERFACE(source) ctl;
+			struct propParam d;
+		} src;
+		
+		src.ctl._vptr = &_prop_vptr;
+		src.d.val = prop.val;
+		src.d.sep = " ,;/:";
+		src.d.conv = 0;
+		
+		return m->_vptr->property(m, 0, &src.ctl);
+	}
 }
 
 /*!
@@ -227,14 +253,29 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) *m, const char *par, const char 
 	
 	va_start(va, fmt);
 	if (fmt[0] == 's' && !fmt[1]) {
-		MPT_STRUCT(property) prop;
-		
-		prop.name = par ? par : "";
-		prop.desc = 0;
-		prop.val.fmt = 0;
-		prop.val.ptr = va_arg(va, void *);
-		
-		ret = mpt_meta_pset(m, &prop, 0);
+		if (par) {
+			MPT_STRUCT(property) prop;
+			
+			prop.name = par ? par : "";
+			prop.desc = 0;
+			prop.val.fmt = 0;
+			prop.val.ptr = va_arg(va, void *);
+			
+			ret = mpt_meta_pset(m, &prop, 0);
+		} else {
+			struct {
+				MPT_INTERFACE(source) ctl;
+				struct propParam d;
+			} src;
+			
+			src.ctl._vptr = &_prop_vptr;
+			src.d.val.fmt = 0;
+			src.d.val.ptr = va_arg(va, void *);
+			src.d.sep = " ,;/:";
+			src.d.conv = 0;
+			
+			ret = m->_vptr->property(m, 0, &src.ctl);
+		}
 	} else {
 		ret = mpt_meta_vset(m, par, fmt, va);
 	}

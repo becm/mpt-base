@@ -19,8 +19,8 @@
  * 
  * get history parameters from configuration list.
  * 
- * \param out	output descriptor
- * \param conf	configuration list
+ * \param out   output descriptor
+ * \param conf  configuration list
  * 
  * \return combined result of history configuration
  */
@@ -28,7 +28,6 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 {
 	static const char data_def[] = "";
 	MPT_STRUCT(node) *tmp;
-	MPT_STRUCT(property) pr;
 	const char *data;
 	int e1, e2;
 	
@@ -40,13 +39,7 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 	} else if (!(data = mpt_node_data(tmp, 0))) {
 		data = data_def;
 	}
-	
-	pr.name = "histfmt";
-	pr.desc = 0;
-	pr.val.fmt = 0;
-	pr.val.ptr = data;
-	
-	e1 = mpt_meta_pset((void *) out, &pr, 0);
+	e1 = mpt_meta_set((void *) out, "histfmt", "s", data);
 	
 	/* set history output */
 	if (!(tmp = conf ? mpt_node_next(conf, "outfile") : 0)) {
@@ -54,16 +47,11 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 	} else if (!(data = mpt_node_data(tmp, 0))) {
 		data = data_def;
 	}
-	
-	pr.name = "histfile";
-	pr.desc = 0;
-	pr.val.fmt = 0;
-	pr.val.ptr = data;
-	
-	e2 = mpt_meta_pset((void *) out, &pr, 0);
-	
-	if (e1 < 0) return e2;
-	if (e2 < 0) return e1;
-	
-	return e1 | e2;
+	if ((e2 = mpt_meta_set((void *) out, "histfile", "s", data)) < 0) {
+		return (e1 < 0) ? e1 : (e1 ? 1 : 0);
+	}
+	if (e2) {
+		return (e1 > 0) ? 3 : 2;
+	}
+	return (e1 > 0) ? 1 : 0;
 }

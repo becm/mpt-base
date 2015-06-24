@@ -30,7 +30,6 @@
 extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 {
 	MPT_INTERFACE(metatype) *conf;
-	MPT_STRUCT(property) pr;
 	MPT_STRUCT(notify) *no;
 	MPT_STRUCT(dispatch) *disp;
 	const char *ctl = 0, *src = 0, *cname = 0;
@@ -84,29 +83,17 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		/* set debug parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			pr.name = "print";
-			pr.desc = 0;
-			pr.val.fmt = 0;
-			pr.val.ptr = cname;
-			mpt_meta_pset(out, &pr, 0);
+			mpt_meta_set(out, "print", "s", cname);
 		}
 		/* set debug parameter */
 		else if ((conf = mpt_config_get(0, "mpt.debug", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			pr.name = "debug";
-			pr.desc = 0;
-			pr.val.fmt = 0;
-			pr.val.ptr = cname;
-			mpt_meta_pset(out, &pr, 0);
+			mpt_meta_set(out, "debug", "s", cname);
 		}
 		/* set answer parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.answer", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			pr.name = "answer";
-			pr.desc = 0;
-			pr.val.fmt = 0;
-			pr.val.ptr = cname;
-			mpt_meta_pset(out, &pr, 0);
+			mpt_meta_set(out, "answer", "s", cname);
 		}
 	}
 	/* set default event if no input available */
