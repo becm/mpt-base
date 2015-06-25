@@ -24,14 +24,14 @@ static int set_line(MPT_STRUCT(line) *line, MPT_INTERFACE(source) *src)
 	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine), line)) >= 0) {
 		return len;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &line->color)) >= 0)
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &line->color)) >= 0) {
 		return len;
-	
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &line->attr)) >= 0)
+	}
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &line->attr)) >= 0) {
 		return len;
-	
+	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ENUM(BadType);
 }
 
 /*!
@@ -86,14 +86,14 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 			return pos;
 		}
 		else if ((pos = mpt_property_match(self.name, -1, elem, MPT_arrsize(elem))) < 0) {
-			return -1;
+			return pos;
 		}
 	}
 	else if (src) {
-		return -3;
+		return MPT_ENUM(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
@@ -107,12 +107,12 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 		self.val.fmt = "F";
 	}
 	else {
-		if (line && (pos = set(&line->attr, src)) < 0) return -2;
+		if (line && (pos = set(&line->attr, src)) < 0) return pos;
 		self.val.fmt = "C";
 		*pr = self;
 		return pos;
 	}
-	if (line && (pos = set(self.val.ptr, src)) < 0) return -2;
+	if (line && (pos = set(self.val.ptr, src)) < 0) return pos;
 	*pr = self;
 	return pos;
 }

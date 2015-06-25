@@ -37,7 +37,7 @@ static int setWorld(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
 		return len;
 	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ENUM(BadType);
 }
 
 /*!
@@ -46,9 +46,9 @@ static int setWorld(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
  * 
  * Get/Set world data elements.
  * 
- * \param world	world data
- * \param pr	property to query
- * \param src	data source to change property
+ * \param world world data
+ * \param pr    property to query
+ * \param src   data source to change property
  * 
  * \return consumed/changed value
  */
@@ -91,14 +91,14 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 			return pos;
 		}
 		else if ((pos = mpt_property_match(self.name, 3, elem, MPT_arrsize(elem))) < 0) {
-			return -1;
+			return pos;
 		}
 	}
 	else if (src) {
-		return -2;
+		return MPT_ENUM(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	
 	set = (int (*)()) elem[pos].val.fmt;
@@ -108,21 +108,21 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 	
 	if (pos < 1) {
 		self.val.fmt = "#";
-		if (world && (pos = set(self.val.ptr, src)) < 0) return -2;
+		if (world && (pos = set(self.val.ptr, src)) < 0) return pos;
 	}
 	else if (pos < 2) {
 		self.val.fmt = "I";
-		if (world && (pos = set(world, src)) < 0) return -2;
+		if (world && (pos = set(world, src)) < 0) return pos;
 	}
 	else if (pos < 6) {
 		self.val.fmt = "C";
-		if (world && (pos = set(&world->attr, src)) < 0) return -2;
+		if (world && (pos = set(&world->attr, src)) < 0) return pos;
 	}
 	else if (!world) {
 		self.val.fmt = "s";
 	}
 	else {
-		if ((pos = set(self.val.ptr, src)) < 0) return -2;
+		if ((pos = set(self.val.ptr, src)) < 0) return pos;
 		self.val.fmt = 0;
 		self.val.ptr = world->_alias;
 	}

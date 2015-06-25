@@ -81,14 +81,14 @@ static int set_text(MPT_STRUCT(text) *txt, MPT_INTERFACE(source) *src)
 		mpt_text_init(txt, tx);
 		return len;
 	}
-	if ((len = mpt_text_pset(&txt->_value, src)) >= 0)
+	if ((len = mpt_text_pset(&txt->_value, src)) >= 0) {
 		return len;
-	
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &txt->color)) >= 0)
+	}
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &txt->color)) >= 0) {
 		return len;
-	
+	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ENUM(BadType);
 }
 
 /*!
@@ -137,7 +137,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		if (!*self.name) {
 			pos = 0;
 			if (src && text && (pos = set_text(text, src)) < 0) {
-				return -2;
+				return pos;
 			}
 			pr->name = "line";
 			pr->desc = "mpt line data";
@@ -168,14 +168,14 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 			return pos;
 		}
 		else if ((pos = mpt_property_match(self.name, -1, elem, MPT_arrsize(elem))) < 0) {
-			return -1;
+			return pos;
 		}
 	}
 	else if (src) {
-		return -3;
+		return MPT_ENUM(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
@@ -184,7 +184,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 	self.val.ptr = ((uint8_t *) text) + (intptr_t) elem[pos].val.ptr;
 	
 	if (text && (pos = set(self.val.ptr, src, &self.val.fmt)) < 0) {
-		return -2;
+		return pos;
 	}
 	*pr = self;
 	return pos;

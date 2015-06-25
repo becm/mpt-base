@@ -7,8 +7,8 @@ SUB = ${MODULES} lua
 all : ${SUB}
 devel : sub_devel
 shared : sub_shared
-examples : examples_all
-examples_all : devel
+test : examples_test
+examples_test : devel
 clear : static_clear examples_clear sub_clear
 clean : static_clear examples_clean sub_clean
 static : "${MPT_PREFIX_LIB}/libmpt.a"

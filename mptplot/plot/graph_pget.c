@@ -147,14 +147,14 @@ static int set_graph(MPT_STRUCT(graph) *gr, MPT_INTERFACE(source) *src)
 		mpt_graph_init(gr, from);
 		return len;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) > 0)
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) > 0) {
 		return len;
-	
-	if ((len = src->_vptr->conv(src, 'C', &gr->grid)) > 0)
+	}
+	if ((len = src->_vptr->conv(src, 'C', &gr->grid)) > 0) {
 		return len;
-	
+	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ENUM(BadType);
 }
 
 /*!
@@ -200,14 +200,14 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 	int ret, pos, (*set)();
 	
 	if (!pr) {
-		return src && graph ? set_graph(graph, src) : MPT_ENUM(TypeGraph);
+		return (src && graph) ? set_graph(graph, src) : MPT_ENUM(TypeGraph);
 	}
 	self = *pr;
 	if (self.name) {
 		if (!*self.name) {
 			pos = 0;
 			if (src && graph && (pos = set_graph(graph, src)) < 0) {
-				return -2;
+				return pos;
 			}
 			pr->name = "graph";
 			pr->desc = "mpt graph data";
@@ -217,14 +217,14 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 			return pos;
 		}
 		else if ((pos = mpt_property_match(self.name, 2, elem, MPT_arrsize(elem))) < 0) {
-			return -1;
+			return pos;
 		}
 	}
 	else if (src) {
-		return -3;
+		return MPT_ENUM(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	if (!graph) {
 		*pr = elem[pos];
@@ -251,7 +251,7 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 		return pos;
 	}
 	if ((ret = set(self.val.ptr, src, &self.val.fmt, &self.val.ptr)) < 0) {
-		return -2;
+		return ret;
 	}
 	*pr = self;
 	

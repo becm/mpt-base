@@ -19,20 +19,37 @@
 extern int mpt_convert_string(const char **from, int type, void *dest)
 {
 	const char *txt;
-	int	len = 0;
-	if (!(txt = *from)) return -1;
+	int len = 0;
+	if (!(txt = *from)) {
+		return MPT_ENUM(BadArgument);
+	}
+	if (type == MPT_ENUM(TypeValue)) {
+		MPT_STRUCT(value) *val;
+		if ((val = dest)) {
+			val->fmt = 0;
+			val->ptr = txt;
+		}
+		len = strlen(txt);
+		*from = txt + len;
+		return len;
+	}
 	if (type == 'k') {
 		size_t klen;
-		if (!(txt = mpt_convert_key(from, 0, &klen))) return -2;
+		if (!(txt = mpt_convert_key(from, 0, &klen))) {
+			return MPT_ENUM(BadValue);
+		}
 		if (dest) ((const char **) dest)[0] = txt;
 		return klen;
 	}
+	
 	if (type != 's') {
-		if ((len = mpt_convert_number(txt, type, dest)) > 0) *from = txt + len;
+		while (isspace(*txt)) {
+			++txt;
+		}
+		if ((len = mpt_convert_number(txt, type, dest)) >= 0) {
+			*from = txt + len;
+		}
 		return len;
-	}
-	while (*txt && isspace(*txt)) {
-		++txt;
 	}
 	if (dest) *(const char **) dest = txt;
 	len = strlen(txt);

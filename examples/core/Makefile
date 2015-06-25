@@ -8,7 +8,6 @@ progs = \
 tests = \
 	cobs \
 	ident \
-	axis \
 	environ
 
 TESTS = $(tests:%=${DIR_BIN}/%)
@@ -19,7 +18,7 @@ LDLIBS = -lmptcore
 all : ${PROGS}
 
 # additional libraries needed
-axis mclient : LDLIBS+=-lmptplot
+axis : LDLIBS+=-lmptplot
 
 # general targets and definitions
 include ../mpt.example.mk

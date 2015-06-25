@@ -126,6 +126,13 @@ enum MPT_ENUM(SocketFlags) {
 	MPT_ENUM(SocketRead)   = 0x4
 };
 
+enum MPT_ENUM(TypeErrors) {
+	MPT_ENUM(BadArgument)  = -1,
+	MPT_ENUM(BadValue)     = -2,
+	MPT_ENUM(BadType)      = -3,
+	MPT_ENUM(BadOperation) = -4
+};
+
 MPT_STRUCT(codestate)
 {
 #ifdef __cplusplus

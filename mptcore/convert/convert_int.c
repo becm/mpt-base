@@ -40,30 +40,46 @@ extern int _mpt_convert_int(void *val, size_t vlen, const char *src, int base)
 	char *end;
 	
 	if (!(end = (char *) src)) {
-		errno = EFAULT; return -1;
+		errno = EFAULT;
+		return MPT_ENUM(BadArgument);
 	}
 	/* max size unsigend integer */
 	tmp = *src ? strtoimax(src, &end, base) : 0;
-	if (*src && end == src) return -1;
-	
+	if (*src && end == src) {
+		return MPT_ENUM(BadArgument);
+	}
 	switch (vlen) {
 	  case sizeof(int8_t) :
-		if (tmp < INT8_MIN || tmp > INT8_MAX) { errno = ERANGE; return -2; }
+		if (tmp < INT8_MIN || tmp > INT8_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int8_t *) val) = tmp;
 		break;
 	  case sizeof(int16_t):
-		if (tmp < INT16_MIN || tmp > INT16_MAX) { errno = ERANGE; return -2; }
+		if (tmp < INT16_MIN || tmp > INT16_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int16_t *) val) = tmp;
 		break;
 	  case sizeof(int32_t):
-		if (tmp < INT32_MIN || tmp > INT32_MAX) { errno = ERANGE; return -2; }
+		if (tmp < INT32_MIN || tmp > INT32_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int32_t *) val) = tmp;
 		break;
 	  case sizeof(int64_t):
-		if (tmp < INT64_MIN || tmp > INT64_MAX) { errno = ERANGE; return -2; }
+		if (tmp < INT64_MIN || tmp > INT64_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int64_t *) val) = tmp;
 		break;
-	  default: errno = EINVAL; return -3;
+	  default:
+		errno = EINVAL;
+		return MPT_ENUM(BadType);
 	}
 	
 	return end - src;
@@ -84,32 +100,46 @@ extern int _mpt_convert_uint(void *val, size_t vlen, const char *src, int base)
 	char *end;
 	
 	if (!(end = (char *) src)) {
-		errno = EFAULT; return -1;
+		errno = EFAULT;
+		return MPT_ENUM(BadArgument);
 	}
 	/* max size unsigend integer */
 	tmp = *src ? strtoumax(src, &end, base) : 0;
-	if (*src && end == src) return -1;
-	if (!val) return end - src;
-	
+	if (*src && end == src) {
+		return MPT_ENUM(BadArgument);
+	}
 	switch (vlen) {
 	  case sizeof(int8_t) :
-		if (tmp > UINT8_MAX) { errno = ERANGE; return -2; }
+		if (tmp > UINT8_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int8_t *) val) = tmp;
 		break;
 	  case sizeof(int16_t):
-		if (tmp > UINT16_MAX) { errno = ERANGE; return -2; }
+		if (tmp > UINT16_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int16_t *) val) = tmp;
 		break;
 	  case sizeof(int32_t):
-		if (tmp > UINT32_MAX) { errno = ERANGE; return -2; }
+		if (tmp > UINT32_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int32_t *) val) = tmp;
 		break;
 	  case sizeof(int64_t):
-		if (tmp > UINT64_MAX) { errno = ERANGE; return -2; }
+		if (tmp > UINT64_MAX) {
+			errno = ERANGE;
+			return MPT_ENUM(BadValue);
+		}
 		if (val) *((int64_t *) val) = tmp;
 		break;
-	  default: errno = EINVAL; return -3;
+	  default:
+		errno = EINVAL;
+		return MPT_ENUM(BadType);
 	}
-	
 	return end - src;
 }

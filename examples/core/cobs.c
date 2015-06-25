@@ -62,6 +62,8 @@ int main()
 		vec.iov_len  = msg[i].len;
 		mpt_array_push(&arr, &info, ENCODE, &vec);
 		mpt_array_push(&arr, &info, ENCODE, 0);
+		fputc('<',stdout);
+		fputc(' ',stdout);
 		disp(&arr, info.done);
 		ENCODE(&info, 0, 0);
 		
@@ -76,6 +78,8 @@ int main()
 		mpt_array_push(&arr, &info, ENCODE, &vec);
 	}
 	mpt_array_push(&arr, &info, ENCODE, 0);
+	fputc('<',stdout);
+	fputc(' ',stdout);
 	disp(&arr, info.done);
 	ENCODE(&info, 0, 0);
 	
@@ -90,6 +94,8 @@ int main()
 	vec.iov_len  = max;
 	mpt_array_push(&arr, &info, ENCODE, &vec);
 	mpt_array_push(&arr, &info, ENCODE, 0);
+	fputc('<',stdout);
+	fputc(' ',stdout);
 	disp(&arr, info.done);
 	ENCODE(&info, 0, 0);
 	

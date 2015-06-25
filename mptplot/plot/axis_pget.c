@@ -106,9 +106,9 @@ static int set_direction(char *val, MPT_INTERFACE(source) *src, const char **fmt
 	if (!src) {
 		return *val ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, 's', &s)) >= 0) {
+	if ((len = src->_vptr->conv(src, 'k', &s)) >= 0) {
 		*val = s ? *s : 0;
-		return 1;
+		return len;
 	}
 	if ((len = src->_vptr->conv(src, 'c', val)) >= 0) {
 		return len;
@@ -125,7 +125,7 @@ static int setAxis(MPT_STRUCT(axis) *ax, MPT_INTERFACE(source) *src)
 		return len;
 	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ENUM(BadType);
 }
 
 /*!
@@ -145,8 +145,8 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 	static const MPT_STRUCT(property) elem[] = {
 		{"title",     "axis title",              { (char *) mpt_text_pset,  (void *) MPT_offset(axis, _title)} },
 		{"begin",     "axis start value",        { (char *) set_begin,      (void *) MPT_offset(axis, begin)} },
-		{"tlen",      "relative tick length ",   { (char *) set_tlen,       (void *) MPT_offset(axis, tlen)} },
 		{"end",       "axis end value",          { (char *) set_end,        (void *) MPT_offset(axis, end)} },
+		{"tlen",      "relative tick length ",   { (char *) set_tlen,       (void *) MPT_offset(axis, tlen)} },
 		{"exponent",  "label exponent",          { (char *) set_exp,        (void *) MPT_offset(axis, exp)} },
 		{"intervals", "intervals between ticks", { (char *) set_intv,       0} },
 		{"subtick",   "intermediate ticks",      { (char *) set_sub,        (void *) MPT_offset(axis, sub)} },
@@ -176,7 +176,7 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 		if (!*self.name) {
 			pos = 0;
 			if (src && axis && (pos = setAxis(axis, src)) < 0) {
-				return -2;
+				return pos;
 			}
 			pr->name = "axis";
 			pr->desc = "mpt axis data";
@@ -186,14 +186,14 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 			return pos;
 		}
 		else if ((pos = mpt_property_match(self.name, 3, elem, MPT_arrsize(elem))) < 0) {
-			return -1;
+			return MPT_ENUM(BadArgument);
 		}
 	}
 	else if (src) {
-		return -3;
+		return MPT_ENUM(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	set = (int(*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
@@ -206,7 +206,7 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 		return pos;
 	}
 	if ((len = set(self.val.ptr, src, &self.val.fmt, &self.val.ptr)) < 0) {
-		return -2;
+		return len;
 	}
 	if (pos < 1) {
 		self.val.fmt = 0;

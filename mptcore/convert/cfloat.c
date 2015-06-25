@@ -16,7 +16,7 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	
 	if (!src) {
 		errno = EFAULT;
-		return -1;
+		return MPT_ENUM(BadArgument);
 	}
 	if (!*src) {
 		return 0;
@@ -24,10 +24,11 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	tmp = strtof(src, &end);
 	
 	if (end == src) {
-		return -1;
+		return MPT_ENUM(BadType);
 	}
 	if (range && (range[0] > tmp || tmp > range[1])) {
-		errno = ERANGE; return -2;
+		errno = ERANGE;
+		return MPT_ENUM(BadValue);
 	}
 	if (val) {
 		*val = tmp;
