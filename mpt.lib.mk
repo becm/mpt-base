@@ -21,12 +21,12 @@ OBJS ?= $(SRCS:%.c=%.o)
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.conf.mk
 #
 # path to library without type suffix
-LIB_FULLNAME = ${DIR_LIB}/lib${LIB}
+LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
 #
 # general library rules
 .PHONY: shared devel static header
-shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
 devel  : ${LIB_FULLNAME}.so header
+shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
 static : ${LIB_FULLNAME}.a
 
 ${LIB_FULLNAME}.a : ${OBJS} ${KEEP_OBJS} ${STATIC_OBJS} ${LIB_FULLNAME}.a(${OBJS} ${KEEP_OBJS} ${STATIC_OBJS})
@@ -43,22 +43,21 @@ ${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MI
 
 ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${OBJS} ${KEEP_OBJS} ${SHLIB_OBJS}
 	${LINK} ${LDFLAGS} -o '${@}' ${OBJS} ${KEEP_OBJS} ${SHLIB_OBJS} ${LDLIBS}
-#
-# header export
-header : ${HEADER}
-	if [ -n "${HEADER}" ]; then ${INST.d} '${DIR_INC}'; ${INST.h} ${HEADER}; fi
-#
-# maintenance targets
+
 extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
+#
+# object file operations
+${OBJS} ${SHLIB_OBJS} ${STATIC_OBJS} : ${HEADER}
+CLEAN_FILES += ${OBJS} ${SHLIB_OBJS} ${STATIC_OBJS}
+#
+# header export
+header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})
+GEN_FILES += $(HEADER:%.h=${DIR_INC}/$(notdir %.h))
+#
+# maintenance targets
 .PHONY: clear clean distclean
-clear :
-	${RM} ${CLEAR_FILES}
-
-clean : clear
-	${RM} ${OBJS} ${SHLIB_OBJS} ${STATIC_OBJS} ${CLEAN_FILES}
-
-distclean : clean
-
-# additional dependencies
-${OBJS} ${SHLIB_OBJS} : ${HEADER}
+clear:;    ${RM} ${CLEAR_FILES}
+clean:;    ${RM} ${CLEAR_FILES} ${CLEAN_FILES}
+distclean:;${RM} ${CLEAR_FILES} ${CLEAN_FILES} ${GEN_FILES}
+#

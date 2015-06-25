@@ -20,11 +20,12 @@
 #include <sys/stat.h>
 
 #include "core.h"
+
 #include "stream.h"
 
 #if defined(_WIN32)
 # define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineNet)
-#elif defined( __APPLE__)
+#elif defined(__APPLE__)
 # define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineMac)
 #elif defined(__linux__) || defined(__unix__)
 # define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineUnix)

@@ -9,9 +9,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "plot.h"
 #include "convert.h"
 
+#include "plot.h"
 
 /*!
  * \ingroup mptConvert

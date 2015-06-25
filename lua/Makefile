@@ -31,8 +31,7 @@ ${LIB} : ${OBJS}
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 
 ${DIR_SHARE}/mpt/% :
-	install -d '${@D}'
-	install -C -m 644 -t '${@D}' '${@F}'
+	install -d '${@D}' && install -C -m 644 '${@F}' '${@D}'
 
 clear :
 	${RM} ${LIB}

@@ -2,7 +2,7 @@
 LIB = mptio
 #
 # additional header directories
-INC = . .. ../mptplot ../mptclient ../mptcore
+INC = . .. ../mptplot ../mptcore
 #
 # header to export
 HEADER = notify.h stream.h
@@ -20,10 +20,9 @@ LDLIBS = -lmptcore -ldl
 #
 # import library creation settings
 include ../mpt.lib.mk
+# import release creation settings
+RELEASE_HEADER = ../release.h
+include ../mpt.release.mk
 #
 # additional dependencies
-RELEASE_HEADER = ../release.h
 libinfo.o : ../libinfo.h ../version.h ${RELEASE_HEADER}
-#
-# import release creation settings
-include ../mpt.release.mk

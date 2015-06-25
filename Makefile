@@ -3,14 +3,14 @@ MODULES = mptcore mptplot mptio mpt++
 SUB = ${MODULES} lua
 #
 # creation targets
-.PHONY : ${SUB} all clear clean static static_clear sub_%
-devel : SUB=${MODULES}
-all devel : sub_devel
+.PHONY : ${SUB} all clear clean static static_clear sub_% examples_%
+all : ${SUB}
+devel : sub_devel
 shared : sub_shared
-examples : all
-clear clean : SUB=${MODULES} examples
-clear : static_clear sub_clear
-clean : static_clear sub_clean
+examples : examples_all
+examples_all : devel
+clear : static_clear examples_clear sub_clear
+clean : static_clear examples_clean sub_clean
 static : "${MPT_PREFIX_LIB}/libmpt.a"
 mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
@@ -24,6 +24,10 @@ sub_% :
 
 ${SUB} :
 	${MAKE} -C "${@}"
+#
+# examples operations
+examples_% :
+	${MAKE} -C examples $(@:examples_%=%)
 #
 # combined static library
 static_clear :

@@ -8,4 +8,4 @@ ${RELEASE_HEADER} :
 	fi
 #
 # add to auto-remove
-CLEAN_FILES += ${RELEASE_HEADER}
+GEN_FILES += ${RELEASE_HEADER}

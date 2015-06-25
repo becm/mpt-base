@@ -9,8 +9,9 @@
 #include <limits.h>
 
 #include "array.h"
-#include "plot.h"
 #include "convert.h"
+
+#include "plot.h"
 
 static const struct {
 	uint8_t key, size;

@@ -7,7 +7,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "plot.h"
 #include "convert.h"
 
 /*!
