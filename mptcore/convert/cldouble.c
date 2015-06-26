@@ -20,7 +20,7 @@ extern int mpt_cldouble(long double *val, const char *src, const long double ran
 	
 	if (!src) {
 		errno = EFAULT;
-		return MPT_ENUM(BadArgument);
+		return MPT_ERROR(BadArgument);
 	}
 	if (!*src) {
 		return 0;
@@ -28,11 +28,11 @@ extern int mpt_cldouble(long double *val, const char *src, const long double ran
 	tmp = strtold(src, &end);
 	
 	if (end == src) {
-		return MPT_ENUM(BadType);
+		return MPT_ERROR(BadType);
 	}
 	if (range && (range[0] > tmp || tmp > range[1])) {
 		errno = ERANGE;
-		return MPT_ENUM(BadValue);
+		return MPT_ERROR(BadValue);
 	}
 	if (val) {
 		*val = tmp;

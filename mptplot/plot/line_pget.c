@@ -31,7 +31,7 @@ static int set_line(MPT_STRUCT(line) *line, MPT_INTERFACE(source) *src)
 		return len;
 	}
 	errno = ENOTSUP;
-	return MPT_ENUM(BadType);
+	return MPT_ERROR(BadType);
 }
 
 /*!
@@ -90,10 +90,10 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 		}
 	}
 	else if (src) {
-		return MPT_ENUM(BadOperation);
+		return MPT_ERROR(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return MPT_ENUM(BadArgument);
+		return MPT_ERROR(BadArgument);
 	}
 	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;

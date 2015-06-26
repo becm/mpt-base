@@ -20,7 +20,7 @@ extern int mpt_property_match(const char *match, int mlen, const MPT_STRUCT(prop
 	size_t pos = 0;
 	
 	if (!match) {
-		return MPT_ENUM(BadArgument);
+		return MPT_ERROR(BadArgument);
 	}
 	/* find property name */
 	pos = 0;
@@ -39,7 +39,7 @@ extern int mpt_property_match(const char *match, int mlen, const MPT_STRUCT(prop
 				size_t tmp = pos;
 				while (++tmp < len) {
 					if (!strncasecmp(match, (++sub)->name, mlen)) {
-						return MPT_ENUM(BadType);
+						return MPT_ERROR(BadType);
 					}
 				}
 			}
@@ -49,5 +49,5 @@ extern int mpt_property_match(const char *match, int mlen, const MPT_STRUCT(prop
 		++pos;
 	}
 	/* name not in properties */
-	return MPT_ENUM(BadValue);
+	return MPT_ERROR(BadValue);
 }

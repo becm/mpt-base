@@ -154,7 +154,7 @@ static int set_graph(MPT_STRUCT(graph) *gr, MPT_INTERFACE(source) *src)
 		return len;
 	}
 	errno = ENOTSUP;
-	return MPT_ENUM(BadType);
+	return MPT_ERROR(BadType);
 }
 
 /*!
@@ -221,10 +221,10 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 		}
 	}
 	else if (src) {
-		return MPT_ENUM(BadOperation);
+		return MPT_ERROR(BadOperation);
 	}
 	else if ((pos = (intptr_t) pr->desc) < 0 || pos >= (int) MPT_arrsize(elem)) {
-		return MPT_ENUM(BadArgument);
+		return MPT_ERROR(BadArgument);
 	}
 	if (!graph) {
 		*pr = elem[pos];

@@ -35,12 +35,14 @@
 # define MPT_STRUCT(s)    struct s
 # define MPT_ENUM(e)      e
 # define MPT_TYPE(t)      t
+# define MPT_ERROR(t)     t
 #else
 # define MPT_INTERFACE_VPTR(v) struct _mpt_vptr_##v
 # define MPT_INTERFACE(i)      struct mpt_##i
 # define MPT_STRUCT(s)         struct mpt_##s
 # define MPT_ENUM(e)           MPT_##e
 # define MPT_TYPE(t)           MPT##t
+# define MPT_ERROR(t)          MPT_ERROR_##t
 
 # define __MPT_DEFPAR(v)
 
@@ -127,10 +129,10 @@ enum MPT_ENUM(SocketFlags) {
 };
 
 enum MPT_ENUM(TypeErrors) {
-	MPT_ENUM(BadArgument)  = -1,
-	MPT_ENUM(BadValue)     = -2,
-	MPT_ENUM(BadType)      = -3,
-	MPT_ENUM(BadOperation) = -4
+	MPT_ERROR(BadArgument)  = -1,
+	MPT_ERROR(BadValue)     = -2,
+	MPT_ERROR(BadType)      = -3,
+	MPT_ERROR(BadOperation) = -4
 };
 
 MPT_STRUCT(codestate)

@@ -21,7 +21,7 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 	const char *txt;
 	int len = 0;
 	if (!(txt = *from)) {
-		return MPT_ENUM(BadArgument);
+		return MPT_ERROR(BadArgument);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
 		MPT_STRUCT(value) *val;
@@ -36,7 +36,7 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 	if (type == 'k') {
 		size_t klen;
 		if (!(txt = mpt_convert_key(from, 0, &klen))) {
-			return MPT_ENUM(BadValue);
+			return MPT_ERROR(BadValue);
 		}
 		if (dest) ((const char **) dest)[0] = txt;
 		return klen;
