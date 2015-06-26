@@ -290,7 +290,7 @@ bool Collection::bind(const Relation &from, logger *out)
         Item<metatype> *it;
         metatype *m;
         Group *g;
-        if (!(it = _items.get(i)) || !(m = *it) || !(g = m->cast<typeof(*g)>())) {
+        if (!(it = _items.get(i)) || !(m = *it) || !(g = m->cast<Group>())) {
             continue;
         }
         if (!g->bind(GroupRelation(*g, &from), out)) return false;
@@ -328,7 +328,7 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
             const Group *g;
             metatype *m;
             if (!c || !(m = *c)) continue;
-            if (!(g = m->cast<typeof(*g)>())) continue;
+            if (!(g = m->cast<Group>())) continue;
             if (!c->equal(name, plen)) continue;
             if ((m = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
                 return m;

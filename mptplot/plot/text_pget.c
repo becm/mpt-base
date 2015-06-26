@@ -105,6 +105,7 @@ static int set_text(MPT_STRUCT(text) *txt, MPT_INTERFACE(source) *src)
  */
 extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const MPT_STRUCT(property) elem[] = {
 		{"color",  "text color",     { (char *) mpt_color_pset, (void *) MPT_offset(text,color) } },
 		{"pos",    "text position",  { (char *) set_pos2,       (void *) MPT_offset(text, pos) } },

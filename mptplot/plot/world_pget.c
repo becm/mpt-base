@@ -54,6 +54,7 @@ static int setWorld(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
  */
 extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const MPT_STRUCT(property) elem[] = {
 		{"color",   "world color",   { (char *) mpt_color_pset,   (void *) MPT_offset(world,color) } },
 		{"cycles",  "cycle count",   { (char *) setCycle,         (void *) MPT_offset(world,cyc) } },

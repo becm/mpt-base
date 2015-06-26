@@ -142,6 +142,7 @@ static int setAxis(MPT_STRUCT(axis) *ax, MPT_INTERFACE(source) *src)
  */
 extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const MPT_STRUCT(property) elem[] = {
 		{"title",     "axis title",              { (char *) mpt_text_pset,  (void *) MPT_offset(axis, _title)} },
 		{"begin",     "axis start value",        { (char *) set_begin,      (void *) MPT_offset(axis, begin)} },

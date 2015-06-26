@@ -101,7 +101,7 @@ bool Cycle::setSize(int cyc)
         _flags |= AutoGrow;
         return true;
     }
-    if (cyc < 0 || cyc > std::numeric_limits<typeof(_act)>::max()) return false;
+    if (cyc < 0 || cyc > std::numeric_limits<decltype(_act)>::max()) return false;
     if (!_part.resize(cyc)) return false;
     _flags &= ~AutoGrow;
     return true;

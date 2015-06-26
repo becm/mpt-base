@@ -201,7 +201,7 @@ extern void mpt_array_callunref(const MPT_STRUCT(array) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );
-#if (defined(_VA_LIST) || defined(_VA_LIST_DECLARED)) && (!defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L)
+#if !defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L || defined(__cplusplus)
 extern int mpt_vprintf(MPT_STRUCT(array) *, const char *, va_list );
 #endif
 /* return zero-terminated buffer data */

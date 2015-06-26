@@ -48,6 +48,7 @@ static int set_line(MPT_STRUCT(line) *line, MPT_INTERFACE(source) *src)
  */
 extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const MPT_STRUCT(property) elem[] = {
 		{"color",  "line color",     { (char *) mpt_color_pset,   (void *) MPT_offset(line,color)} },
 		{"x1",     "line start",     { (char *) set_pos,          (void *) MPT_offset(line,from.x)} },

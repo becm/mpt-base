@@ -75,12 +75,12 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	}
 	while (1) {
 		if (msg.used) {
-			const char *sep;
+			const uint8_t *sep;
 			size_t plen;
-			if ((sep = memchr(msg.base, 0, msg.used)) && (plen = sep - ((char *) msg.base))) {
+			if ((sep = memchr(msg.base, 0, msg.used)) && (plen = sep - ((uint8_t *) msg.base))) {
 				fwrite(msg.base, plen, 1, out);
 				msg.used -= ++plen;
-				msg.base += plen;
+				msg.base = ((uint8_t *) msg.base) + plen;
 				fwrite(": ", 2, 1, out);
 				len += ++plen;
 				continue;

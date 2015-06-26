@@ -8,7 +8,7 @@
 
 int valueLength(MPT_STRUCT(value) *val, struct iovec *vec, int dlen)
 {
-	static const char fmt[2] = { MPT_ENUM(TypeVector) };
+	static const char fmt[2] = { (char) MPT_ENUM(TypeVector) };
 	
 	if (!val->fmt) {
 		return val->ptr ? strlen(val->ptr) + 1 : 0;

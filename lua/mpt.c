@@ -156,7 +156,7 @@ static int streamPush(lua_State *L)
 	if (!(mpt_stream_flags(&s->srm._info) & MPT_ENUM(StreamMesgAct))) {
 		if (t == LUA_TNUMBER) {
 			s->mt.cmd = MPT_ENUM(MessageValRaw);
-			s->mt.arg = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(double);
+			s->mt.arg = (int8_t) (MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(double));
 		}
 		/* simple continous command */
 		else if (t == LUA_TSTRING) {

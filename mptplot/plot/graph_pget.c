@@ -171,6 +171,7 @@ static int set_graph(MPT_STRUCT(graph) *gr, MPT_INTERFACE(source) *src)
  */
 extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
 {
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const MPT_STRUCT(property) elem[] = {
 		{"axes",       "axis names to bind",  { (char *) mpt_text_pset,  (void *) MPT_offset(graph,_axes)} },
 		{"worlds",     "world names to bind", { (char *) mpt_text_pset,  (void *) MPT_offset(graph,_worlds)} },

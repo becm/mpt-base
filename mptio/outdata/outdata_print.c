@@ -30,7 +30,7 @@ static int answerType(int code)
 static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 {
 	size_t all = 0;
-	const void *sep;
+	const uint8_t *sep;
 	
 	if (!(fd)) return 0;
 	
@@ -39,7 +39,7 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 		return 1;
 	}
 	while ((sep = memchr(src, 0, len))) {
-		size_t diff = sep - src;
+		size_t diff = sep - ((const uint8_t *) src);
 		if (diff) {
 			fwrite(src, diff, 1, fd);
 			all += diff;
@@ -48,7 +48,7 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 		fputc(' ', fd);
 		all += 2;
 		len -= ++diff;
-		src += diff;
+		src = ((const uint8_t *) src) + diff;
 	}
 	if (len && fwrite(src, len, 1, fd)) all += len;
 	

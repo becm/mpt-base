@@ -14,7 +14,7 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */
 	MPT_ENUM(EncodingCobs)         = 0x2,   /* use cobs encoding */
 	MPT_ENUM(EncodingCobsInline)   = 0x3,   /* cobs with tail inline */
-	MPT_ENUM(EncodingCompress)     = 0x4,   /* compress data */
+	MPT_ENUM(EncodingCompress)     = 0x4    /* compress data */
 };
 
 MPT_STRUCT(float80)

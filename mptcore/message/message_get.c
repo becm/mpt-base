@@ -32,7 +32,7 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *qu, size_t off, size_t take,
 	}
 	else {
 		len = off - low;
-		base = qu->base + len;
+		base = ((uint8_t *) qu->base) + len;
 		if (len > high) {
 			errno = EINVAL;
 			return -1;

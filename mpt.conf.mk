@@ -10,7 +10,7 @@ DIR_SHARE ?= ${MPT_PREFIX}/share
 DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
 #
 # preprocessor flags
-CPPFLAGS ?= -Wall -Werror -W $(INC:%=-I%) $(DEF:%=-D'%')
+CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
 # compiler flags
 CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
 CXXFLAGS ?= ${CFLAGS}

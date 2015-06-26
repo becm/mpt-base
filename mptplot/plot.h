@@ -411,10 +411,10 @@ inline int linepart::trimRaw() const
 { return _trim; }
 inline bool linepart::setRaw(int c, int t)
 {
-    if (c > std::numeric_limits<typeof(_cut)>::max()
-        || c < std::numeric_limits<typeof(_cut)>::min()
-        || t > std::numeric_limits<typeof(_trim)>::max()
-        || t < std::numeric_limits<typeof(_trim)>::min()) {
+    if (c > std::numeric_limits<decltype(_cut)>::max()
+        || c < std::numeric_limits<decltype(_cut)>::min()
+        || t > std::numeric_limits<decltype(_trim)>::max()
+        || t < std::numeric_limits<decltype(_trim)>::min()) {
         return false;
     }
     _cut = c; _trim = t;

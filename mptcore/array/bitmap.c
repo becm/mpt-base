@@ -9,13 +9,13 @@
  * 
  * Set bit in map on specified position.
  * 
- * \param base	bitmap base address
- * \param len	number of bytes for map
- * \param pos	position of bit to modify
+ * \param base  bitmap base address
+ * \param len   number of bytes for map
+ * \param pos   position of bit to modify
  * 
- * \retval <0	position out of range
- * \retval 0	bit already set
- * \retval >0	bit modified
+ * \retval <0  position out of range
+ * \retval 0   bit already set
+ * \retval >0  bit modified
  */
 extern int mpt_bitmap_set(uint8_t *base, size_t len, size_t pos)
 {
@@ -35,13 +35,13 @@ extern int mpt_bitmap_set(uint8_t *base, size_t len, size_t pos)
  * 
  * Unset bit in map on specified position.
  * 
- * \param base	bitmap base address
- * \param len	number of bytes for map
- * \param pos	position of bit to modify
+ * \param base  bitmap base address
+ * \param len   number of bytes for map
+ * \param pos   position of bit to modify
  * 
- * \retval <0	position out of range
- * \retval 0	bit already not set
- * \retval >0	bit modified
+ * \retval <0  position out of range
+ * \retval 0   bit already not set
+ * \retval >0  bit modified
  */
 extern int mpt_bitmap_unset(uint8_t *base, size_t len, size_t pos)
 {
@@ -61,13 +61,13 @@ extern int mpt_bitmap_unset(uint8_t *base, size_t len, size_t pos)
  * 
  * Get bit value in map on specified position.
  * 
- * \param base	bitmap base address
- * \param len	number of bytes for map
- * \param pos	position of bit to modify
+ * \param base  bitmap base address
+ * \param len   number of bytes for map
+ * \param pos   position of bit to modify
  * 
- * \retval <0	position out of range
- * \retval 0	bit is unset
- * \retval 1	bit is set
+ * \retval <0  position out of range
+ * \retval 0   bit is unset
+ * \retval 1   bit is set
  */
 extern int mpt_bitmap_get(const uint8_t *base, size_t len, size_t pos)
 {

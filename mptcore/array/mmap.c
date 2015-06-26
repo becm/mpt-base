@@ -50,7 +50,7 @@ extern void *_mpt_memmap(size_t len, void *base)
 		/* get page table size & check range */
 		if (!ptsize || (ptsize = sysconf(_SC_PAGESIZE)) < 1)
 			return 0;
-		if (len > (size_t) ptsize) munmap(base+ptsize, len-ptsize);
+		if (len > (size_t) ptsize) munmap(((uint8_t *) base)+ptsize, len-ptsize);
 		(void) mprotect(base, ptsize, PROT_NONE);
 		base = mmap(base, len, MPT_MMAP_FLAGS, MPT_MMAP_TYPE, devzero, 0);
 	}
