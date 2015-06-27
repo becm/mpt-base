@@ -1,8 +1,6 @@
 # Makefile: MPT C++ library example programs
 #
-DIR_BIN = .
-
-tests = \
+TESTS = \
 	object \
 	buffer \
 	config \
@@ -11,23 +9,20 @@ tests = \
 	layout \
 	map
 
-progs = \
-	comp
-
-TESTS = $(tests:%=${DIR_BIN}/%)
-PROGS = $(progs:%=${DIR_BIN}/%) ${TESTS}
+PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
 
-# general creation rules
-all : ${PROGS}
-
-# additional libraries
-output : LDLIBS+=-lmptio -lmptcore
-comp   : LDLIBS+=-lmptio
-
 # general targets and definitions
-include ../mpt.example.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../example.mk
 
-# additional targets
-static : ${PROGS} ${DIR_BIN}/layout ${DIR_BIN}/comp
-static : LDFLAGS+=-static
+# library config
+output : LDLIBS+=-lmptio -lmptcore
+comp : LDLIBS+=-lmptio
+%_static : LDLIBS=-lmpt
+
+# special test arguments
+test_layout : ARGS=layout.lay
+
+# default to C++11 standard
+CPPFLAGS += -std=c++11

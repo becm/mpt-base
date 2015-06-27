@@ -4,7 +4,8 @@
 LUA = 5.2
 #
 # include lua and MPT core header
-INC = /usr/include/lua${LUA} ${MPT_PREFIX}/include
+INC_LUA ?= /usr/include/lua${LUA}
+INC = ${INC_LUA} ${MPT_PREFIX}/include
 CPPFLAGS = $(INC:%=-I'%')
 CFLAGS = -g
 #
@@ -26,19 +27,23 @@ MBOX = ${MPT_PREFIX}/share/mpt/mathbox.lua
 ${PROG} : ${OBJS}
 	${CC} ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
+${PROG}_static : ${SRCS}
+	${CC} -static -D_STATIC ${CPPFLAGS} ${LDFLAGS} -o ${@} ${SRCS} -llua${LUA} -ldl -lm
+
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 #
 # service targets
 .PHONY : clear clean test all
-all : ${PROG}
 test : ${PROG}
 	env MPT_MATHBOX='${MBOX}' LUA_PATH='?.lua;${MPT_PREFIX}/share/mpt/?.lua' \
 		lua${LUA} -l test -e 'print(testmpt()); testmath([[user.lua]])'
-	env MPT_MATHBOX='${MBOX}' ./${PROG} 'user.lua'
+	./${PROG} 'user.lua'
+
+static : ${PROG}_static
 
 clear :
-	${RM} ${PROG}
+	${RM} ${PROG} ${PROG}_static
 
-clean : clear
+distclean clean : clear
 	${RM} ${OBJS}

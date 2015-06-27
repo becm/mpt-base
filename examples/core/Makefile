@@ -1,28 +1,17 @@
 # Makefile: MPT core library example programs
 #
-DIR_BIN = .
+TESTS = cobs ident environ
+PROGS = parse ${TESTS}
 
-progs = \
-	parse
-
-tests = \
-	cobs \
-	ident \
-	environ
-
-TESTS = $(tests:%=${DIR_BIN}/%)
-PROGS = $(progs:%=${DIR_BIN}/%) ${TESTS}
 LDLIBS = -lmptcore
 
-# general creation rules
-all : ${PROGS}
-
-# additional libraries needed
-axis : LDLIBS+=-lmptplot
-
 # general targets and definitions
-include ../mpt.example.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../example.mk
 
-# additional targets
-static : ${PROGS}
-static : LDFLAGS+=-static
+# library config
+%_static : LDLIBS=-lmpt
+
+# special test arguments
+test_ident : ARGS=1024 1025
+test_environ : ARGS='mpt_*'

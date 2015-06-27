@@ -1,26 +1,20 @@
 # Makefile: MPT I/O library example programs
 #
-DIR_BIN = .
-
-progs = \
+TESTS = pipe
+PROGS = \
 	swrite sread \
 	mserver mclient \
-	pipe
+	${TESTS}
 
-TESTS = $(tests:%=${DIR_BIN}/%)
-PROGS = $(progs:%=${DIR_BIN}/%) ${TESTS}
 LDLIBS = -lmptio
 
-# general creation rules
-all : ${PROGS}
-
-# additional libraries needed
-sread mclient : LDLIBS+=-lmptcore
-
 # general targets and definitions
-include ../mpt.example.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../example.mk
 
-# additional targets
-static : ${PROGS}
-static : LDFLAGS+=-static
-static : LDLIBS=-lmpt
+# library config
+sread mclient : LDLIBS+=-lmptcore
+%_static : LDLIBS=-lmpt
+
+# special test arguments
+test_pipe : ARGS=/bin/ls

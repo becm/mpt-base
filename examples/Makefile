@@ -1,19 +1,21 @@
 # Makefile: MPT base example programs
 #
+
 DIRS = core io cxx lua
 TESTS = client axis
 PROGS = readline ${TESTS}
 OBJS = $(PROGS:%=%.o)
 
-# .PHONY : all devel clear clean static test distclean
-all : ${PROGS} sub_all
+DIR_TOP = ${MPT_PREFIX}
+include example.mk
 
+# library config
 client : LDLIBS=-lmpt++ -lmptio -lmptcore
 readline : LDLIBS=-lmptio
 axis : LDLIBS=-lmptplot -lmptcore
+%_static : LDLIBS=-lmpt
+readline_static : LDLIBS+=-ldl
 
-include mpt.example.mk
+# special test arguments
+test_axis : ARGS=title='my axis' intervals=3 tpos=Up
 
-clear : sub_clear
-clean : sub_clean
-test  : sub_test

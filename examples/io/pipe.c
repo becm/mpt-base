@@ -23,5 +23,6 @@ int main(int argc, char *argv[], char *env[])
 	while (mpt_stream_poll(&srm, POLLIN | POLLHUP, -1) >= 0) {
 		fprintf(stderr, "%d\n", (int) srm._rd.len);
 	}
+	fwrite(srm._rd.base, srm._rd.len, 1, stdout);
 	return 0;
 }
