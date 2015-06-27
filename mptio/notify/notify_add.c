@@ -12,7 +12,7 @@
 
 #include "notify.h"
 
-#if defined(__linux)
+#if defined(__linux__)
 # include <sys/epoll.h>
 #endif
 
@@ -49,7 +49,7 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	else {
 		return -1;
 	}
-#if defined(__linux)
+#if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {
 		no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
 	}

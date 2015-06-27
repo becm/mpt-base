@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 
-#if defined(__linux)
+#if defined(__linux__)
 # include <sys/epoll.h>
 #endif
 

@@ -5,14 +5,14 @@
 #include <unistd.h>
 
 #ifdef __GNUC__
-# ifdef __linux
+# ifdef __linux__
 #  ifdef __x86_64__
 const char _lib_interp[] __attribute__((section(".interp"))) = "/lib64/ld-linux-x86-64.so.2";
-#  else /* __x86_64__ */
+#  elif __i386
 const char _lib_interp[] __attribute__((section(".interp"))) = "/lib/ld-linux.so.2";
-#  endif/* __x86_64__ */
-# endif/* __linux */
-#endif /* __GNUC__ */
+#  endif /* <architecture> */
+# endif /* <system> */
+#endif /* <compiler> */
 
 
 static void _library_ident(const char *ident)

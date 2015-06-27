@@ -8,7 +8,7 @@
 
 #include <poll.h>
 
-#if defined(__linux)
+#if defined(__linux__)
 # include <sys/epoll.h>
 #endif
 
@@ -45,7 +45,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 	pslot = (void *) (no->_slot._buf + 1);
 	used  = no->_wait._buf ? no->_wait._buf->used : 0;
 	
-#if defined(__linux)
+#if defined(__linux__)
 	if (no->_sysfd >= 0) {
 		struct epoll_event *epv;
 		

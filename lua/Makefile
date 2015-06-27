@@ -10,20 +10,23 @@ INC_LUA = /usr/include/lua${LUA}
 INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
 #
 # import global settings
-include ../mpt.conf.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../config.mk
 #
 # library sources
 SRCS = mpt.c
 OBJS = $(SRCS:%.c=%_lua${LUA}.o)
 #
 # link parameters
-LDFLAGS = -L${DIR_LIB} -z origin -rpath \$$ORIGIN
+LDFLAGS = -L${DIR_LIB} -zorigin -rpath=\$$ORIGIN
 LDLIBS = -lmptio -lmptcore
+#
+SHARE = mpt.lua mathbox.lua
 #
 # service targets
 .PHONY : all clear clean test devel shared
 # file creation
-all devel : ${LIB} ${DIR_SHARE}/mpt/mpt.lua ${DIR_SHARE}/mpt/mathbox.lua
+all devel : ${LIB} $(SHARE:%=${DIR_SHARE}/mpt/%)
 shared : ${LIB}
 ${LIB} : ${OBJS}
 	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
@@ -39,3 +42,6 @@ clear :
 
 clean : clear
 	${RM} ${OBJS}
+
+distclean : clean
+	${RM} $(SHARE:%=${DIR_SHARE}/mpt/%)

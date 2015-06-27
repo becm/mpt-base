@@ -15,14 +15,15 @@ SRCS := $(wildcard */*.c) ${sources}
 SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
-SHLIB_OBJS = libinfo.o
+SHLIB_OBJS = libinfo.o ${OBJS}
 LDLIBS = -lmptcore -ldl
 #
 # import library creation settings
-include ../mpt.lib.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../lib.mk
 # import release creation settings
-RELEASE_HEADER = ../release.h
-include ../mpt.release.mk
+include ../release.mk
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h ${RELEASE_HEADER}
+CLEAN_FILES += libinfo.o

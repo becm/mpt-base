@@ -11,8 +11,8 @@ HEADER = object.h graphic.h
 SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
-SHLIB_OBJS = libinfo.o
-LINK = ${CXX}
+SHLIB_OBJS = libinfo.o ${OBJS}
+LINK = ${CXX} ${CXXFLAGS}
 LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
 # source summary
@@ -20,10 +20,14 @@ SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:%.cpp=%.o)
 #
 # import library creation settings
-include ../mpt.lib.mk
+DIR_TOP = ${MPT_PREFIX}
+include ../lib.mk
 # import release creation settings
-RELEASE_HEADER = ../release.h
-include ../mpt.release.mk
+include ../release.mk
+#
+# extend preprocessor for C++11
+CXXFLAGS += -std=c++11
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h ${RELEASE_HEADER}
+CLEAN_FILES += libinfo.o

@@ -12,13 +12,13 @@
 # define _MPT_RELEASE(M,m,p) _MPT_STRING(M.m.p)
 #endif
 
-#ifdef MPT_RELEASE
-# define MPT_VERSION MPT_RELEASE
+#ifdef __RELEASE__
+# define MPT_VERSION __RELEASE__
 #elif defined(MPT_RELEASE_MAJOR)
 # define MPT_RELEASE _MPT_RELEASE(MPT_RELEASE_MAJOR,MPT_RELEASE_MINOR,MPT_RELEASE_TEENY)
 # define MPT_VERSION MPT_RELEASE
-#elif defined(__MPT_DATE__)
-# define MPT_VERSION "devel ("__MPT_DATE__")"
+#elif defined(__ISO_DATE__)
+# define MPT_VERSION "devel ("__ISO_DATE__")"
 #else
 # define MPT_VERSION "developer build"
 #endif
@@ -26,8 +26,8 @@
 #ifndef SHLIB_VERSION
 # ifdef MPT_RELEASE
 #  define SHLIB_VERSION "release "MPT_RELEASE
-# elif defined(__MPT_DATE__)
-#  define SHLIB_VERSION "developer build: "__MPT_DATE__
+# elif defined(__ISO_DATE__)
+#  define SHLIB_VERSION "developer build: "__ISO_DATE__
 # else
 #  define SHLIB_VERSION "developer build"
 # endif
