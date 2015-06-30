@@ -73,6 +73,9 @@ public:
         UpdateHint hint;
         uint32_t used;
     };
+    inline Slice<const Element> slice() const
+    { return Slice<const Element>((const Element *) base(), used()/sizeof(Element)); }
+    
     int add(const T &m, const UpdateHint &d = UpdateHint())
     {
         Element *cmp = (Element *) base();
