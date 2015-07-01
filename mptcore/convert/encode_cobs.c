@@ -13,62 +13,7 @@
 #endif
 
 #ifndef MPT_COBS_MAXLEN
-# define MPT_COBS_MAXLEN 255
-
-
-/*!
- * \ingroup mptConvert
- * \brief encode with COBS/R
- * 
- * Encode data with COBS and "tail inline" extension (COBS/R).
- * 
- * State is saved after finished COBS data.
- * 
- * Pass zero pointer @base to terminate message block.
- * 
- * \param info encoder state info
- * \param cobs buffer for COBS encoded data
- * \param base input data to append
- * 
- * \return length of processed data
- */
-extern ssize_t mpt_encode_cobs_r(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
-{
-	uint8_t *dst, end;
-	size_t off, left, code;
-	
-	if (!cobs || base || !(code = info->scratch)) {
-		return mpt_encode_cobs(info, cobs, base);
-	}
-	off = info->done;
-	left = cobs->iov_len;
-	if ((off > left)
-	    || !(dst = cobs->iov_base)) {
-		return -1;
-	}
-	dst += off;
-	/* tail inline condition */
-	if (code > 1 && code < (end = dst[code-1])) {
-		*dst = end;
-		--code;
-	}
-	/* need enough data to save end */
-	else if (left <= off) {
-		return -2;
-	}
-	else {
-		*dst = code;
-	}
-	/* cobs message termination */
-	dst[code++] = 0;
-	
-	info->_ctx = 0;
-	info->done = off + code;
-	info->scratch = 0;
-	
-	return code;
-}
-
+# define MPT_COBS_MAXLEN 0xff
 /*!
  * \ingroup mptConvert
  * \brief encode COBS data

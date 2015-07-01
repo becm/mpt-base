@@ -8,7 +8,33 @@
 #include "convert.h"
 
 #define _MPT_COBS_MSG_COMPLETE (INTPTR_MAX ^ UINTPTR_MAX)
+#define _MPT_COBS_MLEN_FACT    0x10000
 
+#ifndef MPT_cobs_msg_state
+# define MPT_cobs_msg_state(len, code, pos) ((len * _MPT_COBS_MLEN_FACT) + (pos) * 0x100 + (code))
+#endif
+
+#ifndef MPT_cobs_data_len
+# define MPT_cobs_data_len(c)  ((c)-1)
+#endif
+
+#ifndef MPT_cobs_zero_len
+# define MPT_cobs_zero_len(c)  0
+#endif
+
+#ifndef MPT_cobs_zero_add
+# define MPT_cobs_save_zero(c) ((c) < MPT_COBS_MAXLEN)
+#endif
+
+#ifndef MPT_cobs_max_dec
+# define MPT_cobs_max_dec(c)   ((c) - ((c) / MPT_COBS_MAXLEN))
+#endif
+
+#if __STDC_VERSION__ < 199901L
+# define restrict __restrict__
+#endif
+
+#ifndef MPT_COBS_MAXLEN
 /*!
  * \ingroup mptConvert
  * \brief decode COBS data
@@ -28,249 +54,214 @@
  * 
  * \return size of message/consumed data
  */
-extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+extern ssize_t mpt_decode_cobs
+#define MPT_COBS_MAXLEN 255
+#else
+static ssize_t _decode
+#endif
+(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
 {
-	MPT_STRUCT(message) from, to;
-	int code;
-	size_t flen, tlen, slen, off;
+	MPT_STRUCT(message) tmp;
+	const struct iovec *dvec;
+	size_t dveclen, dlen, clen;
+	const uint8_t *restrict src;
+	uint8_t *restrict dst, code, pos, prev;
+	size_t proc, mlen, done, rem;
+	
+	/* used message buffer */
+	mlen = (info->_ctx & ~_MPT_COBS_MSG_COMPLETE) / _MPT_COBS_MLEN_FACT;
 	
 	if (!source) {
 		if (!sourcelen) {
 			info->_ctx = 0;
-			info->done = 0;
-			info->scratch = 0;
+		} else {
+			return MPT_cobs_max_dec(sourcelen) + mlen;
 		}
 		return 0;
 	}
 	
-	/* decoder data sizes */
-	slen = info->_ctx & ~_MPT_COBS_MSG_COMPLETE;
-	off  = info->done;
-	flen = info->scratch;
-	
-	to.base = 0;
-	to.used = 0;
-	to.cont = (void *) source;
-	to.clen = sourcelen;
-	
-	/* peek at message data */
+	/* get minimum scratch area */
 	if (!sourcelen) {
-		size_t max = source->iov_len;
-		
-		if (!max) {
-			return -2;
-		}
-		if (off >= max) {
-			return 0;
-		}
-		max -= off;
-		
-		if (slen) {
-			return slen < max ? slen : max;
-		}
-		to.clen = 1;
+		return mlen;
 	}
+	/* decoder data sizes */
+	code = info->_ctx & 0xff;
+	done = info->done;
+	proc = info->scratch;
+	
+	tmp.base = 0;
+	tmp.used = 0;
+	tmp.cont = (void *) source;
+	tmp.clen = sourcelen;
+	
+	/* check info for data vector */
+	if ((mlen > proc)
+	    || (mpt_message_read(&tmp, done, 0) < done)
+	    || ((rem = mpt_message_length(&tmp)) < proc)) {
+		return MPT_ERROR(BadArgument);
+	}
+	rem -= proc;
+	
 	/* consume previous message */
-	else if (info->_ctx & _MPT_COBS_MSG_COMPLETE) {
-		size_t shift;
-		
-		/* find last valid part */
-		if (off && (mpt_message_read(&to, off, 0) < off)) {
-			return sourcelen ? -1 : 0;
-		}
-		shift = 0;
-		while (flen > to.used) {
-			shift += to.used;
-			flen  -= to.used;
-			mpt_message_read(&to, to.used, 0);
-			if (!to.used) {
-				return -1;
-			}
-			continue;
-		}
-		/* target alignment */
-		for (off = 0x10; off; off /= 2) {
-			const uint8_t *addr = to.base;
-			size_t post = ((uintptr_t) (addr + flen)) & (off - 1);
-			if (flen < post) {
+	if (info->_ctx & _MPT_COBS_MSG_COMPLETE) {
+		const uint8_t *addr = tmp.base;
+		size_t align = 0x10, curr = tmp.used;
+		/* target base alignment */
+		while (align > 1) {
+			size_t post = 0;
+			if (curr < align/2) {
+				align /= 2;
 				continue;
 			}
-			off = flen - post;
-			flen = post;
-			shift += off;
+			post = ((uintptr_t) addr) & (align - 1);
+			done += post;
+			proc -= post;
+			mpt_message_read(&tmp, post, 0);
+			info->done = done;
 			break;
 		}
-		info->_ctx = 0;
-		info->done += shift;
-		info->scratch = flen;
+		mlen = 0;
 	}
-	/* skip decoded space */
-	else {
-		off  += slen;
-		flen -= slen;
-	}
-	/* consume empty segments and processed data */
-	if (off && (mpt_message_read(&to, off, 0) < off)) {
-		return sourcelen ? -1 : 0;
-	}
-	/* encoded data start */
-	from = to;
-	if (flen && (mpt_message_read(&from, flen, 0) < flen)) {
-		return sourcelen ? -1 : 0;
-	}
+	/* decoded data start */
+	dst  = (uint8_t *) tmp.base;
+	dlen = tmp.used;
+	dvec = tmp.cont;
+	dveclen = tmp.clen;
+	proc -= mlen;
 	
-	/* set start of encoded data */
-	tlen = to.used;
-	flen = from.used;
+	/* encoded data start */
+	mpt_message_read(&tmp, proc, 0);
+	src  = tmp.base;
+	clen = tmp.used;
+	
+	/* finished with complete block/message */
+	if (!code) {
+		if (!mpt_message_read(&tmp, 1, &code)) {
+			return 1;
+		}
+		src  = tmp.base;
+		clen = tmp.used;
+		++proc;
+		
+		/* double/leading zero */
+		if (!code) {
+			info->_ctx |= _MPT_COBS_MSG_COMPLETE;
+			return MPT_ERROR(BadEncoding);
+		}
+	}
+	pos  = (info->_ctx & 0xff00) / 0x100;
+	prev = 0;
 	
 	while (1) {
-		uint8_t sbuf[256], *end;
-		const uint8_t *base;
+		uint8_t curr;
 		
-		code = mpt_cobs_dec(from.base, &flen, (void *) to.base, &tlen);
-		
-		tlen = to.used - tlen;
-		flen = from.used - flen;
-		
+		/* message finished */
 		if (!code) {
-			break;
+			/* illegal message sizes */
+			if (mlen > UINTPTR_MAX/_MPT_COBS_MLEN_FACT) {
+				return MPT_ERROR(BadOperation);
+			}
+			info->_ctx = (mlen * _MPT_COBS_MLEN_FACT) | _MPT_COBS_MSG_COMPLETE;
+			info->scratch = proc + mlen;
+			return mlen;
 		}
-		info->scratch += flen;
-		info->_ctx += tlen;
+		/* no zero append of "previous" code */
+		if (prev && MPT_cobs_save_zero(prev)) {
+			/* no remaining target space */
+			if (!proc) {
+				code = 1;
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return MPT_ERROR(MissingBuffer);
+			}
+			while (!dlen--) {
+				dst  = (uint8_t *) dvec->iov_base;
+				dlen = dvec->iov_len;
+				++dvec;
+				--dveclen;
+			}
+			*dst++ = 0;
+			++mlen;
+			--proc;
+		}
+		/* length of non-zero part */
+		curr = MPT_cobs_data_len(code);
 		
-		/* tail inline */
-		if (code <= -256) {
-			return code;
+		for (; pos < curr; ++pos) {
+			uint8_t val;
+			while (!clen--) {
+				if (!tmp.clen--) {
+					info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+					info->scratch = proc + mlen;
+					return MPT_ERROR(MissingData);
+				}
+				src  = tmp.cont->iov_base;
+				clen = tmp.cont->iov_len;
+				++tmp.cont;
+			}
+			/* regular data */
+			if ((val = *src++)) {
+			/* no remaining target space */
+				if (!proc) {
+					info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+					info->scratch = proc + mlen;
+					return MPT_ERROR(MissingBuffer);
+				}
+				/* no remaining data on current part */
+				while (!dlen--) {
+					dst  = (uint8_t *) dvec->iov_base;
+					dlen = dvec->iov_len;
+					++dvec;
+					--dveclen;
+				}
+				*dst++ = val;
+				++mlen;
+				continue;
+			}
+			/* tail byte inline */
+			info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+			info->scratch = proc + mlen + 1;
+			return MPT_ERROR(BadEncoding);
 		}
-		/* consumed data */
-		mpt_message_read(&from, flen, 0);
-		base = from.base;
-		flen = from.used;
+		/* explicit numbers of zeros to write */
+		curr += MPT_cobs_zero_len(code);
 		
-		/* created data */
-		mpt_message_read(&to, tlen, 0);
-		end  = (void *) to.base;
-		tlen = to.used;
-		
-		/* missing source data */
-		if (code < 0) {
-			MPT_STRUCT(message) tmp = from;
-			size_t blen;
-			
-			if (!from.clen) {
-				if (!sourcelen && (blen = info->_ctx)) {
-					return blen;
-				}
-				return -2;
+		for (; pos < curr; ++pos) {
+			/* no remaining target space */
+			if (!proc) {
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return MPT_ERROR(MissingBuffer);
 			}
-			blen = flen = mpt_message_read(&tmp, sizeof(sbuf), sbuf);
-			
-			code = mpt_cobs_dec(sbuf, &flen, end, &tlen);
-			blen -= flen;
-			tlen = to.used - tlen;
-			
-			if (!code) {
-				flen = blen;
-				break;
+			/* no remaining data on current part */
+			while (!dlen--) {
+				dst  = (uint8_t *) dvec->iov_base;
+				dlen = dvec->iov_len;
+				++dvec;
+				--dveclen;
 			}
-			info->scratch += blen;
-			info->_ctx += tlen;
-			
-			/* inline zero byte */
-			if (code <= -256) {
-				return code;
-			}
-			/* missing source data */
-			if (code < 0) {
-				if (!sourcelen && (blen = info->_ctx)) {
-					return blen;
-				}
-				return -2;
-			}
-			/* consume source data */
-			slen = from.used;
-			mpt_message_read(&from, blen, 0);
-			
-			/* continue from buffer */
-			if (blen < slen) {
-				base = sbuf + blen;
-			} else {
-				base = from.base;
-				flen = from.used;
-			}
-			/* register decoded data */
-			mpt_message_read(&to, tlen, 0);
+			*dst++ = 0;
+			++mlen;
+			--proc;
 		}
-		/* missing target data */
-		if (code > 0) {
-			uint8_t tbuf[256], *buf;
-			size_t tmp = flen, blen = sizeof(tbuf);
-			
-			code = mpt_cobs_dec(base, &flen, buf = tbuf, &blen);
-			flen = tmp - flen;
-			slen = sizeof(tbuf) - blen;
-			
-			/* save decoded data */
-			off = slen;
-			while (off) {
-				end  = (uint8_t *) to.base;
-				tlen = to.used;
-				
-				/* remainig data fits in current segment */
-				if (tlen >= off) {
-					memcpy(end, buf, off);
-					to.used = tlen - off;
-					to.base = end  + off;
-					break;
-				}
-				memcpy(end, buf, tlen);
-				off -= tlen;
-				buf += tlen;
-				
-				/* advance target vector */
-				do {
-					const struct iovec *cont;
-					if (!to.clen--) {
-						return -1;
-					}
-					cont = to.cont++;
-					to.base = cont->iov_base;
-					to.used = cont->iov_len;
-				} while (!tlen);
+		while (!clen--) {
+			if (!tmp.clen--) {
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return MPT_ERROR(MissingData);
 			}
-			if (!code) {
-				tlen = slen;
-				break;
-			}
-			/* save decoded data */
-			info->scratch += flen;
-			info->_ctx += slen;
-			
-			tlen = to.used;
-			
-			/* consume source data */
-			mpt_message_read(&from, flen, 0);
+			src  = tmp.cont->iov_base;
+			clen = tmp.cont->iov_len;
+			++tmp.cont;
 		}
-		/* next message part */
-		flen = from.used;
+		++proc;
+		prev = code;
+		code = *src++;
+		pos  = 0;
 	}
-	/* add new data */
-	slen = info->_ctx + tlen;
-	
-	/* mark message completion */
-	if (sourcelen) {
-		info->_ctx = slen | _MPT_COBS_MSG_COMPLETE;
-	} else {
-		info->_ctx = slen;
-		--flen;
-	}
-	/* advance start position */
-	info->scratch += flen;
-	
-	/* return length to consume */
-	return slen;
 }
 
+#ifndef MPT_cobs_dec_regular
 /*!
  * \ingroup mptConvert
  * \brief decode COBS/R data
@@ -290,77 +281,37 @@ extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
  * 
  * \return size of message/consumed data
  */
-extern ssize_t mpt_decode_cobs_r(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+extern ssize_t mpt_decode_cobs_r
+# define MPT_cobs_dec_regular mpt_decode_cobs
+#else
+static ssize_t _decode_r
+#endif
+(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
 {
-	ssize_t ret = mpt_decode_cobs(info, source, sourcelen);
+	ssize_t ret = MPT_cobs_dec_regular(info, source, sourcelen);
+	uint8_t val;
 	
 	/* max. data size */
-	if (ret <= -256) {
+	if (ret == MPT_ERROR(BadEncoding)
+	    && ((val = info->_ctx & 0xff) > 1)) {
+		MPT_STRUCT(message) tmp;
+		
+		ret = info->_ctx / _MPT_COBS_MLEN_FACT;
+		
+		tmp.base = 0;
+		tmp.used = 0;
+		tmp.cont = (void *) source;
+		tmp.clen = sourcelen;
+		mpt_message_read(&tmp, ret + info->done, 0);
+		
+		if (!tmp.used) {
+			return MPT_ERROR(MissingBuffer);
+		}
 		/* save consume data size */
-		ret = ++info->_ctx;
-		++info->done;
-		--info->scratch;
-	}
-	return ret;
-}
-
-/*!
- * \ingroup mptConvert
- * \brief decode COBS/ZPE data
- * 
- * Decode data in COBS format in vector array.
- * 
- * New message data begins at \info.done ,
- * encoded data continues \info.scratch later
- * 
- * Pass \sourcelen = 0 to get encoded message length
- * on single data element.
- * No data change is performed in this case.
- * 
- * \param info      start position of encoded data
- * \param source    encoded data
- * \param sourcelen length of source array
- * 
- * \return size of message/consumed data
- */
-extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
-{
-	(void) info;
-	(void) source;
-	(void) sourcelen;
-	MPT_ABORT("TODO: implement COBS/ZPE elemination");
-	return -1;
-}
-/*!
- * \ingroup mptConvert
- * \brief decode COBS/ZPE+R data
- * 
- * Decode data in COBS format in vector array.
- * 
- * New message data begins at \info.done ,
- * encoded data continues \info.scratch later
- * 
- * Pass \sourcelen = 0 to get encoded message length
- * on single data element.
- * No data change is performed in this case.
- * 
- * \param info      start position of encoded data
- * \param mlen      consumed message length
- * \param source    encoded data
- * \param sourcelen length of source array
- * 
- * \return size of message/consumed data
- */
-extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
-{
-	ssize_t ret = mpt_decode_cobs_zpe(info, source, sourcelen);
-	
-	/* max. data size */
-	if (ret <= -256) {
-		/* save consume data size */
-		ret = ++info->_ctx;
-		++info->done;
-		--info->scratch;
+		*((uint8_t *) tmp.base) = val;
+		++ret;
+		
+		info->_ctx = (ret * _MPT_COBS_MLEN_FACT) | _MPT_COBS_MSG_COMPLETE;
 	}
 	return ret;
 }

@@ -129,10 +129,13 @@ enum MPT_ENUM(SocketFlags) {
 };
 
 enum MPT_ENUM(TypeErrors) {
-	MPT_ERROR(BadArgument)  = -1,
-	MPT_ERROR(BadValue)     = -2,
-	MPT_ERROR(BadType)      = -3,
-	MPT_ERROR(BadOperation) = -4
+	MPT_ERROR(BadArgument)    = -0x1,
+	MPT_ERROR(BadValue)       = -0x2,
+	MPT_ERROR(BadType)        = -0x3,
+	MPT_ERROR(BadOperation)   = -0x4,
+	MPT_ERROR(BadEncoding)    = -0x8,
+	MPT_ERROR(MissingData)    = -0x10,
+	MPT_ERROR(MissingBuffer)  = -0x11
 };
 
 MPT_STRUCT(codestate)

@@ -1,6 +1,6 @@
 # Makefile: MPT core library example programs
 #
-TESTS = cobs ident environ
+TESTS = coding ident environ
 PROGS = parse ${TESTS}
 
 LDLIBS = -lmptcore
@@ -15,3 +15,4 @@ include ../example.mk
 # special test arguments
 test_ident : ARGS=1024 1025
 test_environ : ARGS='mpt_*'
+test_coding : ARGS=cobs

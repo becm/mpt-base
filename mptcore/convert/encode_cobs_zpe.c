@@ -13,7 +13,7 @@
 	? (--l, ++s, c + MPT_COBS_MAXLEN) \
 	: c), \
 	1)
-# define MPT_COBS_MAXLEN 224
+#define MPT_COBS_MAXLEN 223
 /*!
  * \ingroup mptConvert
  * \brief encode with COBS/ZPE
@@ -31,8 +31,10 @@
  * \return size of processed data
  */
 extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
-# include "encode_cobs.c"
+#include "encode_cobs.c"
 
+#define MPT_cobs_check_inline(c, e, p)    ((c <= MPT_COBS_MAXLEN && c < (e = p[c-1])))
+#define MPT_encode_cobs_regular(i, c, d)  mpt_encode_cobs_zpe(i, c, d)
 /*!
  * \ingroup mptConvert
  * \brief encode with COBS/ZPE+R
@@ -50,32 +52,4 @@ extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iov
  * \return length of processed data
  */
 extern ssize_t mpt_encode_cobs_zpe_r(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
-{
-	uint8_t *dst, end;
-	size_t off, left, code;
-	
-	if (!cobs || base || !(code = info->scratch)) {
-		return mpt_encode_cobs_zpe(info, cobs, base);
-	}
-	off = info->done + code;
-	left  = cobs->iov_len;
-	
-	if ((off > left)
-	    || !(dst = cobs->iov_base)) {
-		return -1;
-	}
-	/* tail inline condition */
-	if (code > 1 && code < (end = dst[off-1]) && end < MPT_COBS_MAXLEN) {
-		*dst = end;
-		--code;
-		--off;
-	}
-	/* need enough data to save state of next message */
-	else if (left <= off) {
-		return -2;
-	}
-	/* cobs message termination */
-	dst[off++] = 0;
-	
-	return code;
-}
+#include "encode_cobs_r.c"

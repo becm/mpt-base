@@ -20,8 +20,8 @@ static const struct {
 	{ "cobs",        MPT_ENUM(EncodingCobs) },
 	{ "cobs/r",      MPT_ENUM(EncodingCobsInline) },
 	
-	{ "cobs/zpe",    MPT_ENUM(EncodingCompress) },
-	{ "cobs/c",      MPT_ENUM(EncodingCompress) },
+	{ "cobs/zpe",    MPT_ENUM(EncodingCompress) | MPT_ENUM(EncodingCobs) },
+	{ "cobs/c",      MPT_ENUM(EncodingCompress) | MPT_ENUM(EncodingCobs) },
 	
 	{ "cobs/zpe+r",  MPT_ENUM(EncodingCompress) | MPT_ENUM(EncodingCobsInline) }
 };
