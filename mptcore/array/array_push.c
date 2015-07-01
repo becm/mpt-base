@@ -92,7 +92,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(array) *arr, MPT_STRUCT(codestate) *inf
 		b->used = off;
 		
 		/* retry on size problem only */
-		if (cont == -2) {
+		if (cont == MPT_ERROR(MissingBuffer)) {
 			;
 		}
 		else if (cont < 0) {

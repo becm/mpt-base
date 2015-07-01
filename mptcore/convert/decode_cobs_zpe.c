@@ -1,9 +1,9 @@
 
 
-#define MPT_COBS_MAXLEN 0xef
+#define MPT_COBS_MAXLEN 0xdf
 
-#define MPT_cobs_data_len(c) (((c) <= MPT_COBS_MAXLEN) ? (c) - 1 : (c) - 0xd0)
-#define MPT_cobs_zero_len(c) (((c) >= 0xd0) ? ((c) - 0xd0 + 2) : 0)
+#define MPT_cobs_data_len(c) (((c) <= MPT_COBS_MAXLEN) ? (c) - 1 : (c) - 0xe0)
+#define MPT_cobs_zero_len(c) (((c) >= 0xe0) ? 2 : 0)
 #define MPT_cobs_max_dec(c)  ((c) * 2)
 
 #define MPT_cobs_dec_regular mpt_decode_cobs_zpe

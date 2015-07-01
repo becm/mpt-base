@@ -11,7 +11,7 @@
 #define MPT_cobs_zero(c,d,r,s,l) (d[-c] = (\
 	(l && (c > 1) && (c < 32) && !*s) \
 	? (--l, ++s, c + MPT_COBS_MAXLEN) \
-	: c), \
+	: c), ++d, --r, \
 	1)
 #define MPT_COBS_MAXLEN 223
 /*!

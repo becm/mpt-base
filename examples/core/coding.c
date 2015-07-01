@@ -45,7 +45,13 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
 	vec.iov_base = arr->_buf + 1;
 	vec.iov_len  = arr->_buf->used;
 	/*decode(info, &vec, 0);*/
-	if ((len = decode(&info, &vec, 1)) < 0) {
+	while ((len = decode(&info, &vec, 1)) < 0) {
+		if (len == MPT_ERROR(MissingBuffer)) {
+			vec.iov_base = mpt_array_insert(arr, info.done + info.scratch, 8);
+			vec.iov_len  = arr->_buf->used;
+			info.scratch += 8;
+			continue;
+		}
 		fprintf(stderr, "%s %"__PRIPTR_PREFIX"d\n", "error", len);
 		return;
 	}

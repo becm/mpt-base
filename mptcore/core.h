@@ -148,7 +148,7 @@ MPT_STRUCT(codestate)
 #endif
 	uintptr_t _ctx; /* state pointer */
 	size_t done;    /* data in finished format */
-	size_t scratch; /* empty(decoder)/unfinished(encoder) data size */
+	size_t scratch; /* unfinished data size */
 };
 typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
 typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
