@@ -95,39 +95,53 @@ static ssize_t _decode
 	tmp.clen = sourcelen;
 	
 	/* check info for data vector */
+	dlen = mlen + done;
 	if ((mlen > proc)
-	    || (mpt_message_read(&tmp, done, 0) < done)
-	    || ((rem = mpt_message_length(&tmp)) < proc)) {
+	    || (mpt_message_read(&tmp, dlen, 0) < dlen)) {
+		return MPT_ERROR(BadArgument);
+	}
+	/* space available for target data */
+	proc -= mlen;
+	
+	/* consume previous message */
+	if (info->_ctx & _MPT_COBS_MSG_COMPLETE) {
+		const uint8_t *addr;
+		size_t curr, align = 0x10;
+		
+		/* set current message done */
+		done = dlen;
+		
+		addr = tmp.base;
+		curr = tmp.used;
+		
+		/* target base alignment */
+		while (align > 1) {
+			size_t post = 0;
+			if ((curr < align/2)
+			    || (proc < (post = ((uintptr_t) addr) & (align - 1)))) {
+				align /= 2;
+				continue;
+			}
+			done += post;
+			proc -= post;
+			mpt_message_read(&tmp, post, 0);
+			break;
+		}
+		info->_ctx = 0;
+		info->done = done;
+		info->scratch = proc;
+		mlen = 0;
+	}
+	if ((rem = mpt_message_length(&tmp)) < proc) {
 		return MPT_ERROR(BadArgument);
 	}
 	rem -= proc;
 	
-	/* consume previous message */
-	if (info->_ctx & _MPT_COBS_MSG_COMPLETE) {
-		const uint8_t *addr = tmp.base;
-		size_t align = 0x10, curr = tmp.used;
-		/* target base alignment */
-		while (align > 1) {
-			size_t post = 0;
-			if (curr < align/2) {
-				align /= 2;
-				continue;
-			}
-			post = ((uintptr_t) addr) & (align - 1);
-			done += post;
-			proc -= post;
-			mpt_message_read(&tmp, post, 0);
-			info->done = done;
-			break;
-		}
-		mlen = 0;
-	}
 	/* decoded data start */
 	dst  = (uint8_t *) tmp.base;
 	dlen = tmp.used;
 	dvec = tmp.cont;
 	dveclen = tmp.clen;
-	proc -= mlen;
 	
 	/* encoded data start */
 	mpt_message_read(&tmp, proc, 0);
@@ -137,7 +151,7 @@ static ssize_t _decode
 	/* finished with complete block/message */
 	if (!code) {
 		if (!mpt_message_read(&tmp, 1, &code)) {
-			return 1;
+			return MPT_ERROR(MissingData);
 		}
 		src  = tmp.base;
 		clen = tmp.used;
