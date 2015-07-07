@@ -35,9 +35,9 @@ test_% : %
 clear : sub_clear
 	${RM} ${CLEAR_FILES}
 clean : sub_clean
-	${RM} ${CLEAR_FILES} ${CLEAN_FILES}
+	${RM} ${CLEAN_FILES}
 distclean : sub_distclean
-	${RM} ${CLEAR_FILES} ${CLEAN_FILES} ${GEN_FILES}
+	${RM} ${CLEAR_FILES} ${CLEAN_FILES}
 
 # subdirectory template
 sub_% :

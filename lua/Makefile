@@ -24,10 +24,10 @@ LDLIBS = -lmptio -lmptcore
 SHARE = mpt.lua mathbox.lua
 #
 # service targets
-.PHONY : all clear clean test devel shared
+.PHONY : install clear clean test devel shared
 # file creation
-all devel : ${LIB} $(SHARE:%=${DIR_SHARE}/mpt/%)
-shared : ${LIB}
+shared devel : ${LIB}
+install : ${LIB} $(SHARE:%=${DIR_SHARE}/mpt/%)
 ${LIB} : ${OBJS}
 	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
@@ -40,8 +40,8 @@ ${DIR_SHARE}/mpt/% :
 clear :
 	${RM} ${LIB}
 
-clean : clear
+clean :
 	${RM} ${OBJS}
 
-distclean : clean
-	${RM} $(SHARE:%=${DIR_SHARE}/mpt/%)
+distclean :
+	${RM} ${LIB} ${OBJS} $(SHARE:%=${DIR_SHARE}/mpt/%)

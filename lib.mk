@@ -13,7 +13,7 @@ CLEAN_FILES ?= ${OBJS}
 SHLIB_MAJOR ?= 1
 SHLIB_MINOR ?= 0
 SHLIB_TEENY ?= 0
-SHLIB_OBJS ?= ${OBJS}
+SHLIB_OBJS  ?= ${OBJS}
 #
 # static library defaults
 STATIC_OBJS ?= ${OBJS}
@@ -31,10 +31,11 @@ include $(dir $(lastword $(MAKEFILE_LIST)))config.mk
 LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
 #
 # general library rules
-.PHONY: shared devel static
+.PHONY: shared devel static install
 shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
-devel  : ${LIB_FULLNAME}.so header
+devel : ${LIB_FULLNAME}.so header
 static : ${LIB_FULLNAME}.a
+install : devel
 
 $(dir ${LIB_FULLNAME}) :
 	install -d '${@}'
@@ -63,11 +64,12 @@ ${SHLIB_OBJS} ${STATIC_OBJS} : ${HEADER}
 # header export
 .PHONY: header
 header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})
-GEN_FILES += $(HEADER:%.h=${DIR_INC}/$(notdir %.h))
+CLEAR_FILES += $(HEADER:%.h=${DIR_INC}/$(notdir %.h))
 #
 # maintenance targets
-.PHONY: clear clean distclean
-clear:;    ${RM} ${CLEAR_FILES}
-clean:;    ${RM} ${CLEAR_FILES} ${CLEAN_FILES}
-distclean:;${RM} ${CLEAR_FILES} ${CLEAN_FILES} ${GEN_FILES}
+.PHONY: clear clean distclean uninstall
+clear : ; ${RM} ${CLEAR_FILES}
+clean : ; ${RM} ${CLEAN_FILES}
+distclean : ; ${RM} ${CLEAR_FILES} ${CLEAN_FILES}
+uninstall : clear
 #
