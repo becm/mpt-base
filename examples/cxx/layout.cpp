@@ -22,7 +22,7 @@ extern int main(int argc, char *argv[])
 	mpt::Layout lay;
 	mpt::Polyline pl(2);
 	
-	if (!lay.setInput(argv[1])) return 1;
+	if (argc < 2 || !lay.setInput(argv[1])) return 1;
 	
 	pl.truncate(-1, 3);
 	mpt::Transform3 t;

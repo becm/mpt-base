@@ -1,4 +1,4 @@
-# conf.mk: global settings
+# mpt.conf.mk: global settings
 ARCH_OS != uname -s | tr A-Z a-z
 ARCH_SYS != uname -m
 ARCH_LIBC ?= gnu
@@ -6,19 +6,12 @@ ARCH ?= ${ARCH_SYS}-${ARCH_OS}$(if $(strip ${ARCH_LIBC}),-${ARCH_LIBC})
 #
 # target directory setup
 DIR_TOP ?= /usr
-DIR_INC ?= ${DIR_TOP}/include/mpt
+DIR_INC ?= ${DIR_TOP}/include
 DIR_LIB ?= ${DIR_TOP}/lib/${ARCH}
 DIR_BIN ?= ${DIR_TOP}/bin
 DIR_SHARE ?= ${DIR_TOP}/share
 # set template base directory
 DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
-#
-# preprocessor flags
-CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
-# compiler flags
-CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
-CXXFLAGS ?= ${CFLAGS}
-FFLAGS ?= -fpic -O5 -Wall
 #
 # install header files
 define install_files

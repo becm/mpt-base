@@ -153,7 +153,7 @@ inline client::~client()
     else mpt_node_destroy(conf);
 }
 
-inline int client::report(logger *l) const
+inline int client::report(logger *) const
 { return 0; }
 inline int client::init()
 { return 0; }

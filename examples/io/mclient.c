@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int flg;
 	char txt[8];
 	
-	if (!argv[1]) {
+	if (argc < 2) {
 		fputs(*argv, stderr);
 		fputs(" <target>\n", stderr);
 		return 1;

@@ -1,19 +1,18 @@
-# example.mk: template for examples
+# mpt.example.mk: template for examples
 #
-# top directory
-DIR_TOP ?= $(dir $(lastword $(MAKEFILE_LIST)))..
+# include global configuration
+include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
-# flags for compiler/preprocessor
-CPPFLAGS ?= -I${DIR_TOP}/include -Wall -Werror -Wpedantic
-CFLAGS   ?= -g -fstack-protector
-CXXFLAGS ?= ${CFLAGS} ${CPPFLAGS}
-FFLAGS   ?= ${CFLAGS} ${CPPFLAGS}
+# preprocessor/compiler flags
+INC ?= ${DIR_INC}
+CPPFLAGS ?= -Wall -W -Werror $(INC:%=-I%) $(DEF:%=-D'%')
+CXXFLAGS ?= ${CFLAGS}
+CFLAGS ?= -g -fstack-protector
 #
 # flags for linker
-LDDIRS  ?= ${MPT_PREFIX_LIB}
+LDDIRS  ?= ${DIR_LIB}
 DLDIRS  ?= ${LDDIRS}
 LDFLAGS ?= $(LDDIRS:%=-L%) $(DLDIRS:%=-Wl,-R%)
-LINK    ?= ${CC}
 #
 # static version of all programs
 STATIC ?= $(PROGS:%=%_static)
@@ -41,7 +40,7 @@ distclean : sub_distclean
 
 # subdirectory template
 sub_% :
-	@for d in ${DIRS}; do if ! ${MAKE} -C "$${d}" $(@:sub_%=%); then break; fi; done;
+	@for d in ${DIRS}; do if ! ${MAKE} -C "$${d}" $(@:sub_%=%); then exit 1; fi; done;
 
 # static template
 static : ${STATIC} sub_static

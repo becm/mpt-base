@@ -11,11 +11,15 @@ INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
 #
 # import global settings
 DIR_TOP = ${MPT_PREFIX}
-include ../config.mk
+include ../mpt.config.mk
 #
 # library sources
 SRCS = mpt.c
 OBJS = $(SRCS:%.c=%_lua${LUA}.o)
+#
+# preprocessor/compiler flags
+CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
+CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
 #
 # link parameters
 LDFLAGS = -L${DIR_LIB} -zorigin -rpath=\$$ORIGIN

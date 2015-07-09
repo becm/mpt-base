@@ -12,7 +12,7 @@
 # define mtrace()
 #endif
 
-extern int main(int argc, char *argv[])
+extern int main(int , char * const [])
 {
 	mpt::Pipe<char> p;
 	

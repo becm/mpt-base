@@ -7,7 +7,7 @@ PROGS = readline ${TESTS}
 OBJS = $(PROGS:%=%.o)
 
 DIR_TOP = ${MPT_PREFIX}
-include example.mk
+include ../mpt.example.mk
 
 # library config
 client : LDLIBS=-lmpt++ -lmptio -lmptcore

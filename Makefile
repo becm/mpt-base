@@ -19,7 +19,7 @@ lua : mptio
 # dispatch target to subdirectories
 sub_% :
 	@for m in ${SUB}; do \
-		if ! ${MAKE} -C "$${m}" $(@:sub_%=%); then break; fi; \
+		if ! ${MAKE} -C "$${m}" $(@:sub_%=%); then exit 1; fi; \
 	done
 
 ${SUB} :
@@ -35,6 +35,6 @@ clear :
 
 "${MPT_PREFIX_LIB}/libmpt.a" :
 	@for m in ${MODULES}; do \
-		if ! ${MAKE} -C "$${m}" static LIB=mpt "DIR_LIB=${MPT_PREFIX_LIB}"; then break; fi; \
+		if ! ${MAKE} -C "$${m}" static LIB=mpt "DIR_LIB=${MPT_PREFIX_LIB}"; then exit 1; fi; \
 	done
 	${AR} s "${MPT_PREFIX_LIB}/libmpt.a"

@@ -1,9 +1,19 @@
-# lib.mk: library creation template
+# mpt.lib.mk: library creation template
 #
 # require library name
 ifeq (${LIB},)
   $(error no library name defined)
 endif
+#
+# include global configuration
+include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
+#
+# preprocessor flags
+CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
+# compiler flags
+CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
+CXXFLAGS ?= ${CFLAGS}
+# FFLAGS ?= -fpic -O5 -Wall
 #
 # default object creation/removal
 OBJS ?= $(SRCS:%.c=%.o)
@@ -19,13 +29,10 @@ SHLIB_OBJS  ?= ${OBJS}
 STATIC_OBJS ?= ${OBJS}
 #
 # linker and link options
-LDDIRS ?= '${DIR_LIB}'
+LDDIRS ?= ${DIR_LIB}
 LDFLAGS ?= '-hlib${LIB}.so.${SHLIB_MAJOR}' -zorigin -rpath=\$$ORIGIN $(LDDIRS:%=-L%)
 LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS} -o
 LINK ?= ${CC} ${CFLAGS}
-#
-# include global configuration
-include $(dir $(lastword $(MAKEFILE_LIST)))config.mk
 #
 # path to library without type suffix
 LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
@@ -64,7 +71,8 @@ ${SHLIB_OBJS} ${STATIC_OBJS} : ${HEADER}
 # header export
 .PHONY: header
 header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})
-CLEAR_FILES += $(HEADER:%.h=${DIR_INC}/$(notdir %.h))
+clear_header = $(notdir ${HEADER})
+CLEAR_FILES += $(clear_header:%.h=${DIR_INC}/%.h)
 #
 # maintenance targets
 .PHONY: clear clean distclean uninstall

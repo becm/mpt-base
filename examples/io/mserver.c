@@ -42,7 +42,7 @@ static int wrap_io(void *fd, struct mpt_event *ev)
 int main(int argc, char *argv[])
 {
 	struct mpt_notify no;
-	int evcnt, mincon;
+	uint32_t mincon;
 	
 	mtrace();
 	
@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 	}
 	do {
 		struct mpt_input *in;
+		int evcnt;
 		
 		/* wait for connection/input */
 		if ((evcnt = mpt_notify_wait(&no, -1, -1)) < 0) {

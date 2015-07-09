@@ -7,7 +7,7 @@ LDLIBS = -lmptcore
 
 # general targets and definitions
 DIR_TOP = ${MPT_PREFIX}
-include ../example.mk
+include ../../mpt.example.mk
 
 # library config
 %_static : LDLIBS=-lmpt

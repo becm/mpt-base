@@ -46,7 +46,7 @@ const char *MyQueue::string()
 
 const char txt[] = "fdsgfdgm dfkhndn djgkh d hdfhsjdfgh df gh dir";
 
-extern int main(int argc, char *argv[])
+extern int main(int , char * const [])
 {
 	mtrace();
 	

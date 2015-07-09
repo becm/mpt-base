@@ -20,9 +20,10 @@ LDLIBS = -lmptcore -ldl
 #
 # import library creation settings
 DIR_TOP = ${MPT_PREFIX}
-include ../lib.mk
+DIR_INC = ${DIR_TOP}/include/mpt
+include ../mpt.lib.mk
 # import release creation settings
-include ../release.mk
+include ../mpt.release.mk
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h ${RELEASE_HEADER}

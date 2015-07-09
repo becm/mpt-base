@@ -16,7 +16,7 @@
 
 using namespace mpt;
 
-extern int main(int argc, char *argv[])
+extern int main(int , char * const [])
 {
 	mtrace();
 	

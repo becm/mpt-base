@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	
 	mtrace();
 	
-	if (!argv[1]) {
+	if (argc < 2) {
 		fputs("missing socket description\n", stderr);
 		return 1;
 	}

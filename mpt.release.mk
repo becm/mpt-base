@@ -1,4 +1,4 @@
-# release.mk: create release information
+# mpt.release.mk: create release information
 RELEASE_HEADER ?= release.h
 ${RELEASE_HEADER} :
 	@if [ -n "${RELEASE}" ]; then \

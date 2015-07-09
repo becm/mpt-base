@@ -9,11 +9,15 @@
 #include <mpt/queue.h>
 #include <mpt/stream.h>
 
-int main(int argc, char *argv[], char *env[])
+int main(int argc, char * const argv[])
 {
 	struct mpt_stream srm = MPT_STREAM_INIT;
 	int mode;
 	
+	if (argc < 2) {
+		fprintf(stderr, "%s %s\n", *argv, "<target>");
+		return 1;
+	}
 	if ((mode = mpt_stream_pipe(&srm._info, argv[1], argv+1)) < 0) {
 		perror("call");
 		return 1;

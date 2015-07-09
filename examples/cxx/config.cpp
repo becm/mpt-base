@@ -14,7 +14,7 @@
 # define mtrace()
 #endif
 
-extern int main(int argc, char *argv[])
+extern int main(int , char * const [])
 {
 	mpt::Config conf("settings.env");
 	mpt::metatype *m;

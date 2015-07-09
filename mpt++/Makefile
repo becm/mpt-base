@@ -21,9 +21,10 @@ OBJS := $(SRCS:%.cpp=%.o)
 #
 # import library creation settings
 DIR_TOP = ${MPT_PREFIX}
-include ../lib.mk
+DIR_INC = ${DIR_TOP}/include/mpt
+include ../mpt.lib.mk
 # import release creation settings
-include ../release.mk
+include ../mpt.release.mk
 #
 # extend preprocessor for C++11
 CXXFLAGS += -std=c++11

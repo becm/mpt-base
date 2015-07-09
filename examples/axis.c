@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	mpt_axis_init(&obj, 0);
 	
 	++argv;
-	while (*argv) {
+	while (--argc) {
 		src.txt = strchr(pr.name = *argv, '=');
 		++argv;
 		if (!src.txt) continue;

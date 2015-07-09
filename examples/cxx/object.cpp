@@ -26,13 +26,13 @@ class Double {
     public:
     Double(double d) { _d = d; }
     virtual int f0(void) { return _d; }
-    virtual int f1(int p) { return 1; }
-    virtual int f2(int p) { return 2; }
-    virtual int f3(int p) { return 3; }
-    virtual int f4(int p) { return 4; }
-    virtual int f5(int p) { return 5; }
-    virtual int f6(int p) { return 6; }
-    virtual int f7(int p) { return 7; }
+    virtual int f1(int) { return 1; }
+    virtual int f2(int) { return 2; }
+    virtual int f3(int) { return 3; }
+    virtual int f4(int) { return 4; }
+    virtual int f5(int) { return 5; }
+    virtual int f6(int) { return 6; }
+    virtual int f7(int) { return 7; }
     private:
     double _d;
 };
@@ -61,7 +61,7 @@ private:
     { return false; }
 };
 
-extern int main(int argc, char *argv[])
+extern int main(int , char * const [])
 {
 	mtrace();
 	

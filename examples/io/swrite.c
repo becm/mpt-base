@@ -8,12 +8,16 @@
 
 #include <mpt/core.h>
 
-int main(int argc, char *argv[], char *env[])
+int main(int argc, char *argv[])
 {
 	struct mpt_socket sock = MPT_SOCKET_INIT;
 	char text[128];
 	int len;
 	
+	if (argc < 2) {
+		fprintf(stderr, "%s %s\n", argv[0], "<destination>");
+		return 2;
+	}
 	if ((len = mpt_connect(&sock, argv[1], 0)) < 0) {
 		perror("connect");
 		return 1;
