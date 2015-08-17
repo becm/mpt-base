@@ -14,14 +14,19 @@
 static void disp(MPT_STRUCT(array) *arr, size_t len)
 {
 	uint8_t *base;
-	size_t i;
 	
 	base = (void *) (arr->_buf + 1);
 	
-	for (i = 0; i < len; i++) {
-		fprintf(stdout, "%02x ", base[i]);
+	while (len) {
+		size_t i, line;
+		line = len > 16 ? 16 : len;
+		for (i = 0; i < line; i++) {
+			fprintf(stdout, "%02x ", base[i]);
+		}
+		fputc('\n',stdout);
+		base += line;
+		len -= line;
 	}
-	fputc('\n',stdout);
 }
 static void enc(MPT_STRUCT(array) *arr, struct iovec *data, MPT_TYPE(DataEncoder) encode)
 {

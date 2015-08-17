@@ -26,19 +26,20 @@ LDFLAGS = -L${DIR_LIB} -zorigin -rpath=\$$ORIGIN
 LDLIBS = -lmptio -lmptcore
 #
 SHARE = mpt.lua mathbox.lua
+LUA_SHARE = ${DIR_SHARE}/lua/${LUA}
 #
 # service targets
 .PHONY : install clear clean test devel shared
 # file creation
 shared devel : ${LIB}
-install : ${LIB} $(SHARE:%=${DIR_SHARE}/mpt/%)
+install : ${LIB} $(SHARE:%=${LUA_SHARE}/%)
 ${LIB} : ${OBJS}
 	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 
-${DIR_SHARE}/mpt/% :
+${LUA_SHARE}/% :
 	$(call install_files,${@D},${@F})
 
 clear :
@@ -48,4 +49,4 @@ clean :
 	${RM} ${OBJS}
 
 distclean :
-	${RM} ${LIB} ${OBJS} $(SHARE:%=${DIR_SHARE}/mpt/%)
+	${RM} ${LIB} ${OBJS} $(SHARE:%=${LUA_SHARE}/%)

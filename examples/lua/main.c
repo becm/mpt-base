@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	else if ((str = getenv("MPT_PREFIX"))) {
 		char buf[256];
 		
-		snprintf(buf, sizeof(buf), "%s/%s", str, "share/mpt/mathbox.lua");
+		snprintf(buf, sizeof(buf), "%s/%s", str, "share/lua/"LUA_VERSION_MAJOR"."LUA_VERSION_MINOR"/mathbox.lua");
 		
 		if (luaL_dofile(L, buf)) {
 			if ((str = lua_tostring(L, -1))) {
