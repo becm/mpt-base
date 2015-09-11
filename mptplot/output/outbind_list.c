@@ -27,16 +27,17 @@
  */
 extern int mpt_outbind_list(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *conf)
 {
-	int	nbind = 0;
+	int nbind = 0;
 	
 	if (!conf) {
-		errno = EFAULT; return -1;
+		errno = EFAULT;
+		return -2;
 	}
 	do {
 		MPT_INTERFACE(metatype) *meta;
 		const char *src, *dest;
 		MPT_STRUCT(msgtype) mt;
-		ssize_t	len;
+		ssize_t len;
 		
 		if (!(dest = mpt_node_ident(conf))) {
 			continue;

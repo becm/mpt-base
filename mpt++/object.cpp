@@ -10,92 +10,79 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template bool setValue(Property &, const int32_t &);
-template bool setValue(Property &, const int64_t &);
-template bool setValue(Property &, const double  &);
-
 // class extension for basic property
 Property::Property(const Reference<metatype> &ref) : Reference<metatype>(ref)
-{ }
-Property::~Property()
 { }
 
 // assignment operation for metatypes
 Property & Property::operator= (metatype &meta)
 {
     property pr;
-    if (meta.property(&pr) < 0) { this->name = 0; return *this; }
-    this->val.fmt = pr.val.fmt;
-    this->val.ptr = pr.val.ptr;
-    metatype *mt = *this;
-    if (!mt || mpt_meta_pset(mt, this) < 0) this->name = 0;
+    if (meta.property(&pr) < 0) { _prop.name = 0; return *this; }
+    pr.name = _prop.name;
+    pr.desc = 0;
+    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) _prop = property();
+    else _prop = pr;
     return *this;
 }
 
-// primitive assignment operations
-Property & Property::operator= (const int & val)
-{ setValue(*this, val); return *this; }
-Property & Property::operator= (const long & val)
-{ setValue(*this, val); return *this; }
-Property & Property::operator= (const double & val)
-{ setValue(*this, val); return *this; }
-
 Property & Property::operator= (const char *val)
 {
-    if (!invalid()) {
-        this->val.fmt = 0;
-        this->val.ptr = val;
-        metatype *mt = *this;
-        if (!mt || mpt_meta_pset(mt, this) < 0) this->name = 0;
-    }
+    property pr(_prop.name, 0, val);
+    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) _prop = property();
+    else _prop = pr;
     return *this;
 }
 
 Property & Property::operator= (const property & val)
 {
-    property tmp = val;
-    if (!_ref || mpt_meta_pset(_ref, &tmp) < 0) this->name = 0;
-    else { property::operator=(tmp); }
+    property pr = val;
+    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) {
+        _prop = property();
+    }
+    else {
+        _prop.name = val.name ? pr.name : 0;
+        _prop.desc = pr.desc;
+        _prop.val  = pr.val;
+    }
     return *this;
 }
 Property & Property::operator= (const Property & val)
 {
-    *this = static_cast<const property &>(val);
+    _prop = val._prop;
     if (_ref == val._ref) return *this;
     if (_ref) _ref->unref();
     _ref = val._ref ? val._ref->addref() : 0;
-    property::operator=(val);
     return *this;
 }
 
-bool Property::set(const char *name)
+bool Property::select(const char *name)
 {
     if (!_ref) return false;
     property pr(name);
-    if (!name && !(pr.name = this->name)) return false;
     if (_ref->property(&pr) < 0) return false;
-    property::operator=(pr);
+    _prop = pr;
     return true;
 }
-bool Property::set(int pos)
+bool Property::select(int pos)
 {
     if (!_ref || pos <= 0) return false;
     property pr(pos);
     if (_ref->property(&pr) < 0) return false;
-    property::operator=(pr);
+    _prop = pr;
     return true;
 }
 bool Property::set(source &src)
 {
-    if (invalid()) return false;
-    return (_ref && _ref->property(this, &src) >= 0);
+    if (!_ref) return false;
+    return (_ref && _ref->property(&_prop, &src) >= 0);
 }
-bool Property::set(const property &src)
+bool Property::set(const struct value &src)
 {
-    if (!_ref || !src.name) return false;
-    property pr = src;
-    if (_ref->property(&pr) < 0) return false;
-    property::operator=(pr);
+    if (!_ref) return false;
+    property pr(_prop.name, src.fmt, src.ptr);
+    if (mpt_meta_pset(_ref, &pr) < 0) return false;
+    _prop = pr;
     return true;
 }
 
@@ -169,13 +156,13 @@ bool Object::setName(const char *name, int len)
 Property Object::operator [](const char *name)
 {
     Property prop(ref());
-    if (!prop.set(name)) prop.name = prop.desc = 0;
+    prop.select(name);
     return prop;
 }
 Property Object::operator [](int pos)
 {
     Property prop(ref());
-    if (!prop.set(pos)) prop.name = prop.desc = 0;
+    prop.select(pos);
     return prop;
 }
 

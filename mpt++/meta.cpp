@@ -223,13 +223,13 @@ MetatypeGeneric *MetatypeGeneric::create(size_t size)
     size = MPT_align(size);
 
     MetatypeGeneric *m;
-    MetatypeSmall *ms;
-    MetatypeBig *mb;
+    MetatypeGeneric::Small *ms;
+    MetatypeGeneric::Big *mb;
 
     if (size > sizeof(mb->data)) return 0;
 
-    if (size <= sizeof(ms->data)) m = ms = new MetatypeSmall;
-    else m = mb = new MetatypeBig;
+    if (size <= sizeof(ms->data)) m = ms = new MetatypeGeneric::Small;
+    else m = mb = new MetatypeGeneric::Big;
 
     return m;
 }

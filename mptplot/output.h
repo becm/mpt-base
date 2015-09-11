@@ -85,7 +85,7 @@ MPT_STRUCT(outdata)
 	ssize_t push(size_t, const void *);
 protected:
 # else
-#  define MPT_OUTDATA_INIT { MPT_SOCKET_INIT,  0,0,0,0,  MPT_ARRAY_INIT, { 0, MPT_CODESTATE_INIT }, 0 }
+#  define MPT_OUTDATA_INIT { MPT_SOCKET_INIT,  0,0,0,0,  MPT_ARRAY_INIT, { 0, MPT_CODESTATE_INIT } }
 # endif
 	MPT_STRUCT(socket) sock;
 	uint8_t           _sflg;    /* socket flags */
@@ -97,11 +97,6 @@ protected:
 		MPT_TYPE(DataEncoder) fcn;
 		MPT_STRUCT(codestate) info;
 	} _enc;
-# if defined(_STDIO_H) || defined(_STDIO_H_)
-	FILE  *hist;
-# else
-	void  *hist;
-# endif
 }
 #endif
 ;
@@ -181,6 +176,8 @@ extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *, MPT_INTERFACE(source) *);
 extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgbind) *);
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
+/* outdata print setup and processing */
+extern int mpt_outdata_print(MPT_STRUCT(outdata) *, FILE *, size_t , const void *);
 
 /* printing values */
 extern int mpt_fprint_int(FILE *, const int8_t  *, MPT_INTERFACE(source) *);
@@ -193,8 +190,6 @@ extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
 extern int mpt_outdata_property(MPT_STRUCT(outdata) *, MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
-/* outdata print setup and processing */
-extern int mpt_outdata_print(MPT_STRUCT(outdata) *, size_t , const void *);
 
 
 /* data mapping operations */

@@ -43,7 +43,10 @@ MPT_STRUCT(out_data) {
 	
 	MPT_STRUCT(queue)      in;
 	
-	MPT_STRUCT(histinfo)   hist;
+	struct {
+		MPT_STRUCT(histinfo) info;
+		FILE                *file;
+	} hist;
 	
 	uint16_t               cid,
 	                      _rid,
@@ -60,13 +63,13 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 	if (od->out.state & MPT_ENUM(OutputActive)) {
 		/* local print condition */
 		if (od->out.state & 0x7) {
-			if (!(ret = mpt_outdata_print(&od->out, len, src))) {
+			if (!(ret = mpt_outdata_print(&od->out, od->hist.file, len, src))) {
 				ret = len;
 			}
 		}
 		/* history output triggered */
-		else if (od->hist.size) {
-			ret = mpt_history_print(od->out.hist, &od->hist, len, src);
+		else if (od->hist.info.size) {
+			ret = mpt_history_print(od->hist.file, &od->hist.info, len, src);
 		}
 		else {
 			ret = mpt_outdata_push(&od->out, len, src);
@@ -76,7 +79,7 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 		}
 		if (!len) {
 			od->out.state &= MPT_ENUM(OutputPrintColor);
-			od->hist.size = 0;
+			od->hist.info.size = 0;
 			od->cid = 0;
 		}
 		return ret;
@@ -86,7 +89,7 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 	}
 	if (len > 1 && !(od->out.state & MPT_ENUM(OutputRemote))) {
 		const MPT_STRUCT(msgtype) *mt = src;
-		if ((ret = mpt_outdata_print(&od->out, len, src)) >= 0) {
+		if ((ret = mpt_outdata_print(&od->out, od->hist.file, len, src)) >= 0) {
 			return ret ? ret : (ssize_t) len;
 		}
 		/* convert history to printable output */
@@ -96,20 +99,20 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 			if (len < (size_t) ret) {
 				return -2;
 			}
-			mpt_history_set(&od->hist, 0);
+			mpt_history_set(&od->hist.info, 0);
 			while (parts--) {
-				if (mpt_history_set(&od->hist, (void *) (++mt)) < 0) {
-					od->hist.line = 0;
-					od->hist.type = 0;
+				if (mpt_history_set(&od->hist.info, (void *) (++mt)) < 0) {
+					od->hist.info.line = 0;
+					od->hist.info.type = 0;
 				}
 			}
 			od->out.state |= MPT_ENUM(OutputActive);
 			
 			/* consume data for bad setup */
-			if (!od->hist.type
-			    || !od->hist.size
+			if (!od->hist.info.type
+			    || !od->hist.info.size
 			    || ((parts = (len - ret))
-			        && (ret = mpt_history_print(od->out.hist, &od->hist, parts, src)) < 0)) {
+			        && (ret = mpt_history_print(od->hist.file, &od->hist.info, parts, src)) < 0)) {
 				od->out.state |= MPT_ENUM(OutputPrintRestore);
 				return 0;
 			}
@@ -256,7 +259,7 @@ static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 static int outputUnref(MPT_INTERFACE(metatype) *mt)
 {
 	MPT_STRUCT(out_data) *odata = (void *) mt;
-	
+	FILE *fd;
 	if (odata->_shared) {
 		return odata->_shared--;
 	}
@@ -265,7 +268,15 @@ static int outputUnref(MPT_INTERFACE(metatype) *mt)
 	
 	free(odata->in.base);
 	
-	mpt_history_setfmt(&odata->hist, 0);
+	mpt_history_setfmt(&odata->hist.info, 0);
+	
+	if ((fd = odata->hist.file)
+	    && (fd != stdin)
+	    && (fd != stdout)
+	    && (fd != stderr)) {
+		fclose(fd);
+		odata->hist.file = 0;
+	}
 	
 	free(mt);
 	return 0;
@@ -395,26 +406,26 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return src ? -1 : -3;
 	}
 	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		if ((ret = setHistfile(&od->hist, src)) < 0) {
+		if ((ret = setHistfile(&odata->hist.file, src)) < 0) {
 			return ret;
 		}
 		prop->name = "history";
 		prop->desc = MPT_tr("history data output file");
 		prop->val.fmt = "";
-		prop->val.ptr = od->hist;
+		prop->val.ptr = odata->hist.file;
 		return ret;
 	}
 	if (!strcasecmp(name, "histfmt")) {
 		if (!src) {
-			ret = odata->hist.fmt ? 1 : 0;
+			ret = odata->hist.info.fmt ? 1 : 0;
 		}
-		else if ((ret = mpt_history_setfmt(&odata->hist, src)) < 0) {
+		else if ((ret = mpt_history_setfmt(&odata->hist.info, src)) < 0) {
 			return ret;
 		}
 		prop->name = "histfmt";
 		prop->desc = "history data output format";
 		prop->val.fmt = "";
-		prop->val.ptr = odata->hist.fmt;
+		prop->val.ptr = odata->hist.info.fmt;
 		return ret;
 	}
 	if (!strcasecmp(name, "encoding")) {
@@ -536,8 +547,8 @@ static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 	}
 	else {
 		fd = stderr;
-		if ((type & MPT_ENUM(LogFile)) && od->hist) {
-			fd = od->hist;
+		if ((type & MPT_ENUM(LogFile)) && odata->hist.file) {
+			fd = odata->hist.file;
 		}
 		else if (mpt_output_file(type & 0x7f, od->level & 0xf) <= 0) {
 			return 0;
@@ -804,7 +815,7 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 		MPT_ARRAY_INIT,
 		MPT_OUTDATA_INIT, { 0, MPT_CODESTATE_INIT }, 0,
 		MPT_QUEUE_INIT,
-		MPT_HISTINFO_INIT,
+		{ MPT_HISTINFO_INIT, 0 },
 		0, 0, 0,
 		0
 	};

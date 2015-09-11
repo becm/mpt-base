@@ -4,13 +4,14 @@
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # preprocessor/compiler flags
-INC ?= ${DIR_INC}
-CPPFLAGS ?= -Wall -W -Werror $(INC:%=-I%) $(DEF:%=-D'%')
+INC ?= '${DIR_INC}'
+CPPWARN ?= all error
+CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
 CXXFLAGS ?= ${CFLAGS}
 CFLAGS ?= -g -fstack-protector
 #
 # flags for linker
-LDDIRS  ?= ${DIR_LIB}
+LDDIRS  ?= '${DIR_LIB}'
 DLDIRS  ?= ${LDDIRS}
 LDFLAGS ?= $(LDDIRS:%=-L%) $(DLDIRS:%=-Wl,-R%)
 #

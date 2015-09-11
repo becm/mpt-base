@@ -39,7 +39,8 @@ int main()
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
     o->set(mpt::property("history", "/dev/stdout"), 0);
-    o->message(0, mpt::LogMessage, "hallo");
+    o->set(mpt::property("level", "debug"), 0);
+    o->message(0, mpt::LogDebug, "hallo");
     c->init();
     c->unref();
 }

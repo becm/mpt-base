@@ -116,14 +116,14 @@ extern int main(int , char * const [])
 	prop = "10";
 	std::cout << l->from.x << std::endl;
 	
-	lo["x2"] = "4";
+	lo["x2"] = 4;
 	lo["color"] = "#6666";
 	
 	op = lo;
 	
+	// failing assignments for empty/same metatype
 	op.setMeta(0);
 	op.setMeta(lo);
-	
 	opt = &lo;
 	opt->setMeta(lo);
 	opt = &op;

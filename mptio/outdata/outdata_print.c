@@ -68,11 +68,10 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
  * 
  * \return output file descriptor
  */
-extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, size_t len, const void *src)
+extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, const void *src)
 {
 	const MPT_STRUCT(msgtype) *mt;
 	const char *prefix;
-	FILE *fd;
 	int type, flags;
 	
 	if (od->state & MPT_ENUM(OutputActive)) {
@@ -81,27 +80,27 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, size_t len, const void *sr
 		}
 		switch (od->state & 0x3) {
 		  case MPT_ENUM(OutputPrintNormal):
-		    fd = stdout; break;
+		    hist = stdout; break;
 		  case MPT_ENUM(OutputPrintError):
-		    fd = stderr; break;
+		    hist = stderr; break;
 		  case MPT_ENUM(OutputPrintHistory):
-		    if (!(fd = od->hist)) fd = stderr;
+		    if (!hist) hist = stderr;
 		    break;
 		  default: return 0;
 		}
 		if (!len) {
 			if ((od->state & MPT_ENUM(OutputPrintRestore))
-			    && isatty(fileno(fd))) {
-				fputs("\033[0m", fd);
+			    && isatty(fileno(hist))) {
+				fputs("\033[0m", hist);
 			}
-			fputc('\n', fd);
+			fputc('\n', hist);
 			od->state &= ~(0x7 | MPT_ENUM(OutputActive));
 			return 0;
 		}
 		if (!src) {
 			return -2;
 		}
-		outputWrite(fd, len, src);
+		outputWrite(hist, len, src);
 		
 		return len;
 	}
@@ -127,41 +126,41 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, size_t len, const void *sr
 	
 	switch (flags & 0x3) {
 	  case 0:
-		fd = 0;
+		hist = 0;
 		break;
 	  case MPT_ENUM(OutputPrintNormal):
-		fd = stdout;
+		hist = stdout;
 		break;
 	  case MPT_ENUM(OutputPrintError):
-		fd = stderr;
+		hist = stderr;
 		break;
 	  case MPT_ENUM(OutputPrintHistory):
-		fd = od->hist;
+		break;
 	}
 	if (flags & MPT_ENUM(OutputPrintRestore)) {
-		if (fd) {
+		if (hist) {
 			flags = MPT_ENUM(OutputPrintHistory);
 		} else {
-			fd = stderr;
+			hist = stderr;
 			flags = MPT_ENUM(OutputPrintError);
 		}
 	}
 	od->state |= MPT_ENUM(OutputActive);
 	
-	if (!fd) {
+	if (!hist) {
 		od->state |= MPT_ENUM(OutputPrintRestore);
 		return 0;
 	}
-	if ((isatty(fileno(fd)) > 0) && (prefix = mpt_output_prefix(type))) {
+	if ((isatty(fileno(hist)) > 0) && (prefix = mpt_output_prefix(type))) {
 		flags |= MPT_ENUM(OutputPrintRestore);
-		fputs(prefix, fd);
+		fputs(prefix, hist);
 	}
 	/* mark answer message */
 	if (mt->cmd == MPT_ENUM(MessageAnswer)) {
-		fputc('@', fd);
+		fputc('@', hist);
 	}
 	if (len > 2) {
-		outputWrite(fd, len-2, mt+1);
+		outputWrite(hist, len-2, mt+1);
 	}
 	od->state |= flags & 0x7;
 	

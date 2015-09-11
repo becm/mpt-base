@@ -30,7 +30,7 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		const char *pos = src;
 		while (isspace(*pos)) ++pos;
 		if (!*pos) return 0;
-		if (!((fmt == 'C') ? isalnum(*pos) : isgraph(*pos))) return -3;
+		if (!((fmt == 'C') ? isalnum(*pos) : isgraph(*pos))) return MPT_ERROR(BadType);
 		if (dest) *((char *) dest) = *pos;
 		return pos + 1 - src;
 	}
@@ -63,6 +63,6 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		case 'E':
 		case 'e': return mpt_cldouble(dest, src, 0);
 		
-		default: errno = EINVAL; return -3;
+		default: errno = EINVAL; return MPT_ERROR(BadType);
 	}
 }

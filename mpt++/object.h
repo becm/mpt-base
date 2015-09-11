@@ -13,29 +13,51 @@ namespace mpt {
 struct color;
 struct lineattr;
 
-class Property : public property, Reference<metatype>
+template <typename T>
+class Value : public value
+{
+public:
+    inline Value(const T &v) : _val(v)
+    {
+        static const char _fmt[2] = { static_cast<char>(typeIdentifier<T>()) };
+        fmt = _fmt;
+        ptr = &_val;
+    }
+private:
+    T _val;
+};
+
+class Property : Reference<metatype>
 {
 public:
     Property(const Reference<metatype> &);
-    virtual ~Property();
+    inline ~Property()
+    { }
 
-    bool set(const char * = 0);
-    bool set(int);
+    inline operator const property&() const
+    { return _prop; }
+
+    bool select(const char * = 0);
+    bool select(int);
+
     bool set(source &);
-    bool set(const property &);
+    bool set(const struct value &);
 
     Property & operator= (const char *val);
     Property & operator= (metatype &meta);
 
-    Property & operator= (const int32_t &);
-    Property & operator= (const int64_t &);
-    Property & operator= (const double &);
-    Property & operator= (const color &);
-    Property & operator= (const lineattr &);
+    inline Property & operator= (const struct value &v)
+    { if (!set(v)) _prop.name = 0; return *this; }
+    
     Property & operator= (const property &);
     Property & operator= (const Property &);
 
+    template <typename T>
+    inline Property & operator= (const T &v)
+    { if (!set(Value<T>(v))) _prop.name = 0; return *this; }
+
 protected:
+    property _prop;
     friend class Object;
 };
 
@@ -63,13 +85,6 @@ public:
         return sizeof(T);
     }
 };
-
-template <typename T>
-bool setValue(Property &pr, const T &val)
-{
-    Source<T> src(&val);
-    return pr.set(src);
-}
 
 // auto-create reference
 template <typename T>
@@ -165,6 +180,8 @@ public:
     void *typecast(int);
 
     Slice<const char> data(void) const;
+    class Small;
+    class Big;
 
     static MetatypeGeneric *create(size_t size);
 
@@ -175,19 +192,19 @@ protected:
     uint64_t _info;
 };
 
-class MetatypeSmall : public MetatypeGeneric
+class MetatypeGeneric::Small : public MetatypeGeneric
 {
 public:
-    MetatypeSmall(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
+    Small(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
     { }
 protected:
     friend class MetatypeGeneric;
     int8_t data[64-sizeof(MetatypeGeneric)];
 };
-class MetatypeBig : public MetatypeGeneric
+class MetatypeGeneric::Big : public MetatypeGeneric
 {
 public:
-    MetatypeBig(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
+    Big(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
     { }
 protected:
     friend class MetatypeGeneric;

@@ -26,12 +26,4 @@ extern void mpt_outdata_fini(MPT_STRUCT(outdata) *out)
 	out->curr = 0;
 	out->state &= 0xf | MPT_ENUM(OutputPrintColor);
 	mpt_array_clone(&out->_buf, 0);
-	
-	if (out->hist
-	    && (out->hist != stdin)
-	    && (out->hist != stdout)
-	    && (out->hist != stderr)) {
-		fclose(out->hist);
-		out->hist = 0;
-	}
 }

@@ -64,7 +64,7 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 	ts.len = len;
 	
 	while (len >= ts.esze) {
-		size_t	pos = ts.len;
+		size_t pos = ts.len;
 		
 		if (hist->line) {
 			pos = hist->pos;

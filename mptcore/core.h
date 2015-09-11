@@ -179,12 +179,6 @@ MPT_STRUCT(property)
 	{ }
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
-	inline bool invalid() const
-	{ return !name; }
-	inline const struct value &value() const
-	{ return val; }
-	inline void set(const struct value &v)
-	{ val.set(v); }
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */

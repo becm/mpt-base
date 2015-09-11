@@ -70,7 +70,11 @@ extern int mpt_conf_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 	if (!err) {
 		return 0;
 	}
-	(void) mpt_output_log(out, __func__, MPT_ENUM(LogError), "%s %i", MPT_tr("error in graphic binding"), err);
+	if (err < 0) {
+		(void) mpt_output_log(out, __func__, MPT_ENUM(LogWarning), "%s", MPT_tr("unable to apply graphic binding"));
+		return -2;
+	}
+	(void) mpt_output_log(out, __func__, MPT_ENUM(LogError), "%s %i", MPT_tr("error processing graphic binding"), err);
 	return -3;
 }
 

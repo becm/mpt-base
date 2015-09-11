@@ -9,7 +9,8 @@ endif
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # preprocessor flags
-CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
+CPPWARN ?= all error pedantic
+CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
 # compiler flags
 CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
 CXXFLAGS ?= ${CFLAGS}
@@ -29,7 +30,7 @@ SHLIB_OBJS  ?= ${OBJS}
 STATIC_OBJS ?= ${OBJS}
 #
 # linker and link options
-LDDIRS ?= ${DIR_LIB}
+LDDIRS ?= '${DIR_LIB}'
 LDFLAGS ?= '-hlib${LIB}.so.${SHLIB_MAJOR}' -zorigin -rpath=\$$ORIGIN $(LDDIRS:%=-L%)
 LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS} -o
 LINK ?= ${CC} ${CFLAGS}
@@ -54,10 +55,10 @@ ${LIB_FULLNAME}.a(%.o) : %.o
 	${AR} S${ARFLAGS} '${@}' $?
 
 ${LIB_FULLNAME}.so : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
-	cd ${@D}; ln -fs '${@F}.${SHLIB_MAJOR}' '${@F}'
+	cd '${@D}'; ln -fs '${@F}.${SHLIB_MAJOR}' '${@F}'
 
 ${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
-	cd ${@D}; ln -fs '${@F}.${SHLIB_MINOR}.${SHLIB_TEENY}' '${@F}'
+	cd '${@D}'; ln -fs '${@F}.${SHLIB_MINOR}.${SHLIB_TEENY}' '${@F}'
 
 ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${SHLIB_OBJS}
 	${LINK} ${LINK_FLAGS} '${@}' ${SHLIB_OBJS}

@@ -8,7 +8,7 @@ INC = . .. ../mptplot ../mptcore
 HEADER = notify.h stream.h
 #
 # source summary
-sources = connect.c init.c output_new.o readline.c
+sources = connect.c init.c output_new.c readline.c
 SRCS := $(wildcard */*.c) ${sources}
 #
 # shared library options
