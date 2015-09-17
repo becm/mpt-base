@@ -53,9 +53,9 @@ MPT_STRUCT(array)
 	char *string();
 	bool compact();
 	
-	void *append (size_t , const void * = 0);
+	void *append(size_t , const void * = 0);
 	void *prepend(size_t , size_t = 0);
-	void *set    (size_t , const void * = 0);
+	void *set(size_t , const void * = 0);
 	
 	int set(source &);
 	int printf(const char *fmt, ... );
@@ -167,8 +167,8 @@ extern void mpt_irange(int32_t *, int , const int32_t *, int);
 
 /* copy/convert operations with leading dimension */
 #if !defined(MPT_COPY_ST) && !defined(MPT_COPY_DT)
-extern void mpt_copy64 (int , const void *, int , void *, int);
-extern void mpt_copy32 (int , const void *, int , void *, int);
+extern void mpt_copy64(int , const void *, int , void *, int);
+extern void mpt_copy32(int , const void *, int , void *, int);
 
 extern void mpt_copy_fd(int , const float  *, int , double *, int);
 extern void mpt_copy_df(int , const double *, int , float  *, int);
@@ -188,7 +188,7 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *, size_t , size_t);
 extern ssize_t mpt_array_cut(MPT_STRUCT(array) *, size_t , size_t);
 
 /* get data element */
-extern void *mpt_array_data (const MPT_STRUCT(array) *, size_t , size_t);
+extern void *mpt_array_data(const MPT_STRUCT(array) *, size_t , size_t);
 
 /* create and return slice data */
 extern void *mpt_array_slice(MPT_STRUCT(array) *, size_t , size_t __MPT_DEFPAR(0));
@@ -216,8 +216,8 @@ extern ssize_t mpt_array_flush(int , const MPT_STRUCT(slice) *, const struct soc
 #endif
 
 /* pointer/metatype array */
-extern size_t mpt_array_compact(void **, size_t );
-extern size_t mpt_array_move   (void *, size_t , size_t , size_t);
+extern size_t mpt_array_compact(void **, size_t);
+extern size_t mpt_array_move(void *, size_t , size_t , size_t);
 
 /* buffer resizing */
 extern MPT_STRUCT(buffer) *_mpt_buffer_realloc(MPT_STRUCT(buffer) *, size_t);

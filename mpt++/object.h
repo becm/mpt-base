@@ -13,20 +13,6 @@ namespace mpt {
 struct color;
 struct lineattr;
 
-template <typename T>
-class Value : public value
-{
-public:
-    inline Value(const T &v) : _val(v)
-    {
-        static const char _fmt[2] = { static_cast<char>(typeIdentifier<T>()) };
-        fmt = _fmt;
-        ptr = &_val;
-    }
-private:
-    T _val;
-};
-
 class Property : Reference<metatype>
 {
 public:
@@ -53,8 +39,12 @@ public:
     Property & operator= (const Property &);
 
     template <typename T>
-    inline Property & operator= (const T &v)
-    { if (!set(Value<T>(v))) _prop.name = 0; return *this; }
+    Property & operator= (const T &v)
+    {
+        static const char _fmt[2] = { static_cast<char>(typeIdentifier<T>()) };
+        if (!set(value(_fmt, &v))) _prop.name = 0;
+        return *this;
+    }
 
 protected:
     property _prop;

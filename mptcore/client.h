@@ -85,9 +85,9 @@ MPT_STRUCT(proxy)
 #ifdef __cplusplus
 	inline proxy() : _mt(0), _id(0)
 	{ }
-	MPT_INTERFACE(metatype) *meta(void)
+	MPT_INTERFACE(metatype) *meta(void) const
 	{ return _mt; }
-	uintptr_t id(void)
+	uintptr_t id(void) const
 	{ return _id; }
 protected:
 	Reference<metatype> _mt;
@@ -148,9 +148,7 @@ inline client::client(class output *out) : Reference<class output>(out), conf(0)
 { }
 inline client::~client()
 {
-    if (!conf) return;
-    if (conf->parent) mpt_node_clear(conf);
-    else mpt_node_destroy(conf);
+    if (conf && !conf->parent) mpt_node_destroy(conf);
 }
 
 inline int client::report(logger *) const

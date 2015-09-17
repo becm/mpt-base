@@ -173,7 +173,7 @@ extern int mpt_stream_close(MPT_STRUCT(stream) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-# if defined(_MPT_QUEUE_H) && defined(_MPT_ARRAY_H) && defined(_MPT_NOTIFY_H)
+# if defined(_MPT_QUEUE_H) && defined(_MPT_ARRAY_H) && defined(_MPT_NOTIFY_H) && defined(_MPT_EVENT_H)
 struct msgtype;
 struct message;
 

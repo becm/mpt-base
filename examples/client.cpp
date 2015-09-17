@@ -2,14 +2,8 @@
  * instance of MPT client
  */
 
-#include <mpt/queue.h>
-#include <mpt/array.h>
-#include <mpt/event.h>
-#include <mpt/output.h>
-#include <mpt/message.h>
-#include <mpt/stream.h>
-
 #include <mpt/client.h>
+#include <mpt/output.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>

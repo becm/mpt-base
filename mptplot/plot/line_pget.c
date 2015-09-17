@@ -105,7 +105,7 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 		self.val.fmt = "#";
 	}
 	else if (pos < 5) {
-		self.val.fmt = "F";
+		self.val.fmt = "f";
 	}
 	else {
 		if (line && (pos = set(&line->attr, src)) < 0) return pos;

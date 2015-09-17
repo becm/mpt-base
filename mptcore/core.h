@@ -573,7 +573,6 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *, const char *);
 /* socket operations */
 extern int mpt_connect(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode) *);
 extern int mpt_bind(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode) *, int);
-/* modify output data */
 
 
 /* identifier operations */
@@ -582,6 +581,7 @@ extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *, size_t *)
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, int);
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
 extern void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
+
 
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t);
@@ -611,6 +611,7 @@ extern uint32_t _mpt_geninfo_unref(uint64_t *);
 extern uint32_t _mpt_geninfo_addref(uint64_t *);
 /* property operations on geninfo data */
 extern int _mpt_geninfo_property(uint64_t *, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *);
+
 
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
