@@ -61,11 +61,11 @@ private:
     { return false; }
 };
 
-extern int main(int , char * const [])
+extern int main(int , char * const argv[])
 {
 	mtrace();
 	
-	mpt::Config config;
+	mpt::Config config(argv[1]);
 	mpt::metatype *mt;
 	Double d(46);
 	

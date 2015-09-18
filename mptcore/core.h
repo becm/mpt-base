@@ -435,7 +435,7 @@ protected:
 # define MPT_IDENTIFIER_INIT { 0, 0, 0, { 0 }, 0 }
 #endif
 	uint16_t _len;
-	uint8_t  _size;
+	uint8_t  _post;
 	uint8_t  _flags;
 	char     _val[4];
 	char    *_base;
@@ -577,10 +577,11 @@ extern int mpt_bind(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode)
 
 /* identifier operations */
 size_t mpt_identifier_align(size_t);
-extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *, size_t *);
+extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *);
+extern int mpt_identifier_len(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, int);
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
-extern void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
+extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
 
 
 /* create meta type element */

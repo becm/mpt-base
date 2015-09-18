@@ -46,7 +46,11 @@ extern MPT_STRUCT(node) *mpt_parse_append(MPT_STRUCT(node) *old, const MPT_STRUC
 		data = 0;
 		path.first = 0;
 	}
-	if (!(conf = mpt_node_new(path.valid+1, data, path.first))) {
+	if (!(conf = mpt_node_new(path.first+1, path.valid+1))) {
+		return 0;
+	}
+	if (path.first && !mpt_identifier_set(&conf->ident, data, path.first)) {
+		mpt_node_destroy(conf);
 		return 0;
 	}
 	/* previous element was section -> insert */
@@ -58,12 +62,11 @@ extern MPT_STRUCT(node) *mpt_parse_append(MPT_STRUCT(node) *old, const MPT_STRUC
 		mpt_gnode_add(old, 0, conf);
 	}
 	
-	if (!path.valid) {
-		return conf;
+	if (path.valid) {
+		if ((data = mpt_path_data(&path))) {
+			mpt_node_set(conf, data);
+		}
 	}
-	data = mpt_path_data(&path);
-	
-	mpt_node_set(conf, data);
 	
 	return conf;
 }

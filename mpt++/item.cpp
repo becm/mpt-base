@@ -37,16 +37,12 @@ bool identifier::setName(const char *name, int nlen)
 }
 const char *identifier::name() const
 {
-    return (const char *) mpt_identifier_data(this, 0);
+    return (mpt_identifier_len(this) <= 0) ? 0 : (const char *) mpt_identifier_data(this);
 }
 Slice<const char> identifier::data() const
 {
-    const char *id;
-    size_t len;
-
-    id = (const char *) mpt_identifier_data(this, &len);
-
-    return Slice<const char>(id, len);
+    const char *id = (const char *) mpt_identifier_data(this);
+    return Slice<const char>(id, _len);
 }
 // generic item group
 bool Group::clear(const metatype *)

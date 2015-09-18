@@ -24,7 +24,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_get(MPT_INTERFACE(config) *conf, cons
 	mpt_path_set(&p, dest, -1);
 	
 	if (conf) {
-		if (!(mt = conf->_vptr->query(conf, &p))) {
+		if (!(mt = conf->_vptr->query(conf, &p, -1))) {
 			return 0;
 		}
 	} else {

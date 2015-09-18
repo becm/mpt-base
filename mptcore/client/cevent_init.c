@@ -28,12 +28,11 @@ static int setConfig(void *udata, MPT_STRUCT(property) *pr)
 	len = mpt_path_set(&where, pr->name, -1);
 	len = strlen(pr->val.ptr);
 	/* max length exceeded */
-	if (++len > UINT16_MAX) return -2;
-	where.valid = len;
+	if (++len > INT32_MAX) return -2;
 	
 	conf = base ? base->children : 0;
 	
-	if (!(conf = mpt_node_query(conf, &where))) {
+	if (!(conf = mpt_node_query(conf, &where, len))) {
 		return -2;
 	}
 	if (!base) {

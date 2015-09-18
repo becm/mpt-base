@@ -15,25 +15,28 @@ struct Config {
 	MPT_INTERFACE(config) conf;
 	MPT_STRUCT(node) *node;
 };
-static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, MPT_STRUCT(path) *path)
+static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, const MPT_STRUCT(path) *path, int len)
 {
+	MPT_STRUCT(path) *tmp = (MPT_STRUCT(path) *) path;
 	struct Config *conf = (void *) ptr;
 	MPT_STRUCT(node) *curr;
 	
-	if (!(curr = mpt_node_query(conf->node, path))) {
-		return 0;
+	if (len < 0) {
+		if (!(curr = mpt_node_query(conf->node, tmp, len))) {
+			return 0;
+		}
 	}
 	if (!conf->node) {
 		conf->node = curr;
 	}
-	if (path->len && !(curr = mpt_node_get(curr, path))) {
+	if (path->len && !(curr = mpt_node_get(curr, tmp))) {
 		return 0;
 	}
 	return &curr->_meta;
 }
 
 static const MPT_INTERFACE_VPTR(config) nodeQuery = {
-	0, (MPT_INTERFACE(metatype) **(*)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *)) queryNode, 0
+	0, queryNode, 0
 };
 
 /*!
@@ -93,7 +96,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 	
 	/* (re)evaluate environment */
 	while ((var = *(env++))) {
-		MPT_INTERFACE(metatype) **mt;
+		MPT_INTERFACE(metatype) **mt, *mp;
 		MPT_STRUCT(path) path;
 		char *end, *pos, tmp[1024];
 		size_t vlen;
@@ -124,7 +127,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		}
 		path.off   = 0;
 		path.len   = pos - tmp;
-		path.valid = vlen+1;
+		path.valid = vlen++;
 		
 		path.sep = '_';
 		path.assign = '=';
@@ -140,23 +143,26 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 			if (!root) {
 				root = mpt_node_get(0, 0);
 			}
-			if (!(n = mpt_node_query(root, &path))) {
+			if (!(n = mpt_node_query(root, &path, vlen))) {
 				errno = EINVAL;
 				return -accept;
 			}
 			if (path.len) n = mpt_node_get(n->children, &path);
 			
-			if (!n->_meta && !(n->_meta = mpt_meta_new(path.valid+1))) {
+			if (!n->_meta && !(n->_meta = mpt_meta_new(vlen))) {
 				errno = EINVAL;
 				return -accept;
 			}
 			mt = &n->_meta;
 		}
-		else if (!(mt = conf->_vptr->query(conf, &path)) || !mt) {
+		else if (!(mt = conf->_vptr->query(conf, &path, vlen)) || !mt) {
 			errno = EINVAL;
 			return -accept;
 		}
-		if (mpt_meta_set(*mt, 0, "s", end+1) < 0) {
+		if (!(mp = *mt)) {
+			*mt = mp = mpt_meta_new(vlen);
+		}
+		if (mpt_meta_set(mp, 0, "s", end+1) < 0) {
 			errno = ENOTSUP;
 			return -accept;
 		}

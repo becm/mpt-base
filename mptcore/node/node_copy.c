@@ -10,9 +10,9 @@
 extern MPT_STRUCT(node) *mpt_node_copy(const MPT_STRUCT(node) *node, MPT_STRUCT(node) *copy)
 {
 	MPT_INTERFACE(metatype) *meta;
-	const char *ident = 0, *data = 0;
+	const char *data = 0;
 	size_t dlen = 0;
-	int ilen = 0;
+	int nlen;
 	
 	if (!node) {
 		errno = EFAULT;
@@ -29,13 +29,12 @@ extern MPT_STRUCT(node) *mpt_node_copy(const MPT_STRUCT(node) *node, MPT_STRUCT(
 	if (copy) {
 		return mpt_node_set(copy, data) ? copy : 0;
 	}
-	ident = mpt_identifier_data(&node->ident, 0);
-	ilen  = ident ? strlen(ident) : 0;
-	
-	if (!(copy = mpt_node_new(dlen, ident, ilen))) {
+	if (!(copy = mpt_node_new(nlen = node->ident._len, dlen))) {
 		return 0;
 	}
-	if (dlen && !mpt_node_set(copy, data)) {
+	nlen = mpt_identifier_len(&node->ident);
+	if ((nlen && !mpt_identifier_set(&copy->ident, mpt_identifier_data(&node->ident), nlen))
+	    || (dlen && !mpt_node_set(copy, data))) {
 		mpt_node_destroy(copy);
 		return 0;
 	}

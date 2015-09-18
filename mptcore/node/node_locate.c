@@ -41,7 +41,8 @@
 		while (curr->next) {
 			curr = curr->next;
 		}
-		cid = mpt_identifier_data(&curr->ident, &clen);
+		cid  = mpt_identifier_data(&curr->ident);
+		clen = curr->ident._len;
 		if (idlen == clen && (idlen == (size_t) len || !cid[len]) && !memcmp(ident, cid, len)) {
 			return (MPT_STRUCT(node) *) curr;
 		}
@@ -50,7 +51,8 @@
 	/* negative offset, start with previous */
 	if (pos < 0) {
 		while ((curr = curr->prev)) {
-			cid = mpt_identifier_data(&curr->ident, &clen);
+			cid  = mpt_identifier_data(&curr->ident);
+			clen = curr->ident._len;
 			if (idlen == clen && (idlen == (size_t) len || !cid[len]) && !memcmp(ident, cid, len)) {
 				if (!(++pos)) {
 					break;
@@ -61,7 +63,8 @@
 	}
 	/* positive offset, start with current */
 	do {
-		cid = mpt_identifier_data(&curr->ident, &clen);
+		cid  = mpt_identifier_data(&curr->ident);
+		clen = curr->ident._len;
 		if (idlen == clen && (idlen == (size_t) len || !cid[len]) && !memcmp(ident, cid, len)) {
 			if (!(--pos)) {
 				break;

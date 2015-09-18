@@ -25,7 +25,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	MPT_STRUCT(path) where = MPT_PATH_INIT;
 	MPT_INTERFACE(metatype) **mt;
 	MPT_STRUCT(node) *n;
-	size_t len;
+	int len;
 	
 	where.sep = sep;
 	where.assign = end;
@@ -54,16 +54,10 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		}
 		return 1;
 	}
-	len = strlen(val);
-	/* max length exceeded */
-	if (++len > UINT16_MAX) {
-		errno =ERANGE;
-		return -2;
-	}
-	where.valid = len;
+	len = strlen(val) + 1;
 	
 	if (!conf) {
-		if (!(n = mpt_node_query(mpt_node_get(0, 0), &where))) {
+		if (!(n = mpt_node_query(mpt_node_get(0, 0), &where, len))) {
 			return -1;
 		}
 		if (where.len) n = mpt_node_get(n->children, &where);
@@ -74,8 +68,8 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		}
 		mt = &n->_meta;
 	}
-	else if (!(mt = conf->_vptr->query(conf, &where)) || !mt) {
-		return 0;
+	else if (!(mt = conf->_vptr->query(conf, &where, len)) || !mt) {
+		return -1;
 	}
 	if (mpt_meta_set(*mt, 0, "s", val) < 0) {
 		errno = ENOTSUP;

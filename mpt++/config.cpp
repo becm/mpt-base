@@ -88,18 +88,14 @@ Slice<const char> path::data() const
 // default implementation for config
 bool config::set(const char *p, const char *val, int sep)
 {
-    path where;
-
-    where.set(p, -1, sep);
+    path where(sep, 0, p);
 
     if (!val) {
         return (remove(&where) < 0) ? false : true;
     }
-    where.valid = strlen(val)+1;
-
     Reference<metatype> *r;
     metatype *m;
-    if (!(r = query(&where)) || !(m = *r)) {
+    if (!(r = query(&where, strlen(val)+1)) || !(m = *r)) {
         return false;
     }
     return (mpt_meta_set(m, 0, "s", val) < 0) ? false : true;
@@ -108,8 +104,10 @@ metatype *config::get(const char *base, int sep, int len)
 {
     path to;
     to.set(base, len, sep, 0);
-    Reference<metatype> *r = query(&to);
-    return r ? *r : 0;
+    Reference<metatype> *r;
+    if (!(r = query(&to))) return 0;
+    metatype *m = *r;
+    return m;
 }
 void config::del(const char *p, int sep, int assign)
 {
@@ -127,7 +125,7 @@ Config::Config(const char *top, int sep) : _last(0), _root(0), _local(true)
     _local = false;
     if (!*top) return;
     path p(sep, 0, top);
-    _root = mpt_node_query(mpt_node_get(0, 0), &p);
+    _root = mpt_node_query(mpt_node_get(0, 0), &p, 0);
     if (p.len) _root = mpt_node_get(_root->children, &p);
 }
 Config::~Config()
@@ -143,16 +141,21 @@ int Config::unref()
     delete this;
     return 0;
 }
-Reference<metatype> *Config::query(const path *dest)
+Reference<metatype> *Config::query(const path *dest, int minlen)
 {
     node *n;
 
-    // get last queried */
+    // metatype identity */
     if (!dest) {
-        return (Reference<metatype> *) _last;
+        if (_local || !_root) {
+            _last = 0;
+            return 0;
+        }
+        _last = _root;
+        return (Reference<metatype> *) &_root->_meta;
     }
     // find existing
-    if (!dest->valid) {
+    if (minlen < 0) {
         if (_local) {
             n = _root ? mpt_node_get(_root, dest) : 0;
         }
@@ -165,7 +168,7 @@ Reference<metatype> *Config::query(const path *dest)
 
     // query local config
     if (_local) {
-        if (!(n = mpt_node_query(_root, &p))) {
+        if (!(n = mpt_node_query(_root, &p, minlen))) {
             return 0;
         }
         if (!_root) {
@@ -174,16 +177,17 @@ Reference<metatype> *Config::query(const path *dest)
     }
     // use non-root global
     else if (_root) {
-        if (!(n = mpt_node_query(_root->children, &p))) {
+        if (!(n = mpt_node_query(_root->children, &p, minlen))) {
             return 0;
         }
         if (!_root->children) {
             _root->children = n;
+            n->parent = _root;
         }
     }
     // interface to global config
     else {
-        if (!(n = mpt_node_query(mpt_node_get(0, 0), &p))) {
+        if (!(n = mpt_node_query(mpt_node_get(0, 0), &p, minlen))) {
             return 0;
         }
     }

@@ -61,29 +61,29 @@ static const MPT_INTERFACE_VPTR(metatype) _meta_control = {
 	nodeCast
 };
 
-extern MPT_STRUCT(node) *mpt_node_new(size_t dlen, const char *ident, int idlen)
+extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, size_t dlen)
 {
-	static const size_t defsize = 16 * sizeof(void*) - sizeof(MPT_STRUCT(node));
+	static const size_t defsize = 16 * sizeof(void*) - sizeof(MPT_STRUCT(node)) + sizeof(MPT_STRUCT(identifier));
 	struct _inline_meta *m;
 	MPT_STRUCT(node) *node;
-	size_t post, ilen;
+	size_t post;
 	
-	if (!(ilen = mpt_identifier_align(idlen > 0 ? idlen + 1 : -idlen))) {
+	if (!(ilen = mpt_identifier_align(ilen))) {
 		return 0;
 	}
 	ilen = MPT_align(ilen);
-	post = MPT_align(dlen) + ilen + sizeof(*m);
+	post = ilen + sizeof(*m) + MPT_align(dlen);
 	
-	if (!dlen || post > defsize) {
+	if (post > defsize) {
 		MPT_INTERFACE(metatype) *meta = 0;
 		
 		if (dlen && !(meta = mpt_meta_new(dlen))) {
 			return 0;
 		}
 		if (ilen > defsize) {
-			ilen = 0;
+			ilen = sizeof(node->ident);
 		}
-		if (!(node = malloc(sizeof(*node) + ilen))) {
+		if (!(node = malloc(sizeof(*node) - sizeof(node->ident) + ilen))) {
 			if (meta) {
 				meta->_vptr->unref(meta);
 			}
@@ -94,10 +94,10 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t dlen, const char *ident, int idlen)
 	else {
 		uint8_t *base;
 		
-		if (!(node = malloc(sizeof(*node) + post))) {
+		if (!(node = malloc(sizeof(*node) - sizeof(node->ident) + post))) {
 			return 0;
 		}
-		base = (void *) (node + 1);
+		base = (void *) (&node->ident);
 		m = (void *) (base + ilen);
 		
 		m->_base._vptr = &_meta_control;
@@ -112,7 +112,6 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t dlen, const char *ident, int idlen)
 	node->next = node->prev = node->parent = node->children = 0;
 	
 	mpt_identifier_init(&node->ident, ilen);
-	mpt_identifier_set(&node->ident, ident, idlen);
 	
 	return node;
 }

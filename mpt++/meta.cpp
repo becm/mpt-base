@@ -35,12 +35,8 @@ extern "C" mpt::metatype *mpt_meta_new(size_t size)
     if (b) b->write(size, 0, 0);
     return b;
 }
-extern "C" mpt::node *mpt_node_new(size_t dlen, const char *ident, int idlen)
-{
-    if (idlen < 0) {
-        return mpt::node::create(dlen, -idlen, ident);
-    }
-    return mpt::node::create(dlen, ident, idlen); }
+extern "C" mpt::node *mpt_node_new(size_t nlen, size_t dlen)
+{ return mpt::node::create(nlen, dlen); }
 
 __MPT_NAMESPACE_BEGIN
 
@@ -67,21 +63,23 @@ protected:
         inline ~Meta() { }
     };
     friend struct node;
-    int8_t data[116-sizeof(node)];
+    int8_t data[128-sizeof(node)];
 };
 
 NodePrivate::NodePrivate(size_t len) : node()
 {
-    size_t skip = MPT_align(len);
+    size_t skip = mpt_identifier_align(len);
+    skip = MPT_align(skip);
 
-    if (skip > sizeof(data)) {
-        skip = 0;
+    if (skip > (sizeof(ident) + sizeof(data))) {
+        skip = MPT_align(sizeof(ident));
     }
     else {
-        new (&ident) identifier(sizeof(ident) + skip);
+        new (&ident) identifier(skip);
     }
-    if (skip <= sizeof(Meta)) {
-        _meta = new (data+skip) Meta(sizeof(data) - skip, this);
+    size_t left = sizeof(data) + sizeof(ident) - skip;
+    if (left >= sizeof(Meta)) {
+        _meta = new (data-sizeof(ident)+skip) Meta(left, this);
     }
 }
 NodePrivate::~NodePrivate()
@@ -235,27 +233,24 @@ MetatypeGeneric *MetatypeGeneric::create(size_t size)
 }
 
 // node
-node *node::create(size_t dlen, size_t ilen, const void *ident)
+node *node::create(size_t ilen, size_t dlen)
 {
-    size_t total = MPT_align(dlen);
-    total += ilen;
-    total = MPT_align(total);
+    size_t isize = mpt_identifier_align(ilen);
+    isize = MPT_align(isize);
 
     node *n;
-    if (total <= (sizeof(NodePrivate) - sizeof(NodePrivate::Meta) - sizeof(*n))) {
+    size_t left = sizeof(NodePrivate::data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
+    if (left >= (isize + dlen)) {
         if (!(n = (node *) malloc(sizeof(NodePrivate)))) return 0;
         new (n) NodePrivate(ilen);
         if (!n->_meta) ::abort();
     }
-    else if (!(n = (node *) malloc(sizeof(*n) + ilen))) {
+    else if (!(n = (node *) malloc(sizeof(*n) - sizeof(n->ident) + isize))) {
         return 0;
     }
     else {
         new (n) node(dlen ? metatype::create(dlen) : 0);
-        mpt_identifier_init(&n->ident, sizeof(n->ident) + ilen);
-    }
-    if (ident) {
-        n->ident.setName((const char *) ident, ilen);
+        mpt_identifier_init(&n->ident, isize);
     }
     return n;
 }
@@ -267,7 +262,7 @@ node *node::create(size_t dlen, const char *ident, int ilen)
     }
     node *n;
 
-    if ((n = node::create(dlen, ilen+1, 0))) {
+    if ((n = node::create(ilen+1, dlen))) {
         n->ident.setName(ident, ilen);
     }
     return n;

@@ -22,9 +22,7 @@ extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *old, const MPT_STRUC
 	MPT_STRUCT(node) *conf;
 	const char *data;
 	
-	++path.valid;
-	
-	if (!(conf = mpt_node_query(old, &path))) {
+	if (!(conf = mpt_node_query(old, &path, path.valid + 1))) {
 		return 0;
 	}
 	if (!old) old = conf;
@@ -32,9 +30,8 @@ extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *old, const MPT_STRUC
 	if (path.len && !(conf = mpt_node_get(conf->children, &path))) {
 		return 0;
 	}
-	--path.valid;
 	
-	if (!(data = mpt_path_data(&path))) {
+	if (!path.valid || !(data = mpt_path_data(&path))) {
 		data = "";
 	}
 	mpt_node_set(conf, data);

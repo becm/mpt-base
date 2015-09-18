@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_CONFIG_H
-#define _MPT_CONFIG_H	201502
+#define _MPT_CONFIG_H  201502
 
 #include "core.h"
 
@@ -63,7 +63,7 @@ MPT_INTERFACE(config)
 {
 public:
 	virtual int unref(void) = 0;
-	virtual Reference<metatype> *query(const path *) = 0;
+	virtual Reference<metatype> *query(const path *, int = -1) = 0;
 	virtual int remove(const path *) = 0;
 	
 	int environ(const char *filter = "mpt_*", int sep = '_', char * const env[] = 0);
@@ -73,7 +73,7 @@ public:
 #else
 ; MPT_INTERFACE_VPTR(config) {
 	int (*unref)(MPT_INTERFACE(config) *);
-	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
+	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, int);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
@@ -90,7 +90,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_D
 
 /* node operations for configuration */
 extern MPT_STRUCT(node) *mpt_node_get(MPT_STRUCT(node) *, const MPT_STRUCT(path) *);
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *);
+extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, size_t);
 /* use node to store environment */
 extern int mpt_node_environ(MPT_STRUCT(node) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
@@ -140,7 +140,7 @@ public:
     virtual ~Config();
 
     int unref(void);
-    Reference<metatype> *query(const path *);
+    Reference<metatype> *query(const path *, int = -1);
     int remove(const path *);
 
 protected:
