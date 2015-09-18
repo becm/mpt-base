@@ -22,7 +22,7 @@ extern int mpt_parse_option(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 	int curr;
 	
 	/* get next visible character, no save */
-	if ((curr = mpt_parse_nextvis(parse, fmt->com, sizeof(fmt->com))) < 0) {
+	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
 		return path->len ? curr : 0;
 	}
 	if (fmt->ostart && curr != fmt->ostart && path->valid){
@@ -88,15 +88,13 @@ extern int mpt_parse_option(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 			if (fmt->oend) {
 				return -MPT_ENUM(ParseOptName);
 			}
-			if ((curr = mpt_parse_endline(parse)) == '\n') {
-				parse->line++;
-			}
+			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
 		else {
 			mpt_path_valid(path);
 		}
-		if ((curr = mpt_parse_getchar(parse, path)) < 0) {
+		if ((curr = mpt_parse_getchar(&parse->src, path)) < 0) {
 			return -MPT_ENUM(ParseOption);
 		}
 	}

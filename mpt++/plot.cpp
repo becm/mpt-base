@@ -585,39 +585,18 @@ void Layout::reset()
     setAlias(0);
 }
 
-bool Layout::setInput(const char *fname)
+bool Layout::open(const char *fn)
 {
-    if (!fname) {
-        delete _parse;
-        _parse = 0;
-        return true;
+    if (!fn) {
+        if (!_parse) return true;
+        return _parse->open(fn);
     }
-    FILE *f;
-    if (!(f = fopen(fname, "r"))) return false;
-    
-    class LayoutParser : public Parse
-    {
-    public:
-        inline LayoutParser(FILE *f) : Parse(&_d)
-        {
-            _d.source.arg = f;
-            _d.source.getc = (int (*)(void *)) mpt_getchar_stdio;
-            _d.check.ctl = (int (*)(void *, const path *, int))checkName;
-            _d.check.arg = &_d.name;
-        }
-        ~LayoutParser()
-        {
-            fclose((FILE *) _d.source.arg);
-            _d.source.arg = 0;
-        }
-    protected:
-        parse _d;
-    };
-
-    delete _parse;
-    _parse = new LayoutParser(f);
-    _parse->setFormat(defaultFormat());
-
+    if (!_parse) {
+        _parse = new LayoutParser();
+    }
+    if (!_parse->open(fn)) {
+        return false;
+    }
     return true;
 }
 
@@ -642,49 +621,6 @@ fpoint Layout::minScale() const
         if (g->scale.y < y) y = g->scale.y;
     }
     return fpoint(x, y);
-}
-
-int Layout::checkName(const parseflg *flg, const path *p, int op)
-{
-    Slice<const char> data = p->data();
-    const char *name = data.base();
-    size_t len = data.len();
-    
-    switch (op & 0x3) {
-      case MPT_ENUM(ParseSection):
-        break;
-      case MPT_ENUM(ParseOption):
-        return mpt_parse_ncheck(name, len, flg->opt);
-      default:
-        return 0;
-    }
-    
-    // remove type info
-    if (len) {
-        while (!isspace(*name)) {
-            if (!--len) return -1;
-            ++name;
-        }
-        while (isspace(*name)) {
-            if (!--len) return -1;
-            ++name;
-        }
-    }
-    if (len) {
-        size_t pos = 1;
-        
-        // get element name end
-        while (pos < len && !isspace(name[pos]) && name[pos] != ':') {
-           ++pos;
-        }
-        return mpt_parse_ncheck(name, pos, flg->sect);
-    }
-    return -2;
-}
-const char *Layout::defaultFormat()
-{
-    static const char fmt[] = "{*} =;#! '\"\0";
-    return fmt;
 }
 
 __MPT_NAMESPACE_END

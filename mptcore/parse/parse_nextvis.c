@@ -6,21 +6,23 @@
 
 #include "parse.h"
 
-extern int mpt_parse_nextvis(MPT_STRUCT(parse) *parse, const void *com, size_t len)
+extern int mpt_parse_nextvis(MPT_STRUCT(parseinput) *src, const void *com, size_t len)
 {
 	int curr;
 	
-	while ((curr = parse->source.getc(parse->source.arg)) > 0) {
+	if (!src->line) ++src->line;
+	
+	while ((curr = src->getc(src->arg)) > 0) {
 		if (curr == '\n') {
-			parse->line++;
+			src->line++;
 		}
-		if (isspace(curr))
+		if (isspace(curr)) {
 			continue;
-		
+		}
 		if (len && memchr(com, curr, len)) {
-			if ( (curr = mpt_parse_endline(parse)) != '\n' )
-				break;
-			parse->line++;
+			if ((curr = mpt_parse_endline(src)) < 0) {
+				return curr;
+			}
 			continue;
 		}
 		break;

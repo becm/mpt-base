@@ -645,14 +645,11 @@ public:
     
     virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());
+    virtual bool open(const char *);
     virtual void reset(void);
     
     const Item<Graph> &graph(int pos) const;
     inline int graphCount() const { return _graphs.size(); }
-    
-    inline Parse *input() const { return _parse; }
-    bool setInput(const char *);
-    
     
     virtual bool setAlias(const char *, int = -1);
     inline const char *alias() const
@@ -663,9 +660,6 @@ public:
     { return _font; }
     
     fpoint minScale(void) const;
-    
-    static int checkName(const parseflg *, const path *, int);
-    static const char *defaultFormat();
     
 protected:
     RefArray<Item<Graph> > _graphs;

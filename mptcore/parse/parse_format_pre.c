@@ -22,7 +22,7 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	int curr;
 	
 	/* get next visible character, no save */
-	if ((curr = mpt_parse_nextvis(parse, fmt->com, sizeof(fmt->com))) < 0) {
+	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
 		return path->len ? -MPT_ENUM(ParseSectEnd) : 0;
 	}
 	if (mpt_path_addchar(path, curr) < 0) {
@@ -70,9 +70,7 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		}
 		/* comments: continue to line end without save */
 		if (MPT_iscomment(fmt, curr)) {
-			if ((curr = mpt_parse_endline(parse)) == '\n') {
-				parse->line++;
-			}
+			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
 		
@@ -82,13 +80,13 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		}
 		/* get next visible character, no save */
 		else if (curr == '\n') {
-			curr = mpt_parse_nextvis(parse, fmt->com, sizeof(fmt->com));
+			curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com));
 			if (mpt_path_addchar(path, curr) < 0) {
 				return -MPT_ENUM(ParseInternal);
 			}
 			break;
 		}
-	} while ((curr = mpt_parse_getchar(parse, path)) >= 0);
+	} while ((curr = mpt_parse_getchar(&parse->src, path)) >= 0);
 	
 	/* last chance to get section start */
 	if (fmt->sstart && curr == fmt->sstart) {

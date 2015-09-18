@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 		parse.lastop = type;
 	}
 	if (type) {
-		fprintf(stderr, "parse error %d, line %lu\n", type, parse.line);
+		fprintf(stderr, "parse error %d, line %lu\n", type, parse.src.line);
 	}
 	mpt_path_fini(&path);
 	

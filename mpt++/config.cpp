@@ -11,7 +11,6 @@
 #include "node.h"
 #include "array.h"
 #include "config.h"
-#include "parse.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -226,105 +225,6 @@ int Config::remove(const path *dest)
         mpt_node_destroy(n);
         return 1;
     }
-}
-
-// parser implementation
-parsefmt::parsefmt(const char *fmt)
-{
-    mpt_parse_format(this, fmt);
-}
-
-parse::parse(const char *file)
-{
-    mpt_parse_init(this);
-    if (!file || !(source.arg = fopen(file, "r"))) return;
-    source.getc = (int (*)(void *)) mpt_getchar_stdio;
-}
-
-Parse::Parse(parse *p) : _parse(p), _next(mpt_parse_format_pre)
-{ }
-Parse::~Parse()
-{ }
-
-bool Parse::setFormat(const char *fmt)
-{
-    int type;
-    ParserFcn n;
-    
-    if (!_parse) {
-        return false;
-    }
-    parsefmt p = _parse->format;
-    if ((type = mpt_parse_format(&p, fmt)) < 0
-        || !(n = mpt_parse_next_fcn(type))) {
-        return false;
-    }
-    _next = n;
-    _parse->format = p;
-
-    return true;
-}
-
-int Parse::read(struct node &to, logger *out)
-{
-    static const char fname[] = "mpt::Parse::read";
-    node *(*save)(node *, const path *, int , int);
-    node *curr;
-    path where;
-    int ret;
-
-    if (!_parse || !_parse->source.getc) {
-        if (out) mpt_log(out, fname, LogError, "%s", MPT_tr("no parser input"));
-        return -1;
-    }
-
-    if (!(curr = to.children)) {
-        curr = &to;
-        _parse->lastop = ParseSection;
-        save = mpt_parse_append;
-    }
-    else {
-        save = (node *(*)(node *, const path *, int , int)) mpt_parse_insert;
-    }
-
-    while ((ret = _next(_parse, &where)) > 0) {
-        node *tmp;
-        if (!(tmp = save(curr, &where, _parse->lastop, ret))) {
-            if (out) out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _parse->line);
-            return -2;
-        }
-        else if (!curr) to.children = tmp;
-
-        curr = tmp;
-
-        metatype *m;
-        if ((m = curr->meta())) {
-            uint32_t line = _parse->line;
-            m->set(property("line", "I", &line), 0);
-        }
-        if (ret & ParseSectEnd) {
-            where.del();
-        } else {
-            where.clearData();
-        }
-        _parse->lastop = ret;
-    }
-    if (!ret) return 0;
-
-    if (out) out->error(fname, "%s: %s %zu", MPT_tr("parse error"), MPT_tr("line"), _parse->line);
-
-    return -3;
-}
-size_t Parse::line() const
-{ return _parse ? _parse->line : 0; }
-
-bool Parse::reset()
-{
-    if (!_parse) return false;
-    FILE *file = (FILE *) _parse->source.arg;
-    if (file && fseek(file, 0, SEEK_SET) < 0) return false;
-    _parse->line = 1;
-    return true;
 }
 
 __MPT_NAMESPACE_END

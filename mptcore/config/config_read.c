@@ -53,8 +53,8 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, const char *file, const char 
 		(void) mpt_log(out, __func__, MPT_ENUM(LogError), "%s \"%s\"", MPT_tr("unable to open file"), file);
 		return -1;
 	}
-	parse.source.getc = (int (*)()) mpt_getchar_stdio;
-	parse.source.arg = fd;
+	parse.src.getc = (int (*)()) mpt_getchar_stdio;
+	parse.src.arg  = fd;
 	
 	conf.children = 0;
 	if ((err = mpt_parse_config(next, &parse, &conf)) < 0) {
@@ -76,7 +76,7 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, const char *file, const char 
 	}
 	fclose(fd);
 	if (err < 0) {
-		mpt_log(out, __func__, MPT_ENUM(LogError), "%s (%x): %s %u: %s", MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.line, file);
+		mpt_log(out, __func__, MPT_ENUM(LogError), "%s (%x): %s %u: %s", MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line, file);
 	}
 	return err;
 }

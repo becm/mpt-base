@@ -28,12 +28,12 @@ extern int mpt_parse_format_sep(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	if ((parse->lastop & 0xf) == MPT_ENUM(ParseSectEnd)) {
 		curr = fmt->sstart;
 		/* find section name start */
-		if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(parse, path)) < 0)) {
+		if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(&parse->src, path)) < 0)) {
 			return -MPT_ENUM(ParseSection);
 		}
 	}
 	/* get next visible character, no save */
-	else if ((curr = mpt_parse_nextvis(parse, fmt->com, sizeof(fmt->com))) < 0) {
+	else if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
 		return curr == -2 ? 0 : -curr;
 	}
 	/* section start missed */
@@ -51,7 +51,7 @@ extern int mpt_parse_format_sep(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		return MPT_ENUM(ParseSectEnd);
 	}
 	/* get first name element */
-	else if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(parse, path)) < 0)) {
+	else if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(&parse->src, path)) < 0)) {
 		return -MPT_ENUM(ParseSection);
 	}
 	/* find valid section separator */
@@ -75,7 +75,7 @@ extern int mpt_parse_format_sep(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		else if (curr == '\n') {
 			break;
 		}
-		if ((curr = mpt_parse_getchar(parse, path)) < 0) {
+		if ((curr = mpt_parse_getchar(&parse->src, path)) < 0) {
 			break;
 		}
 	}

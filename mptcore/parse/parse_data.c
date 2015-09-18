@@ -21,7 +21,7 @@ extern int mpt_parse_data(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 	const MPT_STRUCT(parsefmt) *fmt = &parse->format;
 	int curr, match = 0, last = -1;
 	
-	while ((curr = mpt_parse_getchar(parse, path)) >= 0) {
+	while ((curr = mpt_parse_getchar(&parse->src, path)) >= 0) {
 		/* escape release and begin conditions */
 		if (match) {
 			if (curr == match) {
@@ -49,8 +49,7 @@ extern int mpt_parse_data(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 		}
 		/* comments: continue to line end without save */
 		else if (!fmt->oend && MPT_iscomment(fmt, curr) && isspace(last)) {
-			if ((curr = mpt_parse_endline(parse)) == '\n')
-				parse->line++;
+			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
 		/* add currend trailing data to valid area */

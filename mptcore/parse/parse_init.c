@@ -29,14 +29,13 @@ static int parseCheck(void *data, const MPT_STRUCT(path) *path, int op)
  * 
  * initialize parser descriptor to default values.
  * 
- * \param parse parser structure
- * \param fmt   format information
+ * \param parse parse structure
  */
 extern void mpt_parse_init(MPT_STRUCT(parse) *parse)
 {
-	parse->source.getc = mpt_getchar_file;
-	parse->source.arg = 0;
-	parse->line = 1;
+	parse->src.getc = (int (*)(void *)) mpt_getchar_file;
+	parse->src.arg  = 0;
+	parse->src.line = 0;
 	
 	parse->check.ctl = parseCheck;
 	parse->check.arg = &parse->name;

@@ -7,19 +7,25 @@
  * 
  * Read till end of line without saving.
  * 
- * \param parse parse structure
+ * \param src  parse input data
  * 
  * \return newline character
  */
-extern int mpt_parse_endline(MPT_STRUCT(parse) *parse)
+extern int mpt_parse_endline(MPT_STRUCT(parseinput) *src)
 {
-	int curr;
+	int curr, len;
 	
-	while ((curr = parse->source.getc(parse->source.arg)) != '\n') {
+	len = 0;
+	if (!src->line) ++src->line;
+	
+	while ((curr = src->getc(src->arg)) != '\n') {
 		if (curr < 0) {
 			return curr;
 		}
+		++len;
 	}
-	return curr;
+	++src->line;
+	
+	return len;
 }
 

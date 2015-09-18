@@ -8,20 +8,22 @@
  * 
  * get next character from parser source and save to path.
  * 
- * \param parse	parser data
- * \param path	target path
+ * \param src   parser input
+ * \param path  target path
  * 
  * \return new input character
  */
-extern int mpt_parse_getchar(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
+extern int mpt_parse_getchar(MPT_STRUCT(parseinput) *src, MPT_STRUCT(path) *path)
 {
 	int curr;
 	
-	if ((curr = parse->source.getc(parse->source.arg)) <= 0) {
+	if (!src->line) ++src->line;
+	
+	if ((curr = src->getc(src->arg)) <= 0) {
 		return curr;
 	}
 	if (curr == '\n') {
-		parse->line++;
+		src->line++;
 	}
 	if (path && mpt_path_addchar(path, curr) < 0) {
 		return -1;

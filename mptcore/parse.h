@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_PARSE_H
-#define _MPT_PARSE_H	201502
+#define _MPT_PARSE_H  201502
 
 #include <ctype.h>
 #include <limits.h>
@@ -68,16 +68,24 @@ MPT_STRUCT(parseflg)
 	        opt;     /* option name format */
 };
 /* parser input metadata */
+MPT_STRUCT(parseinput)
+{
+#ifdef __cplusplus
+	parseinput();
+#else
+# define MPT_PARSEINPUT_INIT { 0, 0, 1 }
+#endif
+	int (*getc)(void *); /* byte read operation */
+	void *arg;           /* reader context */
+	size_t line;         /* current line */
+};
+/* parser context */
 MPT_STRUCT(parse)
 {
 #ifdef __cplusplus
-	parse(const char *file = 0);
+	parse();
 #endif
-	struct {
-	int (*getc)(void *);
-	void *arg;
-	} source;                    /* character source */
-	size_t line;                 /* current line */
+	MPT_STRUCT(parseinput) src;  /* character source */
 	
 	struct {
 	int (*ctl)(void *, const MPT_STRUCT(path) *, int);
@@ -107,15 +115,16 @@ extern int mpt_parse_post(MPT_STRUCT(path) *, int);
 extern int mpt_parse_format(MPT_STRUCT(parsefmt) *, const char *);
 extern MPT_TYPE(ParserFcn) mpt_parse_next_fcn(int);
 
+
 /* initialize parser structure */
 extern void mpt_parse_init(MPT_STRUCT(parse) *);
 
 /* read character from source, save in 'post' path area */
-extern int mpt_parse_getchar(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_getchar(MPT_STRUCT(parseinput) *, MPT_STRUCT(path) *);
 
 /* continue to next visible character / end of line without saving */
-extern int mpt_parse_nextvis(MPT_STRUCT(parse) *, const void *, size_t);
-extern int mpt_parse_endline(MPT_STRUCT(parse) *);
+extern int mpt_parse_nextvis(MPT_STRUCT(parseinput) *, const void *, size_t);
+extern int mpt_parse_endline(MPT_STRUCT(parseinput) *);
 
 /* get character from file */
 extern int mpt_getchar_file(void *);
@@ -153,17 +162,35 @@ __MPT_EXTDECL_END
 class Parse
 {
 public:
-    Parse(parse *);
+    Parse();
     virtual ~Parse();
-
-    virtual size_t line() const;
-    virtual bool reset();
+    
+    virtual size_t line(void) const;
+    virtual bool reset(void);
     virtual bool setFormat(const char *);
+    virtual bool open(const char *);
     virtual int read(struct node &, logger * = logger::defaultInstance());
-
+    
 protected:
     parse *_parse;
     ParserFcn _next;
+};
+
+class LayoutParser : public Parse
+{
+public:
+    LayoutParser();
+    ~LayoutParser();
+    
+    bool reset(void);
+    bool open(const char *);
+    
+    static int checkName(const parseflg *, const path *, int);
+    static const char *defaultFormat();
+    
+protected:
+    parse _d;
+    char *_fn;
 };
 #endif
 
