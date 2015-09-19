@@ -244,6 +244,21 @@ inline size_t array::left() const
 inline bool array::shared(void) const
 { return _buf && _buf->shared; }
 
+inline array &array::operator= (slice const& from)
+{ Slice<uint8_t> d = from.data(); set(d.len(), d.base()); return *this; }
+inline array &array::operator+= (array const& from)
+{ append(from.used(), from.base()); return *this; }
+inline array &array::operator+= (slice const& from)
+{ Slice<uint8_t> d = from.data(); append(d.len(), d.base()); return *this; }
+
+inline slice::slice(array const& a) : array(a), _off(0)
+{ _len = used(); }
+inline slice::~slice()
+{ }
+inline Slice<uint8_t> slice::data() const
+{ return Slice<uint8_t>(_len ? ((uint8_t *) (_buf+1))+_off : 0, _len); }
+
+
 /*! transtorming appended data */
 class EncodingArray
 {
@@ -263,21 +278,6 @@ protected:
     codestate _state;
     array _d;
 };
-
-inline array &array::operator= (slice const& from)
-{ Slice<uint8_t> d = from.data(); set(d.len(), d.base()); return *this; }
-inline array &array::operator+= (array const& from)
-{ append(from.used(), from.base()); return *this; }
-inline array &array::operator+= (slice const& from)
-{ Slice<uint8_t> d = from.data(); append(d.len(), d.base()); return *this; }
-
-inline slice::slice(array const& a) : array(a), _off(0)
-{ _len = used(); }
-inline slice::~slice()
-{ }
-inline Slice<uint8_t> slice::data() const
-{ return Slice<uint8_t>(_len ? ((uint8_t *) (_buf+1))+_off : 0, _len); }
-
 
 #ifdef _MPT_QUEUE_H
 /* IO extension to buffer */
@@ -546,12 +546,45 @@ protected:
     Array<Element> _d;
 };
 
-/*! extendable array for reference types */
-template <typename T>
-class RefArray
+/*! basic pointer array */
+class PointerArray
 {
 public:
-    RefArray(size_t len = 0) : _d(len * sizeof(T*))
+    inline PointerArray(size_t len = 0) : _d(len * sizeof(void*))
+    { }
+    inline PointerArray & operator=(const PointerArray &a)
+    {
+        _d = a._d;
+        return *this;
+    }
+    inline size_t size() const
+    {
+        return _d.used()/sizeof(void *);
+    }
+    bool insert(size_t , void *);
+    void compact();
+
+    inline void *get(size_t pos) const
+    {
+        if (pos >= size()) return 0;
+        return ((void **) _d.base())[pos];
+    }
+    bool set(size_t , void *) const;
+    size_t unused() const;
+    ssize_t offset(const void *) const;
+    bool swap(size_t p1, size_t p2) const;
+    bool move(size_t p1, size_t p2) const;
+
+protected:
+    struct array _d;
+};
+
+/*! extendable array for reference types */
+template <typename T>
+class RefArray : public PointerArray
+{
+public:
+    RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
     { }
     ~RefArray()
     {
@@ -571,17 +604,9 @@ public:
         *b = ref;
         return true;
     }
-    bool insert(size_t pos, T *ref)
-    {
-        T **b;
-        if (_d.shared() || !(b = (T **) _d.prepend(sizeof(*b), pos*sizeof(*b)))) return false;
-        *b = ref;
-        return true;
-    }
     inline T *get(size_t pos) const
     {
-        if (pos >= size()) return 0;
-        return ((T**) _d.base())[pos];
+        return (T *) PointerArray::get(pos);
     }
     T **resize(size_t len)
     {
@@ -601,57 +626,25 @@ public:
         size_t elem = 0, len = size();
         if (!ref) {
             for (size_t i = 0; i < len; ++i) {
-                if (!pos[i]) ++elem;
+                T *match;
+                if (!(match = pos[i])) continue;
+                match->unref();
+                pos[i] = 0;
+                ++elem;
             }
             return elem;
         }
         for (size_t i = 0; i < len; ++i) {
-            if (!pos[i] || (pos[i] != ref)) continue;
-            pos[i]->unref();
+            T *match;
+            if (!(match = pos[i]) || (match != ref)) continue;
+            match->unref();
             pos[i] = 0;
             ++elem;
         }
         return elem;
     }
-    ssize_t offset(const T *ref) const
-    {
-        T **pos = (T**) _d.base();
-        size_t len = size();
-        for (size_t i = 0; i < len; ++i) {
-             if (ref == pos[i]) return i;
-        }
-        return -1;
-    }
-    void compact()
-    {
-        size_t len = ::mpt::compact((void **) _d.base(), size());
-        _d.set(len * sizeof(T*));
-    }
-    bool swap(size_t p1, size_t p2) const
-    {
-        size_t len = size();
-        if (p1 > len || p2 > len) return false;
-        T *t, **b = (T **) _d.base();
-        t = b[p1];
-        b[p1] = b[p2];
-        b[p2] = t;
-        return true;
-    }
-    bool move(size_t p1, size_t p2) const
-    {
-        size_t len = size();
-        if (p1 >= len || p2 >= len) return false;
-        ::mpt::move((T**) _d.base(), p1, p2);
-        return true;
-    }
-    inline size_t size() const
-    { return _d.used()/sizeof(T *); }
-
     inline const Array<Reference<T> > &toArray() const
     { return *((const Array<Reference<T> > *) this); }
-    
-protected:
-    struct array _d;
 };
 
 /*! Group implementation using reference array */

@@ -5,10 +5,10 @@ include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # preprocessor/compiler flags
 INC ?= '${DIR_INC}'
-CPPWARN ?= all error
+CPPWARN  ?= all error
 CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
+CFLAGS   ?= -g -fstack-protector
 CXXFLAGS ?= ${CFLAGS}
-CFLAGS ?= -g -fstack-protector
 #
 # flags for linker
 LDDIRS  ?= '${DIR_LIB}'
@@ -46,6 +46,6 @@ sub_% :
 # static template
 static : ${STATIC} sub_static
 %_static : %.cpp
-	${CXX} -static ${CXXFLAGS} ${LDFLAGS} -o ${@} $^ ${LDLIBS}
+	${CXX} -static ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS} -o ${@} $^ ${LDLIBS}
 %_static : %.c
 	${CC} -static ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} $^ ${LDLIBS}

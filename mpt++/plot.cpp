@@ -587,17 +587,11 @@ void Layout::reset()
 
 bool Layout::open(const char *fn)
 {
-    if (!fn) {
-        if (!_parse) return true;
-        return _parse->open(fn);
-    }
     if (!_parse) {
+        if (!fn) return true;
         _parse = new LayoutParser();
     }
-    if (!_parse->open(fn)) {
-        return false;
-    }
-    return true;
+    return _parse->open(fn);
 }
 
 bool Layout::setAlias(const char *base, int len)

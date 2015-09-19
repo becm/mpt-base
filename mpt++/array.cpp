@@ -279,6 +279,54 @@ bool EncodingArray::setData(const message *msg)
     return true;
 }
 
+// basic pointer array
+size_t PointerArray::unused() const
+{
+    void **pos = (void **) _d.base();
+    size_t elem = 0, len = size();
+    for (size_t i = 0; i < len; ++i) {
+        if (!pos[i]) ++elem;
+    }
+    return elem;
+}
+void PointerArray::compact()
+{
+    size_t len = ::mpt::compact((void **) _d.base(), size());
+    _d.set(len * sizeof(void *));
+}
+bool PointerArray::swap(size_t p1, size_t p2) const
+{
+    size_t len = size();
+    if (p1 > len || p2 > len) return false;
+    void *t, **b = (void **) _d.base();
+    t = b[p1];
+    b[p1] = b[p2];
+    b[p2] = t;
+    return true;
+}
+bool PointerArray::move(size_t p1, size_t p2) const
+{
+    size_t len = size();
+    if (p1 >= len || p2 >= len) return false;
+    ::mpt::move((void **) _d.base(), p1, p2);
+    return true;
+}
+bool PointerArray::insert(size_t pos, void *ref)
+{
+    void **b;
+    if (_d.shared() || !(b = (void **) _d.prepend(sizeof(*b), pos*sizeof(*b)))) return false;
+    *b = ref;
+    return true;
+}
+ssize_t PointerArray::offset(const void *ref) const
+{
+    void **pos = (void **) _d.base();
+    size_t len = size();
+    for (size_t i = 0; i < len; ++i) {
+         if (ref == pos[i]) return i;
+    }
+    return -1;
+}
 
 // buffer metatype
 Buffer::Buffer()
