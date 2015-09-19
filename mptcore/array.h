@@ -564,7 +564,20 @@ protected:
 class LogStore : public logger
 {
 public:
-    LogStore();
+    enum {
+        PassSaved   =   0x1,
+        PassUnsaved =   0x2,
+        PassNormal  = PassSaved | PassUnsaved,
+        PassFile    =   0x4,
+        PassMessage =   0x8,
+        PassFlags   =   0xf,
+        
+        SaveMessage =  0x10,
+        SaveLog     =  0x20,
+        SaveLogAll  =  0x40,
+        SaveFlags   =  0xf0
+    };
+    LogStore(logger * = logger::defaultInstance());
     virtual ~LogStore();
     
     int unref();
@@ -573,22 +586,22 @@ public:
     virtual const LogEntry *nextEntry(void);
     virtual void clearLog(void);
     
-    virtual bool setStoreRange(int, int);
-    virtual bool setPassRange(int, int);
+    virtual bool setIgnoreLevel(int);
+    virtual bool setFlowFlags(int);
+    
+    inline int flowFlags(void) const
+    { return _flags; }
     
     inline const Slice<const LogEntry> logEnries(void) const
     { return _msg.slice(); }
     
 protected:
     Array<LogEntry> _msg;
-    logger *_next;
+    logger  *_next;
     uint32_t _act;
-    struct {
-        uint8_t min, max;
-    } _store;
-    struct {
-        uint8_t min, max;
-    } _pass;
+    uint8_t  _flags;
+    uint8_t  _ignore;
+    uint8_t  _level;
 };
 
 /*! linear search map type */
@@ -596,6 +609,21 @@ template <typename K, typename V>
 class Map
 {
 public:
+    class Element
+    {
+    public:
+        inline Element(const K &k = K(), const V &v = V()) : key(k), value(v)
+        { }
+        K key;
+        V value;
+    };
+    typedef const Element * const_iterator;
+    
+    inline const_iterator begin() const
+    { return _d.begin(); }
+    inline const_iterator end() const
+    { return _d.end(); }
+    
     bool set(const K &key, const V &value)
     {
         V *d = get(key);
@@ -603,16 +631,14 @@ public:
         *d = value;
         return true;
     }
-    inline bool append(const K &key, const V &value)
+    bool append(const K &key, const V &value)
     {
         return _d.insert(_d.size(), Element(key, value));
     }
     V *get(const K &key) const
     {
-        Element *e = _d.get(0);
-        size_t len = _d.size();
-        for (size_t i = 0; i < len; ++i, ++e) {
-            if (e->key == key) return &e->value;
+        for (auto &e : _d) {
+            if (e.key == key) return &e.value;
         }
         return 0;
     }
@@ -620,33 +646,15 @@ public:
     {
         return values(&key);
     }
-    inline Array<V> values() const
-    {
-        return values(0);
-    }
-protected:
-    class Element
-    {
-    public:
-        Element(const K &k, const V &v) : key(k), value(v)
-        { }
-        Element()
-        { }
-        ~Element()
-        { }
-        K key;
-        V value;
-    };
-    Array<V> values(const K *key) const
+    Array<V> values(const K *key = 0) const
     {
         Array<V> a;
-        Element *e = _d.get(0);
-        size_t len = _d.size();
-        for (size_t i = 0; i < len; ++i, ++e) {
-            if (!key || e->key == *key) a.insert(a.size(), e->value);
+        for (auto &e : _d) {
+            if (!key || e.key == *key) a.insert(a.size(), e.value);
         }
         return a;
     }
+protected:
     Array<Element> _d;
 };
 

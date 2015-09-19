@@ -566,14 +566,8 @@ int LogEntry::set(const char *from, int type, const char *fmt, va_list arg)
     return used();
 }
 
-LogStore::LogStore() : _next(logger::defaultInstance()), _act(0)
-{
-    _store.min = 1;
-    _store.max = LogFile-1;
-
-    _pass.min = 0;
-    _pass.max = UINT8_MAX;
-}
+LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(PassFlags), _ignore(LogDebug), _level(0)
+{ }
 LogStore::~LogStore()
 { }
 int LogStore::unref()
@@ -583,17 +577,35 @@ int LogStore::unref()
 }
 int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
 {
-    if (_next && type >= _pass.min && type <= _pass.max) {
+    int save = 0, pass = 0, code = 0x7f & type;
+    
+    if (!code) {
+        save |= _flags & SaveMessage;
+        pass |= _flags & PassMessage;
+    }
+    else if (code >= _ignore) {
+        save = (type & LogFile) && (_flags & SaveLogAll);
+        pass |= _flags & PassUnsaved;
+    } else {
+        save = 1;
+        pass |= _flags & PassSaved;
+    }
+    if (type < 0 || type >= LogFile) {
+        pass |= _flags & PassFile;
+    }
+    if (_next && pass) {
         va_list tmp;
         va_copy(tmp, arg);
         _next->log(from, type, fmt, tmp);
         va_end(tmp);
     }
-    if (type < _store.min || type > _store.max) {
+    if (!save) {
         return 0;
     }
     LogEntry m;
     int ret;
+    
+    if (code && code < _level) _level = code;
 
     if ((ret = m.set(from, type, fmt, arg)) < 0) {
         return ret;
@@ -618,35 +630,20 @@ void LogStore::clearLog()
 {
     _msg.clear();
     _act = 0;
+    _level = 0;
 }
 
-bool LogStore::setStoreRange(int min, int max)
+bool LogStore::setIgnoreLevel(int val)
 {
-    if (min < 0) min = LogFile;
-    if (max < 0) max = UINT8_MAX;
-
-    if (min < 0 || max > UINT8_MAX || min > max) {
-        return false;
-    }
-    _store.min = min;
-    _store.max = max;
-
-    return false;
+    if (val < 0) val = LogDebug;
+    else if (val >= LogFile) return false;
+    _ignore = val;
+    return true;
 }
-bool LogStore::setPassRange(int min, int max)
+bool LogStore::setFlowFlags(int val)
 {
-    if (min < 0) min = LogFile;
-    if (max < 0) max = UINT8_MAX;
-
-    if (min < 0 || max > UINT8_MAX || min > max) {
-        return false;
-    }
-    _pass.min = min;
-    _pass.max = max;
-
-    return false;
+    _flags = val;
+    return true;
 }
-
-
 
 __MPT_NAMESPACE_END

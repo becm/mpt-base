@@ -455,8 +455,8 @@ public:
     class Parts : public array
     {
     public:
-        inline Slice<linepart> data(void) const
-        { return Slice<linepart>((linepart *) base(), used()/sizeof(linepart)); }
+        inline Slice<const linepart> data(void) const
+        { return Slice<const linepart>((linepart *) base(), used()/sizeof(linepart)); }
         
         bool create(const Transform &, polyline &);
         size_t userLength(void);
@@ -465,7 +465,7 @@ public:
     class Points : public array
     {
     public:
-        Slice<dpoint> data(void) const;
+        Slice<const dpoint> data(void) const;
         dpoint *resize(size_t);
     };
     Polyline(int dim = -1);
@@ -477,7 +477,7 @@ public:
     const char *format(void) const;
     
     virtual Slice<dpoint> values(int part = -1) const;
-    virtual Slice<linepart> vis(void) const;
+    virtual Slice<const linepart> vis(void) const;
     virtual void transform(const Transform &);
     
     bool setValues(int dim, size_t len, const double *val, int ld = 1, size_t offset = 0);

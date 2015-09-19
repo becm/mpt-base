@@ -76,7 +76,7 @@ bool Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
         return false;
     }
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
-        Reference<Cycle> *cyc = Map::get(laydest(layId+1, graphID+i, i+1));
+        Reference<Cycle> *cyc = Map::get(laydest(layId+1, graphID+1, i+1));
         if (!cyc) continue;
         if (!graph.setCycle(i, *cyc)) {
             return false;
@@ -99,13 +99,11 @@ bool Mapping::loadCycles(int layId, const Layout &lay) const
 // deregister cycle references
 void Mapping::clearCycles(int lay, int grf, int wld) const
 {
-    for (size_t i = 0, max = _d.size(); i < max; ++i) {
-        Element *e = _d.get(i);
-        if (!e) continue;
-        if (lay >= 0 && e->key.lay != lay) continue;
-        if (grf >= 0 && e->key.grf != grf) continue;
-        if (wld >= 0 && e->key.grf != wld) continue;
-        e->value = Reference<Cycle>();
+    for (auto &e : _d) {
+        if (lay >= 0 && e.key.lay != lay) continue;
+        if (grf >= 0 && e.key.grf != grf) continue;
+        if (wld >= 0 && e.key.grf != wld) continue;
+        e.value = Reference<Cycle>();
     }
 }
 // get cycle reference
@@ -113,18 +111,14 @@ const Reference<Cycle> &Mapping::getCycle(const laydest &dest) const
 {
     static const Reference<Cycle> def;
     // search matching destination
-    for (int i = 0, max = _d.size(); i < max; ++i) {
-        Element *e;
-        if (!(e = _d.get(i))) {
-            continue;
-        }
+    for (auto &e : _d) {
         // match target cycle
-        if (!(e->key == laydest(dest.lay, dest.grf, dest.wld))) {
+        if (!(e.key == laydest(dest.lay, dest.grf, dest.wld))) {
             continue;
         }
         // cycle not active
         Cycle *c;
-        if (!(c = e->value)) {
+        if (!(c = e.value)) {
             return def;
         }
         // bad dimension
@@ -133,7 +127,7 @@ const Reference<Cycle> &Mapping::getCycle(const laydest &dest) const
             return def;
         }
         // return cycle reference
-        return e->value;
+        return e.value;
     }
     // no destination found
     return def;
