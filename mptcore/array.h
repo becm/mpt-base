@@ -325,22 +325,7 @@ template <typename T>
 class Array
 {
 public:
-    class iterator
-    {
-    public:
-        iterator(T *d) : _d(d)
-        { }
-        iterator operator ++()
-        { ++_d; return *this; }
-        const T & operator *() const
-        { return *_d; }
-        bool operator ==(const iterator &it)
-        { return _d == it._d; }
-        bool operator !=(const iterator &it)
-        { return !(*this == it); }
-    protected:
-        T *_d;
-    };
+    typedef T* iterator;
     
     inline Array(size_t len = 0) : _d(len * sizeof(T))
     { }
@@ -348,10 +333,10 @@ public:
     { clear(); }
 
     inline iterator begin() const
-    { return iterator(get(0)); }
+    { return (T *) _d.base(); }
     
     inline iterator end() const
-    { return iterator(get(0)+size()); }
+    { return ((T *) _d.base())+size(); }
     
     Array & operator=(const Array &a)
     {
@@ -438,6 +423,125 @@ public:
     }
 protected:
     struct array _d;
+};
+
+/*! basic pointer array */
+class PointerArray
+{
+public:
+    typedef void** iterator;
+    
+    inline PointerArray(size_t len = 0) : _d(len * sizeof(void*))
+    { }
+    inline PointerArray & operator=(const PointerArray &a)
+    {
+        _d = a._d;
+        return *this;
+    }
+
+    inline iterator begin() const
+    { return (void **) _d.base(); }
+    
+    inline iterator end() const
+    { return ((void **) _d.base())+size(); }
+    
+    inline size_t size() const
+    {
+        return _d.used()/sizeof(void *);
+    }
+    bool insert(size_t , void *);
+    void compact();
+    
+    inline void *get(size_t pos) const
+    {
+        if (pos >= size()) return 0;
+        return ((void **) _d.base())[pos];
+    }
+    bool set(size_t , void *) const;
+    size_t unused() const;
+    ssize_t offset(const void *) const;
+    bool swap(size_t p1, size_t p2) const;
+    bool move(size_t p1, size_t p2) const;
+
+protected:
+    struct array _d;
+};
+
+/*! extendable array for reference types */
+template <typename T>
+class RefArray : public PointerArray
+{
+public:
+    typedef Reference<T>* iterator;
+    
+    RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
+    { }
+    ~RefArray()
+    {
+        if (!_d.shared()) resize(0);
+    }
+    RefArray & operator=(const RefArray &a)
+    {
+        if (!_d.shared()) resize(0);
+        _d = a._d;
+        return *this;
+    }
+
+    inline iterator begin() const
+    { return (Reference<T> *) _d.base(); }
+    
+    inline iterator end() const
+    { return ((Reference<T> *) _d.base())+size(); }
+    
+    bool set(size_t pos, T *ref) const
+    {
+        if (_d.shared() || pos >= size()) return false;
+        T **b = ((T **) _d.base()) + pos;
+        if (*b) (*b)->unref();
+        *b = ref;
+        return true;
+    }
+    inline T *get(size_t pos) const
+    {
+        return (T *) PointerArray::get(pos);
+    }
+    T **resize(size_t len)
+    {
+        if (_d.shared()) return 0;
+        size_t s = size();
+        if (len <= s) {
+            T **b = (T**) _d.base();
+            for (size_t i = len; i < s; ++i) {
+                if (b[i]) b[i]->unref();
+            }
+        }
+        return (T**) _d.set(len * sizeof(T*));
+    }
+    size_t clear(const T *ref = 0) const
+    {
+        T **pos = (T**) _d.base();
+        size_t elem = 0, len = size();
+        if (!ref) {
+            for (size_t i = 0; i < len; ++i) {
+                T *match;
+                if (!(match = pos[i])) continue;
+                match->unref();
+                pos[i] = 0;
+                ++elem;
+            }
+            return elem;
+        }
+        for (size_t i = 0; i < len; ++i) {
+            T *match;
+            if (!(match = pos[i]) || (match != ref)) continue;
+            match->unref();
+            pos[i] = 0;
+            ++elem;
+        }
+        return elem;
+    }
+    inline const Array<Reference<T> > &asArray() const
+    { return *((const Array<Reference<T> > *) this); }
 };
 
 /*! storage for log messages */
@@ -544,107 +648,6 @@ protected:
         return a;
     }
     Array<Element> _d;
-};
-
-/*! basic pointer array */
-class PointerArray
-{
-public:
-    inline PointerArray(size_t len = 0) : _d(len * sizeof(void*))
-    { }
-    inline PointerArray & operator=(const PointerArray &a)
-    {
-        _d = a._d;
-        return *this;
-    }
-    inline size_t size() const
-    {
-        return _d.used()/sizeof(void *);
-    }
-    bool insert(size_t , void *);
-    void compact();
-
-    inline void *get(size_t pos) const
-    {
-        if (pos >= size()) return 0;
-        return ((void **) _d.base())[pos];
-    }
-    bool set(size_t , void *) const;
-    size_t unused() const;
-    ssize_t offset(const void *) const;
-    bool swap(size_t p1, size_t p2) const;
-    bool move(size_t p1, size_t p2) const;
-
-protected:
-    struct array _d;
-};
-
-/*! extendable array for reference types */
-template <typename T>
-class RefArray : public PointerArray
-{
-public:
-    RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
-    { }
-    ~RefArray()
-    {
-        if (!_d.shared()) resize(0);
-    }
-    RefArray & operator=(const RefArray &a)
-    {
-        if (!_d.shared()) resize(0);
-        _d = a._d;
-        return *this;
-    }
-    bool set(size_t pos, T *ref) const
-    {
-        if (_d.shared() || pos >= size()) return false;
-        T **b = ((T **) _d.base()) + pos;
-        if (*b) (*b)->unref();
-        *b = ref;
-        return true;
-    }
-    inline T *get(size_t pos) const
-    {
-        return (T *) PointerArray::get(pos);
-    }
-    T **resize(size_t len)
-    {
-        if (_d.shared()) return 0;
-        size_t s = size();
-        if (len <= s) {
-            T **b = (T**) _d.base();
-            for (size_t i = len; i < s; ++i) {
-                if (b[i]) b[i]->unref();
-            }
-        }
-        return (T**) _d.set(len * sizeof(T*));
-    }
-    size_t clear(const T *ref = 0) const
-    {
-        T **pos = (T**) _d.base();
-        size_t elem = 0, len = size();
-        if (!ref) {
-            for (size_t i = 0; i < len; ++i) {
-                T *match;
-                if (!(match = pos[i])) continue;
-                match->unref();
-                pos[i] = 0;
-                ++elem;
-            }
-            return elem;
-        }
-        for (size_t i = 0; i < len; ++i) {
-            T *match;
-            if (!(match = pos[i]) || (match != ref)) continue;
-            match->unref();
-            pos[i] = 0;
-            ++elem;
-        }
-        return elem;
-    }
-    inline const Array<Reference<T> > &toArray() const
-    { return *((const Array<Reference<T> > *) this); }
 };
 
 /*! Group implementation using reference array */

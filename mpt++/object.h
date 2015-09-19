@@ -23,6 +23,9 @@ public:
     inline operator const property&() const
     { return _prop; }
 
+    inline operator const value&() const
+    { return _prop.val; }
+
     bool select(const char * = 0);
     bool select(int);
 
@@ -52,28 +55,28 @@ protected:
 };
 
 template <typename T>
-class Source : public source, Slice<const T>
+class Source : public source
 {
 public:
-    Source(const T *val, size_t len = 1) : Slice<const T>(val, len)
+    Source(const T *val, size_t len = 1) : _d(val, len)
     { }
-
     virtual ~Source()
     { }
 
     int unref()
-    { return 0; }
+    { delete this; return 0; }
 
     int conv(int type, void *dest)
     {
-        if (!Slice<const T>::_len) return -2;
-        const T *val = Slice<const T>::_base;
-        if ((type = convert((const void **) &val, typeIdentifier<T>(), dest, type)) < 0) return -1;
-        if (!dest) return type;
-        Slice<const T>::_len -= sizeof(T);
-        Slice<const T>::_base = val;
+        if (!_d.len()) return -2;
+        const T *val = _d.base();
+        type = convert((const void **) &val, typeIdentifier<T>(), dest, type);
+        if ((type < 0) || !dest) return type;
+        _d.shift(1);
         return sizeof(T);
     }
+protected:
+    Slice<const T> _d;
 };
 
 // auto-create reference

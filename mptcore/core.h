@@ -20,9 +20,14 @@
 #endif
 
 #ifdef __cplusplus
-# include <string>
+
+# if __cplusplus >= 201103L
+#  define __MPT_CONST_EXPR constexpr
+# else
+#  define __MPT_CONST_EXPR
+# endif
+
 # include <sstream>
-# include <stdlib.h>
 
 # define __MPT_NAMESPACE_BEGIN namespace mpt {
 # define __MPT_NAMESPACE_END   }
@@ -192,21 +197,21 @@ class Transform;
 extern int convert(const void **, int , void *, int);
 
 template<typename T>
-inline int typeIdentifier(void) { return T::Type; }
+inline __MPT_CONST_EXPR int typeIdentifier(void) { return T::Type; }
 
 /* floating point values */
-template<> inline int typeIdentifier<float>(void)  { return 'f'; }
-template<> inline int typeIdentifier<double>(void) { return 'd'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float>(void)  { return 'f'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<double>(void) { return 'd'; }
 /* integer values */
-template<> inline int typeIdentifier<int8_t>(void)  { return 'b'; }
-template<> inline int typeIdentifier<int16_t>(void) { return 'h'; }
-template<> inline int typeIdentifier<int32_t>(void) { return 'i'; }
-template<> inline int typeIdentifier<int64_t>(void) { return 'l'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>(void)  { return 'b'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>(void) { return 'h'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>(void) { return 'i'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>(void) { return 'l'; }
 /* unsigned values */
-template<> inline int typeIdentifier<uint8_t>(void)  { return 'B'; }
-template<> inline int typeIdentifier<uint16_t>(void) { return 'H'; }
-template<> inline int typeIdentifier<uint32_t>(void) { return 'I'; }
-template<> inline int typeIdentifier<uint64_t>(void) { return 'L'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>(void)  { return 'B'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>(void) { return 'H'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>(void) { return 'I'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>(void) { return 'L'; }
 
 /*! container for reference type pointer */
 template<typename T>
@@ -225,13 +230,11 @@ public:
     
     bool setReference(Reference const &ref)
     {
-        if (_ref == ref._ref) return true;
-        T *t = 0;
-        if (ref._ref && !(t = ref._ref->addref())) {
-            return false;
-        }
-        if (_ref) { _ref->unref(); _ref = 0; }
-        _ref = t;
+        T *r = ref._ref;
+        if (r == _ref) return true;
+        if (r && !(r = r->addref())) return false;
+        if (_ref) _ref->unref();
+        _ref = r;
         return true;
     }
     inline Reference & operator= (Reference const &ref)
@@ -386,23 +389,32 @@ template <typename T>
 class Slice
 {
 public:
+    typedef T* iterator;
+    
     inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
     { }
+
+    inline iterator begin() const
+    { return _base; }
+    
+    inline iterator end() const
+    { return _base+len(); }
+    
     inline size_t len() const
     { return _len / sizeof(T); }
     inline T *base() const
     { return _base; };
-    bool skip(size_t len)
+    bool skip(size_t l)
     {
-        if (len > _len/sizeof(T)) return false;
-        if (!(_len -= len * sizeof(T))) _base = 0;
-        else _base += len;
+        if (l > len()) return false;
+        if (!(_len -= l * sizeof(T))) _base = 0;
+        else _base += l;
         return true;
     }
-    bool trim(size_t len)
+    bool trim(size_t l)
     {
-        if ((len *= sizeof(T)) > _len) return false;
-        if (!(_len -= len)) _base = 0;
+        if (l > len()) return false;
+        if (!(_len -= (l * sizeof(T)))) _base = 0;
         return true;
     }
     const char *fmt(void)

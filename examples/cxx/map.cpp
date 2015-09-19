@@ -31,6 +31,11 @@ extern int main(int , char * const [])
 	
 	Array<Reference<Cycle> > r = p.values();
 	
+	for (auto &x : r) {
+		Cycle *m = c;
+		std::cout << m->size() << std::endl;
+	}
+	
 	r = p.values(laydest(1,4,3));
 	
 	return 0;
