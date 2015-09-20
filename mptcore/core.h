@@ -442,6 +442,7 @@ MPT_STRUCT(identifier)
 	
 	bool setName(const char *, int = -1);
 	bool setName(size_t , const void *);
+	bool setName(const identifier &);
 protected:
 #else
 # define MPT_IDENTIFIER_INIT { 0, 0, 0, { 0 }, 0 }

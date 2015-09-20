@@ -623,8 +623,8 @@ public:
     bool updateTransform(int dim = -1);
     
 protected:
-    RefArray<Item<Axis> > _axes;
-    RefArray<Data> _worlds;
+    ItemArray<Axis> _axes;
+    RefArray<Data>  _worlds;
 };
 
 class Layout : public Metatype, public Collection
@@ -662,7 +662,7 @@ public:
     fpoint minScale(void) const;
     
 protected:
-    RefArray<Item<Graph> > _graphs;
+    ItemArray<Graph> _graphs;
     Parse *_parse;
     char *_alias;
     char *_font;

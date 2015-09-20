@@ -425,6 +425,47 @@ protected:
     struct array _d;
 };
 
+
+/*! typed array with standard operations */
+template <typename T>
+class ItemArray : public Array<Item<T> >
+{
+public:
+    inline ItemArray(size_t len = 0) : Array<Item<T> >(len)
+    { }
+    
+    Item<T> *append(T *t, const char *id, int len = -1)
+    {
+        Item<T> *it = (Item<T> *) Array<Item<T> >::_d.append(sizeof(*it));
+        if (!it) return 0;
+        new (it) Item<T>(t);
+        if (it->setName(id, len)) {
+            return it;
+        }
+        Array<Item<T> >::_d.set(Array<Item<T> >::_d.used() - sizeof(*it));
+        return 0;
+    }
+    bool compact()
+    {
+        Item<T> *space = 0;
+        size_t len = 0;
+        for (Item<T> *pos = Array<Item<T> >::begin(), *to = Array<Item<T> >::end(); pos != to; ++pos) {
+            metatype *m = *pos;
+            if (!m) {
+                if (!space) space = pos;
+                continue;
+            }
+            ++len;
+            if (!space) continue;
+            memcpy(space, pos, sizeof(*space));
+            do { ++space; } while (!(m = *space) && space < pos);
+        }
+        if (!space) return false;
+        Array<Item<T> >::_d.set(len * sizeof(*space));
+        return true;
+    }
+};
+
 /*! basic pointer array */
 class PointerArray
 {
@@ -472,7 +513,7 @@ template <typename T>
 class RefArray : public PointerArray
 {
 public:
-    typedef Reference<T>* iterator;
+    typedef const T** iterator;
     
     RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
     { }
@@ -488,10 +529,10 @@ public:
     }
 
     inline iterator begin() const
-    { return (Reference<T> *) _d.base(); }
+    { return (const T **) _d.base(); }
     
     inline iterator end() const
-    { return ((Reference<T> *) _d.base())+size(); }
+    { return ((const T **) _d.base())+size(); }
     
     bool set(size_t pos, T *ref) const
     {
@@ -672,7 +713,7 @@ public:
     
 protected:
     int unref();
-    RefArray<Item<metatype> > _items;
+    ItemArray<metatype> _items;
 };
 
 #endif /* __cplusplus */

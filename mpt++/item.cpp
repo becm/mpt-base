@@ -252,44 +252,39 @@ const Item<metatype> *Collection::item(size_t pos) const
 
 Item<metatype> *Collection::append(metatype *mt)
 {
-    Item<metatype> *it = new Item<metatype>(mt);
-    if (_items.insert(_items.size(), it)) {
-        return it;
-    }
-    it->detach();
-    it->unref();
-    return 0;
+    return _items.append(mt, 0);
 }
 
 bool Collection::clear(const metatype *mt)
 {
-    bool remove = false;
+    size_t remove = 0;
     if (!mt) {
-        if (_items.size()) remove = true;
-        _items = RefArray<Item<metatype> >();
-        return remove;
+        if (!_items.size()) remove = 1;
+        _items = ItemArray<metatype>();
+        return remove ? true : false;
     }
-    bool sparse = false;
-    for (size_t i = 0, len = _items.size(); i < len; ++i) {
-        Item<metatype> *it;
-        if (!(it = _items.get(i))) { sparse = true; continue; }
-        if (mt && mt != *it) continue;
-        _items.set(i, 0);
-        remove = sparse = true;
+    for (auto &it : _items) {
+        metatype *ref = it;
+        if (mt != ref) continue;
+        it.detach()->unref();
+        ++remove;
     }
-    if (sparse) _items.compact();
+    if (remove > _items.size()/2) {
+        _items.compact();
+    }
     return remove;
 }
 bool Collection::bind(const Relation &from, logger *out)
 {
-    for (size_t i = 0, len = _items.size(); i < len; ++i) {
-        Item<metatype> *it;
+    for (auto &it : _items) {
         metatype *m;
         Group *g;
-        if (!(it = _items.get(i)) || !(m = *it) || !(g = m->cast<Group>())) {
+        if (!(m = it) || !(g = m->cast<Group>())) {
             continue;
         }
-        if (!g->bind(GroupRelation(*g, &from), out)) return false;
+        if (!g->bind(GroupRelation(*g, &from), out)) {
+            return false;
+        }
     }
     return true;
 }
@@ -299,12 +294,13 @@ ssize_t Collection::offset(const metatype *mt) const
     if (!mt) {
         return _items.size();
     }
-    for (size_t i = 0, max = _items.size(); i < max; ++i) {
-        Item<metatype> *it = _items.get(i);
-        metatype *m;
-        if (it && (m = *it) && m == mt) {
+    ssize_t i = 0;
+    for (auto &it : _items) {
+        metatype *m = it;
+        if (m == mt) {
             return i;
         }
+        ++i;
     }
     return -2;
 }

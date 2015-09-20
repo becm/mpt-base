@@ -207,36 +207,45 @@ Graph *Graph::addref()
 bool Graph::bind(const Relation &rel, logger *out)
 {
     static const char fname[] = "mpt::Graph::bind()";
-    const Item<metatype> *it;
     metatype *m;
     const char *names, *curr;
     size_t len;
 
+    ItemArray<Axis> oldaxes = _axes;
+    _axes = ItemArray<Axis>();
+
+    RefArray<Data> oldworlds = _worlds;
+    _worlds = RefArray<Data>();
+
     if (!(names = axes())) {
-        for (size_t i = 0, max = _items.size(); i < max; ++i) {
-            if (!(it = _items.get(i)) || !(m = *it) || m->type() != Axis::Type) continue;
+        for (auto &it : _items) {
+            if (!(m = it) || m->type() != Axis::Type) continue;
             Axis *a;
             if (!(a = dynamic_cast<Axis *>(m))) {
                 continue;
             }
             Reference<Axis> ref(a->addref());
-            if (!addAxis(ref, it->name())) {
-                if (out) out->error(fname, "%s: %s", MPT_tr("could not create axis"), it->name());
-            } else {
+            if ((a = ref) && addAxis(a, curr = it.name())) {
                 ref.detach();
+                continue;
             }
+            if (out) out->error(fname, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
+            _axes = oldaxes;
+            return false;
         }
     }
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         m = rel.find(Axis::Type, curr, len);
         if (!m) {
             if (out) out->error(fname, "%s: %s", MPT_tr("could not find axis"), std::string(curr, len).c_str());
+            _axes = oldaxes;
             return false;
         }
         Axis *a;
         if (!(a = dynamic_cast<Axis *>(m))) {
             if (out) out->error(fname, "%s: %s", MPT_tr("no axis type"), std::string(curr, len).c_str());
-            continue;
+            _axes = oldaxes;
+            return false;
         }
         const char *sep;
         while ((sep = (char *) memchr(curr, ':', len))) {
@@ -244,36 +253,44 @@ bool Graph::bind(const Relation &rel, logger *out)
             curr = sep + 1;
         }
         Reference<Axis> ref(a->addref());
-        if (!addAxis(ref, curr, len)) {
+        if (!(a = ref) || !addAxis(a, curr, len)) {
             if (out) out->error(fname, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
-        } else {
-            ref.detach();
+            _axes = oldaxes;
+            return false;
         }
+        ref.detach();
     }
     if (!(names = worlds())) {
-        for (size_t i = 0, max = _items.size(); i < max; ++i) {
-            if (!(it = _items.get(i)) || !(m = *it) || m->type() != World::Type) continue;
+        for (auto &it : _items) {
+            if (!(m = it) || m->type() != World::Type) continue;
             World *w;
             if (!(w = dynamic_cast<World *>(m))) {
                 continue;
             }
             Reference<World> ref(w->addref());
-            if (!addWorld(ref, it->name())) {
-                if (out) out->error(fname, "%s: %s", MPT_tr("could not assign world"), it->name());
-            } else {
+            if ((w = ref) && addWorld(w, curr = it.name())) {
                 ref.detach();
+                continue;
             }
+            if (out) out->error(fname, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
+            _axes = oldaxes;
+            _worlds = oldworlds;
+            return false;
         }
     }
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         if (!(m = rel.find(World::Type, curr, len))) {
             if (out) out->error(fname, "%s: %s", MPT_tr("could not find world"), std::string(curr, len).c_str());
+            _axes = oldaxes;
+            _worlds = oldworlds;
             return false;
         }
         World *w;
         if (!(w = dynamic_cast<World *>(m))) {
             if (out) out->error(fname, "%s: %s", MPT_tr("no world type"), std::string(curr, len).c_str());
-            continue;
+            _axes = oldaxes;
+            _worlds = oldworlds;
+            return false;
         }
         const char *sep;
         while ((sep = (char *) memchr(curr, ':', len))) {
@@ -281,17 +298,23 @@ bool Graph::bind(const Relation &rel, logger *out)
             curr = sep + 1;
         }
         Reference<World> ref(w->addref());
-        if (!addWorld(ref, curr, len)) {
+        if (!(w = ref) || !addWorld(w, curr, len)) {
             if (out) out->error(fname, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
-        } else {
-            ref.detach();
+            _axes = oldaxes;
+            _worlds = oldworlds;
+            return false;
         }
+        ref.detach();
     }
-    for (int i = 0; (it = item(i)); ++i) {
+    for (auto &it : _items) {
         Group *g;
-        if (!(m = *it) || !(g = m->cast<Group>())) continue;
+        if (!(m = it) || !(g = m->cast<Group>())) continue;
         GroupRelation gr(*g, &rel);
-        if (!g->bind(gr, out)) return false;
+        if (!g->bind(gr, out)) {
+            _axes = oldaxes;
+            _worlds = oldworlds;
+            return false;
+        }
     }
     return true;
 }
@@ -332,27 +355,21 @@ const Item<Axis> &Graph::axis(int pos) const
 }
 Item<Axis> *Graph::addAxis(Axis *from, const char *name, int nlen)
 {
-    int nax = _axes.size();
-    Item<Axis> *it;
     Axis *a;
 
     if (!(a = from)) {
-        it = new Item<Axis>(a = new Axis);
+        a = new Axis;
     }
     else {
-        for (int i = 0; i < nax; ++i) {
-            Item<Axis> *it = _axes.get(i);
-            if (it && a == *it) return 0; // deny multiple dimensions sharing same transformation
+        for (auto &it : _axes) {
+            if (a == it) return 0; // deny multiple dimensions sharing same transformation
         }
-        it = new Item<Axis>(a);
     }
-    if (it->setName(name, nlen)
-        && _axes.insert(_axes.size(), it)) {
-        updateTransform(nax);
+    Item<Axis> *it;
+    if ((it = _axes.append(a, name, nlen))) {
         return it;
     }
-    if (!from) it->detach();
-    it->unref();
+    if (!from) a->unref();
     return 0;
 }
 
@@ -523,22 +540,24 @@ bool Layout::update(metatype *m)
 }
 bool Layout::bind(const Relation &rel, logger *out)
 {
+    ItemArray<metatype> old = _items;
     if (!Collection::bind(rel, out)) return false;
 
-    _graphs = RefArray<Item<Graph> >();
+    ItemArray<Graph> arr;
 
-    Item<metatype> *it;
-    for (size_t i = 0; (it = _items.get(i)); ++i) {
+    for (auto &it : _items) {
         metatype *m;
         Graph *g;
-        if (!(m = *it) || !(g = dynamic_cast<Graph *>(m)) || !(g = g->addref())) continue;
-        Item<Graph> *gr = new Item<Graph>(g);
+        if (!(m = it) || !(g = dynamic_cast<Graph *>(m))) continue;
 
-        if (!gr->setName(it->name())
-            || !_graphs.insert(_graphs.size(), gr)) {
-            gr->unref();
+        Reference<Graph> ref(g->addref());
+        if (!(g = ref) || !arr.append(g, it.name())) {
+            _items = old;
+            return false;
         }
+        ref.detach();
     }
+    _graphs = arr;
     return true;
 }
 bool Layout::set(const struct property &pr, logger *log)
@@ -580,7 +599,7 @@ bool Layout::load(logger *out)
 }
 void Layout::reset()
 {
-    _graphs = RefArray<Item<Graph> >();
+    _graphs = ItemArray<Graph>();
     setFont(0);
     setAlias(0);
 }
@@ -607,10 +626,9 @@ fpoint Layout::minScale() const
 {
     float x = 1, y = 1;
 
-    for (size_t i = 0, max = _graphs.size(); i < max; ++i) {
-        Item<Graph> *it = _graphs.get(i);
+    for (auto &it : _graphs) {
         Graph *g;
-        if (!it || !(g = *it)) continue;
+        if (!(g = it)) continue;
         if (g->scale.x < x) x = g->scale.x;
         if (g->scale.y < y) y = g->scale.y;
     }
