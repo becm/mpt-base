@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "message.h"
+
 #include "object.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -40,62 +42,45 @@ int logger::critical(const char *from, const char *fmt, ... )
     va_end(va);
     return ret;
 }
-
-class defaultLogger : public logger
-{
-public:
-    int unref();
-    int log(const char *, int, const char *, va_list );
-};
-int defaultLogger::unref()
-{ return 0; }
-
-int defaultLogger::log(const char *from, int arg, const char *fmt, va_list va)
-{
-    FILE *fd;
-    if (arg) {
-        fd = stderr;
-        if (from) {
-            fputs(from, fd); fputs(": ", fd);
-        }
-    } else {
-        fd = stdout;
-    }
-    arg = vfprintf(fd, fmt, va);
-    fputc('\n', fd);
-    return arg;
-}
-
 logger *logger::defaultInstance()
 {
-    static defaultLogger log;
-    return &log;
+    return _mpt_log_default(stderr);
 }
 
 
-static Output &msgOut(Output &out, const char *fcn, const char *nspace)
+bool Output::setSource(const char *fcn, const char *nspace, pid_t pid)
 {
-    if (!fcn) return out;
-    if (nspace && *nspace) out.nospace() << nspace << "::";
-    out.nospace() << fcn << "[" << getpid() << "]:";
-    return out;
+    Message *msg = _msg;
+    if (msg->_flen) return false;
+    if (nspace && *nspace) msg->buf << nspace << "::";
+    
+    if (pid < 0) pid = getpid();
+    
+    msg->buf << fcn;
+    if (pid) msg->buf << '[' << pid << ']';
+    msg->buf.put(0);
+    msg->_flen = msg->buf.str().size();
+    return true;
 }
 
 Output debug(const char *fcn, const char *nspace)
 {
-    Output out(LogInfo);
-    return msgOut(out, fcn, nspace).space().space();
+    Output out(LogDebug);
+    out.setSource(fcn, nspace);
+    return out;
 }
 
 Output warning(const char *fcn, const char *nspace)
 {
     Output out(LogWarning);
-    return msgOut(out, fcn, nspace).space();
+    out.setSource(fcn, nspace);
+    return out;
 }
 Output critical(const char *fcn, const char *nspace)
 {
     Output out(LogCritical);
-    return msgOut(out, fcn, nspace).space();
+    out.setSource(fcn, nspace);
+    return out;
 }
 
 Output::Message *Output::Message::addref()
@@ -109,10 +94,15 @@ int Output::Message::unref()
     if (!_ref) return 0;
     if (--_ref) return _ref;
     logger *o;
-    if (type >= 0 && (o = logger::defaultInstance())) {
-        const std::string &str = buf.str();
-        mpt_log(o, 0, type, "%s", str.c_str());
+    if ((o = _out) || (o = logger::defaultInstance())) {
+        const char *msg = buf.str().c_str(), *fcn = 0;
+        if (_flen) {
+            fcn = msg;
+            msg += _flen;
+        }
+        mpt_log(o, fcn, _type, "%s", msg);
     }
+    if (_out) _out->unref();
     delete this;
     return 0;
 }

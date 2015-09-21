@@ -30,7 +30,7 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	MPT_STRUCT(message) msg;
 	ssize_t len;
 	int arg;
-	const char *prefix = 0;
+	const char *ansi = 0;
 	
 	if (!omsg) return 0;
 	msg = *omsg;
@@ -67,8 +67,8 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	}
 	len = 0;
 	
-	if ((isatty(fileno(out))) && (prefix = mpt_output_prefix(arg))) {
-		fputs(prefix, out);
+	if ((isatty(fileno(out))) && (ansi = mpt_ansi_code(arg))) {
+		fputs(ansi, out);
 	}
 	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
 		fputc('@', out);
@@ -93,8 +93,8 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 		msg.used = msg.cont->iov_len;
 		++msg.cont;
 	}
-	if (prefix) {
-		fputs("\033[0m", out);
+	if (ansi) {
+		fputs(mpt_ansi_restore(), out);
 	}
 	fputc('\n', out);
 	

@@ -237,8 +237,13 @@ extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
 
 /* determine output file type */
 extern int mpt_output_file(uint8_t arg, int min);
-/* determine message prefix */
-extern const char *mpt_output_prefix(uint8_t);
+/* determine message ANSI colour code */
+extern const char *mpt_ansi_code(uint8_t);
+extern const char *mpt_ansi_restore(void);
+/* message type description */
+extern const char *mpt_message_identifier(int);
+/* determine message level */
+int mpt_output_level(const char *);
 
 /* get message on queue */
 extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);

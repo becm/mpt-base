@@ -218,8 +218,8 @@ template<typename T>
 class Reference
 {
 public:
-    Reference(T *ref = 0)
-    { _ref = ref; }
+    Reference(T *ref = 0) : _ref(ref)
+    { }
     Reference(const Reference &ref) : _ref(0)
     { *this = ref; }
     ~Reference()
@@ -249,32 +249,37 @@ protected:
 };
 
 /*! container for message reference */
+class logger;
 class Output
 {
 public:
     class Message
     {
     public:
-        inline Message(int t) : _ref(1), type(t), space(1) { }
+        inline Message(int t, logger *out = 0) : _out(out), _ref(1), _source(0), _flen(0), _type(t), space(1) { }
 
         Message *addref();
         int unref();
 
     protected:
         friend class Output;
-        std::stringstream buf;
+        std::ostringstream buf;
+        logger  *_out;
         uint32_t _ref;
-        int16_t type;
-        uint8_t space;
-        uint8_t _pad;
+        pid_t    _source;
+        uint8_t  _flen;
+        int16_t  _type;
+        uint8_t  space;
     };
-    inline Output(int type = -1) : _msg(new Message(type)) { }
+    inline Output(int type = -1, logger *out = 0) : _msg(new Message(type, out)) { }
+
+    bool setSource(const char *, const char * = 0, pid_t = -1);
 
     inline Output &space()    { Message *m = _msg; if (!m->space) m->buf << ' '; m->space = 1; return *this; }
     inline Output &nospace()  { Message *m = _msg; m->space = 0; return *this; }
-    inline Output &maySpace() { Message *m = _msg; if (m->space) m->buf << ' '; return *this; }
+    inline Output &maySpace() { Message *m = _msg; if (m->space)  m->buf << ' '; return *this; }
 
-    inline std::stringstream &buf() { Message *m = _msg; return m->buf; }
+    inline std::ostringstream &buf() { Message *m = _msg; return m->buf; }
 
     template<typename T>
     inline Output &operator<<(const T &v) { buf() << v; return maySpace(); }
@@ -488,9 +493,8 @@ public:
     
     virtual const Item<metatype> *item(size_t pos) const;
     virtual Item<metatype> *append(metatype *);
-    virtual bool clear(const metatype * = 0);
+    virtual size_t clear(const metatype * = 0);
     virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
-    virtual ssize_t offset(const metatype *) const;
     
     virtual const Transform &transform();
     
@@ -629,6 +633,9 @@ extern int _mpt_geninfo_property(uint64_t *, MPT_STRUCT(property) *prop, MPT_INT
 
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
+#if defined(_STDIO_H) || defined(_STDIO_H_)
+extern MPT_INTERFACE(logger) *_mpt_log_default(FILE *__MPT_DEFPAR(0));
+#endif
 
 /* write error message and abort program */
 extern void _mpt_abort(const char *, const char *, const char *, int);

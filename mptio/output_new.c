@@ -506,7 +506,7 @@ static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, log, _log, _base);
 	MPT_STRUCT(outdata) *od = &odata->out;
 	FILE *fd;
-	const char *pre = 0;
+	const char *ansi = 0;
 	
 	/* send log entry to contact */
 	if (!(od->state & MPT_ENUM(OutputActive))
@@ -553,8 +553,8 @@ static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 		else if (mpt_output_file(type & 0x7f, od->level & 0xf) <= 0) {
 			return 0;
 		}
-		else if ((od->state & MPT_ENUM(OutputPrintColor)) && isatty(fileno(fd)) > 0 && (pre = mpt_output_prefix(type))) {
-			fputs(pre, fd);
+		else if ((od->state & MPT_ENUM(OutputPrintColor)) && isatty(fileno(fd)) > 0 && (ansi = mpt_ansi_code(type))) {
+			fputs(ansi, fd);
 		}
 	}
 	if (from) {
@@ -563,8 +563,8 @@ static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 	if (fmt) {
 		vfprintf(fd, fmt, va);
 	}
-	if (pre) {
-		fputs("\033[m", fd);
+	if (ansi) {
+		fputs(mpt_ansi_restore(), fd);
 	}
 	fputc('\n', fd);
 	fflush(fd);

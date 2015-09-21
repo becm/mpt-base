@@ -45,12 +45,10 @@ Slice<const char> identifier::data() const
     return Slice<const char>(id, _len);
 }
 // generic item group
-bool Group::clear(const metatype *)
-{ return false; }
+size_t Group::clear(const metatype *)
+{ return 0; }
 Item<metatype> *Group::append(metatype *)
 { return 0; }
-ssize_t Group::offset(const metatype *) const
-{ return -1; }
 const Item<metatype> *Group::item(size_t) const
 { return 0; }
 bool Group::bind(const Relation &, logger *)
@@ -208,8 +206,9 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
 }
 metatype *Group::create(const char *type, int nl)
 {
+    if (!type || !nl) return 0;
+
     if (nl < 0) {
-        if (!type) return 0;
         nl = strlen(type);
     }
 
@@ -224,11 +223,11 @@ metatype *Group::create(const char *type, int nl)
     if (nl == 4 && !memcmp("axis", type, nl)) return new Axis;
 
     if (nl == 5 && !memcmp("xaxis", type, nl)) return new Axis(AxisStyleX);
-    
+
     if (nl == 5 && !memcmp("yaxis", type, nl)) return new Axis(AxisStyleY);
-    
+
     if (nl == 5 && !memcmp("zaxis", type, nl)) return new Axis(AxisStyleZ);
-    
+
     return 0;
 }
 
@@ -255,21 +254,23 @@ Item<metatype> *Collection::append(metatype *mt)
     return _items.append(mt, 0);
 }
 
-bool Collection::clear(const metatype *mt)
+size_t Collection::clear(const metatype *mt)
 {
     size_t remove = 0;
     if (!mt) {
-        if (!_items.size()) remove = 1;
+        remove = _items.size();
         _items = ItemArray<metatype>();
         return remove ? true : false;
     }
+    size_t empty = 0;
     for (auto &it : _items) {
         metatype *ref = it;
+        if (!ref) { ++empty; continue; }
         if (mt != ref) continue;
         it.detach()->unref();
         ++remove;
     }
-    if (remove > _items.size()/2) {
+    if ((remove + empty) > _items.size()/2) {
         _items.compact();
     }
     return remove;
@@ -287,22 +288,6 @@ bool Collection::bind(const Relation &from, logger *out)
         }
     }
     return true;
-}
-
-ssize_t Collection::offset(const metatype *mt) const
-{
-    if (!mt) {
-        return _items.size();
-    }
-    ssize_t i = 0;
-    for (auto &it : _items) {
-        metatype *m = it;
-        if (m == mt) {
-            return i;
-        }
-        ++i;
-    }
-    return -2;
 }
 
 

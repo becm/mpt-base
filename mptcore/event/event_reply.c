@@ -33,7 +33,8 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 	}
 	
 	if (!ev || !ev->reply.set) {
-		const char *prefix = 0;
+		FILE *fd = stderr;
+		const char *ansi = 0;
 		
 		if (!code) {
 			code = MPT_ENUM(LogDebug);
@@ -48,13 +49,19 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		if (!data) {
 			return 0;
 		}
-		if ((isatty(fileno(stderr)) > 0) && (prefix = mpt_output_prefix(code & 0x7f))) {
-			fputs(prefix, stderr);
+		if ((isatty(fileno(fd)) > 0) && (ansi = mpt_ansi_code(code))) {
+			fputs(ansi, fd);
 		}
-		fputs(data, stderr);
-		if (prefix) {
-			fputs("\033[0m", stderr);
+		fputc('[', fd);
+		fputc('>', fd);
+		fputs(mpt_message_identifier(code), fd);
+		fputc(']', fd);
+		fputc(' ', fd);
+		
+		if (ansi) {
+			fputs(mpt_ansi_restore(), stderr);
 		}
+		fputs(data, fd);
 		fputc('\n', stderr);
 		
 		return 1;
@@ -73,9 +80,9 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		
 		
 		if (data && (cont.iov_len = strlen(data))) {
+			cont.iov_base = (void *) data;
 			msg.cont = &cont;
 			msg.clen = 1;
-			cont.iov_base = (void *) data;
 		} else {
 			msg.clen = 0;
 		}

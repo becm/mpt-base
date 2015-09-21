@@ -406,9 +406,9 @@ const Reference<Cycle> &Graph::cycle(int pos) const
     if (pos < 0 && (pos += _worlds.size()) < 0) return def;
     Data *d = _worlds.get(pos);
     if (!d->cycle) {
-        World *w = *d;
         d->cycle = Reference<Cycle>(new Cycle);
-        if (w) {
+        World *w;
+        if ((w = *d)) {
             static_cast<Cycle *>(d->cycle)->setSize(w->cyc);
         }
     }
@@ -431,7 +431,7 @@ bool Graph::updateTransform(int dim)
     if (dim < 0) {
         updateTransform(0);
         updateTransform(1);
-        updateTransform(3);
+        updateTransform(2);
     }
     Item<Axis> *it = _axes.get(dim);
     Axis *a;
@@ -536,7 +536,12 @@ const Item<Graph> &Layout::graph(int pos) const
 
 bool Layout::update(metatype *m)
 {
-    return m && (Collection::offset(m) >= 0);
+    if (!m) return false;
+    for (auto &it : _items) {
+        metatype *ref = it;
+        if (m == ref) return true;
+    }
+    return false;
 }
 bool Layout::bind(const Relation &rel, logger *out)
 {

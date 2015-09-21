@@ -707,9 +707,8 @@ public:
     
     const Item<metatype> *item(size_t) const;
     Item<metatype> *append(metatype *);
-    bool clear(const metatype * = 0);
+    size_t clear(const metatype * = 0);
     bool bind(const Relation &, logger * = logger::defaultInstance());
-    ssize_t offset(const metatype *) const;
     
 protected:
     int unref();

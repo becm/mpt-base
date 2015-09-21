@@ -91,7 +91,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		if (!len) {
 			if ((od->state & MPT_ENUM(OutputPrintRestore))
 			    && isatty(fileno(hist))) {
-				fputs("\033[0m", hist);
+				fputs(mpt_ansi_restore(), hist);
 			}
 			fputc('\n', hist);
 			od->state &= ~(0x7 | MPT_ENUM(OutputActive));
@@ -151,7 +151,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		od->state |= MPT_ENUM(OutputPrintRestore);
 		return 0;
 	}
-	if ((isatty(fileno(hist)) > 0) && (prefix = mpt_output_prefix(type))) {
+	if ((isatty(fileno(hist)) > 0) && (prefix = mpt_ansi_code(type))) {
 		flags |= MPT_ENUM(OutputPrintRestore);
 		fputs(prefix, hist);
 	}
