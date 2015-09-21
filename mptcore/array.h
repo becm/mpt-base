@@ -606,9 +606,8 @@ class LogStore : public logger
 {
 public:
     enum {
-        PassSaved   =   0x1,
-        PassUnsaved =   0x2,
-        PassNormal  = PassSaved | PassUnsaved,
+        PassUnsaved =   0x1,
+        PassSaved   =   0x2,
         PassFile    =   0x4,
         PassMessage =   0x8,
         PassFlags   =   0xf,
@@ -616,7 +615,9 @@ public:
         SaveMessage =  0x10,
         SaveLog     =  0x20,
         SaveLogAll  =  0x40,
-        SaveFlags   =  0xf0
+        SaveFlags   =  0xf0,
+        
+        FlowNormal  = PassUnsaved | PassSaved | PassFile
     };
     LogStore(logger * = logger::defaultInstance());
     virtual ~LogStore();

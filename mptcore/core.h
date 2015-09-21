@@ -124,7 +124,12 @@ enum MPT_ENUM(LogType) {
 	MPT_ENUM(LogDebug2)    = 0x50,
 	MPT_ENUM(LogDebug3)    = 0x60,
 	MPT_ENUM(LogDebug4)    = 0x70,
-	MPT_ENUM(LogFile)      = 0x80   /* use log target */
+	MPT_ENUM(LogFile)      = 0x80,  /* use log target */
+	MPT_ENUM(LogPrefix)    = 0x100, /* print log type */
+	MPT_ENUM(LogANSI)      = 0x200, /* use teminal colours */
+	MPT_ENUM(LogFunction)  = 0x400, /* auto-add function decorator */
+	
+	MPT_ENUM(LogPretty)    = 0xf00
 };
 
 enum MPT_ENUM(SocketFlags) {
@@ -273,7 +278,7 @@ public:
     };
     inline Output(int type = -1, logger *out = 0) : _msg(new Message(type, out)) { }
 
-    bool setSource(const char *, const char * = 0, pid_t = -1);
+    bool setSource(const char *, pid_t = -1);
 
     inline Output &space()    { Message *m = _msg; if (!m->space) m->buf << ' '; m->space = 1; return *this; }
     inline Output &nospace()  { Message *m = _msg; m->space = 0; return *this; }

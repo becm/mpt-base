@@ -3,6 +3,8 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "message.h"
@@ -22,21 +24,22 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	
 	(void) out;
 	
-	if (!type) {
+	if (!(type & 0xff)) {
 		fd = stdout;
 		fputc('#', fd);
 		fputc(' ', fd);
 	}
 	else {
 		const char *desc;
+		size_t len;
 		
 		fd = loggerErr ? loggerErr : stderr;
 		
-		if (isatty(fileno(fd)) && (ansi = mpt_ansi_code(type))) {
+		if ((type & MPT_ENUM(LogANSI)) && isatty(fileno(fd)) && (ansi = mpt_ansi_code(type))) {
 			fputs(ansi, fd);
 			ansi = mpt_ansi_restore();
 		}
-		if ((desc = mpt_message_identifier(type))) {
+		if ((type & MPT_ENUM(LogPrefix)) && (desc = mpt_message_identifier(type))) {
 			fputc('[', fd);
 			fputs(desc, fd);
 			fputc(']', fd);
@@ -46,10 +49,12 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 				ansi = 0;
 			}
 		}
-		if (where) {
-			fputs(where, fd);
-			fputc('(', fd);
-			fputc(')', fd);
+		if (where && (len = strlen(where))) {
+			fwrite(where, len, 1, fd);
+			if ((type & MPT_ENUM(LogFunction)) && isalpha(where[len-1])) {
+				fputc('(', fd);
+				fputc(')', fd);
+			}
 			fputs(": ", fd);
 			if (ansi) {
 				fputs(ansi, fd);
@@ -90,7 +95,7 @@ extern int mpt_log(MPT_INTERFACE(logger) *out, const char *where, int type, cons
 	va_start(ap, fmt);
 	
 	if (!out) out = &defaultLogger;
-	err = out->_vptr->log(out, where, type, fmt, ap);
+	err = out->_vptr->log(out, where, type | MPT_ENUM(LogPretty), fmt, ap);
 	va_end(ap);
 	
 	return err;

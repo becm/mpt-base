@@ -18,7 +18,8 @@ extern const char *mpt_message_identifier(int type)
 	if (type <= 0) {
 		return 0;
 	}
-	if (type >= MPT_ENUM(LogFile)) {
+	if (type & MPT_ENUM(LogFile)) {
+		type &= 0x7f;
 		if (type >= MPT_ENUM(LogDebug))    return "DEBUG";
 		if (type >= MPT_ENUM(LogInfo))     return "INFO";
 		if (type >= MPT_ENUM(LogWarning))  return "WARNING";
@@ -26,6 +27,7 @@ extern const char *mpt_message_identifier(int type)
 		if (type >= MPT_ENUM(LogCritical)) return "CRITICAL";
 		if (type >= MPT_ENUM(LogFatal))    return "FATAL";
 	} else {
+		type &= 0x7f;
 		if (type >= MPT_ENUM(LogDebug))    return "debug";
 		if (type >= MPT_ENUM(LogInfo))     return "info";
 		if (type >= MPT_ENUM(LogWarning))  return "warning";

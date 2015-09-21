@@ -80,7 +80,7 @@ bool Group::copy(const Group &from, logger *)
 
 bool Group::addItems(node *head, const Relation *relation, logger *out)
 {
-    const char fcnName[] = "mpt::Group::addItems()";
+    const char _func[] = "mpt::Group::addItems";
 
     for (; head; head = head->next) {
         metatype *from;
@@ -106,7 +106,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (from->property(&pr) < 0 || !pr.name) {
                 pr.name = "<unknown>";
             }
-            if (out) out->error(fcnName, "%s: ", MPT_tr("bad element name"), pr.name);
+            if (out) out->error(_func, "%s: ", MPT_tr("bad element name"), pr.name);
             return false;
         }
 
@@ -122,14 +122,14 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         pr.val.fmt = pr.desc = pr.name;
         pr.name = mpt_convert_key(&pr.desc, 0, &len);
         if (!pr.name || !*pr.name) {
-            if (out) out->warning(fcnName, "%s: %s", MPT_tr("bad object name"), pr.val.fmt);
+            if (out) out->warning(_func, "%s: %s", MPT_tr("bad object name"), pr.val.fmt);
             continue;
         }
 
         // create item
         metatype *it = create(pr.name, len);
         if (!it) {
-            if (out) out->warning(fcnName, "%s: %s", MPT_tr("invalid object type"), std::string(pr.name, len).c_str());
+            if (out) out->warning(_func, "%s: %s", MPT_tr("invalid object type"), std::string(pr.name, len).c_str());
             continue;
         }
 
@@ -137,13 +137,13 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         pr.name = mpt_convert_key(&pr.desc, ":", &len);
 
         if (!pr.name || !len) {
-            if (out) out->warning(fcnName, "%s", MPT_tr("empty object name"));
+            if (out) out->warning(_func, "%s", MPT_tr("empty object name"));
             it->unref();
             continue;
         }
 
         if (GroupRelation(*this).find(it->type(), pr.name, len)) {
-            if (out) out->warning(fcnName, "%s: %s", MPT_tr("conflicting object name"), std::string(pr.name, len).c_str());
+            if (out) out->warning(_func, "%s: %s", MPT_tr("conflicting object name"), std::string(pr.name, len).c_str());
             it->unref();
             continue;
         }
@@ -159,7 +159,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                 it->setProperties(*curr, out);
                 continue;
             }
-            if (out) out->error(fcnName, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(pr.name, len).c_str());
+            if (out) out->error(_func, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(pr.name, len).c_str());
             return false;
         }
 
@@ -168,7 +168,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         Item<metatype> *ni = append(it);
         if (!ni) {
             it->unref();
-            if (out) out->error(fcnName, "%s: %s", MPT_tr("unable add item"), std::string(name, nlen).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("unable add item"), std::string(name, nlen).c_str());
             continue;
         }
         ni->setName(name, nlen);
@@ -196,9 +196,9 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (!(pr.name = mpt_node_ident(sub)) || !*pr.name || it->set(pr, out) || !out) continue;
             // error handling
             if (!pr.val.ptr) {
-                if (out) out->warning(fcnName, "%s: %s: %s", MPT_tr("bad property"), ni->name(), pr.name);
+                if (out) out->warning(_func, "%s: %s: %s", MPT_tr("bad property"), ni->name(), pr.name);
             } else {
-                if (out) out->warning(fcnName, "%s: %s: %s = %s", MPT_tr("bad property value"), ni->name(), pr.name, pr.val.ptr);
+                if (out) out->warning(_func, "%s: %s: %s = %s", MPT_tr("bad property value"), ni->name(), pr.name, pr.val.ptr);
             }
         }
     }

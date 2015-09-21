@@ -206,7 +206,7 @@ Graph *Graph::addref()
 
 bool Graph::bind(const Relation &rel, logger *out)
 {
-    static const char fname[] = "mpt::Graph::bind()";
+    static const char _func[] = "mpt::Graph::bind";
     metatype *m;
     const char *names, *curr;
     size_t len;
@@ -229,7 +229,7 @@ bool Graph::bind(const Relation &rel, logger *out)
                 ref.detach();
                 continue;
             }
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
             _axes = oldaxes;
             return false;
         }
@@ -237,13 +237,13 @@ bool Graph::bind(const Relation &rel, logger *out)
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         m = rel.find(Axis::Type, curr, len);
         if (!m) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not find axis"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not find axis"), std::string(curr, len).c_str());
             _axes = oldaxes;
             return false;
         }
         Axis *a;
         if (!(a = dynamic_cast<Axis *>(m))) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("no axis type"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("no axis type"), std::string(curr, len).c_str());
             _axes = oldaxes;
             return false;
         }
@@ -254,7 +254,7 @@ bool Graph::bind(const Relation &rel, logger *out)
         }
         Reference<Axis> ref(a->addref());
         if (!(a = ref) || !addAxis(a, curr, len)) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
             _axes = oldaxes;
             return false;
         }
@@ -272,7 +272,7 @@ bool Graph::bind(const Relation &rel, logger *out)
                 ref.detach();
                 continue;
             }
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
             _axes = oldaxes;
             _worlds = oldworlds;
             return false;
@@ -280,14 +280,14 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         if (!(m = rel.find(World::Type, curr, len))) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not find world"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not find world"), std::string(curr, len).c_str());
             _axes = oldaxes;
             _worlds = oldworlds;
             return false;
         }
         World *w;
         if (!(w = dynamic_cast<World *>(m))) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("no world type"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("no world type"), std::string(curr, len).c_str());
             _axes = oldaxes;
             _worlds = oldworlds;
             return false;
@@ -299,7 +299,7 @@ bool Graph::bind(const Relation &rel, logger *out)
         }
         Reference<World> ref(w->addref());
         if (!(w = ref) || !addWorld(w, curr, len)) {
-            if (out) out->error(fname, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
             _axes = oldaxes;
             _worlds = oldworlds;
             return false;

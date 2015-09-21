@@ -134,7 +134,7 @@ const char *metatype::cast()
 
 bool metatype::set(const struct property &porg, logger *out)
 {
-    static const char _fname[] = "mpt::metatype::set()";
+    static const char _fname[] = "mpt::metatype::set";
     struct property pr = porg;
     int ret;
     if ((ret = mpt_meta_pset(this, &pr)) >= 0) return true;

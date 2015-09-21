@@ -19,8 +19,8 @@
  * 
  * Print message data or metadata to file.
  * 
- * \param out	file descriptor
- * \param omsg	message data
+ * \param out  file descriptor
+ * \param omsg message data
  * 
  * \return written length
  */
@@ -65,7 +65,7 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 		if (!mt.arg) return 0;
 		out = stderr;
 	}
-	len = 0;
+	len = sizeof(mt);
 	
 	if ((isatty(fileno(out))) && (ansi = mpt_ansi_code(arg))) {
 		fputs(ansi, out);
@@ -78,14 +78,20 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 			const uint8_t *sep;
 			size_t plen;
 			if ((sep = memchr(msg.base, 0, msg.used)) && (plen = sep - ((uint8_t *) msg.base))) {
-				fwrite(msg.base, plen, 1, out);
+				if (!fwrite(msg.base, plen, 1, out)) {
+					break;
+				}
 				msg.used -= ++plen;
 				msg.base = ((uint8_t *) msg.base) + plen;
-				fwrite(": ", 2, 1, out);
+				if (!fwrite(": ", 2, 1, out)) {
+					break;
+				}
 				len += ++plen;
 				continue;
 			}
-			fwrite(msg.base, msg.used, 1, out);
+			if (!fwrite(msg.base, msg.used, 1, out)) {
+				break;
+			}
 			len += msg.used;
 		}
 		if (!msg.clen--) break;
