@@ -80,7 +80,8 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < (ssize_t) sizeof(mt)
 		    || mt.cmd != MPT_ENUM(MessageCommand)) {
-			mpt_output_log(cl->out, __func__, MPT_ENUM(LogError), "%s", MPT_tr("bad message format"));
+			mpt_output_log(cl->out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s",
+			               MPT_tr("bad message format"));
 			return -1;
 		}
 		else if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
@@ -89,7 +90,8 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		/* set solver parameters from arguments */
 		while (part > 0) {
 			if (!(part = mpt_message_pset(&msg, mt.arg, setConfig, &cl->conf))) {
-				mpt_output_log(cl->out, __func__, MPT_ENUM(LogError), "%s", MPT_tr("error while setting client configuration"));
+				mpt_output_log(cl->out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s",
+				               MPT_tr("error while setting client configuration"));
 				part = 1;
 			}
 		}

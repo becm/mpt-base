@@ -15,9 +15,10 @@
  */
 extern const char *mpt_ansi_code(uint8_t type)
 {
-	if (!type || type >= MPT_ENUM(LogFile)) {
+	if (type & MPT_ENUM(LogFile)) {
 		return 0;
 	}
+	if (!type) return "\033[1m";
 	if (type >= MPT_ENUM(LogDebug))    return "\033[32m";
 	if (type >= MPT_ENUM(LogInfo))     return "\033[34m";
 	if (type >= MPT_ENUM(LogWarning))  return "\033[33m";
@@ -33,7 +34,7 @@ extern const char *mpt_ansi_code(uint8_t type)
  * 
  * \return ANSI display attribute string
  */
-extern const char *mpt_ansi_restore(void)
+extern const char *mpt_ansi_reset(void)
 {
 	return "\033[0m";
 }

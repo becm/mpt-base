@@ -128,7 +128,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		/* bad default command */
 		if (!(cmd = mpt_command_get(&disp->_cmd, tmp.id))) {
 			disp->_def = 0;
-			mpt_output_log(disp->_out, __func__, MPT_ENUM(LogCritical), "%s (%"PRIxPTR")",
+			mpt_output_log(disp->_out, __func__, MPT_ENUM(LogCritical) | MPT_ENUM(LogFunction), "%s (%"PRIxPTR")",
 			               MPT_tr("invalid default command id"), tmp.id);
 			return -2;
 		}
@@ -164,13 +164,13 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state = disp->_err.cmd(disp->_err.arg, ev);
 	}
 	else {
-		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogWarning), "%s (%"PRIx8")",
+		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s (%"PRIx8")",
 		               MPT_tr("invalid command id"), ev->id);
 		return -2;
 	}
 	/* bad execution of command */
 	if (state < 0) {
-		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogDebug), "%s (%"PRIxPTR")",
+		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogDebug) | MPT_ENUM(LogFunction), "%s (%"PRIxPTR")",
 		               MPT_tr("command execution failed"), ev->id);
 		return state;
 	}

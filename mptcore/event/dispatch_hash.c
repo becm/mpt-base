@@ -44,7 +44,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	msg = *ev->msg;
 	
 	if ((len = mpt_message_read(&msg, 2, &mt)) < 2) {
-		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogError), "%s", MPT_tr("bad message length"));
+		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", MPT_tr("bad message length"));
 		return -1;
 	}
 	if (mt.cmd != MPT_ENUM(MessageCommand)) {

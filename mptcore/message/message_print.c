@@ -72,6 +72,20 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	}
 	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
 		fputc('@', out);
+		if (arg >= MPT_ENUM(LogDebug)) {
+			fputs(mpt_ansi_reset(), out);
+			ansi = 0;
+		}
+	}
+	else {
+		const char *desc = mpt_message_identifier(arg);
+		fputc('[', out);
+		fputs(desc, out);
+		fputc(']', out);
+		if (ansi) {
+			fputs(mpt_ansi_reset(), out);
+			ansi = 0;
+		}
 	}
 	while (1) {
 		if (msg.used) {
@@ -100,7 +114,7 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 		++msg.cont;
 	}
 	if (ansi) {
-		fputs(mpt_ansi_restore(), out);
+		fputs(mpt_ansi_reset(), out);
 	}
 	fputc('\n', out);
 	

@@ -95,7 +95,7 @@ int Parse::read(struct node &to, logger *out)
     int ret;
 
     if (!_parse || !_parse->src.getc) {
-        if (out) mpt_log(out, fname, LogError, "%s", MPT_tr("no parser input"));
+        if (out) out->error(fname, "%s", MPT_tr("no parser input"));
         return -1;
     }
     if (!(curr = to.children)) {

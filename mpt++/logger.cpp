@@ -22,7 +22,7 @@ int logger::warning(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogPretty | LogWarning, fmt, va);
+    ret = log(from, LogFunction | LogWarning, fmt, va);
     va_end(va);
     return ret;
 }
@@ -31,7 +31,7 @@ int logger::error(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogPretty | LogError, fmt, va);
+    ret = log(from, LogFunction | LogError, fmt, va);
     va_end(va);
     return ret;
 }
@@ -40,7 +40,7 @@ int logger::critical(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogPretty | LogCritical, fmt, va);
+    ret = log(from, LogFunction | LogCritical, fmt, va);
     va_end(va);
     return ret;
 }
@@ -77,7 +77,7 @@ bool Output::setSource(const char *fcn, pid_t pid)
 
 Output debug(const char *fcn, const char *nspace)
 {
-    Output out(LogPretty | LogDebug);
+    Output out(LogFunction | LogDebug);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;
@@ -85,14 +85,14 @@ Output debug(const char *fcn, const char *nspace)
 
 Output warning(const char *fcn, const char *nspace)
 {
-    Output out(LogPretty | LogWarning);
+    Output out(LogFunction | LogWarning);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;
 }
 Output critical(const char *fcn, const char *nspace)
 {
-    Output out(LogPretty | LogCritical);
+    Output out(LogFunction | LogCritical);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;

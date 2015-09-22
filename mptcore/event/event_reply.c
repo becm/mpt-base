@@ -59,7 +59,7 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		fputc(' ', fd);
 		
 		if (ansi) {
-			fputs(mpt_ansi_restore(), stderr);
+			fputs(mpt_ansi_reset(), stderr);
 		}
 		fputs(data, fd);
 		fputc('\n', stderr);

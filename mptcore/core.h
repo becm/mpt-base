@@ -125,11 +125,14 @@ enum MPT_ENUM(LogType) {
 	MPT_ENUM(LogDebug3)    = 0x60,
 	MPT_ENUM(LogDebug4)    = 0x70,
 	MPT_ENUM(LogFile)      = 0x80,  /* use log target */
-	MPT_ENUM(LogPrefix)    = 0x100, /* print log type */
-	MPT_ENUM(LogANSI)      = 0x200, /* use teminal colours */
-	MPT_ENUM(LogFunction)  = 0x400, /* auto-add function decorator */
 	
-	MPT_ENUM(LogPretty)    = 0xf00
+	MPT_ENUM(LogPrefix)    = 0x100, /* add type prefix */
+	MPT_ENUM(LogSelect)    = 0x200, /* use ANSI colouring */
+	MPT_ENUM(LogANSIMore)  = 0x400, /* no forced ANSI termination */
+	MPT_ENUM(LogPretty)    = 0x700,
+	
+	MPT_ENUM(LogFunction)  = 0x800  /* auto-add function decorator */
+	
 };
 
 enum MPT_ENUM(SocketFlags) {
@@ -639,7 +642,10 @@ extern int _mpt_geninfo_property(uint64_t *, MPT_STRUCT(property) *prop, MPT_INT
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 #if defined(_STDIO_H) || defined(_STDIO_H_)
+/* get default logger instance */
 extern MPT_INTERFACE(logger) *_mpt_log_default(FILE *__MPT_DEFPAR(0));
+/* start log message */
+extern const char *mpt_log_start(FILE *, const char *, int);
 #endif
 
 /* write error message and abort program */

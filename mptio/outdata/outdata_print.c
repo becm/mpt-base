@@ -91,7 +91,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		if (!len) {
 			if ((od->state & MPT_ENUM(OutputPrintRestore))
 			    && isatty(fileno(hist))) {
-				fputs(mpt_ansi_restore(), hist);
+				fputs(mpt_ansi_reset(), hist);
 			}
 			fputc('\n', hist);
 			od->state &= ~(0x7 | MPT_ENUM(OutputActive));

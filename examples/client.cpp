@@ -34,7 +34,7 @@ int main()
     mpt::output *o = *c;
     o->set(mpt::property("history", "/dev/stdout"), 0);
     o->set(mpt::property("level", "debug"), 0);
-    o->message(0, mpt::LogDebug, "hallo");
+    o->message(0, mpt::LogFile, "hallo");
     c->init();
     c->unref();
 }

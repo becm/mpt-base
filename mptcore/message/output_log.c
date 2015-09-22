@@ -26,31 +26,22 @@
 extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, ... )
 {
 	MPT_INTERFACE(logger) *log;
-	va_list	ap;
-	int	err = 0;
+	va_list ap;
+	int err = 0;
 	
 	if (!out) {
-		if (!type) {
-			return 0;
-		}
-		if (from) {
-			fputs(from, stderr);
-			fputc(':', stderr);
-			fputc(' ', stderr);
-		}
-		if (fmt) {
-			va_start(ap, fmt);
-			vfprintf(stderr, fmt, ap);
-			va_end(ap);
-		}
-		return 0;
+		if (!(type & 0xff)) return 0;
+		log = _mpt_log_default(0);
+	} else {
+		log = out->_vptr->_mt.typecast((void*) out, MPT_ENUM(TypeLogger));
 	}
-	if ((log = out->_vptr->_mt.typecast((void*) out, MPT_ENUM(TypeLogger)))) {
+	if (log) {
 		va_start(ap, fmt);
 		err = log->_vptr->log(log, from, type, fmt, ap);
 		va_end(ap);
+		return err;
 	}
-	else if (from || fmt) {
+	if (from || fmt) {
 		uint8_t hdr[2];
 		hdr[0] = MPT_ENUM(MessageOutput);
 		hdr[1] = type;
@@ -81,11 +72,10 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 			}
 			return -1;
 		}
-		out->_vptr->push(out, 0, 0);
-		
-		return 0;
+		if (out->_vptr->push(out, 0, 0) < 0) {
+			out->_vptr->push(out, 1, 0);
+		}
 	}
-	
-	return err;
+	return 0;
 }
 

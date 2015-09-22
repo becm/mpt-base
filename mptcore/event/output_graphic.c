@@ -40,7 +40,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 	msg = *ev->msg;
 	if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
 	    || mt.cmd != MPT_ENUM(MessageCommand)) {
-		mpt_output_log(out, __func__, MPT_ENUM(LogError), "%s", MPT_tr("bad message format"));
+		mpt_output_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", MPT_tr("bad message format"));
 		return -1;
 	}
 	/* need existing output */

@@ -239,7 +239,7 @@ extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
 extern int mpt_output_file(uint8_t arg, int min);
 /* determine message ANSI colour code */
 extern const char *mpt_ansi_code(uint8_t);
-extern const char *mpt_ansi_restore(void);
+extern const char *mpt_ansi_reset(void);
 /* message type description */
 extern const char *mpt_message_identifier(int);
 /* determine message level */

@@ -65,20 +65,20 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, MPT_INTERFACE(l
 	
 	/* bind library handle */
 	if ((err = mpt_library_assign(&lh, descr))) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogError), "%s", err);
+		(void) mpt_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", err);
 		return 0;
 	}
 	/* create remote instance */
 	if (!(m = lh.create())) {
 		mpt_library_close(&lh);
-		(void) mpt_log(out, __func__, MPT_ENUM(LogError), "%s: %s", MPT_tr("error in library initializer"), descr);
+		(void) mpt_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %s", MPT_tr("error in library initializer"), descr);
 		return 0;
 	}
 	if ((err = mpt_meta_typename(m))) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogDebug), "%s: %s", MPT_tr("created proxy instance"), err);
+		(void) mpt_log(out, __func__, MPT_ENUM(LogDebug) | MPT_ENUM(LogFunction), "%s: %s", MPT_tr("created proxy instance"), err);
 	}
 	if (!(mp = malloc(sizeof(*mp)))) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogCritical), "%s", MPT_tr("out of memory"));
+		(void) mpt_log(out, __func__, MPT_ENUM(LogCritical) | MPT_ENUM(LogFunction), "%s", MPT_tr("out of memory"));
 		return 0;
 	}
 	mp->lh = lh;
