@@ -93,7 +93,7 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		ssize_t part = 0;
 		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
 		    || mt.cmd != MPT_ENUM(MessageCommand)) {
-			mpt_output_log(cl->out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s",
+			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
 			               MPT_tr("bad message format"));
 			return -1;
 		}

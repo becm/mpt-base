@@ -439,7 +439,7 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return ret;
 	}
 	if ((ret = mpt_outdata_property(od, prop, src)) < 0) {
-		mpt_log(&odata->_log, __func__, MPT_ENUM(LogDebug) | MPT_ENUM(LogFunction), "%s: %s",
+		mpt_log(&odata->_log, __func__, MPT_FCNLOG(Debug), "%s: %s",
 		        src ? MPT_tr("unable to set property") : MPT_tr("invalid property"),
 		        prop->name);
 		return ret;
@@ -471,14 +471,14 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		
 		/* add local reference for event controller */
 		if (!outputRef((void *) odata)) {
-			mpt_log(&odata->_log, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %s "PRIxPTR,
+			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
 			        MPT_tr("failed"),
 			        MPT_tr("reference output"),
 			        od);
 		}
 		/* use first reference for notifier */
 		else if (mpt_notify_add(odata->_no, POLLIN, &odata->_in) < 0) {
-			mpt_log(&odata->_log, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %s: fd%i",
+			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %s: fd%i",
 			        MPT_tr("failed"),
 			        MPT_tr("register notifier"),
 			        (int) od->sock._id);
@@ -619,13 +619,13 @@ extern int replySet(void *con, const MPT_STRUCT(message) *src)
 	
 	/* already answered */
 	if (!rep->_rid) {
-		mpt_log(&rep->_log, fcn, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s",
+		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Warning), "%s",
 		        MPT_tr("reply to processed message ignored"));
 		return -3;
 	}
 	
 	if (rep->out.state & MPT_ENUM(OutputActive)) {
-		mpt_log(&rep->_log, fcn, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s (%04x): %s",
+		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Error), "%s (%04x): %s",
 	        MPT_tr("unable to reply"), rep->_rid, MPT_tr("message in progress"));
 		rep->_rid = 0;
 		return -1;
@@ -635,7 +635,7 @@ extern int replySet(void *con, const MPT_STRUCT(message) *src)
 	vec.iov_len  = sizeof(rid);
 	
 	if (mpt_array_push(&rep->out._buf, &rep->out._enc.info, rep->out._enc.fcn, &vec) < (ssize_t) sizeof(rid)) {
-		mpt_log(&rep->_log, fcn, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s (%04x)",
+		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Warning), "%s (%04x)",
 		        MPT_tr("error replying to message"), rep->_rid);
 		rep->_rid = 0;
 		return -1;
@@ -735,13 +735,13 @@ static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 		
 		if ((ans = mpt_command_get(&odata->_wait, rid))) {
 			if (ans->cmd(ans->arg, &msg) < 0) {
-				mpt_log(&odata->_log, __func__, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s: %04x",
+				mpt_log(&odata->_log, __func__, MPT_FCNLOG(Warning), "%s: %04x",
 				        MPT_tr("reply processing error"), rid);
 			}
 			ans->cmd = 0;
 		} else {
 			ev.msg = &msg;
-			mpt_log(&odata->_log, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %04x",
+			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %04x",
 			        MPT_tr("unregistered reply id"), rid);
 		}
 	}

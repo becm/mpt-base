@@ -24,7 +24,7 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 	/* process reply notification */
 	if (ev->id) {
 		if (ev->msg) {
-			mpt_output_log(disp->_out, "mpt_dispatch_emit", MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: 0x%zx",
+			mpt_output_log(disp->_out, "mpt_dispatch_emit", MPT_FCNLOG(Error), "%s: 0x%zx",
 			               MPT_tr("unprocessed reply id"), ev->id);
 		}
 		return disp->_def ? MPT_ENUM(EventDefault) : 0;

@@ -132,8 +132,8 @@ enum MPT_ENUM(LogType) {
 	MPT_ENUM(LogPretty)    = 0x700,
 	
 	MPT_ENUM(LogFunction)  = 0x800  /* auto-add function decorator */
-	
 };
+#define MPT_FCNLOG(x) (MPT_ENUM(Log##x) | MPT_ENUM(LogFunction))
 
 enum MPT_ENUM(SocketFlags) {
 	MPT_ENUM(SocketStream) = 0x1,
@@ -309,6 +309,16 @@ protected:
 	inline ~logger() {}
 public:
 	enum { Type = TypeLogger };
+	
+	enum LogTypes {
+		Fatal    = MPT_FCNLOG(Fatal),
+		Critical = MPT_FCNLOG(Critical),
+		Error    = MPT_FCNLOG(Error),
+		Warning  = MPT_FCNLOG(Warning),
+		Info     = MPT_FCNLOG(Info),
+		Debug    = MPT_FCNLOG(Debug),
+		File     = MPT_FCNLOG(File)
+	};
 	
 	int error(const char *, const char *, ... );
 	int critical(const char *, const char *, ... );

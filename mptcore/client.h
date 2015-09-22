@@ -40,7 +40,7 @@ MPT_INTERFACE_VPTR(client)
 	int (*output)(const MPT_INTERFACE(client) *, int);
 	int (*report)(const MPT_INTERFACE(client) *, MPT_INTERFACE(logger) *);
 };
-# define MPT_CLIENT_LOGLEVEL MPT_ENUM(LogDebug2)
+# define MPT_CLIENT_LOGLEVEL MPT_FCNLOG(Debug2)
 MPT_INTERFACE(client)
 {
 	const MPT_INTERFACE_VPTR(client) *_vptr;

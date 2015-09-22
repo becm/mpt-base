@@ -27,7 +27,7 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 	uintptr_t id, len;
 	
 	if (!conf) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", MPT_tr("missing initializer target"));
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
 		return -1;
 	}
 	/* resolve alias to full library description */
@@ -40,7 +40,7 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 		;
 	}
 	else if ((len = ldesc - conf) >= sizeof(buf)) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %s", MPT_tr("invalid initializer length"), conf);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("invalid initializer length"), conf);
 		return 0;
 	}
 	else {
@@ -51,7 +51,7 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 	
 	/* keep existing proxy object */
 	if ((m = px->_mt) && (id == px->_id)) {
-		(void) mpt_log(out, __func__, MPT_ENUM(LogDebug) | MPT_ENUM(LogFunction), "%s: %s", MPT_tr("instance types match"), conf);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("instance types match"), conf);
 		return 0;
 	}
 	/* create new proxy */

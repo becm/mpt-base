@@ -26,7 +26,7 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 	if (mpt_event_reply(ev, -1, MPT_tr("invalid message command")) >= 0) {
 		return MPT_ENUM(EventFail);
 	}
-	mpt_output_log(disp ? disp->_out : 0, "mpt::event::unknown", MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s",
+	mpt_output_log(disp ? disp->_out : 0, "mpt::event::unknown", MPT_FCNLOG(Error), "%s",
 	               MPT_tr("invalid command"));
 	
 	ev->id = 0;

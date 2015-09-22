@@ -22,7 +22,7 @@ int logger::warning(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogFunction | LogWarning, fmt, va);
+    ret = log(from, Warning, fmt, va);
     va_end(va);
     return ret;
 }
@@ -31,7 +31,7 @@ int logger::error(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogFunction | LogError, fmt, va);
+    ret = log(from, Error, fmt, va);
     va_end(va);
     return ret;
 }
@@ -40,7 +40,7 @@ int logger::critical(const char *from, const char *fmt, ... )
     va_list va;
     int ret;
     va_start(va, fmt);
-    ret = log(from, LogFunction | LogCritical, fmt, va);
+    ret = log(from, Critical, fmt, va);
     va_end(va);
     return ret;
 }
@@ -65,7 +65,6 @@ bool Output::setSource(const char *fcn, pid_t pid)
             && (len = strlen(fcn))
             && isalpha(fcn[len-1])) {
             msg->buf << '(' << ')';
-            msg->_type ^= LogFunction;
         }
         msg->buf << '[' << pid << ']';
     }
@@ -77,7 +76,7 @@ bool Output::setSource(const char *fcn, pid_t pid)
 
 Output debug(const char *fcn, const char *nspace)
 {
-    Output out(LogFunction | LogDebug);
+    Output out(logger::Debug);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;
@@ -85,14 +84,14 @@ Output debug(const char *fcn, const char *nspace)
 
 Output warning(const char *fcn, const char *nspace)
 {
-    Output out(LogFunction | LogWarning);
+    Output out(logger::Warning);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;
 }
 Output critical(const char *fcn, const char *nspace)
 {
-    Output out(LogFunction | LogCritical);
+    Output out(logger::Critical);
     if (nspace && *nspace) out.nospace() << nspace << "::";
     out.setSource(fcn);
     return out;

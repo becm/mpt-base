@@ -59,13 +59,13 @@ extern int mpt_outbind_string(MPT_INTERFACE(output) *out, const char *descr)
 	/* read binding description string */
 	while ((len = mpt_string_dest(&str, ':', descr))) {
 		if (len < 0) {
-			(void) mpt_output_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %d: %s",
+			(void) mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s: %d: %s",
 			                      MPT_tr("bad data destination"), bnd.src.dim+1, descr);
 			return dim - 1;
 		}
 		descr += len;
 		if (!str.change) {
-			(void) mpt_output_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %d: %s",
+			(void) mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s: %d: %s",
 			                       MPT_tr("identical data destination"), bnd.src.dim+1, descr-len);
 			continue;
 		}
@@ -74,7 +74,7 @@ extern int mpt_outbind_string(MPT_INTERFACE(output) *out, const char *descr)
 		if (str.change & 4) bnd.dst.wld = str.val[2];
 		
 		if (!bnd.dst.lay || !bnd.dst.grf || !bnd.dst.wld) {
-			(void) mpt_output_log(out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %d: %s",
+			(void) mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s: %d: %s",
 			                       MPT_tr("illegal data destination"), bnd.src.dim+1, descr - len);
 			continue;
 		}

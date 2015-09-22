@@ -44,8 +44,8 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	msg = *ev->msg;
 	
 	if ((len = mpt_message_read(&msg, 2, &mt)) < 2) {
-		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", MPT_tr("bad message length"));
-		return -1;
+		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad message length"));
+		return MPT_ERROR(MissingData);
 	}
 	if (mt.cmd != MPT_ENUM(MessageCommand)) {
 		mt.arg = 0;

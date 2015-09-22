@@ -123,7 +123,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		}
 		/* add command source */
 		else if (mpt_notify_connect(no, ctl) < 0) {
-			mpt_output_log(disp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction),
+			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error),
 			               "%s: %s", MPT_tr("unable to connect to control"), ctl);
 			
 			mpt_notify_fini(no);
@@ -133,7 +133,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	}
 	/* open socket with 2 listening slots */
 	if (src && mpt_notify_bind(no, src, 2) < 0) {
-		mpt_output_log(disp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction),
+		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error),
 		               "%s: %s", MPT_tr("unable to create source"), src);
 		
 		mpt_notify_fini(no);

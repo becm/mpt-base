@@ -37,7 +37,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)
 		    || mt.cmd < MPT_ENUM(MessageCommand)
 		    || mt.cmd >= MPT_ENUM(MessageUserMin)) {
-			mpt_output_log(cl->out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s", MPT_tr("bad message format"));
+			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad message format"));
 			return -1;
 		}
 	}
@@ -68,7 +68,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		if (ev->reply.set) {
 			return MPT_event_good(ev, msg);
 		} else {
-			mpt_output_log(cl->out, __func__, MPT_CLIENT_LOGLEVEL | MPT_ENUM(LogFunction), "%s", msg);
+			mpt_output_log(cl->out, __func__, MPT_CLIENT_LOGLEVEL, "%s", msg);
 			return MPT_ENUM(EventNone);
 		}
 	}

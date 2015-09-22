@@ -124,12 +124,12 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 	id = mpt_hash("step", 4);
 	
 	if (!mpt_command_get(&d->_cmd, id)) {
-		mpt_output_log(d->_out, __func__, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s (%"PRIxPTR")",
+		mpt_output_log(d->_out, __func__, MPT_FCNLOG(Warning), "%s (%"PRIxPTR")",
 		               MPT_tr("invalid default command id"), id);
 		
 		return MPT_event_fail(ev, MPT_tr("step operation not defined"));
 	}
-	mpt_output_log(d->_out, __func__, MPT_ENUM(LogInfo) | MPT_ENUM(LogFunction), "%s (%"PRIxPTR")",
+	mpt_output_log(d->_out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR")",
 	               MPT_tr("assigned default command id"), id);
 	
 	ev->id = d->_def = id;
@@ -150,7 +150,7 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
 		}
 	}
 	if (d->_def) {
-		mpt_output_log(d->_out, __func__, MPT_ENUM(LogInfo) | MPT_ENUM(LogFunction), "%s (%"PRIxPTR")",
+		mpt_output_log(d->_out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR")",
 		               MPT_tr("cleared default command"), d->_def);
 	}
 	d->_def = 0;
@@ -187,20 +187,20 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 	/* mapping of command type messages */
 	id = MPT_ENUM(MessageCommand);
 	if (mpt_dispatch_set(dsp, id, (int (*)()) mpt_dispatch_hash, dsp) < 0) {
-		mpt_output_log(dsp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s",
+		mpt_output_log(dsp->_out, __func__, MPT_FCNLOG(Error), "%s",
 		               MPT_tr("unable to set string command handler"));
 		return -1;
 	}
 	/* register default event activator */
 	id = mpt_hash("cont", 4);
 	if (mpt_dispatch_set(dsp, id, clientCont, dsp) < 0) {
-		mpt_output_log(dsp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %"PRIxPTR" (%s)\n",
+		mpt_output_log(dsp->_out, __func__, MPT_FCNLOG(Error), "%s: %"PRIxPTR" (%s)\n",
 		               MPT_tr("error registering handler id"), id, "cont");
 	}
 	/* register default event activator */
 	id = mpt_hash("stop", 4);
 	if (mpt_dispatch_set(dsp, id, clientStop, dsp) < 0) {
-		mpt_output_log(dsp->_out, __func__, MPT_ENUM(LogError) | MPT_ENUM(LogFunction), "%s: %"PRIxPTR" (%s)\n",
+		mpt_output_log(dsp->_out, __func__, MPT_FCNLOG(Error), "%s: %"PRIxPTR" (%s)\n",
 		               MPT_tr("error registering handler id"), id, "stop");
 	}
 	/* register client command handler */
@@ -208,7 +208,7 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 		id = mpt_hash(cmdsolv[i].name, strlen(cmdsolv[i].name));
 		
 		if (mpt_dispatch_set(dsp, id, (int (*)()) cmdsolv[i].ctl, cl) < 0) {
-			mpt_output_log(dsp->_out, __func__, MPT_ENUM(LogWarning) | MPT_ENUM(LogFunction), "%s: %"PRIxPTR" (%s)\n",
+			mpt_output_log(dsp->_out, __func__, MPT_FCNLOG(Warning), "%s: %"PRIxPTR" (%s)\n",
 				       MPT_tr("error registering handler id"), id, cmdsolv[i].name);
 		}
 	}
