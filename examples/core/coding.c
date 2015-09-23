@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include <inttypes.h>
 
 #include <sys/uio.h>
@@ -52,7 +53,8 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
 	/*decode(info, &vec, 0);*/
 	while ((len = decode(&info, &vec, 1)) < 0) {
 		if (len == MPT_ERROR(MissingBuffer)) {
-			vec.iov_base = mpt_array_insert(arr, info.done + info.scratch, 8);
+			assert(mpt_array_insert(arr, info.done + info.scratch, 8));
+			vec.iov_base = (void *) (arr->_buf + 1);
 			vec.iov_len  = arr->_buf->used;
 			info.scratch += 8;
 			continue;

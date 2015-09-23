@@ -35,40 +35,53 @@ extern int mpt_conf_profile(const MPT_STRUCT(array) *arr, int len, int neqs, con
 	int	ld = 1, err;
 
 	if (len < 1 || neqs < 1) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: (len = %i) > (neqs = %i)", MPT_tr("bad solver data size"), len, neqs);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: (len = %i) > (neqs = %i)",
+		               MPT_tr("bad solver data size"), len, neqs);
 		return -1;
 	}
 	ld  = (buf = arr->_buf) ? ((buf->used / sizeof(double)) / len) : 0;
 	val = (double *) (buf+1);
 	
 	if (neqs > --ld) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: (npde = %i) > (ld = %i)", MPT_tr("bad user data allocation"), neqs, ld);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: (npde = %i) > (ld = %i)",
+		               MPT_tr("bad user data allocation"), neqs, ld);
 		return -1;
 	}
 	
 	if (!(prof = conf) || (prof = conf->children) || !(desc = mpt_node_data(conf, 0))) {
-		int	np;
+		int np;
 		
 		if ((np = mpt_conf_profiles(len, val+len, neqs, prof, val)) < 0) {
-			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("invalid start values"));
+			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+			               MPT_tr("invalid start values"));
 			return -2;
 		}
 		else if (!np) {
-			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("use zero initial values"));
+			(void) mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s",
+			               MPT_tr("use zero initial values"));
 		} else if (np < neqs) {
-			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%d..%d)", MPT_tr("use latest initial values"), np, neqs);
+			if ((neqs - np) < 2) {
+				(void) mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s (%d -> %d)",
+				               MPT_tr("reuse initial values"), np, neqs);
+			} else {
+				(void) mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s (%d -> %d..%d)",
+				               MPT_tr("reuse initial values"), np, np+1, neqs);
+			}
 		}
 	}
 	else if (neqs > 1) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("PDE needs verbose profile configuration"));
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+		               MPT_tr("PDE needs verbose profile configuration"));
 		return -2;
 	}
 	else if ((err = mpt_valtype_select(desc, (char **) &desc)) < 0) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad profile description"), desc);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s",
+		               MPT_tr("bad profile description"), desc);
 		return -2;
 	}
 	else if (mpt_valtype_init(len, val+len, neqs, desc, err, val) < 0) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad profile parameter"), desc);
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s",
+		               MPT_tr("bad profile parameter"), desc);
 		return -2;
 	}
 	/* set used space */
