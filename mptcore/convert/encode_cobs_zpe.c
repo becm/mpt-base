@@ -13,7 +13,7 @@
 	? (--l, ++s, c + MPT_COBS_MAXLEN) \
 	: c), ++d, --r, \
 	1)
-#define MPT_COBS_MAXLEN 223
+#define MPT_COBS_MAXLEN 0xdf /* = 223 */
 /*!
  * \ingroup mptConvert
  * \brief encode with COBS/ZPE
@@ -33,8 +33,11 @@
 extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
 #include "encode_cobs.c"
 
-#define MPT_cobs_check_inline(c, e, p)    ((c <= MPT_COBS_MAXLEN && c < (e = p[c-1])))
-#define MPT_encode_cobs_regular(i, c, d)  mpt_encode_cobs_zpe(i, c, d)
+#define MPT_encode_cobs_regular(i,c,d)  mpt_encode_cobs_zpe(i,c,d)
+#define MPT_cobs_check_inline(c,e,p) \
+	(((c) <= MPT_COBS_MAXLEN) && \
+	((c) < ((e) = (p)[(c)-1])) && \
+	((e) <= MPT_COBS_MAXLEN))
 /*!
  * \ingroup mptConvert
  * \brief encode with COBS/ZPE+R

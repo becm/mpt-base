@@ -15,19 +15,15 @@
 #endif
 
 #ifndef MPT_cobs_data_len
-# define MPT_cobs_data_len(c)  ((c)-1)
+# define MPT_cobs_data_len(c)   ((c)-1)
 #endif
 
 #ifndef MPT_cobs_zero_len
-# define MPT_cobs_zero_len(c)  0
-#endif
-
-#ifndef MPT_cobs_zero_add
-# define MPT_cobs_save_zero(c) ((c) < MPT_COBS_MAXLEN)
+# define MPT_cobs_zero_len(c,n) ((((c) < MPT_COBS_MAXLEN) && n) ? 1 : 0)
 #endif
 
 #ifndef MPT_cobs_max_dec
-# define MPT_cobs_max_dec(c)   ((c) - ((c) / MPT_COBS_MAXLEN))
+# define MPT_cobs_max_dec(c)    ((c) - ((c) / MPT_COBS_MAXLEN))
 #endif
 
 #if __STDC_VERSION__ < 199901L
@@ -65,7 +61,7 @@ static ssize_t _decode
 	const struct iovec *dvec;
 	size_t dveclen, dlen, clen;
 	const uint8_t *restrict src;
-	uint8_t *restrict dst, code, pos, prev;
+	uint8_t *restrict dst, code, pos;
 	size_t proc, mlen, done, rem;
 	
 	/* used message buffer */
@@ -160,14 +156,14 @@ static ssize_t _decode
 		/* double/leading zero */
 		if (!code) {
 			info->_ctx |= _MPT_COBS_MSG_COMPLETE;
-			return MPT_ERROR(BadEncoding);
+			return MPT_ERROR(BadValue);
 		}
 	}
-	pos  = (info->_ctx & 0xff00) / 0x100;
-	prev = 0;
+	/* position in last save operation */
+	pos = (info->_ctx & 0xff00) / 0x100;
 	
 	while (1) {
-		uint8_t curr;
+		uint8_t curr, next;
 		
 		/* message finished */
 		if (!code) {
@@ -178,25 +174,6 @@ static ssize_t _decode
 			info->_ctx = (mlen * _MPT_COBS_MLEN_FACT) | _MPT_COBS_MSG_COMPLETE;
 			info->scratch = proc + mlen;
 			return mlen;
-		}
-		/* no zero append of "previous" code */
-		if (prev && MPT_cobs_save_zero(prev)) {
-			/* no remaining target space */
-			if (!proc) {
-				code = 1;
-				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
-				info->scratch = proc + mlen;
-				return MPT_ERROR(MissingBuffer);
-			}
-			while (!dlen--) {
-				dst  = (uint8_t *) dvec->iov_base;
-				dlen = dvec->iov_len;
-				++dvec;
-				--dveclen;
-			}
-			*dst++ = 0;
-			++mlen;
-			--proc;
 		}
 		/* length of non-zero part */
 		curr = MPT_cobs_data_len(code);
@@ -237,8 +214,22 @@ static ssize_t _decode
 			info->scratch = proc + mlen + 1;
 			return MPT_ERROR(BadEncoding);
 		}
-		/* explicit numbers of zeros to write */
-		curr += MPT_cobs_zero_len(code);
+		/* read next element */
+		while (!clen--) {
+			if (!tmp.clen--) {
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return MPT_ERROR(MissingData);
+			}
+			src  = tmp.cont->iov_base;
+			clen = tmp.cont->iov_len;
+			++tmp.cont;
+		}
+		++proc;
+		next = *src++;
+		
+		/* needed numbers of zeros */
+		curr += MPT_cobs_zero_len(code, next);
 		
 		for (; pos < curr; ++pos) {
 			/* no remaining target space */
@@ -258,20 +249,9 @@ static ssize_t _decode
 			++mlen;
 			--proc;
 		}
-		while (!clen--) {
-			if (!tmp.clen--) {
-				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
-				info->scratch = proc + mlen;
-				return MPT_ERROR(MissingData);
-			}
-			src  = tmp.cont->iov_base;
-			clen = tmp.cont->iov_len;
-			++tmp.cont;
-		}
-		++proc;
-		prev = code;
-		code = *src++;
-		pos  = 0;
+		/* start next part */
+		code = next;
+		pos = 0;
 	}
 }
 

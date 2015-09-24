@@ -4,8 +4,8 @@
 #include "convert.h"
 
 #ifndef MPT_cobs_check_inline
-# define MPT_cobs_check_inline(c, e, p)    (c < (e = p[c-1]))
-# define MPT_encode_cobs_regular(i, c, d)  mpt_encode_cobs(i, c, d)
+# define MPT_cobs_check_inline(c,e,p)    ((c) < ((e) = (p)[(c)-1]))
+# define MPT_encode_cobs_regular(i,c,d)  mpt_encode_cobs(i, c, d)
 /*!
  * \ingroup mptConvert
  * \brief encode with COBS/R
