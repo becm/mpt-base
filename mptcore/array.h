@@ -403,7 +403,7 @@ public:
         size_t len = size();
         array a;
         T *to;
-        if (!(to = a.set(len * sizeof(T)))) return false;
+        if (!(to = (T *) a.set(len * sizeof(T)))) return false;
         T *old = (T *) _d.base();
         for (size_t i = 0; i < len; ++i) {
              new (to+i) T(old[i]);

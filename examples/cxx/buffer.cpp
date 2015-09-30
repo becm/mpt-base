@@ -3,15 +3,10 @@
  */
 
 
-#include <stdio.h>
-#include <string.h>
-
-#include <sys/uio.h>
+#include <iostream>
 
 #include <mpt/queue.h>
 #include <mpt/array.h>
-
-#include <mpt/plot.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -63,8 +58,9 @@ extern int main(int , char * const [])
 	buf.write(1, txt, strlen(txt));
 	
 	d.insert(3, 4);
-	for (mpt::Array<double>::iterator it = d.begin(), end = d.end(); it != end; ++it) {
-		printf("%lf\n", *it);
+	d.set(2, 1);
+	for (auto &it : d) {
+		std::cout << it << std::endl;
 	}
 	
 	cq.push('b');

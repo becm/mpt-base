@@ -36,7 +36,9 @@ extern int main(int , char * const [])
 	std::cout << typeid(*m).name() << "=" << name << std::endl;
 	
 	conf.set("hallo*ich bin*text", "anderer", '*');
-	m = conf.get("hallo/ich bin/text", '/');
+	mpt::path p('/', 0, "settings/env/hallo/ich bin/text");
+	mpt::node *n = mpt::mpt_node_get(0, &p);
+	m = n->meta();
 	
 	name = m->cast();
 	std::cout << " -> " << name << std::endl;

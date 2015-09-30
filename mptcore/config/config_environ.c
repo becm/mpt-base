@@ -17,19 +17,27 @@ struct Config {
 };
 static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, const MPT_STRUCT(path) *path, int len)
 {
-	MPT_STRUCT(path) *tmp = (MPT_STRUCT(path) *) path;
 	struct Config *conf = (void *) ptr;
 	MPT_STRUCT(node) *curr;
 	
-	if (len < 0) {
-		if (!(curr = mpt_node_query(conf->node, tmp, len))) {
+	/* create/change node */
+	if (len >= 0) {
+		if (!(curr = mpt_node_query(conf->node, (MPT_STRUCT(path) *) path, len))) {
+			return 0;
+		}
+		if (!conf->node) {
+			conf->node = curr;
+		}
+		if (path->len && !(curr = mpt_node_get(curr->children, path))) {
+			return 0;
+		}
+		if (len && !curr->_meta && !(curr->_meta = mpt_meta_new(len))) {
 			return 0;
 		}
 	}
-	if (!conf->node) {
-		conf->node = curr;
-	}
-	if (path->len && !(curr = mpt_node_get(curr, tmp))) {
+	/* require existing node */
+	else if (!(curr = conf->node)
+	         || (path->len && !(curr = mpt_node_get(curr, path)))) {
 		return 0;
 	}
 	return &curr->_meta;
@@ -72,7 +80,7 @@ extern int mpt_node_environ(MPT_STRUCT(node) *base, const char *pattern, int sep
 
 /*!
  * \ingroup mptConfig
- * \brief set contiguration from environment.
+ * \brief set configuration from environment.
  * 
  * use pattern matching to only include wanted
  * environment variables.
@@ -86,7 +94,6 @@ extern int mpt_node_environ(MPT_STRUCT(node) *base, const char *pattern, int sep
  */
 extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, int sep, char * const env[])
 {
-	MPT_STRUCT(node) *root = 0;
 	const char *var;
 	int accept = 0;
 	
@@ -94,6 +101,12 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 	if (!sep) sep = '_';
 	if (!pattern) pattern = "mpt_*";
 	
+	/* populate global config */
+	if (!conf) {
+		struct Config conf = { { &nodeQuery }, 0 };
+		conf.node = mpt_node_get(0, 0);
+		return mpt_config_environ(&conf.conf, pattern, sep, env);
+	}
 	/* (re)evaluate environment */
 	while ((var = *(env++))) {
 		MPT_INTERFACE(metatype) **mt, *mp;
@@ -137,25 +150,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		var++;
 		accept++;
 		
-		if (!conf) {
-			MPT_STRUCT(node) *n;
-			
-			if (!root) {
-				root = mpt_node_get(0, 0);
-			}
-			if (!(n = mpt_node_query(root, &path, vlen))) {
-				errno = EINVAL;
-				return -accept;
-			}
-			if (path.len) n = mpt_node_get(n->children, &path);
-			
-			if (!n->_meta && !(n->_meta = mpt_meta_new(vlen))) {
-				errno = EINVAL;
-				return -accept;
-			}
-			mt = &n->_meta;
-		}
-		else if (!(mt = conf->_vptr->query(conf, &path, vlen)) || !mt) {
+		if (!(mt = conf->_vptr->query(conf, &path, vlen))) {
 			errno = EINVAL;
 			return -accept;
 		}

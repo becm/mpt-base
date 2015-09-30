@@ -49,7 +49,7 @@ MPT_INTERFACE(client)
 MPT_INTERFACE(client) : public Reference<output>
 {
 public:
-	enum { LogLevel = MPT_CLIENT_LOGLEVEL };
+	enum { LogLevel = MPT_FCNLOG(Debug2) };
 	
 	client(class output * = 0);
 	~client();

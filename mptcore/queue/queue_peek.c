@@ -36,13 +36,15 @@ extern ssize_t mpt_queue_peek(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 	if (MPT_queue_frag(qu)) {
 		msg.base = ((uint8_t *) qu->base) + qu->off;
 		msg.used = qu->max - qu->off;
+		msg.clen = 1;
+		msg.cont = &src;
 		src.iov_base = qu->base;
 		src.iov_len  = qu->len - msg.used;
-		msg.clen = 1;
 	} else {
 		msg.base = ((uint8_t *) qu->base) + qu->off;
-		msg.used  = qu->len;
+		msg.used = qu->len;
 		msg.clen = 0;
+		msg.cont = 0;
 	}
 	off = info->done;
 	if (off && (mpt_message_read(&msg, off, 0) < off)) {
@@ -52,14 +54,9 @@ extern ssize_t mpt_queue_peek(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 	/* final data available */
 	if (!dec) {
 		if (!dst) {
-			return off;
+			return mpt_message_length(&msg);
 		}
-		if (off > dst->iov_len) {
-			off = dst->iov_len;
-		}
-		;
-		
-		return off;
+		return mpt_message_read(&msg, dst->iov_len, dst->iov_base);
 	}
 	src.iov_base = (void *) msg.base;
 	src.iov_len  = msg.used;
@@ -70,12 +67,16 @@ extern ssize_t mpt_queue_peek(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 	len = info->done;
 	info->done = len + off;
 	
-	if (ret <= 0 || !dst) {
+	if (ret < 0 || !dst) {
 		return ret;
 	}
 	/* consume additional done data */
 	if (len && (len = mpt_message_read(&msg, len, 0) < len)) {
 		return -1;
+	}
+	len = src.iov_len;
+	if ((size_t) ret > len) {
+		ret = len;
 	}
 	/* get data start and length */
 	if ((size_t) ret > dst->iov_len) {

@@ -30,10 +30,13 @@ extern uint32_t _mpt_geninfo_addref(uint64_t *raw)
 	struct metaInfo *info = (void *) raw;
 	int32_t c = info->ref;
 	
-	if (!c) { errno = EINVAL; return 0; }
-	
-	if ((c = (++info->ref)) > 0) return c;
-	
+	if (!c) {
+		errno = EINVAL;
+		return 0;
+	}
+	if ((c = (++info->ref)) > 0) {
+		return c;
+	}
 	--info->ref;
 	errno = ERANGE;
 	
@@ -67,17 +70,17 @@ static int geninfoSet(struct metaInfo *info, MPT_INTERFACE(source) *src)
 		}
 	}
 	else if ((len = src->_vptr->conv(src, MPT_ENUM(TypeVector) | 'c', &vec)) < 0) {
-		return -1;
+		return len;
 	}
 	if (!len || !vec.iov_len) {
 		info->used = 0;
 		return len;
 	}
 	if (vec.iov_len >= info->size) {
-		return -2;
+		return MPT_ERROR(MissingBuffer);
 	}
 	if (!vec.iov_base) {
-		return -3;
+		return MPT_ERROR(BadValue);
 	}
 	vec.iov_base = memcpy(info+1, vec.iov_base, vec.iov_len);
 	((char *) vec.iov_base)[vec.iov_len] = 0;
@@ -146,7 +149,7 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 	if (!strcasecmp(prop->name, metaProp[3].name)) {
 		*prop = metaProp[3];
 		prop->val.ptr = &info->size;
-		return 1;
+		return 2;
 	}
 	errno = ENOTSUP;
 	return -1;

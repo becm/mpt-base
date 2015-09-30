@@ -131,11 +131,19 @@ public:
     
     enum { Type = IODevice::Type };
     
+    /* metatype interface */
     int unref();
     Queue *addref();
     int property(struct property *pr, source * = 0);
     void *typecast(int);
     
+    /* IODevice interface */
+    ssize_t write(size_t , const void *, size_t);
+    ssize_t read(size_t , void *, size_t);
+    
+    Slice<uint8_t> data();
+    
+    /* queue access */
     virtual bool prepare(size_t);
     
     virtual bool push(const void *, size_t);
@@ -143,11 +151,6 @@ public:
     
     virtual bool unshift(const void *, size_t);
     virtual bool shift(void *, size_t);
-    
-    virtual Slice<uint8_t> data();
-    
-    ssize_t write(size_t , const void *, size_t);
-    ssize_t read(size_t , void *, size_t);
     
 protected:
     struct queue _d;

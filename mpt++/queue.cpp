@@ -43,7 +43,6 @@ bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
         return false;
     }
     mpt_message_get(&_d, _state.done, _mlen, &msg, cont);
-    _mlen = -1;
 
     return true;
 }

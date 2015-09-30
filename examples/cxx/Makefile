@@ -17,6 +17,7 @@ DIR_TOP = ${MPT_PREFIX}
 include ../../mpt.example.mk
 
 # library config
+config : LDLIBS+=-lmptcore
 output : LDLIBS+=-lmptio -lmptcore
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt

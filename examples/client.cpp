@@ -33,8 +33,8 @@ int main()
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
     o->set(mpt::property("history", "/dev/stdout"), 0);
-    o->set(mpt::property("level", "debug"), 0);
-    o->message(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    o->set(mpt::property("level", "debug2"), 0);
+    o->message(__func__, mpt::client::LogLevel, "%s = %i", "value", 5);
     c->init();
     c->unref();
 }

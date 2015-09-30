@@ -225,7 +225,8 @@ bool Graph::bind(const Relation &rel, logger *out)
                 continue;
             }
             Reference<Axis> ref(a->addref());
-            if ((a = ref) && addAxis(a, curr = it.name())) {
+            curr = it.name();
+            if ((a = ref) && addAxis(a, curr)) {
                 ref.detach();
                 continue;
             }
@@ -268,7 +269,8 @@ bool Graph::bind(const Relation &rel, logger *out)
                 continue;
             }
             Reference<World> ref(w->addref());
-            if ((w = ref) && addWorld(w, curr = it.name())) {
+            curr = it.name();
+            if ((w = ref) && addWorld(w, curr)) {
                 ref.detach();
                 continue;
             }

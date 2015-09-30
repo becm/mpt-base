@@ -50,7 +50,7 @@ static MPT_STRUCT(node) *nodeRoot(void)
  * \param conf  configuration root
  * \param path  element path
  * 
- * \return config element if exists
+ * \return config node if exists
  */
 extern MPT_STRUCT(node) *mpt_node_get(MPT_STRUCT(node) *conf, const MPT_STRUCT(path) *path)
 {
