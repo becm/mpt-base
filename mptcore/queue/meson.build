@@ -1,1 +1,25 @@
 # meson.build.gen: suffix=c
+src = files(
+ # match: *.c
+  'memrev.c',
+  'qpop.c',
+  'qpost.c',
+  'qpre.c',
+  'qpush.c',
+  'qshift.c',
+  'queue_align.c',
+  'queue_crop.c',
+  'queue_data.c',
+  'queue_empty.c',
+  'queue_find.c',
+  'queue_get.c',
+  'queue_load.c',
+  'queue_push.c',
+  'queue_recv.c',
+  'queue_resize.c',
+  'queue_save.c',
+  'queue_set.c',
+  'queue_string.c',
+  'qunshift.c',
+  'queue_peek.c',
+)

@@ -8,6 +8,10 @@
 
 #include "core.h"
 
+#if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L
+# define _MPT_FLOAT_EXTENDED_H
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 enum MPT_ENUM(EncodingType) {

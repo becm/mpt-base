@@ -9,6 +9,10 @@
 
 #include "message.h"
 
+#ifndef SSIZE_MAX
+# define SSIZE_MAX (SIZE_MAX/2)
+#endif
+
 /*!
  * \ingroup mptMessage
  * \brief get first position

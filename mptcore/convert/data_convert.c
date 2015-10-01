@@ -61,7 +61,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((int8_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((int8_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((int8_t *) from); break;
 #endif
@@ -89,7 +89,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((uint8_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((uint8_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((uint8_t *) from); break;
 #endif
@@ -118,7 +118,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((int16_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((int16_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
@@ -147,7 +147,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((int16_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((int16_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
@@ -178,7 +178,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((int32_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((int32_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((int32_t *) from); break;
 #endif
@@ -208,7 +208,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((uint32_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((uint32_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((uint32_t *) from); break;
 #endif
@@ -241,9 +241,9 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((int64_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((int64_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
-			  case 'D': *((long double *) dest) = *((double *) from); break;
+			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
 			  default: return MPT_ERROR(BadType); /* invalid conversion */
 			}
@@ -273,7 +273,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((uint64_t *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((uint64_t *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
@@ -287,7 +287,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			  case 'f': *((float *) dest) = *((float *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((float *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
@@ -302,14 +302,14 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 				    *((float *) dest) = *((double *) from); break;
 			  case 'D':
 			  case 'd': *((double *) dest) = *((double *) from); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 			  case 'E':
 			  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
 			  default: return MPT_ERROR(BadType); /* invalid conversion */
 			}
 			break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 		  case 'e':
 		  case 'E':
 			switch (dtype) {

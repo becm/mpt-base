@@ -1,1 +1,28 @@
 # meson.build.gen: suffix=c
+src = files(
+ # match: *.c
+  'array_append.c',
+  'array_callunref.c',
+  'array_compact.c',
+  'array_cut.c',
+  'array_data.c',
+  'array_insert.c',
+  'array_reduce.c',
+  'array_slice.c',
+  'array_string.c',
+  'buffer.c',
+  'copy32.c',
+  'copy64.c',
+  'copy_df.c',
+  'copy_fd.c',
+  'drange.c',
+  'frange.c',
+  'irange.c',
+  'printf.c',
+  'array_flush.c',
+  'meta_buffer.c',
+  'mmap.c',
+  'slice_write.c',
+  'bitmap.c',
+  'array_push.c',
+)

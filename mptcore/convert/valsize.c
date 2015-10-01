@@ -55,7 +55,7 @@ static const struct {
 	
 	{ 'f', sizeof(float) },       { 'F', sizeof(float) },
 	{ 'd', sizeof(double) },      { 'D', sizeof(double) },
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 	{ 'e', sizeof(long double) }, { 'E', sizeof(long double) },
 #endif
 	/* different string representations */
