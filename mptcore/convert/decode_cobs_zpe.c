@@ -20,15 +20,22 @@
  * New message data begins at \info.done ,
  * encoded data continues \info.scratch later
  * 
- * Pass \sourcelen = 0 to get encoded message length
+ * Pass \sourcelen = 0 to get current message length
  * on single data element.
  * No data change is performed in this case.
+ * 
+ * Pass \source = 0 to get maximum required message size
+ * for remaining data length.
+ * No data change is performed in this case.
+ * 
+ * Pass \sourcelen = 0 and \source = 0 to reset
+ * \codestate data.
  * 
  * \param info      start position of encoded data
  * \param source    encoded data
  * \param sourcelen length of source array
  * 
- * \return size of message/consumed data
+ * \return size of message
  */
 extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
 {
@@ -43,16 +50,22 @@ extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iov
  * New message data begins at \info.done ,
  * encoded data continues \info.scratch later
  * 
- * Pass \sourcelen = 0 to get encoded message length
+ * Pass \sourcelen = 0 to get current message length
  * on single data element.
  * No data change is performed in this case.
  * 
+ * Pass \source = 0 to get maximum required message size
+ * for remaining data length.
+ * No data change is performed in this case.
+ * 
+ * Pass \sourcelen = 0 and \source = 0 to reset
+ * \codestate data.
+ * 
  * \param info      start position of encoded data
- * \param mlen      consumed message length
  * \param source    encoded data
  * \param sourcelen length of source array
  * 
- * \return size of message/consumed data
+ * \return size of message
  */
 extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
 {

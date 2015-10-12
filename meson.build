@@ -8,6 +8,8 @@ if not meson.is_subproject()
   add_global_arguments('-std=c++11', language : 'cpp')
 endif
 
+cpp_args = []
+
 libs = get_option('libraries')
 if libs == 'shared'
   with_static = false
@@ -20,25 +22,29 @@ else
   with_shared = true
 endif
 
-inc = include_directories(
-   meson.current_source_dir() + '/mptcore',
-   meson.current_source_dir() + '/mptplot',
-   meson.current_source_dir() + '/mptio',
-   meson.current_source_dir() + '/mpt++'
-)
-subdir('mptcore')
-subdir('mptplot')
-subdir('mptio')
+if not get_option('with_plot')
+  cpp_args += [ '-DMPT_NO_PLOT' ]
+endif
 
-src = [
-  src_core,
-  src_plot,
-  src_io
-]
+subdir('mptcore')
+inc = [ include_directories('mptcore', 'mptplot') ]
+src = [ src_core ]
+
+if get_option('with_plot')
+  subdir('mptplot')
+  src += src_plot
+endif
+
+if get_option('with_io')
+  subdir('mptio')
+  inc += include_directories('mptio')
+  src += src_io
+endif
 
 if get_option('with_cxx')
   add_languages('cpp')
   subdir('mpt++')
+  inc += include_directories('mpt++')
   src += src_xx
 endif
 

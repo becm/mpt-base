@@ -2,7 +2,7 @@
 LIB = mptcore
 #
 # additional header directories
-INC = . .. ../mptplot ../mptio
+INC = . ..
 #
 # header to export
 HEADER = core.h \

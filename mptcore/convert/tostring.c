@@ -11,7 +11,9 @@
 
 #include "convert.h"
 
-#include "plot.h"
+#ifndef MPT_NO_PLOT
+# include "../mptplot/plot.h"
+#endif
 
 /*!
  * \ingroup mptConvert
@@ -87,6 +89,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 	int len;
 	
 	switch (type) {
+#ifndef MPT_NO_PLOT
 	    case '#':
 		if (((const MPT_STRUCT(color) *)arg)->alpha != 0xff) {
 			const MPT_STRUCT(color) *c = arg;
@@ -96,6 +99,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 			len = snprintf(dest, left, "#%02x%02x%02x", c->red, c->green, c->blue);
 		}
 		break;
+#endif
 	    case 'c': case 'C':
 		len = snprintf(dest, left, "%c", *((char*)arg));
 		break;

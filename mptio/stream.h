@@ -9,7 +9,10 @@
 #include "core.h"
 
 #ifdef __cplusplus
+# include "array.h"
+# include "event.h"
 # include "notify.h"
+# include "queue.h"
 #endif
 
 struct sockaddr;
@@ -173,7 +176,6 @@ extern int mpt_stream_close(MPT_STRUCT(stream) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-# if defined(_MPT_QUEUE_H) && defined(_MPT_ARRAY_H) && defined(_MPT_NOTIFY_H) && defined(_MPT_EVENT_H)
 struct msgtype;
 struct message;
 
@@ -216,7 +218,6 @@ protected:
     int _inputFile;
     uint8_t _idlen;
 };
-# endif /* _MPT_QUEUE_H && _MPT_ARRAY_H */
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

@@ -1,3 +1,9 @@
 # mpt-base/meson_options.txt: mpt base build options
-option('libraries', type : 'combo', choices : ['static', 'shared', 'both'], value : 'both')
-option('with_cxx', type : 'boolean', value : true)
+option('libraries', type : 'combo', choices : ['static', 'shared', 'both'], value : 'both',
+       description : 'library types to build')
+option('with_cxx', type : 'boolean', value : true,
+       description : 'build C++ library/components')
+option('with_io', type : 'boolean', value : true,
+       description : 'build I/O library/components')
+option('with_plot', type : 'boolean', value : true,
+       description : 'build plotting library/components')

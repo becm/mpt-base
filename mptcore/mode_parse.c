@@ -21,7 +21,7 @@
 
 #include "core.h"
 
-#include "stream.h"
+#include "../mptio/stream.h"
 
 #if defined(_WIN32)
 # define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineNet)

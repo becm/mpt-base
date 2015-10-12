@@ -33,7 +33,6 @@ install_headers(
 if with_shared
   mptcore = shared_library('mptcore', src_core, #'libinfo.c',
     version : '1.0.0', soversion : '1',
-    include_directories : inc,
     install : true)
 
   pkgconfig_gen(
