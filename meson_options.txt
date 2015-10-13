@@ -7,3 +7,5 @@ option('with_io', type : 'boolean', value : true,
        description : 'build I/O library/components')
 option('with_plot', type : 'boolean', value : true,
        description : 'build plotting library/components')
+option('lua', type : 'string', value : '5.3',
+       description : 'lua target version')

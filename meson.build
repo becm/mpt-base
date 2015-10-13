@@ -41,6 +41,10 @@ if get_option('with_io')
   src += src_io
 endif
 
+if dependency('lua' + get_option('lua'), required : false).found()
+  subdir('lua')
+endif
+
 if get_option('with_cxx')
   add_languages('cpp')
   subdir('mpt++')

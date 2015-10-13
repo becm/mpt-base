@@ -28,7 +28,7 @@ endforeach
 install_headers(
   'array.h', 'client.h', 'config.h', 'convert.h',
   'core.h', 'message.h', 'node.h', 'parse.h', 'queue.h',
-  install_dir : 'include/mpt')
+  subdir : 'mpt')
 
 if with_shared
   mptcore = shared_library('mptcore', src_core, #'libinfo.c',
@@ -40,4 +40,7 @@ if with_shared
     libraries : mptcore,
     version : '1.0.0',
     name : 'mptcore')
+
+  core = declare_dependency(link_with : mptcore,
+    include_directories : include_directories('.'))
 endif

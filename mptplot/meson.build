@@ -9,13 +9,13 @@ foreach d : [ 'output', 'plot', 'values' ]
 endforeach
 
 install_headers('output.h', 'plot.h', 'values.h',
-  install_dir : 'include/mpt')
+  subdir : 'mpt')
 
 if with_shared
   mptplot = shared_library('mptplot', src_plot, #'libinfo.c',
+    install_rpath : '$ORIGIN',
     version : '1.0.0', soversion : '1',
-    include_directories : inc,
-    link_with : mptcore,
+    dependencies : core,
     install : true)
   
   pkgconfig_gen(
@@ -23,4 +23,7 @@ if with_shared
     libraries : mptplot,
     version : '1.0.0',
     name : 'mptplot')
+
+  plot = declare_dependency(link_with : mptplot,
+    include_directories : include_directories('.'))
 endif

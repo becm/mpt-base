@@ -18,24 +18,23 @@ src_xx = files(
   'queue.cpp',
   'transform.cpp'
 )
-mptxx_link = [ mptplot, mptcore ]
+mptxx_dep = [ plot, core ]
 
 if get_option('with_io')
   src_xx += files(
     'notify.cpp',
     'stream.cpp'
   )
-  mptxx_link = [ mptio ] + mptxx_link
+  mptxx_dep = [ io ] + mptxx_dep
 endif
 
 install_headers('object.h', 'graphic.h',
-  install_dir : 'include/mpt')
+  subdir : 'mpt')
 
 if with_shared
   mptxx = shared_library('mpt++', src_xx, #'libinfo.c',
-    include_directories : inc,
     install_rpath : '$ORIGIN',
-    link_with : mptxx_link,
+    dependencies : mptxx_dep,
     version : '1.0.0', soversion : '1',
     install : true)
   
