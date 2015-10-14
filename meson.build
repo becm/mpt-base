@@ -22,20 +22,25 @@ else
   with_shared = true
 endif
 
-if not get_option('with_plot')
+with_plot = get_option('with_plot')
+if not with_plot
   cpp_args += [ '-DMPT_NO_PLOT' ]
 endif
 
 subdir('mptcore')
-inc = [ include_directories('mptcore', 'mptplot') ]
+inc = [ include_directories('mptcore') ]
 src_all = [ src_core ]
 
-if get_option('with_plot')
+if with_plot
   subdir('mptplot')
+  inc += include_directories('mptplot')
   src_all += src_plot
 endif
 
-if get_option('with_io')
+with_io = get_option('with_io')
+if with_io
+  with_loader = get_option('with_loader')
+  with_io = true
   subdir('mptio')
   inc += include_directories('mptio')
   src_all += src_io
@@ -45,17 +50,17 @@ if dependency('lua' + get_option('lua'), required : false).found()
   subdir('lua')
 endif
 
-if get_option('with_cxx')
+with_cxx = get_option('with_cxx')
+if with_cxx
   add_languages('cpp')
   subdir('mpt++')
   inc += include_directories('mpt++')
-  src_all += src_xx
+  src_all += src_cxx
 endif
 
 if with_static
   mpt = static_library('mpt', src_all,
     include_directories : inc,
-    dependencies : find_library('dl'),
     install : true)
   
   pkgconfig_gen(

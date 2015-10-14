@@ -1,46 +1,57 @@
 # mpt-base/mpt++/meson.build
 # build definition for mpt C++ library
 
-src_xx = files(
+src_cxx = files(
   'array.cpp',
   'config.cpp',
-  'cycle.cpp',
   'message.cpp',
-  'graphic.cpp',
-  'item.cpp',
   'logger.cpp',
-  'mapping.cpp',
   'meta.cpp',
   'object.cpp',
   'parse.cpp',
-  'plot.cpp',
-  'polyline.cpp',
   'queue.cpp',
-  'transform.cpp'
 )
-mptxx_dep = [ plot, core ]
+cxx = [ core ]
 
-if get_option('with_io')
-  src_xx += files(
+if with_plot
+  src_cxx += files(
+    'cycle.cpp',
+    'graphic.cpp',
+    'item.cpp',
+    'mapping.cpp',
+    'plot.cpp',
+    'polyline.cpp',
+    'transform.cpp'
+  )
+  cxx = [ plot ] + cxx
+endif
+
+if with_io
+  src_cxx += files(
     'notify.cpp',
     'stream.cpp'
   )
-  mptxx_dep = [ io ] + mptxx_dep
+  cxx = [ io ] + cxx
 endif
 
 install_headers('object.h', 'graphic.h',
   subdir : 'mpt')
 
 if with_shared
-  mptxx = shared_library('mpt++', src_xx, #'libinfo.c',
+  mptcxx = shared_library('mpt++', src_cxx, #'libinfo.c',
     install_rpath : '$ORIGIN',
-    dependencies : mptxx_dep,
+    dependencies : cxx,
     version : '1.0.0', soversion : '1',
     install : true)
-  
+
   pkgconfig_gen(
     description : 'mpt C++ library',
-    libraries : mptxx,
+    libraries : mptcxx,
     version : '1.0.0',
     name : 'mpt++')
+
+  cxx = [ declare_dependency(
+      link_with : mptcxx,
+      include_directories : include_directories('.'))
+    ] + cxx
 endif

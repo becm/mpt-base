@@ -8,10 +8,15 @@ src_io = files(
   'output_new.c',
   'readline.c'
 )
-foreach d : [ 'loader', 'notify', 'outdata', 'stream' ]
+foreach d : [ 'notify', 'outdata', 'stream' ]
   subdir(d)
   src_io += src
 endforeach
+
+if with_loader
+  subdir('loader')
+  src_io += src
+endif
 
 install_headers('notify.h', 'stream.h',
   subdir : 'mpt')

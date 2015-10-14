@@ -13,9 +13,10 @@
 #include "queue.h"
 #include "message.h"
 #include "convert.h"
-#include "stream.h"
 
-#include "output.h"
+#include "../mptplot/output.h"
+
+#include "../mptio/stream.h"
 
 struct luaStream {
 	MPT_STRUCT(stream) srm;

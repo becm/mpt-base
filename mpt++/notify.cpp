@@ -71,11 +71,4 @@ void dispatch::setError(int (*cmd)(void *, event *), void *arg)
     _err.arg = arg;
 }
 
-
-// message source interface
-int MessageSource::reply(const message *)
-{
-    return -1;
-}
-
 __MPT_NAMESPACE_END
