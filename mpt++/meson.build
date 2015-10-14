@@ -42,13 +42,15 @@ if with_shared
     install_rpath : '$ORIGIN',
     dependencies : cxx,
     version : '1.0.0', soversion : '1',
-    install : true)
+    install : with_cxx)
 
-  pkgconfig_gen(
-    description : 'mpt C++ library',
-    libraries : mptcxx,
-    version : '1.0.0',
-    name : 'mpt++')
+  if with_cxx
+    pkgconfig_gen(
+      description : 'mpt C++ library',
+      libraries : mptcxx,
+      version : '1.0.0',
+      name : 'mpt++')
+  endif
 
   cxx = [ declare_dependency(
       link_with : mptcxx,

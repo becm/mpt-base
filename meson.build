@@ -27,6 +27,7 @@ if not with_plot
   cpp_args += [ '-DMPT_NO_PLOT' ]
 endif
 
+with_core = true
 subdir('mptcore')
 inc = [ include_directories('mptcore') ]
 src_all = [ src_core ]
@@ -37,9 +38,13 @@ if with_plot
   src_all += src_plot
 endif
 
+with_loader = get_option('with_loader')
+if with_loader
+  subdir('mptloader')
+endif
+
 with_io = get_option('with_io')
 if with_io
-  with_loader = get_option('with_loader')
   with_io = true
   subdir('mptio')
   inc += include_directories('mptio')

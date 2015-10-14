@@ -1,5 +1,5 @@
 # Makefile: create base MPT modules
-MODULES = mptcore mptplot mptio mpt++
+MODULES = mptcore mptplot mptio mptloader mpt++
 SUB = ${MODULES} lua
 #
 # creation targets

@@ -13,11 +13,6 @@ foreach d : [ 'notify', 'outdata', 'stream' ]
   src_io += src
 endforeach
 
-if with_loader
-  subdir('loader')
-  src_io += src
-endif
-
 install_headers('notify.h', 'stream.h',
   subdir : 'mpt')
 
@@ -30,13 +25,15 @@ if with_shared
     version : '1.0.0', soversion : '1',
     dependencies : [ core, dlib ],
     include_directories : include_directories('../mptplot'),
-    install : true)
+    install : with_io)
 
-  pkgconfig_gen(
-    description : 'mpt I/O library',
-    libraries : mptio,
-    version : '1.0.0',
-    name : 'mptio')
+  if with_io
+    pkgconfig_gen(
+      description : 'mpt I/O library',
+      libraries : mptio,
+      version : '1.0.0',
+      name : 'mptio')
+  endif
 
   io = declare_dependency(link_with : mptio,
     include_directories : include_directories('.'))

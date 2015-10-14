@@ -6,7 +6,7 @@ option('with_cxx', type : 'boolean', value : true,
 option('with_io', type : 'boolean', value : true,
        description : 'build I/O library/components')
 option('with_loader', type : 'boolean', value : true,
-       description : 'build loader functionality')
+       description : 'build loader library/components')
 option('with_plot', type : 'boolean', value : true,
        description : 'build plotting library/components')
 option('lua', type : 'string', value : '5.3',

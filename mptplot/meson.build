@@ -16,7 +16,7 @@ if with_shared
     install_rpath : '$ORIGIN',
     version : '1.0.0', soversion : '1',
     dependencies : core,
-    install : true)
+    install : with_plot)
   
   pkgconfig_gen(
     description : 'mpt plotting library',
