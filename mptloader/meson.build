@@ -1,15 +1,16 @@
-# mpt-base/mptloader/meson.build.gen
+# mpt-base/mptloader/meson.build
 # create loader library
 
-src = files(
+src_loader = files(
   'library_assign.c',
   'library_open.c',
   'meta_open.c',
   'library_bind.c'
 )
 
-mptload = static_library('mptloader', src,
+mptload = shared_library('mptloader', src_loader,
   include_directories : inc,
+  dependencies : find_library('dl'),
   install : with_loader)
 
 load = declare_dependency(link_with : mptload)

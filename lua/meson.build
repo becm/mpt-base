@@ -2,7 +2,6 @@
 # build definition for mpt LUA library
 
 lua_version = run_command('pkg-config',
-  '--define-variable=prefix=' + get_option('prefix'),
   '--variable=major_version',
   'lua' + get_option('lua')).stdout().strip()
 

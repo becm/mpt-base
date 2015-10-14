@@ -41,6 +41,7 @@ endif
 with_loader = get_option('with_loader')
 if with_loader
   subdir('mptloader')
+  src_all += src_loader
 endif
 
 with_io = get_option('with_io')
