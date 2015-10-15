@@ -14,18 +14,19 @@
  * 
  * Check/Set array data zero-terminated.
  * 
- * \param arr	data array
+ * \param arr  data array
  * 
  * \return start address of string
  */
 extern char *mpt_array_string(MPT_STRUCT(array) *arr)
 {
 	MPT_STRUCT(buffer) *buf;
-	size_t	len;
-	char	*str;
+	size_t len;
+	char *str;
 	
 	if (!(buf = arr->_buf)) {
-		errno = EFAULT; return 0;
+		errno = EFAULT;
+		return 0;
 	}
 	str = (char *) (buf+1);
 	len = buf->used;
@@ -34,8 +35,9 @@ extern char *mpt_array_string(MPT_STRUCT(array) *arr)
 		return str;
 	}
 	if ((len = buf->used) >= buf->size) {
-		if (buf->resize || !(buf = buf->resize(buf, len + 8)))
+		if (!buf->resize || !(buf = buf->resize(buf, len + 8))) {
 			return 0;
+		}
 		arr->_buf = buf;
 	}
 	str = (char *) (buf+1);

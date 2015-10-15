@@ -29,7 +29,7 @@ static double iterNext(MPT_INTERFACE(iterator) *iter, int step)
 	struct _iter_fdata *it = (void *) iter;
 	
 	if (step < 0) {
-		step = it->pos = 0;
+		it->pos = 0;
 		return it->curr = it->base;
 	}
 	if (step + it->pos >= it->max) {
@@ -54,15 +54,15 @@ static MPT_INTERFACE_VPTR(iterator) ictl = { iterUnref, iterNext };
  * 
  * Create iterator advancing by factor.
  * 
- * \param conf	factor iterator parameters
+ * \param conf  factor iterator parameters
  * 
  * \return iterator interface
  */
 extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(const char *conf)
 {
 	struct _iter_fdata *it;
-	double	base = 1.0, fact = 10.;
-	int	max = 10, len;
+	double base = 1.0, fact = 10.;
+	int max = 10, len;
 	
 	if (!conf) {
 		errno = EFAULT;

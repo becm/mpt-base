@@ -35,8 +35,9 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 		replace->_vptr->unref(replace);
 		return -3;
 	}
-	old->_vptr->unref(old);
-	
+	if (old) {
+		old->_vptr->unref(old);
+	}
 	node->_meta = replace;
 	
 	return ret;

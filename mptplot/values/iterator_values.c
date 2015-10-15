@@ -26,7 +26,7 @@ static int iterUnref(MPT_INTERFACE(iterator) *iter)
 static double iterNext(MPT_INTERFACE(iterator) *iter, int step)
 {
 	struct _iter_sdata *it = (void *) iter;
-	const char *desc = it->pos;
+	const char *desc;
 	double curr;
 	int len;
 	

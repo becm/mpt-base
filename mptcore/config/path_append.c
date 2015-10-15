@@ -21,15 +21,17 @@
 extern void *mpt_path_append(MPT_STRUCT(path) *path, size_t len)
 {
 	MPT_STRUCT(array) arr;
-	char	*dest = (void *) path->base;
-	size_t	pos;
+	size_t pos;
+	char *dest = (void *) path->base;
 	
 	/* need new storage */
 	if (!(arr._buf = (void *) dest) || !(path->flags & MPT_ENUM(PathHasArray))) {
 		arr._buf = 0;
 		pos = path->off + path->len + path->valid;
-		if (!(dest = mpt_array_insert(&arr, 0, pos+len)))
+		if (!(dest = mpt_array_insert(&arr, 0, pos+len))) {
 			return 0;
+		}
+		/* 'nonnull' false positive: pos!=0 -> path->base!=null */
 		path->base = pos ? memcpy(dest, path->base, pos) : dest;
 		path->flags |= MPT_ENUM(PathHasArray);
 		return dest + pos;

@@ -28,8 +28,6 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 	from.iov_base = (void *) src;
 	from.iov_len  = len;
 	
-	src = stream->_wd.base;
-	
 	if (flags & MPT_ENUM(StreamWriteMap)) {
 		flags &= ~MPT_ENUM(StreamWriteBuf);
 	}

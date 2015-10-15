@@ -265,7 +265,7 @@ static int streamConnect(lua_State *L)
 	
 	if (type) {
 		if ((flg = mpt_mode_parse(&mode, type)) < 0) {
-			flg = mpt_mode_parse(&mode, 0);
+			(void) mpt_mode_parse(&mode, 0);
 		}
 	}
 	if ((flg = mpt_connect(&sock, dest, type ? &mode : 0)) < 0) {

@@ -70,7 +70,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 			;
 		} else if (part < (ssize_t) sizeof(buf)) {
 			buf[part] = 0;
-			part = mpt_message_read(&msg, part, buf);
+			(void) mpt_message_read(&msg, part, buf);
 			msg.base = buf;
 		} else {
 			return MPT_event_fail(ev, MPT_tr("unaligned connect argument"));

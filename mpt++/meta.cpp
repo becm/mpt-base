@@ -94,12 +94,13 @@ NodePrivate::Meta::Meta(size_t len, node *base) : _base(base)
 metatype *NodePrivate::Meta::addref()
 {
 
-    metatype *meta = mpt_meta_clone(this);
+    metatype *ref, *meta;
 
-    if (!(meta)) return 0;
-
-    if ((meta = meta->addref())) {
-        _base->_meta = meta;
+    if (!(meta = mpt_meta_clone(this))) {
+        return 0;
+    }
+    if ((ref = meta->addref())) {
+        _base->_meta = ref;
         return meta;
     }
     meta->unref();
@@ -241,7 +242,7 @@ node *node::create(size_t ilen, size_t dlen)
     node *n;
     size_t left = sizeof(NodePrivate::data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
     if (left >= (isize + dlen)) {
-        if (!(n = (node *) malloc(sizeof(NodePrivate)))) return 0;
+        if (!(n = (NodePrivate *) malloc(sizeof(NodePrivate)))) return 0;
         new (n) NodePrivate(ilen);
         if (!n->_meta) ::abort();
     }

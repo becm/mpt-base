@@ -20,7 +20,7 @@ extern void mpt_node_clear(MPT_STRUCT(node) *node)
 	while (tmp) {
 		MPT_STRUCT(node) *next = tmp->next;
 		tmp->next = tmp->prev = tmp->parent = 0;
-		tmp = mpt_node_destroy(tmp);
+		(void) mpt_node_destroy(tmp);
 		tmp = next;
 	}
 	node->children = 0;

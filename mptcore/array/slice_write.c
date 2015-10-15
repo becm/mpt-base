@@ -66,7 +66,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 	}
 	/* remove offset data */
 	if (sl->_off) {
-		uint8_t *to = (uint8_t *) (buf+1);
+		uint8_t *to;
 		
 		if (!(to = mpt_array_slice(&sl->_a, 0, pos + esze))) {
 			return -1;
@@ -95,6 +95,6 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		++avail;
 		from = ((uint8_t *) from) + esze;
 	}
-	sl->_len = sl->_a._buf->used;
+	sl->_len = sl->_a._buf ? sl->_a._buf->used : 0;
 	return avail ? (ssize_t) avail : -2;
 }

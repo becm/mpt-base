@@ -29,8 +29,10 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	/* need new storage */
 	if (!(arr._buf = (void *) path->base) || !(path->flags & MPT_ENUM(PathHasArray))) {
 		arr._buf = 0;
-		if (!(dest = mpt_array_insert(&arr, 0, pos+1)))
+		if (!(dest = mpt_array_insert(&arr, 0, pos+1))) {
 			return -1;
+		}
+		/* 'nonnull' false positive: pos!=0 -> path->base!=null */
 		path->base = pos ? memcpy(dest, path->base, pos) : dest;
 		dest[pos]  = val & 0xff;
 		path->flags |= MPT_ENUM(PathHasArray);

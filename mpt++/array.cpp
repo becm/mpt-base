@@ -118,8 +118,10 @@ int array::set(source &src)
         if (len) {
             return -1;
         }
+        set(0);
+        return 0;
     }
-    if (!len) {
+    else if (!len) {
         len = strlen(data);
     }
     if (!set(len+1)) return -1;

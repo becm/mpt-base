@@ -69,7 +69,7 @@ static ssize_t _decode
 	size_t dveclen, dlen, clen;
 	const uint8_t *restrict src;
 	uint8_t *restrict dst, code, pos;
-	size_t proc, mlen, done, rem;
+	size_t proc, mlen, done;
 	
 	/* used message buffer */
 	mlen = (info->_ctx & ~_MPT_COBS_MSG_COMPLETE) / _MPT_COBS_MLEN_FACT;
@@ -135,11 +135,9 @@ static ssize_t _decode
 		info->scratch = proc;
 		mlen = 0;
 	}
-	if ((rem = mpt_message_length(&tmp)) < proc) {
+	if (mpt_message_length(&tmp) < proc) {
 		return MPT_ERROR(BadArgument);
 	}
-	rem -= proc;
-	
 	/* decoded data start */
 	dst  = (uint8_t *) tmp.base;
 	dlen = tmp.used;

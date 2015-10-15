@@ -55,6 +55,8 @@ extern ssize_t mpt_array_push(MPT_STRUCT(array) *arr, MPT_STRUCT(codestate) *inf
 		src = *data;
 		data = &src;
 		max = data->iov_len;
+	} else {
+		src.iov_len = 0;
 	}
 	/* current buffer data */
 	if (!(b = arr->_buf)) {

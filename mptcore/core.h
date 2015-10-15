@@ -659,7 +659,7 @@ extern const char *mpt_log_start(FILE *, const char *, int);
 #endif
 
 /* write error message and abort program */
-extern void _mpt_abort(const char *, const char *, const char *, int);
+extern void _mpt_abort(const char *, const char *, const char *, int) __attribute__ ((__noreturn__));
 
 __MPT_EXTDECL_END
 

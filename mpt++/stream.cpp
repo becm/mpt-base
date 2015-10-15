@@ -222,7 +222,7 @@ int Stream::property(struct property *pr, source *src)
             return -3;
         }
     }
-    if (!*name) {
+    else if (!*name) {
         if ((ret = mpt_stream_setter(this, src)) < 0) return ret;
         pr->name = "stream";
         pr->desc = "generic data stream";

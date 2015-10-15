@@ -52,6 +52,9 @@ extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 			base = (char *) (buf+1);
 		}
 	}
+	if (!buf) {
+		return -1;
+	}
 	va_copy(tmp, args);
 	rval = vsnprintf(base+used, len, format, tmp);
 	va_end(tmp);

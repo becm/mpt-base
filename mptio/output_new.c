@@ -370,10 +370,14 @@ static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
 		rtype = val;
 	}
 	if (!rtype) {
-		if (od->out._enc.fcn) od->out._enc.fcn(&od->out._enc.info, 0, 0);
-		od->out._enc.fcn = 0;
-		if (od->dec.fcn) od->out._enc.fcn(&od->dec.info, 0, 0);
-		od->dec.fcn = 0;
+		if (od->out._enc.fcn) {
+			od->out._enc.fcn(&od->out._enc.info, 0, 0);
+			od->out._enc.fcn = 0;
+		}
+		if (od->dec.fcn) {
+			od->dec.fcn(&od->dec.info, 0, 0);
+			od->dec.fcn = 0;
+		}
 	}
 	else if (!(enc = mpt_message_encoder(rtype))
 	    || !(dec = mpt_message_decoder(rtype))) {
@@ -398,9 +402,7 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		if (!src) {
 			return MPT_ENUM(TypeOutput);
 		}
-		if ((ret = mpt_outdata_property(od, prop, src)) < 0) {
-			return ret;
-		}
+		return mpt_outdata_property(od, prop, src);
 	}
 	if (!(name = prop->name)) {
 		return src ? -1 : -3;
@@ -446,11 +448,14 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 	}
 	/* conditions for notification change */
 	if (prop->val.ptr == &od->sock) {
-		if (od->_enc.fcn) od->_enc.fcn(&od->_enc.info, 0, 0);
-		if (odata->dec.fcn) od->_enc.fcn(&odata->dec.info, 0, 0);
-		od->_enc.fcn = 0;
-		odata->dec.fcn = 0;
-		
+		if (od->_enc.fcn) {
+			od->_enc.fcn(&od->_enc.info, 0, 0);
+			od->_enc.fcn = 0;
+		}
+		if (odata->dec.fcn) {
+			odata->dec.fcn(&odata->dec.info, 0, 0);
+			odata->dec.fcn = 0;
+		}
 		if (od->_sflg & MPT_ENUM(SocketStream)) {
 			if (!odata->_coding) {
 				odata->_coding = MPT_ENUM(EncodingCobs);
@@ -531,8 +536,9 @@ static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 			 * just ignore Microsoft's fuckuped version without termination */
 			if (plen >= (int) sizeof(buf)) plen = sizeof(buf);
 			
-			if (plen > 0) {
-				plen = outputPush(&odata->_base, plen, buf);
+			if (plen > 0 && (plen = outputPush(&odata->_base, plen, buf)) < 0) {
+				outputPush(&odata->_base, 1, 0);
+				return plen;
 			}
 		}
 		outputPush(&odata->_base, 0, 0);

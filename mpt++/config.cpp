@@ -44,10 +44,8 @@ path &path::operator =(const path &from)
 
 void path::set(const char *path, int len, int s, int a)
 {
-    if (s < 0) s = this->sep;
-    else this->sep = s;
-    if (a < 0) a = this->assign;
-    else this->assign = a;
+    if (s >= 0) this->sep = s;
+    if (a >= 0) this->assign = a;
     mpt_path_set(this, path, len);
 }
 
@@ -195,7 +193,7 @@ Reference<metatype> *Config::query(const path *dest, int minlen)
 }
 int Config::remove(const path *dest)
 {
-    node *n = _root;
+    node *n;
 
     // local search only
     if (_local) {

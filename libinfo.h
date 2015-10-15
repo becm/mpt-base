@@ -20,25 +20,26 @@ static void _library_ident(const char *ident)
 	int len = 0;
 	
 	while (ident[len]) len++;
-	len = write(STDOUT_FILENO, ident, len);
+	(void) write(STDOUT_FILENO, ident, len);
 	
 #ifdef SHLIB_INFO
 	ident = " ("SHLIB_INFO")\0";
 	len = 0;
 	while (ident[len]) len++;
-	len = write(STDOUT_FILENO, ident, len);
+	(void) write(STDOUT_FILENO, ident, len);
 #endif
-	len = write(STDOUT_FILENO, "\n", 1);
+	(void) write(STDOUT_FILENO, "\n", 1);
 }
 static void _library_task(const char *task)
 {
 	static const char txt[] = "  - \n";
-	int len = write(STDOUT_FILENO, txt, 4);
+	int len;
 	
+	(void) write(STDOUT_FILENO, txt, 4);
 	len = 0;
 	while (task[len]) len++;
 	
-	len = write(STDOUT_FILENO, task, len);
-	len = write(STDOUT_FILENO, txt+4, 1);
+	(void) write(STDOUT_FILENO, task, len);
+	(void) write(STDOUT_FILENO, txt+4, 1);
 }
 

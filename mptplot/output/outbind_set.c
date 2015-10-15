@@ -23,7 +23,7 @@
  */
 extern int mpt_outbind_set(MPT_STRUCT(msgbind) *bnd, const char *data)
 {
-	uint8_t val, type = bnd->type;
+	uint8_t val, type;
 	int	curr;
 	
 	/* special validity for binding */

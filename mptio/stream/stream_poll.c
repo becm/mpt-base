@@ -46,6 +46,7 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 	/* fast path for output */
 	else if (timeout < 0 && what == POLLOUT) {
 		fd[0].fd = -1;
+		fd[0].revents = 0;
 		fd[1].fd = _mpt_stream_fread(&srm->_info);
 		fd[1].revents = what;
 	}

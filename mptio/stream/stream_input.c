@@ -99,13 +99,11 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 	else {
 		/* input codec for message */
 		if (!(tmp._dec.fcn = mpt_message_decoder(code))) {
-			code = -1;
 			return 0;
 		}
 		/* bidirectional codec for reply */
 		if ((mode & MPT_ENUM(StreamWrite))
 		    && !(tmp._enc.fcn = mpt_message_encoder(code))) {
-			code = -1;
 			return 0;
 		}
 		memset(&tmp._dec.info, 0, sizeof(tmp._dec.info));

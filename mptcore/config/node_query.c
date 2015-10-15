@@ -78,7 +78,7 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 		}
 		return match;
 	}
-	if (vlen && !match->_meta) {
+	if (vlen && match && !match->_meta) {
 		match->_meta = mpt_meta_new(vlen);
 	}
 	return match;

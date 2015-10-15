@@ -76,11 +76,12 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_remap(MPT_STRUCT(buffer) *buf, size_t len
 	size_t	size, used;
 	
 	/* get page table size & check range */
-	if (!ptsize || (ptsize = sysconf(_SC_PAGESIZE)) < 1)
+	if (!ptsize || (ptsize = sysconf(_SC_PAGESIZE)) < 1) {
 		return 0;
-	
+	}
 	if (SIZE_MAX - ptsize < len) {
-		errno = ERANGE; return 0;
+		errno = ERANGE;
+		return 0;
 	}
 	if (buf) {
 		size = buf->size;
@@ -89,9 +90,9 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_remap(MPT_STRUCT(buffer) *buf, size_t len
 		size = used = 0;
 	}
 	/* no change */
-	if (size == len && (!buf || !buf->shared))
+	if (size == len && (!buf || !buf->shared)) {
 		return buf;
-	
+	}
 	/* round up to page table size */
 	if (len) {
 		len += sizeof(*buf);
@@ -100,10 +101,13 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_remap(MPT_STRUCT(buffer) *buf, size_t len
 	size += sizeof(*buf);
 	
 	/* shrink buffer */
-	if (len < size && !buf->shared) {
-		if (munmap(((uint8_t *) buf)+len, size-len))
-			return buf;
-		if (!len) return 0;
+	if (len < size && buf && !buf->shared) {
+		if (munmap(((uint8_t *) buf)+len, size-len)) {
+			return len ? 0 : buf;
+		}
+		if (!len) {
+			return 0;
+		}
 		/* shrink used size to match new total */
 		if (len < used) buf->used = len;
 		buf->size = len;
@@ -111,14 +115,17 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_remap(MPT_STRUCT(buffer) *buf, size_t len
 		return buf;
 	}
 	else {
-		MPT_STRUCT(buffer) *nbuf;
+		MPT_STRUCT(buffer) *nbuf = 0;
 		
-		if (!(nbuf = _mpt_memmap(len, (!buf || buf->shared) ? 0 : buf)))
+		if (len && !(nbuf = _mpt_memmap(len, (!buf || buf->shared) ? 0 : buf))) {
 			return 0;
-		
+		}
 		if (buf && buf != nbuf) {
-			if (used) memcpy(nbuf+1, buf+1, used);
+			if (len && used) memcpy(nbuf+1, buf+1, used);
 			if (!(buf->shared--)) munmap(buf, size);
+		}
+		if (!nbuf) {
+			return 0;
 		}
 		nbuf->resize = _mpt_buffer_remap;
 		nbuf->shared = 0;

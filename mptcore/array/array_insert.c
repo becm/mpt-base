@@ -23,8 +23,8 @@
 extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 {
 	MPT_STRUCT(buffer) *b, *(*resize)(MPT_STRUCT(buffer) *, size_t );
-	uint8_t	*base;
-	size_t	used, size, total;
+	uint8_t *base;
+	size_t used, size, total;
 	
 	if ((b = arr->_buf)) {
 		used = b->used;
@@ -44,11 +44,13 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	/* set after used space */
 	if (pos >= used) {
 		if (total > size) {
-			if (!(b = resize ? resize(b, total) : 0))
+			if (!resize || !(b = resize(b, total))) {
 				return 0;
+			}
 			arr->_buf = b;
 			base = (uint8_t *) (b+1);
 		}
+		/* false 0pointer positive: b = 0 -> size=0, total>=1 */
 		b->used = total;
 		if (pos > used) memset(base+used, 0, pos-used);
 		return base + pos;
@@ -56,9 +58,9 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	total = used + len;
 	
 	/* increase allocation size */
-	if (used >= size && !(b = resize ? resize(b, total) : 0))
+	if (used >= size && !(b = resize ? resize(b, total) : 0)) {
 		return 0;
-	
+	}
 	/* increase used size */
 	size = used - pos;
 	b->used = total;

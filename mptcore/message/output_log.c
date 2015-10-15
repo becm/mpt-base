@@ -41,6 +41,9 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 		va_end(ap);
 		return err;
 	}
+	if (!out) {
+		return 0;
+	}
 	if (from || fmt) {
 		uint8_t hdr[2];
 		hdr[0] = MPT_ENUM(MessageOutput);

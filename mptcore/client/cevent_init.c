@@ -25,7 +25,7 @@ static int setConfig(void *udata, MPT_STRUCT(property) *pr)
 		return -1;
 	}
 	
-	len = mpt_path_set(&where, pr->name, -1);
+	(void) mpt_path_set(&where, pr->name, -1);
 	len = strlen(pr->val.ptr);
 	/* max length exceeded */
 	if (++len > INT32_MAX) return -2;

@@ -159,6 +159,7 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 		
 		/* get available chunks from buffer */
 		if ((curr = left / part)) {
+			size_t take;
 			/* reduce to needed size */
 			if (curr > (count - tchunk)) {
 				curr = count - tchunk;
@@ -177,11 +178,11 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 				continue;
 			}
 			left = 0;
-			while (curr && (part = flushPosition(stream, data, curr))) {
-				left += part;
-				mpt_qpush(&stream->_wd, part, data);
-				data = ((char *) data) + part;
-				curr -= part;
+			while (curr && (take = flushPosition(stream, data, curr))) {
+				left += take;
+				mpt_qpush(&stream->_wd, take, data);
+				data = ((char *) data) + take;
+				curr -= take;
 			}
 			if (left) {
 				mpt_stream_flush(stream);
@@ -198,7 +199,7 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 		if (file < 0 && (file = _mpt_stream_fwrite(&stream->_info)) < 0) {
 			break;
 		}
-		curr = mpt_queue_save(&stream->_wd, file);
+		(void) mpt_queue_save(&stream->_wd, file);
 		
 		left = stream->_wd.max - stream->_wd.len;
 		

@@ -29,7 +29,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	
 	where.sep = sep;
 	where.assign = end;
-	len = mpt_path_set(&where, path, -1);
+	(void) mpt_path_set(&where, path, -1);
 	
 	if (!val) {
 		MPT_STRUCT(node) *root;

@@ -34,10 +34,9 @@ extern int mpt_parse_data(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 				}
 			}
 			mpt_path_valid(path);
-			last = curr;
 		}
 		else if (MPT_isescape(fmt, curr)) {
-			match = last = curr;
+			match = curr;
 		}
 		/* option end detected */
 		else if (curr == fmt->oend) {

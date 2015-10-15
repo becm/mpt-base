@@ -42,7 +42,7 @@ extern const char *mpt_client_read(MPT_STRUCT(node) *conf, MPT_STRUCT(message) *
 		}
 	} else if ((size_t) part < msg->used && (!sep || !((char *) msg->base)[part])) {
 		fname = msg->base;
-		part = mpt_message_read(msg, part, 0);
+		(void) mpt_message_read(msg, part, 0);
 	} else if (part >= (ssize_t) sizeof(fbuf)) {
 		return MPT_tr("temporary buffer exceeded");
 	} else {

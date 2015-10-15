@@ -21,12 +21,14 @@ struct _inline_meta
 static MPT_INTERFACE(metatype) *nodeAddref(MPT_INTERFACE(metatype) *meta)
 {
 	struct _inline_meta *node = (void *) meta;
+	MPT_INTERFACE(metatype) *ref;
 	
 	if (!(meta = mpt_meta_clone(meta))) {
 		return 0;
 	}
-	if ((meta = meta->_vptr->addref(meta))) {
-		return node->node->_meta = meta;
+	if ((ref = meta->_vptr->addref(meta))) {
+		node->node->_meta = meta;
+		return ref;
 	}
 	meta->_vptr->unref(meta);
 	return 0;

@@ -98,14 +98,13 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(codestate) *info, const struct iove
 	/* register additional data */
 	else {
 		off += pos;
-		pos = off + len;
 		if (off && mpt_message_read(&from, off, 0) < off) {
 			return -3;
 		}
 	}
 	/* find command end */
 	while (1) {
-		if ((end = memchr(from.base, 0, from.used))) {
+		if (from.used && (end = memchr(from.base, 0, from.used))) {
 			len += (end - (uint8_t *) from.base);
 			break;
 		}

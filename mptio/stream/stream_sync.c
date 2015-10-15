@@ -49,8 +49,6 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(
 		if (!(fcn = cmd[pos++].cmd)) continue;
 		++count;
 	}
-	pos = count;
-	
 	/* no input -> trim array later */
 	if (!stream->_dec.fcn) {
 		count = 0;
