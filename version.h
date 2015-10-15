@@ -32,7 +32,5 @@
 #  define SHLIB_INFO "dev_"__VCS_TAG__
 # elif defined(__ISO_DATE__)
 #  define SHLIB_INFO "developer build: "__ISO_DATE__
-# else
-#  define SHLIB_INFO "developer build"
 # endif
 #endif

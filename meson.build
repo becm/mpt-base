@@ -90,3 +90,9 @@ if with_static
     version : '1.0.0',
     name : 'mpt')
 endif
+
+pkgconfig_gen(
+  description : 'mpt header directory',
+  subdirs : 'mpt',
+  version : '1.0.0',
+  name : 'mptheaders')
