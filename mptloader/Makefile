@@ -1,20 +1,23 @@
-# Makefile: MPT I/O library
+# Makefile: MPT loader library
 LIB = mptloader
+#
+# additional header directories
+INC = .. ../mptcore
 #
 # source summary
 SRCS := library_assign.c library_bind.c library_open.c meta_open.c
-OBJS := $(SRCS:%.c=%.o)
+#
+# shared library options
+SHLIB_MAJOR = 1
+SHLIB_MINOR = 0
+SHLIB_TEENY = 0
+SHLIB_OBJS = libinfo.o ${OBJS}
+LDLIBS = -ldl
 #
 # import library creation settings
 DIR_TOP = ${MPT_PREFIX}
-DIR_INC = ${DIR_TOP}/include/mpt
-include ../mpt.config.mk
+include ../mpt.lib.mk
 #
-# additional header directories
-CPPFLAGS += -I../mptcore
-#
-${DIR_LIB}/libmptloader.a : ${OBJS}
-	${AR} ${ARFLAGS} '${@}' $?
-
-devel static : ${DIR_LIB}/libmptloader.a
-shared :
+# additional dependencies
+libinfo.o : ../libinfo.h ../version.h
+CLEAN_FILES += libinfo.o

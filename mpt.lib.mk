@@ -8,6 +8,9 @@ endif
 # include global configuration
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
+# define VCS tag or ISO date
+DEF += $(if ${VCS_TAG},'__VCS_TAG__="${VCS_TAG}"','__ISO_DATE__="${ISODATE}"')
+#
 # preprocessor flags
 CPPWARN ?= all error pedantic
 CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)

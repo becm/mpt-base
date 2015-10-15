@@ -22,8 +22,8 @@ static void _library_ident(const char *ident)
 	while (ident[len]) len++;
 	len = write(STDOUT_FILENO, ident, len);
 	
-#ifdef SHLIB_VERSION
-	ident = " ("SHLIB_VERSION")\0";
+#ifdef SHLIB_INFO
+	ident = " ("SHLIB_INFO")\0";
 	len = 0;
 	while (ident[len]) len++;
 	len = write(STDOUT_FILENO, ident, len);

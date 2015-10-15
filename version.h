@@ -2,33 +2,37 @@
  * general version information
  */
 
-#define _MPT_STRING(x) #x
+#define _TO_STRING(x) #x
 
-#if !defined(MPT_RELEASE_MINOR)
-# define _MPT_RELEASE(M,m,p) _MPT_STRING(M)
-#elif !defined(MPT_RELEASE_TEENY)
-# define _MPT_RELEASE(M,m,p) _MPT_STRING(M.m)
+#if !defined(RELEASE_MINOR)
+# define _MAKE_RELEASE(M,m,p) _TO_STRING(M)
+#elif !defined(RELEASE_TEENY)
+# define _MAKE_RELEASE(M,m,p) _TO_STRING(M.m)
 #else
-# define _MPT_RELEASE(M,m,p) _MPT_STRING(M.m.p)
+# define _MAKE_RELEASE(M,m,p) _TO_STRING(M.m.p)
 #endif
 
-#ifdef __RELEASE__
-# define MPT_VERSION __RELEASE__
-#elif defined(MPT_RELEASE_MAJOR)
-# define MPT_RELEASE _MPT_RELEASE(MPT_RELEASE_MAJOR,MPT_RELEASE_MINOR,MPT_RELEASE_TEENY)
-# define MPT_VERSION MPT_RELEASE
+#ifdef RELEASE_BUILD
+# define BUILD_VERSION RELEASE_BUILD
+#elif defined(RELEASE_MAJOR)
+# define RELEASE_BUILD _MAKE_RELEASE(RELEASE_MAJOR,RELEASE_MINOR,RELEASE_TEENY)
+# define BUILD_VERSION RELEASE_BUILD
+#elif defined(__VCS_REVISION__)
+# define BUILD_VERSION "dev_"__VCS_REVISION__
 #elif defined(__ISO_DATE__)
-# define MPT_VERSION "devel ("__ISO_DATE__")"
+# define BUILD_VERSION "devel ("__ISO_DATE__")"
 #else
-# define MPT_VERSION "developer build"
+# define BUILD_VERSION "developer build"
 #endif
 
-#ifndef SHLIB_VERSION
-# ifdef MPT_RELEASE
-#  define SHLIB_VERSION "release "MPT_RELEASE
+#ifndef SHLIB_INFO
+# ifdef RELEASE_BUILD
+#  define SHLIB_INFO "release "RELEASE_BUILD
+# elif defined(__VCS_TAG__)
+#  define SHLIB_INFO "dev_"__VCS_TAG__
 # elif defined(__ISO_DATE__)
-#  define SHLIB_VERSION "developer build: "__ISO_DATE__
+#  define SHLIB_INFO "developer build: "__ISO_DATE__
 # else
-#  define SHLIB_VERSION "developer build"
+#  define SHLIB_INFO "developer build"
 # endif
 #endif

@@ -1,8 +1,7 @@
 /*!
- * MPT core library description
+ * MPT plotting library description
  */
 
-#include "release.h"
 #include "version.h"
 #include "libinfo.h"
 

@@ -2,7 +2,6 @@
  * MPT C++ library description
  */
 
-#include "release.h"
 #include "version.h"
 #include "libinfo.h"
 
