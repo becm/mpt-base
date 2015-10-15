@@ -20,11 +20,11 @@ install_headers('notify.h', 'stream.h',
 dlib = find_library('dl', required : false)
 
 if with_shared
-  mptio = shared_library('mptio', src_io, #'libinfo.c',
+  mptio = shared_library('mptio', src_io, 'libinfo.c',
+    include_directories : include_directories('../mptplot', '..'),
     install_rpath : '$ORIGIN',
     version : '1.0.0', soversion : '1',
     dependencies : [ core, dlib ],
-    include_directories : include_directories('../mptplot'),
     install : with_io)
 
   if with_io

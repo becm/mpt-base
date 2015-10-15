@@ -11,7 +11,9 @@ src_cxx = files(
   'parse.cpp',
   'queue.cpp',
 )
-cxx = [ core ]
+if with_shared
+  cxx = [ core ]
+endif
 
 if with_plot
   src_cxx += files(
@@ -23,7 +25,9 @@ if with_plot
     'polyline.cpp',
     'transform.cpp'
   )
-  cxx = [ plot ] + cxx
+  if with_shared
+    cxx = [ plot ] + cxx
+  endif
 endif
 
 if with_io
@@ -31,14 +35,17 @@ if with_io
     'notify.cpp',
     'stream.cpp'
   )
-  cxx = [ io ] + cxx
+  if with_shared
+    cxx = [ io ] + cxx
+  endif
 endif
 
 install_headers('object.h', 'graphic.h',
   subdir : 'mpt')
 
 if with_shared
-  mptcxx = shared_library('mpt++', src_cxx, #'libinfo.c',
+  mptcxx = shared_library('mpt++', src_cxx, 'libinfo.c',
+    include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : cxx,
     version : '1.0.0', soversion : '1',

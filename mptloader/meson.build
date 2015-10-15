@@ -8,7 +8,7 @@ src_loader = files(
   'library_bind.c'
 )
 
-mptload = shared_library('mptloader', src_loader,
+mptload = shared_library('mptloader', src_loader, 'libinfo.c',
   include_directories : inc,
   dependencies : find_library('dl'),
   install : with_loader)

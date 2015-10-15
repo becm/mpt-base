@@ -8,6 +8,7 @@ if not meson.is_subproject()
   add_global_arguments('-std=c++11', language : 'cpp')
 endif
 
+c_args = []
 cpp_args = []
 
 libs = get_option('libraries')
@@ -24,24 +25,38 @@ endif
 
 with_plot = get_option('with_plot')
 if not with_plot
-  cpp_args += [ '-DMPT_NO_PLOT' ]
+  add_global_arguments('-DMPT_NO_PLOT', language : ['c', 'cpp'])
 endif
 
+git = run_command('git', 'status', '--porcelain')
+if git.returncode() == 0 and git.stdout().strip() == ''
+  git = run_command('git', 'show', '-s', '--pretty=format:%h')
+  if git.returncode() == 0
+    add_global_arguments('-D__VCS_TAG__="' + git.stdout().strip() + '"', language : 'c')
+  endif
+else
+  iso = run_command('date', '+%F')
+  if iso.returncode() == 0
+    add_global_arguments('-D__ISO_DATE__="' + iso.stdout().strip() + '"', language : 'c')
+  endif
+endif
+
+inc = [ include_directories('.') ]
 with_core = true
 subdir('mptcore')
-inc = [ include_directories('mptcore') ]
+inc += include_directories('mptcore')
 src_all = [ src_core ]
-
-if with_plot
-  subdir('mptplot')
-  inc += include_directories('mptplot')
-  src_all += src_plot
-endif
 
 with_loader = get_option('with_loader')
 if with_loader
   subdir('mptloader')
   src_all += src_loader
+endif
+
+if with_plot
+  subdir('mptplot')
+  inc += include_directories('mptplot')
+  src_all += src_plot
 endif
 
 with_io = get_option('with_io')

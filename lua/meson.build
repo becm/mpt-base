@@ -22,10 +22,12 @@ lua_inc = run_command('pkg-config',
 install_data('mathbox.lua', 'mpt.lua',
   install_dir : lua_lmod)
 
-lua = shared_library('lua' + lua_version + '-mpt', 'mpt.c',
-  install_rpath : get_option('prefix') + '/' + get_option('libdir'),
-  c_args : lua_inc,
-  include_directories : inc,
-  link_with : mptcore,
-  install_dir : lua_cmod,
-  install : true)
+if with_shared
+  lua = shared_library('lua' + lua_version + '-mpt', 'mpt.c',
+    install_rpath : get_option('prefix') + '/' + get_option('libdir'),
+    c_args : lua_inc,
+    include_directories : inc,
+    link_with : mptcore,
+    install_dir : lua_cmod,
+    install : true)
+endif

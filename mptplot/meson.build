@@ -12,7 +12,8 @@ install_headers('output.h', 'plot.h', 'values.h',
   subdir : 'mpt')
 
 if with_shared
-  mptplot = shared_library('mptplot', src_plot, #'libinfo.c',
+  mptplot = shared_library('mptplot', src_plot, 'libinfo.c',
+    include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     version : '1.0.0', soversion : '1',
     dependencies : core,
