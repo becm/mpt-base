@@ -10,11 +10,11 @@
 /* set/get functions */
 static int setCycle(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)
 {
-	uint16_t cyc;
+	uint32_t cyc;
 	int len;
 	
 	if (!src) return wld->cyc;
-	if ((len = src->_vptr->conv(src, 'H', &cyc)) >= 0) {
+	if ((len = src->_vptr->conv(src, 'u', &cyc)) >= 0) {
 		wld->cyc = len ? cyc : 0;
 	}
 	return len;
@@ -68,7 +68,7 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 		's',
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeLineAttr),
-		'I', 'I',
+		'u',
 		0
 	};
 	MPT_STRUCT(property) self;
@@ -112,18 +112,18 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 		if (world && (pos = set(self.val.ptr, src)) < 0) return pos;
 	}
 	else if (pos < 2) {
-		self.val.fmt = "I";
+		self.val.fmt = "u";
 		if (world && (pos = set(world, src)) < 0) return pos;
 	}
 	else if (pos < 6) {
-		self.val.fmt = "C";
+		self.val.fmt = "y";
 		if (world && (pos = set(&world->attr, src)) < 0) return pos;
 	}
 	else if (!world) {
 		self.val.fmt = "s";
 	}
 	else {
-		if ((pos = set(self.val.ptr, src)) < 0) return pos;
+		if ((pos = set(&world->_alias, src)) < 0) return pos;
 		self.val.fmt = 0;
 		self.val.ptr = world->_alias;
 	}

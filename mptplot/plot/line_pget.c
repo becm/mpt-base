@@ -63,7 +63,8 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 	static const char format[] = {
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeLineAttr),
-		'f', 'f', 'f', 'f',
+		'f', 'f', /* line start */
+		'f', 'f', /* line end */
 		0
 	};
 	MPT_STRUCT(property) self;
@@ -109,7 +110,7 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 	}
 	else {
 		if (line && (pos = set(&line->attr, src)) < 0) return pos;
-		self.val.fmt = "C";
+		self.val.fmt = "c";
 		*pr = self;
 		return pos;
 	}

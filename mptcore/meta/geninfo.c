@@ -105,9 +105,9 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 {
 	static const MPT_STRUCT(property) metaProp[] = {
 		{ "store", "default storage element", { "", 0 } },
-		{ "line",  "origin line", { "H", 0 } },
-		{ "used",  "current data usage", { "B", 0 } },
-		{ "size",  "max. available size", { "B", 0 } }
+		{ "line",  "origin line", { "q", 0 } },
+		{ "used",  "current data usage", { "y", 0 } },
+		{ "size",  "max. available size", { "y", 0 } }
 	};
 	struct metaInfo *info = (void *) raw;
 	
@@ -131,7 +131,7 @@ extern int _mpt_geninfo_property(uint64_t *raw, MPT_STRUCT(property) *prop, MPT_
 	}
 	if (!(strcasecmp(prop->name, metaProp[1].name))) {
 		int ret = info->used;
-		if (src && (ret = src->_vptr->conv(src, 'H', &info->line)) < 0) {
+		if (src && (ret = src->_vptr->conv(src, 'q', &info->line)) < 0) {
 			return ret;
 		}
 		*prop = metaProp[1];

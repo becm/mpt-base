@@ -15,7 +15,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-#if defined(__FreeBSD__)
+#ifndef _GNU_SOURCE
 # define exp10(x)  exp(M_LN10 * (x))
 #endif
 

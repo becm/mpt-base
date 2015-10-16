@@ -8,8 +8,6 @@
 
 #include "array.h"
 
-#define MPT_META_POST	8
-
 static int metaUnref(MPT_INTERFACE(metatype) *meta)
 {
 	uint32_t c = _mpt_geninfo_unref((uint64_t *) (meta+1));
@@ -57,9 +55,10 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t post)
 {
 	MPT_INTERFACE(metatype) *meta;
 	uint64_t *info;
+        static const size_t min = (32 - sizeof(info) - sizeof(*meta));
 	
-	if (post < MPT_META_POST) {
-		post = MPT_META_POST;
+	if (post < min) {
+		post = min;
 	}
 	else if (post > UINT8_MAX) {
 		return mpt_meta_buffer(post, 0);

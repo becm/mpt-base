@@ -5,7 +5,8 @@ src_loader = files(
   'library_assign.c',
   'library_open.c',
   'meta_open.c',
-  'library_bind.c'
+  'library_bind.c',
+  'readline.c'
 )
 
 mptload = shared_library('mptloader', src_loader, 'libinfo.c',

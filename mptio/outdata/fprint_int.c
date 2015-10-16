@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "output.h"
 
@@ -42,26 +43,29 @@ extern int mpt_outfmt_iget(int fmt, int *wp)
  */
 extern int mpt_fprint_int(FILE *file, const int8_t *str, MPT_INTERFACE(source) *src)
 {
+	static const char valsunsigned[] = "tuqy";
 	char fmt[] = " %*lli";
 	const char *fs = fmt + 1;
 	int width = 1, adv = 'i', last = 0;
 	
 	if (!file) {
-		errno = EFAULT; return -1;
+		errno = EFAULT;
+		return -1;
 	}
 	while (1) {
 		union {
-			int64_t  l;
+			int64_t  x;
 			int32_t  i;
-			int16_t  h;
+			int16_t  n;
 			int8_t   b;
 			char     c;
-			uint64_t L;
-			uint32_t I;
-			uint16_t H;
-			uint8_t  B;
+			
+			uint64_t t;
+			uint32_t u;
+			uint16_t q;
+			uint8_t  y;
 		} val;
-		int	len = 0;
+		int len = 0;
 		
 		/* update format settings */
 		if (str && *str) {
@@ -69,39 +73,37 @@ extern int mpt_fprint_int(FILE *file, const int8_t *str, MPT_INTERFACE(source) *
 		}
 		if (!adv || adv == 'i') {
 			/* retry valid last successful conversion */
-			if (islower(last) && (len = src->_vptr->conv(src, last, &val)) > 0) {
+			if (last && strchr(valsunsigned, last) && (len = src->_vptr->conv(src, last, &val)) > 0) {
 				switch (last) {
-				  case 'i': val.l = val.i; break;
-				  case 'h': val.l = val.h; break;
-				  case 'b': val.l = val.b; break;
-				  case 'c': val.l = val.c; break;
+				  case 'i': val.x = val.i; break;
+				  case 'n': val.x = val.n; break;
+				  case 'b': val.x = val.b; break;
+				  case 'c': val.x = val.c; break;
 				  default:;
 				}
 			}
-			else if ((len = src->_vptr->conv(src, last = 'i', &val.i)) > 0) val.l = val.i;
-			else if ((len = src->_vptr->conv(src, last = 'l', &val.l)) > 0);
-			else if ((len = src->_vptr->conv(src, last = 'h', &val.h)) > 0) val.l = val.h;
-			else if ((len = src->_vptr->conv(src, last = 'b', &val.b)) > 0) val.l = val.b;
-			else if ((len = src->_vptr->conv(src, last = 'c', &val.c)) > 0) val.l = val.c;
+			else if ((len = src->_vptr->conv(src, last = 'i', &val.i)) > 0) val.x = val.i;
+			else if ((len = src->_vptr->conv(src, last = 'x', &val.x)) > 0);
+			else if ((len = src->_vptr->conv(src, last = 'n', &val.n)) > 0) val.x = val.n;
+			else if ((len = src->_vptr->conv(src, last = 'b', &val.b)) > 0) val.x = val.b;
+			else if ((len = src->_vptr->conv(src, last = 'c', &val.c)) > 0) val.x = val.c;
 			else if (adv) break;
 			else len = 0;
 		}
 		if (!len) {
 			/* retry valid last successful conversion */
-			if (isupper(last) && (len = src->_vptr->conv(src, last, &val)) > 0) {
+			if (last && !strchr(valsunsigned, last) && (len = src->_vptr->conv(src, last, &val)) > 0) {
 				switch (last) {
-				  case 'I': val.L = val.I; break;
-				  case 'H': val.L = val.H; break;
-				  case 'B': val.L = val.B; break;
-				  case 'C': val.L = val.B; break;
+				  case 'u': val.t = val.u; break;
+				  case 'q': val.t = val.q; break;
+				  case 'y': val.t = val.y; break;
 				  default:;
 				}
 			}
-			else if ((len = src->_vptr->conv(src, last = 'I', &val.I)) > 0) val.L = val.I;
-			else if ((len = src->_vptr->conv(src, last = 'L', &val.L)) > 0);
-			else if ((len = src->_vptr->conv(src, last = 'H', &val.H)) > 0) val.L = val.H;
-			else if ((len = src->_vptr->conv(src, last = 'B', &val.B)) > 0) val.L = val.B;
-			else if ((len = src->_vptr->conv(src, last = 'C', &val.B)) > 0) val.L = val.B;
+			else if ((len = src->_vptr->conv(src, last = 'u', &val.u)) > 0) val.t = val.u;
+			else if ((len = src->_vptr->conv(src, last = 't', &val.t)) > 0);
+			else if ((len = src->_vptr->conv(src, last = 'q', &val.q)) > 0) val.t = val.q;
+			else if ((len = src->_vptr->conv(src, last = 'y', &val.y)) > 0) val.t = val.y;
 			if (len <= 0) break;
 		}
 		if (len < 0) {
@@ -111,7 +113,7 @@ extern int mpt_fprint_int(FILE *file, const int8_t *str, MPT_INTERFACE(source) *
 		if (!adv) continue;
 		
 		fmt[5] = adv;
-		fprintf(file, fs, width, val.l);
+		fprintf(file, fs, width, val.x);
 		fs = fmt;
 	}
 	return 0;

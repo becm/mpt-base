@@ -9,22 +9,6 @@
 
 #include "plot.h"
 
-static const struct {
-	const char *name;
-	MPT_STRUCT(color) c;
-} named[] = {
-	{ "black",   { 0xff, 0, 0, 0 } },
-	
-	{ "red",     { 0xff, 0xff, 0, 0 } },
-	{ "green",   { 0xff, 0, 0xff, 0 } },
-	{ "blue",    { 0xff, 0, 0, 0xff } },
-	
-	{ "cyan",    { 0xff, 0, 0xff, 0xff } },
-	{ "yellow",  { 0xff, 0xff, 0xff, 0 } },
-	{ "magenta", { 0xff, 0xff, 0, 0xff } },
-	
-	{ "white",   { 0xff, 0xff, 0xff, 0xff } }
-};
 
 /*!
  * \ingroup mptPlot
@@ -39,7 +23,23 @@ static const struct {
  */
 extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt)
 {
-	int	len;
+	static const struct {
+		const char *name;
+		MPT_STRUCT(color) val;
+	} col[] = {
+		{ "black",   { 0xff, 0, 0, 0 } },
+		
+		{ "red",     { 0xff, 0xff, 0, 0 } },
+		{ "green",   { 0xff, 0, 0xff, 0 } },
+		{ "blue",    { 0xff, 0, 0, 0xff } },
+		
+		{ "cyan",    { 0xff, 0, 0xff, 0xff } },
+		{ "yellow",  { 0xff, 0xff, 0xff, 0 } },
+		{ "magenta", { 0xff, 0xff, 0, 0xff } },
+		
+		{ "white",   { 0xff, 0xff, 0xff, 0xff } }
+	};
+	int len;
 	
 	if (!txt || !*txt) {
 		if (color) mpt_color_set(color, 0, 0, 0);
@@ -48,10 +48,10 @@ extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt)
 	if (!(*txt == '#')) {
 		size_t i;
 		
-		for (i = 0; i < MPT_arrsize(named); i++) {
-			len = strlen(named[i].name);
-			if (!strncasecmp(named[i].name, txt, len) && (!txt[len] || isspace(txt[len]))) {
-				if (color) *color = named[i].c;
+		for (i = 0; i < MPT_arrsize(col); i++) {
+			len = strlen(col[i].name);
+			if (!strncasecmp(col[i].name, txt, len) && (!txt[len] || isspace(txt[len]))) {
+				if (color) *color = col[i].val;
 				return len;
 			}
 		}

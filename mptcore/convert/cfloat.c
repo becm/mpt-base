@@ -7,7 +7,7 @@
 
 #include "convert.h"
 
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#if _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 
 extern int mpt_cfloat(float *val, const char *src, const float *range)
 {
@@ -35,7 +35,7 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	}
 	return end - src;
 }
-#else /* _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE) */
+#else /* has(strtof) */
 
 #include <math.h>
 
@@ -54,4 +54,4 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	}
 	return ret;
 }
-#endif /* _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE) */
+#endif /* has(strtof) */

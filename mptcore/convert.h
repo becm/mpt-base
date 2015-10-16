@@ -8,7 +8,7 @@
 
 #include "core.h"
 
-#if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L
+#if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
 # define _MPT_FLOAT_EXTENDED_H
 #endif
 
@@ -20,11 +20,19 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCobsInline)   = 0x3,   /* cobs with tail inline */
 	MPT_ENUM(EncodingCompress)     = 0x4    /* compress data */
 };
+enum MPT_ENUM(PrintFlags) {
+	MPT_ENUM(PrintNumberHex)       = 0x100, /* print hexadecimal */
+	MPT_ENUM(PrintScientific)      = 0x200, /* scientific float notation */
+	MPT_ENUM(PrintIntOctal)        = 0x400, /* print octal integer */
+	MPT_ENUM(PrintNumberSign)      = 0x800  /* print sign */
+};
 
 MPT_STRUCT(float80)
 {
 #ifdef __cplusplus
 public:
+	enum { Type = TypeFloat80 };
+	
 	inline float80()
 	{ for (size_t i = 0; i < sizeof(_d); i++) _d[i] = 0; }
 	inline float80(const float80 &v)

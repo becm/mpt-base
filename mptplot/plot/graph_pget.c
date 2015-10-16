@@ -22,7 +22,7 @@ static int set_bg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char 
 static int set_pos(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int l1, l2;
-	*fmt = "FF";
+	*fmt = "ff";
 	if (!src) return (val[0] != 0.0 || val[1] != 0.0) ? 1 : 0;
 	if ((l1 = src->_vptr->conv(src, 'f', val)) < 0) return l1;
 	if ((l2 = src->_vptr->conv(src, 'f', val+1)) <= 0) {
@@ -34,7 +34,7 @@ static int set_pos(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_scale(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int l1, l2;
-	*fmt = "FF";
+	*fmt = "ff";
 	if (!src) return (val[0] != 1.0 || val[1] != 1.0) ? 1 : 0;
 	if ((l1 = src->_vptr->conv(src, 'f', val)) < 0) return l1;
 	if ((l2 = src->_vptr->conv(src, 'f', val+1)) <= 0) {
@@ -47,9 +47,9 @@ static int set_scale(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_type(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "C";
+	*fmt = "c";
 	if (!src) return *val ? 1 : 0;
-	if ((len = src->_vptr->conv(src, 'C', val)) < 0) return len;
+	if ((len = src->_vptr->conv(src, 'c', val)) < 0) return len;
 	if (!len) *val = 0;
 	return len;
 }
@@ -60,12 +60,12 @@ static int set_align(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 	const char *v;
 	int len;
 	
-	*fmt = "C";
+	*fmt = "y";
 	
 	if (!src) {
 		return (align == *val) ? 0 : 1;
 	}
-	else if ((len = src->_vptr->conv(src, 'B', val)) > 0) {
+	else if ((len = src->_vptr->conv(src, 'y', val)) > 0) {
 		return len;
 	}
 	else if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
@@ -106,7 +106,7 @@ static int set_clip(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt, 
 	if (!src) {
 		len = (nv = *val) ? 0 : 1;
 	}
-	else if ((len = src->_vptr->conv(src, 'B', val)) > 0) {
+	else if ((len = src->_vptr->conv(src, 'y', val)) > 0) {
 		return len;
 	}
 	else if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
@@ -131,7 +131,7 @@ static int set_clip(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt, 
 		*data = clip[nv];
 	}
 	else {
-		*fmt = "B";
+		*fmt = "y";
 		*data = val;
 	}
 	return len;
@@ -150,7 +150,7 @@ static int set_graph(MPT_STRUCT(graph) *gr, MPT_INTERFACE(source) *src)
 	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) > 0) {
 		return len;
 	}
-	if ((len = src->_vptr->conv(src, 'C', &gr->grid)) > 0) {
+	if ((len = src->_vptr->conv(src, 'y', &gr->grid)) > 0) {
 		return len;
 	}
 	errno = ENOTSUP;
@@ -192,9 +192,13 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 		's', 's',
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeColor),
-		'f', 'f', 'f', 'f',
-		'B', 'B', 'B', 'B',
-		'c',
+		'f', 'f', /* position */
+		'f', 'f', /* scaling */
+		'y',      /* grid type */
+		'y',      /* axis alignment */
+		'y',      /* frame type */
+		'y',      /* clipping */
+		'c',      /* legend alignment */
 		0
 	};
 	MPT_STRUCT(property) self;

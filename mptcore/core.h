@@ -80,16 +80,16 @@ enum MPT_ENUM(Types)
 	
 	/* data pointer types */
 	MPT_ENUM(TypeNode)     = 0x6,   /* ACK */
-	MPT_ENUM(TypeArray)    = 0x7,   /* BEL '\a' */
 	
 	/* layout types */
 	MPT_ENUM(TypeLineAttr) = 0x8,   /* BS  '\b' */
 	MPT_ENUM(TypeLine)     = 0x9,   /* HT  '\t' */
+	MPT_ENUM(TypeColor)    = 0xa,   /* LF  '\n' rgba(0..255) */
 	/* layout pointer types */
-	MPT_ENUM(TypeAxis)     = 0xa,   /* LF  '\n' */
-	MPT_ENUM(TypeGraph)    = 0xb,   /* BS  '\b' */
 	MPT_ENUM(TypeWorld)    = 0xc,   /* FF  '\f' */
 	MPT_ENUM(TypeText)     = 0xd,   /* CR  '\r' */
+	MPT_ENUM(TypeAxis)     = 0xe,   /* SO  '\n' */
+	MPT_ENUM(TypeGraph)    = 0xf,   /* SI  '\b' */
 	
 	/* reference types */
 	MPT_ENUM(TypeGroup)    = 0x10,  /* DLE */
@@ -103,8 +103,21 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeOutput)   = 0x19,  /* EM  */
 	MPT_ENUM(TypeSolver)   = 0x1a,  /* SUB */
 	
-	/* primitive types with printable representation (0x20..0x7f) */
-	MPT_ENUM(TypeColor)    = '#',   /* rgba(0..255) */
+	
+	/* array types ('@'..'Z') */
+	MPT_ENUM(TypeArray)    = '@',   /* 0x40: generic array */
+	
+#if __SIZEOF_LONG__ == 8
+	MPT_ENUM(TypeLong)     = 'x',
+	MPT_ENUM(TypeULong)    = 't',
+#elif __SIZEOF_LONG__ == 4
+	MPT_ENUM(TypeLong)     = 'i',
+	MPT_ENUM(TypeULong)    = 'u',
+#else
+# error: bad sizeof(long)
+#endif
+	/* types with printable representation ('`'..'z') */
+	MPT_ENUM(TypeFloat80)  = '`',   /* 0x60: 80bit float transport format */
 	
 	/* vector format flag, make typed version via (0x80 | <typeid>) for builtin types (0x01..0x7f) */
 	MPT_ENUM(TypeVector)   = 0x80,
@@ -212,14 +225,14 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<float>(void)  { return 'f'
 template<> inline __MPT_CONST_EXPR int typeIdentifier<double>(void) { return 'd'; }
 /* integer values */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>(void)  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>(void) { return 'h'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>(void) { return 'n'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>(void) { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>(void) { return 'l'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>(void) { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>(void)  { return 'B'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>(void) { return 'H'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>(void) { return 'I'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>(void) { return 'L'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>(void)  { return 'y'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>(void) { return 'q'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>(void) { return 'u'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>(void) { return 't'; }
 
 /*! container for reference type pointer */
 template<typename T>

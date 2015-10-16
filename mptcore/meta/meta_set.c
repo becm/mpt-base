@@ -210,7 +210,7 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 			break;
 		  case sizeof(uint32_t): *((uint32_t *) (buf+len)) = va_arg(va, uint32_t); break;
 		  case sizeof(uint64_t): *((uint64_t *) (buf+len)) = va_arg(va, uint64_t); break;
-#if _XOPEN_SOURCE >= 600 || defined(_ISOC99_SOURCE)
+#ifdef _MPT_FLOAT_EXTENDED_H
 		  case sizeof(long double): *((long double *) (buf+len)) = va_arg(va, long double); break;
 #endif
 		  default: errno = EINVAL; return -2;

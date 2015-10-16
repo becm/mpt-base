@@ -3,6 +3,7 @@
  * mpt type registry
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 
 #include <sys/uio.h>
@@ -41,29 +42,32 @@ static const struct {
 	{ MPT_ENUM(TypeWorld),  0 },
 	{ MPT_ENUM(TypeText),   0 },
 #endif
-	/* basic types */
-	{ 'c', sizeof(char) }, { 'C', sizeof(char) },
+	/* basic printable types */
+	{ 'c', sizeof(char) },
 	
-	{ 'b', sizeof(int8_t)  }, { 'B', sizeof(uint8_t) },
-	{ 'y', sizeof(uint8_t) }, { 'Y', sizeof(uint8_t) },
+	{ 'b', sizeof(int8_t)  },
+	{ 'y', sizeof(uint8_t) },
 	
-	{ 'h', sizeof(int16_t)  }, { 'H', sizeof(uint16_t) },
-	{ 'n', sizeof(uint32_t) }, { 'N', sizeof(uint32_t) },
+	{ 'n', sizeof(int16_t)  },
+	{ 'q', sizeof(uint32_t) },
 	
-	{ 'i', sizeof(int32_t)  }, { 'I', sizeof(uint32_t) },
-	{ 'u', sizeof(uint32_t) }, { 'U', sizeof(uint32_t) },
+	{ 'i', sizeof(int32_t)  },
+	{ 'u', sizeof(uint32_t) },
 	
-	{ 'l', sizeof(int64_t)  }, { 'L', sizeof(uint64_t) },
-	{ 'x', sizeof(uint64_t) }, { 'X', sizeof(uint64_t) }, { 't', sizeof(uint64_t) },
+	{ 'x', sizeof(int64_t) },
+	{ 't', sizeof(uint64_t) },
+	{ 'l', sizeof(uint64_t) },
 	
-	{ 'f', sizeof(float) },       { 'F', sizeof(float) },
-	{ 'd', sizeof(double) },      { 'D', sizeof(double) },
+	{ 'f', sizeof(float) },
+	{ 'd', sizeof(double) },
+	{ MPT_ENUM(TypeFloat80), sizeof(MPT_STRUCT(float80)) },
 #ifdef _MPT_FLOAT_EXTENDED_H
-	{ 'e', sizeof(long double) }, { 'E', sizeof(long double) },
+	{ 'e', sizeof(long double) },
 #endif
-	/* different string representations */
+	/* string types */
 	{ 's', 0 },
-	{ 'k', 0 },
+	{ 'k', 0 },  /* keyword */
+	{ 'o', 0 },  /* D-Bus object path */
 	
 	/* reference types */
 	{ MPT_ENUM(TypeIODevice),  0 },
@@ -100,12 +104,25 @@ extern ssize_t mpt_valsize(int type)
 	
 	if (type < MPT_ENUM(TypeUser)) {
 		uint8_t i;
+		
+		/* generic array */
+		if (type == MPT_ENUM(TypeArray)) {
+			return 0;
+		}
+		/* typed array */
+		if (isupper(type)) {
+			if (mpt_valsize(tolower(type)) < 0) {
+				return MPT_ERROR(BadType);
+			}
+			return 0;
+		}
+		/* basic type */
 		for (i = 0; i < MPT_arrsize(static_ptypes); ++i) {
 			if (static_ptypes[i].key != (type & 0x7f)) continue;
 			if (type & 0x80) return sizeof(struct iovec);
 			return static_ptypes[i].size;
 		}
-		return -1;
+		return MPT_ERROR(BadType);
 	}
 	/* user types */
 	if (ptypes._buf) {
@@ -115,7 +132,7 @@ extern ssize_t mpt_valsize(int type)
 			return ((size_t *) (ptypes._buf+1))[type];
 		}
 	}
-	return -2;
+	return MPT_ERROR(BadValue);
 }
 /*!
  * \ingroup mptConvert

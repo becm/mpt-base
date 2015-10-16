@@ -88,15 +88,15 @@ extern int mpt_history_set(MPT_STRUCT(histinfo) *hist, const MPT_STRUCT(msgbind)
 	  case MPT_ENUM(ValuesFloat) | sizeof(float) : type = 'f'; break;
 	  case MPT_ENUM(ValuesFloat) | sizeof(double): type = 'd'; break;
 	  /* unsigned integer values */
-	  case MPT_ENUM(ValuesUnsigned) | sizeof(int8_t):  type = 'B'; break;
-	  case MPT_ENUM(ValuesUnsigned) | sizeof(int16_t): type = 'H'; break;
-	  case MPT_ENUM(ValuesUnsigned) | sizeof(int32_t): type = 'I'; break;
-	  case MPT_ENUM(ValuesUnsigned) | sizeof(int64_t): type = 'L'; break;
+	  case MPT_ENUM(ValuesUnsigned) | sizeof(int8_t):  type = 'y'; break;
+	  case MPT_ENUM(ValuesUnsigned) | sizeof(int16_t): type = 'q'; break;
+	  case MPT_ENUM(ValuesUnsigned) | sizeof(int32_t): type = 'u'; break;
+	  case MPT_ENUM(ValuesUnsigned) | sizeof(int64_t): type = 't'; break;
 	  /* signed integer values */
 	  case sizeof(int8_t):  type = 'b'; break;
-	  case sizeof(int16_t): type = 'h'; break;
+	  case sizeof(int16_t): type = 'n'; break;
 	  case sizeof(int32_t): type = 'i'; break;
-	  case sizeof(int64_t): type = 'l'; break;
+	  case sizeof(int64_t): type = 'x'; break;
 	  default: return -3;
 	}
 	/* initial part */

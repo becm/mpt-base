@@ -21,7 +21,7 @@ static int set_pos2(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 	int l1, l2;
 	float tmp;
 	
-	*fmt = "FF";
+	*fmt = "ff";
 	
 	if (!src) {
 		l1 = (val[0] == (float) 0.5) ? 0 : 1;
@@ -49,23 +49,23 @@ static int set_pos2(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_size(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "C";
+	*fmt = "y";
 	if (!src) return (*val != 10) ? 1 : 0;
-	if (!(len = src->_vptr->conv(src, 'B', val))) *val = 10;
+	if (!(len = src->_vptr->conv(src, 'y', val))) *val = 10;
 	return len;
 }
 static int set_align(char *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "C";
+	*fmt = "c";
 	if (!src) return (*val != '5') ? 1 : 0;
-	if (!(len = src->_vptr->conv(src, 'C', val))) *val = 1;
+	if (!(len = src->_vptr->conv(src, 'c', val))) *val = 1;
 	return len;
 }
 static int set_angle(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "F";
+	*fmt = "d";
 	if (!src) return (*val != 0.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 0.0;
 	return len;
@@ -120,11 +120,12 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		{"y",  "y start position",  { "F", (void *) MPT_offset(text, pos.y)} }
 	};
 	static const char format[] = {
-		's', 's',            /* value, font */
+		's', 's',       /* value, font */
 		MPT_ENUM(TypeColor),
-		'B', 'B', 'B', 'B',  /* style, weight, size, alignment */
-		'f', 'f',            /* position */
-		'd',                 /* angle */
+		'y', 'y', 'y',  /* font style, weight, size, */
+		'c',            /* text alignment */
+		'f', 'f',       /* position */
+		'd',            /* angle */
 		0
 	};
 	MPT_STRUCT(property) self;
@@ -181,7 +182,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
 	self.desc = elem[pos].desc;
-	self.val.fmt = pos < 1 ? "#" : "s"; /* set non-modifying handler */
+	self.val.fmt = pos < 1 ? "#" : "s"; /* set for external non-modifying handler */
 	self.val.ptr = ((uint8_t *) text) + (intptr_t) elem[pos].val.ptr;
 	
 	if (text && (pos = set(self.val.ptr, src, &self.val.fmt)) < 0) {

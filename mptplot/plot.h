@@ -156,7 +156,7 @@ MPT_STRUCT(world)
 	bool setAlias(const char *name, int len = -1);
 protected:
 #endif
-	char  *_alias;	/* display name */
+	char  *_alias;  /* display name */
 #ifdef __cplusplus
 public:
 #endif

@@ -90,7 +90,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 	
 	switch (type) {
 #ifndef MPT_NO_PLOT
-	    case '#':
+	    case MPT_ENUM(TypeColor):
 		if (((const MPT_STRUCT(color) *)arg)->alpha != 0xff) {
 			const MPT_STRUCT(color) *c = arg;
 			len = snprintf(dest, left, "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
@@ -100,7 +100,7 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 		}
 		break;
 #endif
-	    case 'c': case 'C':
+	    case 'c':
 		len = snprintf(dest, left, "%c", *((char*)arg));
 		break;
 		
@@ -108,27 +108,27 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 	    case 'b':
 		len = snprintf(dest, left, "%"PRIi8, *((int8_t*)arg));
 		break;
-	    case 'B':
+	    case 'y':
 		len = snprintf(dest, left, "%"PRIu8, *((uint8_t*)arg));
 		break;
-	    case 'y':
+	    case 'y' | MPT_ENUM(PrintNumberHex):
 		len = snprintf(dest, left, "%"PRIx8, *((uint8_t*)arg));
 		break;
-	    case 'Y':
+	    case 'y' | MPT_ENUM(PrintIntOctal):
 		len = snprintf(dest, left, "%"PRIo8, *((uint8_t*)arg));
 		break;
 		
 	/* 16bit formats */
-	    case 'h':
+	    case 'n':
 		len = snprintf(dest, left, "%"PRIi16, *((int16_t*)arg));
 		break;
-	    case 'H':
+	    case 'q':
 		len = snprintf(dest, left, "%"PRIu16, *((uint16_t*)arg));
 		break;
-	    case 'n':
+	    case 'q' | MPT_ENUM(PrintNumberHex):
 		len = snprintf(dest, left, "%"PRIx16, *((uint16_t*)arg));
 		break;
-	    case 'N':
+	    case 'q' | MPT_ENUM(PrintIntOctal):
 		len = snprintf(dest, left, "%"PRIo16, *((uint16_t*)arg));
 		break;
 		
@@ -136,56 +136,67 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 	    case 'i':
 		len = snprintf(dest, left, "%"PRIi32, *((int32_t*)arg));
 		break;
-	    case 'I':
+	    case 'u':
 		len = snprintf(dest, left, "%"PRIu32, *((uint32_t*)arg));
 		break;
-	    case 'u':
+	    case 'u' | MPT_ENUM(PrintNumberHex):
 		len = snprintf(dest, left, "%"PRIx32, *((uint32_t*)arg));
 		break;
-	    case 'U':
+	    case 'u' | MPT_ENUM(PrintIntOctal):
 		len = snprintf(dest, left, "%"PRIo32, *((uint32_t*)arg));
 		break;
 		
 	/* 64bit formats */
-	    case 'l':
+	    case 'x':
 		len = snprintf(dest, left, "%"PRIi64, *((int64_t*)arg));
 		break;
-	    case 'L':
+	    case 't':
 		len = snprintf(dest, left, "%"PRIu64, *((uint64_t*)arg));
 		break;
-	    case 'x':
+	    case 't' | MPT_ENUM(PrintNumberHex):
 		len = snprintf(dest, left, "%"PRIx64, *((uint64_t*)arg));
 		break;
-	    case 'X':
+	    case 't' | MPT_ENUM(PrintIntOctal):
 		len = snprintf(dest, left, "%"PRIo64, *((uint64_t*)arg));
 		break;
 		
 	/* floating point formats */
-	    case 'F':
+	    case 'f':
 		len = snprintf(dest, left, "%g", *((float*)arg));
 		break;
-	    case 'f':
+	    case 'f' | MPT_ENUM(PrintScientific):
 		len = snprintf(dest, left, "%e", *((float*)arg));
 		break;
-	    case 'D':
+#if __STDC_VERSION__ >= 199901L
+	    case 'f' | MPT_ENUM(PrintNumberHex):
+		len = snprintf(dest, left, "%a", *((float*)arg));
+		break;
+#endif
+	    case 'd':
 		len = snprintf(dest, left, "%g", *((double*)arg));
 		break;
-	    case 'd':
+	    case 'd' | MPT_ENUM(PrintScientific):
 		len = snprintf(dest, left, "%e", *((double*)arg));
 		break;
-	    case 'E':
-		len = snprintf(dest, left, "%g", (double) *((long double*)arg));
+#if __STDC_VERSION__ >= 199901L
+	    case 'd' | MPT_ENUM(PrintNumberHex):
+		len = snprintf(dest, left, "%a", *((double*)arg));
 		break;
+#endif
 	    case 'e':
-		len = snprintf(dest, left, "%e", (double) *((long double*)arg));
+		len = snprintf(dest, left, "%Lg", *((long double*)arg));
 		break;
-		
+	    case 'e' | MPT_ENUM(PrintScientific):
+		len = snprintf(dest, left, "%Le", *((long double*)arg));
+		break;
+#if __STDC_VERSION__ >= 199901L
+	    case 'e' | MPT_ENUM(PrintNumberHex):
+		len = snprintf(dest, left, "%LA", *((long double*)arg));
+		break;
+#endif
 	/* string pointers */
 	    case 's':
 		len = (*(char **)arg) ? snprintf(dest, left, "%s", *(char **)arg) : 0;
-		break;
-	    case 'S':
-		len = (*(char **)arg && **((char ***)arg)) ? snprintf(dest, left, "%s", **((char ***)arg)) : 0;
 		break;
 	    default:
 		return -1;

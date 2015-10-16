@@ -15,7 +15,7 @@ int main(int argc, char * const argv[])
 	int mode;
 	
 	if (argc < 2) {
-		fprintf(stderr, "%s %s\n", *argv, "<target>");
+		fprintf(stderr, "%s %s [%s]\n", *argv, "<executable>", "<args>");
 		return 1;
 	}
 	if ((mode = mpt_stream_pipe(&srm._info, argv[1], argv+1)) < 0) {

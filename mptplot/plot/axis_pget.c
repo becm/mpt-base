@@ -11,7 +11,7 @@
 static int set_begin(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "D";
+	*fmt = "d";
 	if (!src) return (*val != 0.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 0.0;
 	return len;
@@ -19,7 +19,7 @@ static int set_begin(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_end(double *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "D";
+	*fmt = "d";
 	if (!src) return (*val != 1.0) ? 1 : 0;
 	if (!(len = src->_vptr->conv(src, 'd', val))) *val = 1.0;
 	return len;
@@ -29,7 +29,7 @@ static int set_tlen(float *val, MPT_INTERFACE(source) *src, const char **fmt)
 	float tlen;
 	int   len;
 	
-	*fmt = "F";
+	*fmt = "f";
 	if (!src) return (*val == 0.3f) ? 0 : 1;
 	
 	if ((len = src->_vptr->conv(src, 'f', &tlen)) > 0) {
@@ -49,16 +49,16 @@ static int set_intv(MPT_STRUCT(axis) *ax, MPT_INTERFACE(source) *src, const char
 			*dat = desc;
 			return 3;
 		}
-		*fmt = "B";
+		*fmt = "y";
 		*dat = &ax->intv;
 		return ax->intv;
 	}
-	if (!(len = src->_vptr->conv(src, 'B', &ax->intv))) {
+	if (!(len = src->_vptr->conv(src, 'y', &ax->intv))) {
 		ax->format &= ~MPT_ENUM(AxisLg);
 		ax->intv = 0;
 	}
 	if (len >= 0 || (len = src->_vptr->conv(src, 's', &l)) < 0 || len < 0 || !l) {
-		*fmt = "B";
+		*fmt = "y";
 		*dat = &ax->intv;
 		ax->format &= ~MPT_ENUM(AxisLg);
 		return len;
@@ -75,9 +75,9 @@ static int set_intv(MPT_STRUCT(axis) *ax, MPT_INTERFACE(source) *src, const char
 static int set_exp(int16_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "h";
+	*fmt = "n";
 	if (!src) return (*val != 0) ? (*val < 1 ? 2 : 1) : 0;
-	if (!(len = src->_vptr->conv(src, 'h', val))) *val = 0;
+	if (!(len = src->_vptr->conv(src, 'n', val))) *val = 0;
 	return len;
 }
 static int set_sub(int8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
@@ -91,9 +91,9 @@ static int set_sub(int8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 static int set_decimals(uint8_t *val, MPT_INTERFACE(source) *src, const char **fmt)
 {
 	int len;
-	*fmt = "B";
+	*fmt = "y";
 	if (!src) return *val;
-	if (!(len = src->_vptr->conv(src, 'B', val))) *val = 0;
+	if (!(len = src->_vptr->conv(src, 'y', val))) *val = 0;
 	return len;
 }
 static int set_direction(char *val, MPT_INTERFACE(source) *src, const char **fmt)
@@ -159,10 +159,10 @@ extern int mpt_axis_pget(MPT_STRUCT(axis) *axis, MPT_STRUCT(property) *pr, MPT_I
 		's',
 		'd', 'd', /* axis range values */
 		'f',      /* relative tick length */
-		'h',      /* scale value */
-		'B', 'B', /* intervals, subintervals */
-		'B',      /* axis flags */
-		'B',      /* decimals */
+		'n',      /* scale value */
+		'y', 'y', /* intervals, subintervals */
+		'y',      /* axis flags */
+		'y',      /* decimals */
 		'c', 'c', /* label/title direction */
 		0
 	};

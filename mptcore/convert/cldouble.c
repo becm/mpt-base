@@ -4,6 +4,7 @@
 
 #include "convert.h"
 
+#ifdef _MPT_FLOAT_EXTENDED_H
 /*!
  * \ingroup mptConvert
  * \brief get keyword from string
@@ -39,3 +40,4 @@ extern int mpt_cldouble(long double *val, const char *src, const long double ran
 	}
 	return end - src;
 }
+#endif
