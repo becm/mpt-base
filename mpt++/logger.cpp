@@ -14,9 +14,16 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class Reference<Output::Message>;
-
 // logger interfaces
+int logger::debug(const char *from, const char *fmt, ... )
+{
+    va_list va;
+    int ret;
+    va_start(va, fmt);
+    ret = log(from, Debug, fmt, va);
+    va_end(va);
+    return ret;
+}
 int logger::warning(const char *from, const char *fmt, ... )
 {
     va_list va;
@@ -49,77 +56,6 @@ logger *logger::defaultInstance()
     return _mpt_log_default(stderr);
 }
 
-
-bool Output::setSource(const char *fcn, pid_t pid)
-{
-    Message *msg = _msg;
-    if (msg->_flen) return false;
-    
-    if (pid < 0) pid = getpid();
-    
-    msg->buf << fcn;
-    if (pid) {
-        size_t len;
-        if (fcn
-            && (msg->_type & LogFunction)
-            && (len = strlen(fcn))
-            && isalpha(fcn[len-1])) {
-            msg->buf << '(' << ')';
-        }
-        msg->buf << '[' << pid << ']';
-    }
-    msg->buf.put(0);
-    msg->_flen = msg->buf.str().size();
-    msg->space = 1;
-    return true;
-}
-
-Output debug(const char *fcn, const char *nspace)
-{
-    Output out(logger::Debug);
-    if (nspace && *nspace) out.nospace() << nspace << "::";
-    out.setSource(fcn);
-    return out;
-}
-
-Output warning(const char *fcn, const char *nspace)
-{
-    Output out(logger::Warning);
-    if (nspace && *nspace) out.nospace() << nspace << "::";
-    out.setSource(fcn);
-    return out;
-}
-Output critical(const char *fcn, const char *nspace)
-{
-    Output out(logger::Critical);
-    if (nspace && *nspace) out.nospace() << nspace << "::";
-    out.setSource(fcn);
-    return out;
-}
-
-Output::Message *Output::Message::addref()
-{
-    if (++_ref) return this;
-    --_ref;
-    return 0;
-}
-int Output::Message::unref()
-{
-    if (!_ref) return 0;
-    if (--_ref) return _ref;
-    logger *o;
-    if ((o = _out) || (o = logger::defaultInstance())) {
-        const char *msg = buf.str().c_str(), *fcn = 0;
-        if (_flen) {
-            fcn = msg;
-            msg += _flen;
-        }
-        mpt_log(o, fcn, _type, "%s", msg);
-    }
-    if (_out) _out->unref();
-    delete this;
-    return 0;
-}
 // logging store
 int LogEntry::type() const
 {

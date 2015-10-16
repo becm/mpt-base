@@ -69,8 +69,6 @@ extern int main(int , char * const argv[])
 	mpt::metatype *mt;
 	Double d(46);
 	
-	mpt::Output(mpt::LogDebug) << "text" << 56;
-	
 	mpt::Object ao(new mpt::Axis);
 	
 	std::cout << "ao: " << ao.type() << std::endl;

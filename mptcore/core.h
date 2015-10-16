@@ -268,50 +268,6 @@ public:
 protected:
     T *_ref;
 };
-
-/*! container for message reference */
-class logger;
-class Output
-{
-public:
-    class Message
-    {
-    public:
-        inline Message(int t, logger *out = 0) : _out(out), _ref(1), _source(0), _flen(0), _type(t), space(1) { }
-
-        Message *addref();
-        int unref();
-
-    protected:
-        friend class Output;
-        std::ostringstream buf;
-        logger  *_out;
-        uint32_t _ref;
-        pid_t    _source;
-        uint8_t  _flen;
-        int16_t  _type;
-        uint8_t  space;
-    };
-    inline Output(int type = -1, logger *out = 0) : _msg(new Message(type, out)) { }
-
-    bool setSource(const char *, pid_t = -1);
-
-    inline Output &space()    { Message *m = _msg; if (!m->space) m->buf << ' '; m->space = 1; return *this; }
-    inline Output &nospace()  { Message *m = _msg; m->space = 0; return *this; }
-    inline Output &maySpace() { Message *m = _msg; if (m->space)  m->buf << ' '; return *this; }
-
-    inline std::ostringstream &buf() { Message *m = _msg; return m->buf; }
-
-    template<typename T>
-    inline Output &operator<<(const T &v) { buf() << v; return maySpace(); }
-
-protected:
-    Reference<Message> _msg;
-};
-/* output interfaces */
-Output debug   (const char *fname = 0, const char *nspace = 0);
-Output warning (const char *fname = 0, const char *nspace = 0);
-Output critical(const char *fname = 0, const char *nspace = 0);
 #endif
 
 /*! interface to send data */
@@ -333,9 +289,10 @@ public:
 		File     = MPT_FCNLOG(File)
 	};
 	
-	int error(const char *, const char *, ... );
 	int critical(const char *, const char *, ... );
+	int error(const char *, const char *, ... );
 	int warning(const char *, const char *, ... );
+	int debug(const char *, const char *, ... );
 	
 	static logger *defaultInstance(void);
 	

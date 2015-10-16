@@ -17,7 +17,7 @@ extern int main(int argc, char *argv[])
 	mpt::Layout lay;
 	
 	if (argc < 2 || !lay.open(argv[1])) {
-	    mpt::debug(__func__) << "missing layout";
+	    mpt::logger::defaultInstance()->debug(__func__, "%s", "missing layout");
 	    return 1;
 	}
 	if (!lay.load()) return 2;

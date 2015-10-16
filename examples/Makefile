@@ -11,10 +11,10 @@ include ../mpt.example.mk
 
 # library config
 client : LDLIBS=-lmpt++ -lmptio -lmptcore
-readline : LDLIBS=-lmptio
+readline : LDLIBS=-lmptloader
 axis : LDLIBS=-lmptplot -lmptcore
 %_static : LDLIBS=-lmpt
-readline_static : LDLIBS+=-ldl
+readline_static : LDLIBS=-lmpt -ldl
 
 # special test arguments
 test_axis : ARGS=title='my axis' intervals=3 tpos=Up

@@ -10,8 +10,8 @@ src_loader = files(
 )
 
 mptload = shared_library('mptloader', src_loader, 'libinfo.c',
-  include_directories : inc,
-  dependencies : find_library('dl'),
+  include_directories : include_directories('..'),
+  dependencies : [ core, find_library('dl') ],
   install : with_loader)
 
 load = declare_dependency(link_with : mptload)
