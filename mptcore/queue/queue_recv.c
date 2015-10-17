@@ -40,19 +40,19 @@ extern ssize_t mpt_queue_recv(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 	if (!(len = qu->len)) {
 		return -2;
 	}
-	pre = qu->off;
-	max = qu->max;
-	
 	/* get new data part */
 	if (!dec) {
 		pre = info->done;
 		max = info->scratch;
 		
-		if ((max + pre) < len) {
+		if ((max + pre) > len) {
 			return -1;
 		}
-		return max;
+		return info->scratch = len - pre;
 	}
+	pre = qu->off;
+	max = qu->max;
+	
 	base = (uint8_t *) qu->base;
 	/* unaligned message data */
 	if ((pre + len) > max) {

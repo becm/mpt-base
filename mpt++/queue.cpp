@@ -65,7 +65,8 @@ bool DecodingQueue::advance()
     if (_mlen < 0) {
         return false;
     }
-    mpt_queue_crop(&_d, 0, _state.done);
+    mpt_queue_crop(&_d, 0, _mlen + _state.done);
+    _state.scratch -= _mlen;
     _state.done = 0;
 
     _mlen = mpt_queue_recv(&_d, &_state, _dec);
