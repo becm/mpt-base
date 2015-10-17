@@ -49,13 +49,13 @@ static int setArray(MPT_STRUCT(array) *arr, MPT_INTERFACE(source) *src)
 	}
 	else {
 		errno = ENOTSUP;
-		return -1;
+		return len;
 	}
 	
 	if (!(base = mpt_array_slice(arr, 0, len))) {
 		return len ? -1 : 0;
 	}
-	memcpy(base, data, len);
+	if (len) memcpy(base, data, len);
 	
 	return arr->_buf->used = len;
 }

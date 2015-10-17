@@ -74,7 +74,7 @@ extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
 		int len;
 		
 		/* update format settings */
-		len = src->_vptr->conv(src, MPT_ENUM(TypeValFmt), &fmt);
+		(void) src->_vptr->conv(src, MPT_ENUM(TypeValFmt), &fmt);
 		
 		/* retry valid last successful conversion */
 		if (!last) {

@@ -95,4 +95,4 @@ pkgconfig_gen(
   description : 'mpt header directory',
   subdirs : 'mpt',
   version : '1.0.0',
-  name : 'mptheaders')
+  name : 'mpt-local-headers')

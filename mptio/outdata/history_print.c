@@ -117,6 +117,7 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 			}
 			/* element not first in line */
 			if (pos) {
+				/* false `divide by 0` positive: ts.esze constant */
 				if ((pos /= ts.esze) < ts.fmtlen) {
 					ts.fmtlen -= pos;
 					ts.fmt += pos;
