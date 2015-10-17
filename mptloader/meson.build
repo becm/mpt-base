@@ -10,17 +10,22 @@ src_loader = files(
 )
 
 if with_shared
-  mptload = shared_library('mptloader', src_loader, 'libinfo.c',
+  if host_machine.system() == 'linux'
+    load_dep = [ core, find_library('dl') ]
+  else
+    load_dep = core
+  endif
+  libloader = shared_library('mptloader', src_loader, 'libinfo.c',
     include_directories : include_directories('..'),
-    dependencies : [ core, find_library('dl') ],
+    dependencies : load_dep,
     install : with_loader)
 
-  load = declare_dependency(link_with : mptload)
+  load = declare_dependency(link_with : libloader)
 
   if with_loader
     pkgconfig_gen(
       description : 'mpt loader operations',
-      libraries : mptload,
+      libraries : libloader,
       version : '1.0.0',
       name : 'mptloader')
   endif

@@ -470,6 +470,7 @@ public:
     { }
     virtual metatype *find(int , const char *, int = -1) const = 0;
 protected:
+    virtual ~Relation() {}
     const Relation *_parent;
 };
 /*! interface to generic groups of metatypes elements */
@@ -491,6 +492,7 @@ public:
     bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
     
 protected:
+    inline ~Group() {}
     virtual metatype *create(const char *, int = -1);
     virtual bool set(const property &, logger * = logger::defaultInstance());
 };
@@ -499,6 +501,8 @@ class GroupRelation : public Relation
 {
 public:
     inline GroupRelation(const Group &g, const Relation *p = 0, char sep = ':') : Relation(p), _curr(g), _sep(sep)
+    { }
+    virtual ~GroupRelation()
     { }
     metatype *find(int type, const char *, int = -1) const;
 protected:

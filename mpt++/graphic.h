@@ -143,7 +143,7 @@ class Graphic
 public:
 
     Graphic();
-    ~Graphic();
+    virtual ~Graphic();
 
     // layout (de)registration
     virtual int addLayout(Layout *, bool = true);

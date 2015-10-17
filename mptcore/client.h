@@ -140,17 +140,16 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 inline libhandle::~libhandle()
-{ mpt_library_close(this); }
-#endif
+{
+    mpt_library_close(this);
+}
 
-#ifdef __cplusplus
 inline client::client(class output *out) : Reference<class output>(out), conf(0)
 { }
 inline client::~client()
 {
     if (conf && !conf->parent) mpt_node_destroy(conf);
 }
-
 inline int client::report(logger *) const
 { return 0; }
 inline int client::init()
@@ -160,7 +159,9 @@ inline int client::prep(source *)
 inline int client::output(int) const
 { return 0; }
 inline void client::clear(void)
-{ mpt_node_clear(conf); }
+{
+    mpt_node_clear(conf);
+}
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

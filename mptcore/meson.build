@@ -31,7 +31,7 @@ install_headers(
   subdir : 'mpt')
 
 if with_shared
-  mptcore = shared_library('mptcore', src_core, 'libinfo.c',
+  libcore = shared_library('mptcore', src_core, 'libinfo.c',
     include_directories : inc,
     version : '1.0.0', soversion : '1',
     install : with_core)
@@ -39,11 +39,11 @@ if with_shared
   if with_core
     pkgconfig_gen(
       description : 'mpt core library',
-      libraries : mptcore,
+      libraries : libcore,
       version : '1.0.0',
       name : 'mptcore')
   endif
 
-  core = declare_dependency(link_with : mptcore,
+  core = declare_dependency(link_with : libcore,
     include_directories : include_directories('.'))
 endif

@@ -44,7 +44,7 @@ install_headers('object.h', 'graphic.h',
   subdir : 'mpt')
 
 if with_shared
-  mptcxx = shared_library('mpt++', src_cxx, 'libinfo.c',
+  libcxx = shared_library('mpt++', src_cxx, 'libinfo.c',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : cxx,
@@ -54,13 +54,13 @@ if with_shared
   if with_cxx
     pkgconfig_gen(
       description : 'mpt C++ library',
-      libraries : mptcxx,
+      libraries : libcxx,
       version : '1.0.0',
       name : 'mpt++')
   endif
 
   cxx = [ declare_dependency(
-      link_with : mptcxx,
+      link_with : libcxx,
       include_directories : include_directories('.'))
     ] + cxx
 endif

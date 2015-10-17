@@ -12,7 +12,7 @@ install_headers('output.h', 'plot.h', 'values.h',
   subdir : 'mpt')
 
 if with_shared
-  mptplot = shared_library('mptplot', src_plot, 'libinfo.c',
+  libplot = shared_library('mptplot', src_plot, 'libinfo.c',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     version : '1.0.0', soversion : '1',
@@ -21,10 +21,10 @@ if with_shared
   
   pkgconfig_gen(
     description : 'mpt plotting library',
-    libraries : mptplot,
+    libraries : libplot,
     version : '1.0.0',
     name : 'mptplot')
 
-  plot = declare_dependency(link_with : mptplot,
+  plot = declare_dependency(link_with : libplot,
     include_directories : include_directories('.'))
 endif

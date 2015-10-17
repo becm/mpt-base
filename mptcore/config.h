@@ -70,6 +70,8 @@ public:
 	void del(const char *path, int sep = '.', int end = 0);
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	metatype *get(const char *path, int sep = '.', int len = -1);
+protected:
+	inline ~config() { }
 #else
 ; MPT_INTERFACE_VPTR(config) {
 	int (*unref)(MPT_INTERFACE(config) *);

@@ -23,6 +23,8 @@ public:
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
 	virtual int _file(void);
+protected:
+	inline ~input() { }
 # else
 ; MPT_INTERFACE_VPTR(input) {
 	int (*unref)(MPT_INTERFACE(input) *);

@@ -429,6 +429,8 @@ public:
     virtual linepart part(int dim, const double *val, int len) const;
     virtual bool apply(int dim, const linepart &, dpoint *dest, const double *from) const;
     virtual dpoint zero(void) const;
+protected:
+    inline ~Transform() { }
 };
 
 extern int applyLineData(dpoint *dest, const linepart *lp, int plen, Transform &tr, polyline &part);
@@ -437,6 +439,9 @@ class Transform3 : public Transform
 {
 public:
     Transform3();
+    
+    inline virtual ~Transform3()
+    { }
     
     int dimensions() const;
     

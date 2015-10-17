@@ -210,7 +210,7 @@ class globalMetatype : public metatype
 {
 public:
     globalMetatype()  { }
-    ~globalMetatype() { }
+    virtual ~globalMetatype() { }
 
     metatype *addref() { return this; }
     int unref() { return 0; }
