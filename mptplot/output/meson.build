@@ -1,16 +1,18 @@
 # meson.build.gen: suffix=c
 src = files(
  # match: *.c
-  'mapping.c',
-  'outbind_set.c',
-  'output_data.c',
-  'output_history.c',
-  'output_values.c',
-  'string_dest.c',
-  'output_plot.c',
+  'conf_graphic.c',
   'conf_history.c',
   'layout_open.c',
+  'mapping.c',
   'outbind_list.c',
+  'outbind_set.c',
   'outbind_string.c',
-  'conf_graphic.c',
+  'outfmt_get.c',
+  'outfmt_parse.c',
+  'output_data.c',
+  'output_history.c',
+  'output_plot.c',
+  'output_values.c',
+  'string_dest.c',
 )

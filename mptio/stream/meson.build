@@ -3,6 +3,7 @@ src = files(
  # match: *.c
   'accept.c',
   'stream_close.c',
+  'stream_dispatch.c',
   'stream_dopen.c',
   'stream_flush.c',
   'stream_getc.c',
@@ -13,12 +14,11 @@ src = files(
   'stream_poll.c',
   'stream_push.c',
   'stream_read.c',
+  'stream_seek.c',
   'stream_send.c',
   'stream_setmode.c',
   'stream_setter.c',
+  'stream_sync.c',
   'stream_write.c',
   'streaminfo.c',
-  'stream_dispatch.c',
-  'stream_sync.c',
-  'stream_seek.c',
 )

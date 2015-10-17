@@ -48,11 +48,12 @@ def write_header(f, t, n):
   f.write(bytes(n, 'utf-8'))
   newline(f)
 
-def write_entry(f, n):
-  f.write(b'  \'')
-  f.write(bytes(n, 'utf-8'))
-  f.write(b'\',')
-  newline(f)
+def write_entries(f, elem):
+  for e in elem:
+    f.write(b'  \'')
+    f.write(bytes(e, 'utf-8'))
+    f.write(b'\',')
+    newline(f)
 
 for root, dirs, files in os.walk('.'):
   for name in fnmatch.filter(files, 'meson.build'):
@@ -83,21 +84,25 @@ for root, dirs, files in os.walk('.'):
     for d in dirs:
       write_header(mb, 'directory', d)
       d = os.path.join(root,d)
-      for f in os.listdir(d):
-        write_entry(mb, f)
+      elem = os.listdir(d)
+      elem.sort()
+      write_entries(mb, elem)
     
     for s in suffixes:
       s = '*.' + s
       write_header(mb, 'match', s)
+      elem = []
       for f in os.listdir(root):
         if fnmatch.fnmatch(f, s):
-          write_entry(mb, f)
+          elem = elem + [f]
+      elem.sort()
+      write_entries(mb, elem)
     
     if len(files):
       mb.write(b' # files')
       newline(mb)
-      for f in files:
-        write_entry(mb, f)
+      files.sort()
+      write_entries(mb, files)
     
     mb.write(b')')
     newline(mb)
