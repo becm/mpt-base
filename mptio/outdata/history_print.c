@@ -6,24 +6,40 @@
 #include <string.h>
 #include <errno.h>
 
+#include "array.h"
+
 #include "output.h"
 
 struct typeSource
 {
 	MPT_INTERFACE(source) ctl;
 	const int8_t *src;
-	size_t len, esze;
+	size_t srclen, esze;
+	const MPT_STRUCT(valfmt) *fmt;
+	size_t fmtlen;
 	char type;
 };
 static int getVoidType(MPT_INTERFACE(source) *src, int type, void *dest)
 {
 	struct typeSource *ts = (void *) src;
 	ssize_t left;
+	
+	if (type == MPT_ENUM(TypeValFmt)) {
+		if (!ts->fmtlen) {
+			return -2;
+		}
+		if (dest) {
+			*((MPT_STRUCT(valfmt) *) dest) = *ts->fmt;
+		}
+		++ts->fmt;
+		--ts->fmtlen;
+		return sizeof(*ts->fmt);
+	}
 	if (type != ts->type) return -1;
-	if ((left = ts->len - (type = ts->esze)) < 0) return -2;
+	if ((left = ts->srclen - (type = ts->esze)) < 0) return -2;
 	if (dest) memcpy(dest, ts->src, type);
 	ts->src += type;
-	ts->len  = left;
+	ts->srclen = left;
 	return type;
 }
 static const MPT_INTERFACE_VPTR(source) getCtl = { getVoidType };
@@ -34,10 +50,10 @@ static const MPT_INTERFACE_VPTR(source) getCtl = { getVoidType };
  * 
  * Print available data elements to file.
  * 
- * \param fd	file descriptor
- * \param hist	history state information
- * \param len	length of data
- * \param src	start address of data
+ * \param fd   file descriptor
+ * \param hist history state information
+ * \param len  length of data
+ * \param src  start address of data
  */
 extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t len, const void *src)
 {
@@ -61,11 +77,18 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 	}
 	ts.ctl._vptr = &getCtl;
 	ts.src = src;
-	ts.len = len;
+	ts.srclen = len;
 	
 	while (len >= ts.esze) {
-		size_t pos = ts.len;
+		MPT_STRUCT(buffer) *fmt;
+		size_t pos = ts.srclen;
 		
+		if (!(fmt = hist->_fmt._buf)) {
+			ts.fmtlen = 0;
+		} else {
+			ts.fmt = (void *) (fmt+1);
+			ts.fmtlen = fmt->used/sizeof(*ts.fmt);
+		}
 		if (hist->line) {
 			pos = hist->pos;
 			
@@ -88,29 +111,25 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 				ts.src += adv;
 				continue;
 			}
-			else {
-				ts.len = hist->part - pos;
-				if (ts.len > len) {
-					ts.len = len;
+			ts.srclen = hist->part - pos;
+			if (ts.srclen > len) {
+				ts.srclen = len;
+			}
+			/* element not first in line */
+			if (pos) {
+				if ((pos /= ts.esze) < ts.fmtlen) {
+					ts.fmtlen -= pos;
+					ts.fmt += pos;
 				}
-				/* element not first in line */
-				if (pos) fputc(' ', fd);
-				pos = ts.len;
+				fputc(' ', fd);
 			}
+			pos = ts.srclen;
 		}
-		
 		/* float values may have format information */
-		if (strchr("dfg", hist->type)) {
-			const int16_t *fmt = hist->line ? hist->fmt : 0;
-			size_t adv = hist->pos/ts.esze;
-			while (fmt && adv--) {
-				if (!*(fmt++)) fmt = 0;
-			}
-			mpt_fprint_float(fd, fmt, &ts.ctl);
-		} else {
-			mpt_fprint_int(fd, 0, &ts.ctl);
+		if (mpt_fprint_val(fd, &ts.ctl) < 0) {
+			return total;
 		}
-		pos -= ts.len;
+		pos -= ts.srclen;
 		len -= pos;
 		total += pos;
 		ts.src += pos;

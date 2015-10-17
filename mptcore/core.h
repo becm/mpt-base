@@ -74,22 +74,23 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeAddress)  = 0x1,   /* SOH */
 	MPT_ENUM(TypeSocket)   = 0x2,   /* STX */
 	
+	/* data pointer types */
+	MPT_ENUM(TypeNode)     = 0x3,   /* ETX */
+	
 	/* data copy types */
 	MPT_ENUM(TypeValue)    = 0x4,   /* EOT */
 	MPT_ENUM(TypeProperty) = 0x5,   /* ENQ */
-	
-	/* data pointer types */
-	MPT_ENUM(TypeNode)     = 0x6,   /* ACK */
+	MPT_ENUM(TypeValFmt)   = 0x6,   /* ACK */
 	
 	/* layout types */
 	MPT_ENUM(TypeLineAttr) = 0x8,   /* BS  '\b' */
 	MPT_ENUM(TypeLine)     = 0x9,   /* HT  '\t' */
 	MPT_ENUM(TypeColor)    = 0xa,   /* LF  '\n' rgba(0..255) */
 	/* layout pointer types */
-	MPT_ENUM(TypeWorld)    = 0xc,   /* FF  '\f' */
-	MPT_ENUM(TypeText)     = 0xd,   /* CR  '\r' */
-	MPT_ENUM(TypeAxis)     = 0xe,   /* SO  '\n' */
-	MPT_ENUM(TypeGraph)    = 0xf,   /* SI  '\b' */
+	MPT_ENUM(TypeText)     = 0xc,   /* FF  '\f' */
+	MPT_ENUM(TypeAxis)     = 0xd,   /* CR  '\r' */
+	MPT_ENUM(TypeWorld)    = 0xe,   /* SO */
+	MPT_ENUM(TypeGraph)    = 0xf,   /* SI */
 	
 	/* reference types */
 	MPT_ENUM(TypeGroup)    = 0x10,  /* DLE */
@@ -107,6 +108,7 @@ enum MPT_ENUM(Types)
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeArray)    = '@',   /* 0x40: generic array */
 	
+	/* types with printable representation ('`'..'z') */
 #if __SIZEOF_LONG__ == 8
 	MPT_ENUM(TypeLong)     = 'x',
 	MPT_ENUM(TypeULong)    = 't',
@@ -116,7 +118,6 @@ enum MPT_ENUM(Types)
 #else
 # error: bad sizeof(long)
 #endif
-	/* types with printable representation ('`'..'z') */
 	MPT_ENUM(TypeFloat80)  = '`',   /* 0x60: 80bit float transport format */
 	
 	/* vector format flag, make typed version via (0x80 | <typeid>) for builtin types (0x01..0x7f) */

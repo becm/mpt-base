@@ -268,7 +268,7 @@ static int outputUnref(MPT_INTERFACE(metatype) *mt)
 	
 	free(odata->in.base);
 	
-	mpt_history_setfmt(&odata->hist.info, 0);
+	mpt_array_clone(&odata->hist.info._fmt, 0);
 	
 	if ((fd = odata->hist.file)
 	    && (fd != stdin)
@@ -418,16 +418,13 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return ret;
 	}
 	if (!strcasecmp(name, "histfmt")) {
-		if (!src) {
-			ret = odata->hist.info.fmt ? 1 : 0;
-		}
-		else if ((ret = mpt_history_setfmt(&odata->hist.info, src)) < 0) {
+		if ((ret = mpt_history_setfmt(&odata->hist.info, src)) < 0) {
 			return ret;
 		}
 		prop->name = "histfmt";
 		prop->desc = "history data output format";
-		prop->val.fmt = "";
-		prop->val.ptr = odata->hist.info.fmt;
+		prop->val.fmt = "@";
+		prop->val.ptr = &odata->hist.info._fmt;
 		return ret;
 	}
 	if (!strcasecmp(name, "encoding")) {

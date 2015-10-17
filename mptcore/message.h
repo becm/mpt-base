@@ -184,9 +184,6 @@ public:
 };
 #endif /* __cplusplus */
 
-#define MPT_outfmt_fset(w,d,f)  ((((w)&0xff)<<8)|(((d)&0x1f)<<3)|((f)&0x7))
-#define MPT_outfmt_iset(w,f)    ((w)&0x3f | (((f)=='x') ? 3 : ((f)=='o') ? 2 : ((f)=='u') ? 1 : 0)<<6)
-
 __MPT_EXTDECL_BEGIN
 
 /* generate (next) id for message */
@@ -223,12 +220,6 @@ extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct 
 
 /* send message */
 extern int mpt_output_send(MPT_INTERFACE(output) *, int , int , MPT_STRUCT(message) *);
-
-/* get/set terminal output format */
-extern int mpt_outfmt_iget(int , int *);
-extern int mpt_outfmt_get(int , int *, int *);
-extern int mpt_outfmt_set(const char **);
-extern int16_t *mpt_outfmt_parse(const char *, char **);
 
 /* value to string conversion */
 #if defined(_STDIO_H) || defined(_STDIO_H_)

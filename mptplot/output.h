@@ -6,7 +6,6 @@
 #ifndef _MPT_OUTPUT_H
 #define _MPT_OUTPUT_H  201401
 
-
 #include "core.h"
 
 #ifdef __cplusplus
@@ -53,27 +52,43 @@ MPT_STRUCT(laydest)
 	        dim;  /* target dimension */
 };
 
+/* history information */
 MPT_STRUCT(histinfo)
+#ifdef _MPT_ARRAY_H
 {
 # ifdef __cplusplus
 public:
-	inline histinfo() : fmt(0), pos(0), part(0), line(0), type(0)
+	inline histinfo() : pos(0), part(0), line(0), type(0), size(0)
 	{ }
-	inline ~histinfo()
-	{ free(fmt); }
 	
 	bool setFormat(const char *fmt);
 	bool setup(size_t , const msgbind *);
 protected:
 # else
-#  define MPT_HISTINFO_INIT  { 0,  0, 0, 0,  0, 0 }
+#  define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT,  0, 0, 0,  0, 0 }
 # endif
-	int16_t  *fmt;   /* float output format */
-	uint16_t  pos;   /* position in line */
-	uint16_t  part;  /* part of line to display */
-	uint16_t  line;  /* line lenth */
-	char      type;  /* type information */
-	uint8_t   size;  /* element size */
+	MPT_STRUCT(array) _fmt;  /* output format */
+	uint16_t           pos;  /* position in line */
+	uint16_t           part; /* part of line to display */
+	uint16_t           line; /* line lenth */
+	char               type; /* type information */
+	uint8_t            size; /* element size */
+}
+#endif
+;
+/* value output format */
+MPT_STRUCT(valfmt)
+{
+#ifdef __cplusplus
+public:
+	inline valfmt() : width(0), dec(-1), flt('g')
+	{ }
+#else
+# define MPT_VALFMT_INIT  { 0, -1, 'g' }
+#endif
+	uint8_t width; /* field width */
+	int8_t  dec;   /* number of decimals */
+	char    flt;   /* float format */
 };
 
 MPT_STRUCT(outdata)
@@ -180,9 +195,12 @@ extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const 
 extern int mpt_outdata_print(MPT_STRUCT(outdata) *, FILE *, size_t , const void *);
 
 /* printing values */
-extern int mpt_fprint_int(FILE *, const int8_t  *, MPT_INTERFACE(source) *);
-extern int mpt_fprint_float(FILE *, const int16_t *, MPT_INTERFACE(source) *);
+extern int mpt_fprint_val(FILE *, MPT_INTERFACE(source) *);
 #endif
+
+/* get/set terminal output format */
+extern int mpt_outfmt_get(MPT_STRUCT(valfmt) *, const char *);
+extern int mpt_outfmt_parse(MPT_STRUCT(array) *, const char *);
 
 /* clear outdata */
 extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);

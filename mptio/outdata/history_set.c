@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "array.h"
 #include "message.h"
 
 #include "output.h"
@@ -24,26 +25,23 @@
  */
 extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(source) *src)
 {
-	char *from, *end = 0;
-	ssize_t len;
-	int16_t *fmt = 0;
+	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
+	char *from;
+	int len;
 	
 	if (!src) {
-		free(hist->fmt);
-		return 0;
+		return hist->_fmt._buf ? hist->_fmt._buf->used / sizeof(MPT_STRUCT(valfmt)) : 0;
 	}
 	if ((len = src->_vptr->conv(src, 's', &from)) < 0) {
 		return len;
 	}
 	else if (!from) {
-		fmt = 0;
+		mpt_array_clone(&hist->_fmt, 0);
 	}
-	else if (!(fmt = mpt_outfmt_parse(from, &end))) {
-		if (end) fprintf(stderr, "%s: %s\n", MPT_tr("bad history format"), end);
-		return -2;
+	else if ((len = mpt_outfmt_parse(&tmp, from)) >= 0) {
+		mpt_array_clone(&hist->_fmt, &tmp);
 	}
-	free(hist->fmt);
-	return (hist->fmt = fmt) ? 1 : 0;
+	return len;
 }
 /*!
  * \ingroup mptOutput
