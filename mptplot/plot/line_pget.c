@@ -103,7 +103,8 @@ extern int mpt_line_pget(MPT_STRUCT(line) *line, MPT_STRUCT(property) *pr, MPT_I
 	self.val.ptr = ((uint8_t *) line) + (intptr_t) elem[pos].val.ptr;
 	
 	if (pos < 1) {
-		self.val.fmt = "#";
+		static const char cfmt[] = { MPT_ENUM(TypeColor) };
+		self.val.fmt = cfmt;
 	}
 	else if (pos < 5) {
 		self.val.fmt = "f";

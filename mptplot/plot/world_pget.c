@@ -108,7 +108,8 @@ extern int mpt_world_pget(MPT_STRUCT(world) *world, MPT_STRUCT(property) *pr, MP
 	self.val.ptr = ((uint8_t *) world) + (intptr_t) elem[pos].val.ptr;
 	
 	if (pos < 1) {
-		self.val.fmt = "#";
+		static const char cfmt[] = { MPT_ENUM(TypeColor) };
+		self.val.fmt = cfmt;
 		if (world && (pos = set(self.val.ptr, src)) < 0) return pos;
 	}
 	else if (pos < 2) {

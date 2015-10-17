@@ -10,12 +10,14 @@
 
 static int set_fg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char **fmt)
 {
-	*fmt = "#";
+	static const char cfmt[] = { MPT_ENUM(TypeColor) };
+	*fmt = cfmt;
 	return mpt_color_pset(bg, src);
 }
 static int set_bg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char **fmt)
 {
-	*fmt = "#";
+	static const char cfmt[] = { MPT_ENUM(TypeColor) };
+	*fmt = cfmt;
 	if (!src) return bg->alpha ? (bg->red || bg->green || bg->blue) : 0;
 	return mpt_color_pset(bg, src);
 }
@@ -243,12 +245,6 @@ extern int mpt_graph_pget(MPT_STRUCT(graph) *graph, MPT_STRUCT(property) *pr, MP
 	
 	if (pos < 2) {
 		self.val.fmt = "s";
-	}
-	else if (pos < 4) {
-		self.val.fmt = "#";
-	}
-	else {
-		self.val.fmt = "";
 	}
 	if (!graph) {
 		*pr = elem[pos];

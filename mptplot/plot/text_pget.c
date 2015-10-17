@@ -128,6 +128,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		'd',            /* angle */
 		0
 	};
+	static const char color_fmt[] = { MPT_ENUM(TypeColor) };
 	MPT_STRUCT(property) self;
 	int pos, (*set)();
 	
@@ -182,7 +183,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 	set = (int (*)()) elem[pos].val.fmt;
 	self.name = elem[pos].name;
 	self.desc = elem[pos].desc;
-	self.val.fmt = pos < 1 ? "#" : "s"; /* set for external non-modifying handler */
+	self.val.fmt = pos < 1 ? color_fmt : "s"; /* set for external non-modifying handler */
 	self.val.ptr = ((uint8_t *) text) + (intptr_t) elem[pos].val.ptr;
 	
 	if (text && (pos = set(self.val.ptr, src, &self.val.fmt)) < 0) {
