@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <strings.h>
 
 #include "config.h"
 #include "plot.h"

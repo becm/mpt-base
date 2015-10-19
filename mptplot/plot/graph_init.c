@@ -2,6 +2,10 @@
  * default graph values
  */
 
+#ifndef _POSIX_C_SOURCE
+# define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 

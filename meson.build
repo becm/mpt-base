@@ -4,7 +4,7 @@
 project('mpt', 'c')
 
 if not meson.is_subproject()
-#  add_global_arguments('-std=c11', language : 'c')
+  add_global_arguments('-std=c11', language : 'c')
   add_global_arguments('-std=c++11', language : 'cpp')
 endif
 
@@ -28,9 +28,12 @@ if not with_plot
   add_global_arguments('-DMPT_NO_PLOT', language : ['c', 'cpp'])
 endif
 
-git = run_command('git', 'status', '--porcelain')
-if git.returncode() == 0 and git.stdout().strip() == ''
-  git = run_command('git', 'show', '-s', '--pretty=format:%h')
+gitcommand = find_program('git', required : false)
+if gitcommand.found()
+  git = run_command(gitcommand, 'status', '--porcelain')
+endif
+if is_variable('git') and git.returncode() == 0 and git.stdout().strip() == ''
+  git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h')
   if git.returncode() == 0
     add_global_arguments('-D__VCS_TAG__="' + git.stdout().strip() + '"', language : 'c')
   endif

@@ -27,7 +27,7 @@ if with_shared
     install_rpath : get_option('prefix') + '/' + get_option('libdir'),
     c_args : lua_inc,
     include_directories : inc,
-    link_with : mptcore,
+    link_with : libcore,
     install_dir : lua_cmod,
     install : true)
 endif
