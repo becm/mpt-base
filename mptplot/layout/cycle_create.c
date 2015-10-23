@@ -7,7 +7,7 @@
 #include <limits.h>
 
 #include "array.h"
-#include "plot.h"
+#include "layout.h"
 
 struct Cycle
 {

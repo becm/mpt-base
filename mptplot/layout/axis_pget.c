@@ -6,7 +6,7 @@
 #include <strings.h>
 #include <errno.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /* modification functions */
 static int set_begin(double *val, MPT_INTERFACE(source) *src, const char **fmt)

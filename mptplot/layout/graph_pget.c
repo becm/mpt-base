@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "plot.h"
+#include "layout.h"
 
 static int set_fg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char **fmt)
 {

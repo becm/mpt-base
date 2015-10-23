@@ -11,7 +11,8 @@
 #include <math.h>
 
 #include "array.h"
-#include "plot.h"
+
+#include "layout.h"
 
 __MPT_NAMESPACE_BEGIN
 

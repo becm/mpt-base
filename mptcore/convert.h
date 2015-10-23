@@ -14,6 +14,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_STRUCT(array);
+
 enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */
 	MPT_ENUM(EncodingCobs)         = 0x2,   /* use cobs encoding */
@@ -46,6 +48,20 @@ public:
 private:
 #endif
 	uint8_t _d[10];
+};
+/* value output format */
+MPT_STRUCT(valfmt)
+{
+#ifdef __cplusplus
+public:
+	inline valfmt() : width(0), dec(-1), flt('g')
+	{ }
+#else
+# define MPT_VALFMT_INIT  { 0, -1, 'g' }
+#endif
+	uint8_t width; /* field width */
+	int8_t  dec;   /* number of decimals */
+	char    flt;   /* float format */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -150,6 +166,11 @@ extern int mpt_offset(const char *, int);
 /* get/add registered (primitive) types */
 extern ssize_t mpt_valsize(int);
 extern int mpt_valtype_add(size_t);
+
+/* parse/create terminal output format */
+extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
+extern int mpt_valfmt_parse(MPT_STRUCT(array) *, const char *);
+extern int mpt_valfmt_set(MPT_STRUCT(array) *, MPT_INTERFACE(source) *);
 
 
 __MPT_EXTDECL_END

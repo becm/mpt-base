@@ -7,9 +7,20 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "output.h"
+#include "convert.h"
 
-extern int mpt_outfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
+/*!
+ * \ingroup mptConvert
+ * \brief parse value format
+ * 
+ * Set value format from description string.
+ * 
+ * \param arr  value format element
+ * \param src  format descriptions
+ * 
+ * \return consumed length
+ */
+extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 {
 	static const MPT_STRUCT(valfmt) deffmt = MPT_VALFMT_INIT;
 	MPT_STRUCT(valfmt) fmt;

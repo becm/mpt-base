@@ -2,8 +2,9 @@
 #include <string.h>
 
 #include <mpt/config.h>
-#include <mpt/plot.h>
 #include <mpt/convert.h>
+
+#include <mpt/layout.h>
 
 static int printm(void *out, struct mpt_property *prop)
 {

@@ -4,7 +4,7 @@
 
 #include <errno.h>
 
-#include "plot.h"
+#include "layout.h"
 
 #define MPT_LineStyleMax   5
 #define MPT_LineWidthMax   10

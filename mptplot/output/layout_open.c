@@ -2,8 +2,6 @@
 #include <string.h>
 #include <strings.h>
 
-#include "config.h"
-#include "plot.h"
 #include "message.h"
 
 #include "output.h"

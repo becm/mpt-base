@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptPlot

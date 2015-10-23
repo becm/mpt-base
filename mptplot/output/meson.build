@@ -8,8 +8,6 @@ src = files(
   'outbind_list.c',
   'outbind_set.c',
   'outbind_string.c',
-  'outfmt_get.c',
-  'outfmt_parse.c',
   'output_data.c',
   'output_history.c',
   'output_plot.c',

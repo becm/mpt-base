@@ -7,10 +7,9 @@
 #endif
 
 #include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptPlot

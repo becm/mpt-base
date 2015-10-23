@@ -6,7 +6,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptPlot

@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /* set/get functions */
 static int setCycle(MPT_STRUCT(world) *wld, MPT_INTERFACE(source) *src)

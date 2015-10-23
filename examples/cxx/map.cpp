@@ -4,10 +4,10 @@
 
 #include <iostream>
 
-#include <mpt/output.h>
 #include <mpt/message.h>
 
-#include <mpt/plot.h>
+#include <mpt/output.h>
+#include <mpt/layout.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>

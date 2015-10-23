@@ -8,10 +8,10 @@
 
 #include <sys/uio.h>
 
-#include "plot.h"
 #include "message.h"
 
 #include "output.h"
+#include "layout.h"
 
 #include "graphic.h"
 

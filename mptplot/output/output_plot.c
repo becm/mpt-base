@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "array.h"
-#include "plot.h"
 #include "message.h"
 
 #include "output.h"

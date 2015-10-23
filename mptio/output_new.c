@@ -423,7 +423,7 @@ static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, M
 		return ret;
 	}
 	if (!strcasecmp(name, "histfmt")) {
-		if ((ret = mpt_history_setfmt(&odata->hist.info, src)) < 0) {
+		if ((ret = mpt_valfmt_set(&odata->hist.info._fmt, src)) < 0) {
 			return ret;
 		}
 		prop->name = "histfmt";

@@ -29,5 +29,8 @@ src = files(
   'offset.c',
   'position.c',
   'tostring.c',
+  'valfmt_get.c',
+  'valfmt_parse.c',
+  'valfmt_set.c',
   'valsize.c',
 )

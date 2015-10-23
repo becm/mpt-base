@@ -76,20 +76,6 @@ protected:
 }
 #endif
 ;
-/* value output format */
-MPT_STRUCT(valfmt)
-{
-#ifdef __cplusplus
-public:
-	inline valfmt() : width(0), dec(-1), flt('g')
-	{ }
-#else
-# define MPT_VALFMT_INIT  { 0, -1, 'g' }
-#endif
-	uint8_t width; /* field width */
-	int8_t  dec;   /* number of decimals */
-	char    flt;   /* float format */
-};
 
 MPT_STRUCT(outdata)
 #ifdef _MPT_ARRAY_H
@@ -187,7 +173,6 @@ extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(msgval) *
 extern int mpt_output_plot(MPT_INTERFACE(output) *, const MPT_STRUCT(laydest) *, int, const double *, int);
 
 /* history operations */
-extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *, MPT_INTERFACE(source) *);
 extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgbind) *);
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
@@ -197,10 +182,6 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *, FILE *, size_t , const void 
 /* printing values */
 extern int mpt_fprint_val(FILE *, MPT_INTERFACE(source) *);
 #endif
-
-/* get/set terminal output format */
-extern int mpt_outfmt_get(MPT_STRUCT(valfmt) *, const char *);
-extern int mpt_outfmt_parse(MPT_STRUCT(array) *, const char *);
 
 /* clear outdata */
 extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);

@@ -14,7 +14,7 @@
 #include "convert.h"
 #include "array.h"
 
-#include "plot.h"
+#include "layout.h"
 
 #include "object.h"
 

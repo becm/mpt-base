@@ -7,11 +7,12 @@
 #include <stdio.h>
 
 #include "array.h"
-#include "plot.h"
 #include "convert.h"
 #include "node.h"
 #include "parse.h"
 #include "config.h"
+
+#include "layout.h"
 
 __MPT_NAMESPACE_BEGIN
 

@@ -2,7 +2,7 @@
  * test config/path object
  */
 
-#include <mpt/plot.h>
+#include <mpt/layout.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>

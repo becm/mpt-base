@@ -3,12 +3,12 @@
 
 # collect source files
 src_plot = []
-foreach d : [ 'output', 'plot', 'values' ]
+foreach d : [ 'output', 'layout', 'values' ]
   subdir(d)
   src_plot += src
 endforeach
 
-install_headers('output.h', 'plot.h', 'values.h',
+install_headers('output.h', 'layout.h', 'values.h',
   subdir : 'mpt')
 
 if with_shared

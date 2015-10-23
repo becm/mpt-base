@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "array.h"
+#include "convert.h"
 
 #include "output.h"
 

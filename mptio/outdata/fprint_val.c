@@ -7,6 +7,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "convert.h"
+
 #include "output.h"
 
 /*!

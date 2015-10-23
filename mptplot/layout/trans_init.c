@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /* no separate #define magic to get universal constant... */
 #ifndef M_SQRT1_2

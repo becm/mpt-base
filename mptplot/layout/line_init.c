@@ -1,5 +1,5 @@
 
-#include "plot.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptPlot

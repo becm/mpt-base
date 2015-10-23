@@ -6,7 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "plot.h"
+#include "layout.h"
 
 /* set/get functions */
 static int set_pos(float *val, MPT_INTERFACE(source) *src)

@@ -6,9 +6,9 @@
 #define __STDC_LIMIT_MACROS
 #include <limits>
 
-#include "plot.h"
 #include "message.h"
 
+#include "layout.h"
 #include "output.h"
 
 #include "graphic.h"

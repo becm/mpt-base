@@ -12,7 +12,7 @@
 #include "convert.h"
 
 #ifndef MPT_NO_PLOT
-# include "../mptplot/plot.h"
+# include "../mptplot/layout.h"
 #endif
 
 /*!

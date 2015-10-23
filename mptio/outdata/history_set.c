@@ -14,37 +14,6 @@
 
 /*!
  * \ingroup mptOutput
- * \brief set history format
- * 
- * Set output format for history.
- * 
- * \param hist  history state
- * \param src   source descriptor
- * 
- * \return state of message format
- */
-extern int mpt_history_setfmt(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(source) *src)
-{
-	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
-	char *from;
-	int len;
-	
-	if (!src) {
-		return hist->_fmt._buf ? hist->_fmt._buf->used / sizeof(MPT_STRUCT(valfmt)) : 0;
-	}
-	if ((len = src->_vptr->conv(src, 's', &from)) < 0) {
-		return len;
-	}
-	else if (!from) {
-		mpt_array_clone(&hist->_fmt, 0);
-	}
-	else if ((len = mpt_outfmt_parse(&tmp, from)) >= 0) {
-		mpt_array_clone(&hist->_fmt, &tmp);
-	}
-	return len;
-}
-/*!
- * \ingroup mptOutput
  * \brief set history parameters
  * 
  * Add binding to history info.

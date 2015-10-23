@@ -5,7 +5,7 @@
 #include <errno.h>
 
 #include "convert.h"
-#include "plot.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptPlot
