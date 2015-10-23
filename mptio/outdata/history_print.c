@@ -127,6 +127,9 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 			}
 			pos = ts.srclen;
 		}
+		else if (hist->pos) {
+			fputc(' ', fd);
+		}
 		/* float values may have format information */
 		if (mpt_fprint_val(fd, &ts.ctl) < 0) {
 			return total;
@@ -134,7 +137,6 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 		pos -= ts.srclen;
 		len -= pos;
 		total += pos;
-		ts.src += pos;
 		hist->pos += pos;
 	}
 	return total;

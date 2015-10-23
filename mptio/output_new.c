@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
@@ -74,7 +75,16 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 		}
 		/* history output triggered */
 		else if (od->hist.info.size) {
-			ret = mpt_history_print(od->hist.file, &od->hist.info, len, src);
+			if (od->hist.info.type) {
+				ret = mpt_history_print(od->hist.file, &od->hist.info, len, src);
+			} else {
+				MPT_STRUCT(histinfo) info = MPT_HISTINFO_INIT;
+				info.type = 't';
+				info.pos = od->hist.info.pos;
+				info.size = sizeof(uint64_t);
+				ret = mpt_history_print(od->hist.file, &info, len, src);
+				od->hist.info.pos = info.pos;
+			}
 		}
 		else {
 			ret = mpt_outdata_push(&od->out, len, src);
@@ -105,7 +115,11 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 				return -2;
 			}
 			mpt_history_set(&od->hist.info, 0);
-			while (parts--) {
+			
+			if (!parts) {
+				od->hist.info.size = sizeof(uint64_t);
+			}
+			else while (parts--) {
 				if (mpt_history_set(&od->hist.info, (void *) (++mt)) < 0) {
 					od->hist.info.line = 0;
 					od->hist.info.type = 0;
@@ -114,8 +128,7 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 			od->out.state |= MPT_ENUM(OutputActive);
 			
 			/* consume data for bad setup */
-			if (!od->hist.info.type
-			    || !od->hist.info.size
+			if (!od->hist.info.size
 			    || ((parts = (len - ret))
 			        && (ret = mpt_history_print(od->hist.file, &od->hist.info, parts, src)) < 0)) {
 				od->out.state |= MPT_ENUM(OutputPrintRestore);

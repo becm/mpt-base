@@ -9,7 +9,7 @@
 
 #include "output.h"
 
-#define MPT_fmtHdrLen(m) (sizeof(m.cmd) + sizeof(m.arg) + m.arg*sizeof(m.bnd[0]))
+#define MPT_fmtHdrLen(m) (sizeof(m.type) + m.type.arg*sizeof(m.bnd[0]))
 
 /*!
  * \ingroup mptOutput
@@ -31,10 +31,10 @@
 extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double *ref, int rlen, const double *val, int vlen)
 {
 	struct {
-		int8_t cmd, arg;
+		MPT_STRUCT(msgtype) type;
 		MPT_STRUCT(msgbind) bnd[2];
 	} hdr;
-	int dim[2], msgs, i, ldr, ldv;
+	int plen, msgs, i, ldr, ldv;
 	
 	if (len < 0) return -1;
 	
@@ -45,23 +45,22 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 		ldr = ldv = rlen + vlen;
 		val = ref + rlen;
 	}
-	dim[0] = len;
-	dim[1] = rlen + vlen;
+	plen = rlen + vlen;
 	
-	if (len && dim[1]) {
+	if (len && plen) {
+		uint64_t dim;
 		/* send size info */
-		hdr.cmd = MPT_ENUM(MessageValFmt);
-		hdr.arg = 1;
-		hdr.bnd[0].type = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesInteger) | sizeof(*dim);
-		hdr.bnd[0].dim  = 2;
+		hdr.type.cmd = MPT_ENUM(MessageValFmt);
+		hdr.type.arg = 0;
 		
-		out->_vptr->push(out, MPT_fmtHdrLen(hdr), &hdr);
-		out->_vptr->push(out, sizeof(dim), &dim);
+		out->_vptr->push(out, sizeof(hdr.type), &hdr.type);
+		dim = len;  out->_vptr->push(out, sizeof(dim), &dim);
+		dim = plen; out->_vptr->push(out, sizeof(dim), &dim);
 		out->_vptr->push(out, 0, 0);
 	}
 	/* header setup for data output */
-	hdr.cmd = MPT_ENUM(MessageValFmt);
-	hdr.arg = 2;
+	hdr.type.cmd = MPT_ENUM(MessageValFmt);
+	hdr.type.arg = 2;
 	
 	hdr.bnd[0].type = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*ref);
 	hdr.bnd[0].dim  = ref ? rlen : 0;
@@ -98,8 +97,9 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 	out->_vptr->push(out, 0, 0);
 	
 	/* terminate history block */
-	hdr.arg = 0;
-	out->_vptr->push(out, 2, &hdr);
+	hdr.type.cmd = MPT_ENUM(MessageValFmt);
+	hdr.type.arg = 0;
+	out->_vptr->push(out, sizeof(hdr.type), &hdr.type);
 	out->_vptr->push(out, 0, 0);
 	
 	return msgs;
