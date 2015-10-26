@@ -116,8 +116,8 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		{"font",   "text font",      { (char *) mpt_text_pset,  (void *) MPT_offset(text,_font) } },
 	};
 	static const MPT_STRUCT(property) elem_xy[] = {
-		{"x",  "x start position",  { "F", (void *) MPT_offset(text, pos.x)} },
-		{"y",  "y start position",  { "F", (void *) MPT_offset(text, pos.y)} }
+		{"x",  "x start position",  { "f", (void *) MPT_offset(text, pos.x)} },
+		{"y",  "y start position",  { "f", (void *) MPT_offset(text, pos.y)} }
 	};
 	static const char format[] = {
 		's', 's',       /* value, font */
@@ -128,7 +128,7 @@ extern int mpt_text_pget(MPT_STRUCT(text) *text, MPT_STRUCT(property) *pr, MPT_I
 		'd',            /* angle */
 		0
 	};
-	static const char color_fmt[] = { MPT_ENUM(TypeColor) };
+	static const char color_fmt[2] = { MPT_ENUM(TypeColor) };
 	MPT_STRUCT(property) self;
 	int pos, (*set)();
 	

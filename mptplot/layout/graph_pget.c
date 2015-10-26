@@ -10,13 +10,13 @@
 
 static int set_fg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char **fmt)
 {
-	static const char cfmt[] = { MPT_ENUM(TypeColor) };
+	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
 	*fmt = cfmt;
 	return mpt_color_pset(bg, src);
 }
 static int set_bg(MPT_STRUCT(color) *bg, MPT_INTERFACE(source) *src, const char **fmt)
 {
-	static const char cfmt[] = { MPT_ENUM(TypeColor) };
+	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
 	*fmt = cfmt;
 	if (!src) return bg->alpha ? (bg->red || bg->green || bg->blue) : 0;
 	return mpt_color_pset(bg, src);
