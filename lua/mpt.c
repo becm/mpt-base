@@ -10,6 +10,8 @@
 
 #include <sys/uio.h>
 
+#include <sys/wait.h>
+
 #include "queue.h"
 #include "message.h"
 #include "convert.h"
@@ -20,6 +22,7 @@
 
 struct luaStream {
 	MPT_STRUCT(stream) srm;
+	pid_t pid;
 	MPT_STRUCT(msgtype) mt;
 };
 
@@ -64,51 +67,69 @@ static const char streamClassString[] = "mpt::stream\0";
 
 static int streamString(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	lua_pushfstring(L, "%s (%p)", streamClassString, s);
 	return 1;
 }
+static int streamWait(struct luaStream *s)
+{
+	pid_t id;
+	int end;
+	if ((id = s->pid)
+	    && (id == waitpid(s->pid, &end, WNOHANG))
+	    && (WIFEXITED(end)
+	        || WIFSIGNALED(end))) {
+		s->pid = 0;
+		return 1;
+	}
+	return 0;
+}
 static int streamDel(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
-	mpt_stream_close(s);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
+	streamWait(s);
+	mpt_stream_close(&s->srm);
 	return 0;
 }
 static int streamRead(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	size_t len;
 	void *base;
 	int timeout = -1;
 	luaL_Buffer b;
 	
+	streamWait(s);
+	
 	if (lua_isnumber(L, 2)) {
 		timeout = lua_tonumber(L, 2);
 	}
-	if (mpt_stream_poll(s, POLLIN, timeout) < 0) {
+	if (mpt_stream_poll(&s->srm, POLLIN, timeout) < 0) {
 		return 0;
 	}
-	if (s->_rd.len == s->_rd.max) {
-		while ((timeout = mpt_stream_poll(s, POLLIN, 0)) > 0
+	if (s->srm._rd.len == s->srm._rd.max) {
+		while ((timeout = mpt_stream_poll(&s->srm, POLLIN, 0)) > 0
 		       && timeout & POLLIN);
 	}
 	luaL_buffinit(L, &b);
-	base = mpt_queue_data(&s->_rd, &len);
+	base = mpt_queue_data(&s->srm._rd, &len);
 	if (len) luaL_addlstring(&b, base, len);
-	len = s->_rd.len - len;
-	if (len) luaL_addlstring(&b, s->_rd.base, len);
+	len = s->srm._rd.len - len;
+	if (len) luaL_addlstring(&b, s->srm._rd.base, len);
 	
-	mpt_queue_crop(&s->_rd, 0, s->_rd.len);
+	mpt_queue_crop(&s->srm._rd, 0, s->srm._rd.len);
 	
 	luaL_pushresult(&b);
 	return 1;
 }
 static int streamWrite(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	int i, max;
 	
-	if (s->_enc.fcn) {
+	streamWait(s);
+	
+	if (s->srm._enc.fcn) {
 		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("write to encoded stream"));
 		return lua_error(L);
 	}
@@ -121,7 +142,7 @@ static int streamWrite(lua_State *L)
 		if (!(d = lua_tolstring(L, i, &l))) {
 			break;
 		}
-		if (!(l = mpt_stream_write(s, l, d, 1))) {
+		if (!(l = mpt_stream_write(&s->srm, l, d, 1))) {
 			break;
 		}
 	}
@@ -133,6 +154,8 @@ static int streamPush(lua_State *L)
 	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	int i, t, len;
 	size_t old;
+	
+	streamWait(s);
 	
 	if (!s->srm._enc.fcn) {
 		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("push to raw stream"));
@@ -250,15 +273,16 @@ static int streamPush(lua_State *L)
 }
 static int streamFlush(lua_State *L)
 {
-	MPT_STRUCT(stream) *srm = luaL_checkudata(L, 1, streamClassString);
-	mpt_stream_flush(srm);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
+	streamWait(s);
+	mpt_stream_flush(&s->srm);
 	return 0;
 }
 static int streamConnect(lua_State *L)
 {
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	MPT_STRUCT(fdmode) mode;
-	MPT_STRUCT(stream) *srm = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	const char *dest = luaL_checkstring(L, 2);
 	const char *type = lua_isstring(L, 3) ? lua_tostring(L, 3) : 0;
 	int flg;
@@ -284,7 +308,7 @@ static int streamConnect(lua_State *L)
 	} else {
 		flg = MPT_ENUM(StreamRead);
 	}
-	if (mpt_stream_dopen(srm, &sock, flg | MPT_ENUM(StreamBuffer)) < 0) {
+	if (mpt_stream_dopen(&s->srm, &sock, flg | MPT_ENUM(StreamBuffer)) < 0) {
 		close(sock._id);
 		return 0;
 	}
@@ -293,7 +317,7 @@ static int streamConnect(lua_State *L)
 }
 static int streamIndex(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	const char *id = luaL_checkstring(L, 2);
 	
 	if (!strcmp(id, "write")) {
@@ -317,10 +341,10 @@ static int streamIndex(lua_State *L)
 		return 1;
 	}
 	if (!strcmp(id, "encoding")) {
-		if (s->_enc.fcn == mpt_encode_cobs) {
+		if (s->srm._enc.fcn == mpt_encode_cobs) {
 			lua_pushcfunction(L, bufferCobs);
 		}
-		else if (s->_enc.fcn || s->_dec.fcn) {
+		else if (s->srm._enc.fcn || s->srm._dec.fcn) {
 			lua_pushboolean(L, 1);
 		}
 		else {
@@ -332,7 +356,7 @@ static int streamIndex(lua_State *L)
 }
 static int streamNewIndex(lua_State *L)
 {
-	MPT_STRUCT(stream) *s = luaL_checkudata(L, 1, streamClassString);
+	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
 	const char *id = luaL_checkstring(L, 2);
 	
 	if (!strcmp(id, "encoding")) {
@@ -340,7 +364,7 @@ static int streamNewIndex(lua_State *L)
 		MPT_TYPE(DataDecoder) dec;
 		int type = -1;
 		
-		if (s->_rd.base || s->_wd.base) {
+		if (s->srm._rd.base || s->srm._wd.base) {
 			lua_pushstring(L, "stream is active");
 			lua_error(L);
 		}
@@ -375,14 +399,14 @@ static int streamNewIndex(lua_State *L)
 			lua_pushstring(L, "invalid encoding");
 			return lua_error(L);
 		}
-		s->_enc.fcn = enc;
-		s->_dec.fcn = dec;
+		s->srm._enc.fcn = enc;
+		s->srm._dec.fcn = dec;
 	}
 	
 	return 0;
 }
 
-static MPT_STRUCT(stream) *createStream(lua_State *L)
+static struct luaStream *createStream(lua_State *L)
 {
 	static const MPT_STRUCT(stream) def = MPT_STREAM_INIT;
 	struct luaStream *s;
@@ -391,11 +415,12 @@ static MPT_STRUCT(stream) *createStream(lua_State *L)
 		return 0;
 	}
 	s->srm = def;
+	s->pid = 0;
 	
 	/* use existing metatable */
 	if (!luaL_newmetatable(L, streamClassString)) {
 		lua_setmetatable(L, -2);
-		return &s->srm;
+		return s;
 	}
 	/* string conversion */
 	lua_pushliteral(L, "__tostring");
@@ -417,7 +442,7 @@ static MPT_STRUCT(stream) *createStream(lua_State *L)
 	
 	lua_setmetatable(L, -2);
 	
-	return &s->srm;
+	return s;
 }
 static int streamCreate(lua_State *L)
 {
@@ -425,27 +450,27 @@ static int streamCreate(lua_State *L)
 }
 static int streamOpen(lua_State *L)
 {
-	MPT_STRUCT(stream) *srm;
+	struct luaStream *s;
 	const char *dest = lua_tostring(L, 1);
 	const char *mode = lua_tostring(L, 2);
 	
-	if (!(srm = createStream(L))) {
+	if (!(s = createStream(L))) {
 		return 0;
 	}
 	if (!dest) {
 		return 0;
 	}
 	if (!*dest) {
-		_mpt_stream_setfile(&srm->_info, 0, 1);
+		_mpt_stream_setfile(&s->srm._info, 0, 1);
 	}
-	else if (mpt_stream_open(srm, dest, mode) < 0) {
+	else if (mpt_stream_open(&s->srm, dest, mode) < 0) {
 		return 0;
 	}
 	return 1;
 }
 static int streamPipe(lua_State *L)
 {
-	MPT_STRUCT(stream) *srm;
+	struct luaStream *s;
 	char **args, *prog;
 	int i, len = 0;
 	
@@ -462,16 +487,16 @@ static int streamPipe(lua_State *L)
 	}
 	args[i] = 0;
 	
-	if (!(srm = createStream(L))) {
+	if (!(s = createStream(L))) {
 		free(args);
 		return 0;
 	}
-	else if (mpt_stream_pipe(&srm->_info, args[0], args) < 0) {
+	else if ((s->pid = mpt_stream_pipe(&s->srm._info, args[0], args)) <= 0) {
 		free(args);
 		return 0;
 	}
 	free(args);
-	mpt_stream_setmode(srm, MPT_ENUM(StreamBuffer));
+	mpt_stream_setmode(&s->srm, MPT_ENUM(StreamBuffer));
 	return 1;
 }
 static const luaL_Reg mptInterface[] =

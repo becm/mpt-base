@@ -2,9 +2,7 @@
  * graph item implementation
  */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <string>
 
 #include "array.h"
 #include "convert.h"

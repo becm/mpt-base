@@ -27,8 +27,6 @@
 #  define __MPT_CONST_EXPR
 # endif
 
-# include <sstream>
-
 # define __MPT_NAMESPACE_BEGIN namespace mpt {
 # define __MPT_NAMESPACE_END   }
 # define __MPT_EXTDECL_BEGIN   extern "C" {
@@ -104,11 +102,13 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeOutput)   = 0x19,  /* EM  */
 	MPT_ENUM(TypeSolver)   = 0x1a,  /* SUB */
 	
-	
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeArray)    = '@',   /* 0x40: generic array */
 	
-	/* types with printable representation ('`'..'z') */
+	/* transport formats */
+	MPT_ENUM(TypeFloat80)  = '`',   /* 0x60: 80bit float */
+	
+	/* types with printable representation ('a'..'z') */
 #if __SIZEOF_LONG__ == 8
 	MPT_ENUM(TypeLong)     = 'x',
 	MPT_ENUM(TypeULong)    = 't',
@@ -118,8 +118,6 @@ enum MPT_ENUM(Types)
 #else
 # error: bad sizeof(long)
 #endif
-	MPT_ENUM(TypeFloat80)  = '`',   /* 0x60: 80bit float transport format */
-	
 	/* vector format flag, make typed version via (0x80 | <typeid>) for builtin types (0x01..0x7f) */
 	MPT_ENUM(TypeVector)   = 0x80,
 	

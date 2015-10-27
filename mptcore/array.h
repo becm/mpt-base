@@ -9,6 +9,7 @@
 #include "core.h"
 
 #ifdef __cplusplus
+# include <new>
 # include <cstring>
 struct iovec;
 #endif

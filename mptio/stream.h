@@ -131,7 +131,7 @@ extern int _mpt_stream_fwrite(const MPT_STRUCT(streaminfo) *);
 /* set socket/file descriptor(s) and flags */
 extern void _mpt_stream_setalloc(MPT_STRUCT(streaminfo) *);
 extern int _mpt_stream_setfile(MPT_STRUCT(streaminfo) *, int , int);
-extern int mpt_stream_pipe(MPT_STRUCT(streaminfo) *, const char *, char *const argv[]);
+extern pid_t mpt_stream_pipe(MPT_STRUCT(streaminfo) *, const char *, char *const argv[]);
 
 /* change mode (buffering, newline, ...) */
 extern int mpt_stream_setmode(MPT_STRUCT(stream) *, int);

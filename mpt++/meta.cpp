@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include <sys/uio.h>

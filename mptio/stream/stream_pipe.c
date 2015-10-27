@@ -23,7 +23,7 @@
  * 
  * \return result of operation
  */
-extern int mpt_stream_pipe(MPT_STRUCT(streaminfo) *stream, const char *file, char * const argv[])
+extern pid_t mpt_stream_pipe(MPT_STRUCT(streaminfo) *stream, const char *file, char * const argv[])
 {
 	char *targ[2];
 	int   in[2], out[2];
@@ -79,6 +79,6 @@ extern int mpt_stream_pipe(MPT_STRUCT(streaminfo) *stream, const char *file, cha
 	close(in[1]);
 	close(out[0]);
 	
-	return 0;
+	return pid;
 }
 
