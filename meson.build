@@ -1,46 +1,47 @@
 # mpt-base/meson.build
 # build definitions for mpt
 
-project('mpt', 'c')
+project('mpt', 'c', default_options : [
+  'cpp_std=c++11',
+  'c_std=c11'
+])
+
+# conditionals from configuration
+with_plot = get_option('with_plot')
+with_io = get_option('with_io')
+with_cxx = get_option('with_cxx')
+with_loader = get_option('with_loader')
+libs = get_option('libraries')
+
+
+if not (is_variable('with_static') and is_variable('with_shared'))
+  if libs == 'shared'
+    with_static = false
+    with_shared = true
+  elif libs == 'static'
+    with_static = true
+    with_shared = false
+  else
+    with_static = true
+    with_shared = true
+  endif
+endif
 
 if not meson.is_subproject()
-  add_global_arguments('-std=c11', language : 'c')
-  add_global_arguments('-std=c++11', language : 'cpp')
-endif
-
-c_args = []
-cpp_args = []
-
-libs = get_option('libraries')
-if libs == 'shared'
-  with_static = false
-  with_shared = true
-elif libs == 'static'
-  with_static = true
-  with_shared = false
-else
-  with_static = true
-  with_shared = true
-endif
-
-with_plot = get_option('with_plot')
-if not with_plot
-  add_global_arguments('-DMPT_NO_PLOT', language : ['c', 'cpp'])
-endif
-
-gitcommand = find_program('git', required : false)
-if gitcommand.found()
-  git = run_command(gitcommand, 'status', '--porcelain')
-endif
-if is_variable('git') and git.returncode() == 0 and git.stdout().strip() == ''
-  git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h')
-  if git.returncode() == 0
-    add_global_arguments('-D__VCS_TAG__="' + git.stdout().strip() + '"', language : 'c')
+  gitcommand = find_program('git', required : false)
+  if gitcommand.found()
+    git = run_command(gitcommand, 'status', '--porcelain')
   endif
-else
-  iso = run_command('date', '+%F')
-  if iso.returncode() == 0
-    add_global_arguments('-D__ISO_DATE__="' + iso.stdout().strip() + '"', language : 'c')
+  if is_variable('git') and git.returncode() == 0 and git.stdout().strip() == ''
+    git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h')
+    if git.returncode() == 0
+      add_global_arguments('-D__VCS_TAG__="git:' + git.stdout().strip() + '"', language : 'c')
+    endif
+  else
+    iso = run_command('date', '+%F')
+    if iso.returncode() == 0
+      add_global_arguments('-D__ISO_DATE__="' + iso.stdout().strip() + '"', language : 'c')
+    endif
   endif
 endif
 
@@ -50,7 +51,6 @@ subdir('mptcore')
 inc += include_directories('mptcore')
 src_all = [ src_core ]
 
-with_loader = get_option('with_loader')
 if with_loader
   subdir('mptloader')
   src_all += src_loader
@@ -62,9 +62,7 @@ if with_plot
   src_all += src_plot
 endif
 
-with_io = get_option('with_io')
 if with_io
-  with_io = true
   subdir('mptio')
   inc += include_directories('mptio')
   src_all += src_io
@@ -74,7 +72,6 @@ if dependency('lua' + get_option('lua'), required : false).found()
   subdir('lua')
 endif
 
-with_cxx = get_option('with_cxx')
 if with_cxx
   add_languages('cpp')
   subdir('mpt++')
@@ -86,7 +83,7 @@ if with_static
   mpt = static_library('mpt', src_all,
     include_directories : inc,
     install : true)
-  
+
   pkgconfig_gen(
     description : 'static mpt library',
     libraries : [ mpt ],

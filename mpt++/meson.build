@@ -21,7 +21,7 @@ if with_plot
     'graphic.cpp',
     'item.cpp',
     'mapping.cpp',
-    'plot.cpp',
+    'layout.cpp',
     'polyline.cpp',
     'transform.cpp'
   )

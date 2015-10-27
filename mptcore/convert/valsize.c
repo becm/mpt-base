@@ -12,9 +12,7 @@
 #include "array.h"
 #include "convert.h"
 
-#ifndef MPT_NO_PLOT
-# include "../mptplot/layout.h"
-#endif
+#include "../mptplot/layout.h"
 
 static const struct {
 	uint8_t key, size;
@@ -31,7 +29,6 @@ static const struct {
 	{ MPT_ENUM(TypeNode),  0 },
 	{ MPT_ENUM(TypeArray), 0 },
 	
-#ifndef MPT_NO_PLOT
 	/* basic layout types */
 	{ MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color)) },
 	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
@@ -41,7 +38,7 @@ static const struct {
 	{ MPT_ENUM(TypeGraph),  0 },
 	{ MPT_ENUM(TypeWorld),  0 },
 	{ MPT_ENUM(TypeText),   0 },
-#endif
+	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
 	
