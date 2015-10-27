@@ -2,9 +2,7 @@
  * MPT C++ queue implementation
  */
 
-#include <string.h>
 #include <poll.h>
-
 #include <sys/uio.h>
 
 #include "message.h"

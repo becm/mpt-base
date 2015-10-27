@@ -2,9 +2,7 @@
  * MPT C++ cycle implementation
  */
 
-#include <errno.h>
-#include <string.h>
-
+#include <cerrno>
 #include <limits>
 
 #include "array.h"

@@ -2,8 +2,7 @@
  * line item implementation
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
 
 #include <sys/uio.h>
 

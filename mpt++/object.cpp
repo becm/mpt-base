@@ -2,9 +2,6 @@
  * generic metatype Object wrapper and property extension
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "node.h"
 #include "object.h"
 

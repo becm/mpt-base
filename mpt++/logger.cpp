@@ -3,9 +3,8 @@
  */
 
 #include <limits>
+#include <cstdio>
 
-#include <string.h>
-#include <stdio.h>
 #include <unistd.h>
 
 #include "array.h"

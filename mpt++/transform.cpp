@@ -2,12 +2,6 @@
  * MPT transformation routines
  */
 
-#define __STDC_LIMIT_MACROS
-#include <limits>
-
-#include <string.h>
-#include <stdint.h>
-#include <float.h>
 #include <math.h>
 
 #include "array.h"

@@ -2,10 +2,8 @@
  * MPT C++ core implementation
  */
 
-#include <string.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <limits.h>
+#include <limits>
+#include <cstdlib>
 
 #include <sys/uio.h>
 

@@ -5,8 +5,8 @@
 
 #define __STDC_LIMIT_MACROS
 #include <limits>
+#include <cctype>
 
-#include <ctype.h>
 #include <sys/uio.h>
 
 #include "message.h"

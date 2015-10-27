@@ -2,8 +2,7 @@
  * MPT C++ buffer implementation
  */
 
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
 
 #include <sys/uio.h>
 

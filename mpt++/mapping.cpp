@@ -44,7 +44,8 @@ void Mapping::clear()
 // save cycles references
 bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
 {
-    if (layId >= UINT16_MAX || graphID >= UINT16_MAX) {
+    if (layId >= UINT8_MAX || layId < 0
+        || graphID >= UINT8_MAX || layId < 0) {
         return false;
     }
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
@@ -72,7 +73,8 @@ bool Mapping::saveCycles(int layId, const Layout &lay)
 // load cycles references
 bool Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
 {
-    if (layId >= UINT16_MAX || graphID >= UINT16_MAX) {
+    if (layId >= UINT8_MAX || layId < 0
+        || graphID >= UINT8_MAX || layId < 0) {
         return false;
     }
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {

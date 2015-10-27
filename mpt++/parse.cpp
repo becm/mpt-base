@@ -4,9 +4,9 @@
 
 #include <cstdio>
 
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cerrno>
+#include <cstring>
+#include <cstdlib>
 
 #include <sys/uio.h>
 

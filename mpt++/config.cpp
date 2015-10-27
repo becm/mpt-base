@@ -2,10 +2,6 @@
  * MPT C++ config interface
  */
 
-#include <cstdio>
-
-#include <errno.h>
-
 #include <sys/uio.h>
 
 #include "node.h"

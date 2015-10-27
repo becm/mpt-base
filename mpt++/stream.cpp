@@ -4,9 +4,8 @@
 
 #include <cstring>
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <errno.h>
+#include <cstdio>
+#include <cerrno>
 
 #include <unistd.h>
 #include <fcntl.h>
