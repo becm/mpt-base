@@ -137,33 +137,24 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 }
 /*!
  * \ingroup mptOutput
- * \brief find mapping
+ * \brief compare mapping
  * 
- * Get mapping for source data from array.
+ * Check mapping for source data match.
  * 
- * \param arr  array descriptor
+ * \param map  mapping data
  * \param src  data source
  * \param cli  source client
  */
-const MPT_STRUCT(mapping) *mpt_mapping_get(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, int cli)
+int mpt_mapping_cmp(const MPT_STRUCT(mapping) *map, const MPT_STRUCT(msgbind) *src, int cli)
 {
-	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(mapping) *map;
-	size_t i, len = 0;
-	
-	if (!(buf = arr->_buf)) {
+	if (cli >= 0 && (map->client != cli)) {
+		return -1;
+	}
+	if (map->src.dim != src->dim) {
+		return -2;
+	}
+	if (map->src.type & src->type) {
 		return 0;
 	}
-	len = buf->used / sizeof(*map);
-	map = (void *) (buf+1);
-	
-	for (i = 0; i < len; ++i) {
-		if (map[i].client != cli || map[i].src.dim != src->dim) {
-			continue;
-		}
-		if (map[i].src.type & src->type) {
-			return map+i;
-		}
-	}
-	return 0;
+	return 1;
 }

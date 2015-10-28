@@ -28,7 +28,7 @@ class Mapping : Map<laydest, Reference<Cycle> >
 public:
     int add(const msgbind &, const laydest &, int = 0);
     int del(const msgbind *, const laydest * = 0, int = 0) const;
-    const mapping *get(const msgbind &, int = 0) const;
+    Array<laydest> destinations(const msgbind &, int = 0) const;
 
     // save/load layout cycles
     bool saveCycles(int , const Layout &);

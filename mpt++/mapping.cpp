@@ -30,9 +30,19 @@ int Mapping::del(const msgbind *src, const laydest *dest, int client) const
     return mpt_mapping_del(&_bind, src, dest, client);
 }
 // get data mapping
-const mapping *Mapping::get(const msgbind &src, int client) const
+Array<laydest> Mapping::destinations(const msgbind &src, int client) const
 {
-    return mpt_mapping_get(&_bind, &src, client);
+    const mapping *map = (mapping *) _bind.base();
+    size_t len = _bind.used() / sizeof(*map);
+    Array<laydest> arr;
+
+    for (size_t i = 0; i < len; ++i) {
+        if (mpt_mapping_cmp(map, &src, client)) {
+            continue;
+        }
+        arr.set(arr.size(), map->dest);
+    }
+    return arr;
 }
 // clear data mappings
 void Mapping::clear()

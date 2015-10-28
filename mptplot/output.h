@@ -194,7 +194,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* data mapping operations */
 extern int mpt_mapping_add(MPT_STRUCT(array) *, const MPT_STRUCT(mapping) *);
 extern int mpt_mapping_del(const MPT_STRUCT(array) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(laydest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
-extern const MPT_STRUCT(mapping) *mpt_mapping_get(const MPT_STRUCT(array) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
+extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
 
 
 /* create output instance */
