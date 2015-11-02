@@ -34,6 +34,9 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		if (dest) *((char *) dest) = *pos;
 		return pos + 1 - src;
 	}
+	if (fmt == 'l') {
+		fmt = MPT_ENUM(TypeLong);
+	}
 	switch (fmt) {
 		case 'b': return mpt_cint8 (dest, src, 0, 0);
 		case 'y': return mpt_cuint8(dest, src, 0, 0);

@@ -3,6 +3,10 @@
 #include <string.h>
 #include <float.h>
 
+#include <sys/uio.h>
+
+#include "array.h"
+
 #include "convert.h"
 
 /*!
@@ -30,11 +34,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	if ((flen = mpt_valsize(ftype)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
+	dlen = flen;
 	if ((ftype != dtype)
 	    && (dlen = mpt_valsize(dtype)) < 0) {
 		return MPT_ERROR(BadArgument);
-	} else {
-		dlen = flen;
 	}
 	if (!flen) flen = sizeof(void *);
 	
@@ -42,6 +45,12 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	if (!dest) {
 		*fptr = from + flen;
 		return dlen ? dlen : (int) sizeof(void *);
+	}
+	if (ftype == 'l') {
+		ftype = MPT_ENUM(TypeLong);
+	}
+	if (dtype == 'l') {
+		dtype = MPT_ENUM(TypeLong);
 	}
 	/* number processing */
 	switch (ftype) {
@@ -347,14 +356,62 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			ftype = MPT_ENUM(TypeMeta);
 		}
 	  default:
+		/* array conversion */
+		if (dtype >= '@' && dtype <= 'Z') {
+			/* require same or generic type */
+			if (dtype != '@' && ftype != dtype) {
+				return MPT_ERROR(BadType);
+			}
+			mpt_array_clone(dest, (MPT_STRUCT(array) *) from);
+		}
+		/* vector conversion */
+		else if (dtype >= MPT_ENUM(TypeVector) && dtype < MPT_ENUM(TypeUser)) {
+			struct iovec *vec = dest;
+			
+			/* copy vector data */
+			if (ftype >= MPT_ENUM(TypeVector) && ftype < MPT_ENUM(TypeUser)) {
+				/* require same or generic type */
+				if (dtype == MPT_ENUM(TypeVector) || dtype == ftype) {
+					memcpy(dest, from, flen);
+				} else {
+					return MPT_ERROR(BadType);
+				}
+			}
+			/* convert from array */
+			else if ((ftype >= '@' && ftype <= 'Z')
+			         && ((dtype == MPT_ENUM(TypeVector))
+			             || (dtype & ~MPT_ENUM(TypeVector)) == tolower(ftype))) {
+				MPT_STRUCT(array) *a = (MPT_STRUCT(array) *) from;
+				MPT_STRUCT(buffer) *b;
+				
+				if ((b = a->_buf) && b->used) {
+					vec->iov_base = b + 1;
+					vec->iov_len = b->used;
+				} else {
+					vec->iov_base = 0;
+					vec->iov_len = 0;
+				}
+			}
+			/* convert from scalar */
+			else if (dtype == MPT_ENUM(TypeVector) || dtype == (ftype | MPT_ENUM(TypeVector))) {
+				vec->iov_base = (void *) from;
+				vec->iov_len = flen;
+			}
+			else {
+				return MPT_ERROR(BadType);
+			}
+		}
 		/* unable to convert */
-		if (dtype != ftype) {
+		else if (dtype != ftype) {
 			return MPT_ERROR(BadType);
 		}
-		if (!dlen) {
+		/* copy pointer data */
+		else if (!dlen) {
 			*((void **) dest) = *((void **) from); break;
 			dlen = sizeof(void *);
-		} else {
+		}
+		/* raw data copy */
+		else {
 			memcpy(dest, from, flen);
 		}
 	}

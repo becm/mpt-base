@@ -86,6 +86,9 @@ extern int mpt_data_print(char *dest, size_t left, int type, const void *arg)
 {
 	int len;
 	
+	if (type == 'l') {
+		type = MPT_ENUM(TypeLong);
+	}
 	switch (type) {
 	/* color format */
 	    case MPT_ENUM(TypeColor):

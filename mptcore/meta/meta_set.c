@@ -14,7 +14,8 @@
 #include "core.h"
 
 
-struct propParam {
+struct paramSource {
+	MPT_INTERFACE(source) ctl;
 	MPT_STRUCT(value) val;
 	const char *sep;
 	int (*conv)(const char **, int , void *);
@@ -36,7 +37,7 @@ static int stringConvert(const char **from, const char *sep, int type, void *des
 #endif
 }
 #ifndef MPT_NO_CONVERT
-static int fromText(struct propParam *par, int type, void *dest)
+static int fromText(struct paramSource *par, int type, void *dest)
 {
 	const char *txt;
 	int len;
@@ -75,7 +76,7 @@ static int fromText(struct propParam *par, int type, void *dest)
 
 static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
 {
-	struct propParam *src = (void *) (ctl + 1);
+	struct paramSource *src = (void *) ctl;
 	const char *txt;
 	int len;
 	
@@ -138,15 +139,12 @@ static const MPT_INTERFACE_VPTR(source) _prop_vptr = {
  */
 extern int mpt_meta_pset(MPT_INTERFACE(metatype) *meta, MPT_INTERFACE(property) *pr, int (*conv)(const char **, int ,void *))
 {
-	struct {
-		MPT_INTERFACE(source) ctl;
-		struct propParam d;
-	} src;
+	struct paramSource src;
 	
 	src.ctl._vptr = &_prop_vptr;
-	src.d.val = pr->val;
-	src.d.sep = pr->desc ? pr->desc : " ,;/:";
-	src.d.conv = conv;
+	src.val = pr->val;
+	src.sep = pr->desc ? pr->desc : " ,;/:";
+	src.conv = conv;
 	
 	return meta->_vptr->property(meta, pr, &src.ctl);
 }
@@ -183,37 +181,38 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 			errno = EINVAL;
 			return -2;
 		}
-		if (!curr) {
-			curr = sizeof(void*);
-		}
-		if ((sizeof(buf) - len) < (size_t) curr) {
+		if ((sizeof(buf) - len) < (curr ? (size_t) curr : sizeof(void*))) {
 			if (par && (curr = m->_vptr->property(m, &prop, 0)) < 0) {
 				return curr;
 			}
 			errno = EOVERFLOW;
 			return -2;
 		}
-		switch (curr) {
-		  case sizeof(uint8_t):
-			if (isupper(*fmt)) {
-				*((uint8_t *) (buf+len)) = va_arg(va, uint32_t);
-			} else {
-				*((int8_t  *) (buf+len)) = va_arg(va, int32_t);
-			}
-			break;
-		  case sizeof(uint16_t):
-			if (isupper(*fmt)) {
-				*((uint16_t *) (buf+len)) = va_arg(va, uint32_t);
-			} else {
-				*((int16_t  *) (buf+len)) = va_arg(va, int32_t);
-			}
-			break;
-		  case sizeof(uint32_t): *((uint32_t *) (buf+len)) = va_arg(va, uint32_t); break;
-		  case sizeof(uint64_t): *((uint64_t *) (buf+len)) = va_arg(va, uint64_t); break;
+		switch (*fmt) {
+		  case 'b': *((int8_t  *)   (buf+len)) = va_arg(va, int32_t); break;
+		  case 'y': *((uint8_t  *)  (buf+len)) = va_arg(va, uint32_t); break;
+		  case 'n': *((int16_t *)   (buf+len)) = va_arg(va, int32_t); break;
+		  case 'q': *((uint16_t *)  (buf+len)) = va_arg(va, uint32_t); break;
+		  case 'i': *((int32_t *)   (buf+len)) = va_arg(va, int32_t); break;
+		  case 'u': *((uint32_t *)  (buf+len)) = va_arg(va, uint32_t); break;
+		  case 'x': *((int64_t *)   (buf+len)) = va_arg(va, int64_t); break;
+		  case 't': *((uint64_t *)  (buf+len)) = va_arg(va, uint64_t); break;
+		  
+		  case 'l': *((long *)  (buf+len)) = va_arg(va, long); break;
+		  
+		  case 'f': *((float *) (buf+len))  = va_arg(va, double); break;
+		  case 'd': *((double *) (buf+len)) = va_arg(va, double); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case sizeof(long double): *((long double *) (buf+len)) = va_arg(va, long double); break;
+		  case 'e': *((long double *) (buf+len)) = va_arg(va, long double); break;
 #endif
-		  default: errno = EINVAL; return -2;
+		  default:
+			if (!curr) {
+				void *ptr = va_arg(va, void *);
+				memcpy(buf+len, &ptr, curr = sizeof(ptr));
+				break;
+			}
+			errno = EINVAL;
+			return MPT_ERROR(BadType);
 		}
 		len += curr;
 		++fmt;
@@ -221,15 +220,12 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 	if (par) {
 		return mpt_meta_pset(m, &prop, 0);
 	} else {
-		struct {
-			MPT_INTERFACE(source) ctl;
-			struct propParam d;
-		} src;
+		struct paramSource src;
 		
 		src.ctl._vptr = &_prop_vptr;
-		src.d.val = prop.val;
-		src.d.sep = " ,;/:";
-		src.d.conv = 0;
+		src.val = prop.val;
+		src.sep = " ,;/:";
+		src.conv = 0;
 		
 		return m->_vptr->property(m, 0, &src.ctl);
 	}
@@ -256,23 +252,20 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) *m, const char *par, const char 
 		if (par) {
 			MPT_STRUCT(property) prop;
 			
-			prop.name = par ? par : "";
+			prop.name = par;
 			prop.desc = 0;
 			prop.val.fmt = 0;
 			prop.val.ptr = va_arg(va, void *);
 			
 			ret = mpt_meta_pset(m, &prop, 0);
 		} else {
-			struct {
-				MPT_INTERFACE(source) ctl;
-				struct propParam d;
-			} src;
+			struct paramSource src;
 			
 			src.ctl._vptr = &_prop_vptr;
-			src.d.val.fmt = 0;
-			src.d.val.ptr = va_arg(va, void *);
-			src.d.sep = " ,;/:";
-			src.d.conv = 0;
+			src.val.fmt = 0;
+			src.val.ptr = va_arg(va, void *);
+			src.sep = " ,;/:";
+			src.conv = 0;
 			
 			ret = m->_vptr->property(m, 0, &src.ctl);
 		}
