@@ -5,7 +5,7 @@ src = files(
   'meta_clone.c',
   'meta_data.c',
   'meta_new.c',
-  'meta_set.c',
-  'meta_typename.c',
+  'object_set.c',
+  'object_typename.c',
   'property_match.c',
 )

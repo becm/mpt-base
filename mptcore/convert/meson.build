@@ -10,6 +10,7 @@ src = files(
   'convert_number.c',
   'convert_string.c',
   'data_convert.c',
+  'data_tostring.c',
   'decode_cobs.c',
   'decode_cobs_zpe.c',
   'decode_command.c',
@@ -33,4 +34,5 @@ src = files(
   'valfmt_parse.c',
   'valfmt_set.c',
   'valsize.c',
+  'value_compare.c',
 )

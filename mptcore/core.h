@@ -390,7 +390,7 @@ MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object)
 {
 	int (*unref)(MPT_INTERFACE(object) *);
-	int (*property)(MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
+	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
 	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(source) *);
 };
 MPT_INTERFACE(object)

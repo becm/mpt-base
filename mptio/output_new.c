@@ -217,7 +217,7 @@ static int outputObjectUnref(MPT_INTERFACE(object) *obj) {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
 	return outputUnref((void *) &odata->_base);
 }
-static int outputProperty(MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
+static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
 	const char *name;
