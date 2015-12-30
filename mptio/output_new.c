@@ -34,6 +34,7 @@
 
 MPT_STRUCT(out_data) {
 	MPT_INTERFACE(output) _base;
+	MPT_INTERFACE(object) _obj;
 	MPT_INTERFACE(logger) _log;
 	MPT_INTERFACE(input)  _in;
 	uintptr_t             _shared;
@@ -60,6 +61,282 @@ MPT_STRUCT(out_data) {
 	uint8_t               _coding;
 };
 
+static int setHistfile(FILE **hist, MPT_INTERFACE(source) *src)
+{
+	const char *where = 0;
+	int len;
+	FILE *fd;
+	
+	if (!src) {
+		return *hist ? 1 : 0;
+	}
+	if ((len = src->_vptr->conv(src, 's', &where)) < 0) {
+		return len;
+	} else if (!where) {
+		fd = stdout;
+	} else if (!*where) {
+		fd = 0;
+	} else {
+		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
+		int mode;
+		
+		/* try to use argument as connect string */
+		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
+			if (!(mode & MPT_ENUM(SocketStream))
+			    || !(mode & MPT_ENUM(SocketWrite))
+			    || !(fd = fdopen(sock._id, "w"))) {
+				mpt_connect(&sock, 0, 0);
+				return -1;
+			}
+		}
+		/* regular file path */
+		else if (!(fd = fopen(where, "w"))) {
+			return -1;
+		}
+	}
+	if (*hist && (*hist != stdout) && (*hist != stderr)) {
+		fclose(*hist);
+	}
+	*hist = fd;
+	
+	return len;
+}
+static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
+{
+	MPT_TYPE(DataEncoder) enc;
+	MPT_TYPE(DataDecoder) dec;
+	char *where;
+	int32_t val;
+	int type;
+	uint8_t rtype;
+	
+	if (!src) return od->_coding;
+	
+	if (MPT_socket_active(&od->out.sock)) {
+		return -4;
+	}
+	if ((type = src->_vptr->conv(src, 's', &where)) >= 0) {
+		val = mpt_encoding_value(where, -1);
+		if (val < 0 || val > UINT8_MAX) {
+			return -2;
+		}
+		rtype = val;
+	}
+	else if ((type = src->_vptr->conv(src, 'y', &rtype)) < 0) {
+		type = src->_vptr->conv(src, 'i', &val);
+		if (type < 0 || val < 0 || val > UINT8_MAX) {
+			return -3;
+		}
+		rtype = val;
+	}
+	if (!rtype) {
+		if (od->out._enc.fcn) {
+			od->out._enc.fcn(&od->out._enc.info, 0, 0);
+			od->out._enc.fcn = 0;
+		}
+		if (od->dec.fcn) {
+			od->dec.fcn(&od->dec.info, 0, 0);
+			od->dec.fcn = 0;
+		}
+	}
+	else if (!(enc = mpt_message_encoder(rtype))
+	    || !(dec = mpt_message_decoder(rtype))) {
+		return -3;
+	}
+	else {
+		od->out._enc.fcn = enc;
+		od->dec.fcn = dec;
+	}
+	od->_coding = rtype;
+	
+	return type;
+}
+
+/* metatype interface */
+static int outputUnref(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(out_data) *odata = (void *) mt;
+	FILE *fd;
+	if (odata->_shared) {
+		return odata->_shared--;
+	}
+	mpt_outdata_fini(&odata->out);
+	mpt_command_clear(&odata->_wait);
+	
+	free(odata->in.base);
+	
+	mpt_array_clone(&odata->hist.info._fmt, 0);
+	
+	if ((fd = odata->hist.file)
+	    && (fd != stdin)
+	    && (fd != stdout)
+	    && (fd != stderr)) {
+		fclose(fd);
+		odata->hist.file = 0;
+	}
+	
+	free(mt);
+	return 0;
+}
+static MPT_INTERFACE(metatype) *outputRef(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(out_data) *od = (void *) mt;
+	if (++od->_shared) return mt;
+	--od->_shared;
+	return 0;
+}
+static int outputAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
+{
+	MPT_STRUCT(out_data) *od = (void *) mt;
+	
+	return mpt_object_pset(&od->_obj, 0, val, 0);
+}
+static void *outputCast(MPT_INTERFACE(metatype) *mt, int type) {
+	MPT_STRUCT(out_data) *od = (void *) mt;
+	
+	if (!type) {
+		static const char types[] = {
+			MPT_ENUM(TypeOutput), MPT_ENUM(TypeMeta),
+			MPT_ENUM(TypeObject), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput),
+			0 };
+		return (void*) types;
+	}
+	switch (type) {
+	  case MPT_ENUM(TypeMeta):   return mt;
+	  case MPT_ENUM(TypeOutput): return &od->_base;
+	  case MPT_ENUM(TypeObject): return &od->_obj;
+	  case MPT_ENUM(TypeLogger): return &od->_log;
+	  case MPT_ENUM(TypeInput):  return &od->_in;
+	  default: return 0;
+	}
+}
+
+
+/* object interface */
+static int outputObjectUnref(MPT_INTERFACE(object) *obj) {
+	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
+	return outputUnref((void *) &odata->_base);
+}
+static int outputProperty(MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
+{
+	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
+	const char *name;
+	
+	if (!pr) {
+		return MPT_ENUM(TypeOutput);
+	}
+	if (!(name = pr->name)) {
+		return mpt_outdata_get(&odata->out, pr);
+	}
+	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+		pr->name = "history";
+		pr->desc = MPT_tr("history data output file");
+		pr->val.fmt = "";
+		pr->val.ptr = odata->hist.file;
+		return odata->hist.file ? 1 : 0;
+	}
+	if (!strcasecmp(name, "histfmt")) {
+		MPT_STRUCT(buffer) *buf;
+		pr->name = "histfmt";
+		pr->desc = "history data output format";
+		pr->val.fmt = "@";
+		pr->val.ptr = &odata->hist.info._fmt;
+		buf = odata->hist.info._fmt._buf;
+		return buf ? buf->used : 0;
+	}
+	if (!strcasecmp(name, "encoding")) {
+		pr->name = "encoding";
+		pr->desc = "socket stream encoding";
+		pr->val.fmt = "y";
+		pr->val.ptr = &odata->_coding;
+		return odata->_coding;
+	}
+	return mpt_outdata_get(&odata->out, pr);
+}
+static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(source) *src) {
+	static const char _fcn[] = "mpt::output::setProperty";
+	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
+	MPT_STRUCT(outdata) *od = &odata->out;
+	int ret;
+	
+	if (!name) {
+		int oldFd = od->sock._id;
+		if ((ret = mpt_outdata_set(od, name, src)) < 0) {
+			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s",
+			        MPT_tr("unable to assign output"));
+			return ret;
+		}
+		/* conditions for notification change */
+		if (od->_enc.fcn) {
+			od->_enc.fcn(&od->_enc.info, 0, 0);
+			od->_enc.fcn = 0;
+		}
+		if (odata->dec.fcn) {
+			odata->dec.fcn(&odata->dec.info, 0, 0);
+			odata->dec.fcn = 0;
+		}
+		if (od->_sflg & MPT_ENUM(SocketStream)) {
+			if (!odata->_coding) {
+				odata->_coding = MPT_ENUM(EncodingCobs);
+			}
+			od->_enc.fcn = mpt_message_encoder(odata->_coding);
+			odata->dec.fcn = mpt_message_decoder(odata->_coding);
+		}
+		if (!odata->_no || (od->sock._id == oldFd)) {
+			return ret;
+		}
+		/* remove old registration */
+		if (oldFd > 2) {
+			mpt_notify_clear(odata->_no, oldFd);
+		}
+		if (!MPT_socket_active(&od->sock)) {
+			return ret;
+		}
+		
+		/* add local reference for event controller */
+		if (!outputRef((void *) odata)) {
+			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
+			        MPT_tr("failed"),
+			        MPT_tr("reference output"),
+			        od);
+		}
+		/* use first reference for notifier */
+		else if (mpt_notify_add(odata->_no, POLLIN, &odata->_in) < 0) {
+			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Error), "%s: %s: fd%i",
+			        MPT_tr("failed"),
+			        MPT_tr("register notifier"),
+			        (int) od->sock._id);
+			/* clear references */
+			outputUnref((void *) odata);
+		}
+		return ret;
+	}
+	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+		ret = setHistfile(&odata->hist.file, src);
+	}
+	else if (!strcasecmp(name, "histfmt")) {
+		ret = mpt_valfmt_set(&odata->hist.info._fmt, src);
+	}
+	else if (!strcasecmp(name, "encoding")) {
+		ret = outputEncoding(odata, src);
+	}
+	else {
+		ret = mpt_outdata_set(od, name, src);
+	}
+	if (ret < 0) {
+		mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s: %s",
+		        MPT_tr("unable to set property"), name);
+	}
+	return ret;
+}
+
+static const MPT_INTERFACE_VPTR(object) objCtl = {
+	outputObjectUnref,
+	outputProperty,
+	outputSetProperty
+};
+
+/* output interface */
 static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
 	ssize_t ret;
@@ -274,253 +551,20 @@ static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 	}
 	return 1 + cmd - ((MPT_STRUCT(command) *) (od->_wait._buf + 1));
 }
-static int outputUnref(MPT_INTERFACE(metatype) *mt)
-{
-	MPT_STRUCT(out_data) *odata = (void *) mt;
-	FILE *fd;
-	if (odata->_shared) {
-		return odata->_shared--;
-	}
-	mpt_outdata_fini(&odata->out);
-	mpt_command_clear(&odata->_wait);
-	
-	free(odata->in.base);
-	
-	mpt_array_clone(&odata->hist.info._fmt, 0);
-	
-	if ((fd = odata->hist.file)
-	    && (fd != stdin)
-	    && (fd != stdout)
-	    && (fd != stderr)) {
-		fclose(fd);
-		odata->hist.file = 0;
-	}
-	
-	free(mt);
-	return 0;
-}
-static MPT_INTERFACE(metatype) *outputRef(MPT_INTERFACE(metatype) *mt)
-{
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	if (++od->_shared) return mt;
-	--od->_shared;
-	return 0;
-}
 
-static void *outputCast(MPT_INTERFACE(metatype) *mt, int type) {
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	
-	switch (type) {
-	  case MPT_ENUM(TypeMeta): return mt;
-	  case MPT_ENUM(TypeLogger): return &od->_log;
-	  case MPT_ENUM(TypeOutput): return &od->_base;
-	  case MPT_ENUM(TypeInput):  return &od->_in;
-	  default: return 0;
-	}
-}
-
-static int setHistfile(FILE **hist, MPT_INTERFACE(source) *src)
-{
-	const char *where = 0;
-	int len;
-	FILE *fd;
-	
-	if (!src) {
-		return *hist ? 1 : 0;
-	}
-	if ((len = src->_vptr->conv(src, 's', &where)) < 0) {
-		return len;
-	} else if (!where) {
-		fd = stdout;
-	} else if (!*where) {
-		fd = 0;
-	} else {
-		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
-		int mode;
-		
-		/* try to use argument as connect string */
-		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
-			if (!(mode & MPT_ENUM(SocketStream))
-			    || !(mode & MPT_ENUM(SocketWrite))
-			    || !(fd = fdopen(sock._id, "w"))) {
-				mpt_connect(&sock, 0, 0);
-				return -1;
-			}
-		}
-		/* regular file path */
-		else if (!(fd = fopen(where, "w"))) {
-			return -1;
-		}
-	}
-	if (*hist && (*hist != stdout) && (*hist != stderr)) {
-		fclose(*hist);
-	}
-	*hist = fd;
-	
-	return len;
-}
-static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
-{
-	MPT_TYPE(DataEncoder) enc;
-	MPT_TYPE(DataDecoder) dec;
-	char *where;
-	int32_t val;
-	int type;
-	uint8_t rtype;
-	
-	if (!src) return od->_coding;
-	
-	if (MPT_socket_active(&od->out.sock)) {
-		return -4;
-	}
-	if ((type = src->_vptr->conv(src, 's', &where)) >= 0) {
-		val = mpt_encoding_value(where, -1);
-		if (val < 0 || val > UINT8_MAX) {
-			return -2;
-		}
-		rtype = val;
-	}
-	else if ((type = src->_vptr->conv(src, 'B', &rtype)) < 0) {
-		type = src->_vptr->conv(src, 'i', &val);
-		if (type < 0 || val < 0 || val > UINT8_MAX) {
-			return -3;
-		}
-		rtype = val;
-	}
-	if (!rtype) {
-		if (od->out._enc.fcn) {
-			od->out._enc.fcn(&od->out._enc.info, 0, 0);
-			od->out._enc.fcn = 0;
-		}
-		if (od->dec.fcn) {
-			od->dec.fcn(&od->dec.info, 0, 0);
-			od->dec.fcn = 0;
-		}
-	}
-	else if (!(enc = mpt_message_encoder(rtype))
-	    || !(dec = mpt_message_decoder(rtype))) {
-		return -3;
-	}
-	else {
-		od->out._enc.fcn = enc;
-		od->dec.fcn = dec;
-	}
-	od->_coding = rtype;
-	
-	return type;
-}
-static int outputProp(MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *src)
-{
-	MPT_STRUCT(out_data) *odata = (void *) mt;
-	MPT_STRUCT(outdata) *od = &odata->out;
-	const char *name;
-	int ret, oldFd = od->sock._id;
-	
-	if (!prop) {
-		if (!src) {
-			return MPT_ENUM(TypeOutput);
-		}
-		return mpt_outdata_property(od, prop, src);
-	}
-	if (!(name = prop->name)) {
-		return src ? -1 : -3;
-	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		if ((ret = setHistfile(&odata->hist.file, src)) < 0) {
-			return ret;
-		}
-		prop->name = "history";
-		prop->desc = MPT_tr("history data output file");
-		prop->val.fmt = "";
-		prop->val.ptr = odata->hist.file;
-		return ret;
-	}
-	if (!strcasecmp(name, "histfmt")) {
-		if ((ret = mpt_valfmt_set(&odata->hist.info._fmt, src)) < 0) {
-			return ret;
-		}
-		prop->name = "histfmt";
-		prop->desc = "history data output format";
-		prop->val.fmt = "@";
-		prop->val.ptr = &odata->hist.info._fmt;
-		return ret;
-	}
-	if (!strcasecmp(name, "encoding")) {
-		if ((ret = outputEncoding(odata, src)) < 0) {
-			return ret;
-		}
-		prop->name = "encoding";
-		prop->desc = "socket stream encoding";
-		prop->val.fmt = "B";
-		prop->val.ptr = &odata->_coding;
-		return ret;
-	}
-	if ((ret = mpt_outdata_property(od, prop, src)) < 0) {
-		mpt_log(&odata->_log, __func__, MPT_FCNLOG(Debug), "%s: %s",
-		        src ? MPT_tr("unable to set property") : MPT_tr("invalid property"),
-		        prop->name);
-		return ret;
-	}
-	/* conditions for notification change */
-	if (prop->val.ptr == &od->sock) {
-		if (od->_enc.fcn) {
-			od->_enc.fcn(&od->_enc.info, 0, 0);
-			od->_enc.fcn = 0;
-		}
-		if (odata->dec.fcn) {
-			odata->dec.fcn(&odata->dec.info, 0, 0);
-			odata->dec.fcn = 0;
-		}
-		if (od->_sflg & MPT_ENUM(SocketStream)) {
-			if (!odata->_coding) {
-				odata->_coding = MPT_ENUM(EncodingCobs);
-			}
-			od->_enc.fcn = mpt_message_encoder(odata->_coding);
-			odata->dec.fcn = mpt_message_decoder(odata->_coding);
-		}
-		if (!odata->_no || (od->sock._id == oldFd)) {
-			return ret;
-		}
-		/* remove old registration */
-		if (oldFd > 2) {
-			mpt_notify_clear(odata->_no, oldFd);
-		}
-		if (!MPT_socket_active(&od->sock)) {
-			return ret;
-		}
-		
-		/* add local reference for event controller */
-		if (!outputRef((void *) odata)) {
-			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
-			        MPT_tr("failed"),
-			        MPT_tr("reference output"),
-			        od);
-		}
-		/* use first reference for notifier */
-		else if (mpt_notify_add(odata->_no, POLLIN, &odata->_in) < 0) {
-			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %s: fd%i",
-			        MPT_tr("failed"),
-			        MPT_tr("register notifier"),
-			        (int) od->sock._id);
-			/* clear references */
-			outputUnref((void *) odata);
-		}
-	}
-	return ret;
-}
 
 static const MPT_INTERFACE_VPTR(output) outCtl = {
-	{ outputUnref, outputRef, outputProp, outputCast },
+	{ outputUnref, outputRef, outputAssign, outputCast },
 	outputPush,
 	outputSync,
 	outputAwait
 };
 
+/* logger interface */
 static int outputLoggerUnref(MPT_INTERFACE(logger) *log)
 {
 	return outputUnref(MPT_reladdr(out_data, log, _log, _base));
 }
-
 static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list va)
 {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, log, _log, _base);
@@ -834,7 +878,7 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
 extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 {
 	static const MPT_STRUCT(out_data) defOut = {
-		{ &outCtl }, { &logCtl }, { &inputCtl }, 0,
+		{ &outCtl }, { &objCtl }, { &logCtl }, { &inputCtl }, 0,
 		MPT_ARRAY_INIT,
 		MPT_OUTDATA_INIT, { 0, MPT_CODESTATE_INIT }, 0,
 		MPT_QUEUE_INIT,

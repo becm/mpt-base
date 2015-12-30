@@ -179,7 +179,7 @@ __MPT_EXTDECL_END
 struct msgtype;
 struct message;
 
-class Stream : public output, public input, public logger, public IODevice, stream
+class Stream : public output, public object, public input, public logger, public IODevice, stream
 {
 public:
     Stream(const streaminfo * = 0, uintptr_t ref = 1);
@@ -189,12 +189,15 @@ public:
     
     int unref();
     Stream *addref();
-    int property(struct property *, source *);
+    int assign(const value *);
     void *typecast(int);
     
     ssize_t push(size_t , const void *);
     int sync(int = -1);
     int await(int (*)(void *, const struct message *) = 0, void * = 0);
+    
+    int property(struct property *) const;
+    int setProperty(const char *, source *);
     
     int log(const char *, int, const char *, va_list);
     
@@ -210,7 +213,9 @@ public:
     
     bool open(const char *, const char * = "r");
     bool open(void *, size_t , int = StreamRead);
-    void close(void);
+    
+    inline void close(void)
+    { assign(0); }
     
 protected:
     array _msg;

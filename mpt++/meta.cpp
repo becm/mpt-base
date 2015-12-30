@@ -53,7 +53,7 @@ protected:
         Meta(size_t, node *);
         metatype *addref();
         int unref();
-        int property(struct property *, source *);
+        int assign(const value *);
         void *typecast(int);
 
     protected:
@@ -109,19 +109,20 @@ int NodePrivate::Meta::unref()
 {
     return 0;
 }
-int NodePrivate::Meta::property(struct property *prop, source *src)
+int NodePrivate::Meta::assign(const value *val)
 {
-    if (prop || src) {
-        return _mpt_geninfo_property(&_info, prop, src);
+    if (!val) {
+        static const value empty(0, 0);
+        val = &empty;
     }
-    return 0;
+    return _mpt_geninfo_value(&_info, val);
 }
 void *NodePrivate::Meta::typecast(int t)
 {
     switch (t) {
     case metatype::Type: return static_cast<metatype *>(this);
     case node::Type: return _base;
-    case 's': return _mpt_geninfo_property(&_info, 0, 0) ? ((&_info) + 1) : 0;
+    case 's': return _mpt_geninfo_value(&_info, 0) ? ((&_info) + 1) : 0;
     default: return 0;
     }
 }
@@ -131,44 +132,43 @@ const char *metatype::cast()
 {
     return (const char *) mpt_meta_data(this, 0);
 }
-
-bool metatype::set(const struct property &porg, logger *out)
+metatype *metatype::create(size_t size)
 {
-    static const char _fname[] = "mpt::metatype::set";
-    struct property pr = porg;
-    int ret;
-    if ((ret = mpt_meta_pset(this, &pr)) >= 0) return true;
-    if (!out) return false;
-    pr.name = "";
-    pr.desc = 0;
-    if (property(&pr) < 0) pr.name = "metatype";
-    pr.val.fmt = porg.val.fmt;
-    if (!(pr.val.ptr = porg.val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
+    return mpt_meta_new(size);
+}
 
-    if (ret < -2) {
-        out->error(_fname, "%s: %s.%s", MPT_tr("bad property"), pr.name, porg.name);
-    } else if (!pr.val.fmt) {
-        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, porg.name, pr.val.ptr);
-    } else {
-        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, porg.name, pr.val.fmt);
+// object
+bool object::set(const char *name, const value &val, logger *out)
+{
+    static const char _fname[] = "mpt::object::set";
+    int ret;
+    if ((ret = mpt_object_pset(this, name, &val)) >= 0) return true;
+    if (!out) return false;
+    struct property pr;
+    if (property(&pr) < 0) pr.name = "object";
+    pr.val.fmt = val.fmt;
+    if (!(pr.val.ptr = val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
+
+    if (ret == BadArgument) {
+        out->error(_fname, "%s: %s.%s", MPT_tr("bad property"), pr.name, name);
+    } else if (ret == BadValue) {
+        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, name, pr.val.ptr);
+    } else if (ret == BadType) {
+        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
     }
     return false;
 }
-metatype *metatype::create(size_t size)
-{ return mpt_meta_new(size); }
-
-
-struct propertyErrorOut { metatype *meta; logger *out; };
-static int setProperty(void *addr, property *pr)
+struct propertyErrorOut { object *obj; logger *out; };
+static int objectSetProperty(void *addr, const property *pr)
 {
     struct propertyErrorOut *dat = (propertyErrorOut *) addr;
-    if (dat->meta->set(*pr, dat->out)) return 0;
+    if (dat->obj->set(pr->name, pr->val, dat->out)) return 0;
     return dat->out ? 1 : -1;
 }
-bool metatype::setProperties(metatype &meta, logger *out)
+bool object::setProperties(const object &from, logger *out)
 {
     propertyErrorOut dat = { this, out };
-    return mpt_meta_foreach(&meta, setProperty, &dat);
+    return mpt_object_foreach(&from, objectSetProperty, &dat);
 }
 
 
@@ -190,30 +190,27 @@ int MetatypeGeneric::unref()
 metatype *MetatypeGeneric::addref()
 { return _mpt_geninfo_addref(&_info) ? this : 0; }
 
-int MetatypeGeneric::property(struct property *prop, source *src)
+int MetatypeGeneric::assign(const value *val)
 {
-    return _mpt_geninfo_property(&_info, prop, src);
+    if (!val) {
+        static const value empty(0, 0);
+        val = &empty;
+    }
+    return _mpt_geninfo_value(&_info, val);
 }
 void *MetatypeGeneric::typecast(int t)
 {
     switch (t) {
     case metatype::Type: return static_cast<metatype *>(this);
-    case 's': return _mpt_geninfo_property(&_info, 0, 0) ? ((&_info) + 1) : 0;
+    case 's': return _mpt_geninfo_value(&_info, 0) ? ((&_info) + 1) : 0;
     default: return 0;
     }
 }
 
 Slice<const char> MetatypeGeneric::data() const
 {
-    struct property pr("");
-
-    int len = _mpt_geninfo_property(const_cast<uint64_t *>(&_info), &pr, 0);
-
-    if (len >= 0 && !pr.val.fmt) {
-        if (!len) len = pr.val.ptr ? strlen((const char *) pr.val.ptr) : 0;
-        return Slice<const char>((const char *) pr.val.ptr, len);
-    }
-    return Slice<const char>(0, 0);
+    int len = _mpt_geninfo_value(const_cast<uint64_t *>(&_info), 0);
+    return Slice<const char>((const char *) (&_info + 1), len);
 }
 
 MetatypeGeneric *MetatypeGeneric::create(size_t size)
@@ -288,40 +285,25 @@ Metatype::~Metatype()
 
 Metatype *Metatype::addref()
 {
-    intptr_t c = _ref;
-    if (!c) return 0;
-    if ((c = ++_ref) > 0) return this;  // limit to avoid race conditions
-    --_ref; return 0;
+    return _ref.raise() ? this : 0;
 }
-
 int Metatype::unref()
 {
-    uintptr_t c = _ref;
-    if (!c || (c = --_ref)) return c;
-    delete this;
-    return 0;
+    uintptr_t c = _ref.lower();
+    if (!c) delete this;
+    return c;
 }
-
-int Metatype::property(struct property *prop, source *src)
+int Metatype::assign(const value *val)
 {
-    if (src) {
-        return -1;
+    return val ? BadArgument : 0;
+}
+void *Metatype::typecast(int type)
+{
+    if (!type) {
+        static const char types[] = { metatype::Type, 0 };
+        return (void *) types;
     }
-    if (!prop) {
-        return Type;
-    }
-    if (!prop->name) {
-        return -1;
-    }
-    if (*prop->name) {
-        return -1;
-    }
-    prop->name = "store";
-    prop->desc = "default data store";
-    prop->val.fmt = 0;
-    prop->val.ptr = 0;
-
-    return 0;
+    return (type == metatype::Type) ? this : 0;
 }
 
 __MPT_NAMESPACE_END

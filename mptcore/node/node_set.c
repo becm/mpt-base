@@ -21,17 +21,21 @@
 extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 {
 	MPT_INTERFACE(metatype) *old, *replace;
+	MPT_STRUCT(value) val;
 	int ret = 0;
 	
+	val.fmt = 0;
+	val.ptr = data;
+	
 	if (((old = node->_meta)
-	     && (ret = mpt_meta_set(old, 0, "s", data)) >= 0)
+	     && (ret = old->_vptr->assign(old, &val)) >= 0)
 	    || !data) {
 		return ret;
 	}
 	if (!(replace = mpt_meta_new(strlen(data)))) {
 		return -1;
 	}
-	if ((ret = mpt_meta_set(replace, 0, "s", data)) < 0) {
+	if ((ret = old->_vptr->assign(old, &val)) < 0) {
 		replace->_vptr->unref(replace);
 		return -3;
 	}

@@ -20,7 +20,7 @@
  * 
  * \return index of requested property
  */
-extern int mpt_generic_foreach(MPT_TYPE(PropertyHandler) get, void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+extern int mpt_generic_foreach(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
 {
 	MPT_STRUCT(property) prop;
 	uintptr_t pos = 0;
@@ -42,8 +42,11 @@ extern int mpt_generic_foreach(MPT_TYPE(PropertyHandler) get, void *obj, MPT_TYP
 	return pos - 1;
 }
 
-static int getProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *pr)
-{ return meta->_vptr->property(meta, pr, 0); }
+static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
+{
+	MPT_INTERFACE(object) *obj = ptr;
+	return obj->_vptr->property(obj, pr);
+}
 
 /*!
  * \ingroup mptConvert
@@ -58,7 +61,7 @@ static int getProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *pr)
  * 
  * \return index of requested property
  */
-extern int mpt_meta_foreach(MPT_INTERFACE(metatype) *meta, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
 {
-	return mpt_generic_foreach((MPT_TYPE(PropertyHandler)) getProperty, (void *) meta, proc, data, mask);
+	return mpt_generic_foreach(getProperty, (void *) obj, proc, data, mask);
 }

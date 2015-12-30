@@ -16,9 +16,8 @@
 
 struct paramSource {
 	MPT_INTERFACE(source) ctl;
-	MPT_STRUCT(value) val;
 	const char *sep;
-	int (*conv)(const char **, int , void *);
+	MPT_STRUCT(value) val;
 };
 
 static int stringConvert(const char **from, const char *sep, int type, void *dest)
@@ -63,7 +62,7 @@ static int fromText(struct paramSource *par, int type, void *dest)
 	} else {
 		return -3;
 	}
-	len = par->conv ? par->conv(&txt, type, dest) : stringConvert(&txt, par->sep, type, dest);
+	len = stringConvert(&txt, par->sep, type, dest);
 	if (len <= 0 || !dest) {
 		return len;
 	}
@@ -112,7 +111,7 @@ static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
 		if (dest) ((char **) dest)[0] = 0;
 		return 0;
 	}
-	len = src->conv ? src->conv(&txt, type, dest) : stringConvert(&txt, src->sep, type, dest);
+	len = stringConvert(&txt, src->sep, type, dest);
 	
 	if (len <= 0 || !dest) {
 		return len;
@@ -128,65 +127,58 @@ static const MPT_INTERFACE_VPTR(source) _prop_vptr = {
 
 /*!
  * \ingroup mptMeta
- * \brief set solver property
+ * \brief set object property
  * 
- * Set solver parameter.
+ * Set property data to value.
  * 
- * \param gen  solver descriptor
- * \param par  parameter to change
- * \param fmt  data format
- * \param data address of data to set
+ * \param obj  object interface descriptor
+ * \param par  property to change
+ * \param val  data format
+ * \param sep  allowed keyword separators
  */
-extern int mpt_meta_pset(MPT_INTERFACE(metatype) *meta, MPT_INTERFACE(property) *pr, int (*conv)(const char **, int ,void *))
+extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const MPT_STRUCT(value) *val, const char *sep)
 {
 	struct paramSource src;
 	
 	src.ctl._vptr = &_prop_vptr;
-	src.val = pr->val;
-	src.sep = pr->desc ? pr->desc : " ,;/:";
-	src.conv = conv;
+	src.sep = sep ? sep : " ,;/:";
 	
-	return meta->_vptr->property(meta, pr, &src.ctl);
+	if (!val) {
+		src.val.fmt = 0;
+		src.val.ptr = 0;
+	} else {
+		src.val = *val;
+	}
+	return obj->_vptr->setProperty(obj, name, &src.ctl);
 }
 
 /*!
  * \ingroup mptMeta
- * \brief set metatype property
+ * \brief set object property
  * 
- * Create contigous data format from argument list and set property.
+ * Set property to data in argument list.
  * 
- * \param gen  solver descriptor
- * \param par  parameter to change
- * \param fmt  argument format
- * \param va   argument list
+ * \param obj   object interface descriptor
+ * \param prop  property to change
+ * \param fmt   argument format
+ * \param va    argument list
  */
-extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char *fmt, va_list va)
+extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
 {
-	MPT_STRUCT(property) prop;
+	MPT_STRUCT(value) val;
 	uint8_t buf[1024];
 	size_t len = 0;
-	
-	prop.name = par;
-	prop.desc = 0;
-	prop.val.fmt = fmt;
-	prop.val.ptr = buf;
 	
 	while (*fmt) {
 		int curr;
 		
 		if ((curr = mpt_valsize(*fmt)) < 0) {
-			if (par && (curr = m->_vptr->property(m, &prop, 0)) < 0) {
-				return curr;
-			}
 			errno = EINVAL;
-			return -2;
+			return MPT_ERROR(BadOperation);
 		}
 		if ((sizeof(buf) - len) < (curr ? (size_t) curr : sizeof(void*))) {
-			if (par && (curr = m->_vptr->property(m, &prop, 0)) < 0) {
-				return curr;
-			}
 			errno = EOVERFLOW;
-			return -2;
+			return MPT_ERROR(BadOperation);
 		}
 		switch (*fmt) {
 		  case 'b': *((int8_t  *)   (buf+len)) = va_arg(va, int32_t); break;
@@ -217,60 +209,41 @@ extern int mpt_meta_vset(MPT_INTERFACE(metatype) *m, const char *par, const char
 		len += curr;
 		++fmt;
 	}
-	if (par) {
-		return mpt_meta_pset(m, &prop, 0);
-	} else {
-		struct paramSource src;
-		
-		src.ctl._vptr = &_prop_vptr;
-		src.val = prop.val;
-		src.sep = " ,;/:";
-		src.conv = 0;
-		
-		return m->_vptr->property(m, 0, &src.ctl);
-	}
+	val.fmt = fmt;
+	val.ptr = buf;
+	
+	return mpt_object_pset(obj, prop, &val, 0);
 }
 
 /*!
  * \ingroup mptMeta
- * \brief set metatype property
+ * \brief set object property
  * 
- * Create contigous data format from argument list and set property.
+ * Set property to data in argument list.
  * 
- * \param gen  solver descriptor
- * \param par  parameter to change
- * \param fmt  argument format
- * \param va   argument list
+ * \param obj   object interface descriptor
+ * \param prop  property to change
+ * \param fmt   argument format
+ * \param va    argument list
  */
-extern int mpt_meta_set(MPT_INTERFACE(metatype) *m, const char *par, const char *fmt, ...)
+extern int mpt_object_set(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, ...)
 {
 	va_list va;
 	int ret;
 	
+	if (!fmt) {
+		mpt_object_pset(obj, prop, 0, 0);
+	}
 	va_start(va, fmt);
 	if (fmt[0] == 's' && !fmt[1]) {
-		if (par) {
-			MPT_STRUCT(property) prop;
-			
-			prop.name = par;
-			prop.desc = 0;
-			prop.val.fmt = 0;
-			prop.val.ptr = va_arg(va, void *);
-			
-			ret = mpt_meta_pset(m, &prop, 0);
-		} else {
-			struct paramSource src;
-			
-			src.ctl._vptr = &_prop_vptr;
-			src.val.fmt = 0;
-			src.val.ptr = va_arg(va, void *);
-			src.sep = " ,;/:";
-			src.conv = 0;
-			
-			ret = m->_vptr->property(m, 0, &src.ctl);
-		}
+		MPT_STRUCT(value) val;
+		
+		val.fmt = 0;
+		val.ptr = va_arg(va, void *);
+		
+		ret = mpt_object_pset(obj, prop, &val, 0);
 	} else {
-		ret = mpt_meta_vset(m, par, fmt, va);
+		ret = mpt_object_vset(obj, prop, fmt, va);
 	}
 	va_end(va);
 	

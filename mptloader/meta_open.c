@@ -27,10 +27,10 @@ static MPT_INTERFACE(metatype) *mpAddref(MPT_INTERFACE(metatype) *m)
 	(void) m;
 	return 0;
 }
-static int mpProperty(MPT_INTERFACE(metatype) *m, MPT_STRUCT(property) *pr, MPT_INTERFACE(source) *src)
+static int mpAssign(MPT_INTERFACE(metatype) *m, const MPT_STRUCT(value) *val)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
-	return mp->_d->_vptr->property(mp->_d, pr, src);
+	return mp->_d->_vptr->assign(mp->_d, val);
 }
 static void *mpTypecast(MPT_INTERFACE(metatype) *m, int type)
 {
@@ -41,7 +41,7 @@ static void *mpTypecast(MPT_INTERFACE(metatype) *m, int type)
 static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
 	mpUnref,
 	mpAddref,
-	mpProperty,
+	mpAssign,
 	mpTypecast
 };
 
@@ -60,6 +60,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, MPT_INTERFACE(l
 {
 	struct _mpt_metaProxy *mp;
 	MPT_INTERFACE(metatype) *m;
+	MPT_INTERFACE(object) *obj;
 	MPT_STRUCT(libhandle) lh = { 0, 0 };
 	const char *err;
 	
@@ -74,7 +75,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, MPT_INTERFACE(l
 		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("error in library initializer"), descr);
 		return 0;
 	}
-	if ((err = mpt_meta_typename(m))) {
+	if ((obj = m->_vptr->typecast(m, MPT_ENUM(TypeObject)))) {
+		err = mpt_object_typename(obj);
+		if (!err) err = "";
 		(void) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("created proxy instance"), err);
 	}
 	if (!(mp = malloc(sizeof(*mp)))) {

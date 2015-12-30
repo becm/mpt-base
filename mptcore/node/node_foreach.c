@@ -43,7 +43,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 				continue;
 			}
 			/* default text metatype */
-			if (!curr->_vptr->property(curr, 0, 0)
+			if (!curr->_vptr->assign(curr, 0)
 			    && (prop.val.ptr = curr->_vptr->typecast(curr, 's'))) {
 				prop.val.fmt = 0;
 			} else {

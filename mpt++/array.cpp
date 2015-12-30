@@ -7,7 +7,9 @@
 #include <sys/uio.h>
 
 #include "message.h"
+#include "convert.h"
 #include "queue.h"
+
 #include "array.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -327,7 +329,7 @@ ssize_t PointerArray::offset(const void *ref) const
 }
 
 // buffer metatype
-Buffer::Buffer()
+Buffer::Buffer(uintptr_t ref) : Metatype(ref)
 { }
 Buffer::~Buffer()
 { }
@@ -339,45 +341,70 @@ int Buffer::unref()
 {
     return Metatype::unref();
 }
-int Buffer::property(struct property *pr, source *src)
+int Buffer::assign(const value *val)
 {
-    if (!pr) {
-        if (!src) {
-            return Type;
+    if (!val) {
+        mpt_array_clone(&_d, 0);
+        return 0;
+    }
+    const char *base;
+    size_t len;
+    if (!val->fmt) {
+        if (!(base = (const char *) val->ptr)) {
+            len = 0;
+        } else {
+            len = strlen(base);
         }
-        if (_enc) {
-            return -1;
+        if (!mpt_array_append(&_d, len, base)) {
+            return BadOperation;
         }
-        return _d.set(*src);
+        return len;
     }
-    if (!pr->name) {
-        return src ? -1 : -3;
-    }
-    // no accessible properties
-    else if (*pr->name || pr->desc) return -2;
-    // set self info
-    else {
-        static const char fmt[4] = { array::Type, 0 };
-        pr->val.fmt = fmt;
-        pr->val.ptr = static_cast<const array *>(&_d);
-    }
-    pr->name = "buffer";
-    pr->desc = "FIFO data structure";
+    value tmp = *val;
 
-    if (!src) {
-        return data().len();
+    while (*tmp.fmt) {
+        /* insert space element */
+        if (tmp.fmt != val->fmt) {
+            if (!mpt_array_append(&_d, 1, " ")) {
+                return tmp.fmt - val->fmt;
+            }
+        }
+        /* copy string value */
+        if ((base = mpt_data_tostring(&tmp.ptr, *tmp.fmt, &len))) {
+            if (!mpt_array_append(&_d, len, base)) {
+                len = tmp.fmt - val->fmt;
+                return len ? (int) len : BadOperation;
+            }
+            ++tmp.fmt;
+            continue;
+        }
+        char buf[256];
+        int ret;
+        /* print binary data */
+        if ((ret = mpt_data_print(buf, sizeof(buf), *tmp.fmt, tmp.ptr)) >= 0) {
+            if (!mpt_array_append(&_d, ret, buf)) {
+                len = tmp.fmt - val->fmt;
+                return len ? (int) len : BadOperation;
+            }
+            if ((ret = mpt_valsize(*tmp.fmt++)) < 0) {
+                return tmp.fmt - val->fmt;
+            }
+            tmp.ptr = ((uint8_t *) tmp.ptr) + ret;
+            continue;
+        }
     }
-    if (_enc) {
-        return -3;
-    }
-
-    return _d.set(*src);
+    len = tmp.fmt - val->fmt;
+    return len ? (int) len : BadValue;
 }
 void *Buffer::typecast(int type)
 {
+    if (!type) {
+        static const char types[] = { 's', IODevice::Type, array::Type, 0 };
+        return (void *) (mpt_array_string(&_d) ? types : types + 1);
+    }
     switch (type) {
-    case IODevice::Type: return static_cast<IODevice *>(this);
     case metatype::Type: return static_cast<metatype *>(this);
+    case IODevice::Type: return static_cast<IODevice *>(this);
     case array::Type:    return static_cast<array *>(&_d);
     case 's': return mpt_array_string(&_d);
     default: return 0;

@@ -15,13 +15,20 @@ struct Config {
 	MPT_INTERFACE(config) conf;
 	MPT_STRUCT(node) *node;
 };
-static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, const MPT_STRUCT(path) *path, int len)
+static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
 	struct Config *conf = (void *) ptr;
 	MPT_STRUCT(node) *curr;
 	
 	/* create/change node */
-	if (len >= 0) {
+	if (val) {
+		MPT_INTERFACE(metatype) *mt;
+		size_t len;
+		
+		if (val->fmt) {
+			return 0;
+		}
+		len = val->ptr ? strlen(val->ptr) + 1 : 0;
 		if (!(curr = mpt_node_query(conf->node, (MPT_STRUCT(path) *) path, len))) {
 			return 0;
 		}
@@ -31,7 +38,10 @@ static MPT_INTERFACE(metatype) **queryNode(MPT_INTERFACE(config) *ptr, const MPT
 		if (path->len && !(curr = mpt_node_get(curr->children, path))) {
 			return 0;
 		}
-		if (len && !curr->_meta && !(curr->_meta = mpt_meta_new(len))) {
+		if (len && !(mt = curr->_meta) && !(curr->_meta = mt = mpt_meta_new(len))) {
+			return 0;
+		}
+		if (mt->_vptr->assign(mt, val) < 0) {
 			return 0;
 		}
 	}
@@ -112,6 +122,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		MPT_INTERFACE(metatype) **mt, *mp;
 		MPT_STRUCT(path) path;
 		char *end, *pos, tmp[1024];
+		MPT_STRUCT(value) d;
 		size_t vlen;
 		
 		if (!(end = strchr(var, '='))) {
@@ -150,16 +161,19 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		var++;
 		accept++;
 		
-		if (!(mt = conf->_vptr->query(conf, &path, vlen))) {
+		d.fmt = 0;
+		d.ptr = end+1;
+		
+		if (!(mt = conf->_vptr->query(conf, &path, &d))) {
 			errno = EINVAL;
 			return -accept;
 		}
 		if (!(mp = *mt)) {
 			*mt = mp = mpt_meta_new(vlen);
-		}
-		if (mpt_meta_set(mp, 0, "s", end+1) < 0) {
-			errno = ENOTSUP;
-			return -accept;
+			if (!mp || (mp->_vptr->assign(mp, &d) < 0)) {
+				errno = ENOTSUP;
+				return -accept;
+			}
 		}
 	}
 	

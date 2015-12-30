@@ -185,8 +185,9 @@ extern int mpt_fprint_val(FILE *, MPT_INTERFACE(source) *);
 
 /* clear outdata */
 extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
-/* modify outdata */
-extern int mpt_outdata_property(MPT_STRUCT(outdata) *, MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+/* get/set outdata property */
+extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
+extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(source) *);
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 

@@ -22,10 +22,8 @@
  */
 extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 {
-	MPT_STRUCT(property) pr;
 	const struct iovec *vec;
 	const char *base;
-	int pos;
 	
 	if (len && (vec = meta->_vptr->typecast(meta, MPT_ENUM(TypeVector)))) {
 		*len = vec->iov_len;
@@ -37,36 +35,11 @@ extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 		}
 		return base;
 	}
-	pr.name = "\0";
-	
-	if (meta->_vptr->property(meta, &pr, 0) < 0) {
-		return 0;
-	}
-	base = pr.val.ptr;
-	if (!pr.val.fmt) {
-		if (len) *len = 0;
-		return base;
-	}
-	if (len
-	    && (pos = mpt_position(pr.val.fmt, MPT_ENUM(TypeVector))) >= 0
-	    && (pos = mpt_offset(pr.val.fmt, pos)) >= 0) {
-		vec = (void *) (base + pos);
-		*len = vec->iov_len;
-		return vec->iov_base;
-	}
-	if ((pos = mpt_position(pr.val.fmt, 's')) >= 0
-	    && (pos = mpt_offset(pr.val.fmt, pos)) >= 0) {
-		base = *((void **) (base + pos));
+	if ((vec = meta->_vptr->typecast(meta, (char) ('c' | MPT_ENUM(TypeVector))))) {
 		if (len) {
-			static const char def[] = "\0";
-			if (base) {
-				*len = strlen(base);
-			} else {
-				base = def;
-				*len = 0;
-			}
+			*len = vec->iov_len;
 		}
-		return base;
+		return vec->iov_base;
 	}
 	return 0;
 }

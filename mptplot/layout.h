@@ -77,6 +77,8 @@ MPT_STRUCT(color)
 	{ }
 	
 	enum { Type = TypeColor };
+#else
+# define MPT_COLOR_INIT  { 0, 0, 0, 0xff }
 #endif
 	uint8_t alpha,  /* alpha part of color */
 	        red,    /* red part of color */
@@ -93,6 +95,8 @@ MPT_STRUCT(lineattr)
 	{ }
 	
 	enum { Type = TypeLineAttr };
+#else
+# define MPT_LINEATTR_INIT  { 1, 1, 0, 10 }
 #endif
 	uint8_t style,
 	        width,   /* line style/width */
@@ -224,9 +228,9 @@ MPT_STRUCT(text)
     public:
 #endif
 	MPT_STRUCT(color)   color;   /* text color */
-	uint8_t             style,
-	                    weight,  /* text properties */
-	                    size;    /* text size */
+	uint8_t             size;    /* text size */
+	char                weight,  /* text properties */
+	                    style;
 	char                align;   /* text alignment */
 	MPT_STRUCT(fpoint)  pos;     /* text reference position */
 	double              angle;   /* raw text rotation */
@@ -330,24 +334,29 @@ extern int mpt_color_html (MPT_STRUCT(color) *color, const char *txt);
 
 extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlag) __MPT_DEFPAR(AxisStyleGen));
 
-extern void mpt_line_init (MPT_STRUCT(line) *);
-extern int mpt_line_pget(MPT_STRUCT(line) *,   MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+extern void mpt_line_init(MPT_STRUCT(line) *);
+extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
+extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(source) *);
 
 extern void mpt_graph_init(MPT_STRUCT(graph) *, const MPT_STRUCT(graph) *__MPT_DEFPAR(0));
 extern void mpt_graph_fini(MPT_STRUCT(graph) *);
-extern int mpt_graph_pget(MPT_STRUCT(graph) *, MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+extern int  mpt_graph_get (const MPT_STRUCT(graph) *, MPT_STRUCT(property) *);
+extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(source) *);
 
 extern void mpt_axis_init(MPT_STRUCT(axis) *, const MPT_STRUCT(axis) *__MPT_DEFPAR(0));
 extern void mpt_axis_fini(MPT_STRUCT(axis) *);
-extern int mpt_axis_pget(MPT_STRUCT(axis) *,   MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+extern int  mpt_axis_get (const MPT_STRUCT(axis) *, MPT_STRUCT(property) *);
+extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(source) *);
 
 extern void mpt_world_init(MPT_STRUCT(world) *, const MPT_STRUCT(world) *__MPT_DEFPAR(0));
 extern void mpt_world_fini(MPT_STRUCT(world) *);
-extern int mpt_world_pget(MPT_STRUCT(world) *, MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+extern int  mpt_world_get (const MPT_STRUCT(world) *, MPT_STRUCT(property) *);
+extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(source) *);
 
-extern void mpt_text_init (MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
-extern void mpt_text_fini (MPT_STRUCT(text) *);
-extern int mpt_text_pget(MPT_STRUCT(text) *,   MPT_STRUCT(property) *, MPT_INTERFACE(source) *);
+extern void mpt_text_init(MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
+extern void mpt_text_fini(MPT_STRUCT(text) *);
+extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
+extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, MPT_INTERFACE(source) *);
 
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double );
@@ -361,8 +370,8 @@ extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
 extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
 
 extern int mpt_color_pset(MPT_STRUCT(color) *, MPT_INTERFACE(source) *);
-extern int mpt_text_pset(char **, MPT_INTERFACE(source) *);
-extern int mpt_text_set(char **, const char *, int __MPT_DEFPAR(-1));
+extern int mpt_string_pset(char **, MPT_INTERFACE(source) *);
+extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
 
 /* set line/color attributes */
 extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int );
@@ -527,13 +536,13 @@ public:
 protected:
     virtual ~Cycle();
     RefArray<Polyline> _part;
-    uint32_t _ref;
+    reference _ref;
     uint16_t _act;
     uint8_t  _dim;
     uint8_t  _flags;
 };
 
-class Line : public Metatype, public line
+class Line : public Metatype, public object, public line
 {
 public:
     enum { Type = line::Type };
@@ -541,12 +550,16 @@ public:
     Line(const line *from = 0, uintptr_t = 1);
     ~Line();
     
+    int unref();
     Line *addref();
-    int property(struct property *, source * = 0);
+    int assign(const struct value *);
     void *typecast(int);
+    
+    int property(struct property *) const;
+    int setProperty(const char *, source * = 0);
 };
 
-class Text : public Metatype, public text
+class Text : public Metatype, public object, public text
 {
 public:
     enum { Type = text::Type };
@@ -554,12 +567,16 @@ public:
     Text(const text *from = 0, uintptr_t = 1);
     ~Text();
     
+    int unref();
     Text *addref();
-    int property(struct property *, source * = 0);
+    int assign(const struct value *);
     void *typecast(int);
+    
+    int property(struct property *) const;
+    int setProperty(const char *, source *);
 };
 
-class Axis : public Metatype, public axis
+class Axis : public Metatype, public object, public axis
 {
 public:
     enum { Type = axis::Type };
@@ -568,12 +585,16 @@ public:
     Axis(AxisFlag type, uintptr_t = 1);
     ~Axis();
     
+    int unref();
     Axis *addref();
-    int property(struct property *, source * = 0);
+    int assign(const struct value *);
     void *typecast(int);
+    
+    int property(struct property *) const;
+    int setProperty(const char *, source *);
 };
 
-class World : public Metatype, public world
+class World : public Metatype, public object, public world
 {
 public:
     enum { Type = world::Type };
@@ -582,9 +603,13 @@ public:
     World(const world *, uintptr_t = 1);
     ~World();
     
+    int unref();
     World *addref();
-    int property(struct property *, source * = 0);
+    int assign(const struct value *);
     void *typecast(int);
+    
+    int property(struct property *) const;
+    int setProperty(const char *, source *);
 };
 
 class Graph : public Metatype, public Collection, public Transform3, public graph
@@ -607,11 +632,14 @@ public:
     
     int unref();
     Graph *addref();
-    int property(struct property *, source * = 0);
+    int assign(const struct value *);
     void *typecast(int);
     
+    int property(struct property *) const;
+    int setProperty(const char *, source *);
+    
     bool bind(const Relation &from, logger * = logger::defaultInstance());
-    bool set(const struct property &, logger * = logger::defaultInstance());
+    bool set(const char *, const value &, logger * = logger::defaultInstance());
     
     virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
     const Item<Axis> &axis(int pos) const;
@@ -640,13 +668,16 @@ public:
     Layout(uintptr_t = 1);
     ~Layout();
     
-    Layout *addref();
     int unref();
-    int property(struct property *pr, source *src);
+    Layout *addref();
+    int assign(const struct value *);
     void *typecast(int);
     
+    int property(struct property *pr) const;
+    int setProperty(const char *pr, source *src);
+    
     bool bind(const Relation &, logger * = logger::defaultInstance());
-    bool set(const struct property &, logger *);
+    bool set(const char *, const value &, logger *);
     
     virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());

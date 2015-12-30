@@ -43,15 +43,13 @@ Cycle::~Cycle()
 
 int Cycle::unref()
 {
-    uint32_t c = _ref;
-    if (!c || (c = --_ref)) return c;
-    delete this; return 0;
+    uintptr_t c = _ref.lower();
+    if (!c) delete this;
+    return c;
 }
 Cycle *Cycle::addref()
 {
-    if (!_ref) return 0;
-    if (++_ref) return this;
-    --_ref; return 0;
+    return _ref.raise() ? this : 0;
 }
 
 Polyline *Cycle::append()

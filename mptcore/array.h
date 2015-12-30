@@ -286,12 +286,12 @@ class Buffer : public Metatype, public IODevice, public EncodingArray
 {
 public:
     enum { Type = TypeIODevice };
-    Buffer();
+    Buffer(uintptr_t ref = 1);
     ~Buffer();
     
+    int unref();
     Buffer *addref(void);
-    int unref(void);
-    int property(struct property *, source * = 0);
+    int assign(const value *);
     void *typecast(int);
     
     ssize_t read(size_t , void *, size_t = 1);

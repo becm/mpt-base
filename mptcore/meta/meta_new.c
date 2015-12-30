@@ -17,11 +17,11 @@ static int metaUnref(MPT_INTERFACE(metatype) *meta)
 static MPT_INTERFACE(metatype) *metaAddref(MPT_INTERFACE(metatype) *meta)
 { return _mpt_geninfo_addref((uint64_t *) (meta+1)) ? meta : 0; }
 
-static int metaProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *src)
+static int metaAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *val)
 {
 	uint64_t *info = (uint64_t *) (meta + 1);
-	if (src || prop) {
-		return _mpt_geninfo_property(info, prop, src);
+	if (val) {
+		return _mpt_geninfo_value(info, val);
 	}
 	return 0;
 }
@@ -30,14 +30,14 @@ static void *metaCast(MPT_INTERFACE(metatype) *meta, int type)
 	uint64_t *info = (uint64_t *) (meta + 1);
 	switch (type) {
 	  case MPT_ENUM(TypeMeta): return meta;
-	  case 's': return _mpt_geninfo_property(info, 0, 0) > 0 ? (info + 1) : 0;
+	  case 's': return _mpt_geninfo_value(info, 0) > 0 ? (info + 1) : 0;
 	  default: return 0;
 	}
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
 	metaUnref,
 	metaAddref,
-	metaProperty,
+	metaAssign,
 	metaCast
 };
 

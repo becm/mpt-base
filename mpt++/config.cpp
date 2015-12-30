@@ -91,7 +91,8 @@ bool config::set(const char *p, const char *val, int sep)
     if (!(r = query(&where, strlen(val)+1)) || !(m = *r)) {
         return false;
     }
-    return (mpt_meta_set(m, 0, "s", val) < 0) ? false : true;
+    value tmp(0, val);
+    return (m->assign(&tmp) < 0) ? false : true;
 }
 metatype *config::get(const char *base, int sep, int len)
 {

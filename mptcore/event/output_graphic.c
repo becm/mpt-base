@@ -27,6 +27,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(msgtype) mt;
 	MPT_STRUCT(message) msg, tmp;
+	MPT_STRUCT(value) val;
 	char buf[256];
 	ssize_t part = -1;
 	
@@ -75,15 +76,19 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 		} else {
 			return MPT_event_fail(ev, MPT_tr("unaligned connect argument"));
 		}
+		val.fmt = 0;
+		val.ptr = msg.base;
 		
-		if (mpt_meta_set((void *) out, 0, "s", msg.base) < 0) {
+		if (out->_vptr->_mt.assign((void *) out, &val) < 0) {
 			return MPT_event_fail(ev, MPT_tr("unable to open connection"));
 		}
 		return MPT_event_good(ev, MPT_tr("created new graphic connection"));
 	}
 	/* command is close operation */
 	else if (part >= 5 && !strncmp("close", buf, part)) {
-		if (mpt_meta_set((void *) out, 0, "s", (void *) 0) < 0) {
+		val.fmt = 0;
+		val.ptr = 0;
+		if (out->_vptr->_mt.assign((void *) out, &val) < 0) {
 			return MPT_event_fail(ev, MPT_tr("error on graphic close"));
 		}
 		return MPT_event_good(ev, MPT_tr("closed graphic connection"));

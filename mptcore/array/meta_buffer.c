@@ -10,6 +10,8 @@
 
 #include <sys/uio.h>
 
+#include "convert.h"
+
 #include "array.h"
 
 MPT_STRUCT(metaBuffer) {
@@ -32,73 +34,44 @@ static MPT_INTERFACE(metatype) *bufferAddref(MPT_INTERFACE(metatype) *meta)
 	MPT_STRUCT(metaBuffer) *mb = MPT_reladdr(metaBuffer, meta, _meta, arr);
 	return (_mpt_geninfo_addref(&mb->_info)) ? meta : 0;
 }
-
-static int setArray(MPT_STRUCT(array) *arr, MPT_INTERFACE(source) *src)
+static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *vorg)
 {
-	struct iovec tmp;
-	void *base, *data;
-	int len;
+	MPT_STRUCT(metaBuffer) *mb = MPT_reladdr(metaBuffer, meta, _meta, arr);
+	MPT_STRUCT(array) arr = MPT_ARRAY_INIT;
+	MPT_STRUCT(value) val;
 	
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeVector), &tmp)) >= 0) {
-		data = tmp.iov_base;
-		len  = tmp.iov_len;
+	if (!vorg) {
+		return MPT_ENUM(TypeArray);
 	}
-	else if ((len = src->_vptr->conv(src, 's', &data)) >= 0) {
-		if (!len && data) len = strlen(data);
-		if (len) ++len;
-	}
-	else {
-		errno = ENOTSUP;
+	val = *vorg;
+	
+	if (!val.fmt) {
+		size_t len = val.ptr ? strlen(val.ptr) + 1 : 0;
+		
+		if (!mpt_array_append(&arr, len, val.ptr)) {
+			return MPT_ERROR(BadOperation);
+		}
+		mpt_array_clone(&mb->arr, &arr);
+		mpt_array_clone(&arr, 0);
 		return len;
 	}
-	
-	if (!(base = mpt_array_slice(arr, 0, len))) {
-		return len ? -1 : 0;
-	}
-	if (len) memcpy(base, data, len);
-	
-	return arr->_buf->used = len;
-}
-
-
-
-static int bufferProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *src)
-{
-	static const uintptr_t _size = 0;
-	MPT_STRUCT(metaBuffer) *mb = MPT_reladdr(metaBuffer, meta, _meta, arr);
-	int ret;
-	
-	if (!prop) {
-		return src ? setArray(&mb->arr, src) : MPT_ENUM(TypeArray);
-	}
-	if (!prop->name) {
-		return -3;
-	}
-	else if (*prop->name) {
-		if (strcmp("used", prop->name)) {
-			return -3;
+	while (*val.fmt) {
+		const char *base;
+		size_t len;
+		
+		if (!(base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
+			return MPT_ERROR(BadValue);
 		}
-		prop->desc = "buffer metatype";
-		prop->val.fmt = "L";
-		prop->val.ptr = mb->arr._buf ? &mb->arr._buf->used : &_size;
-		return 0;
-	}
-	else {
-		static const char fmt[2] = { MPT_ENUM(TypeArray) };
-		ret = 0;
-		if (src && (ret = setArray(&mb->arr, src)) < 0) {
-			return ret;
+		if (!mpt_array_append(&arr, len, base)) {
+			return MPT_ERROR(BadOperation);
 		}
-		prop->val.fmt = fmt;
-		prop->val.ptr = &mb->arr;
+		++val.fmt;
 	}
+	mpt_array_clone(&mb->arr, &arr);
+	mpt_array_clone(&arr, 0);
 	
-	prop->name = "array";
-	prop->desc = "generic resizable data array";
-	
-	return ret;
+	return val.fmt - vorg->fmt;
 }
-
 static void *bufferCast(MPT_INTERFACE(metatype) *meta, int type)
 {
 	MPT_STRUCT(metaBuffer) *mb = MPT_reladdr(metaBuffer, meta, _meta, arr);
@@ -114,7 +87,7 @@ static void *bufferCast(MPT_INTERFACE(metatype) *meta, int type)
 static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer = {
 	bufferUnref,
 	bufferAddref,
-	bufferProperty,
+	bufferAssign,
 	bufferCast
 };
 

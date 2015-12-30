@@ -173,6 +173,26 @@ bool socket::set(source &src)
     _id = tmp._id;
     return true;
 }
+bool socket::set(const value *val)
+{
+    if (!val) {
+        mpt_bind(this, 0, 0, 0);
+        return 0;
+    }
+    socket tmp;
+    if (!val->fmt) {
+        const char *dst = (const char *) val->ptr;
+        if (!dst || mpt_connect(&tmp, dst, 0) < 0) {
+            return false;
+        }
+        if (_id) {
+            (void) close(_id);
+        }
+        _id = tmp._id;
+        return true;
+    }
+    return false;
+}
 
 // stream class
 Stream::Stream(const streaminfo *from, uintptr_t ref) : _ref(ref), _inputFile(-1)
@@ -190,6 +210,7 @@ Stream::~Stream()
     mpt_command_clear(&_msg);
 }
 
+// metatype interface
 int Stream::unref()
 {
     uintptr_t c = _ref;
@@ -197,7 +218,6 @@ int Stream::unref()
     delete this;
     return 0;
 }
-
 Stream *Stream::addref()
 {
     intptr_t c = _ref;
@@ -205,52 +225,18 @@ Stream *Stream::addref()
     if ((c = ++_ref) > 0) return this;  // limit to avoid race conditions
     --_ref; return 0;
 }
-
-int Stream::property(struct property *pr, source *src)
-{
-    if (!pr) {
-        return src ? mpt_stream_setter(this, src) : Type;
+int Stream::assign(const value *val) {
+    if (!val) {
+        return mpt_stream_setter(this, 0);
     }
-
-    int ret;
-    intptr_t pos;
-    const char *name;
-    if (!(name = pr->name)) {
-        if (src || ((pos = (intptr_t) pr->desc) < 0)) {
-            errno = EINVAL;
-            return -3;
-        }
-    }
-    else if (!*name) {
-        if ((ret = mpt_stream_setter(this, src)) < 0) return ret;
-        pr->name = "stream";
-        pr->desc = "generic data stream";
-        pr->val.fmt = "";
-        pr->val.ptr = static_cast<stream *>(this);
-        return ret;
-    }
-    intptr_t id = 0;
-    if (name ? strcasecmp(name, "idlen") : (pos == id++)) {
-        if (!src) {
-            ret = id;
-        } else {
-            uint8_t l;
-            if ((ret = src->conv('C', &l)) < 0) return ret;
-            if (l > sizeof(uintptr_t)) {
-                errno = ERANGE; return -2;
-            }
-        }
-        pr->name = "idlen";
-        pr->desc = "message id length";
-        pr->val.fmt = "C";
-        pr->val.ptr = &_idlen;
-        return ret;
-    }
-    errno = EINVAL;
-    return -1;
+    return set(0, *val);
 }
 void *Stream::typecast(int type)
 {
+    if (!type) {
+        static const char types[] = { IODevice::Type, output::Type, input::Type, 0 };
+        return (void *) types;
+    }
     switch (type) {
     case IODevice::Type: return static_cast<IODevice *>(this);
     case input::Type:    return static_cast<input *>(this);
@@ -258,11 +244,58 @@ void *Stream::typecast(int type)
     default: return 0;
     }
 }
-
-void Stream::close()
+// object interface
+int Stream::property(struct property *pr) const
 {
-    mpt_stream_close(this);
-    _inputFile = -1;
+    if (!pr) {
+        return Type;
+    }
+    const char *name;
+    intptr_t pos;
+
+    if (!(name = pr->name)) {
+        if (((pos = (intptr_t) pr->desc) < 0)) {
+            errno = EINVAL;
+            return -3;
+        }
+    }
+    intptr_t id = 0;
+    if (name ? strcasecmp(name, "idlen") : (pos == id++)) {
+        pr->name = "idlen";
+        pr->desc = "message id length";
+        pr->val.fmt = "y";
+        pr->val.ptr = &_idlen;
+        return id;
+    }
+    return BadArgument;
+}
+
+int Stream::setProperty(const char *pr, source *src)
+{
+    if (!pr) {
+        return mpt_stream_setter(this, src);
+    }
+    if (strcasecmp(pr, "idlen")) {
+        if (_inputFile >= 0) {
+            errno = EALREADY;
+            return BadOperation;
+        }
+        int ret;
+        uint8_t l;
+        
+        if (!src) {
+            ret = l = 0;
+        } else {
+            if ((ret = src->conv('y', &l)) < 0) return ret;
+            if (l > sizeof(uintptr_t)) {
+                errno = ERANGE;
+                return BadValue;
+            }
+        }
+        _idlen = l;
+        return ret;
+    }
+    return BadArgument;
 }
 bool Stream::open(const char *dest, const char *type)
 {
@@ -406,7 +439,7 @@ int Stream::getchar()
 }
 
 // socket class
-Socket::Socket(struct socket *from, uintptr_t ref) : Metatype(ref)
+Socket::Socket(struct socket *from, uintptr_t ref) : _ref(ref)
 {
     if (!from) return;
     *static_cast<socket *>(this) = *from;
@@ -416,17 +449,18 @@ Socket::~Socket()
 { }
 
 Socket *Socket::addref()
-{ return Metatype::addref() ? this : 0; }
-
-int Socket::property(struct property *pr, source *src)
 {
-    if (pr) {
-        return -1;
-    }
-    if (!src) {
-        return Type;
-    }
-    return (socket::set(*src)) ? 0 : -2;
+    return _ref.raise() ? this : 0;
+}
+int Socket::unref()
+{
+    uintptr_t c = _ref.lower();
+    if (!c) delete this;
+    return c;
+}
+int Socket::assign(const value *val)
+{
+    return (socket::set(val)) ? (val ? 1 : 0) : BadOperation;
 }
 void *Socket::typecast(int type)
 {

@@ -5,6 +5,8 @@
 #include <poll.h>
 #include <sys/uio.h>
 
+#include <cstring>
+
 #include "message.h"
 
 #include "queue.h"
@@ -73,7 +75,7 @@ bool DecodingQueue::advance()
 }
 
 // queue metatype operations
-Queue::Queue(size_t len, uintptr_t ref) : Metatype(ref), _d()
+Queue::Queue(size_t len, uintptr_t ref) : _ref(ref)
 {
     if (len) Queue::prepare(len);
 }
@@ -111,40 +113,31 @@ Slice<uint8_t> Queue::data()
     else base += _d.off;
     return Slice<uint8_t>(base, _d.len);
 }
-
-static int setQueue(queue *q, source *src)
-{
-    if (src) return -1;
-    if (!q->len) return 0;
-    return q->off ? 2 : 1;
-}
-
+// queue metatype interface
 int Queue::unref()
-{ return Metatype::unref(); }
-Queue *Queue::addref()
-{ return Metatype::addref() ? this : 0; }
-
-int Queue::property(struct property *pr, source *src)
 {
-    if (!pr) {
-        return src ? setQueue(&_d, src) : Type;
+    if (!_ref) return -1;
+    if (--_ref) return _ref;
+    delete this;
+    return 0;
+}
+Queue *Queue::addref()
+{
+    if (!_ref) return 0;
+    if (++_ref) return this;
+    --_ref;
+    return 0;
+}
+int Queue::assign(const value *val)
+{
+    if (!val) {
+        return mpt_queue_prepare(&_d, 0) ? 1 : 0;
     }
-
-    int ret = _d.len;
-
-    if (!pr->name) {
-        return src ? -1 : -3;
+    if (!val->fmt) {
+        const char *d = (const char *) val->ptr;
+        return d ? write(1, d, strlen(d)) : 0;
     }
-    else if (*pr->name || pr->desc) return -2;
-
-    if (src && setQueue(&_d, src) < 0) return -1;
-
-    pr->name = "queue";
-    pr->desc = "FIFO data structure";
-    pr->val.fmt = "p";
-    pr->val.ptr = &_d;
-
-    return ret;
+    return BadType;
 }
 void *Queue::typecast(int type)
 {

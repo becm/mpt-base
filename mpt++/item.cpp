@@ -42,7 +42,17 @@ Slice<const char> identifier::data() const
     const char *id = (const char *) mpt_identifier_data(this);
     return Slice<const char>(id, _len);
 }
+
+
 // generic item group
+int Group::property(struct property *pr) const
+{
+    if (!pr) return Type;
+    return pr->name ? BadArgument : BadOperation;
+}
+int Group::setProperty(const char *name, source *)
+{ return name ? BadArgument : BadOperation; }
+
 size_t Group::clear(const metatype *)
 { return 0; }
 Item<metatype> *Group::append(metatype *)
@@ -51,8 +61,6 @@ const Item<metatype> *Group::item(size_t) const
 { return 0; }
 bool Group::bind(const Relation &, logger *)
 { return true; }
-bool Group::set(const property &, logger *)
-{ return false; }
 
 
 // bind local childs only
@@ -84,7 +92,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         metatype *from;
         if (!(from = head->_meta)) continue;
 
-        if (from->type()) {
+        if (from->typecast(0)) {
             Reference<metatype> ref(from->addref());
             Item<metatype> *it;
             if (ref && (it = append(ref))) {
@@ -94,70 +102,72 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             continue;
         }
 
-
         // name is property
-        property pr(mpt_node_ident(head));
+        const char *name;
 
-        if (!pr.name) {
-            pr.name = "";
-            pr.desc = 0;
-            if (from->property(&pr) < 0 || !pr.name) {
-                pr.name = "<unknown>";
-            }
-            if (out) out->error(_func, "%s: ", MPT_tr("bad element name"), pr.name);
+        if (!(name = mpt_node_ident(head))) {
+            if (out) out->error(_func, "%s %p: %s", MPT_tr("node"), head, MPT_tr("bad element name"));
             return false;
         }
 
         // set property
-        if ((pr.val.ptr = (const char *) mpt_meta_data(from))) {
-            pr.desc = 0;
-            pr.val.fmt = 0;
-            set(pr, out);
+        value val;
+        if ((val.ptr = (const char *) mpt_meta_data(from))) {
+            val.fmt = 0;
+            set(name, val, out);
             continue;
         }
         // get item type
+        const char *pos;
         size_t len;
-        pr.val.fmt = pr.desc = pr.name;
-        pr.name = mpt_convert_key(&pr.desc, 0, &len);
-        if (!pr.name || !*pr.name) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("bad object name"), pr.val.fmt);
+        val.fmt = pos = name;
+        name = mpt_convert_key(&pos, 0, &len);
+        if (!name || name != val.fmt || !*name) {
+            if (out) out->warning(_func, "%s: %s", MPT_tr("bad object name"), val.fmt);
             continue;
         }
 
         // create item
-        metatype *it = create(pr.name, len);
+        metatype *it = create(name, len);
         if (!it) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("invalid object type"), std::string(pr.name, len).c_str());
+            if (out) out->warning(_func, "%s: %s", MPT_tr("invalid object type"), std::string(name, len).c_str());
+            continue;
+        }
+        object *obj = it->cast<object>();
+        if (!obj) {
+            if (out) out->error(_func, "%s: %s", MPT_tr("invalid object instance"), std::string(name, len).c_str());
+            it->unref();
             continue;
         }
 
         // get item name
-        pr.name = mpt_convert_key(&pr.desc, ":", &len);
+        name = mpt_convert_key(&pos, ":", &len);
 
-        if (!pr.name || !len) {
+        if (!name || !len) {
             if (out) out->warning(_func, "%s", MPT_tr("empty object name"));
             it->unref();
             continue;
         }
 
-        if (GroupRelation(*this).find(it->type(), pr.name, len)) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("conflicting object name"), std::string(pr.name, len).c_str());
+        if (GroupRelation(*this).find(obj->type(), name, len)) {
+            if (out) out->warning(_func, "%s: %s", MPT_tr("conflicting object name"), std::string(name, len).c_str());
             it->unref();
             continue;
         }
-        const char *name = pr.name;
-        int nlen = len;
+        const char *ident = name;
+        int ilen = len;
 
         // find dependant items
-        while ((pr.name = mpt_convert_key(&pr.desc, 0, &len))) {
+        while ((name = mpt_convert_key(&pos, 0, &len))) {
             metatype *curr;
-            if (relation) curr = relation->find(it->type(), pr.name, len);
-            else curr = GroupRelation(*this).find(it->type(), pr.name, len);
-            if (curr) {
-                it->setProperties(*curr, out);
+            if (relation) curr = relation->find(obj->type(), name, len);
+            else curr = GroupRelation(*this).find(obj->type(), name, len);
+            object *from;
+            if (curr && (from = curr->cast<object>())) {
+                obj->setProperties(*from, out);
                 continue;
             }
-            if (out) out->error(_func, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(pr.name, len).c_str());
+            if (out) out->error(_func, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
             return false;
         }
 
@@ -166,10 +176,10 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         Item<metatype> *ni = append(it);
         if (!ni) {
             it->unref();
-            if (out) out->error(_func, "%s: %s", MPT_tr("unable add item"), std::string(name, nlen).c_str());
+            if (out) out->error(_func, "%s: %s", MPT_tr("unable add item"), std::string(ident, ilen).c_str());
             continue;
         }
-        ni->setName(name, nlen);
+        ni->setName(ident, ilen);
 
         // set properties and subitems
         if (!head->children) continue;
@@ -185,19 +195,32 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (!(ig->addItems(head->children, &rel, out))) return false;
             continue;
         }
+
         // load item properties
         for (node *sub = head->children; sub; sub = sub->next) {
             metatype *mt;
-            property pr;
-            if (!(mt = sub->_meta) || mt->property(&pr) < 0 || !pr.val.ptr) continue;
-            // skip invalid configuration
-            if (!(pr.name = mpt_node_ident(sub)) || !*pr.name || it->set(pr, out) || !out) continue;
-            // error handling
-            if (!pr.val.ptr) {
-                if (out) out->warning(_func, "%s: %s: %s", MPT_tr("bad property"), ni->name(), pr.name);
-            } else {
-                if (out) out->warning(_func, "%s: %s: %s = %s", MPT_tr("bad property value"), ni->name(), pr.name, pr.val.ptr);
+            const char *data;
+
+            if (!(mt = sub->_meta)) continue;
+            // skip invalid name
+            if (!(name = mpt_node_ident(sub)) || !*name) continue;
+
+            // try value conversion
+            value *val;
+            if ((val = mt->cast<value>())) {
+                if (!obj->set(name, *val, out) && out) {
+                    out->warning(_func, "%s: %s: %s = <%s>", MPT_tr("failed to assign property"), ni->name(), name, val->fmt);
+                }
+                continue;
             }
+            if ((data = (char *) mt->typecast('s'))) {
+                value txt(0, data);
+                if (!obj->set(name, txt, out) && out) {
+                    out->warning(_func, "%s: %s: %s = %s", MPT_tr("failed to assign property"), ni->name(), name, txt.ptr);
+                }
+                continue;
+            }
+            if (out) out->warning(_func, "%s: %s: %s", MPT_tr("bad value type"), ni->name(), name);
         }
     }
     return true;
@@ -313,11 +336,12 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
             metatype *m;
-            if (!c || !(m = *c)) continue;
-            if (type && (m->type() != type)) continue;
-            if (c->equal(name, nlen)) {
-                return m;
+            if (!c || !(m = *c) || !c->equal(name, nlen)) continue;
+            if (type) {
+                object *obj = m->cast<object>();
+                if (!obj || (obj->type() != type)) continue;
             }
+            return m;
         }
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
@@ -330,10 +354,13 @@ metatype *NodeRelation::find(int type, const char *name, int nlen) const
     if (nlen < 0) nlen = name ? strlen(name) : 0;
 
     metatype *m;
-    for (const node *curr = _curr->children; curr; curr = curr->next) {
-        if (!(m = curr->_meta)) continue;
-        if (type && (m->type()) != type) continue;
-        if (!curr->ident.equal(name, nlen)) return m;
+    for (const node *c = _curr->children; c; c = c->next) {
+        if (!(m = c->_meta) || !c->ident.equal(name, nlen)) continue;
+        if (type) {
+            object *obj = m->cast<object>();
+            if (!obj || (obj->type() != type)) continue;
+        }
+        return m;
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
 }

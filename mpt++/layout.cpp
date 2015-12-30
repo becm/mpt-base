@@ -31,26 +31,41 @@ Line::Line(const line *from, uintptr_t ref) : Metatype(ref)
 }
 Line::~Line()
 { }
-
-Line *Line::addref()
-{ return Metatype::addref() ? this : 0; }
-
-int Line::property(struct property *prop, source *src)
+// line metatype interface
+int Line::unref()
 {
-    if (!prop && !src) {
-        return Type;
-    }
-    return mpt_line_pget(this, prop, src);
+    return Metatype::unref();
+}
+Line *Line::addref()
+{
+    return Metatype::addref() ? this : 0;
+}
+int Line::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
 }
 void *Line::typecast(int type)
 {
     switch (type) {
     case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<object *>(this);
     case line::Type: return static_cast<line *>(this);
     case color::Type: return &color;
     case lineattr::Type: return &attr;
     default: return 0;
     }
+}
+// line object interface
+int Line::property(struct property *prop) const
+{
+    if (!prop) {
+        return Type;
+    }
+    return mpt_line_get(this, prop);
+}
+int Line::setProperty(const char *name, source *src)
+{
+    return mpt_line_set(this, name, src);
 }
 
 // text data operations
@@ -66,46 +81,68 @@ text & text::operator= (const text & tx)
 }
 
 bool text::setValue(const char *v)
-{ return mpt_text_set(&_value, v); }
+{ return mpt_string_set(&_value, v); }
 
 bool text::setFont(const char *v)
-{ return mpt_text_set(&_font, v); }
+{ return mpt_string_set(&_font, v); }
 
 int text::set(source &src)
-{ return mpt_text_pset(&_value, &src); }
+{ return mpt_string_pset(&_value, &src); }
 
 Text::Text(const text *from, uintptr_t ref) : Metatype(ref), text(from)
 { }
 Text::~Text()
 { }
-
-Text *Text::addref()
-{ return Metatype::addref() ? this : 0; }
-
-int Text::property(struct property *prop, source *src)
+// text metatype interface
+int Text::unref()
 {
-    if (!prop && !src) {
-        return Type;
-    }
-    return mpt_text_pget(this, prop, src);
+    return Metatype::unref();
+}
+Text *Text::addref()
+{
+    return Metatype::addref() ? this : 0;
+}
+int Text::assign(const struct value *val)
+{
+    return val ? object::set(0, *val) : setProperty(0, 0);
 }
 void *Text::typecast(int type)
 {
+    if (!type) {
+        static const char types[] = { text::Type, object::Type, metatype::Type, 0 };
+        return (void *) types;
+    }
     switch (type) {
     case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<object *>(this);
     case text::Type: return static_cast<text *>(this);
     case color::Type: return &color;
     default: return 0;
     }
 }
+// line object interface
+int Text::property(struct property *prop) const
+{
+    if (!prop) {
+        return Type;
+    }
+    return mpt_text_get(this, prop);
+}
+int Text::setProperty(const char *prop, source *src)
+{
+    return mpt_text_set(this, prop, src);
+}
 
 // axis data operations
 axis::axis(AxisFlag type)
-{ mpt_axis_init(this); format = type & 0x3; }
-
+{
+    mpt_axis_init(this);
+    format = type & 0x3;
+}
 axis::~axis()
-{ mpt_axis_fini(this); }
-
+{
+    mpt_axis_fini(this);
+}
 Axis::Axis(const axis *from, uintptr_t ref) : Metatype(ref)
 {
     if (!from) return;
@@ -115,38 +152,58 @@ Axis::Axis(AxisFlag type, uintptr_t ref) : Metatype(ref), axis(type)
 { }
 Axis::~Axis()
 { }
-
-Axis *Axis::addref()
-{ return Metatype::addref() ? this : 0; }
-
-int Axis::property(struct property *prop, source *src)
+// axis metatype interface
+int Axis::unref()
 {
-    if (!prop && !src) {
-        return Type;
-    }
-    return mpt_axis_pget(this, prop, src);
+    return Metatype::unref();
+}
+Axis *Axis::addref()
+{
+    return Metatype::addref() ? this : 0;
+}
+int Axis::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
 }
 void *Axis::typecast(int type)
 {
+    if (!type) {
+        static const char types[] = { axis::Type, object::Type, metatype::Type, 0 };
+        return (void *) types;
+    }
     switch (type) {
-    case Type: return this;
     case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<object *>(this);
+    case axis::Type: return static_cast<axis *>(this);
     default: return 0;
     }
+}
+// axis object interface
+int Axis::property(struct property *prop) const
+{
+    if (!prop) {
+        return Type;
+    }
+    return mpt_axis_get(this, prop);
+}
+int Axis::setProperty(const char *prop, source *src)
+{
+    return mpt_axis_set(this, prop, src);
 }
 
 // world data operations
 world::world()
-{ mpt_world_init(this); }
-
+{
+    mpt_world_init(this);
+}
 world::~world()
-{ mpt_world_fini(this); }
-
+{
+    mpt_world_fini(this);
+}
 bool world::setAlias(const char *name, int len)
 {
-    return mpt_text_set(&_alias, name, len) < 0 ? false : true;
+    return mpt_string_set(&_alias, name, len) < 0 ? false : true;
 }
-
 World::World(const world *from, uintptr_t ref) : Metatype(ref)
 {
     if (!from) return;
@@ -156,32 +213,48 @@ World::World(int c, uintptr_t ref) : Metatype(ref)
 {
     cyc = (c < 0) ? 1 : c;
 }
-
 World::~World()
 { }
-
-World *World::addref()
-{ return Metatype::addref() ? this : 0; }
-
-
-int World::property(struct property *prop, source *src)
+// world metatype interface
+int World::unref()
 {
-    if (!prop && !src) {
-        return Type;
-    }
-    return mpt_world_pget(this, prop, src);
+    return Metatype::unref();
+}
+World *World::addref()
+{
+    return Metatype::addref() ? this : 0;
+}
+int World::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
 }
 void *World::typecast(int type)
 {
+    if (!type) {
+        static const char types[] = { world::Type, object::Type, metatype::Type, 0 };
+        return (void *) types;
+    }
     switch (type) {
-    case Type: return this;
     case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<object *>(this);
+    case world::Type: return static_cast<world *>(this);
     case color::Type: return &color;
     case lineattr::Type: return &attr;
     default: return 0;
     }
 }
-
+// world object interface
+int World::property(struct property *prop) const
+{
+    if (!prop) {
+        return Type;
+    }
+    return mpt_world_get(this, prop);
+}
+int World::setProperty(const char *prop, source *src)
+{
+    return mpt_world_set(this, prop, src);
+}
 
 // graph data operations
 graph::graph()
@@ -197,12 +270,52 @@ Graph::Graph(const graph *from, uintptr_t ref) : Metatype(ref)
 }
 Graph::~Graph()
 { }
-
+// graph metatype interface
 int Graph::unref()
-{ return Metatype::unref(); }
+{
+    return Metatype::unref();
+}
 Graph *Graph::addref()
-{ return Metatype::addref() ? this : 0; }
+{
+    return Metatype::addref() ? this : 0;
+}
+int Graph::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
+}
+void *Graph::typecast(int type)
+{
+    if (!type) {
+        static const char types[] = { graph::Type, object::Type, Group::Type, 0 };
+        return (void *) types;
+    }
+    switch (type) {
+    case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<object *>(this);
+    case Group::Type: return static_cast<Group *>(this);
+    case graph::Type: return static_cast<graph *>(this);
+    default: return 0;
+    }
+}
+// graph object interface
+int Graph::property(struct property *prop) const
+{
+    if (!prop) {
+        return Type;
+    }
+    return mpt_graph_get(this, prop);
+}
+int Graph::setProperty(const char *prop, source *src)
+{
+    int ret = mpt_graph_set(this, prop, src);
 
+    if (ret < 0 || !src) {
+        return ret;
+    }
+    updateTransform();
+    return ret;
+}
+// graph group interface
 bool Graph::bind(const Relation &rel, logger *out)
 {
     static const char _func[] = "mpt::Graph::bind";
@@ -218,7 +331,8 @@ bool Graph::bind(const Relation &rel, logger *out)
 
     if (!(names = axes())) {
         for (auto &it : _items) {
-            if (!(m = it) || m->type() != Axis::Type) continue;
+            object *obj;
+            if (!(m = it) || !(obj = m->cast<object>()) || obj->type() != Axis::Type) continue;
             Axis *a;
             if (!(a = dynamic_cast<Axis *>(m))) {
                 continue;
@@ -262,7 +376,8 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     if (!(names = worlds())) {
         for (auto &it : _items) {
-            if (!(m = it) || m->type() != World::Type) continue;
+            object *obj;
+            if (!(m = it) || !(obj = m->cast<object>()) || obj->type() != World::Type) continue;
             World *w;
             if (!(w = dynamic_cast<World *>(m))) {
                 continue;
@@ -319,34 +434,10 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     return true;
 }
-bool Graph::set(const struct property &pr, logger *out)
+bool Graph::set(const char *name, const value &val, logger *out)
 {
-    return metatype::set(pr, out);
+    return object::set(name, val, out);
 }
-
-int Graph::property(struct property *prop, source *src)
-{
-    if (!prop && !src) {
-        return Type;
-    }
-    int ret = mpt_graph_pget(this, prop, src);
-
-    if (ret < 0 || !src) {
-        return ret;
-    }
-    updateTransform();
-    return ret;
-}
-void *Graph::typecast(int type)
-{
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case graph::Type: return static_cast<graph *>(this);
-    case Group::Type: return static_cast<Group *>(this);
-    default: return 0;
-    }
-}
-
 const Item<Axis> &Graph::axis(int pos) const
 {
     static const Item<Axis> def;
@@ -464,67 +555,97 @@ Layout::Layout(uintptr_t ref) : Metatype(ref), _parse(0), _alias(0), _font(0)
 { }
 Layout::~Layout()
 {
-    mpt_text_set(&_alias, 0, 0);
+    mpt_string_set(&_alias, 0, 0);
     delete _parse;
 }
-
+// layout metatype interface
 Layout *Layout::addref()
-{ return Metatype::addref() ? this : 0; }
-int Layout::unref()
-{ return Metatype::unref(); }
-
-int Layout::property(struct property *pr, source *src)
 {
-    const char *name;
-
+    return Metatype::addref() ? this : 0;
+}
+int Layout::unref()
+{
+    return Metatype::unref();
+}
+int Layout::assign(const struct value *val)
+{
+    return val ? object::set(0, *val) : setProperty(0, 0);
+}
+void *Layout::typecast(int t)
+{
+    if (!t) {
+        static const char types[] = { object::Type, Group::Type, 0 };
+        return (void *) types;
+    }
+    switch (t) {
+    case metatype::Type: return static_cast<metatype *>(this);
+    case object::Type: return static_cast<metatype *>(this);
+    case Group::Type: return static_cast<Group *>(this);
+    default: return 0;
+    }
+}
+// layout object interface
+int Layout::property(struct property *pr) const
+{
     if (!pr) {
-        return src ? -1 : Type;
+        return Type;
     }
-    if (!(name = pr->name)) {
-        if (src) return -1;
+    const char *name = pr->name;
+    int pos = -1;
+    if (!name) {
+        pos = (uintptr_t) pr->desc;
     }
-    if (name ? !*name : !pr->desc) {
+    else if (!*name) {
         pr->name = "layout";
         pr->desc = "mpt layout data";
         pr->val.fmt = 0;
         pr->val.ptr = _alias;
         return 0;
     }
-    if (name ? (!strcasecmp(name, "alias") || !strcasecmp(name, "name")) : ((uintptr_t) pr->desc == 1)) {
-        int len;
-
-        if ((len = mpt_text_pset(&_alias, src)) < 0) {
-            return -2;
-        }
+    int id = 0;
+    if (name ? (!strcasecmp(name, "alias") || !strcasecmp(name, "name")) : pos == id++) {
         pr->name = "alias";
         pr->desc = "layout alias";
         pr->val.fmt = 0;
         pr->val.ptr = _alias;
 
-        return len;
+        return _alias ? strlen(_alias) : 0;
     }
-    if (name ? !strcasecmp(name, "font") : ((uintptr_t) pr->desc == 2)) {
-        int len;
-
-        if ((len = mpt_text_pset(&_font, src)) < 0) {
-            return -2;
-        }
+    if (name ? !strcasecmp(name, "font") : pos == id++) {
         pr->name = "font";
         pr->desc = "layout default font";
         pr->val.fmt = 0;
         pr->val.ptr = _font;
 
-        return len;
+        return _font ? strlen(_font) : 0;
     }
-    return -1;
+    return BadArgument;
 }
-void *Layout::typecast(int t)
+int Layout::setProperty(const char *name, source *src)
 {
-    switch (t) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case Group::Type: return static_cast<Group *>(this);
-    default: return 0;
+    int len;
+
+    /* auto-select matching property */
+    if (!name) {
+        if (!src) {
+            return MPT_ERROR(BadOperation);
+        }
+        if ((len = mpt_string_pset(&_alias, src)) >= 0) {
+            return len;
+        }
+        return MPT_ERROR(BadType);
     }
+    /* copy from sibling */
+    if (!*name) {
+        return MPT_ERROR(BadOperation);
+    }
+    if (!strcasecmp(name, "alias") || !strcasecmp(name, "name")) {
+        return mpt_string_pset(&_alias, src);
+    }
+    if (!strcasecmp(name, "font")) {
+        return mpt_string_pset(&_font, src);
+    }
+    return BadArgument;
 }
 
 const Item<Graph> &Layout::graph(int pos) const
@@ -566,9 +687,9 @@ bool Layout::bind(const Relation &rel, logger *out)
     _graphs = arr;
     return true;
 }
-bool Layout::set(const struct property &pr, logger *log)
+bool Layout::set(const char *name, const value &val, logger *log)
 {
-    return metatype::set(pr, log);
+    return object::set(name, val, log);
 }
 
 bool Layout::load(logger *out)
@@ -621,11 +742,11 @@ bool Layout::open(const char *fn)
 
 bool Layout::setAlias(const char *base, int len)
 {
-    return mpt_text_set(&_alias, base, len) >= 0;
+    return mpt_string_set(&_alias, base, len) >= 0;
 }
 bool Layout::setFont(const char *base, int len)
 {
-    return mpt_text_set(&_font, base, len) >= 0;
+    return mpt_string_set(&_font, base, len) >= 0;
 }
 
 fpoint Layout::minScale() const

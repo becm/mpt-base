@@ -8,78 +8,70 @@
 __MPT_NAMESPACE_BEGIN
 
 // class extension for basic property
-Property::Property(const Reference<metatype> &ref) : Reference<metatype>(ref)
+Property::Property(const Reference<metatype> &from) : _obj(0)
+{
+    Reference<metatype> ref = from;
+    metatype *m;
+    if ((m = ref) && (_obj = m->cast<object>())) {
+        ref.detach();
+    }
+}
+Property::Property(object *obj) : _obj(obj)
 { }
-
+Property::~Property()
+{
+    if (_obj) _obj->unref();
+}
 // assignment operation for metatypes
 Property & Property::operator= (metatype &meta)
 {
-    property pr;
-    if (meta.property(&pr) < 0) { _prop.name = 0; return *this; }
-    pr.name = _prop.name;
-    pr.desc = 0;
-    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) _prop = property();
-    else _prop = pr;
+    if (!_obj) return *this;
+
+    const char *fmt = (char *) meta.typecast(0);
+    char type[2];
+
+    while ((*type = *fmt++)) {
+        void *data = meta.typecast(*type);
+        if (!data) continue;
+        value val(type, data);
+        if (mpt_object_pset(_obj, _prop.name, &val) >= 0) break;
+    }
     return *this;
 }
 
 Property & Property::operator= (const char *val)
 {
-    property pr(_prop.name, 0, val);
-    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) _prop = property();
-    else _prop = pr;
-    return *this;
-}
-
-Property & Property::operator= (const property & val)
-{
-    property pr = val;
-    if (!_ref || mpt_meta_pset(_ref, &pr) < 0) {
-        _prop = property();
-    }
-    else {
-        _prop.name = val.name ? pr.name : 0;
-        _prop.desc = pr.desc;
-        _prop.val  = pr.val;
-    }
-    return *this;
-}
-Property & Property::operator= (const Property & val)
-{
-    _prop = val._prop;
-    if (_ref == val._ref) return *this;
-    if (_ref) _ref->unref();
-    _ref = val._ref ? val._ref->addref() : 0;
-    return *this;
+    return *this = value((const char *) 0, (const void *) val);
 }
 
 bool Property::select(const char *name)
 {
-    if (!_ref) return false;
+    if (!_obj) return false;
     property pr(name);
-    if (_ref->property(&pr) < 0) return false;
+    if (_obj->property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
 bool Property::select(int pos)
 {
-    if (!_ref || pos <= 0) return false;
+    if (!_obj || pos <= 0) return false;
     property pr(pos);
-    if (_ref->property(&pr) < 0) return false;
+    if (_obj->property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
 bool Property::set(source &src)
 {
-    if (!_ref) return false;
-    return (_ref && _ref->property(&_prop, &src) >= 0);
+    if (!_obj || !_prop.name) return false;
+    if (_obj->setProperty(_prop.name, &src) < 0) return false;
+    if (_obj->property(&_prop) < 0) _prop.name = 0;
+    return false;
 }
-bool Property::set(const struct value &src)
+bool Property::set(const value &val)
 {
-    if (!_ref) return false;
-    property pr(_prop.name, src.fmt, src.ptr);
-    if (mpt_meta_pset(_ref, &pr) < 0) return false;
-    _prop = pr;
+    if (!_obj || !_prop.name) return false;
+    if (mpt_object_pset(_obj, _prop.name, &val) < 0) return false;
+    if (_obj->property(&_prop) < 0) _prop.name = 0;
     return true;
 }
 
@@ -165,12 +157,12 @@ Property Object::operator [](int pos)
 
 struct objectSetContext
 {
-    metatype *m;
+    object *obj;
     PropertyHandler check;
     void *cdata;
 };
 
-static int metaPropertySet(void *addr, property *pr)
+static int metaPropertySet(void *addr, const property *pr)
 {
     const objectSetContext *con = reinterpret_cast<objectSetContext *>(addr);
     int ret;
@@ -186,22 +178,26 @@ static int metaPropertySet(void *addr, property *pr)
             if (ret) return ret;
         }
     }
-    if ((ret = mpt_meta_pset(con->m, pr, 0)) < 0) {
-        pr->desc = (ret == -1) ? 0 : "";
-        return con->check ? con->check(con->cdata, pr) : 3;
+    if ((ret = mpt_object_pset(con->obj, pr->name, &pr->val)) < 0) {
+        property tmp = *pr;
+        tmp.desc = (ret == -1) ? 0 : "";
+        return con->check ? con->check(con->cdata, &tmp) : 3;
     }
     return 0;
 }
-
 const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
 {
-    objectSetContext con = { _ref, proc, pdata };
-    return _ref ? mpt_node_foreach(head, metaPropertySet, &con, TraverseNonLeafs) : 0;
+    object *obj;
+    if (!_ref || !(obj = _ref->cast<object>())) return 0;
+    objectSetContext con = { obj, proc, pdata };
+    return mpt_node_foreach(head, metaPropertySet, &con, TraverseNonLeafs);
 }
-
-
-static const char globName[] = "metatype\0";
-static const char globDesc[] = "default metatype reference\0";
+int Object::type()
+{
+    object *obj;
+    if (!_ref || !(obj = _ref->cast<object>())) return 0;
+    return obj->type();
+}
 
 class globalMetatype : public metatype
 {
@@ -211,15 +207,9 @@ public:
 
     metatype *addref() { return this; }
     int unref() { return 0; }
-    int property(struct property *p, source *s)
+    int assign(const value *val)
     {
-        if (!p) return 0;
-        if (p->name || p->desc) return -1;
-        p->name = globName;
-        p->desc = globDesc;
-        p->val.fmt = globName+8;
-        p->val.ptr = this;
-        return s ? -1 : 0;
+        return val ? mpt::BadOperation : 0;
     }
     void *typecast(int type)
     {

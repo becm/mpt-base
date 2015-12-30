@@ -10,7 +10,7 @@ struct outData
 	void *p;
 };
 
-static int mprint(void *data, MPT_STRUCT(property) *prop)
+static int mprint(void *data, const MPT_STRUCT(property) *prop)
 {
 	char buf[1024];
 	struct outData *par = data;
@@ -46,7 +46,7 @@ static int mprint(void *data, MPT_STRUCT(property) *prop)
 	return par->h(par->p, &pr);
 }
 
-extern int mpt_generic_print(MPT_TYPE(PropertyHandler) get, void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+extern int mpt_generic_print(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
 {
 	struct outData par;
 	

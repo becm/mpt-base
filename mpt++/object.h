@@ -13,12 +13,12 @@ namespace mpt {
 struct color;
 struct lineattr;
 
-class Property : Reference<metatype>
+class Property
 {
 public:
     Property(const Reference<metatype> &);
-    inline ~Property()
-    { }
+    Property(object * = 0);
+    ~Property();
 
     inline operator const property&() const
     { return _prop; }
@@ -34,13 +34,12 @@ public:
 
     Property & operator= (const char *val);
     Property & operator= (metatype &meta);
+    Property & operator= (const property &);
 
-    inline Property & operator= (const struct value &v)
+    inline Property & operator= (const value &v)
     { if (!set(v)) _prop.name = 0; return *this; }
     
-    Property & operator= (const property &);
-    Property & operator= (const Property &);
-
+    
     template <typename T>
     Property & operator= (const T &v)
     {
@@ -51,7 +50,11 @@ public:
 
 protected:
     property _prop;
+    object *_obj;
     friend class Object;
+
+private:
+    Property & operator= (const Property &);
 };
 
 template <typename T>
@@ -135,8 +138,7 @@ public:
     // get property by name/position
     Property operator [](const char *);
     Property operator [](int);
-    inline int type() const
-    { return _ref ? _ref->type() : -1; }
+    int type();
 
     // metatype name hash
     inline long hash() const
@@ -169,7 +171,7 @@ class MetatypeGeneric : public metatype
 public:
     int unref();
     metatype *addref();
-    int property(struct property *, source * = 0);
+    int assign(const value *);
     void *typecast(int);
 
     Slice<const char> data(void) const;

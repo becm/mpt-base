@@ -123,7 +123,7 @@ protected:
     { }
 };
 
-class Queue : public Metatype, public IODevice
+class Queue : public metatype, public IODevice
 {
 public:
     Queue(size_t = 0, uintptr_t = 1);
@@ -134,7 +134,7 @@ public:
     /* metatype interface */
     int unref();
     Queue *addref();
-    int property(struct property *pr, source * = 0);
+    int assign(const value *);
     void *typecast(int);
     
     /* IODevice interface */
@@ -154,6 +154,7 @@ public:
     
 protected:
     struct queue _d;
+    uintptr_t _ref;
 };
 
 template <typename T>

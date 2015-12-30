@@ -32,9 +32,13 @@ int main()
     mtrace();
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
-    o->set(mpt::property("history", "/dev/stdout"), 0);
-    o->set(mpt::property("level", "debug2"), 0);
-    o->message(__func__, mpt::client::LogLevel, "%s = %i", "value", 5);
+
+    mpt::object *j = o->cast<mpt::object>();
+    j->set("history", "/dev/stdout", 0);
+    j->set("level", "debug2", 0);
+
+    o->message(__func__, mpt::client::LogLevel | mpt::LogFile, "%s = %i", "value", 5);
+
     c->init();
     c->unref();
 }

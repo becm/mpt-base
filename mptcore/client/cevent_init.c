@@ -12,7 +12,7 @@
 
 #include "client.h"
 
-static int setConfig(void *udata, MPT_STRUCT(property) *pr)
+static int setConfig(void *udata, const MPT_STRUCT(property) *pr)
 {
 	MPT_STRUCT(node) *conf, *base = *((MPT_STRUCT(node) **) udata);
 	MPT_STRUCT(path) where = MPT_PATH_INIT;

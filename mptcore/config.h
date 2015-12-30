@@ -75,7 +75,7 @@ protected:
 #else
 ; MPT_INTERFACE_VPTR(config) {
 	int (*unref)(MPT_INTERFACE(config) *);
-	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, int);
+	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;

@@ -121,7 +121,8 @@ int Parse::read(struct node &to, logger *out)
         metatype *m;
         if ((m = curr->meta())) {
             uint32_t line = _parse->src.line;
-            m->set(property("line", "I", &line), 0);
+            value val("u", &line);
+            m->assign(&val);
         }
         if (ret & ParseSectEnd) {
             where.del();

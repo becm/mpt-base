@@ -36,11 +36,11 @@ static MPT_INTERFACE(metatype) *nodeAddref(MPT_INTERFACE(metatype) *meta)
 static int nodeUnref(MPT_INTERFACE(metatype) *meta)
 { (void) meta; return 0; }
 
-static int nodeProperty(MPT_INTERFACE(metatype) *meta, MPT_STRUCT(property) *prop, MPT_INTERFACE(source) *src)
+static int nodeAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *val)
 {
 	struct _inline_meta *m = (void *) meta;
-	if (prop || src) {
-		return _mpt_geninfo_property(&m->info, prop, src);
+	if (val) {
+		return _mpt_geninfo_value(&m->info, val);
 	}
 	return 0;
 }
@@ -51,7 +51,7 @@ static void *nodeCast(MPT_INTERFACE(metatype) *meta, int type)
 	switch (type) {
 	  case MPT_ENUM(TypeMeta): return meta;
 	  case MPT_ENUM(TypeNode): return m->node;
-	  case 's': return _mpt_geninfo_property(&m->info, 0, 0) > 0 ? (&m->info) + 1 : 0;
+	  case 's': return _mpt_geninfo_value(&m->info, 0) > 0 ? (&m->info) + 1 : 0;
 	  default: return 0;
 	}
 }
@@ -59,7 +59,7 @@ static void *nodeCast(MPT_INTERFACE(metatype) *meta, int type)
 static const MPT_INTERFACE_VPTR(metatype) _meta_control = {
 	nodeUnref,
 	nodeAddref,
-	nodeProperty,
+	nodeAssign,
 	nodeCast
 };
 

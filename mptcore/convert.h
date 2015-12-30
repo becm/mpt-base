@@ -77,6 +77,8 @@ extern void mpt_bswap_16(size_t , uint16_t *);
 
 /* get data from pointer and description */
 extern int mpt_data_convert(const void **, int , void *, int );
+/* get string data */
+extern const char *mpt_data_tostring(const void **, int , size_t *);
 
 /* get number type from string */
 extern int mpt_convert_number(const char *, int , void *);
@@ -149,23 +151,13 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(codestate) *, const struct iovec *,
 
 
 /* loop trough properties */
-extern int mpt_generic_foreach(MPT_TYPE(PropertyHandler) , void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
-extern int mpt_generic_print(MPT_TYPE(PropertyHandler) , void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+extern int mpt_generic_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+extern int mpt_generic_print  (int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 /* convert structured data to string */
 extern int mpt_data_print(char *, size_t , int , const void *);
 /* output data */
 extern int mpt_tostring(const MPT_STRUCT(value) *, int (*)(void *, const char *, size_t ), void *);
-
-
-/* get type position from data description */
-extern int mpt_position(const char *, int);
-/* get position offset from data description */
-extern int mpt_offset(const char *, int);
-
-/* get/add registered (primitive) types */
-extern ssize_t mpt_valsize(int);
-extern int mpt_valtype_add(size_t);
 
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
