@@ -17,27 +17,14 @@
 static const struct {
 	uint8_t key, size;
 } static_ptypes[] = {
-	/* core types */
-	{ MPT_ENUM(TypeSocket),  0 },
-	{ MPT_ENUM(TypeAddress), 0 },
-	
-	/* data copy types */
-	{ MPT_ENUM(TypeValue),    sizeof(MPT_STRUCT(value)) },
+	/* scalar system types */
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
-	
-	/* data pointer types */
-	{ MPT_ENUM(TypeNode),  0 },
-	{ MPT_ENUM(TypeArray), 0 },
+	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
 	
 	/* basic layout types */
 	{ MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color)) },
 	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
 	{ MPT_ENUM(TypeLine),     sizeof(MPT_STRUCT(line)) },
-	/* extended layout types */
-	{ MPT_ENUM(TypeAxis),   0 },
-	{ MPT_ENUM(TypeGraph),  0 },
-	{ MPT_ENUM(TypeWorld),  0 },
-	{ MPT_ENUM(TypeText),   0 },
 	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
@@ -65,24 +52,14 @@ static const struct {
 	{ 's', 0 },
 	{ 'k', 0 },  /* keyword */
 	{ 'o', 0 },  /* D-Bus object path */
-	
-	/* reference types */
-	{ MPT_ENUM(TypeIODevice),  0 },
-	{ MPT_ENUM(TypeInput),     0 },
-	{ MPT_ENUM(TypeGroup),     0 },
-	{ MPT_ENUM(TypeCycle),     0 },
-	
-	/* metatype references */
-	{ MPT_ENUM(TypeMeta),   0 },
-	{ MPT_ENUM(TypeOutput), 0 },
-	{ MPT_ENUM(TypeSolver), 0 }
 };
 
-static MPT_STRUCT(array) ptypes = { 0 };
+static MPT_STRUCT(array) scalars = { 0 };
+static int pointers = 0;
 
 static void ptypes_finish(void)
 {
-	mpt_array_clone(&ptypes, 0);
+	mpt_array_clone(&scalars, 0);
 }
 /*!
  * \ingroup mptConvert
@@ -103,12 +80,12 @@ extern ssize_t mpt_valsize(int type)
 		uint8_t i;
 		
 		/* generic array */
-		if (type == MPT_ENUM(TypeArray)) {
+		if (type == MPT_ENUM(TypeArrBase)) {
 			return 0;
 		}
 		/* typed array */
-		if (isupper(type)) {
-			if (mpt_valsize(tolower(type)) < 0) {
+		if (MPT_value_isArray(type)) {
+			if (mpt_valsize(type - 0x20) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			return 0;
@@ -122,11 +99,19 @@ extern ssize_t mpt_valsize(int type)
 		return MPT_ERROR(BadType);
 	}
 	/* user types */
-	if (ptypes._buf) {
-		ssize_t len = ptypes._buf->used / sizeof(size_t);
+	if (scalars._buf) {
+		ssize_t len = scalars._buf->used / sizeof(size_t);
 		type -= MPT_ENUM(TypeUser);
+		type -= 0x60; /* scalar type offset */
 		if (type < len) {
-			return ((size_t *) (ptypes._buf+1))[type];
+			return ((size_t *) (scalars._buf+1))[type];
+		}
+	}
+	/* user pointers */
+	if (pointers) {
+		type -= MPT_ENUM(TypeUser);
+		if (type < pointers) {
+			return 0;
 		}
 	}
 	return MPT_ERROR(BadValue);
@@ -145,16 +130,25 @@ extern int mpt_valtype_add(size_t csize)
 {
 	size_t *sizes, pos;
 	
-	if (csize > SIZE_MAX/4) return -2;
+	if (csize > SIZE_MAX/4) return MPT_ERROR(BadValue);
 	
-	pos = ptypes._buf ? ptypes._buf->used / sizeof(*sizes) : 0;
-	
-	if (pos > (MPT_ENUM(_TypeFinal) - MPT_ENUM(TypeUser))) return -2;
-	if (!(sizes = mpt_array_append(&ptypes, sizeof(*sizes), 0))) return -1;
+	if (!csize) {
+		if (pointers >= 0x20) {
+			return MPT_ERROR(BadArgument);
+		}
+		return MPT_ENUM(TypeUser) + pointers++;
+	}
+	pos = scalars._buf ? scalars._buf->used / sizeof(*sizes) : 0;
+	if (pos >= 0x20) {
+		return MPT_ERROR(BadArgument);
+	};
+	if (!(sizes = mpt_array_append(&scalars, sizeof(*sizes), 0))) {
+		return MPT_ERROR(BadOperation);
+	}
 	*sizes = csize;
 	
 	if (!pos) atexit(ptypes_finish);
 	
-	return MPT_ENUM(TypeUser) + pos;
+	return MPT_ENUM(TypeUser) + 0x60 + pos;
 }
 

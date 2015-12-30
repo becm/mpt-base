@@ -104,7 +104,7 @@ int array::set(source &src)
 {
     struct ::iovec vec;
 
-    if (src.conv(TypeVector, &vec) >= 0) {
+    if (src.conv(TypeVecBase, &vec) >= 0) {
         return (set(vec.iov_len, vec.iov_base)) ? vec.iov_len : -1;
     }
     char *data;

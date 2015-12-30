@@ -23,11 +23,11 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 	if (!(txt = *from)) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (type == MPT_ENUM(TypeValue)) {
-		MPT_STRUCT(value) *val;
-		if ((val = dest)) {
-			val->fmt = 0;
-			val->ptr = txt;
+	if (type == MPT_ENUM(TypeProperty)) {
+		MPT_STRUCT(property) *pr;
+		if ((pr = dest)) {
+			pr->val.fmt = 0;
+			pr->val.ptr = txt;
 		}
 		len = strlen(txt);
 		*from = txt + len;

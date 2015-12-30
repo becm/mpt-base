@@ -5,6 +5,7 @@ src_cxx = files(
   'array.cpp',
   'config.cpp',
   'message.cpp',
+  'value.cpp',
   'logger.cpp',
   'meta.cpp',
   'object.cpp',

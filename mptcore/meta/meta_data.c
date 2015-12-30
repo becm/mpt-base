@@ -25,7 +25,7 @@ extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 	const struct iovec *vec;
 	const char *base;
 	
-	if (len && (vec = meta->_vptr->typecast(meta, MPT_ENUM(TypeVector)))) {
+	if (len && (vec = meta->_vptr->typecast(meta, MPT_ENUM(TypeVecBase)))) {
 		*len = vec->iov_len;
 		return vec->iov_base;
 	}
@@ -35,7 +35,7 @@ extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 		}
 		return base;
 	}
-	if ((vec = meta->_vptr->typecast(meta, (char) ('c' | MPT_ENUM(TypeVector))))) {
+	if ((vec = meta->_vptr->typecast(meta, 'c' - 0x40))) {
 		if (len) {
 			*len = vec->iov_len;
 		}

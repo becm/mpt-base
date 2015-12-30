@@ -41,7 +41,7 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 	MPT_STRUCT(value) val;
 	
 	if (!vorg) {
-		return MPT_ENUM(TypeArray);
+		return MPT_ENUM(TypeArrBase);
 	}
 	val = *vorg;
 	
@@ -72,13 +72,18 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 	
 	return val.fmt - vorg->fmt;
 }
-static void *bufferCast(MPT_INTERFACE(metatype) *meta, int type)
+static void *bufferTypecast(MPT_INTERFACE(metatype) *meta, int type)
 {
 	MPT_STRUCT(metaBuffer) *mb = MPT_reladdr(metaBuffer, meta, _meta, arr);
 	
+	if (!type) {
+		static const char types[] = { MPT_ENUM(TypeArrBase), MPT_ENUM(TypeMeta), 'C', 's', 0 };
+		return (void *) types;
+	}
 	switch (type) {
 	  case MPT_ENUM(TypeMeta): return meta;
-	  case MPT_ENUM(TypeArray): return &mb->arr;
+	  case MPT_ENUM(TypeArrBase): return &mb->arr;
+	  case 'C': return &mb->arr;
 	  case 's': return mpt_array_string(&mb->arr);
 	  default: return 0;
 	}
@@ -88,7 +93,7 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer = {
 	bufferUnref,
 	bufferAddref,
 	bufferAssign,
-	bufferCast
+	bufferTypecast
 };
 
 /*!

@@ -189,12 +189,12 @@ extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *
 		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const char fmt[2] = { MPT_ENUM(TypeSocket) };
+		static const char fmt[2] = { 'y' };
 		
 		pr->name = "outdata";
 		pr->desc = "output data context";
 		pr->val.fmt = fmt;
-		pr->val.ptr = &od->sock;
+		pr->val.ptr = &od->level;
 		
 		return MPT_socket_active(&od->sock) ? 1 : 0;
 	}

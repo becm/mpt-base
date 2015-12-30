@@ -31,39 +31,45 @@ extern int mpt_position(const char *fmt, int match)
 			return pos;
 		}
 		/* current is vector entry */
-		if (curr & MPT_ENUM(TypeVector)) {
-			curr &= 0x7f;
+		if (MPT_value_isVector(curr)) {
+			curr |= 0x60;
 			if (curr == 'c' && type == 's') {
 				return pos;
 			}
 			/* vector types only */
-			if (!(type & MPT_ENUM(TypeVector))) {
+			if (!MPT_value_isVector(type)) {
 				++pos;
 				continue;
 			}
-			type &= 0x7f;
+			type |= 0x60;
 		}
 		/* current is array */
-		else if (isupper(curr)) {
+		else if (MPT_value_isArray(curr)) {
 			/* accept generic array */
-			if (type == MPT_ENUM(TypeArray)) {
+			if (type == MPT_ENUM(TypeArrBase)) {
 				return pos;
 			}
 			/* compatible vector type */
-			if (type & MPT_ENUM(TypeVector)) {
-				type &= 0x7f;
+			if (MPT_value_isVector(type)) {
+				if (!(type & 0x1f)) {
+					return pos;
+				}
+				curr |= 0x60;
+				type |= 0x60;
 			}
 			/* compatible array type */
-			else if (isupper(type)) {
-				type = tolower(type);
+			else if (MPT_value_isArray(type)) {
+				if (!(type & 0x1f)) {
+					return pos;
+				}
+				curr |= 0x60;
+				type |= 0x60;
 			}
 			/* incompatible types */
 			else {
 				++pos;
 				continue;
 			}
-			/* accept array with more generic entities */
-			curr = tolower(curr);
 		}
 		switch (curr) {
 		  /* accept more specific type */

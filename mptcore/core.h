@@ -68,22 +68,21 @@ MPT_STRUCT(node);
 
 enum MPT_ENUM(Types)
 {
-	/* system types */
-	MPT_ENUM(TypeAddress)  = 0x1,   /* SOH */
-	MPT_ENUM(TypeSocket)   = 0x2,   /* STX */
+	/* system types (scalar) */
+	MPT_ENUM(TypeValFmt)    = 0x1,   /* SOH */
+	MPT_ENUM(TypeValue)     = 0x2,   /* STX */
+	MPT_ENUM(TypeProperty)  = 0x3,   /* ETX */
 	
-	/* data pointer types */
-	MPT_ENUM(TypeNode)      = 0x3,   /* ETX */
+	/* layout types (scalar) */
+	MPT_ENUM(TypeLineAttr)  = 0x4,   /* EOT */
+	MPT_ENUM(TypeColor)     = 0x5,   /* ENQ rgba(0..255) */
+	MPT_ENUM(TypeLine)      = 0x6,   /* ACK */
 	
-	/* data copy types */
-	MPT_ENUM(TypeValue)     = 0x4,   /* EOT */
-	MPT_ENUM(TypeProperty)  = 0x5,   /* ENQ */
-	MPT_ENUM(TypeValFmt)    = 0x6,   /* ACK */
+	/* system pointer types */
+	MPT_ENUM(TypeAddress)   = 0x8,   /* BS  '\b' */
+	MPT_ENUM(TypeNode)      = 0x9,   /* HT  '\t' */
+	MPT_ENUM(TypeSocket)    = 0xa,   /* LF  '\n' */
 	
-	/* layout types */
-	MPT_ENUM(TypeLineAttr)  = 0x8,   /* BS  '\b' */
-	MPT_ENUM(TypeLine)      = 0x9,   /* HT  '\t' */
-	MPT_ENUM(TypeColor)     = 0xa,   /* LF  '\n' rgba(0..255) */
 	/* layout pointer types */
 	MPT_ENUM(TypeText)      = 0xc,   /* FF  '\f' */
 	MPT_ENUM(TypeAxis)      = 0xd,   /* CR  '\r' */
@@ -91,39 +90,39 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeGraph)     = 0xf,   /* SI */
 	
 	/* reference types */
-	MPT_ENUM(TypeGroup)     = 0x10,  /* DLE */
+	MPT_ENUM(TypeMeta)      = 0x10,  /* CAN */
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	MPT_ENUM(TypeCycle)     = 0x14,  /* DC4 */
-	MPT_ENUM(TypeObject)    = 0x15,  /* SUB */
-	MPT_ENUM(TypeSolver)    = 0x16,  /* SYN */
 	
-	/* metatype and extensions */
-	MPT_ENUM(TypeMeta)      = 0x18,  /* CAN */
-	MPT_ENUM(TypeOutput)    = 0x19,  /* EM  */
+	/* object types */
+	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
+	MPT_ENUM(TypeSolver)    = 0x19,  /* EM */
+	MPT_ENUM(TypeGroup)     = 0x1a,  /* SUB */
+	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
 	
-	/* array types ('@'..'Z') */
-	MPT_ENUM(TypeArray)    = '@',   /* 0x40: generic array */
+	/* vector types (0x20..0x3f) */
+	MPT_ENUM(TypeVecBase)   = ' ',   /* 0x20: generic vector */
 	
-	/* transport formats */
-	MPT_ENUM(TypeFloat80)  = '`',   /* 0x60: 80bit float */
+	/* array types ('@'..'Z'..0x5f) */
+	MPT_ENUM(TypeArrBase)   = '@',   /* 0x40: generic array */
+	
+	/* scalar types ('a'..'z'..0x7f) */
+	MPT_ENUM(TypeFloat80)   = '`',   /* 0x60: 80bit float */
 	
 	/* types with printable representation ('a'..'z') */
 #if __SIZEOF_LONG__ == 8
-	MPT_ENUM(TypeLong)     = 'x',
-	MPT_ENUM(TypeULong)    = 't',
+	MPT_ENUM(TypeLong)      = 'x',
+	MPT_ENUM(TypeULong)     = 't',
 #elif __SIZEOF_LONG__ == 4
-	MPT_ENUM(TypeLong)     = 'i',
-	MPT_ENUM(TypeULong)    = 'u',
+	MPT_ENUM(TypeLong)      = 'i',
+	MPT_ENUM(TypeULong)     = 'u',
 #else
 # error: bad sizeof(long)
 #endif
-	/* vector format flag, make typed version via (0x80 | <typeid>) for builtin types (0x01..0x7f) */
-	MPT_ENUM(TypeVector)   = 0x80,
-	
-	MPT_ENUM(TypeUser)     = 0x100,
-	MPT_ENUM(_TypeFinal)   = 0x7fffffff
+	MPT_ENUM(TypeUser)      = 0x80,
+	MPT_ENUM(_TypeFinal)    = 0xff
 };
 
 enum MPT_ENUM(LogType) {
@@ -191,6 +190,16 @@ MPT_STRUCT(value)
 	{ }
 	inline void set(const struct value &v)
 	{ fmt = v.fmt; ptr = v.ptr; }
+	
+	static bool isPointer(int);
+	static bool isScalar(int);
+	static bool isVector(int);
+	static bool isArray(int);
+	
+	static const char *vectorFormat(int);
+#else
+# define MPT_value_isVector(v) (((v) & 0x7f) >= 0x20 && ((v) & 0x7f) < 0x40)
+# define MPT_value_isArray(v)  (((v) & 0x7f) >= 0x40 && ((v) & 0x7f) < 0x60)
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
@@ -459,8 +468,7 @@ public:
     }
     const char *fmt(void)
     {
-        static const char fmt[2] = {(TypeVector | typeIdentifier<T>())};
-        return fmt;
+        return value::vectorFormat(typeIdentifier<T>());
     }
 protected:
     T *_base;

@@ -357,33 +357,42 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		}
 	  default:
 		/* array conversion */
-		if (dtype >= '@' && dtype <= 'Z') {
-			/* require same or generic type */
-			if (dtype != '@' && ftype != dtype) {
-				return MPT_ERROR(BadType);
+		if (MPT_value_isArray(dtype)) {
+			if (ftype != dtype) {
+				/* require generic array target */
+				if ((dtype & 0x1f)
+				    || !MPT_value_isArray(ftype)) {
+					return MPT_ERROR(BadType);
+				}
 			}
 			mpt_array_clone(dest, (MPT_STRUCT(array) *) from);
 		}
 		/* vector conversion */
-		else if (dtype >= MPT_ENUM(TypeVector) && dtype < MPT_ENUM(TypeUser)) {
+		else if (MPT_value_isVector(dtype)) {
 			struct iovec *vec = dest;
 			
+			/* no special/pointer types */
+			if ((ftype & 0x7f) < 0x20) {
+				return MPT_ERROR(BadType);
+			}
 			/* copy vector data */
-			if (ftype >= MPT_ENUM(TypeVector) && ftype < MPT_ENUM(TypeUser)) {
+			if (MPT_value_isVector(ftype)) {
 				/* require same or generic type */
-				if (dtype == MPT_ENUM(TypeVector) || dtype == ftype) {
-					memcpy(dest, from, flen);
-				} else {
+				if ((dtype & 0x1f) && dtype != ftype) {
 					return MPT_ERROR(BadType);
 				}
+				memcpy(dest, from, flen);
 			}
 			/* convert from array */
-			else if ((ftype >= '@' && ftype <= 'Z')
-			         && ((dtype == MPT_ENUM(TypeVector))
-			             || (dtype & ~MPT_ENUM(TypeVector)) == tolower(ftype))) {
+			else if (MPT_value_isArray(ftype)) {
 				MPT_STRUCT(array) *a = (MPT_STRUCT(array) *) from;
 				MPT_STRUCT(buffer) *b;
 				
+				/* check base type */
+				if ((dtype & 0x1f)
+			            && (dtype & 0x1f) != (ftype & 0x1f)) {
+					return MPT_ERROR(BadType);
+				}
 				if ((b = a->_buf) && b->used) {
 					vec->iov_base = b + 1;
 					vec->iov_len = b->used;
@@ -393,12 +402,13 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 				}
 			}
 			/* convert from scalar */
-			else if (dtype == MPT_ENUM(TypeVector) || dtype == (ftype | MPT_ENUM(TypeVector))) {
-				vec->iov_base = (void *) from;
-				vec->iov_len = flen;
+			else if ((dtype & 0x1f)
+			         && (dtype & 0x1f) != (ftype & 0x1f)) {
+				return MPT_ERROR(BadType);
 			}
 			else {
-				return MPT_ERROR(BadType);
+				vec->iov_base = (void *) from;
+				vec->iov_len = flen;
 			}
 		}
 		/* unable to convert */

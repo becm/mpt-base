@@ -48,9 +48,9 @@ static int fromText(struct paramSource *par, int type, void *dest)
 			return txt ? strlen(txt) : 0;
 		}
 		if (!txt) return -2;
-	} else if (*par->val.fmt == ((char) (MPT_ENUM(TypeVector) | 'c'))) {
+	} else if (*par->val.fmt == ('c' - 0x40)) {
 		const struct iovec *vec = par->val.ptr;
-		if (type == *par->val.fmt || type == MPT_ENUM(TypeVector)) {
+		if (type == *par->val.fmt || type == MPT_ENUM(TypeVecBase)) {
 			*((struct iovec *) dest) = *vec;
 			return sizeof(*vec);
 		}

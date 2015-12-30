@@ -39,7 +39,7 @@ protected:
 MPT_STRUCT(array)
 {
 #ifdef __cplusplus
-	enum { Type = TypeArray };
+	enum { Type = TypeArrBase };
 	
 	array(array const&);
 	array(size_t = 0);

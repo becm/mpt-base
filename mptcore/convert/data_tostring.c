@@ -61,7 +61,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		*from = ((uint8_t *) from) + sizeof(*a);
 		return base;
 	}
-	if (type == ('c' | MPT_ENUM(TypeVector))) {
+	if (type == ('c' - 0x40)) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;
