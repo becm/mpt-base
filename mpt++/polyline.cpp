@@ -192,10 +192,9 @@ bool Polyline::modified(int dim) const
 const char *Polyline::format() const
 { return _rawType; }
 
-int Polyline::unref()
+void Polyline::unref()
 {
     delete this;
-    return 0;
 }
 
 Slice<dpoint> Polyline::values(int part) const

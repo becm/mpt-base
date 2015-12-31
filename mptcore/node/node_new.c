@@ -18,24 +18,10 @@ struct _inline_meta
 	uint64_t info;
 };
 
-static MPT_INTERFACE(metatype) *nodeAddref(MPT_INTERFACE(metatype) *meta)
+static void nodeUnref(MPT_INTERFACE(metatype) *meta)
 {
-	struct _inline_meta *node = (void *) meta;
-	MPT_INTERFACE(metatype) *ref;
-	
-	if (!(meta = mpt_meta_clone(meta))) {
-		return 0;
-	}
-	if ((ref = meta->_vptr->addref(meta))) {
-		node->node->_meta = meta;
-		return ref;
-	}
-	meta->_vptr->unref(meta);
-	return 0;
+	(void) meta;
 }
-static int nodeUnref(MPT_INTERFACE(metatype) *meta)
-{ (void) meta; return 0; }
-
 static int nodeAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *val)
 {
 	struct _inline_meta *m = (void *) meta;
@@ -45,22 +31,39 @@ static int nodeAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *va
 	return 0;
 }
 
-static void *nodeCast(MPT_INTERFACE(metatype) *meta, int type)
+static int nodeConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
 	struct _inline_meta *m = (void *) meta;
-	switch (type) {
-	  case MPT_ENUM(TypeMeta): return meta;
-	  case MPT_ENUM(TypeNode): return m->node;
-	  case 's': return _mpt_geninfo_value(&m->info, 0) > 0 ? (&m->info) + 1 : 0;
-	  default: return 0;
+	void **dest = ptr;
+	
+	if (type & MPT_ENUM(ValueConsume)) {
+		return MPT_ERROR(BadArgument);
 	}
+	if (!type) {
+		static const char types[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeNode), 's', 0 };
+		if (dest) *dest = (void *) types;
+		return 0;
+	}
+	switch (type) {
+	  case MPT_ENUM(TypeMeta): ptr = meta; break;
+	  case MPT_ENUM(TypeNode): ptr = m->node; break;
+	  case 's': ptr = _mpt_geninfo_value(&m->info, 0) >= 0 ? (&m->info) + 1 : 0; break;
+	  default: return MPT_ERROR(BadType);
+	}
+	if (dest) *dest = ptr;
+	return type;
+}
+static MPT_INTERFACE(metatype) *nodeClone(MPT_INTERFACE(metatype) *meta)
+{
+	struct _inline_meta *m = (void *) meta;
+	return _mpt_geninfo_clone(&m->info);
 }
 
 static const MPT_INTERFACE_VPTR(metatype) _meta_control = {
 	nodeUnref,
-	nodeAddref,
 	nodeAssign,
-	nodeCast
+	nodeConv,
+	nodeClone
 };
 
 extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, size_t dlen)
@@ -104,7 +107,7 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, size_t dlen)
 		
 		m->_base._vptr = &_meta_control;
 		m->node = node;
-		if (_mpt_geninfo_init(&m->info, MPT_align(dlen) + sizeof(m->info), 1) < 0) {
+		if (_mpt_geninfo_init(&m->info, MPT_align(dlen) + sizeof(m->info)) < 0) {
 			free(node);
 			return 0;
 		}

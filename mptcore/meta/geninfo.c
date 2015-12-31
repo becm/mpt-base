@@ -13,55 +13,10 @@
 #include "core.h"
 
 struct metaInfo {
-	uint8_t  size, /* free allocated memory */
+	uint16_t size, /* free allocated memory */
 	         used; /* used data size */
-	uint16_t line;
-	uint32_t ref;
+	uint32_t line;
 };
-
-/*!
- * \brief increase geninfo reference count
- * 
- * increase reference count of geninfo data
- * 
- * \param raw start of geninfo data
- * 
- * \return new reference count
- */
-extern uint32_t _mpt_geninfo_addref(uint64_t *raw)
-{
-	struct metaInfo *info = (void *) raw;
-	int32_t c = info->ref;
-	
-	if (!c) {
-		errno = EINVAL;
-		return 0;
-	}
-	if ((c = (++info->ref)) > 0) {
-		return c;
-	}
-	--info->ref;
-	errno = ERANGE;
-	
-	return 0;
-}
-/*!
- * \brief decrease geninfo reference count
- * 
- * decrease reference count of geninfo data
- * 
- * \param raw start of geninfo data
- * 
- * \return new reference count
- */
-extern uint32_t _mpt_geninfo_unref(uint64_t *raw)
-{
-	struct metaInfo *info = (void *) raw;
-	uint32_t c = info->ref;
-	
-	if (!c) return 1;
-	return --info->ref;
-}
 static int geninfoSet(struct metaInfo *info, const char *val, int len)
 {
 	if (len < 0) {
@@ -95,7 +50,6 @@ static int geninfoSet(struct metaInfo *info, const char *val, int len)
  * \brief get/set geninfo value
  * 
  * Set value of geninfo data.
- * Return 0 for type request!
  * 
  * \param raw  start of geninfo data
  * \param prop property to change/request
@@ -108,11 +62,12 @@ extern int _mpt_geninfo_value(uint64_t *raw, const MPT_STRUCT(value) *val)
 	struct metaInfo *info = (void *) raw;
 	const void *ptr;
 	const char *base;
-	size_t line, len;
+	size_t len;
+	uint32_t line;
 	int ret;
 	
 	if (!val) {
-		return info->used;
+		return info->used ? info->used - 1 : MPT_ERROR(BadValue);
 	}
 	if (!val->fmt) {
 		return geninfoSet(info, val->ptr, -1);
@@ -124,7 +79,7 @@ extern int _mpt_geninfo_value(uint64_t *raw, const MPT_STRUCT(value) *val)
 	ptr = val->ptr;
 	if (!(base = mpt_data_tostring(&ptr, val->fmt[0], &len))) {
 		/* require string or integer */
-		if ((ret = mpt_data_convert(&ptr, val->fmt[0], &line, 'q')) < 0) {
+		if ((ret = mpt_data_convert(&ptr, val->fmt[0], &line, 'u')) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		ret = 1;
@@ -151,7 +106,7 @@ extern int _mpt_geninfo_value(uint64_t *raw, const MPT_STRUCT(value) *val)
 			return MPT_ERROR(BadValue);
 		}
 		/* require integer */
-		if (mpt_data_convert(&ptr, val->fmt[0], &line, 'q') < 0) {
+		if (mpt_data_convert(&ptr, val->fmt[0], &line, 'u') < 0) {
 			return MPT_ERROR(BadType);
 		}
 		info->line = line;
@@ -173,7 +128,7 @@ extern int _mpt_geninfo_value(uint64_t *raw, const MPT_STRUCT(value) *val)
  * 
  * \return >= 0 on success
  */
-extern int _mpt_geninfo_init(void *raw, size_t dlen, uint32_t ref)
+extern int _mpt_geninfo_init(void *raw, size_t dlen)
 {
 	struct metaInfo *info = raw;
 	
@@ -181,13 +136,13 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen, uint32_t ref)
 		return -2;
 	}
 	dlen -= sizeof(*info);
-	if (dlen > UINT8_MAX) {
-		dlen = UINT8_MAX;
+	if (dlen > UINT16_MAX) {
+		dlen = UINT16_MAX;
 	}
 	info->size = dlen;
 	info->used = 0;
 	info->line = 0;
-	info->ref  = ref;
 	
 	return dlen;
 }
+

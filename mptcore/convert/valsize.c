@@ -33,7 +33,7 @@ static const struct {
 	{ 'y', sizeof(uint8_t) },
 	
 	{ 'n', sizeof(int16_t)  },
-	{ 'q', sizeof(uint32_t) },
+	{ 'q', sizeof(uint16_t) },
 	
 	{ 'i', sizeof(int32_t)  },
 	{ 'u', sizeof(uint32_t) },

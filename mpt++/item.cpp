@@ -50,7 +50,7 @@ int Group::property(struct property *pr) const
     if (!pr) return Type;
     return pr->name ? BadArgument : BadOperation;
 }
-int Group::setProperty(const char *name, source *)
+int Group::setProperty(const char *name, metatype *)
 { return name ? BadArgument : BadOperation; }
 
 size_t Group::clear(const metatype *)
@@ -73,12 +73,12 @@ bool Group::copy(const Group &from, logger *)
             if (c == t) { t = 0; break; }
         }
         metatype *m;
-        if (!t || !(m = *c)) continue;
-        Reference<metatype> ref(m->addref());
+        if (!t || !(m = *c) || !(m = m->clone())) continue;
         Item<metatype> *id;
-        if ((id = append(ref))) {
+        if ((id = append(m))) {
             id->setName(c->name());
-            ref.detach();
+        } else {
+            m->unref();
         }
     }
     return true;
@@ -92,12 +92,12 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         metatype *from;
         if (!(from = head->_meta)) continue;
 
-        if (from->typecast(0)) {
-            Reference<metatype> ref(from->addref());
+        if (from->conv(0, 0) > 0 && (from = from->clone())) {
             Item<metatype> *it;
-            if (ref && (it = append(ref))) {
-                ref.detach();
+            if ((it = append(from))) {
                 it->setName(head->ident.name());
+            } else {
+                from->unref();
             }
             continue;
         }
@@ -112,7 +112,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
 
         // set property
         value val;
-        if ((val.ptr = (const char *) mpt_meta_data(from))) {
+        if ((val.ptr = mpt_meta_data(from))) {
             val.fmt = 0;
             set(name, val, out);
             continue;
@@ -133,12 +133,6 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (out) out->warning(_func, "%s: %s", MPT_tr("invalid object type"), std::string(name, len).c_str());
             continue;
         }
-        object *obj = it->cast<object>();
-        if (!obj) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("invalid object instance"), std::string(name, len).c_str());
-            it->unref();
-            continue;
-        }
 
         // get item name
         name = mpt_convert_key(&pos, ":", &len);
@@ -149,7 +143,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             continue;
         }
 
-        if (GroupRelation(*this).find(obj->type(), name, len)) {
+        if (GroupRelation(*this).find(it->type(), name, len)) {
             if (out) out->warning(_func, "%s: %s", MPT_tr("conflicting object name"), std::string(name, len).c_str());
             it->unref();
             continue;
@@ -157,11 +151,13 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         const char *ident = name;
         int ilen = len;
 
+        object *obj = it->cast<object>();
+
         // find dependant items
-        while ((name = mpt_convert_key(&pos, 0, &len))) {
+        while (obj && (name = mpt_convert_key(&pos, 0, &len))) {
             metatype *curr;
-            if (relation) curr = relation->find(obj->type(), name, len);
-            else curr = GroupRelation(*this).find(obj->type(), name, len);
+            if (relation) curr = relation->find(it->type(), name, len);
+            else curr = GroupRelation(*this).find(it->type(), name, len);
             object *from;
             if (curr && (from = curr->cast<object>())) {
                 obj->setProperties(*from, out);
@@ -170,9 +166,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (out) out->error(_func, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
             return false;
         }
-
-
-        // replace node metadata and update Item
+        // add item to group
         Item<metatype> *ni = append(it);
         if (!ni) {
             it->unref();
@@ -195,6 +189,8 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (!(ig->addItems(head->children, &rel, out))) return false;
             continue;
         }
+        // no property interface
+        if (!obj) continue;
 
         // load item properties
         for (node *sub = head->children; sub; sub = sub->next) {
@@ -213,7 +209,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                 }
                 continue;
             }
-            if ((data = (char *) mt->typecast('s'))) {
+            if (mt->conv('s', &data) >= 0) {
                 value txt(0, data);
                 if (!obj->set(name, txt, out) && out) {
                     out->warning(_func, "%s: %s: %s = %s", MPT_tr("failed to assign property"), ni->name(), name, txt.ptr);
@@ -233,21 +229,28 @@ metatype *Group::create(const char *type, int nl)
         nl = strlen(type);
     }
 
-    if (nl == 4 && !memcmp("line", type, nl)) return new Line;
+    if (nl == 4 && !memcmp("line", type, nl)) return new Reference<Line>::instance;
 
-    if (nl == 4 && !memcmp("text", type, nl)) return new Text;
+    if (nl == 4 && !memcmp("text", type, nl)) return new Reference<Text>::instance;
 
-    if (nl == 5 && !memcmp("world", type, nl)) return new World;
+    if (nl == 5 && !memcmp("world", type, nl)) return new Reference<World>::instance;
 
-    if (nl == 5 && !memcmp("graph", type, nl)) return new Graph;
+    if (nl == 5 && !memcmp("graph", type, nl)) return new Reference<Graph>::instance;
 
-    if (nl == 4 && !memcmp("axis", type, nl)) return new Axis;
+    if (nl == 4 && !memcmp("axis", type, nl)) return new Reference<Axis>::instance;
+    
+    class TypedAxis : public Reference<Axis>::instance
+    {
+    public:
+        TypedAxis(int type)
+        { format = type & 0x3; }
+    };
 
-    if (nl == 5 && !memcmp("xaxis", type, nl)) return new Axis(AxisStyleX);
+    if (nl == 5 && !memcmp("xaxis", type, nl)) return new TypedAxis(AxisStyleX);
 
-    if (nl == 5 && !memcmp("yaxis", type, nl)) return new Axis(AxisStyleY);
+    if (nl == 5 && !memcmp("yaxis", type, nl)) return new TypedAxis(AxisStyleY);
 
-    if (nl == 5 && !memcmp("zaxis", type, nl)) return new Axis(AxisStyleZ);
+    if (nl == 5 && !memcmp("zaxis", type, nl)) return new TypedAxis(AxisStyleZ);
 
     return 0;
 }
@@ -261,9 +264,6 @@ const Transform &Group::transform()
 // group storing elements in RefArray
 Collection::~Collection()
 { }
-
-int Collection::unref()
-{ delete this; return 0; }
 
 const Item<metatype> *Collection::item(size_t pos) const
 {

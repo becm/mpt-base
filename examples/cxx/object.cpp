@@ -67,6 +67,7 @@ extern int main(int , char * const argv[])
 	
 	mpt::Config config(argv[1]);
 	mpt::metatype *mt;
+	mpt::object *obj;
 	Double d(46);
 	
 	mpt::Object ao(new mpt::Axis);
@@ -86,16 +87,16 @@ extern int main(int , char * const argv[])
 	mt = config.get("next");
 	std::cout << "next identifier: " << typeid(*mt).name() << std::endl;
 	
-	mpt::Line *li = new mpt::Line;
+	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
 	mpt::Object lo(li);
 	mpt::Object op, *opt;
 	
 	std::cout << "lo: " << lo.type() << std::endl;
 	
-	mt = ao;
-	std::cout << "type(ao): " << typeid(*mt).name() << std::endl;
-	mt = lo;
-	std::cout << "type(lo): " << typeid(*mt).name() << std::endl;
+	obj = ao;
+	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
+	obj = lo;
+	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
 	mpt::Axis *na = new mpt::Axis;
 	
@@ -120,12 +121,12 @@ extern int main(int , char * const argv[])
 	op = lo;
 	
 	// failing assignments for empty/same metatype
-	op.setMeta(0);
-	op.setMeta(lo);
+	op.setObject(0);
+	op.setObject(lo);
 	opt = &lo;
-	opt->setMeta(lo);
+	opt->setObject(lo);
 	opt = &op;
-	opt->setMeta(lo);
+	opt->setObject(lo);
 	
 	double t = -.3e-5;
 	mpt::float80 v = t;

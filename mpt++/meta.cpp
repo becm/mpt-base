@@ -28,7 +28,7 @@ extern "C" mpt::metatype *mpt_meta_buffer(size_t size, const void *base)
 // metatype creator override
 extern "C" mpt::metatype *mpt_meta_new(size_t size)
 {
-    mpt::metatype *m = mpt::MetatypeGeneric::create(size);
+    mpt::metatype *m = mpt::Metatype::create(size);
     if (m) return m;
     mpt::Buffer *b = new mpt::Buffer;
     if (b) b->write(size, 0, 0);
@@ -51,10 +51,10 @@ protected:
     {
     public:
         Meta(size_t, node *);
-        metatype *addref();
-        int unref();
+        void unref();
         int assign(const value *);
-        void *typecast(int);
+        int conv(int, void *);
+        metatype *clone();
 
     protected:
         node *_base;
@@ -87,28 +87,11 @@ NodePrivate::~NodePrivate()
 }
 NodePrivate::Meta::Meta(size_t len, node *base) : _base(base)
 {
-    _mpt_geninfo_init(&_info, len - sizeof(*this) + sizeof(_info), 0);
+    _mpt_geninfo_init(&_info, len - sizeof(*this) + sizeof(_info));
 }
 
-metatype *NodePrivate::Meta::addref()
-{
-
-    metatype *ref, *meta;
-
-    if (!(meta = mpt_meta_clone(this))) {
-        return 0;
-    }
-    if ((ref = meta->addref())) {
-        _base->_meta = ref;
-        return meta;
-    }
-    meta->unref();
-    return 0;
-}
-int NodePrivate::Meta::unref()
-{
-    return 0;
-}
+void NodePrivate::Meta::unref()
+{ }
 int NodePrivate::Meta::assign(const value *val)
 {
     if (!val) {
@@ -117,14 +100,30 @@ int NodePrivate::Meta::assign(const value *val)
     }
     return _mpt_geninfo_value(&_info, val);
 }
-void *NodePrivate::Meta::typecast(int t)
+int NodePrivate::Meta::conv(int type, void *ptr)
 {
-    switch (t) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case node::Type: return _base;
-    case 's': return _mpt_geninfo_value(&_info, 0) ? ((&_info) + 1) : 0;
-    default: return 0;
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
     }
+    if (!type) {
+        static const char types[] = { metatype::Type, node::Type, 's', 0 };
+        if (dest) *dest = (void *) types;
+        return 0;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case node::Type: ptr = _base; break;
+    case 's': ptr = _mpt_geninfo_value(&_info, 0) >= 0 ? ((&_info) + 1) : 0; break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *NodePrivate::Meta::clone()
+{
+    return _mpt_geninfo_clone(&_info);
 }
 
 // metatype
@@ -135,6 +134,33 @@ const char *metatype::cast()
 metatype *metatype::create(size_t size)
 {
     return mpt_meta_new(size);
+}
+int metatype::assign(const value *)
+{
+    return BadOperation;
+}
+int metatype::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { Type, 0 };
+        if (dest) *dest = (void *) types;
+        return 0;
+    }
+    switch (type &= 0xff) {
+    case Type: ptr = this;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *metatype::clone(void)
+{
+    return 0;
 }
 
 // object
@@ -158,6 +184,10 @@ bool object::set(const char *name, const value &val, logger *out)
     }
     return false;
 }
+uintptr_t object::addref()
+{
+    return 0;
+}
 struct propertyErrorOut { object *obj; logger *out; };
 static int objectSetProperty(void *addr, const property *pr)
 {
@@ -172,25 +202,25 @@ bool object::setProperties(const object &from, logger *out)
 }
 
 
-MetatypeGeneric::MetatypeGeneric(size_t post, uintptr_t ref) : _info(0)
+Metatype::Metatype(size_t post) : _info(0)
 {
-    _mpt_geninfo_init(&_info, post+sizeof(_info), ref);
+    _mpt_geninfo_init(&_info, post+sizeof(_info));
 }
 
-MetatypeGeneric::~MetatypeGeneric()
+Metatype::~Metatype()
 { _info = 0; }
 
-int MetatypeGeneric::unref()
+void Metatype::unref()
 {
-    int c = _mpt_geninfo_unref(&_info);
-    if (!c) delete this;
-    return c;
+    delete this;
 }
 
-metatype *MetatypeGeneric::addref()
-{ return _mpt_geninfo_addref(&_info) ? this : 0; }
+metatype *Metatype::clone()
+{
+    return _mpt_geninfo_clone(&_info);
+}
 
-int MetatypeGeneric::assign(const value *val)
+int Metatype::assign(const value *val)
 {
     if (!val) {
         static const value empty(0, 0);
@@ -198,33 +228,45 @@ int MetatypeGeneric::assign(const value *val)
     }
     return _mpt_geninfo_value(&_info, val);
 }
-void *MetatypeGeneric::typecast(int t)
+int Metatype::conv(int type, void *ptr)
 {
-    switch (t) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case 's': return _mpt_geninfo_value(&_info, 0) ? ((&_info) + 1) : 0;
-    default: return 0;
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
     }
+    if (!type) {
+        static const char types[] = { metatype::Type, 's', 0 };
+        if (dest) *dest = (void *) types;
+        return 0;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this);
+    case 's': ptr = _mpt_geninfo_value(&_info, 0) >= 0 ? ((&_info) + 1) : 0;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
 }
 
-Slice<const char> MetatypeGeneric::data() const
+Slice<const char> Metatype::data() const
 {
     int len = _mpt_geninfo_value(const_cast<uint64_t *>(&_info), 0);
     return Slice<const char>((const char *) (&_info + 1), len);
 }
 
-MetatypeGeneric *MetatypeGeneric::create(size_t size)
+Metatype *Metatype::create(size_t size)
 {
     size = MPT_align(size);
 
-    MetatypeGeneric *m;
-    MetatypeGeneric::Small *ms;
-    MetatypeGeneric::Big *mb;
+    Metatype *m;
+    Metatype::Small *ms;
+    Metatype::Big *mb;
 
     if (size > sizeof(mb->data)) return 0;
 
-    if (size <= sizeof(ms->data)) m = ms = new MetatypeGeneric::Small;
-    else m = mb = new MetatypeGeneric::Big;
+    if (size <= sizeof(ms->data)) m = ms = new Metatype::Small;
+    else m = mb = new Metatype::Big;
 
     return m;
 }
@@ -275,35 +317,6 @@ const char *node::data(size_t *len) const
 {
     if (!_meta) return 0;
     return (const char *) mpt_meta_data(_meta, len);
-}
-
-// generic class for item access
-Metatype::Metatype(uintptr_t ref) : _ref(ref)
-{ }
-Metatype::~Metatype()
-{ }
-
-Metatype *Metatype::addref()
-{
-    return _ref.raise() ? this : 0;
-}
-int Metatype::unref()
-{
-    uintptr_t c = _ref.lower();
-    if (!c) delete this;
-    return c;
-}
-int Metatype::assign(const value *val)
-{
-    return val ? BadArgument : 0;
-}
-void *Metatype::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { metatype::Type, 0 };
-        return (void *) types;
-    }
-    return (type == metatype::Type) ? this : 0;
 }
 
 __MPT_NAMESPACE_END

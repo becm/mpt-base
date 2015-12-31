@@ -33,9 +33,8 @@ int main()
     mpt::client *c = new MyClient;
     mpt::output *o = *c;
 
-    mpt::object *j = o->cast<mpt::object>();
-    j->set("history", "/dev/stdout", 0);
-    j->set("level", "debug2", 0);
+    o->set("history", "/dev/stdout", 0);
+    o->set("level", "debug2", 0);
 
     o->message(__func__, mpt::client::LogLevel | mpt::LogFile, "%s = %i", "value", 5);
 

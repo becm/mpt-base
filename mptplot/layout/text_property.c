@@ -67,7 +67,7 @@ extern void mpt_text_init(MPT_STRUCT(text) *tx, const MPT_STRUCT(text) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	

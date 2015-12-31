@@ -21,7 +21,7 @@
  * \param str  output format
  * \param src  floating point data source
  */
-extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
+extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(metatype) *src)
 {
 	MPT_STRUCT(valfmt) fmt = MPT_VALFMT_INIT;
 	static const char valfloat[] = "fde";
@@ -83,13 +83,13 @@ extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
 			len = -1;
 		}
 		else if (last == 'c') {
-			if ((len = src->_vptr->conv(src, last, &val.c)) >= 0) {
+			if ((len = src->_vptr->conv(src, last | MPT_ENUM(ValueConsume), &val.c)) >= 0) {
 				fprintf(file, " %*c", fmt.width, val.c);
 				continue;
 			}
 		}
 		else if (strchr(valfloat, last)) {
-			if ((len = src->_vptr->conv(src, last, &val)) >= 0) {
+			if ((len = src->_vptr->conv(src, last | MPT_ENUM(ValueConsume), &val)) >= 0) {
 				switch (last) {
 				  case 'f': val.d = val.f; break;
 				  default:;
@@ -97,7 +97,7 @@ extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
 			}
 		}
 		else if (strchr(valunsigned, last)) {
-			if ((len = src->_vptr->conv(src, last, &val)) >= 0) {
+			if ((len = src->_vptr->conv(src, last | MPT_ENUM(ValueConsume), &val)) >= 0) {
 				switch (last) {
 				  case 'u': val.t = val.u; break;
 				  case 'q': val.t = val.q; break;
@@ -106,7 +106,7 @@ extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
 				}
 			}
 		}
-		else if ((len = src->_vptr->conv(src, last, &val)) >= 0) {
+		else if ((len = src->_vptr->conv(src, last | MPT_ENUM(ValueConsume), &val)) >= 0) {
 			switch (last) {
 			  case 'i': val.x = val.i; break;
 			  case 'n': val.x = val.i; break;
@@ -116,20 +116,20 @@ extern int mpt_fprint_val(FILE *file, MPT_INTERFACE(source) *src)
 		}
 		/* (re-)try data query */
 		if (len < 0) {
-			if ((len = src->_vptr->conv(src, last = 'c', &val.c)) > 0) {
+			if ((len = src->_vptr->conv(src, (last = 'c') | MPT_ENUM(ValueConsume), &val.c)) > 0) {
 				fprintf(file, currfmt ? "%*c" : " %*c", fmt.width, val.c);
 				continue;
 			}
-			else if ((len = src->_vptr->conv(src, last = 'd', &val.d)) >= 0);
-			else if ((len = src->_vptr->conv(src, last = 'f', &val.f)) >= 0) val.d = val.f;
-			else if ((len = src->_vptr->conv(src, last = 'x', &val.x)) >= 0);
-			else if ((len = src->_vptr->conv(src, last = 'i', &val.i)) >= 0) val.x = val.i;
-			else if ((len = src->_vptr->conv(src, last = 'n', &val.n)) >= 0) val.x = val.n;
-			else if ((len = src->_vptr->conv(src, last = 'b', &val.b)) >= 0) val.x = val.b;
-			else if ((len = src->_vptr->conv(src, last = 't', &val.t)) >= 0);
-			else if ((len = src->_vptr->conv(src, last = 'u', &val.n)) >= 0) val.t = val.u;
-			else if ((len = src->_vptr->conv(src, last = 'q', &val.n)) >= 0) val.t = val.q;
-			else if ((len = src->_vptr->conv(src, last = 'y', &val.y)) >= 0) val.t = val.y;
+			else if ((len = src->_vptr->conv(src, (last = 'd') | MPT_ENUM(ValueConsume), &val.d)) >= 0);
+			else if ((len = src->_vptr->conv(src, (last = 'f') | MPT_ENUM(ValueConsume), &val.f)) >= 0) val.d = val.f;
+			else if ((len = src->_vptr->conv(src, (last = 'x') | MPT_ENUM(ValueConsume), &val.x)) >= 0);
+			else if ((len = src->_vptr->conv(src, (last = 'i') | MPT_ENUM(ValueConsume), &val.i)) >= 0) val.x = val.i;
+			else if ((len = src->_vptr->conv(src, (last = 'n') | MPT_ENUM(ValueConsume), &val.n)) >= 0) val.x = val.n;
+			else if ((len = src->_vptr->conv(src, (last = 'b') | MPT_ENUM(ValueConsume), &val.b)) >= 0) val.x = val.b;
+			else if ((len = src->_vptr->conv(src, (last = 't') | MPT_ENUM(ValueConsume), &val.t)) >= 0);
+			else if ((len = src->_vptr->conv(src, (last = 'u') | MPT_ENUM(ValueConsume), &val.n)) >= 0) val.t = val.u;
+			else if ((len = src->_vptr->conv(src, (last = 'q') | MPT_ENUM(ValueConsume), &val.n)) >= 0) val.t = val.q;
+			else if ((len = src->_vptr->conv(src, (last = 'y') | MPT_ENUM(ValueConsume), &val.y)) >= 0) val.t = val.y;
 			/* invalid data */
 			else {
 				return nprint;

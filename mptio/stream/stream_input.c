@@ -25,12 +25,11 @@ struct streamInput {
 	size_t                idlen;
 };
 
-static int streamUnref(MPT_INTERFACE(input) *in)
+static void streamUnref(MPT_INTERFACE(input) *in)
 {
 	struct streamInput *srm = (void *) in;
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
-	return 0;
 }
 static int streamNext(MPT_INTERFACE(input) *in, int what)
 {

@@ -34,10 +34,11 @@
 
 MPT_STRUCT(out_data) {
 	MPT_INTERFACE(output) _base;
-	MPT_INTERFACE(object) _obj;
 	MPT_INTERFACE(logger) _log;
 	MPT_INTERFACE(input)  _in;
-	uintptr_t             _shared;
+	void                  *conv[3];
+	
+	MPT_STRUCT(reference) _ref;
 	
 	MPT_STRUCT(array)     _wait;
 	
@@ -61,7 +62,7 @@ MPT_STRUCT(out_data) {
 	uint8_t               _coding;
 };
 
-static int setHistfile(FILE **hist, MPT_INTERFACE(source) *src)
+static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
 {
 	const char *where = 0;
 	int len;
@@ -101,7 +102,7 @@ static int setHistfile(FILE **hist, MPT_INTERFACE(source) *src)
 	
 	return len;
 }
-static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
+static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(metatype) *src)
 {
 	MPT_TYPE(DataEncoder) enc;
 	MPT_TYPE(DataDecoder) dec;
@@ -153,109 +154,85 @@ static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(source) *src)
 }
 
 /* metatype interface */
-static int outputUnref(MPT_INTERFACE(metatype) *mt)
+static void outputUnref(MPT_INTERFACE(object) *obj)
 {
-	MPT_STRUCT(out_data) *odata = (void *) mt;
+	MPT_STRUCT(out_data) *od = (void *) obj;
+	uintptr_t c;
 	FILE *fd;
-	if (odata->_shared) {
-		return odata->_shared--;
+	if ((c = mpt_reference_lower(&od->_ref))) {
+		return;
 	}
-	mpt_outdata_fini(&odata->out);
-	mpt_command_clear(&odata->_wait);
+	mpt_outdata_fini(&od->out);
+	mpt_command_clear(&od->_wait);
 	
-	free(odata->in.base);
+	free(od->in.base);
 	
-	mpt_array_clone(&odata->hist.info._fmt, 0);
+	mpt_array_clone(&od->hist.info._fmt, 0);
 	
-	if ((fd = odata->hist.file)
+	if ((fd = od->hist.file)
 	    && (fd != stdin)
 	    && (fd != stdout)
 	    && (fd != stderr)) {
 		fclose(fd);
-		odata->hist.file = 0;
+		od->hist.file = 0;
 	}
-	
-	free(mt);
-	return 0;
+	free(obj);
 }
-static MPT_INTERFACE(metatype) *outputRef(MPT_INTERFACE(metatype) *mt)
+static uintptr_t outputRef(MPT_INTERFACE(object) *obj)
 {
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	if (++od->_shared) return mt;
-	--od->_shared;
-	return 0;
-}
-static int outputAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
-{
-	MPT_STRUCT(out_data) *od = (void *) mt;
+	MPT_STRUCT(out_data) *od = (void *) obj;
 	
-	return mpt_object_pset(&od->_obj, 0, val, 0);
-}
-static void *outputCast(MPT_INTERFACE(metatype) *mt, int type) {
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	
-	if (!type) {
-		static const char types[] = {
-			MPT_ENUM(TypeOutput), MPT_ENUM(TypeMeta),
-			MPT_ENUM(TypeObject), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput),
-			0 };
-		return (void*) types;
-	}
-	switch (type) {
-	  case MPT_ENUM(TypeMeta):   return mt;
-	  case MPT_ENUM(TypeOutput): return &od->_base;
-	  case MPT_ENUM(TypeObject): return &od->_obj;
-	  case MPT_ENUM(TypeLogger): return &od->_log;
-	  case MPT_ENUM(TypeInput):  return &od->_in;
-	  default: return 0;
-	}
-}
-
-
-/* object interface */
-static int outputObjectUnref(MPT_INTERFACE(object) *obj) {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
-	return outputUnref((void *) &odata->_base);
+	return mpt_reference_raise(&od->_ref);
 }
 static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
+	MPT_STRUCT(out_data) *od = (void *) obj;
 	const char *name;
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
 	}
 	if (!(name = pr->name)) {
-		return mpt_outdata_get(&odata->out, pr);
+		return mpt_outdata_get(&od->out, pr);
+	}
+	if (!*name) {
+		static const char fmt[] = { MPT_ENUM(TypeObject), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput), 0 };
+		
+		pr->name = "output";
+		pr->desc = "interface to putput data";
+		pr->val.fmt = fmt;
+		pr->val.ptr = od->conv;
+		
+		return 0;
 	}
 	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
 		pr->name = "history";
 		pr->desc = MPT_tr("history data output file");
 		pr->val.fmt = "";
-		pr->val.ptr = odata->hist.file;
-		return odata->hist.file ? 1 : 0;
+		pr->val.ptr = od->hist.file;
+		return od->hist.file ? 1 : 0;
 	}
 	if (!strcasecmp(name, "histfmt")) {
 		MPT_STRUCT(buffer) *buf;
 		pr->name = "histfmt";
 		pr->desc = "history data output format";
 		pr->val.fmt = "@";
-		pr->val.ptr = &odata->hist.info._fmt;
-		buf = odata->hist.info._fmt._buf;
+		pr->val.ptr = &od->hist.info._fmt;
+		buf = od->hist.info._fmt._buf;
 		return buf ? buf->used : 0;
 	}
 	if (!strcasecmp(name, "encoding")) {
 		pr->name = "encoding";
 		pr->desc = "socket stream encoding";
 		pr->val.fmt = "y";
-		pr->val.ptr = &odata->_coding;
-		return odata->_coding;
+		pr->val.ptr = &od->_coding;
+		return od->_coding;
 	}
-	return mpt_outdata_get(&odata->out, pr);
+	return mpt_outdata_get(&od->out, pr);
 }
-static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(source) *src) {
+static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, obj, _obj, _base);
+	MPT_STRUCT(out_data) *odata = (void *) obj;
 	MPT_STRUCT(outdata) *od = &odata->out;
 	int ret;
 	
@@ -329,13 +306,6 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	}
 	return ret;
 }
-
-static const MPT_INTERFACE_VPTR(object) objCtl = {
-	outputObjectUnref,
-	outputProperty,
-	outputSetProperty
-};
-
 /* output interface */
 static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
@@ -551,19 +521,17 @@ static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 	}
 	return 1 + cmd - ((MPT_STRUCT(command) *) (od->_wait._buf + 1));
 }
-
-
 static const MPT_INTERFACE_VPTR(output) outCtl = {
-	{ outputUnref, outputRef, outputAssign, outputCast },
+	{ outputUnref, outputRef, outputProperty, outputSetProperty },
 	outputPush,
 	outputSync,
 	outputAwait
 };
 
 /* logger interface */
-static int outputLoggerUnref(MPT_INTERFACE(logger) *log)
+static void outputLoggerUnref(MPT_INTERFACE(logger) *log)
 {
-	return outputUnref(MPT_reladdr(out_data, log, _log, _base));
+	outputUnref(MPT_reladdr(out_data, log, _log, _base));
 }
 static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list va)
 {
@@ -643,9 +611,9 @@ static const MPT_INTERFACE_VPTR(logger) logCtl = {
 	outputLog
 };
 
-static int outputInputUnref(MPT_INTERFACE(input) *in)
+static void outputInputUnref(MPT_INTERFACE(input) *in)
 {
-	return outputUnref(MPT_reladdr(out_data, in, _in, _base));
+	outputUnref(MPT_reladdr(out_data, in, _in, _base));
 }
 static int outputNext(MPT_INTERFACE(input) *in, int what)
 {
@@ -878,7 +846,8 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
 extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 {
 	static const MPT_STRUCT(out_data) defOut = {
-		{ &outCtl }, { &objCtl }, { &logCtl }, { &inputCtl }, 0,
+		{ &outCtl }, { &logCtl }, { &inputCtl }, { 0 },
+		{ 1 },
 		MPT_ARRAY_INIT,
 		MPT_OUTDATA_INIT, { 0, MPT_CODESTATE_INIT }, 0,
 		MPT_QUEUE_INIT,
@@ -897,6 +866,10 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 	odata->out.level = (MPT_ENUM(OutputLevelWarning) << 4) | MPT_ENUM(OutputLevelWarning);
 	
 	odata->_no = no;
+	
+	odata->conv[0] = &odata->_base;
+	odata->conv[1] = &odata->_log;
+	odata->conv[2] = &odata->_in;
 	
 	return &odata->_base;
 }

@@ -17,11 +17,11 @@
  * Set value formats from source.
  * 
  * \param arr  value format array
- * \param src  source descriptor
+ * \param src  metatype descriptor
  * 
  * \return consumed length
  */
-extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(source) *src)
+extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(metatype) *src)
 {
 	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
 	MPT_STRUCT(valfmt) fmt;

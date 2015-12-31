@@ -44,7 +44,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!cl) {
 		MPT_ABORT("missing client descriptor");
 	}
-	log = MPT_LOGGER((MPT_INTERFACE(metatype) *) cl->out);
+	log = mpt_output_logger(cl->out);
 	
 	/* try to execute next solver step */
 	while (step--) {

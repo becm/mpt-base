@@ -180,14 +180,14 @@ extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const 
 extern int mpt_outdata_print(MPT_STRUCT(outdata) *, FILE *, size_t , const void *);
 
 /* printing values */
-extern int mpt_fprint_val(FILE *, MPT_INTERFACE(source) *);
+extern int mpt_fprint_val(FILE *, MPT_INTERFACE(metatype) *);
 #endif
 
 /* clear outdata */
 extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
 /* get/set outdata property */
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
-extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(source) *);
+extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(metatype) *);
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 

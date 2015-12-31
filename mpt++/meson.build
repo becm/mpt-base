@@ -11,6 +11,7 @@ src_cxx = files(
   'object.cpp',
   'parse.cpp',
   'queue.cpp',
+  'reference.cpp'
 )
 if with_shared
   cxx = [ core ]

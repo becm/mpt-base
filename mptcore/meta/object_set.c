@@ -15,7 +15,7 @@
 
 
 struct paramSource {
-	MPT_INTERFACE(source) ctl;
+	MPT_INTERFACE(metatype) ctl;
 	const char *sep;
 	MPT_STRUCT(value) val;
 };
@@ -73,7 +73,15 @@ static int fromText(struct paramSource *par, int type, void *dest)
 }
 #endif
 
-static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
+static void propUnref(MPT_INTERFACE(metatype) *ctl)
+{
+	(void) ctl;
+}
+static int propAssign(MPT_INTERFACE(metatype) *ctl, const MPT_STRUCT(value) *val)
+{
+	(void) ctl; (void) val; return MPT_ERROR(BadOperation);
+}
+static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 {
 	struct paramSource *src = (void *) ctl;
 	const char *txt;
@@ -119,9 +127,15 @@ static int propConv(MPT_INTERFACE(source) *ctl, int type, void *dest)
 	src->val.ptr = txt;
 	return len;
 }
-
-static const MPT_INTERFACE_VPTR(source) _prop_vptr = {
-	propConv
+static MPT_INTERFACE(metatype) *propClone(MPT_INTERFACE(metatype) *ctl)
+{
+	(void) ctl; return 0;
+}
+static const MPT_INTERFACE_VPTR(metatype) _prop_vptr = {
+	propUnref,
+	propAssign,
+	propConv,
+	propClone
 };
 
 

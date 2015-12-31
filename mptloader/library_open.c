@@ -21,8 +21,13 @@ static char *get_prefix()
 #ifdef MPT_NO_CONFIG
 	return getenv("MPT_PREFIX");
 #else
-	MPT_INTERFACE(metatype) *conf = mpt_config_get(0, "mpt.prefix", '.', 0);
-	return conf ? conf->_vptr->typecast(conf, 's') : 0;
+	MPT_INTERFACE(metatype) *conf;
+	char *str;
+	if ((conf = mpt_config_get(0, "mpt.prefix", '.', 0))
+	    && conf->_vptr->conv(conf, 's', &str) >= 0) {
+		return str;
+	}
+	return 0;
 #endif
 }
 static char *get_prefix_lib()
@@ -30,8 +35,13 @@ static char *get_prefix_lib()
 #ifdef MPT_NO_CONFIG
 	return getenv("MPT_PREFIX_LIB");
 #else
-	MPT_INTERFACE(metatype) *conf = mpt_config_get(0, "mpt.prefix.lib", '.', 0);
-	return conf ? conf->_vptr->typecast(conf, 's') : 0;
+	MPT_INTERFACE(metatype) *conf;
+	char *str;
+	if ((conf = mpt_config_get(0, "mpt.prefix.lib", '.', 0))
+	    && conf->_vptr->conv(conf, 's', &str) >= 0) {
+		return str;
+	}
+	return 0;
 #endif
 }
 

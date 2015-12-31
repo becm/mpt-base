@@ -72,10 +72,9 @@ extern const char *mpt_log_start(FILE *fd, const char *where, int type)
 	return ansi;
 }
 
-static int loggerUnref(MPT_INTERFACE(logger) *out)
+static void loggerUnref(MPT_INTERFACE(logger) *out)
 {
 	(void) out;
-	return 1;
 }
 static FILE *loggerErr = 0;
 

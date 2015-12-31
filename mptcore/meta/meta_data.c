@@ -20,26 +20,18 @@
  * 
  * \return start of string/raw data
  */
-extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
+extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 {
-	const struct iovec *vec;
+	struct iovec vec;
 	const char *base;
 	
-	if (len && (vec = meta->_vptr->typecast(meta, MPT_ENUM(TypeVecBase)))) {
-		*len = vec->iov_len;
-		return vec->iov_base;
+	if (len && meta->_vptr->conv(meta, 'c' - 0x40, &vec) >= 0) {
+		*len = vec.iov_len;
+		return vec.iov_base;
 	}
-	if ((base = meta->_vptr->typecast(meta, 's'))) {
-		if (len) {
-			*len = base ? strlen(base) : 0;
-		}
+	if (meta->_vptr->conv(meta, 's', &base) >= 0) {
+		if (len) *len = base ? strlen(base) : 0;
 		return base;
-	}
-	if ((vec = meta->_vptr->typecast(meta, 'c' - 0x40))) {
-		if (len) {
-			*len = vec->iov_len;
-		}
-		return vec->iov_base;
 	}
 	return 0;
 }

@@ -122,7 +122,9 @@ enum MPT_ENUM(Types)
 # error: bad sizeof(long)
 #endif
 	MPT_ENUM(TypeUser)      = 0x80,
-	MPT_ENUM(_TypeFinal)    = 0xff
+	MPT_ENUM(_TypeFinal)    = 0xff,
+	
+	MPT_ENUM(ValueConsume)  = 0x100
 };
 
 enum MPT_ENUM(LogType) {
@@ -211,8 +213,8 @@ MPT_STRUCT(reference)
 #ifdef __cplusplus
 	inline reference(uintptr_t ref = 1) : _val(ref)
 	{ }
-	inline uintptr_t raise();
-	inline uintptr_t lower();
+	uintptr_t raise();
+	uintptr_t lower();
 protected:
 #endif
 	uintptr_t _val;
@@ -265,6 +267,25 @@ template<typename T>
 class Reference
 {
 public:
+    class instance : public T
+    {
+    public:
+        instance(uintptr_t initial = 1) : _ref(initial)
+        { }
+        void unref()
+        {
+            if (_ref.lower()) {
+                return;
+            }
+            delete this;
+        }
+        uintptr_t addref()
+        {
+            return _ref.raise();
+        }
+    protected:
+        reference _ref;
+    };
     Reference(T *ref = 0) : _ref(ref)
     { }
     Reference(const Reference &ref) : _ref(0)
@@ -279,7 +300,7 @@ public:
     {
         T *r = ref._ref;
         if (r == _ref) return true;
-        if (r && !(r = r->addref())) return false;
+        if (r && !r->addref()) return false;
         if (_ref) _ref->unref();
         _ref = r;
         return true;
@@ -322,31 +343,14 @@ public:
 	
 	static logger *defaultInstance(void);
 	
-	virtual int unref() = 0;
+	virtual void unref() = 0;
 	virtual int log(const char *, int, const char *, va_list) = 0;
 #else
 ; MPT_INTERFACE_VPTR(logger) {
-	int (*unref)(MPT_INTERFACE(logger) *);
+	void (*unref)(MPT_INTERFACE(logger) *);
 	int (*log)  (MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
-# define MPT_LOGGER(l) ((MPT_INTERFACE(logger) *) ((l) ? (l)->_vptr->typecast((l), MPT_ENUM(TypeLogger)) : 0))
-#endif
-};
-
-/*! interface to retrieve data elements */
-MPT_INTERFACE(source)
-#ifdef __cplusplus
-{
-protected:
-	inline ~source() {}
-public:
-	virtual int conv(int type, void * = 0) = 0;
-#else
-; MPT_INTERFACE_VPTR(source) {
-	int (*conv) (MPT_INTERFACE(source) *, int type, void *);
-}; MPT_INTERFACE(source) {
-	const MPT_INTERFACE_VPTR(source) *_vptr;
 #endif
 };
 
@@ -363,35 +367,43 @@ public:
 	
 	template <typename T>
 	inline T *cast(void)
-	{ return (T*) typecast(typeIdentifier<T>()); }
-	
+	{
+	    int t = typeIdentifier<T>();
+	    if (!value::isPointer(t)) return 0;
+	    T *ptr;
+	    if (conv(t, &ptr) < 0) return 0;
+	    return ptr;
+	}
 	static metatype *create(size_t size);
 	
-	virtual int unref() = 0;
-	virtual metatype *addref() = 0;
-	virtual int assign(const value *) = 0;
-	virtual void *typecast(int) = 0;
+	virtual void unref() = 0;
+	virtual int assign(const value *);
+	virtual int conv(int, void *);
+	virtual metatype *clone(void);
+	
+	inline int type()
+	{ return conv(0, 0); }
 #else
 ; MPT_INTERFACE_VPTR(metatype)
 {
-	int (*unref)(MPT_INTERFACE(metatype) *);
-	MPT_INTERFACE(metatype) *(*addref)(MPT_INTERFACE(metatype) *);
+	void (*unref)(MPT_INTERFACE(metatype) *);
 	int (*assign)(MPT_INTERFACE(metatype) *, const MPT_INTERFACE(value) *);
-	void *(*typecast)(MPT_INTERFACE(metatype) *, int);
+	int (*conv)(MPT_INTERFACE(metatype) *, int, void *);
+	MPT_INTERFACE(metatype) *(*clone)(MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
 	const MPT_INTERFACE_VPTR(metatype) *_vptr;
 #endif
 };
-
 
 /*! generic object interface */
 #ifndef __cplusplus
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object)
 {
-	int (*unref)(MPT_INTERFACE(object) *);
+	void (*unref)(MPT_INTERFACE(object) *);
+	uintptr_t (*addref)(MPT_INTERFACE(object) *);
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(source) *);
+	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
 };
 MPT_INTERFACE(object)
 {
@@ -405,9 +417,10 @@ protected:
 public:
 	enum { Type = TypeObject };
 	
-	virtual int unref(void) = 0;
+	virtual void unref(void) = 0;
+	virtual uintptr_t addref(void);
 	virtual int property(struct property *) const = 0;
-	virtual int setProperty(const char *, source * = 0) = 0;
+	virtual int setProperty(const char *, metatype * = 0) = 0;
 	
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
 	bool setProperties(const object &, logger * = logger::defaultInstance());
@@ -419,20 +432,6 @@ public:
 
 
 #ifdef __cplusplus
-class Metatype : public metatype
-{
-public:
-    int unref();
-    Metatype *addref();
-    int assign(const value *);
-    void *typecast(int);
-    
-protected:
-    Metatype(uintptr_t initref = 1);
-    virtual ~Metatype();
-    reference _ref;
-};
-
 /*! reduced slice with type but no data reference */
 template <typename T>
 class Slice
@@ -474,6 +473,48 @@ protected:
     T *_base;
     size_t _len;
 };
+
+
+/* generic implementation for metatype */
+class Metatype : public metatype
+{
+public:
+    void unref();
+    int assign(const value *);
+    int conv(int, void *);
+    metatype *clone();
+
+    Slice<const char> data(void) const;
+    class Small;
+    class Big;
+
+    static Metatype *create(size_t size);
+
+protected:
+    Metatype(size_t post = 0);
+    virtual ~Metatype();
+
+    uint64_t _info;
+};
+
+class Metatype::Small : public Metatype
+{
+public:
+    Small() : Metatype(sizeof(data))
+    { }
+protected:
+    friend class Metatype;
+    int8_t data[64-sizeof(Metatype)];
+};
+class Metatype::Big : public Metatype
+{
+public:
+    Big() : Metatype(sizeof(data))
+    { }
+protected:
+    friend class Metatype;
+    int8_t data[256-sizeof(Metatype)];
+};
 #endif
 
 /* text identifier for entity */
@@ -509,7 +550,7 @@ class Item : public Reference<T>, public identifier
 public:
     Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
     { }
-    inline int unref()
+    inline void unref()
     { delete this; return 0; }
     
 protected:
@@ -534,7 +575,7 @@ public:
     enum { Type = TypeGroup };
     
     int property(struct property *) const;
-    int setProperty(const char *, source *);
+    int setProperty(const char *, metatype *);
     
     virtual const Item<metatype> *item(size_t pos) const;
     virtual Item<metatype> *append(metatype *);
@@ -600,7 +641,7 @@ public:
 	bool bind(const char *, int = 2);
 	bool open(const char *, const char *mode = "w");
 	
-	bool set(source &);
+	bool set(metatype &);
 	bool set(const value *);
 protected:
 #else
@@ -614,20 +655,16 @@ class Stream;
 class Socket : public metatype, public socket
 {
 public:
-    Socket(socket * = 0, uintptr_t = 1);
+    Socket(socket * = 0);
     virtual ~Socket();
     
     enum { Type = socket::Type };
     
-    int unref();
-    Socket *addref();
+    void unref();
     int assign(const value *);
-    void *typecast(int);
+    int conv(int, void *);
     
     virtual Reference<class Stream> accept();
-    
-protected:
-    reference _ref;
 };
 #endif
 
@@ -667,6 +704,7 @@ size_t mpt_identifier_align(size_t);
 extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_len(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, int);
+extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
 extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
 
@@ -677,7 +715,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t);
 extern MPT_INTERFACE(metatype) *mpt_meta_clone(MPT_INTERFACE(metatype) *);
 
 /* get node/metatype text/raw data */
-extern const void *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
+extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 
 
 /* get object type name */
@@ -696,12 +734,12 @@ extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, 
 
 
 /* initialize geninfo data */
-extern int _mpt_geninfo_init(void *, size_t , uint32_t __MPT_DEFPAR(1));
-/* reference operations on geninfo data */
-extern uint32_t _mpt_geninfo_unref(uint64_t *);
-extern uint32_t _mpt_geninfo_addref(uint64_t *);
+extern int _mpt_geninfo_init(void *, size_t);
 /* property operations on geninfo data */
 extern int _mpt_geninfo_value(uint64_t *, const MPT_STRUCT(value) *);
+extern int _mpt_geninfo_line(const uint64_t *);
+/* create new metatype with data */
+extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
 
 
 /* log output */
@@ -716,12 +754,6 @@ extern const char *mpt_log_start(FILE *, const char *, int);
 /* write error message and abort program */
 extern void _mpt_abort(const char *, const char *, const char *, int) __attribute__ ((__noreturn__));
 
-#ifdef __cplusplus
-inline uintptr_t reference::raise()
-{ return mpt_reference_raise(this); }
-inline uintptr_t reference::lower()
-{ return mpt_reference_lower(this); }
-#endif
 __MPT_EXTDECL_END
 
 __MPT_NAMESPACE_END

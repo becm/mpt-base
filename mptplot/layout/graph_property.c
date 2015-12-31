@@ -76,7 +76,7 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int len = 0;
 	

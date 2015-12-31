@@ -166,10 +166,9 @@ LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(FlowNormal), _ig
 { }
 LogStore::~LogStore()
 { }
-int LogStore::unref()
+void LogStore::unref()
 {
     delete this;
-    return 0;
 }
 int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
 {

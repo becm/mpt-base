@@ -39,15 +39,14 @@ size_t compact(void **base, size_t len)
 { return mpt_array_compact(base, len); }
 
 // buffer operations
-int buffer::unref()
+void buffer::unref()
 {
-    if (shared) return shared--;
+    if (shared--) return;
     if (resize) resize(this, 0);
-    return 0;
 }
-buffer *buffer::addref()
+uintptr_t buffer::addref()
 {
-    if (++shared) return this;
+    if (!++shared) return shared;
     --shared; return 0;
 }
 
@@ -100,7 +99,7 @@ void *array::set(size_t len, const void *base)
     return _buf+1;
 }
 
-int array::set(source &src)
+int array::set(metatype &src)
 {
     struct ::iovec vec;
 
@@ -179,7 +178,7 @@ bool slice::trim(ssize_t len)
     _len -= len;
     return true;
 }
-int slice::set(source &src)
+int slice::set(metatype &src)
 {
     int len = array::set(src);
     if (len < 0) {
@@ -329,17 +328,13 @@ ssize_t PointerArray::offset(const void *ref) const
 }
 
 // buffer metatype
-Buffer::Buffer(uintptr_t ref) : Metatype(ref)
+Buffer::Buffer()
 { }
 Buffer::~Buffer()
 { }
-Buffer *Buffer::addref()
+void Buffer::unref()
 {
-    return Metatype::addref() ? this : 0;
-}
-int Buffer::unref()
-{
-    return Metatype::unref();
+    delete this;
 }
 int Buffer::assign(const value *val)
 {
@@ -396,19 +391,27 @@ int Buffer::assign(const value *val)
     len = tmp.fmt - val->fmt;
     return len ? (int) len : BadValue;
 }
-void *Buffer::typecast(int type)
+int Buffer::conv(int type, void *ptr)
 {
+    void **dest = (void **) ptr;
+
+    if (type & MPT_ENUM(ValueConsume)) {
+        return BadOperation;
+    }
     if (!type) {
         static const char types[] = { 's', IODevice::Type, array::Type, 0 };
-        return (void *) (mpt_array_string(&_d) ? types : types + 1);
+        if (dest) *dest = (void *) types;
+        return IODevice::Type;
     }
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case IODevice::Type: return static_cast<IODevice *>(this);
-    case array::Type:    return static_cast<array *>(&_d);
-    case 's': return mpt_array_string(&_d);
-    default: return 0;
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case IODevice::Type: ptr = static_cast<IODevice *>(this); break;
+    case array::Type:    ptr = static_cast<array *>(&_d); break;
+    case 's': ptr = mpt_array_string(&_d); break;
+    default: return BadType;
     }
+    if (dest) *dest = ptr;
+    return type;
 }
 ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {

@@ -19,7 +19,7 @@ MPT_STRUCT(node)
 	node(metatype *ref = 0);
 	~node();
 	
-	bool setMeta(metatype *mt);
+	void setMeta(metatype *mt);
 	struct node &operator=(const struct node & node);
 	
 	inline const Reference<metatype> &meta() const
@@ -107,19 +107,14 @@ extern int mpt_gnode_insert(MPT_STRUCT(node) *, int , MPT_STRUCT(node) *);
 /* add node as nth child of identifier */
 extern int mpt_node_insert(MPT_STRUCT(node) *, int , MPT_STRUCT(node) *);
 
-/* try to copy node data by peek/save */
-extern MPT_STRUCT(node) *mpt_node_copy(const MPT_STRUCT(node) *, MPT_STRUCT(node) *__MPT_DEFPAR(0));
-/* new node refering to same data */
-extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *, MPT_STRUCT(node) *__MPT_DEFPAR(0));
+/* new node with identical attributes */
+extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *);
 
 /* move non-existing nodes */
 size_t mpt_node_move(MPT_STRUCT(node) *, MPT_STRUCT(node) *);
 
-/* copy list/children */
-extern MPT_STRUCT(node) *mpt_list_copy(const MPT_STRUCT(node) *, MPT_STRUCT(node) * __MPT_DEFPAR(0));
-extern MPT_STRUCT(node) *mpt_tree_copy(const MPT_STRUCT(node) *);
 /* clone list/children */
-extern MPT_STRUCT(node) *mpt_list_clone(const MPT_STRUCT(node) *, MPT_STRUCT(node) * __MPT_DEFPAR(0));
+extern MPT_STRUCT(node) *mpt_list_clone(const MPT_STRUCT(node) *);
 extern MPT_STRUCT(node) *mpt_tree_clone(const MPT_STRUCT(node) *);
 
 
@@ -175,22 +170,20 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 inline node::node(struct node const& node) : next(0), prev(0), parent(0), children(0)
-{ _meta = node._meta ? node._meta->addref() : 0; }
+{ _meta = node._meta ? node._meta->clone() : 0; }
 inline node::node(metatype *ref) : _meta(ref), next(0), prev(0), parent(0), children(0)
 { }
 inline node &node::operator = (const struct node & other)
 {
-    Reference<metatype> m = other.meta();
+    Reference<metatype> m(other._meta ? other._meta->clone() : 0);
     if (_meta) _meta->unref();
     _meta = m.detach();
     return *this;
 }
-inline bool node::setMeta(metatype *ref)
+inline void node::setMeta(metatype *ref)
 {
-    if (!ref) return false;
     if (_meta) _meta->unref();
     _meta = ref;
-    return true;
 }
 #endif
 __MPT_NAMESPACE_END

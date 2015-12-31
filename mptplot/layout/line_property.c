@@ -28,7 +28,7 @@ extern void mpt_line_init(MPT_STRUCT(line) *line)
 	*line = def_line;
 }
 /* set/get functions */
-static int setPosition(float *val, MPT_INTERFACE(source) *src)
+static int setPosition(float *val, MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	if (!src) {
@@ -50,7 +50,7 @@ static int setPosition(float *val, MPT_INTERFACE(source) *src)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	

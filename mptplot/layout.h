@@ -219,7 +219,7 @@ MPT_STRUCT(text)
 	inline const char *font(void) const
 	{ return _font; }
 	
-	int set(source &);
+	int set(metatype &);
     protected:
 #endif
 	char              *_value;   /* text to render */
@@ -278,7 +278,7 @@ MPT_INTERFACE(polyline)
 #ifdef __cplusplus
 {
     public:
-	virtual int unref(void) = 0;
+	virtual void unref(void) = 0;
 	virtual void *raw(int dim, size_t len, size_t off = 0) = 0;
 	virtual ssize_t truncate(int dim = -1, ssize_t = -1) = 0;
 	virtual const char *format() const;
@@ -286,7 +286,7 @@ MPT_INTERFACE(polyline)
 	inline ~polyline() { }
 #else
 ; MPT_INTERFACE_VPTR(polyline) {
-	int (*unref)(MPT_INTERFACE(polyline) *);
+	void (*unref)(MPT_INTERFACE(polyline) *);
 	void *(*raw)(MPT_INTERFACE(polyline) *, int , size_t , size_t);
 	ssize_t (*truncate)(MPT_INTERFACE(polyline) *, int , ssize_t);
 	const char *(*format)(const MPT_INTERFACE(polyline) *);
@@ -302,7 +302,7 @@ MPT_INTERFACE(cycle)
     public:
 	enum { Type = TypeCycle };
 	
-	virtual int unref() = 0;
+	virtual void unref() = 0;
 	
 	virtual polyline *current(void) const = 0;
 	virtual polyline *advance(void) = 0;
@@ -336,27 +336,27 @@ extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlag) __MP
 
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
-extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(source) *);
+extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(metatype) *);
 
 extern void mpt_graph_init(MPT_STRUCT(graph) *, const MPT_STRUCT(graph) *__MPT_DEFPAR(0));
 extern void mpt_graph_fini(MPT_STRUCT(graph) *);
 extern int  mpt_graph_get (const MPT_STRUCT(graph) *, MPT_STRUCT(property) *);
-extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(source) *);
+extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(metatype) *);
 
 extern void mpt_axis_init(MPT_STRUCT(axis) *, const MPT_STRUCT(axis) *__MPT_DEFPAR(0));
 extern void mpt_axis_fini(MPT_STRUCT(axis) *);
 extern int  mpt_axis_get (const MPT_STRUCT(axis) *, MPT_STRUCT(property) *);
-extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(source) *);
+extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(metatype) *);
 
 extern void mpt_world_init(MPT_STRUCT(world) *, const MPT_STRUCT(world) *__MPT_DEFPAR(0));
 extern void mpt_world_fini(MPT_STRUCT(world) *);
 extern int  mpt_world_get (const MPT_STRUCT(world) *, MPT_STRUCT(property) *);
-extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(source) *);
+extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(metatype) *);
 
 extern void mpt_text_init(MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
 extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
-extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, MPT_INTERFACE(source) *);
+extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, MPT_INTERFACE(metatype) *);
 
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double );
@@ -364,13 +364,13 @@ extern void mpt_axis_sety(MPT_STRUCT(axis) *, double );
 extern void mpt_axis_setz(MPT_STRUCT(axis) *, double );
 
 /* general value setter */
-extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
-extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
-extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
-extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, MPT_INTERFACE(source) *);
+extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
 
-extern int mpt_color_pset(MPT_STRUCT(color) *, MPT_INTERFACE(source) *);
-extern int mpt_string_pset(char **, MPT_INTERFACE(source) *);
+extern int mpt_color_pset(MPT_STRUCT(color) *, MPT_INTERFACE(metatype) *);
+extern int mpt_string_pset(char **, MPT_INTERFACE(metatype) *);
 extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
 
 /* set line/color attributes */
@@ -485,7 +485,7 @@ public:
     Polyline(int dim = -1);
     virtual ~Polyline();
     
-    int unref();
+    void unref();
     void *raw(int dim, size_t len, size_t off = 0);
     ssize_t truncate(int dim = -1, ssize_t pos = -1);
     const char *format(void) const;
@@ -515,13 +515,13 @@ protected:
 class Cycle : public cycle
 {
 public:
-    Cycle(int dim = -1, uintptr_t ref = 1);
+    Cycle(int dim = -1);
     
     enum Flags {
         AutoGrow = 0x1
     };
-    Cycle *addref();
-    int unref();
+    void unref();
+    uintptr_t addref();
     
     Polyline *current(void) const;
     Polyline *advance(void);
@@ -536,83 +536,82 @@ public:
 protected:
     virtual ~Cycle();
     RefArray<Polyline> _part;
-    reference _ref;
     uint16_t _act;
     uint8_t  _dim;
     uint8_t  _flags;
 };
 
-class Line : public Metatype, public object, public line
+class Line : public object, public metatype, public line
 {
 public:
     enum { Type = line::Type };
     
-    Line(const line *from = 0, uintptr_t = 1);
-    ~Line();
+    Line(const line *from = 0);
+    virtual ~Line();
     
-    int unref();
-    Line *addref();
-    int assign(const struct value *);
-    void *typecast(int);
-    
+    void unref();
     int property(struct property *) const;
-    int setProperty(const char *, source * = 0);
+    int setProperty(const char *, metatype * = 0);
+    
+    int assign(const struct value *);
+    int conv(int, void *);
+    metatype *clone(void);
 };
 
-class Text : public Metatype, public object, public text
+class Text : public object, public metatype, public text
 {
 public:
     enum { Type = text::Type };
     
-    Text(const text *from = 0, uintptr_t = 1);
-    ~Text();
+    Text(const text *from = 0);
+    virtual ~Text();
     
-    int unref();
-    Text *addref();
-    int assign(const struct value *);
-    void *typecast(int);
-    
+    void unref();
     int property(struct property *) const;
-    int setProperty(const char *, source *);
+    int setProperty(const char *, metatype *);
+    
+    int assign(const struct value *);
+    int conv(int, void *);
+    metatype *clone(void);
 };
 
-class Axis : public Metatype, public object, public axis
+class Axis : public object, public metatype, public axis
 {
 public:
     enum { Type = axis::Type };
     
-    Axis(const axis *from = 0, uintptr_t = 1);
-    Axis(AxisFlag type, uintptr_t = 1);
-    ~Axis();
+    Axis(const axis *from = 0);
+    Axis(AxisFlag type);
+    virtual ~Axis();
     
-    int unref();
-    Axis *addref();
-    int assign(const struct value *);
-    void *typecast(int);
-    
+    void unref();
     int property(struct property *) const;
-    int setProperty(const char *, source *);
+    int setProperty(const char *, metatype *);
+    
+    int assign(const struct value *);
+    int conv(int, void *);
+    metatype *clone(void);
 };
 
-class World : public Metatype, public object, public world
+class World : public object, public metatype, public world
 {
 public:
     enum { Type = world::Type };
     
-    World(int = 0, uintptr_t = 1);
-    World(const world *, uintptr_t = 1);
-    ~World();
+    World(int = 0);
+    World(const world *);
+    virtual ~World();
     
-    int unref();
-    World *addref();
-    int assign(const struct value *);
-    void *typecast(int);
-    
+    void unref();
     int property(struct property *) const;
-    int setProperty(const char *, source *);
+    int setProperty(const char *, metatype *);
+    
+    int assign(const struct value *);
+    int conv(int, void *);
+    metatype *clone(void);
 };
 
-class Graph : public Metatype, public Collection, public Transform3, public graph
+class Graph : public Collection, public metatype, public Transform3, public graph
 {
 public:
     class Data : public Item<World>
@@ -627,16 +626,16 @@ public:
     };
     enum { Type = graph::Type };
     
-    Graph(const graph * = 0, uintptr_t ref = 1);
-    ~Graph();
+    Graph(const graph * = 0);
+    virtual ~Graph();
     
-    int unref();
-    Graph *addref();
+    void unref();
     int assign(const struct value *);
-    void *typecast(int);
+    int conv(int, void *);
+    metatype *clone(void);
     
     int property(struct property *) const;
-    int setProperty(const char *, source *);
+    int setProperty(const char *, metatype *);
     
     bool bind(const Relation &from, logger * = logger::defaultInstance());
     bool set(const char *, const value &, logger * = logger::defaultInstance());
@@ -660,21 +659,21 @@ protected:
     RefArray<Data>  _worlds;
 };
 
-class Layout : public Metatype, public Collection
+class Layout : public Collection, public metatype
 {
 public:
     enum { Type = Collection::Type };
     
-    Layout(uintptr_t = 1);
-    ~Layout();
+    Layout();
+    virtual ~Layout();
     
-    int unref();
-    Layout *addref();
+    void unref();
     int assign(const struct value *);
-    void *typecast(int);
+    int conv(int, void *);
+    metatype *clone(void);
     
     int property(struct property *pr) const;
-    int setProperty(const char *pr, source *src);
+    int setProperty(const char *pr, metatype *src);
     
     bool bind(const Relation &, logger * = logger::defaultInstance());
     bool set(const char *, const value &, logger *);

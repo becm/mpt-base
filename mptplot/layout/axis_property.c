@@ -58,7 +58,7 @@ extern void mpt_axis_init(MPT_STRUCT(axis) *ax, const MPT_STRUCT(axis) *from)
 	*ax = def_axis;
 }
 
-static int setPosition(char *val, MPT_INTERFACE(source) *src)
+static int setPosition(char *val, MPT_INTERFACE(metatype) *src)
 {
 	const char *s;
 	int len;
@@ -85,7 +85,7 @@ static int setPosition(char *val, MPT_INTERFACE(source) *src)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	

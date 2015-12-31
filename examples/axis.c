@@ -15,18 +15,29 @@ static int printm(void *out, const struct mpt_property *prop)
 static int getter(void *addr, struct mpt_property *pr)
 { return mpt_axis_get(addr, pr); }
 
-static int convert(MPT_INTERFACE(source) *src, int type, void *dest)
+static void unref(MPT_INTERFACE(metatype) *src)
+{
+	(void) src;
+}
+static int convert(MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
 	return mpt_convert_string((void *) (src+1), type, dest);
 }
-
-static MPT_INTERFACE_VPTR(source) src_vptr = { convert };
+static int assign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
+{
+	(void) src; (void) val; return MPT_ERROR(BadOperation);
+}
+static MPT_INTERFACE(metatype) *clone(MPT_INTERFACE(metatype) *src)
+{
+	(void) src; return 0;
+}
+static MPT_INTERFACE_VPTR(metatype) src_vptr = { unref, assign, convert, clone };
 
 int main(int argc, char *argv[])
 {
-	struct mpt_axis obj;
+	MPT_STRUCT(axis) obj;
 	struct {
-		MPT_INTERFACE(source) src;
+		MPT_INTERFACE(metatype) src;
 		char *txt;
 	} src;
 	

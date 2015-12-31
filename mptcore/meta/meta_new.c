@@ -4,19 +4,15 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
+#include <sys/uio.h>
 
 #include "array.h"
 
-static int metaUnref(MPT_INTERFACE(metatype) *meta)
+static void metaUnref(MPT_INTERFACE(metatype) *meta)
 {
-	uint32_t c = _mpt_geninfo_unref((uint64_t *) (meta+1));
-	if (!c) free(meta);
-	return c;
+	free(meta);
 }
-static MPT_INTERFACE(metatype) *metaAddref(MPT_INTERFACE(metatype) *meta)
-{ return _mpt_geninfo_addref((uint64_t *) (meta+1)) ? meta : 0; }
-
 static int metaAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *val)
 {
 	uint64_t *info = (uint64_t *) (meta + 1);
@@ -25,29 +21,79 @@ static int metaAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *va
 	}
 	return 0;
 }
-static void *metaCast(MPT_INTERFACE(metatype) *meta, int type)
+static int metaConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
 	uint64_t *info = (uint64_t *) (meta + 1);
-	switch (type) {
-	  case MPT_ENUM(TypeMeta): return meta;
-	  case 's': return _mpt_geninfo_value(info, 0) > 0 ? (info + 1) : 0;
-	  default: return 0;
+	void **dest = ptr;
+	
+	if (type & MPT_ENUM(ValueConsume)) {
+		return MPT_ERROR(BadArgument);
 	}
+	if (!type) {
+		static const char types[] = { MPT_ENUM(TypeMeta), 's', 0 };
+		if (dest) *dest = (void *) types;
+		return 0;
+	}
+	switch (type) {
+	  case MPT_ENUM(TypeMeta): ptr = meta; break;
+	  case 's': ptr = _mpt_geninfo_value(info, 0) >= 0 ? (info + 1) : 0; break;
+	  default: return MPT_ERROR(BadType);
+	}
+	if (dest) *dest = ptr;
+	return type;
+}
+static MPT_INTERFACE(metatype) *metaClone(MPT_INTERFACE(metatype) *meta)
+{
+	uint64_t *info = (uint64_t *) (meta + 1);
+	return _mpt_geninfo_clone(info);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
 	metaUnref,
-	metaAddref,
 	metaAssign,
-	metaCast
+	metaConv,
+	metaClone
 };
 
+/*!
+ * \ingroup mptMeta
+ * \brief generic metatype clone
+ * 
+ * Create clone of geninfo data in new metatype instance.
+ * 
+ * \param info  start of (meta)data for geninfo
+ * 
+ * \return new metatype instance
+ */
+extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *info)
+{
+	static const char vecfmt[] = { 'c' - 0x40, 0 };
+	MPT_INTERFACE(metatype) *meta;
+	MPT_STRUCT(value) val;
+	struct iovec vec;
+	int len;
+	
+	len = _mpt_geninfo_value((uint64_t *) info, 0);
+	
+	if (!(meta = mpt_meta_new(len + 1))) {
+		return 0;
+	}
+	vec.iov_len = len;
+	vec.iov_base = (void *) (info + 1);
+	val.fmt = vecfmt;
+	val.ptr = &vec;
+	if (meta->_vptr->assign(meta, &val) >= 0) {
+		return meta;
+	}
+	meta->_vptr->unref(meta);
+	return 0;
+}
 /*!
  * \ingroup mptMeta
  * \brief new metatype
  * 
  * Create default metatype
  * 
- * \param post	additional size for data
+ * \param post  additional size for data
  * 
  * \return new metatype instance
  */
@@ -74,7 +120,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t post)
 	info = (void *) (meta+1);
 	
 	/* initial settings */
-	if (_mpt_geninfo_init(info, post, 1) < 0) {
+	if (_mpt_geninfo_init(info, post) < 0) {
 		free(meta);
 		return 0;
 	}

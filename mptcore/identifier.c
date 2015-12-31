@@ -235,6 +235,37 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *
 
 /*!
  * \ingroup mptCore
+ * \brief compare identifier
+ * 
+ * Check if identifier are equal.
+ * 
+ * \param id   first identifier
+ * \param cmp  second identifier
+ * 
+ * \return start of identifier data
+ */
+extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *cmp)
+{
+	const char *idbase;
+	const char *cmpbase;
+	
+	int diff;
+	
+	if ((diff = id->_len - cmp->_len)) {
+		return diff;
+	}
+	idbase = id->_val;
+	if (id->_flags & MPT_IdentifierPointer) {
+		idbase = id->_base;
+	}
+	cmpbase = cmp->_val;
+	if (cmp->_flags & MPT_IdentifierPointer) {
+		cmpbase = cmp->_base;
+	}
+	return memcmp(idbase, cmpbase, id->_len);
+}
+/*!
+ * \ingroup mptCore
  * \brief identifier value
  * 
  * Get identifier data matches.

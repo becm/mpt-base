@@ -13,37 +13,61 @@
 
 struct typeSource
 {
-	MPT_INTERFACE(source) ctl;
+	MPT_INTERFACE(metatype) ctl;
 	const int8_t *src;
 	size_t srclen, esze;
 	const MPT_STRUCT(valfmt) *fmt;
 	size_t fmtlen;
 	char type;
 };
-static int getVoidType(MPT_INTERFACE(source) *src, int type, void *dest)
+static void histUnref(MPT_INTERFACE(metatype) *src)
+{
+	(void) src;
+}
+static int histAssign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
+{
+	(void) src; (void) val; return MPT_ERROR(BadOperation);
+}
+static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
 	struct typeSource *ts = (void *) src;
 	ssize_t left;
 	
-	if (type == MPT_ENUM(TypeValFmt)) {
+	if ((type & 0xff) == MPT_ENUM(TypeValFmt)) {
 		if (!ts->fmtlen) {
 			return -2;
 		}
 		if (dest) {
 			*((MPT_STRUCT(valfmt) *) dest) = *ts->fmt;
 		}
+		if (!(type & MPT_ENUM(ValueConsume))) {
+			return MPT_ENUM(TypeValFmt);
+		}
 		++ts->fmt;
 		--ts->fmtlen;
-		return sizeof(*ts->fmt);
+		return MPT_ENUM(TypeValFmt) | MPT_ENUM(ValueConsume);
 	}
-	if (type != ts->type) return -1;
-	if ((left = ts->srclen - (type = ts->esze)) < 0) return -2;
+	if ((type & 0xff) != ts->type) return MPT_ERROR(BadType);
+	if ((left = ts->srclen - (type = ts->esze)) < 0) return MPT_ERROR(BadOperation);
 	if (dest) memcpy(dest, ts->src, type);
+	
+	if (!(type & MPT_ENUM(ValueConsume))) {
+		return MPT_ENUM(TypeValFmt);
+	}
 	ts->src += type;
 	ts->srclen = left;
-	return type;
+	return ts->type | MPT_ENUM(TypeValFmt);
 }
-static const MPT_INTERFACE_VPTR(source) getCtl = { getVoidType };
+static MPT_INTERFACE(metatype) *histClone(MPT_INTERFACE(metatype) *src)
+{
+	(void) src; return 0;
+}
+static const MPT_INTERFACE_VPTR(metatype) getCtl = {
+	histUnref,
+	histAssign,
+	histConv,
+	histClone
+};
 
 /*!
  * \ingroup mptMessage

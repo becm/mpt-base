@@ -32,7 +32,7 @@ MPT_INTERFACE_VPTR(client)
 	
 	/* control client data and setup */
 	int  (*init) (MPT_INTERFACE(client) *);
-	int  (*prep) (MPT_INTERFACE(client) *, MPT_INTERFACE(source) *);
+	int  (*prep) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*step) (MPT_INTERFACE(client) *);
 	void (*clear)(MPT_INTERFACE(client) *);
 	
@@ -57,7 +57,7 @@ public:
 	virtual int  unref(void) = 0;
 	
 	virtual int  init(void);
-	virtual int  prep(MPT_INTERFACE(source) * = 0);
+	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(void) = 0;
 	virtual void clear(void);
 	
@@ -154,7 +154,7 @@ inline int client::report(logger *) const
 { return 0; }
 inline int client::init()
 { return 0; }
-inline int client::prep(source *)
+inline int client::prep(metatype *)
 { return 0; }
 inline int client::output(int) const
 { return 0; }

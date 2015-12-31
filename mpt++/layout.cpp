@@ -24,38 +24,18 @@ template class Reference<Graph>;
 line::line()
 { mpt_line_init(this); }
 
-Line::Line(const line *from, uintptr_t ref) : Metatype(ref)
+Line::Line(const line *from)
 {
     if (!from) return;
     line *l = this; *l = *from;
 }
 Line::~Line()
 { }
-// line metatype interface
-int Line::unref()
-{
-    return Metatype::unref();
-}
-Line *Line::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int Line::assign(const value *val)
-{
-    return val ? set(0, *val) : setProperty(0, 0);
-}
-void *Line::typecast(int type)
-{
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<object *>(this);
-    case line::Type: return static_cast<line *>(this);
-    case color::Type: return &color;
-    case lineattr::Type: return &attr;
-    default: return 0;
-    }
-}
 // line object interface
+void Line::unref()
+{
+    delete this;
+}
 int Line::property(struct property *prop) const
 {
     if (!prop) {
@@ -63,9 +43,41 @@ int Line::property(struct property *prop) const
     }
     return mpt_line_get(this, prop);
 }
-int Line::setProperty(const char *name, source *src)
+int Line::setProperty(const char *name, metatype *src)
 {
     return mpt_line_set(this, name, src);
+}
+// line metatype interface
+int Line::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
+}
+int Line::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+    
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, line::Type, color::Type, lineattr::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return line::Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case line::Type: ptr = static_cast<line *>(this); break;
+    case color::Type: ptr = &color; break;
+    case lineattr::Type: ptr = &attr; break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *Line::clone()
+{
+    return new Line(this);
 }
 
 // text data operations
@@ -86,41 +98,18 @@ bool text::setValue(const char *v)
 bool text::setFont(const char *v)
 { return mpt_string_set(&_font, v); }
 
-int text::set(source &src)
+int text::set(metatype &src)
 { return mpt_string_pset(&_value, &src); }
 
-Text::Text(const text *from, uintptr_t ref) : Metatype(ref), text(from)
+Text::Text(const text *from) : text(from)
 { }
 Text::~Text()
 { }
-// text metatype interface
-int Text::unref()
-{
-    return Metatype::unref();
-}
-Text *Text::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int Text::assign(const struct value *val)
-{
-    return val ? object::set(0, *val) : setProperty(0, 0);
-}
-void *Text::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { text::Type, object::Type, metatype::Type, 0 };
-        return (void *) types;
-    }
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<object *>(this);
-    case text::Type: return static_cast<text *>(this);
-    case color::Type: return &color;
-    default: return 0;
-    }
-}
 // line object interface
+void Text::unref()
+{
+    delete this;
+}
 int Text::property(struct property *prop) const
 {
     if (!prop) {
@@ -128,9 +117,40 @@ int Text::property(struct property *prop) const
     }
     return mpt_text_get(this, prop);
 }
-int Text::setProperty(const char *prop, source *src)
+int Text::setProperty(const char *prop, metatype *src)
 {
     return mpt_text_set(this, prop, src);
+}
+// text metatype interface
+int Text::assign(const struct value *val)
+{
+    return val ? object::set(0, *val) : setProperty(0, 0);
+}
+int Text::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+    
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, text::Type, color::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case text::Type: ptr = static_cast<text *>(this); break;
+    case color::Type: if (ptr) { memcpy(ptr, &color, sizeof(color)); dest = 0; } break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *Text::clone()
+{
+    return new Text(this);
 }
 
 // axis data operations
@@ -143,42 +163,20 @@ axis::~axis()
 {
     mpt_axis_fini(this);
 }
-Axis::Axis(const axis *from, uintptr_t ref) : Metatype(ref)
+Axis::Axis(const axis *from)
 {
     if (!from) return;
     axis *ax = this; *ax = *from;
 }
-Axis::Axis(AxisFlag type, uintptr_t ref) : Metatype(ref), axis(type)
+Axis::Axis(AxisFlag type) : axis(type)
 { }
 Axis::~Axis()
 { }
-// axis metatype interface
-int Axis::unref()
-{
-    return Metatype::unref();
-}
-Axis *Axis::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int Axis::assign(const value *val)
-{
-    return val ? set(0, *val) : setProperty(0, 0);
-}
-void *Axis::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { axis::Type, object::Type, metatype::Type, 0 };
-        return (void *) types;
-    }
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<object *>(this);
-    case axis::Type: return static_cast<axis *>(this);
-    default: return 0;
-    }
-}
 // axis object interface
+void Axis::unref()
+{
+    delete this;
+}
 int Axis::property(struct property *prop) const
 {
     if (!prop) {
@@ -186,9 +184,39 @@ int Axis::property(struct property *prop) const
     }
     return mpt_axis_get(this, prop);
 }
-int Axis::setProperty(const char *prop, source *src)
+int Axis::setProperty(const char *prop, metatype *src)
 {
     return mpt_axis_set(this, prop, src);
+}
+// axis metatype interface
+int Axis::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
+}
+int Axis::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+    
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, axis::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case axis::Type: ptr = static_cast<axis *>(this); break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *Axis::clone()
+{
+    return new Axis(this);
 }
 
 // world data operations
@@ -204,46 +232,22 @@ bool world::setAlias(const char *name, int len)
 {
     return mpt_string_set(&_alias, name, len) < 0 ? false : true;
 }
-World::World(const world *from, uintptr_t ref) : Metatype(ref)
+World::World(const world *from)
 {
     if (!from) return;
     world *w = this; *w = *from;
 }
-World::World(int c, uintptr_t ref) : Metatype(ref)
+World::World(int c)
 {
     cyc = (c < 0) ? 1 : c;
 }
 World::~World()
 { }
-// world metatype interface
-int World::unref()
-{
-    return Metatype::unref();
-}
-World *World::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int World::assign(const value *val)
-{
-    return val ? set(0, *val) : setProperty(0, 0);
-}
-void *World::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { world::Type, object::Type, metatype::Type, 0 };
-        return (void *) types;
-    }
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<object *>(this);
-    case world::Type: return static_cast<world *>(this);
-    case color::Type: return &color;
-    case lineattr::Type: return &attr;
-    default: return 0;
-    }
-}
 // world object interface
+void World::unref()
+{
+    delete this;
+}
 int World::property(struct property *prop) const
 {
     if (!prop) {
@@ -251,9 +255,41 @@ int World::property(struct property *prop) const
     }
     return mpt_world_get(this, prop);
 }
-int World::setProperty(const char *prop, source *src)
+int World::setProperty(const char *prop, metatype *src)
 {
     return mpt_world_set(this, prop, src);
+}
+// world metatype interface
+int World::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
+}
+int World::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+    
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, world::Type, color::Type, lineattr::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case world::Type: ptr = static_cast<world *>(this); break;
+    case color::Type: if (ptr) { memcpy(ptr, &color, sizeof(color)); dest = 0; } break;
+    case lineattr::Type: if (ptr) { memcpy(ptr, &attr, sizeof(attr)); dest = 0; } break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *World::clone()
+{
+    return new World(this);
 }
 
 // graph data operations
@@ -263,41 +299,18 @@ graph::graph()
 graph::~graph()
 { mpt_graph_fini(this); }
 
-Graph::Graph(const graph *from, uintptr_t ref) : Metatype(ref)
+Graph::Graph(const graph *from)
 {
     if (!from) return;
     graph *g = this; *g = *from;
 }
 Graph::~Graph()
 { }
-// graph metatype interface
-int Graph::unref()
-{
-    return Metatype::unref();
-}
-Graph *Graph::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int Graph::assign(const value *val)
-{
-    return val ? set(0, *val) : setProperty(0, 0);
-}
-void *Graph::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { graph::Type, object::Type, Group::Type, 0 };
-        return (void *) types;
-    }
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<object *>(this);
-    case Group::Type: return static_cast<Group *>(this);
-    case graph::Type: return static_cast<graph *>(this);
-    default: return 0;
-    }
-}
 // graph object interface
+void Graph::unref()
+{
+    delete this;
+}
 int Graph::property(struct property *prop) const
 {
     if (!prop) {
@@ -305,7 +318,7 @@ int Graph::property(struct property *prop) const
     }
     return mpt_graph_get(this, prop);
 }
-int Graph::setProperty(const char *prop, source *src)
+int Graph::setProperty(const char *prop, metatype *src)
 {
     int ret = mpt_graph_set(this, prop, src);
 
@@ -315,7 +328,85 @@ int Graph::setProperty(const char *prop, source *src)
     updateTransform();
     return ret;
 }
+// graph metatype interface
+int Graph::assign(const value *val)
+{
+    return val ? set(0, *val) : setProperty(0, 0);
+}
+int Graph::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, graph::Type, color::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case Group::Type: ptr = static_cast<Group *>(this); break;
+    case graph::Type: ptr = static_cast<graph *>(this); break;
+    case color::Type: if (ptr) { memcpy(ptr, &fg, sizeof(fg)); dest = 0; } break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *Graph::clone()
+{
+    return new Graph(this);
+}
 // graph group interface
+static Axis *makeAxis(metatype *m, logger *out, const char *_func, const char *name, int len)
+{
+    Axis *a;
+    if ((a = dynamic_cast<Axis *>(m)) && a->addref()) {
+        return a;
+    }
+    axis *base;
+
+    if (m->conv(axis::Type, &base) < 0) {
+        if (out) {
+            const char *msg = MPT_tr("unable to get axis information");
+            if (!name || !*name || len == 0) {
+                out->warning(_func, "%s", msg);
+            } else if (len < 0) {
+                out->warning(_func, "%s: %s", msg, name);
+            } else {
+                out->warning(_func, "%s: %s", msg, std::string(name, len).c_str());
+            }
+        }
+        base = 0;
+    }
+    return new Axis(base);
+}
+static World *makeWorld(metatype *m, logger *out, const char *_func, const char *name, int len)
+{
+    World *w;
+    if ((w = dynamic_cast<World *>(m)) && w->addref()) {
+        return w;
+    }
+    world *base;
+
+    if (m->conv(world::Type, &base) < 0) {
+        if (out) {
+            const char *msg = MPT_tr("unable to get axis information");
+            if (!name || !*name || len == 0) {
+                out->warning(_func, "%s", msg);
+            } else if (len < 0) {
+                out->warning(_func, "%s: %s", msg, name);
+            } else {
+                out->warning(_func, "%s: %s", msg, std::string(name, len).c_str());
+            }
+        }
+        base = 0;
+    }
+    return new World(base);
+}
 bool Graph::bind(const Relation &rel, logger *out)
 {
     static const char _func[] = "mpt::Graph::bind";
@@ -331,20 +422,15 @@ bool Graph::bind(const Relation &rel, logger *out)
 
     if (!(names = axes())) {
         for (auto &it : _items) {
-            object *obj;
-            if (!(m = it) || !(obj = m->cast<object>()) || obj->type() != Axis::Type) continue;
-            Axis *a;
-            if (!(a = dynamic_cast<Axis *>(m))) {
-                continue;
-            }
-            Reference<Axis> ref(a->addref());
+            if (!(m = it) || m->type() != Axis::Type) continue;
             curr = it.name();
-            if ((a = ref) && addAxis(a, curr)) {
-                ref.detach();
+            Axis *a = makeAxis(m, out, _func, curr, -1);
+            if (addAxis(a, curr)) {
                 continue;
             }
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
+            a->unref();
             _axes = oldaxes;
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
             return false;
         }
     }
@@ -355,42 +441,31 @@ bool Graph::bind(const Relation &rel, logger *out)
             _axes = oldaxes;
             return false;
         }
-        Axis *a;
-        if (!(a = dynamic_cast<Axis *>(m))) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("no axis type"), std::string(curr, len).c_str());
-            _axes = oldaxes;
-            return false;
-        }
         const char *sep;
         while ((sep = (char *) memchr(curr, ':', len))) {
             len -= (sep - curr) + 1;
             curr = sep + 1;
         }
-        Reference<Axis> ref(a->addref());
-        if (!(a = ref) || !addAxis(a, curr, len)) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
+        Axis *a = makeAxis(m, out, _func, curr, len);
+        if (!addAxis(a, curr, len)) {
+            a->unref();
             _axes = oldaxes;
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
             return false;
         }
-        ref.detach();
     }
     if (!(names = worlds())) {
         for (auto &it : _items) {
-            object *obj;
-            if (!(m = it) || !(obj = m->cast<object>()) || obj->type() != World::Type) continue;
-            World *w;
-            if (!(w = dynamic_cast<World *>(m))) {
-                continue;
-            }
-            Reference<World> ref(w->addref());
+            if (!(m = it) || m->type() != World::Type) continue;
             curr = it.name();
-            if ((w = ref) && addWorld(w, curr)) {
-                ref.detach();
+            World *w = makeWorld(m, out, _func, curr, -1);
+            if (addWorld(w, curr)) {
                 continue;
             }
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
+            w->unref();
             _axes = oldaxes;
             _worlds = oldworlds;
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
             return false;
         }
     }
@@ -401,26 +476,19 @@ bool Graph::bind(const Relation &rel, logger *out)
             _worlds = oldworlds;
             return false;
         }
-        World *w;
-        if (!(w = dynamic_cast<World *>(m))) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("no world type"), std::string(curr, len).c_str());
-            _axes = oldaxes;
-            _worlds = oldworlds;
-            return false;
-        }
         const char *sep;
         while ((sep = (char *) memchr(curr, ':', len))) {
             len -= (sep - curr) + 1;
             curr = sep + 1;
         }
-        Reference<World> ref(w->addref());
-        if (!(w = ref) || !addWorld(w, curr, len)) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
+        World *w = makeWorld(m, out, _func, curr, len);
+        if (!addWorld(w, curr, len)) {
+            w->unref();
             _axes = oldaxes;
             _worlds = oldworlds;
+            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
             return false;
         }
-        ref.detach();
     }
     for (auto &it : _items) {
         Group *g;
@@ -498,7 +566,7 @@ const Reference<Cycle> &Graph::cycle(int pos) const
     if (pos < 0 && (pos += _worlds.size()) < 0) return def;
     Data *d = _worlds.get(pos);
     if (!d->cycle) {
-        d->cycle = Reference<Cycle>(new Cycle);
+        d->cycle = Reference<Cycle>(new Reference<Cycle>::instance);
         World *w;
         if ((w = *d)) {
             static_cast<Cycle *>(d->cycle)->setSize(w->cyc);
@@ -551,40 +619,18 @@ Graph::Data::Data(World *w) : Item<World>(w)
 { }
 
 // layout extension
-Layout::Layout(uintptr_t ref) : Metatype(ref), _parse(0), _alias(0), _font(0)
+Layout::Layout() : _parse(0), _alias(0), _font(0)
 { }
 Layout::~Layout()
 {
     mpt_string_set(&_alias, 0, 0);
     delete _parse;
 }
-// layout metatype interface
-Layout *Layout::addref()
-{
-    return Metatype::addref() ? this : 0;
-}
-int Layout::unref()
-{
-    return Metatype::unref();
-}
-int Layout::assign(const struct value *val)
-{
-    return val ? object::set(0, *val) : setProperty(0, 0);
-}
-void *Layout::typecast(int t)
-{
-    if (!t) {
-        static const char types[] = { object::Type, Group::Type, 0 };
-        return (void *) types;
-    }
-    switch (t) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case object::Type: return static_cast<metatype *>(this);
-    case Group::Type: return static_cast<Group *>(this);
-    default: return 0;
-    }
-}
 // layout object interface
+void Layout::unref()
+{
+    delete this;
+}
 int Layout::property(struct property *pr) const
 {
     if (!pr) {
@@ -621,7 +667,7 @@ int Layout::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Layout::setProperty(const char *name, source *src)
+int Layout::setProperty(const char *name, metatype *src)
 {
     int len;
 
@@ -646,6 +692,44 @@ int Layout::setProperty(const char *name, source *src)
         return mpt_string_pset(&_font, src);
     }
     return BadArgument;
+}
+// layout metatype interface
+int Layout::assign(const struct value *val)
+{
+    return val ? object::set(0, *val) : setProperty(0, 0);
+}
+int Layout::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, object::Type, Group::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case object::Type: ptr = static_cast<object *>(this); break;
+    case Group::Type: ptr = static_cast<Group *>(this); break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
+metatype *Layout::clone()
+{
+    Layout *lay = new Layout;
+
+    lay->_items  = _items;
+    lay->_graphs = _graphs;
+
+    lay->setAlias(_alias);
+    lay->setFont(_font);
+
+    return lay;
 }
 
 const Item<Graph> &Layout::graph(int pos) const
@@ -675,14 +759,30 @@ bool Layout::bind(const Relation &rel, logger *out)
     for (auto &it : _items) {
         metatype *m;
         Graph *g;
-        if (!(m = it) || !(g = dynamic_cast<Graph *>(m))) continue;
+        if (!(m = it) || m->type() != Graph::Type) continue;
 
-        Reference<Graph> ref(g->addref());
-        if (!(g = ref) || !arr.append(g, it.name())) {
+        const char *name = it.name();
+        if (!(g = dynamic_cast<Graph *>(m)) || !g->addref()) {
+            struct graph *base;
+            if (m->conv(graph::Type, &base) < 0) {
+                if (out) {
+                    static const char _func[] = "mpt::Layout::bind\0";
+                    const char *msg = MPT_tr("unable to get graph information");
+                    if (!name || !*name) {
+                        out->warning(_func, "%s", msg);
+                    } else {
+                        out->warning(_func, "%s: %s", msg, name);
+                    }
+                }
+                base = 0;
+            }
+            g = new Graph(base);
+        }
+        if (!arr.append(g, name)) {
+            g->unref();
             _items = old;
             return false;
         }
-        ref.detach();
     }
     _graphs = arr;
     return true;

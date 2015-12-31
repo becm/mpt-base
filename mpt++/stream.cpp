@@ -45,15 +45,6 @@ long double float80::value() const
     return v;
 }
 
-void *output::typecast(int t)
-{
-    switch (t) {
-      case metatype::Type: return static_cast<metatype *>(this);
-      case output::Type: return this;
-      default: return 0;
-    }
-}
-
 int output::message(const char *from, int type, const char *fmt, ... )
 {
     logger *log;
@@ -61,7 +52,7 @@ int output::message(const char *from, int type, const char *fmt, ... )
     char buf[1024];
     int slen = 0;
 
-    if ((log = cast<logger>())) {
+    if ((log = mpt_output_logger(this))) {
         va_list ap;
         va_start(ap, fmt);
         slen = log->log(from, type, fmt, ap);
@@ -160,7 +151,7 @@ bool socket::bind(const char *addr, int listen)
     return (mpt_bind(this, addr, 0, listen) < 0) ? false : true;
 }
 
-bool socket::set(source &src)
+bool socket::set(metatype &src)
 {
     socket tmp;
     const char *dst;
@@ -195,7 +186,7 @@ bool socket::set(const value *val)
 }
 
 // stream class
-Stream::Stream(const streaminfo *from, uintptr_t ref) : _ref(ref), _inputFile(-1)
+Stream::Stream(const streaminfo *from) : _inputFile(-1)
 {
     if (!from) return;
     _mpt_stream_setfile(&_info, _mpt_stream_fread(from), _mpt_stream_fwrite(from));
@@ -210,41 +201,11 @@ Stream::~Stream()
     mpt_command_clear(&_msg);
 }
 
-// metatype interface
-int Stream::unref()
-{
-    uintptr_t c = _ref;
-    if (!c || (c = --_ref)) return c;
-    delete this;
-    return 0;
-}
-Stream *Stream::addref()
-{
-    intptr_t c = _ref;
-    if (!c) return 0;
-    if ((c = ++_ref) > 0) return this;  // limit to avoid race conditions
-    --_ref; return 0;
-}
-int Stream::assign(const value *val) {
-    if (!val) {
-        return mpt_stream_setter(this, 0);
-    }
-    return set(0, *val);
-}
-void *Stream::typecast(int type)
-{
-    if (!type) {
-        static const char types[] = { IODevice::Type, output::Type, input::Type, 0 };
-        return (void *) types;
-    }
-    switch (type) {
-    case IODevice::Type: return static_cast<IODevice *>(this);
-    case input::Type:    return static_cast<input *>(this);
-    case output::Type:   return static_cast<output *>(this);
-    default: return 0;
-    }
-}
 // object interface
+void Stream::unref()
+{
+    delete this;
+}
 int Stream::property(struct property *pr) const
 {
     if (!pr) {
@@ -270,7 +231,7 @@ int Stream::property(struct property *pr) const
     return BadArgument;
 }
 
-int Stream::setProperty(const char *pr, source *src)
+int Stream::setProperty(const char *pr, metatype *src)
 {
     if (!pr) {
         return mpt_stream_setter(this, src);
@@ -439,7 +400,7 @@ int Stream::getchar()
 }
 
 // socket class
-Socket::Socket(struct socket *from, uintptr_t ref) : _ref(ref)
+Socket::Socket(struct socket *from)
 {
     if (!from) return;
     *static_cast<socket *>(this) = *from;
@@ -448,27 +409,33 @@ Socket::Socket(struct socket *from, uintptr_t ref) : _ref(ref)
 Socket::~Socket()
 { }
 
-Socket *Socket::addref()
+void Socket::unref()
 {
-    return _ref.raise() ? this : 0;
-}
-int Socket::unref()
-{
-    uintptr_t c = _ref.lower();
-    if (!c) delete this;
-    return c;
+    delete this;
 }
 int Socket::assign(const value *val)
 {
     return (socket::set(val)) ? (val ? 1 : 0) : BadOperation;
 }
-void *Socket::typecast(int type)
+int Socket::conv(int type, void *ptr)
 {
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case socket::Type: return static_cast<metatype *>(this);
-    default: return 0;
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
     }
+    if (!type) {
+        static const char types[] = { socket::Type, metatype::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return socket::Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case socket::Type: ptr = static_cast<metatype *>(this); break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
 }
 
 Reference<Stream> Socket::accept()

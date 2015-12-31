@@ -53,8 +53,6 @@ extern int main(int , char * const [])
 	mpt::Pipe<mpt::Buffer> cqp;
 	mpt::Queue *raw = &qu;
 	
-	mpt::Reference<mpt::Queue> rq = cq.ref();
-	
 	buf.write(1, txt, strlen(txt));
 	
 	d.insert(3, 4);

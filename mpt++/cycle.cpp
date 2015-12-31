@@ -35,23 +35,20 @@ bool linepart::setCut(float val)
     return true;
 }
 
-Cycle::Cycle(int dim, uintptr_t ref) : _ref(ref), _act(0), _flags(Cycle::AutoGrow)
+Cycle::Cycle(int dim) : _act(0), _flags(Cycle::AutoGrow)
 { _dim = (dim >= 0) ? dim : 2; }
 
 Cycle::~Cycle()
 { }
 
-int Cycle::unref()
+void Cycle::unref()
 {
-    uintptr_t c = _ref.lower();
-    if (!c) delete this;
-    return c;
+    delete this;
 }
-Cycle *Cycle::addref()
+uintptr_t Cycle::addref()
 {
-    return _ref.raise() ? this : 0;
+    return 0;
 }
-
 Polyline *Cycle::append()
 {
     Polyline *pl;

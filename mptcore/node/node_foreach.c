@@ -43,8 +43,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 				continue;
 			}
 			/* default text metatype */
-			if (!curr->_vptr->assign(curr, 0)
-			    && (prop.val.ptr = curr->_vptr->typecast(curr, 's'))) {
+			if (curr->_vptr->conv(curr, 's', &prop.val.ptr) >= 0) {
 				prop.val.fmt = 0;
 			} else {
 				static const char metafmt[2] = { MPT_ENUM(TypeMeta) };

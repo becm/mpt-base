@@ -136,7 +136,7 @@ extern pid_t mpt_stream_pipe(MPT_STRUCT(streaminfo) *, const char *, char *const
 /* change mode (buffering, newline, ...) */
 extern int mpt_stream_setmode(MPT_STRUCT(stream) *, int);
 /* configure stream via converter function */
-extern int mpt_stream_setter(MPT_STRUCT(stream) *, MPT_INTERFACE(source) *);
+extern int mpt_stream_setter(MPT_STRUCT(stream) *, MPT_INTERFACE(metatype) *);
 
 /* connect stream to file/filedescr/process/address/memory */
 extern int mpt_stream_open(MPT_STRUCT(stream) *, const char *, const char *);
@@ -179,25 +179,21 @@ __MPT_EXTDECL_END
 struct msgtype;
 struct message;
 
-class Stream : public output, public object, public input, public logger, public IODevice, stream
+class Stream : public output, public input, public logger, public IODevice, stream
 {
 public:
-    Stream(const streaminfo * = 0, uintptr_t ref = 1);
+    Stream(const streaminfo * = 0);
     virtual ~Stream();
     
     enum { Type = IODevice::Type };
     
-    int unref();
-    Stream *addref();
-    int assign(const value *);
-    void *typecast(int);
+    void unref();
+    int property(struct property *) const;
+    int setProperty(const char *, metatype *);
     
     ssize_t push(size_t , const void *);
     int sync(int = -1);
     int await(int (*)(void *, const struct message *) = 0, void * = 0);
-    
-    int property(struct property *) const;
-    int setProperty(const char *, source *);
     
     int log(const char *, int, const char *, va_list);
     
@@ -215,11 +211,10 @@ public:
     bool open(void *, size_t , int = StreamRead);
     
     inline void close(void)
-    { assign(0); }
+    { setProperty(0, 0); }
     
 protected:
     array _msg;
-    uintptr_t _ref;
     int _inputFile;
     uint8_t _idlen;
 };

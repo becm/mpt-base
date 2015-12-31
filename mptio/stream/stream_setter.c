@@ -20,7 +20,7 @@
  * \retval 0  default value
  * \retval <0 error
  */
-extern int mpt_stream_setter(MPT_STRUCT(stream) *stream, MPT_INTERFACE(source) *src)
+extern int mpt_stream_setter(MPT_STRUCT(stream) *stream, MPT_INTERFACE(metatype) *src)
 {
 	const char *path, *arg = 0;
 	int len, how;

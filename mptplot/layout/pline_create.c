@@ -15,7 +15,7 @@ struct pl3Data
 	MPT_STRUCT(array) x, y, z;
 };
 
-static int pl3_unref(MPT_INTERFACE(polyline) *part)
+static void pl3_unref(MPT_INTERFACE(polyline) *part)
 {
 	struct pl3Data *pt = (void *) part;
 	
@@ -24,8 +24,6 @@ static int pl3_unref(MPT_INTERFACE(polyline) *part)
 	mpt_array_clone(&pt->z, 0);
 	
 	free(pt);
-	
-	return 0;
 }
 static ssize_t pl3_truncate(MPT_INTERFACE(polyline) *part, int dim, ssize_t len)
 {

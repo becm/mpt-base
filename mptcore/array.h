@@ -22,8 +22,8 @@ MPT_STRUCT(slice);
 MPT_STRUCT(buffer)
 {
 #ifdef __cplusplus
-	int unref();
-	buffer *addref();
+	void unref();
+	uintptr_t addref();
 protected:
 	friend struct array;
 	buffer();
@@ -58,7 +58,7 @@ MPT_STRUCT(array)
 	void *prepend(size_t , size_t = 0);
 	void *set(size_t , const void * = 0);
 	
-	int set(source &);
+	int set(metatype &);
 	int printf(const char *fmt, ... );
 	
 	array & operator=  (const array &);
@@ -86,7 +86,7 @@ struct slice : array
 	Slice<uint8_t> data() const;
 	
 	ssize_t write(size_t , const void *, size_t);
-	int set(source &);
+	int set(metatype &);
 	
 	bool shift(ssize_t);
 	bool trim (ssize_t);
@@ -282,17 +282,16 @@ protected:
 
 #ifdef _MPT_QUEUE_H
 /* IO extension to buffer */
-class Buffer : public Metatype, public IODevice, public EncodingArray
+class Buffer : public metatype, public IODevice, public EncodingArray
 {
 public:
     enum { Type = TypeIODevice };
-    Buffer(uintptr_t ref = 1);
+    Buffer();
     ~Buffer();
     
-    int unref();
-    Buffer *addref(void);
+    void unref();
     int assign(const value *);
-    void *typecast(int);
+    int conv(int , void *);
     
     ssize_t read(size_t , void *, size_t = 1);
     ssize_t write(size_t , const void *, size_t = 1);
@@ -623,7 +622,7 @@ public:
     LogStore(logger * = logger::defaultInstance());
     virtual ~LogStore();
     
-    int unref();
+    void unref();
     int log(const char *, int, const char *, va_list);
     
     virtual const LogEntry *nextEntry(void);
@@ -713,7 +712,6 @@ public:
     bool bind(const Relation &, logger * = logger::defaultInstance());
     
 protected:
-    int unref();
     ItemArray<metatype> _items;
 };
 

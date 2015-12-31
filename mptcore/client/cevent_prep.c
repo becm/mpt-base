@@ -11,8 +11,17 @@
 
 #include "client.h"
 
-
-static int sliceConv(MPT_INTERFACE(source) *src, int type, void *data)
+static void sliceUnref(MPT_INTERFACE(metatype) *src)
+{
+	(void) src;
+}
+static int sliceAssign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
+{
+	(void) src;
+	(void) val;
+	return MPT_ERROR(BadOperation);
+}
+static int sliceConv(MPT_INTERFACE(metatype) *src, int type, void *data)
 {
 	MPT_INTERFACE(slice) *s = (void *) (src+1);
 	char *base, *end;
@@ -57,6 +66,11 @@ static int sliceConv(MPT_INTERFACE(source) *src, int type, void *data)
 	
 	return len;
 }
+static MPT_INTERFACE(metatype) *sliceClone(MPT_INTERFACE(metatype) *src)
+{
+	(void) src;
+	return 0;
+}
 
 /*!
  * \ingroup mptClient
@@ -72,9 +86,9 @@ static int sliceConv(MPT_INTERFACE(source) *src, int type, void *data)
  */
 extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	static const MPT_INTERFACE_VPTR(source) dataVptr = { sliceConv };
+	static const MPT_INTERFACE_VPTR(metatype) dataVptr = { sliceUnref, sliceAssign, sliceConv, sliceClone };
 	struct {
-		MPT_INTERFACE(source) base;
+		MPT_INTERFACE(metatype) base;
 		MPT_STRUCT(slice) d;
 	} data = { { &dataVptr} , MPT_SLICE_INIT };
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;

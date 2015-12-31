@@ -109,7 +109,7 @@ class IODevice
 public:
     enum { Type = TypeIODevice };
     
-    virtual int unref(void) = 0;
+    virtual void unref(void) = 0;
     virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
     virtual ssize_t read(size_t , void *, size_t = 1) = 0;
     
@@ -126,16 +126,15 @@ protected:
 class Queue : public metatype, public IODevice
 {
 public:
-    Queue(size_t = 0, uintptr_t = 1);
+    Queue(size_t = 0);
     ~Queue();
     
     enum { Type = IODevice::Type };
     
     /* metatype interface */
-    int unref();
-    Queue *addref();
+    void unref();
     int assign(const value *);
-    void *typecast(int);
+    int conv(int, void *);
     
     /* IODevice interface */
     ssize_t write(size_t , const void *, size_t);
@@ -154,7 +153,6 @@ public:
     
 protected:
     struct queue _d;
-    uintptr_t _ref;
 };
 
 template <typename T>

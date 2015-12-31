@@ -59,7 +59,7 @@ extern void mpt_world_fini(MPT_STRUCT(world) *wld)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	

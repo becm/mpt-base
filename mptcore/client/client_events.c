@@ -26,7 +26,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!cl->conf && !(cl->conf = mpt_client_config("client"))) {
 		return MPT_event_fail(ev, MPT_tr("unable to query configuration"));
 	}
-	log = MPT_LOGGER((MPT_INTERFACE(metatype) *) cl->out);
+	log = mpt_output_logger(cl->out);
 	
 	if (!ev->msg) {
 		err = mpt_client_read(cl->conf, 0, 0, log);
@@ -181,7 +181,7 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 	}
 	
 	if (!cl->out && dsp->_out) {
-		cl->out = (void *) dsp->_out->_vptr->_mt.addref((void *) dsp->_out);
+		cl->out = (void *) dsp->_out->_vptr->obj.addref((void *) dsp->_out);
 	}
 	
 	/* mapping of command type messages */

@@ -79,16 +79,14 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 		val.fmt = 0;
 		val.ptr = msg.base;
 		
-		if (out->_vptr->_mt.assign((void *) out, &val) < 0) {
+		if (mpt_object_pset((void *) out, 0, &val, 0) < 0) {
 			return MPT_event_fail(ev, MPT_tr("unable to open connection"));
 		}
 		return MPT_event_good(ev, MPT_tr("created new graphic connection"));
 	}
 	/* command is close operation */
 	else if (part >= 5 && !strncmp("close", buf, part)) {
-		val.fmt = 0;
-		val.ptr = 0;
-		if (out->_vptr->_mt.assign((void *) out, &val) < 0) {
+		if (out->_vptr->obj.setProperty((void *) out, "", 0) < 0) {
 			return MPT_event_fail(ev, MPT_tr("error on graphic close"));
 		}
 		return MPT_event_good(ev, MPT_tr("closed graphic connection"));

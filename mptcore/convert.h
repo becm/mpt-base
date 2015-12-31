@@ -162,7 +162,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *, int (*)(void *, const char *,
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
 extern int mpt_valfmt_parse(MPT_STRUCT(array) *, const char *);
-extern int mpt_valfmt_set(MPT_STRUCT(array) *, MPT_INTERFACE(source) *);
+extern int mpt_valfmt_set(MPT_STRUCT(array) *, MPT_INTERFACE(metatype) *);
 
 
 __MPT_EXTDECL_END

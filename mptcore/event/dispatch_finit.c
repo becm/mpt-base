@@ -68,7 +68,7 @@ extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 	mpt_array_clone(&disp->_cmd, 0);
 	
 	if (disp->_out) {
-		disp->_out->_vptr->_mt.unref((void *) disp->_out);
+		disp->_out->_vptr->obj.unref((void *) disp->_out);
 		disp->_out = 0;
 	}
 	if (disp->_err.cmd) {

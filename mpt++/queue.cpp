@@ -75,12 +75,49 @@ bool DecodingQueue::advance()
 }
 
 // queue metatype operations
-Queue::Queue(size_t len, uintptr_t ref) : _ref(ref)
+Queue::Queue(size_t len)
 {
     if (len) Queue::prepare(len);
 }
 Queue::~Queue()
 { mpt_queue_resize(&_d, 0); }
+
+// queue metatype interface
+void Queue::unref()
+{
+    delete this;
+}
+int Queue::assign(const value *val)
+{
+    if (!val) {
+        return mpt_queue_prepare(&_d, 0) ? 1 : 0;
+    }
+    if (!val->fmt) {
+        const char *d = (const char *) val->ptr;
+        return d ? write(1, d, strlen(d)) : 0;
+    }
+    return BadType;
+}
+int Queue::conv(int type, void *ptr)
+{
+    void **dest = (void **) ptr;
+
+    if (type & ValueConsume) {
+        return BadOperation;
+    }
+    if (!type) {
+        static const char types[] = { metatype::Type, IODevice::Type, 0 };
+        if (dest) *dest = (void *) types;
+        return IODevice::Type;
+    }
+    switch (type &= 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    case IODevice::Type: ptr = static_cast<IODevice *>(this); break;
+    default: return BadType;
+    }
+    if (dest) *dest = ptr;
+    return type;
+}
 
 bool Queue::prepare(size_t len = 1)
 { return (!len || mpt_queue_prepare(&_d, len)) ? true : false; }
@@ -112,40 +149,6 @@ Slice<uint8_t> Queue::data()
     if (_d.fragmented()) mpt_queue_align(&_d, 0);
     else base += _d.off;
     return Slice<uint8_t>(base, _d.len);
-}
-// queue metatype interface
-int Queue::unref()
-{
-    if (!_ref) return -1;
-    if (--_ref) return _ref;
-    delete this;
-    return 0;
-}
-Queue *Queue::addref()
-{
-    if (!_ref) return 0;
-    if (++_ref) return this;
-    --_ref;
-    return 0;
-}
-int Queue::assign(const value *val)
-{
-    if (!val) {
-        return mpt_queue_prepare(&_d, 0) ? 1 : 0;
-    }
-    if (!val->fmt) {
-        const char *d = (const char *) val->ptr;
-        return d ? write(1, d, strlen(d)) : 0;
-    }
-    return BadType;
-}
-void *Queue::typecast(int type)
-{
-    switch (type) {
-    case metatype::Type: return static_cast<metatype *>(this);
-    case IODevice::Type: return static_cast<IODevice *>(this);
-    default: return 0;
-    }
 }
 
 ssize_t Queue::write(size_t len, const void *d, size_t part)

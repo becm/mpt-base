@@ -151,7 +151,7 @@ MPT_STRUCT(message)
 MPT_INTERFACE(output);
 MPT_INTERFACE_VPTR(output)
 {
-	MPT_INTERFACE_VPTR(metatype) _mt;
+	MPT_INTERFACE_VPTR(object) obj;
 	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
 	int     (*sync)(MPT_INTERFACE(output) *, int);
 	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
@@ -161,16 +161,12 @@ MPT_INTERFACE(output)
 	const MPT_INTERFACE_VPTR(output) *_vptr;
 };
 #else
-MPT_INTERFACE(output) : public metatype
+MPT_INTERFACE(output) : public object
 {
 protected:
 	inline ~output() {}
 public:
 	enum { Type = TypeOutput };
-	
-	output *addref() = 0;
-	int unref() = 0;
-	void *typecast(int);
 	
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
@@ -242,6 +238,7 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 
 /* access to output/error functions */
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
+extern MPT_INTERFACE(logger) *mpt_output_logger(const MPT_INTERFACE(output) *);
 
 __MPT_EXTDECL_END
 

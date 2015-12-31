@@ -24,12 +24,11 @@ struct socketInput {
 	MPT_STRUCT(notify)   *no;
 };
 
-static int socketUnref(MPT_INTERFACE(input) *in)
+static void socketUnref(MPT_INTERFACE(input) *in)
 {
 	struct socketInput *sd = (void *) in;
 	mpt_bind(&sd->sock, 0, 0, 0);
 	free(sd);
-	return 0;
 }
 static int socketNext(MPT_INTERFACE(input) *in, int what)
 {

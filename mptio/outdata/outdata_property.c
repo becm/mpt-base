@@ -12,7 +12,7 @@
 
 #include "output.h"
 
-static int outdataConnection(MPT_STRUCT(outdata) *out, MPT_INTERFACE(source) *src)
+static int outdataConnection(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
 {
 	char *where;
 	int len;
@@ -49,7 +49,7 @@ static int outdataConnection(MPT_STRUCT(outdata) *out, MPT_INTERFACE(source) *sr
 	return MPT_ERROR(BadType);
 }
 
-static int outdataColor(uint8_t *flags, MPT_INTERFACE(source) *src)
+static int outdataColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
 {
 	char *where;
 	int len;
@@ -77,7 +77,7 @@ static int outdataColor(uint8_t *flags, MPT_INTERFACE(source) *src)
 	return len;
 }
 /* set level limit */
-static int outdataLevel(uint8_t *level, MPT_INTERFACE(source) *src)
+static int outdataLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 {
 	const char *arg;
 	int ret;
@@ -108,7 +108,7 @@ static int outdataLevel(uint8_t *level, MPT_INTERFACE(source) *src)
  * \param name property to query
  * \param src  data source to change property
  */
-extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERFACE(source) *src)
+extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	int ret;
 	

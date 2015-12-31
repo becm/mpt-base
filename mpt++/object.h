@@ -13,10 +13,10 @@ namespace mpt {
 struct color;
 struct lineattr;
 
-class Property
+class Property : Reference<object>
 {
 public:
-    Property(const Reference<metatype> &);
+    Property(const Reference<object> &);
     Property(object * = 0);
     ~Property();
 
@@ -29,7 +29,7 @@ public:
     bool select(const char * = 0);
     bool select(int);
 
-    bool set(source &);
+    bool set(metatype &);
     bool set(const struct value &);
 
     Property & operator= (const char *val);
@@ -50,7 +50,6 @@ public:
 
 protected:
     property _prop;
-    object *_obj;
     friend class Object;
 
 private:
@@ -58,7 +57,7 @@ private:
 };
 
 template <typename T>
-class Source : public source
+class Source : public metatype
 {
 public:
     Source(const T *val, size_t len = 1) : _d(val, len)
@@ -66,8 +65,8 @@ public:
     virtual ~Source()
     { }
 
-    int unref()
-    { delete this; return 0; }
+    void unref()
+    { delete this; }
 
     int conv(int type, void *dest)
     {
@@ -102,33 +101,33 @@ public:
     { return Reference<T>::_ref; }
 };
 
-class Object : protected Item<metatype>
+class Object : protected Item<object>
 {
 public:
     // create storage
     Object(Object &);
-    Object(const Reference<metatype> & = Reference<metatype>());
-    Object(size_t);
+    Object(object * = 0);
+    Object(const Reference<object> &);
     virtual ~Object();
 
     // get/replace meta pointer
     Object & operator=(Object &);
-    Object & operator=(Reference<metatype> const &);
+    Object & operator=(Reference<object> const &);
 
-    // convert from other metatype
+    // convert from other object type
     template <typename T>
     Object & operator=(Reference<T> const from)
     {
         Reference<T> ref = from;
-        if (ref && setMeta(ref)) ref.detach();
+        if (ref && setObject(ref)) ref.detach();
         return *this;
     }
 
     // get/replace meta pointer
-    inline operator metatype*() const
+    inline operator object*() const
     { return _ref; }
-    virtual const Reference<metatype> &ref();
-    virtual bool setMeta(metatype *);
+    virtual const Reference<object> &ref();
+    virtual bool setObject(object *);
 
     // object store identifier
     inline const char *name() const
@@ -140,12 +139,12 @@ public:
     Property operator [](int);
     int type();
 
-    // metatype name hash
+    // object name hash
     inline long hash() const
     { return _hash; }
-    // name and metatype data printable
+    // name and object data printable
     inline bool printable() const
-    { return name() && (!_ref || _ref->typecast('s')); }
+    { return name() && (!_ref || _ref->type() == 's'); }
 
     // get properties from node list
     const node *getProperties(const node *, PropertyHandler , void *) const;
@@ -157,53 +156,8 @@ public:
     node *getDefault(const node *) const;
     node *getAlien(const node *) const;
 
-    // get default metatype
-    static const Reference<metatype> &defaultReference(void);
-
 protected:
     long _hash;
-};
-
-
-// generic implementation for metatype
-class MetatypeGeneric : public metatype
-{
-public:
-    int unref();
-    metatype *addref();
-    int assign(const value *);
-    void *typecast(int);
-
-    Slice<const char> data(void) const;
-    class Small;
-    class Big;
-
-    static MetatypeGeneric *create(size_t size);
-
-protected:
-    MetatypeGeneric(size_t post = 0, uintptr_t ref = 1);
-    virtual ~MetatypeGeneric();
-
-    uint64_t _info;
-};
-
-class MetatypeGeneric::Small : public MetatypeGeneric
-{
-public:
-    Small(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
-    { }
-protected:
-    friend class MetatypeGeneric;
-    int8_t data[64-sizeof(MetatypeGeneric)];
-};
-class MetatypeGeneric::Big : public MetatypeGeneric
-{
-public:
-    Big(uintptr_t ref = 1) : MetatypeGeneric(sizeof(data), ref)
-    { }
-protected:
-    friend class MetatypeGeneric;
-    int8_t data[256-sizeof(MetatypeGeneric)];
 };
 
 } /* namespace mpt */

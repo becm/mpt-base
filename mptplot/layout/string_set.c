@@ -50,7 +50,7 @@ extern int mpt_string_set(char **ptr, const char *data, int len)
  * 
  * \return consumed/changed value
  */
-extern int mpt_string_pset(char **ptr, MPT_INTERFACE(source) *src)
+extern int mpt_string_pset(char **ptr, MPT_INTERFACE(metatype) *src)
 {
 	char *txt;
 	int len;
