@@ -94,7 +94,7 @@ public:
     { }
     virtual const Reference<T> &ref()
     {
-        if (!Reference<T>::_ref) Reference<T>::_ref = new T;
+        if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
         return *this;
     }
     inline operator T*() const

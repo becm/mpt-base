@@ -33,7 +33,7 @@ extern const char *mpt_node_ident(const MPT_STRUCT(node) *node)
  * 
  * \return data for node
  */
-extern const void *mpt_node_data(const MPT_STRUCT(node) *node, size_t *len)
+extern const char *mpt_node_data(const MPT_STRUCT(node) *node, size_t *len)
 {
 	return (node && node->_meta) ? mpt_meta_data(node->_meta, len) : 0;
 }

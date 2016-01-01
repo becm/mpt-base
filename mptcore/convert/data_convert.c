@@ -25,10 +25,11 @@
  * \retval mpt::BadType     unknown conversion
  */
 
-extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
+extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 {
 	const uint8_t *from = *fptr;
 	int flen, dlen;
+	char dtype = to & 0xff;
 	
 	/* check type sizes */
 	if ((flen = mpt_valsize(ftype)) < 0) {
@@ -425,6 +426,8 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			memcpy(dest, from, flen);
 		}
 	}
-	*fptr = from + flen;
+	if (to & MPT_ENUM(ValueConsume)) {
+		*fptr = from + flen;
+	}
 	return dlen;
 }

@@ -136,7 +136,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *, MPT_TY
 
 /* get node identifier */
 extern const char *mpt_node_ident(const MPT_STRUCT(node) *);
-extern const void *mpt_node_data(const MPT_STRUCT(node) *, size_t *);
+extern const char *mpt_node_data(const MPT_STRUCT(node) *, size_t *);
 /* set (zero-terminated string) node data */
 extern int mpt_node_set(MPT_STRUCT(node) *, const char *);
 

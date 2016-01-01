@@ -62,7 +62,7 @@ MPT_INTERFACE(config)
 #if defined(__cplusplus)
 {
 public:
-	virtual int unref(void) = 0;
+	virtual void unref(void) = 0;
 	virtual Reference<metatype> *query(const path *, int = -1) = 0;
 	virtual int remove(const path *) = 0;
 	
@@ -74,7 +74,7 @@ protected:
 	inline ~config() { }
 #else
 ; MPT_INTERFACE_VPTR(config) {
-	int (*unref)(MPT_INTERFACE(config) *);
+	void (*unref)(MPT_INTERFACE(config) *);
 	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
@@ -141,7 +141,7 @@ public:
     Config(const char *root = 0, int sep = '.');
     virtual ~Config();
 
-    int unref(void);
+    void unref(void);
     Reference<metatype> *query(const path *, int = -1);
     int remove(const path *);
 

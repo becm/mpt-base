@@ -17,15 +17,15 @@ public:
     MyClient() : mpt::client(mpt::mpt_output_new()) { }
     virtual ~MyClient() { }
     
-    int unref();
+    void unref();
     int step();
 };
 
 int MyClient::step()
 { return 0; }
 
-int MyClient::unref()
-{ delete this; return 0; }
+void MyClient::unref()
+{ delete this; }
 
 int main()
 {

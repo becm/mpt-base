@@ -10,7 +10,6 @@ src = files(
   'gnode_traverse.c',
   'node_clear.c',
   'node_clone.c',
-  'node_copy.c',
   'node_destroy.c',
   'node_find.c',
   'node_foreach.c',
@@ -21,5 +20,5 @@ src = files(
   'node_new.c',
   'node_set.c',
   'node_unlink.c',
-  'tree_copy.c',
+  'tree_clone.c',
 )

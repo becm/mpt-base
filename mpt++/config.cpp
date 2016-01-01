@@ -130,10 +130,9 @@ Config::~Config()
         mpt_node_clear(&top);
     }
 }
-int Config::unref()
+void Config::unref()
 {
     delete this;
-    return 0;
 }
 Reference<metatype> *Config::query(const path *dest, int minlen)
 {

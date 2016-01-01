@@ -30,7 +30,6 @@ static int nodeAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *va
 	}
 	return 0;
 }
-
 static int nodeConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
 	struct _inline_meta *m = (void *) meta;
@@ -44,7 +43,7 @@ static int nodeConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	switch (type) {
+	switch (type &= 0xff) {
 	  case MPT_ENUM(TypeMeta): ptr = meta; break;
 	  case MPT_ENUM(TypeNode): ptr = m->node; break;
 	  case 's': ptr = _mpt_geninfo_value(&m->info, 0) >= 0 ? (&m->info) + 1 : 0; break;

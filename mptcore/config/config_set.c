@@ -56,6 +56,8 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		return 1;
 	}
 	len = strlen(val) + 1;
+	d.fmt = 0;
+	d.ptr = val;
 	
 	if (!conf) {
 		if (!(n = mpt_node_query(mpt_node_get(0, 0), &where, len))) {
@@ -75,8 +77,5 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		}
 		return 0;
 	}
-	d.fmt = 0;
-	d.fmt = val;
-	
 	return conf->_vptr->query(conf, &where, &d) ? 0 : -1;
 }

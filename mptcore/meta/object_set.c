@@ -93,20 +93,19 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 		if (!src->val.fmt[0] || type != src->val.fmt[0]) {
 			return -1;
 		}
-		if ((len = mpt_valsize(type)) <= 0) {
+		if ((len = mpt_valsize(type)) < 0) {
 			return -3;
 		}
-		if (!dest) return len;
 		if (!len) len = sizeof(void *);
 		
-		memcpy(dest, from, len);
+		if (dest) memcpy(dest, from, len);
 		from = ((uint8_t *) from) + len;
 #else
 		if ((len = mpt_data_convert(&from, *src->val.fmt, dest, type)) < 0) {
 			return fromText(src, type, dest);
 		}
 #endif
-		if (dest) {
+		if (type & MPT_ENUM(ValueConsume)) {
 			src->val.ptr = from;
 			++src->val.fmt;
 		}

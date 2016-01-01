@@ -551,7 +551,7 @@ public:
     Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
     { }
     inline void unref()
-    { delete this; return 0; }
+    { delete this; }
     
 protected:
     char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];

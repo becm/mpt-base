@@ -28,7 +28,7 @@ MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
 	/* remove client reference */
-	int  (*unref)(MPT_INTERFACE(client) *); /* initialize client data */
+	void (*unref)(MPT_INTERFACE(client) *);
 	
 	/* control client data and setup */
 	int  (*init) (MPT_INTERFACE(client) *);
@@ -54,7 +54,7 @@ public:
 	client(class output * = 0);
 	~client();
 	
-	virtual int  unref(void) = 0;
+	virtual void unref(void) = 0;
 	
 	virtual int  init(void);
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);

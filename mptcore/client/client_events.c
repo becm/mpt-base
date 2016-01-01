@@ -53,7 +53,10 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
-	if (!ev) return cl->_vptr->unref(cl);
+	if (!ev) {
+		cl->_vptr->unref(cl);
+		return 0;
+	}
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
@@ -180,8 +183,8 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 		return -1;
 	}
 	
-	if (!cl->out && dsp->_out) {
-		cl->out = (void *) dsp->_out->_vptr->obj.addref((void *) dsp->_out);
+	if (!cl->out && dsp->_out && dsp->_out->_vptr->obj.addref((void *) dsp->_out)) {
+		cl->out = dsp->_out;
 	}
 	
 	/* mapping of command type messages */

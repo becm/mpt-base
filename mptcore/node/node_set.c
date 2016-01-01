@@ -35,7 +35,7 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 	if (!(replace = mpt_meta_new(strlen(data)))) {
 		return -1;
 	}
-	if ((ret = old->_vptr->assign(old, &val)) < 0) {
+	if ((ret = replace->_vptr->assign(old, &val)) < 0) {
 		replace->_vptr->unref(replace);
 		return -3;
 	}
