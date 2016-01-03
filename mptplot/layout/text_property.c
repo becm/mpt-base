@@ -11,14 +11,14 @@
 
 /* default text values */
 static const MPT_STRUCT(text) def_text = {
-        0,                 /* data pointer */
-        0,                 /* text family */
-	{ 0, 0, 0, 0xff }, /* text color (rgba) */
-	10,                /* size */
-	'n', 'n',          /* style, weight */
-	'5',               /* align */
-	{ 0.5, 0.5 },      /* pos */
-	0.0                /* angle */
+        0,              /* data pointer */
+        0,              /* text family */
+        MPT_COLOR_INIT, /* text color (rgba) */
+        10,             /* size */
+        'n', 'n',       /* style, weight */
+        '5',            /* align */
+        { 0.5, 0.5 },   /* pos */
+        0.0             /* angle */
 };
 
 /*!

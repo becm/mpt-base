@@ -78,7 +78,7 @@ MPT_STRUCT(color)
 	
 	enum { Type = TypeColor };
 #else
-# define MPT_COLOR_INIT  { 0, 0, 0, 0xff }
+# define MPT_COLOR_INIT  { 0xff, 0, 0, 0 }
 #endif
 	uint8_t alpha,  /* alpha part of color */
 	        red,    /* red part of color */

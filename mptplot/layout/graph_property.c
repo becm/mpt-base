@@ -12,8 +12,8 @@
 static const MPT_STRUCT(graph) def_graph = {
 	0, 0,      /* _axes, _worlds */
 	
-	{ 0, 0, 0, 0xff },       /* fg */
-	{ 0xff, 0xff, 0xff, 0 }, /* bg */
+	MPT_COLOR_INIT,          /* fg */
+	{ 0, 0xff, 0xff, 0xff }, /* bg */
 	
 	{ 0, 0 },  /* pos */
 	{ 1, 1 },  /* scale */
@@ -146,10 +146,10 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if (!src) {
 			gr->scale = def_graph.scale;
 		}
-		if ((l1 = src->_vptr->conv(src, 'f', &gr->pos.x)) < 0) {
+		if ((l1 = src->_vptr->conv(src, 'f', &gr->scale.x)) < 0) {
 			return l1;
 		}
-		if ((l2 = src->_vptr->conv(src, 'f', &gr->pos.y)) <= 0) {
+		if ((l2 = src->_vptr->conv(src, 'f', &gr->scale.y)) <= 0) {
 			gr->scale.y = gr->scale.x; l2 = 0;
 		}
 		return l1 + l2;
@@ -321,7 +321,7 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	if (!gr) {
 		return 0;
 	}
-	if (strcmp(elem[pos].name, "clip")
+	if (!strcmp(elem[pos].name, "clip")
 	    && gr->clip < 8) {
 		pr->val.fmt = 0;
 		pr->val.ptr = axes_clip[gr->clip];

@@ -9,10 +9,10 @@
 #include "layout.h"
 
 static const MPT_STRUCT(line) def_line = {
-	{ 0, 0, 0, 0xff },  /* color */
-	{ 1, 1, 0, 10 },    /* attr */
-	{ 0, 0 },           /* from */
-	{ 0, 0 }            /* to */
+	MPT_COLOR_INIT,    /* color */
+	MPT_LINEATTR_INIT, /* attr */
+	{ 0, 0 },          /* from */
+	{ 0, 0 }           /* to */
 };
 
 /*!
