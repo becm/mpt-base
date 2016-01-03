@@ -34,13 +34,12 @@ static int metaConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	switch (type) {
+	switch (type & 0xff) {
 	  case MPT_ENUM(TypeMeta): ptr = meta; break;
-	  case 's': ptr = _mpt_geninfo_value(info, 0) >= 0 ? (info + 1) : 0; break;
-	  default: return MPT_ERROR(BadType);
+	  default: return _mpt_geninfo_conv(info, type, ptr);
 	}
 	if (dest) *dest = ptr;
-	return type;
+	return type & 0xff;
 }
 static MPT_INTERFACE(metatype) *metaClone(MPT_INTERFACE(metatype) *meta)
 {

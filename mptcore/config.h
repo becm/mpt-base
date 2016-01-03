@@ -8,6 +8,10 @@
 
 #include "core.h"
 
+#ifdef __cplusplus
+# include "array.h"
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
@@ -53,9 +57,9 @@ MPT_STRUCT(path)
 	uint16_t    valid;  /* valid after path */
 	
 	uint8_t     first,  /* length of first element */
-	            sep,    /* path separator */
-	            assign, /* assign separator */
 	            flags;  /* path format */
+	char        sep,    /* path separator */
+	            assign; /* assign separator */
 };
 
 MPT_INTERFACE(config)
@@ -63,13 +67,15 @@ MPT_INTERFACE(config)
 {
 public:
 	virtual void unref(void) = 0;
-	virtual Reference<metatype> *query(const path *, int = -1) = 0;
+	virtual Reference<metatype> *query(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 	
 	int environ(const char *filter = "mpt_*", int sep = '_', char * const env[] = 0);
-	void del(const char *path, int sep = '.', int end = 0);
+	void del(const char *path, int sep = '.', int len = -1);
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	metatype *get(const char *path, int sep = '.', int len = -1);
+	
+	config *global(const path *);
 protected:
 	inline ~config() { }
 #else
@@ -135,21 +141,30 @@ extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *, const 
 __MPT_EXTDECL_END
 
 #if defined(__cplusplus)
-class Config : public config
+class Config : public config, public Reference<metatype>
 {
 public:
-    Config(const char *root = 0, int sep = '.');
+    Config();
     virtual ~Config();
-
+    
     void unref(void);
-    Reference<metatype> *query(const path *, int = -1);
+    Reference<metatype> *query(const path *, const MPT_STRUCT(value) * = 0);
     int remove(const path *);
-
+    class Element;
+    
 protected:
-    node *_last;
-private:
-    node *_root;
-    bool _local;
+    static Element *getElement(Array<Element> &, path &, bool = false);
+    Array<Element> _sub;
+};
+
+class Config::Element : public Array<Config::Element>, public Reference<metatype>, public identifier
+{
+public:
+    inline bool unused(void)
+    {
+        return _len == 0;
+    }
+    Element & operator =(const Element &from);
 };
 #endif
 

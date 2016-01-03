@@ -286,31 +286,31 @@ public:
     protected:
         reference _ref;
     };
-    Reference(T *ref = 0) : _ref(ref)
+    inline Reference(T *ref = 0) : _ref(ref)
     { }
-    Reference(const Reference &ref) : _ref(0)
+    inline Reference(const Reference &ref) : _ref(0)
     { *this = ref; }
-    ~Reference()
+    inline ~Reference()
     { if (_ref) _ref->unref(); }
     
-    operator T*() const
+    inline operator T*() const
     { return _ref; }
     
-    bool setReference(Reference const &ref)
+    inline void setReference(T *ref)
     {
-        T *r = ref._ref;
-        if (r == _ref) return true;
-        if (r && !r->addref()) return false;
         if (_ref) _ref->unref();
-        _ref = r;
-        return true;
+        _ref = ref;
     }
     inline Reference & operator= (Reference const &ref)
     {
-        setReference(ref);
+        T *r = ref._ref;
+        if (r == _ref) return *this;
+        if (r && !r->addref()) r = 0;
+        if (_ref) _ref->unref();
+        _ref = r;
         return *this;
     }
-    T *detach()
+    inline T *detach()
     { T *ref = _ref; _ref = 0; return ref; }
 protected:
     T *_ref;
@@ -363,7 +363,7 @@ protected:
 public:
 	enum { Type = TypeMeta };
 	
-	const char *cast(void);
+	const char *string(void);
 	
 	template <typename T>
 	inline T *cast(void)
@@ -374,6 +374,9 @@ public:
 	    if (conv(t, &ptr) < 0) return 0;
 	    return ptr;
 	}
+	inline operator const char *()
+	{ return string(); }
+	
 	static metatype *create(size_t size);
 	
 	virtual void unref() = 0;
@@ -432,6 +435,20 @@ public:
 
 
 #ifdef __cplusplus
+/* specialize metatype string cast */
+template <> inline const char *metatype::cast<const char>(void)
+{ return string(); }
+
+/* special copy for metatype */
+template <> inline Reference<metatype> & Reference<metatype>::operator= (Reference<metatype> const &ref)
+{
+    metatype *r = ref._ref;
+    if (r) r = r->clone();
+    if (_ref) _ref->unref();
+    _ref = r;
+    return *this;
+}
+
 /*! reduced slice with type but no data reference */
 template <typename T>
 class Slice
@@ -523,7 +540,7 @@ MPT_STRUCT(identifier)
 #ifdef __cplusplus
 	identifier(size_t = sizeof(identifier));
 	inline ~identifier()
-	{ setName(0, 0); }
+	{ setName(0); }
 	
 	bool equal(const char *, int) const;
 	Slice<const char> data(void) const;
@@ -735,9 +752,10 @@ extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, 
 
 /* initialize geninfo data */
 extern int _mpt_geninfo_init(void *, size_t);
-/* property operations on geninfo data */
+/* operations on geninfo data */
 extern int _mpt_geninfo_value(uint64_t *, const MPT_STRUCT(value) *);
 extern int _mpt_geninfo_line(const uint64_t *);
+extern int _mpt_geninfo_conv(const uint64_t *, int , void *);
 /* create new metatype with data */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
 

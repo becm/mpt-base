@@ -145,4 +145,34 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen)
 	
 	return dlen;
 }
-
+/*!
+ * \brief convert geninfo data
+ * 
+ * Get compatible data from geninfo.
+ * 
+ * \param raw  start of geninfo data
+ * \param type property to change/request
+ * \param dest data source to change property
+ * 
+ * \return >= 0 on success
+ */
+extern int _mpt_geninfo_conv(const uint64_t *raw, int type, void *ptr)
+{
+	struct metaInfo *info = (void *) raw;
+	void **dest = ptr;
+	
+	if (type & MPT_ENUM(ValueConsume)) {
+		return MPT_ERROR(BadArgument);
+	}
+	if (!type) {
+		static const char types[] = { 's', 0 };
+		if (dest) *dest = (void *) (info->used ? types : types + 1);
+		return 0;
+	}
+	switch (type &= 0xff) {
+	  case 's': ptr = info->used ? (info + 1) : 0; break;
+	  default: return MPT_ERROR(BadType);
+	}
+	if (dest) *dest = ptr;
+	return type;
+}

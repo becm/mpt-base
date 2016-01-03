@@ -86,13 +86,22 @@ bool config::set(const char *p, const char *val, int sep)
     if (!val) {
         return (remove(&where) < 0) ? false : true;
     }
+    value tmp(0, val);
     Reference<metatype> *r;
     metatype *m;
-    if (!(r = query(&where, strlen(val)+1)) || !(m = *r)) {
+    if (!(r = query(&where, &tmp))) {
         return false;
     }
-    value tmp(0, val);
-    return (m->assign(&tmp) < 0) ? false : true;
+    if (!(m = *r)) {
+        if (!(m = mpt_meta_new(strlen(val)+1))) {
+            return false;
+        }
+        if (m->assign(&tmp) < 0) {
+            return false;
+        }
+        r->setReference(m);
+    }
+    return true;
 }
 metatype *config::get(const char *base, int sep, int len)
 {
@@ -103,122 +112,135 @@ metatype *config::get(const char *base, int sep, int len)
     metatype *m = *r;
     return m;
 }
-void config::del(const char *p, int sep, int assign)
+void config::del(const char *p, int sep, int len)
 {
     path where;
-    where.set(p, sep, assign);
+    where.set(p, len, sep, 0);
     remove(&where);
 }
 int config::environ(const char *glob, int sep, char * const env[])
 { return mpt_config_environ(this, glob, sep, env); }
 
 // config with private or global node store
-Config::Config(const char *top, int sep) : _last(0), _root(0), _local(true)
-{
-    if (!top) return;
-    _local = false;
-    if (!*top) return;
-    path p(sep, 0, top);
-    _root = mpt_node_query(mpt_node_get(0, 0), &p, 0);
-    if (p.len) _root = mpt_node_get(_root->children, &p);
-}
+Config::Config()
+{ }
 Config::~Config()
-{
-    if (_local && _root) {
-        node top;
-        top.children = _root;
-        mpt_node_clear(&top);
-    }
-}
+{ }
 void Config::unref()
 {
     delete this;
 }
-Reference<metatype> *Config::query(const path *dest, int minlen)
+Config::Element *Config::getElement(Array<Config::Element> &arr, path &p, bool require)
 {
-    node *n;
+    const char *name;
+    int len;
 
-    // metatype identity */
-    if (!dest) {
-        if (_local || !_root) {
-            _last = 0;
+    name = p.base + p.off;
+    if ((len = mpt_path_next(&p)) < 0) {
+        return 0;
+    }
+    Element *unused = 0;
+    for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+        if (e->unused()) {
+            if (!unused) unused = e;
+        }
+        if (!e->equal(name, len)) {
+            continue;
+        }
+        if (p.len) {
+            return getElement(*e, p, require);
+        }
+        return e;
+    }
+    if (!require) {
+        return 0;
+    }
+    if (!unused) {
+        size_t pos = arr.size();
+        if (!arr.insert(pos, Element()) || !(unused = arr.get(pos))) {
             return 0;
         }
-        _last = _root;
-        return (Reference<metatype> *) &_root->_meta;
+    }
+    else {
+        unused->clear();
+        metatype *m = *unused;
+        if (m) m->assign(0);
+    }
+    unused->setName(name, len);
+
+    return p.len ? getElement(*unused, p, require) : unused;
+}
+Reference<metatype> *Config::query(const path *dest, const value *val)
+{
+    // metatype identity */
+    if (!dest || !dest->len) {
+        if (!val) {
+            return this;
+        }
+        if (_ref && !_ref->assign(val)) {
+            return 0;
+        }
+        return this;
     }
     // find existing
-    if (minlen < 0) {
-        if (_local) {
-            n = _root ? mpt_node_get(_root, dest) : 0;
-        }
-        else if ((n = _root->children)) {
-            n = mpt_node_get(n, dest);
-        }
-        return n ? (Reference<metatype> *) (_last = n) : 0;
-    }
     path p = *dest;
-
-    // query local config
-    if (_local) {
-        if (!(n = mpt_node_query(_root, &p, minlen))) {
+    //const char *name = p.base;
+    //int len;
+    
+    Reference<metatype> *mr = this;
+    Element *curr = 0;
+    
+    if (dest && dest->len) {
+        if (!(curr = getElement(_sub, p, val))) {
             return 0;
         }
-        if (!_root) {
-            _root = n;
+        mr = curr;
+    }
+    if (!val) {
+        return mr;
+    }
+    metatype *m;
+    if ((m = *mr)) {
+        if (m->assign(val)) {
+            return curr;
         }
     }
-    // use non-root global
-    else if (_root) {
-        if (!(n = mpt_node_query(_root->children, &p, minlen))) {
-            return 0;
-        }
-        if (!_root->children) {
-            _root->children = n;
-            n->parent = _root;
-        }
-    }
-    // interface to global config
-    else {
-        if (!(n = mpt_node_query(mpt_node_get(0, 0), &p, minlen))) {
-            return 0;
-        }
-    }
-    if (p.len) n = mpt_node_get(n->children, &p);
-    return (Reference<metatype> *) (_last = n);
+    // TODO: create and assign new metatype
+    return mr;
 }
 int Config::remove(const path *dest)
 {
-    node *n;
-
-    // local search only
-    if (_local) {
-        n = _root ? mpt_node_get(_root, dest): 0;
-    }
-    // global search in subtree
-    else if ((n = _root)) {
-        if ((n = n->children)) {
-            n = mpt_node_get(n, dest);
-        }
-    }
-    // general global search
-    else {
-        n = mpt_node_get(0, dest);
-    }
-    if (!n) {
-        return -2;
-    }
-    if (n->children) {
-        n->setMeta(0);
-        _last = n;
+    // clear root element
+    if (!dest) {
+        if (_ref) _ref->assign(0);
         return 0;
     }
-    else {
-        _last = 0;
-        mpt_node_unlink(n);
-        mpt_node_destroy(n);
-        return 1;
+    // clear configuration
+    if (!dest->len) {
+        _sub.clear();
+        if (_ref && _ref->assign(0) < 0) {
+            return 1;
+        }
+        return 0;
     }
+    path p = *dest;
+    Element *curr;
+    // requested element not found
+    if (!(curr = getElement(_sub, p, false))) {
+        return BadOperation;
+    }
+    // remove childen from element
+    curr->clear();
+
+    // mark element as unused
+    curr->setName(0);
+
+    // try to reset element
+    metatype *m = *curr;
+    if (m && m->assign(0)) {
+        return 2;
+    }
+    return 0;
 }
 
 __MPT_NAMESPACE_END

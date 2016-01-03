@@ -26,17 +26,21 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	const char *base;
 	size_t used;
 	
-	if (type == 's') {
+	/* simple pointer */
+	if ((type & 0xff) == 's') {
 		if (!(base = *from)) {
 			base = def;
 		}
 		if (len) {
 			*len = strlen(base);
 		}
-		*from = ((uint8_t *) from) + sizeof(char *);
+		if (type & MPT_ENUM(ValueConsume)) {
+			*from = ((uint8_t *) from) + sizeof(char *);
+		}
 		return base;
 	}
-	if (type == 'C') {
+	/* data is text array */
+	if ((type & 0xff) == 'C') {
 		const MPT_STRUCT(array) *a = *from;
 		size_t size;
 		
@@ -58,10 +62,13 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		else if (used >= size || base[used]) {
 			return 0;
 		}
-		*from = ((uint8_t *) from) + sizeof(*a);
+		if (type & MPT_ENUM(ValueConsume)) {
+			*from = ((uint8_t *) from) + sizeof(*a);
+		}
 		return base;
 	}
-	if (type == ('c' - 0x40)) {
+	/* data is text vector */
+	if ((type & 0xff) == ('c' - 0x40)) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;
@@ -78,7 +85,9 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		else if (!vec->iov_len || base[vec->iov_len - 1]) {
 			return 0;
 		}
-		*from = ((uint8_t *) from) + sizeof(*vec);
+		if (type & MPT_ENUM(ValueConsume)) {
+			*from = ((uint8_t *) from) + sizeof(*vec);
+		}
 		return base;
 	}
 	return 0;

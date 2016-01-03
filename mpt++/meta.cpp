@@ -112,14 +112,13 @@ int NodePrivate::Meta::conv(int type, void *ptr)
         if (dest) *dest = (void *) types;
         return 0;
     }
-    switch (type &= 0xff) {
+    switch (type & 0xff) {
     case metatype::Type: ptr = static_cast<metatype *>(this); break;
     case node::Type: ptr = _base; break;
-    case 's': ptr = _mpt_geninfo_value(&_info, 0) >= 0 ? ((&_info) + 1) : 0; break;
-    default: return BadType;
+    default: return _mpt_geninfo_conv(&_info, type, ptr);
     }
     if (dest) *dest = ptr;
-    return type;
+    return type & 0xff;
 }
 metatype *NodePrivate::Meta::clone()
 {
@@ -127,9 +126,9 @@ metatype *NodePrivate::Meta::clone()
 }
 
 // metatype
-const char *metatype::cast()
+const char *metatype::string()
 {
-    return (const char *) mpt_meta_data(this, 0);
+    return mpt_meta_data(this, 0);
 }
 metatype *metatype::create(size_t size)
 {
@@ -151,12 +150,12 @@ int metatype::conv(int type, void *ptr)
         if (dest) *dest = (void *) types;
         return 0;
     }
-    switch (type &= 0xff) {
+    switch (type & 0xff) {
     case Type: ptr = this;
     default: return BadType;
     }
     if (dest) *dest = ptr;
-    return type;
+    return type & 0xff;
 }
 metatype *metatype::clone(void)
 {
@@ -240,13 +239,12 @@ int Metatype::conv(int type, void *ptr)
         if (dest) *dest = (void *) types;
         return 0;
     }
-    switch (type &= 0xff) {
-    case metatype::Type: ptr = static_cast<metatype *>(this);
-    case 's': ptr = _mpt_geninfo_value(&_info, 0) >= 0 ? ((&_info) + 1) : 0;
-    default: return BadType;
+    switch (type & 0xff) {
+    case metatype::Type: ptr = static_cast<metatype *>(this); break;
+    default: return _mpt_geninfo_conv(&_info, type, ptr);
     }
     if (dest) *dest = ptr;
-    return type;
+    return type & 0xff;
 }
 
 Slice<const char> Metatype::data() const

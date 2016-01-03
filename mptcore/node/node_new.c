@@ -43,14 +43,13 @@ static int nodeConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	switch (type &= 0xff) {
+	switch (type & 0xff) {
 	  case MPT_ENUM(TypeMeta): ptr = meta; break;
 	  case MPT_ENUM(TypeNode): ptr = m->node; break;
-	  case 's': ptr = _mpt_geninfo_value(&m->info, 0) >= 0 ? (&m->info) + 1 : 0; break;
-	  default: return MPT_ERROR(BadType);
+	  default: return _mpt_geninfo_conv(&m->info, type, ptr);
 	}
 	if (dest) *dest = ptr;
-	return type;
+	return type & 0xff;
 }
 static MPT_INTERFACE(metatype) *nodeClone(MPT_INTERFACE(metatype) *meta)
 {

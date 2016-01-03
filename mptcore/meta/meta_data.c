@@ -11,14 +11,14 @@
  * \ingroup mptMeta
  * \brief get metatype data
  * 
- * Try to get data from metatype via
- *  1) cast to string (or vector)
- *  2) generic property
+ * Try to get text data from metatype via
+ *  1) character vector (if len pointer supplied)
+ *  2) generic string pointer
  * 
  * \param      meta data source
  * \param[out] len  length of raw data
  * 
- * \return start of string/raw data
+ * \return start of string
  */
 extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
 {

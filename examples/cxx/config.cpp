@@ -16,7 +16,7 @@
 
 extern int main(int , char * const [])
 {
-	mpt::Config conf("settings.env");
+	mpt::Config conf;
 	mpt::metatype *m;
 	const char *name;
 	
@@ -25,22 +25,21 @@ extern int main(int , char * const [])
 	conf.environ("*");
 	
 	if ((m = conf.get("desktop.session"))) {
-		name = m->cast();
+		name = *m;
 		std::cout << name << std::endl;
 	}
 	
 	if (conf.set("hallo.ich bin.text", "Der täĸẞŦ"))
 		m = conf.get("hallo.ich bin.text");
 	
-	name = m->cast();
+	name = *m;
 	std::cout << typeid(*m).name() << "=" << name << std::endl;
 	
 	conf.set("hallo*ich bin*text", "anderer", '*');
-	mpt::path p('/', 0, "settings/env/hallo/ich bin/text");
-	mpt::node *n = mpt::mpt_node_get(0, &p);
-	m = n->meta();
+	mpt::path p('/', 0, "hallo/ich bin/text");
+	m = *conf.query(&p);
 	
-	name = m->cast();
+	name = *m;
 	std::cout << " -> " << name << std::endl;
 	
 	return 0;

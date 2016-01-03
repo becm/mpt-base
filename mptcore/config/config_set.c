@@ -77,5 +77,21 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		}
 		return 0;
 	}
-	return conf->_vptr->query(conf, &where, &d) ? 0 : -1;
+	else {
+		MPT_INTERFACE(metatype) **mp;
+		
+		if (!(mp = conf->_vptr->query(conf, &where, &d))) {
+			return -1;
+		}
+		if ((mt = *mp)) {
+			if (mt->_vptr->assign(mt, &d) < 0) {
+				return -2;
+			}
+			return 0;
+		}
+		if (!(mt = mpt_meta_new(len)) || mt->_vptr->assign(mt, &d) < 0) {
+			return -1;
+		}
+		return 1;
+	}
 }
