@@ -48,7 +48,7 @@ MPT_STRUCT(array)
 	size_t left() const;
 	size_t used() const;
 	void *base() const;
-	bool shared(void) const;
+	bool shared() const;
 	Reference<buffer> ref() const;
 	
 	char *string();
@@ -242,7 +242,7 @@ inline size_t array::used() const
 { return _buf ? _buf->used : 0; }
 inline size_t array::left() const
 { return _buf ? _buf->size - _buf->used : 0; }
-inline bool array::shared(void) const
+inline bool array::shared() const
 { return _buf && _buf->shared; }
 
 inline array &array::operator= (slice const& from)
@@ -411,7 +411,7 @@ public:
         _d = a;
         return true;
     }
-    void clear(void)
+    void clear()
     {
         if (_d.shared()) {
             _d = array();
@@ -589,8 +589,8 @@ public:
 class LogEntry : array
 {
 public:
-    int type(void) const;
-    const char *source(void) const;
+    int type() const;
+    const char *source() const;
     Slice<const char> data(int part = 0) const;
     int set(const char *, int, const char *, va_list );
 protected:
@@ -625,16 +625,16 @@ public:
     void unref();
     int log(const char *, int, const char *, va_list);
     
-    virtual const LogEntry *nextEntry(void);
-    virtual void clearLog(void);
+    virtual const LogEntry *nextEntry();
+    virtual void clearLog();
     
     virtual bool setIgnoreLevel(int);
     virtual bool setFlowFlags(int);
     
-    inline int flowFlags(void) const
+    inline int flowFlags() const
     { return _flags; }
     
-    inline const Slice<const LogEntry> logEnries(void) const
+    inline const Slice<const LogEntry> logEnries() const
     { return _msg.slice(); }
     
 protected:

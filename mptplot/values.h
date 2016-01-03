@@ -32,10 +32,10 @@ MPT_INTERFACE(iterator)
 {
 	iterator();
 	
-	virtual int unref(void) = 0;
+	virtual int unref() = 0;
 	virtual double next(int pos = 1) = 0;
 	
-	inline double current(void)
+	inline double current()
 	{ return next(0); }
 protected:
 	inline ~iterator() { }

@@ -87,7 +87,7 @@ MPT_STRUCT(stream)
 	stream();
 	~stream();
 	
-	bool endline(void);
+	bool endline();
 	void setNewline(int , int = StreamRdWr);
 	
 	int flags() const;
@@ -203,14 +203,14 @@ public:
     
     ssize_t write(size_t , const void *, size_t part = 1);
     ssize_t read(size_t , void *, size_t part = 1);
-    int64_t pos(void);
+    int64_t pos();
     bool seek(int64_t);
-    int getchar(void);
+    int getchar();
     
     bool open(const char *, const char * = "r");
     bool open(void *, size_t , int = StreamRead);
     
-    inline void close(void)
+    inline void close()
     { setProperty(0, 0); }
     
 protected:

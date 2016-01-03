@@ -28,7 +28,7 @@ __MPT_NAMESPACE_BEGIN
 int convert(const void **from, int ft, void *dest, int dt)
 { return mpt_data_convert(from, ft, dest, dt); }
 
-float80 &float80::swapOrder(void)
+float80 &float80::swapOrder()
 {
     mpt_bswap_80(1, this);
     return *this;
@@ -121,7 +121,7 @@ void stream::setError(int err)
 {
     return mpt_stream_seterror(&this->_info, err);
 }
-bool stream::endline(void)
+bool stream::endline()
 {
     int nl = (mpt_stream_flags(&this->_info) & 0xc000) >> 14;
     

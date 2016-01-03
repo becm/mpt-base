@@ -26,7 +26,7 @@ float linepart::cut() const
 float linepart::trim() const
 { return mpt_linepart_real(_trim); }
 
-const char *polyline::format(void) const
+const char *polyline::format() const
 { return 0; }
 
 

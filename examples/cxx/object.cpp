@@ -25,7 +25,7 @@
 class Double {
     public:
     Double(double d) { _d = d; }
-    virtual int f0(void) { return _d; }
+    virtual int f0() { return _d; }
     virtual int f1(int) { return 1; }
     virtual int f2(int) { return 2; }
     virtual int f3(int) { return 3; }
@@ -42,7 +42,7 @@ class Int {
     public:
     Int(int d) { _d = d; }
     static int (*get)();
-    virtual int f0(void) { return _d; }
+    virtual int f0() { return _d; }
     private:
     int _d;
 };

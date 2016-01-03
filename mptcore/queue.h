@@ -17,7 +17,7 @@ MPT_STRUCT(queue)
 #ifdef __cplusplus
 	inline queue() : base(0), len(0), max(0), off(0)
 	{ }
-	inline bool fragmented(void)
+	inline bool fragmented()
 	{ return (max - len) < off; }
 #else
 # define MPT_QUEUE_INIT    { 0, 0, 0, 0 }
@@ -92,9 +92,9 @@ public:
     DecodingQueue(DataDecoder);
     ~DecodingQueue();
     
-    bool pendingMessage(void);
+    bool pendingMessage();
     bool currentMessage(message &, struct iovec * = 0);
-    bool advance(void);
+    bool advance();
 
 protected:
     DataDecoder _dec;
@@ -109,14 +109,14 @@ class IODevice
 public:
     enum { Type = TypeIODevice };
     
-    virtual void unref(void) = 0;
+    virtual void unref() = 0;
     virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
     virtual ssize_t read(size_t , void *, size_t = 1) = 0;
     
-    virtual int64_t pos(void);
+    virtual int64_t pos();
     virtual bool seek(int64_t);
     virtual Slice<uint8_t> peek(size_t);
-    virtual int getchar(void);
+    virtual int getchar();
     
 protected:
     virtual ~IODevice()

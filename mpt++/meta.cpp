@@ -157,7 +157,7 @@ int metatype::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type & 0xff;
 }
-metatype *metatype::clone(void)
+metatype *metatype::clone()
 {
     return 0;
 }

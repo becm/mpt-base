@@ -16,7 +16,7 @@ __MPT_NAMESPACE_BEGIN
 // generic IODevice operations
 Slice<uint8_t> IODevice::peek(size_t)
 { return Slice<uint8_t>(0, 0); }
-int64_t IODevice::pos(void)
+int64_t IODevice::pos()
 { return -1; }
 bool IODevice::seek(int64_t )
 { return false; }

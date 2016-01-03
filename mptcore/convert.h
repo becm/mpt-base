@@ -43,8 +43,8 @@ public:
 	{ *this = v; }
 	
 	float80 &operator =(const long double &);
-	long double value(void) const;
-	float80 &swapOrder(void);
+	long double value() const;
+	float80 &swapOrder();
 private:
 #endif
 	uint8_t _d[10];

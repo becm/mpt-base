@@ -156,7 +156,7 @@ MPT_STRUCT(world)
 	
 	enum { Type = TypeWorld };
 	
-	inline const char *alias(void) const { return _alias; }
+	inline const char *alias() const { return _alias; }
 	bool setAlias(const char *name, int len = -1);
 protected:
 #endif
@@ -178,9 +178,9 @@ MPT_STRUCT(graph)
 	
 	enum { Type = TypeGraph };
 	
-	inline const char *axes(void) const
+	inline const char *axes() const
 	{ return _axes; }
-	inline const char *worlds(void) const
+	inline const char *worlds() const
 	{ return _worlds; }
 protected:
 #endif
@@ -212,11 +212,11 @@ MPT_STRUCT(text)
 	enum { Type = TypeText };
 	
 	bool setValue(const char *);
-	inline const char *value(void) const
+	inline const char *value() const
 	{ return _value; }
 	
 	bool setFont(const char *);
-	inline const char *font(void) const
+	inline const char *font() const
 	{ return _font; }
 	
 	int set(metatype &);
@@ -278,7 +278,7 @@ MPT_INTERFACE(polyline)
 #ifdef __cplusplus
 {
     public:
-	virtual void unref(void) = 0;
+	virtual void unref() = 0;
 	virtual void *raw(int dim, size_t len, size_t off = 0) = 0;
 	virtual ssize_t truncate(int dim = -1, ssize_t = -1) = 0;
 	virtual const char *format() const;
@@ -304,12 +304,12 @@ MPT_INTERFACE(cycle)
 	
 	virtual void unref() = 0;
 	
-	virtual polyline *current(void) const = 0;
-	virtual polyline *advance(void) = 0;
-	virtual polyline *append(void) = 0;
+	virtual polyline *current() const = 0;
+	virtual polyline *advance() = 0;
+	virtual polyline *append() = 0;
 	
 	virtual polyline *part(int pos = 0) const = 0;
-	virtual int size(void) const = 0;
+	virtual int size() const = 0;
     protected:
 	inline ~cycle() { }
 #else
@@ -437,7 +437,7 @@ public:
     
     virtual linepart part(int dim, const double *val, int len) const;
     virtual bool apply(int dim, const linepart &, dpoint *dest, const double *from) const;
-    virtual dpoint zero(void) const;
+    virtual dpoint zero() const;
 protected:
     inline ~Transform() { }
 };
@@ -456,7 +456,7 @@ public:
     
     linepart part(int dim, const double *val, int len) const;
     bool apply(int dim, const linepart &pt, dpoint *dest, const double *from) const;
-    dpoint zero(void) const;
+    dpoint zero() const;
     
     transform tx, ty, tz; /* dimension transformations */
     uint8_t fx, fy, fz;   /* transformation options */
@@ -469,17 +469,17 @@ public:
     class Parts : public array
     {
     public:
-        inline Slice<const linepart> data(void) const
+        inline Slice<const linepart> data() const
         { return Slice<const linepart>((linepart *) base(), used()/sizeof(linepart)); }
         
         bool create(const Transform &, polyline &);
-        size_t userLength(void);
-        size_t rawLength(void);
+        size_t userLength();
+        size_t rawLength();
     };
     class Points : public array
     {
     public:
-        Slice<const dpoint> data(void) const;
+        Slice<const dpoint> data() const;
         dpoint *resize(size_t);
     };
     Polyline(int dim = -1);
@@ -488,10 +488,10 @@ public:
     void unref();
     void *raw(int dim, size_t len, size_t off = 0);
     ssize_t truncate(int dim = -1, ssize_t pos = -1);
-    const char *format(void) const;
+    const char *format() const;
     
     virtual Slice<dpoint> values(int part = -1) const;
-    virtual Slice<const linepart> vis(void) const;
+    virtual Slice<const linepart> vis() const;
     virtual void transform(const Transform &);
     
     bool setValues(int dim, size_t len, const double *val, int ld = 1, size_t offset = 0);
@@ -509,7 +509,7 @@ protected:
     uint8_t  _dataSize;
     
     array *rawData(int dim) const;
-    Points *userData(void) const;
+    Points *userData() const;
 };
 
 class Cycle : public cycle
@@ -521,14 +521,14 @@ public:
         AutoGrow = 0x1
     };
     void unref();
-    uintptr_t addref();
+    virtual uintptr_t addref();
     
-    Polyline *current(void) const;
-    Polyline *advance(void);
-    Polyline *append(void);
+    Polyline *current() const;
+    Polyline *advance();
+    Polyline *append();
     
     Polyline *part(int pos) const;
-    int size(void) const;
+    int size() const;
     
     virtual bool setSize(int cycles);
     virtual bool updateTransform(const Transform &, bool = false);
@@ -555,7 +555,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
 };
 
 class Text : public object, public metatype, public text
@@ -572,7 +572,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
 };
 
 class Axis : public object, public metatype, public axis
@@ -590,7 +590,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
 };
 
 class World : public object, public metatype, public world
@@ -608,7 +608,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
 };
 
 class Graph : public Collection, public metatype, public Transform3, public graph
@@ -632,7 +632,7 @@ public:
     void unref();
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
     
     int property(struct property *) const;
     int setProperty(const char *, metatype *);
@@ -651,7 +651,7 @@ public:
     virtual bool setCycle(int pos, const Reference<Cycle> &) const;
     virtual const Reference<Cycle> &cycle(int pos) const;
     
-    const Transform &transform(void);
+    const Transform &transform();
     bool updateTransform(int dim = -1);
     
 protected:
@@ -670,7 +670,7 @@ public:
     void unref();
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone(void);
+    metatype *clone();
     
     int property(struct property *pr) const;
     int setProperty(const char *pr, metatype *src);
@@ -681,7 +681,7 @@ public:
     virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());
     virtual bool open(const char *);
-    virtual void reset(void);
+    virtual void reset();
     
     const Item<Graph> &graph(int pos) const;
     inline int graphCount() const { return _graphs.size(); }
@@ -694,7 +694,7 @@ public:
     inline const char *font() const
     { return _font; }
     
-    fpoint minScale(void) const;
+    fpoint minScale() const;
     
 protected:
     ItemArray<Graph> _graphs;

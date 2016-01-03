@@ -165,8 +165,8 @@ public:
     Parse();
     virtual ~Parse();
     
-    virtual size_t line(void) const;
-    virtual bool reset(void);
+    virtual size_t line() const;
+    virtual bool reset();
     virtual bool setFormat(const char *);
     virtual bool open(const char *);
     virtual int read(struct node &, logger * = logger::defaultInstance());
@@ -182,7 +182,7 @@ public:
     LayoutParser();
     ~LayoutParser();
     
-    bool reset(void);
+    bool reset();
     bool open(const char *);
     
     static int checkName(const parseflg *, const path *, int);

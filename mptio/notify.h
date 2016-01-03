@@ -19,10 +19,10 @@ MPT_INTERFACE(input)
 public:
 	enum { Type = TypeInput };
 	
-	virtual void unref(void) = 0;
+	virtual void unref() = 0;
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
-	virtual int _file(void);
+	virtual int _file();
 protected:
 	inline ~input() { }
 # else

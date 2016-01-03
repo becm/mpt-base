@@ -32,16 +32,16 @@ MPT_STRUCT(path)
 	void set(const char *path, int len = -1, int sep = -1, int assign = -1);
 	bool append(const char *path, int len = -1);
 	
-	bool next(void);
-	Slice<const char> data(void) const;
+	bool next();
+	Slice<const char> data() const;
 	
 	path & operator=(path const &);
 	
-	int add(void);
-	int del(void);
+	int add();
+	int del();
 	
 	bool setValid();
-	inline void clearData(void)
+	inline void clearData()
 	{ valid = 0; }
 	
     protected:
@@ -66,7 +66,7 @@ MPT_INTERFACE(config)
 #if defined(__cplusplus)
 {
 public:
-	virtual void unref(void) = 0;
+	virtual void unref() = 0;
 	virtual Reference<metatype> *query(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 	
@@ -147,7 +147,7 @@ public:
     Config();
     virtual ~Config();
     
-    void unref(void);
+    void unref();
     Reference<metatype> *query(const path *, const MPT_STRUCT(value) * = 0);
     int remove(const path *);
     class Element;
@@ -160,7 +160,7 @@ protected:
 class Config::Element : public Array<Config::Element>, public Reference<metatype>, public identifier
 {
 public:
-    inline bool unused(void)
+    inline bool unused()
     {
         return _len == 0;
     }

@@ -137,7 +137,7 @@ MPT_STRUCT(message)
 	inline message(const void *b = 0, size_t u = 0) : used(u), base(b), cont(0), clen(0)
 	{ }
 	size_t read(size_t len, void * = 0);
-	size_t length(void) const;
+	size_t length() const;
 #else
 # define MPT_MESSAGE_INIT { 0, 0, 0, 0 }
 #endif

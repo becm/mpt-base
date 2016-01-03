@@ -148,10 +148,10 @@ public:
     // layout (de)registration
     virtual int addLayout(Layout *, bool = true);
     virtual int removeLayout(const Layout *);
-    int layoutCount(void) const;
+    int layoutCount() const;
 
     // layout creation
-    virtual Layout *createLayout(void);
+    virtual Layout *createLayout();
 
     // mapping helpers
     int target(laydest &, message &, size_t = 0) const;

@@ -246,21 +246,21 @@ class Transform;
 extern int convert(const void **, int , void *, int);
 
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(void) { return T::Type; }
+inline __MPT_CONST_EXPR int typeIdentifier() { return T::Type; }
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float>(void)  { return 'f'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<double>(void) { return 'd'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()  { return 'f'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<double>() { return 'd'; }
 /* integer values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>(void)  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>(void) { return 'n'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>(void) { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>(void) { return 'x'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>(void)  { return 'y'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>(void) { return 'q'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>(void) { return 'u'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>(void) { return 't'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
 
 /*! container for reference type pointer */
 template<typename T>
@@ -341,7 +341,7 @@ public:
 	int warning(const char *, const char *, ... );
 	int debug(const char *, const char *, ... );
 	
-	static logger *defaultInstance(void);
+	static logger *defaultInstance();
 	
 	virtual void unref() = 0;
 	virtual int log(const char *, int, const char *, va_list) = 0;
@@ -363,10 +363,10 @@ protected:
 public:
 	enum { Type = TypeMeta };
 	
-	const char *string(void);
+	const char *string();
 	
 	template <typename T>
-	inline T *cast(void)
+	inline T *cast()
 	{
 	    int t = typeIdentifier<T>();
 	    if (!value::isPointer(t)) return 0;
@@ -382,7 +382,7 @@ public:
 	virtual void unref() = 0;
 	virtual int assign(const value *);
 	virtual int conv(int, void *);
-	virtual metatype *clone(void);
+	virtual metatype *clone();
 	
 	inline int type()
 	{ return conv(0, 0); }
@@ -420,8 +420,8 @@ protected:
 public:
 	enum { Type = TypeObject };
 	
-	virtual void unref(void) = 0;
-	virtual uintptr_t addref(void);
+	virtual void unref() = 0;
+	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, metatype * = 0) = 0;
 	
@@ -436,7 +436,7 @@ public:
 
 #ifdef __cplusplus
 /* specialize metatype string cast */
-template <> inline const char *metatype::cast<const char>(void)
+template <> inline const char *metatype::cast<const char>()
 { return string(); }
 
 /* special copy for metatype */
@@ -482,7 +482,7 @@ public:
         if (!(_len -= (l * sizeof(T)))) _base = 0;
         return true;
     }
-    const char *fmt(void)
+    const char *fmt()
     {
         return value::vectorFormat(typeIdentifier<T>());
     }
@@ -501,7 +501,7 @@ public:
     int conv(int, void *);
     metatype *clone();
 
-    Slice<const char> data(void) const;
+    Slice<const char> data() const;
     class Small;
     class Big;
 
@@ -543,8 +543,8 @@ MPT_STRUCT(identifier)
 	{ setName(0); }
 	
 	bool equal(const char *, int) const;
-	Slice<const char> data(void) const;
-	const char *name(void) const;
+	Slice<const char> data() const;
+	const char *name() const;
 	
 	bool setName(const char *, int = -1);
 	bool setName(size_t , const void *);
@@ -652,7 +652,7 @@ public:
 	{ }
 	~socket();
 	
-	inline bool active(void) const
+	inline bool active() const
 	{ return _id >= 0; }
 	
 	bool bind(const char *, int = 2);

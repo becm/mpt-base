@@ -54,12 +54,12 @@ public:
 	client(class output * = 0);
 	~client();
 	
-	virtual void unref(void) = 0;
+	virtual void unref() = 0;
 	
-	virtual int  init(void);
+	virtual int  init();
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
-	virtual int  step(void) = 0;
-	virtual void clear(void);
+	virtual int  step() = 0;
+	virtual void clear();
 	
 	virtual int output(int what = 0) const;
 	virtual int report(logger * = 0) const;
@@ -77,7 +77,7 @@ MPT_STRUCT(libhandle)
 	~libhandle();
 #endif
 	void *lib;             /* library handle */
-	void *(*create)(void); /* new/unique instance */
+	void *(*create)(); /* new/unique instance */
 };
 
 MPT_STRUCT(proxy)
@@ -85,9 +85,9 @@ MPT_STRUCT(proxy)
 #ifdef __cplusplus
 	inline proxy() : _mt(0), _id(0)
 	{ }
-	MPT_INTERFACE(metatype) *meta(void) const
+	MPT_INTERFACE(metatype) *meta() const
 	{ return _mt; }
-	uintptr_t id(void) const
+	uintptr_t id() const
 	{ return _id; }
 protected:
 	Reference<metatype> _mt;
@@ -158,7 +158,7 @@ inline int client::prep(metatype *)
 { return 0; }
 inline int client::output(int) const
 { return 0; }
-inline void client::clear(void)
+inline void client::clear()
 {
     mpt_node_clear(conf);
 }
