@@ -18,6 +18,7 @@ static const struct {
 	uint8_t key, size;
 } static_ptypes[] = {
 	/* scalar system types */
+	{ MPT_ENUM(TypeSocket),   sizeof(MPT_STRUCT(socket)) },
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
 	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
 	

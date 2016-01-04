@@ -39,143 +39,20 @@ MPT_STRUCT(out_data) {
 	void                  *conv[3];
 	
 	MPT_STRUCT(reference) _ref;
-	
-	MPT_STRUCT(array)     _wait;
-	
-	MPT_STRUCT(outdata)    out;
-	struct {
-		MPT_TYPE(DataDecoder) fcn;
-		MPT_STRUCT(codestate) info;
-	} dec;
 	MPT_STRUCT(notify)   *_no;
 	
-	MPT_STRUCT(queue)      in;
-	
-	struct {
-		MPT_STRUCT(histinfo) info;
-		FILE                *file;
-	} hist;
-	
-	uint16_t               cid,
-	                      _rid,
-	                      _start;
-	uint8_t               _coding;
+	MPT_STRUCT(connection) con;
 };
-
-static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
-{
-	const char *where = 0;
-	int len;
-	FILE *fd;
-	
-	if (!src) {
-		return *hist ? 1 : 0;
-	}
-	if ((len = src->_vptr->conv(src, 's', &where)) < 0) {
-		return len;
-	} else if (!where) {
-		fd = stdout;
-	} else if (!*where) {
-		fd = 0;
-	} else {
-		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
-		int mode;
-		
-		/* try to use argument as connect string */
-		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
-			if (!(mode & MPT_ENUM(SocketStream))
-			    || !(mode & MPT_ENUM(SocketWrite))
-			    || !(fd = fdopen(sock._id, "w"))) {
-				mpt_connect(&sock, 0, 0);
-				return -1;
-			}
-		}
-		/* regular file path */
-		else if (!(fd = fopen(where, "w"))) {
-			return -1;
-		}
-	}
-	if (*hist && (*hist != stdout) && (*hist != stderr)) {
-		fclose(*hist);
-	}
-	*hist = fd;
-	
-	return len;
-}
-static int outputEncoding(MPT_STRUCT(out_data) *od, MPT_INTERFACE(metatype) *src)
-{
-	MPT_TYPE(DataEncoder) enc;
-	MPT_TYPE(DataDecoder) dec;
-	char *where;
-	int32_t val;
-	int type;
-	uint8_t rtype;
-	
-	if (!src) return od->_coding;
-	
-	if (MPT_socket_active(&od->out.sock)) {
-		return -4;
-	}
-	if ((type = src->_vptr->conv(src, 's', &where)) >= 0) {
-		val = mpt_encoding_value(where, -1);
-		if (val < 0 || val > UINT8_MAX) {
-			return -2;
-		}
-		rtype = val;
-	}
-	else if ((type = src->_vptr->conv(src, 'y', &rtype)) < 0) {
-		type = src->_vptr->conv(src, 'i', &val);
-		if (type < 0 || val < 0 || val > UINT8_MAX) {
-			return -3;
-		}
-		rtype = val;
-	}
-	if (!rtype) {
-		if (od->out._enc.fcn) {
-			od->out._enc.fcn(&od->out._enc.info, 0, 0);
-			od->out._enc.fcn = 0;
-		}
-		if (od->dec.fcn) {
-			od->dec.fcn(&od->dec.info, 0, 0);
-			od->dec.fcn = 0;
-		}
-	}
-	else if (!(enc = mpt_message_encoder(rtype))
-	    || !(dec = mpt_message_decoder(rtype))) {
-		return -3;
-	}
-	else {
-		od->out._enc.fcn = enc;
-		od->dec.fcn = dec;
-	}
-	od->_coding = rtype;
-	
-	return type;
-}
 
 /* metatype interface */
 static void outputUnref(MPT_INTERFACE(object) *obj)
 {
 	MPT_STRUCT(out_data) *od = (void *) obj;
 	uintptr_t c;
-	FILE *fd;
 	if ((c = mpt_reference_lower(&od->_ref))) {
 		return;
 	}
-	mpt_outdata_fini(&od->out);
-	mpt_command_clear(&od->_wait);
-	
-	free(od->in.base);
-	
-	mpt_array_clone(&od->hist.info._fmt, 0);
-	
-	if ((fd = od->hist.file)
-	    && (fd != stdin)
-	    && (fd != stdout)
-	    && (fd != stderr)) {
-		fclose(fd);
-		od->hist.file = 0;
-	}
+	mpt_connection_fini(&od->con);
 	free(obj);
 }
 static uintptr_t outputRef(MPT_INTERFACE(object) *obj)
@@ -186,78 +63,58 @@ static uintptr_t outputRef(MPT_INTERFACE(object) *obj)
 }
 static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {
-	MPT_STRUCT(out_data) *od = (void *) obj;
-	const char *name;
+	MPT_STRUCT(out_data) *odata = (void *) obj;
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
 	}
-	if (!(name = pr->name)) {
-		return mpt_outdata_get(&od->out, pr);
-	}
-	if (!*name) {
-		static const char fmt[] = { MPT_ENUM(TypeObject), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput), 0 };
-		
+	if (pr->name && !*pr->name) {
+		static const char fmt[] = { MPT_ENUM(TypeOutput), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput), 0 };
 		pr->name = "output";
-		pr->desc = "interface to putput data";
+		pr->desc = "generic output interface";
 		pr->val.fmt = fmt;
-		pr->val.ptr = od->conv;
+		pr->val.ptr = odata->conv;
 		
 		return 0;
 	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		pr->name = "history";
-		pr->desc = MPT_tr("history data output file");
-		pr->val.fmt = "";
-		pr->val.ptr = od->hist.file;
-		return od->hist.file ? 1 : 0;
-	}
-	if (!strcasecmp(name, "histfmt")) {
-		MPT_STRUCT(buffer) *buf;
-		pr->name = "histfmt";
-		pr->desc = "history data output format";
-		pr->val.fmt = "@";
-		pr->val.ptr = &od->hist.info._fmt;
-		buf = od->hist.info._fmt._buf;
-		return buf ? buf->used : 0;
-	}
-	if (!strcasecmp(name, "encoding")) {
-		pr->name = "encoding";
-		pr->desc = "socket stream encoding";
-		pr->val.fmt = "y";
-		pr->val.ptr = &od->_coding;
-		return od->_coding;
-	}
-	return mpt_outdata_get(&od->out, pr);
+	return mpt_connection_get(&odata->con, pr);
 }
 static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	MPT_STRUCT(out_data) *odata = (void *) obj;
-	MPT_STRUCT(outdata) *od = &odata->out;
-	int ret;
+	int ret, oldFd = odata->con.out.sock._id;
 	
-	if (!name) {
-		int oldFd = od->sock._id;
-		if ((ret = mpt_outdata_set(od, name, src)) < 0) {
+	ret = mpt_connection_set(&odata->con, name, src);
+	
+	if (ret < 0) {
+		if (!name || !*name) {
 			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s",
 			        MPT_tr("unable to assign output"));
-			return ret;
+		} else {
+			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s: %s",
+			        MPT_tr("unable to set property"), name);
+		}
+	}
+	if (oldFd != odata->con.out.sock._id) {
+		MPT_STRUCT(outdata) *od = &odata->con.out;
+		MPT_TYPE(DataEncoder) enc = od->_enc.fcn;
+		MPT_TYPE(DataDecoder) dec = odata->con.in.dec;
+		
+		if (od->_sflg & MPT_ENUM(SocketStream)) {
+			if (!odata->con._coding) {
+				odata->con._coding = MPT_ENUM(EncodingCobs);
+				enc = mpt_message_encoder(odata->con._coding);
+				dec = mpt_message_decoder(odata->con._coding);
+			}
 		}
 		/* conditions for notification change */
 		if (od->_enc.fcn) {
 			od->_enc.fcn(&od->_enc.info, 0, 0);
-			od->_enc.fcn = 0;
+			od->_enc.fcn = enc;
 		}
-		if (odata->dec.fcn) {
-			odata->dec.fcn(&odata->dec.info, 0, 0);
-			odata->dec.fcn = 0;
-		}
-		if (od->_sflg & MPT_ENUM(SocketStream)) {
-			if (!odata->_coding) {
-				odata->_coding = MPT_ENUM(EncodingCobs);
-			}
-			od->_enc.fcn = mpt_message_encoder(odata->_coding);
-			odata->dec.fcn = mpt_message_decoder(odata->_coding);
+		if (odata->con.in.dec) {
+			odata->con.in.dec(&odata->con.in.info, 0, 0);
+			odata->con.in.dec = dec;
 		}
 		if (!odata->_no || (od->sock._id == oldFd)) {
 			return ret;
@@ -286,240 +143,24 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 			/* clear references */
 			outputUnref((void *) odata);
 		}
-		return ret;
-	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		ret = setHistfile(&odata->hist.file, src);
-	}
-	else if (!strcasecmp(name, "histfmt")) {
-		ret = mpt_valfmt_set(&odata->hist.info._fmt, src);
-	}
-	else if (!strcasecmp(name, "encoding")) {
-		ret = outputEncoding(odata, src);
-	}
-	else {
-		ret = mpt_outdata_set(od, name, src);
-	}
-	if (ret < 0) {
-		mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s: %s",
-		        MPT_tr("unable to set property"), name);
 	}
 	return ret;
 }
 /* output interface */
 static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
-	ssize_t ret;
 	MPT_STRUCT(out_data) *od = (void *) out;
-	
-	/* message in progress */
-	if (od->out.state & MPT_ENUM(OutputActive)) {
-		/* local print condition */
-		if (od->out.state & 0x7) {
-			if (!(ret = mpt_outdata_print(&od->out, od->hist.file, len, src))) {
-				ret = len;
-			}
-		}
-		/* history output triggered */
-		else if (od->hist.info.size) {
-			if (od->hist.info.type) {
-				ret = mpt_history_print(od->hist.file, &od->hist.info, len, src);
-			} else {
-				MPT_STRUCT(histinfo) info = MPT_HISTINFO_INIT;
-				info.type = 't';
-				info.pos = od->hist.info.pos;
-				info.size = sizeof(uint64_t);
-				ret = mpt_history_print(od->hist.file, &info, len, src);
-				od->hist.info.pos = info.pos;
-			}
-		}
-		else {
-			ret = mpt_outdata_push(&od->out, len, src);
-		}
-		if (ret < 0) {
-			return ret;
-		}
-		if (!len) {
-			od->out.state &= MPT_ENUM(OutputPrintColor);
-			od->hist.info.size = 0;
-			od->cid = 0;
-		}
-		return ret;
-	}
-	if (!src) {
-		return -2;
-	}
-	if (len > 1 && !(od->out.state & MPT_ENUM(OutputRemote))) {
-		const MPT_STRUCT(msgtype) *mt = src;
-		if ((ret = mpt_outdata_print(&od->out, od->hist.file, len, src)) >= 0) {
-			return ret ? ret : (ssize_t) len;
-		}
-		/* convert history to printable output */
-		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-			size_t parts = mt->arg;
-			ret = 2 + parts * 2;
-			if (len < (size_t) ret) {
-				return -2;
-			}
-			mpt_history_set(&od->hist.info, 0);
-			
-			if (!parts) {
-				od->hist.info.size = sizeof(uint64_t);
-			}
-			else while (parts--) {
-				if (mpt_history_set(&od->hist.info, (void *) (++mt)) < 0) {
-					od->hist.info.line = 0;
-					od->hist.info.type = 0;
-				}
-			}
-			od->out.state |= MPT_ENUM(OutputActive);
-			
-			/* consume data for bad setup */
-			if (!od->hist.info.size
-			    || ((parts = (len - ret))
-			        && (ret = mpt_history_print(od->hist.file, &od->hist.info, parts, src)) < 0)) {
-				od->out.state |= MPT_ENUM(OutputPrintRestore);
-				return 0;
-			}
-			return len;
-		}
-	}
-	/* TODO: semantics to skip ID */
-	if (!(od->out.state & 0x40)) {
-		struct iovec vec;
-		uint16_t mid = htons(od->cid);
-		
-		vec.iov_base = &mid;
-		vec.iov_len  = sizeof(mid);
-		
-		if (MPT_socket_active(&od->out.sock)
-		    && (ret = mpt_array_push(&od->out._buf, &od->out._enc.info, od->out._enc.fcn, &vec)) < (ssize_t) sizeof(mid)) {
-			return -3;
-		}
-	}
-	od->out.state &= ~MPT_ENUM(OutputRemote);
-	if ((ret = mpt_outdata_push(&od->out, len, src)) < 0) {
-		MPT_STRUCT(command) *cmd;
-		if (od->cid && (cmd = mpt_command_get(&od->_wait, od->cid))) {
-			cmd->cmd(cmd->arg, 0);
-			cmd->cmd = 0;
-		}
-	}
-	return ret;
+	return mpt_connection_push(&od->con, len, src);
 }
-
 static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 {
-	struct pollfd sock;
-	size_t len;
-	int ret;
-	MPT_STRUCT(command) *ans;
-	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(out_data) *od = (void *) out;
-	
-	if ((sock.fd = od->out.sock._id) < 0) {
-		errno = EBADF;
-		return -1;
-	}
-	sock.events = POLLIN;
-	
-	/* count waiting handlers */
-	if (!(buf = od->_wait._buf) || !(len = buf->used)) {
-		return 0;
-	}
-	len /= sizeof(*ans);
-	
-	for (ret = 0, ans = (void *) (buf + 1); len; --len, ++ans) {
-		if (ans->cmd) {
-			++ret;
-		}
-	}
-	if (!(len = ret)) {
-		return 0;
-	}
-	while (1) {
-		uint16_t buf[64];
-		struct iovec vec;
-		
-		vec.iov_base = buf;
-		vec.iov_len = sizeof(buf);
-		if (mpt_queue_peek(&od->in, &od->dec.info, od->dec.fcn, &vec) >= 2) {
-			ssize_t raw;
-			
-			buf[0] = ntohs(buf[0]);
-			
-			if (!(buf[0] & 0x8000)) {
-				errno = EINTR;
-				return -2;
-			}
-			if (!(ans = mpt_command_get(&od->_wait, buf[0] & 0x7fff))) {
-				errno = EINVAL;
-				return -3;
-			}
-			if ((raw = mpt_queue_recv(&od->in, &od->dec.info, od->dec.fcn)) >= 0) {
-				MPT_STRUCT(message) msg;
-				size_t off;
-				
-				off = od->dec.info.done;
-				mpt_message_get(&od->in, off, raw, &msg, &vec);
-				
-				/* consume message ID */
-				mpt_message_read(&msg, sizeof(*buf), 0);
-				
-				/* process reply and clear wait state */
-				ret = ans->cmd(ans->arg, &msg);
-				ans->cmd = 0;
-				mpt_queue_crop(&od->in, 0, off);
-				if (ret < 0) {
-					return -4;
-				}
-				if (!--len) {
-					return 0;
-				}
-				continue;
-			}
-		}
-		if ((ret = poll(&sock, 1, timeout)) < 0) {
-			break;
-		}
-		if (!(sock.revents & POLLIN)) {
-			break;
-		}
-		
-		if (od->in.len >= od->in.max && !mpt_queue_prepare(&od->in, 64)) {
-			break;
-		}
-		if ((ret = mpt_queue_load(&od->in, od->out.sock._id, 0)) <= 0) {
-			break;
-		}
-	}
-	return len;
+	return mpt_connection_sync(&od->con, timeout);
 }
-
 static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
 {
-	MPT_STRUCT(command) *cmd;
 	MPT_STRUCT(out_data) *od = (void *) out;
-	
-	if (!MPT_socket_active(&od->out.sock) || !(od->out._sflg & MPT_ENUM(SocketRead))) {
-		return -1;
-	}
-	/* message in progress */
-	if (od->cid || (od->out.state & MPT_ENUM(OutputActive))) {
-		return -2;
-	}
-	if (!(cmd = mpt_message_nextid(&od->_wait))) {
-		return -1;
-	}
-	/* make next message non-local */
-	od->out.state |= MPT_ENUM(OutputRemote);
-	od->cid = cmd->id;
-	
-	if (ctl) {
-		cmd->cmd = (int (*)()) ctl;
-		cmd->arg = udata;
-	}
-	return 1 + cmd - ((MPT_STRUCT(command) *) (od->_wait._buf + 1));
+	return mpt_connection_await(&od->con, ctl, udata);
 }
 static const MPT_INTERFACE_VPTR(output) outCtl = {
 	{ outputUnref, outputRef, outputProperty, outputSetProperty },
@@ -536,75 +177,7 @@ static void outputLoggerUnref(MPT_INTERFACE(logger) *log)
 static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list va)
 {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, log, _log, _base);
-	MPT_STRUCT(outdata) *od = &odata->out;
-	FILE *fd;
-	const char *ansi = 0;
-	
-	/* send log entry to contact */
-	if (!(od->state & MPT_ENUM(OutputActive))
-	    && (od->state & MPT_ENUM(OutputRemote))) {
-		MPT_STRUCT(msgtype) hdr;
-		
-		hdr.cmd = MPT_ENUM(MessageOutput);
-		hdr.arg = type & 0xff;
-		
-		outputPush(&odata->_base, sizeof(hdr), &hdr);
-		
-		if (type && from) {
-			outputPush(&odata->_base, strlen(from)+1, from);
-		}
-		if (fmt) {
-			char buf[1024];
-			int plen;
-			
-			plen = vsnprintf(buf, sizeof(buf), fmt, va);
-			
-			/* zero termination indicates truncation,
-			 * just ignore Microsoft's fuckuped version without termination */
-			if (plen >= (int) sizeof(buf)) plen = sizeof(buf);
-			
-			if (plen > 0 && (plen = outputPush(&odata->_base, plen, buf)) < 0) {
-				outputPush(&odata->_base, 1, 0);
-				return plen;
-			}
-		}
-		outputPush(&odata->_base, 0, 0);
-		
-		return 2;
-	}
-	/* local processing of log entry */
-	if (!(type & 0xff)) {
-		type &= ~MPT_ENUM(LogPretty);
-		fd = stdout;
-		fputc('#', fd);
-		fputc(' ', fd);
-	}
-	else {
-		fd = stderr;
-		if ((type & MPT_ENUM(LogFile)) && odata->hist.file) {
-			fd = odata->hist.file;
-			type &= ~MPT_ENUM(LogFile);
-		}
-		else if (mpt_output_file(type & 0x7f, od->level & 0xf) <= 0) {
-			return 0;
-		}
-		/* use default log config */
-		if (!(type & MPT_ENUM(LogPretty))) {
-			type |= MPT_ENUM(LogPrefix);
-			if (od->state & MPT_ENUM(OutputPrintColor)) {
-				type |= MPT_ENUM(LogSelect);
-			}
-		}
-	}
-	ansi = mpt_log_start(fd, from, type);
-	if (fmt) {
-		vfprintf(fd, fmt, va);
-	}
-	if (ansi) fputs(ansi, fd);
-	fputc('\n', fd);
-	fflush(fd);
-	
-	return 1;
+	return mpt_connection_log(&odata->con, from, type, fmt, va);
 }
 static const MPT_INTERFACE_VPTR(logger) logCtl = {
 	outputLoggerUnref,
@@ -619,22 +192,23 @@ static int outputNext(MPT_INTERFACE(input) *in, int what)
 {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
 	
-	if (!MPT_socket_active(&odata->out.sock)) {
+	if (!MPT_socket_active(&odata->con.out.sock)) {
 		return -3;
 	}
 	if (what & POLLIN) {
+		MPT_STRUCT(queue) *in = &odata->con.in.data;
 		ssize_t len;
 		
-		if (odata->in.len >= odata->in.max && !mpt_queue_prepare(&odata->in, 64)) {
+		if (in->len >= in->max && !mpt_queue_prepare(in, 64)) {
 			return 0;
 		}
-		if ((len = mpt_queue_load(&odata->in, odata->out.sock._id, 0)) > 0) {
+		if ((len = mpt_queue_load(in, odata->con.out.sock._id, 0)) > 0) {
 			return POLLIN;
 		}
-		close(odata->out.sock._id);
-		odata->out.sock._id = -1;
+		close(odata->con.out.sock._id);
+		odata->con.out.sock._id = -1;
 		
-		if (!odata->in.len) {
+		if (!in->len) {
 			return -3;
 		}
 	}
@@ -642,183 +216,15 @@ static int outputNext(MPT_INTERFACE(input) *in, int what)
 	return (what & POLLHUP) ? -2 : 0;
 }
 
-extern int replySet(void *con, const MPT_STRUCT(message) *src)
-{
-	static const char fcn[] = "mpt::output::reply";
-	MPT_STRUCT(out_data) *rep = con;
-	struct iovec vec;
-	ssize_t take;
-	uint16_t rid;
-	
-	/* already answered */
-	if (!rep->_rid) {
-		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Warning), "%s",
-		        MPT_tr("reply to processed message ignored"));
-		return -3;
-	}
-	
-	if (rep->out.state & MPT_ENUM(OutputActive)) {
-		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Error), "%s (%04x): %s",
-	        MPT_tr("unable to reply"), rep->_rid, MPT_tr("message in progress"));
-		rep->_rid = 0;
-		return -1;
-	}
-	rid = htons(rep->_rid);
-	vec.iov_base = &rid;
-	vec.iov_len  = sizeof(rid);
-	
-	if (mpt_array_push(&rep->out._buf, &rep->out._enc.info, rep->out._enc.fcn, &vec) < (ssize_t) sizeof(rid)) {
-		mpt_log(&rep->_log, fcn, MPT_FCNLOG(Warning), "%s (%04x)",
-		        MPT_tr("error replying to message"), rep->_rid);
-		rep->_rid = 0;
-		return -1;
-	}
-	rep->out.state |= MPT_ENUM(OutputActive);
-	
-	if (src) {
-		struct iovec *cont = src->cont;
-		size_t clen = src->clen;
-		
-		vec.iov_base = cont->iov_base;
-		vec.iov_len  = cont->iov_len;
-		
-		
-		
-		while (1) {
-			if (!vec.iov_len) {
-				if (!--clen) {
-					break;
-				}
-				vec = *(cont++);
-				
-				continue;
-			}
-			take = mpt_outdata_push(&rep->out, vec.iov_len, vec.iov_base);
-			
-			if (take < 0 || (size_t) take > vec.iov_len) {
-				if ((take = mpt_outdata_push(&rep->out, 1, 0)) < 0) {
-					return take;
-				}
-				return -1;
-			}
-			vec.iov_base = ((uint8_t *) vec.iov_base) + take;
-			vec.iov_len -= take;
-			
-			/* mark written data */
-			rid = 0;
-		}
-	}
-	if ((take = mpt_outdata_push(&rep->out, 0, 0)) < 0) {
-		if (!rid) {
-			(void) mpt_outdata_push(&rep->out, 1, 0);
-		}
-		take = -1;
-	}
-	rep->out.state &= ~(MPT_ENUM(OutputActive) | MPT_ENUM(OutputRemote));
-	
-	return take;
-}
 static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
-	MPT_STRUCT(event) ev;
-	MPT_STRUCT(message) msg;
-	struct iovec vec;
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
-	MPT_STRUCT(outdata) *od = &odata->out;
-	ssize_t len;
-	size_t off;
-	int ret;
-	uint16_t rid;
-	
-	/* message trnasfer in progress */
-	if (od->state & MPT_ENUM(OutputActive)) {
-		return MPT_ENUM(EventRetry);
-	}
-	if (!odata->dec.fcn) {
-		errno = EINVAL;
-		return -1;
-	}
-	
-	/* get next message */
-	if ((len = mpt_queue_recv(&odata->in, &odata->dec.info, odata->dec.fcn)) < 0) {
-		return len;
-	}
-	off = odata->dec.info.done;
-	mpt_message_get(&odata->in, off, len, &msg, &vec);
-	
-	/* remove message id */
-	if (mpt_message_read(&msg, sizeof(rid), &rid) < sizeof(rid)) {
-		if (off) {
-			mpt_queue_crop(&odata->in, 0, off);
-			odata->dec.info.done = 0;
-		}
-		return -2;
-	}
-	rid = ntohs(rid);
-	
-	/* process reply */
-	if (rid & 0x8000) {
-		MPT_STRUCT(command) *ans;
-		
-		rid &= 0x7fff;
-		ev.id = rid;
-		ev.msg = 0;
-		ev.reply.set = 0;
-		ev.reply.context = 0;
-		
-		if ((ans = mpt_command_get(&odata->_wait, rid))) {
-			if (ans->cmd(ans->arg, &msg) < 0) {
-				mpt_log(&odata->_log, __func__, MPT_FCNLOG(Warning), "%s: %04x",
-				        MPT_tr("reply processing error"), rid);
-			}
-			ans->cmd = 0;
-		} else {
-			ev.msg = &msg;
-			mpt_log(&odata->_log, __func__, MPT_FCNLOG(Error), "%s: %04x",
-			        MPT_tr("unregistered reply id"), rid);
-		}
-	}
-	/* process regular input */
-	else {
-		/* event setup */
-		ev.id = 0;
-		ev.msg = &msg;
-		
-		/* force remote message */
-		if (rid) {
-			odata->_rid = rid | 0x8000;
-			odata->_start = 0;
-			ev.reply.set = replySet;
-			ev.reply.context = odata;
-		}
-	}
-	/* dispatch data to command */
-	if (!cmd) {
-		ret = 0;
-	}
-	else if ((ret = cmd(arg, &ev)) < 0) {
-		ret = MPT_ENUM(EventCtlError);
-	} else {
-		ret &= MPT_ENUM(EventFlags);
-	}
-	if (odata->_rid) {
-		replySet(odata, 0);
-	}
-	/* remove message data from queue */
-	if (off) {
-		mpt_queue_crop(&odata->in, 0, off);
-		odata->dec.info.done = 0;
-	}
-	/* further message on queue */
-	if ((len = mpt_queue_peek(&odata->in, &odata->dec.info, odata->dec.fcn, 0)) >= 0) {
-		ret |= MPT_ENUM(EventRetry);
-	}
-	return ret;
+	return mpt_connection_dispatch(&odata->con, cmd, arg);
 }
 static int outputFile(MPT_INTERFACE(input) *in)
 {
 	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
-	return odata->out.sock._id;
+	return odata->con.out.sock._id;
 }
 const MPT_INTERFACE_VPTR(input) inputCtl = {
 	outputInputUnref,
@@ -847,13 +253,8 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 {
 	static const MPT_STRUCT(out_data) defOut = {
 		{ &outCtl }, { &logCtl }, { &inputCtl }, { 0 },
-		{ 1 },
-		MPT_ARRAY_INIT,
-		MPT_OUTDATA_INIT, { 0, MPT_CODESTATE_INIT }, 0,
-		MPT_QUEUE_INIT,
-		{ MPT_HISTINFO_INIT, 0 },
-		0, 0, 0,
-		0
+		{ 1 }, 0,
+		MPT_CONNECTION_INIT
 	};
 	MPT_STRUCT(out_data) *odata;
 	
@@ -862,8 +263,8 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 	}
 	*odata = defOut;
 	
-	odata->out.state = MPT_ENUM(OutputPrintColor);
-	odata->out.level = (MPT_ENUM(OutputLevelWarning) << 4) | MPT_ENUM(OutputLevelWarning);
+	odata->con.out.state = MPT_ENUM(OutputPrintColor);
+	odata->con.out.level = (MPT_ENUM(OutputLevelWarning) << 4) | MPT_ENUM(OutputLevelWarning);
 	
 	odata->_no = no;
 	

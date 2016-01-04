@@ -17,6 +17,7 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(node);
 MPT_STRUCT(array);
 MPT_STRUCT(notify);
+MPT_STRUCT(message);
 
 MPT_INTERFACE(output);
 
@@ -101,6 +102,46 @@ protected:
 }
 #endif
 ;
+
+#if defined(_MPT_ARRAY_H) && defined(_MPT_QUEUE_H)
+# ifdef __cplusplus
+MPT_STRUCT(connection) : public outdata
+{
+protected:
+# else
+MPT_STRUCT(connection)
+{
+	MPT_STRUCT(outdata)    out;    /* base output data */
+#  define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, MPT_ARRAY_INIT, \
+                                { MPT_QUEUE_INIT, 0, MPT_CODESTATE_INIT }, \
+                                { MPT_HISTINFO_INIT, 0 }, \
+                                0, 0 }
+# endif
+	MPT_STRUCT(array)     _wait;   /* pending message operations */
+	
+	struct {
+	MPT_STRUCT(queue)      data;
+	MPT_TYPE(DataDecoder)  dec;
+	MPT_STRUCT(codestate)  info;
+	} in;                         /* input data */
+	
+	struct {
+	MPT_STRUCT(histinfo)   info;
+#if defined(_STDIO_H) || defined(_STDIO_H_)
+	FILE
+#else
+	void
+#endif
+	                      *file;
+	} hist;                       /* history file parapeters */
+	
+	uint16_t               cid;
+	uint8_t               _coding;
+};
+#else
+MPT_STRUCT(connection);
+#endif
+
 /* binding to layout mapping */
 MPT_STRUCT(mapping)
 {
@@ -191,6 +232,25 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(me
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 
+
+/* clear connection data */
+extern void mpt_connection_fini(MPT_STRUCT(connection) *);
+/* get/set outdata property */
+extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
+extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, MPT_INTERFACE(metatype) *);
+/* push to outdata */
+extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void *);
+extern int mpt_connection_sync(MPT_STRUCT(connection) *, int);
+extern int mpt_connection_await(MPT_STRUCT(connection) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
+/* handle connection input */
+extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
+#ifdef _MPT_EVENT_H
+extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandler) cmd, void *arg);
+#endif
+/* push log message to connection */
+extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *, va_list);
+/* send message via connection */
+extern int mpt_connection_send(MPT_STRUCT(connection) *, const MPT_STRUCT(message) *);
 
 /* data mapping operations */
 extern int mpt_mapping_add(MPT_STRUCT(array) *, const MPT_STRUCT(mapping) *);

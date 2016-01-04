@@ -69,7 +69,7 @@ MPT_STRUCT(node);
 enum MPT_ENUM(Types)
 {
 	/* system types (scalar) */
-	MPT_ENUM(TypeValFmt)    = 0x1,   /* SOH */
+	MPT_ENUM(TypeSocket)    = 0x1,   /* SOH */
 	MPT_ENUM(TypeValue)     = 0x2,   /* STX */
 	MPT_ENUM(TypeProperty)  = 0x3,   /* ETX */
 	
@@ -78,10 +78,13 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeColor)     = 0x5,   /* ENQ rgba(0..255) */
 	MPT_ENUM(TypeLine)      = 0x6,   /* ACK */
 	
+	/* number output format */
+	MPT_ENUM(TypeValFmt)    = 0x7,   /* BEL '\a' */
+	
 	/* system pointer types */
 	MPT_ENUM(TypeAddress)   = 0x8,   /* BS  '\b' */
-	MPT_ENUM(TypeNode)      = 0x9,   /* HT  '\t' */
-	MPT_ENUM(TypeSocket)    = 0xa,   /* LF  '\n' */
+	MPT_ENUM(TypeFile)      = 0x9,   /* HT  '\t' */
+	MPT_ENUM(TypeNode)      = 0xa,   /* LF  '\n' */
 	
 	/* layout pointer types */
 	MPT_ENUM(TypeText)      = 0xc,   /* FF  '\f' */
