@@ -18,10 +18,10 @@ public:
     virtual ~MyClient() { }
     
     void unref();
-    int step();
+    int step(mpt::metatype *);
 };
 
-int MyClient::step()
+int MyClient::step(mpt::metatype *)
 { return 0; }
 
 void MyClient::unref()

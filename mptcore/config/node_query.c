@@ -23,7 +23,7 @@ if (path->len) node = mpt_node_get(node, path);
  * 
  * \return root of created elements
  */
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path, size_t vlen)
+extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path, ssize_t vlen)
 {
 	MPT_STRUCT(node) *match, *parent;
 	const char *base, *curr;
@@ -47,6 +47,9 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			parent = match; conf = match->children;
 			curr = base + path->off;
 			continue;
+		}
+		if (vlen < 0) {
+			return 0;
 		}
 		/* create node for current path element */
 		if (!(match = mpt_node_new(clen, path->len ? 0 : vlen))) {

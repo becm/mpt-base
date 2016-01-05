@@ -17,19 +17,23 @@
 
 static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
+	MPT_STRUCT(path) path = MPT_PATH_INIT;
+	MPT_STRUCT(node) *conf;
 	MPT_INTERFACE(logger) *log;
+	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	const char *err;
 	
-	if (!ev) return 0;
-	
-	if (!cl->conf && !(cl->conf = mpt_client_config("client"))) {
+	if (!ev) {
+		return 0;
+	}
+	mpt_path_set(&path, "mpt.client", -1);
+	if (!(conf = mpt_config_node(&path))) {
 		return MPT_event_fail(ev, MPT_tr("unable to query configuration"));
 	}
 	log = mpt_output_logger(cl->out);
 	
 	if (!ev->msg) {
-		err = mpt_client_read(cl->conf, 0, 0, log);
+		err = mpt_client_read(conf, 0, 0, log);
 	}
 	else {
 		MPT_STRUCT(message) msg = *ev->msg;
@@ -42,7 +46,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
 			mpt_message_read(&msg, part, 0);
 		}
-		err = mpt_client_read(cl->conf, &msg, mt.arg, log);
+		err = mpt_client_read(conf, &msg, mt.arg, log);
 	}
 	if (err) {
 		return MPT_event_fail(ev, err);
@@ -54,7 +58,7 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	if (!ev) {
-		cl->_vptr->unref(cl);
+		cl->_vptr->cfg.unref((void *) cl);
 		return 0;
 	}
 	if (ev->msg) {

@@ -27,7 +27,7 @@ extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *old, const MPT_STRUC
 	}
 	if (!old) old = conf;
 	
-	if (path.len && !(conf = mpt_node_get(conf->children, &path))) {
+	if (path.len && !(conf = mpt_node_query(conf->children, &path, -1))) {
 		return 0;
 	}
 	

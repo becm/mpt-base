@@ -48,7 +48,7 @@ MPT_STRUCT(path)
 	friend MPT_INTERFACE(config);
 	friend class Config;
 #else
-# define MPT_PATH_INIT  { 0,  0, 0, 0,  0, '.', '=', 0 }
+# define MPT_PATH_INIT  { 0,  0, 0, 0,  0, 0,  '.', '=' }
 #endif
 	const char *base;   /* path data */
 	
@@ -75,7 +75,7 @@ public:
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	metatype *get(const char *path, int sep = '.', int len = -1);
 	
-	config *global(const path *);
+	config *global(const path * = 0);
 protected:
 	inline ~config() { }
 #else
@@ -96,9 +96,12 @@ extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, i
 /* use config data to store environment */
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
-/* node operations for configuration */
-extern MPT_STRUCT(node) *mpt_node_get(MPT_STRUCT(node) *, const MPT_STRUCT(path) *);
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, size_t);
+/* get global config node */
+extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *);
+/* get config of global (sub-)tree */
+extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *);
+
+extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, ssize_t);
 /* use node to store environment */
 extern int mpt_node_environ(MPT_STRUCT(node) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 

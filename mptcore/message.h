@@ -196,6 +196,8 @@ extern size_t mpt_message_read(MPT_STRUCT(message) *, size_t , void *);
 extern size_t mpt_message_length(const MPT_STRUCT(message) *);
 /* apply property from message text argument */
 extern int mpt_message_pset(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
+/* apply property from message text argument */
+extern MPT_INTERFACE(metatype) *mpt_message_metatype(int , const MPT_STRUCT(message) *);
 
 /* find position of first occurance */
 extern ssize_t mpt_memchr(const struct iovec *, size_t , int );
@@ -213,9 +215,6 @@ extern ssize_t mpt_memtok(const struct iovec *, size_t , const char *, const cha
 
 /* iovec copy operations */
 extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct iovec *, size_t );
-
-/* send message */
-extern int mpt_output_send(MPT_INTERFACE(output) *, int , int , MPT_STRUCT(message) *);
 
 /* value to string conversion */
 #if defined(_STDIO_H) || defined(_STDIO_H_)

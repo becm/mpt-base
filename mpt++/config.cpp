@@ -119,8 +119,13 @@ void config::del(const char *p, int sep, int len)
     remove(&where);
 }
 int config::environ(const char *glob, int sep, char * const env[])
-{ return mpt_config_environ(this, glob, sep, env); }
-
+{
+	return mpt_config_environ(this, glob, sep, env);
+}
+config *config::global(const path *p)
+{
+	return mpt_config_global(p);
+}
 // config with private or global node store
 Config::Config()
 { }

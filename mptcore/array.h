@@ -679,8 +679,8 @@ public:
     }
     V *get(const K &key) const
     {
-        for (auto &e : _d) {
-            if (e.key == key) return &e.value;
+        for (const Element *c = begin(), e = end(); c < e; ++c) {
+            if (e->key == key) return &e->value;
         }
         return 0;
     }
@@ -691,8 +691,8 @@ public:
     Array<V> values(const K *key = 0) const
     {
         Array<V> a;
-        for (auto &e : _d) {
-            if (!key || e.key == *key) a.insert(a.size(), e.value);
+        for (const Element *c = begin(), e = end(); c < e; ++c) {
+            if (!key || e->key == *key) a.insert(a.size(), e->value);
         }
         return a;
     }

@@ -5,72 +5,10 @@
 #include <string.h>
 #include <errno.h>
 
-#include "array.h"
 #include "message.h"
 #include "event.h"
 
 #include "client.h"
-
-static void sliceUnref(MPT_INTERFACE(metatype) *src)
-{
-	(void) src;
-}
-static int sliceAssign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
-{
-	(void) src;
-	(void) val;
-	return MPT_ERROR(BadOperation);
-}
-static int sliceConv(MPT_INTERFACE(metatype) *src, int type, void *data)
-{
-	MPT_INTERFACE(slice) *s = (void *) (src+1);
-	char *base, *end;
-	size_t len;
-	
-	if (!s->_len) {
-		return 0;
-	}
-	if (!(base = mpt_array_slice(&s->_a, s->_off, s->_len))) {
-		MPT_ABORT("invalid slice parameters");
-	}
-	if (!(end = memchr(base, 0, s->_len))) {
-		return -2;
-	}
-	len = end - base;
-	
-	if (type == MPT_ENUM(TypeProperty)) {
-		if (!(end = memchr(base, '=', len++))) {
-			return -3;
-		}
-		*end = 0;
-		
-		if (data) {
-			MPT_STRUCT(property) *pr = data;
-			
-			pr->name = base;
-			pr->desc = 0;
-			pr->val.fmt = 0;
-			pr->val.ptr = end + 1;
-			s->_off += len;
-			s->_len -= len;
-		}
-	}
-	else if (type != 's') {
-		return -3;
-	}
-	else if (data) {
-		*((const char **) data) = base;
-		s->_off += len + 1;
-		s->_len -= len + 1;
-	}
-	
-	return len;
-}
-static MPT_INTERFACE(metatype) *sliceClone(MPT_INTERFACE(metatype) *src)
-{
-	(void) src;
-	return 0;
-}
 
 /*!
  * \ingroup mptClient
@@ -86,13 +24,8 @@ static MPT_INTERFACE(metatype) *sliceClone(MPT_INTERFACE(metatype) *src)
  */
 extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	static const MPT_INTERFACE_VPTR(metatype) dataVptr = { sliceUnref, sliceAssign, sliceConv, sliceClone };
-	struct {
-		MPT_INTERFACE(metatype) base;
-		MPT_STRUCT(slice) d;
-	} data = { { &dataVptr} , MPT_SLICE_INIT };
-	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
-	int ret;
+	MPT_INTERFACE(metatype) *src;
+	int res;
 	
 	if (!ev) {
 		return 0;
@@ -102,8 +35,10 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		return-1;
 	}
 	/* apply command line client parameters */
+	src = 0;
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
+		MPT_STRUCT(msgtype) mt;
 		ssize_t part = 0;
 		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
 		    || mt.cmd != MPT_ENUM(MessageCommand)) {
@@ -111,28 +46,18 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			               MPT_tr("bad message format"));
 			return -1;
 		}
-		else if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-			uint8_t *dest;
-			mpt_message_read(&msg, part, 0);
-			/* set client parameters from arguments */
-			while ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-				dest = mpt_array_slice(&data.d._a, data.d._len, part+1);
-				mpt_message_read(&msg, part, dest);
-				dest[part] = 0;
-				data.d._len += part+1;
-			}
+		if (!(src = mpt_message_metatype(mt.arg, &msg))) {
+			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
+			               MPT_tr("failed to create argument stream"));
+			return -1;
 		}
 	}
 	/* prepare client */
-	ret = cl->_vptr->prep(cl, data.d._len ? &data.base : 0);
-	mpt_array_clone(&data.d._a, 0);
+	res = cl->_vptr->prep(cl, src);
+	if (src) src->_vptr->unref(src);
 	
-	if (ret < 0) {
+	if (res < 0) {
 		return MPT_event_fail(ev, MPT_tr("client preparation failed"));
-	}
-	/* initial output */
-	if (cl->_vptr->output(cl, MPT_ENUM(OutputStateInit)) < 0) {
-		return MPT_event_fail(ev, MPT_tr("client output failed"));
 	}
 	return MPT_event_good(ev, MPT_tr("client preparation completed"));
 }

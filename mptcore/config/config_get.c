@@ -23,16 +23,11 @@ extern MPT_INTERFACE(metatype) *mpt_config_get(MPT_INTERFACE(config) *conf, cons
 	p.assign = assign;
 	mpt_path_set(&p, dest, -1);
 	
-	if (conf) {
-		if (!(mt = conf->_vptr->query(conf, &p, 0))) {
-			return 0;
-		}
-	} else {
-		MPT_STRUCT(node) *curr;
-		if (!(curr = mpt_node_get(0, &p))) {
-			return 0;
-		}
-		mt = &curr->_meta;
+	if (!conf) {
+		conf = mpt_config_global(0);
+	}
+	if (!(mt = conf->_vptr->query(conf, &p, 0))) {
+		return 0;
 	}
 	return *mt;
 }

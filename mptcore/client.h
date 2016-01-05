@@ -6,11 +6,7 @@
 #ifndef _MPT_CLIENT_H
 #define _MPT_CLIENT_H  201502
 
-#include "core.h"
-
-#ifdef __cplusplus
-# include "node.h"
-#endif
+#include "config.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -27,18 +23,11 @@ MPT_STRUCT(data);
 MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
-	/* remove client reference */
-	void (*unref)(MPT_INTERFACE(client) *);
-	
-	/* control client data and setup */
-	int  (*init) (MPT_INTERFACE(client) *);
+	MPT_INTERFACE_VPTR(config) cfg;
+	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*prep) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
-	int  (*step) (MPT_INTERFACE(client) *);
+	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	void (*clear)(MPT_INTERFACE(client) *);
-	
-	/* client output operations */
-	int (*output)(const MPT_INTERFACE(client) *, int);
-	int (*report)(const MPT_INTERFACE(client) *, MPT_INTERFACE(logger) *);
 };
 # define MPT_CLIENT_LOGLEVEL MPT_FCNLOG(Debug2)
 MPT_INTERFACE(client)
@@ -46,27 +35,21 @@ MPT_INTERFACE(client)
 	const MPT_INTERFACE_VPTR(client) *_vptr;
 	MPT_INTERFACE(output) *out;
 #else
-MPT_INTERFACE(client) : public Reference<output>
+MPT_INTERFACE(client) : public config, public Reference<output>
 {
 public:
 	enum { LogLevel = MPT_FCNLOG(Debug2) };
 	
 	client(class output * = 0);
-	~client();
 	
-	virtual void unref() = 0;
+	Reference<metatype> *query(const path *, const value *);
+	int remove(const path *);
 	
-	virtual int  init();
+	virtual int  init(MPT_INTERFACE(metatype) * = 0);
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
-	virtual int  step() = 0;
+	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
 	virtual void clear();
-	
-	virtual int output(int what = 0) const;
-	virtual int report(logger * = 0) const;
-	
-protected:
 #endif
-	MPT_STRUCT(node) *conf; /* configuration */
 };
 
 MPT_STRUCT(libhandle)
@@ -76,8 +59,8 @@ MPT_STRUCT(libhandle)
 	{ }
 	~libhandle();
 #endif
-	void *lib;             /* library handle */
-	void *(*create)(); /* new/unique instance */
+	void *lib;           /* library handle */
+	void *(*create)();   /* new/unique instance */
 };
 
 MPT_STRUCT(proxy)
@@ -144,24 +127,18 @@ inline libhandle::~libhandle()
     mpt_library_close(this);
 }
 
-inline client::client(class output *out) : Reference<class output>(out), conf(0)
+inline client::client(class output *out) : Reference<class output>(out)
 { }
-inline client::~client()
-{
-    if (conf && !conf->parent) mpt_node_destroy(conf);
-}
-inline int client::report(logger *) const
-{ return 0; }
-inline int client::init()
+inline Reference<metatype> *client::query(const path *p, const value *v)
+{ return config::global()->query(p, v); }
+int client::remove(const path *p)
+{ return config::global()->remove(p); }
+inline int client::init(metatype *)
 { return 0; }
 inline int client::prep(metatype *)
 { return 0; }
-inline int client::output(int) const
-{ return 0; }
 inline void client::clear()
-{
-    mpt_node_clear(conf);
-}
+{ }
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

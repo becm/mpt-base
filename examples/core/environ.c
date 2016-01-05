@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	}
 	mpt_config_set(0, "ls.colors", 0, '.', 0);
 	
-	mpt_gnode_traverse(mpt_node_get(0, 0), MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
+	mpt_gnode_traverse(mpt_config_node(0), MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	
 	return 0;
 }

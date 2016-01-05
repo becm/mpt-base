@@ -45,29 +45,26 @@ static MPT_STRUCT(node) *nodeRoot(void)
  * \ingroup mptConfig
  * \brief get configuration element
  * 
- * find element in configuration tree/list.
+ * find element in global configuration tree/list.
  * 
- * \param conf  configuration root
  * \param path  element path
  * 
  * \return config node if exists
  */
-extern MPT_STRUCT(node) *mpt_node_get(MPT_STRUCT(node) *conf, const MPT_STRUCT(path) *path)
+extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *path)
 {
+	MPT_STRUCT(node) *conf;
 	MPT_STRUCT(path) p;
 	const char *base, *curr;
 	ssize_t clen;
 	
 	if (!path) {
-		return conf ? conf : nodeRoot();
+		return nodeRoot();
 	}
 	/* missing path information */
 	if (!path->len) {
 		errno = EINVAL;
 		return 0;
-	}
-	if (!conf) {
-		conf = nodeRoot();
 	}
 	p = *path;
 	p.flags &= ~MPT_ENUM(PathHasArray);
@@ -75,6 +72,7 @@ extern MPT_STRUCT(node) *mpt_node_get(MPT_STRUCT(node) *conf, const MPT_STRUCT(p
 	base = p.base;
 	curr = base + path->off;
 	
+	conf = nodeRoot();
 	while ((clen = mpt_path_next(&p)) >= 0) {
 		if (!(conf = mpt_node_locate(conf, 1, curr, clen))) {
 			return 0;
