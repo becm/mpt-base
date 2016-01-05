@@ -40,9 +40,9 @@ MPT_STRUCT(laydest)
 	inline laydest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
 		lay(l), grf(g), wld(w), dim(d)
 	{ }
-	inline bool operator==(const laydest &ld)
+	inline bool operator==(const laydest &ld) const
 	{ return lay == ld.lay && grf == ld.grf && wld == ld.wld; }
-	inline bool same(const laydest &ld)
+	inline bool same(const laydest &ld) const
 	{ return *this == ld && dim == ld.dim; }
 #else
 # define MPT_LAYDEST_INIT { 0, 0, 0, 0 }
@@ -149,7 +149,7 @@ MPT_STRUCT(mapping)
 	inline mapping(const msgbind &m = msgbind(0), const laydest &d = laydest(), int c = 0) :
 		src(m), client(c), dest(d)
 	{ }
-	inline bool valid()
+	inline bool valid() const
 	{ return src.type != 0; }
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_LAYDEST_INIT }

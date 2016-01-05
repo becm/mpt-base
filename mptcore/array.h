@@ -197,6 +197,9 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *, size_t , size_t __MPT_DEFPAR(0
 /* write data to slice */
 extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *, size_t , const void *, size_t);
 
+/* get strings from slice */
+extern int mpt_slice_conv(MPT_STRUCT(slice) *, int , void *);
+
 /* clear references on array data */
 extern void mpt_array_callunref(const MPT_STRUCT(array) *);
 
@@ -679,7 +682,7 @@ public:
     }
     V *get(const K &key) const
     {
-        for (const Element *c = begin(), e = end(); c < e; ++c) {
+        for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
             if (e->key == key) return &e->value;
         }
         return 0;
@@ -691,7 +694,7 @@ public:
     Array<V> values(const K *key = 0) const
     {
         Array<V> a;
-        for (const Element *c = begin(), e = end(); c < e; ++c) {
+        for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
             if (!key || e->key == *key) a.insert(a.size(), e->value);
         }
         return a;
