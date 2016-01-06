@@ -46,8 +46,11 @@ extern int mpt_slice_conv(MPT_INTERFACE(slice) *s, int type, void *data)
 	}
 	if ((type & 0xff) == MPT_ENUM(TypeProperty)) {
 		char *sep;
+		int psep;
 		
-		if (!(sep = memchr(base, '=', len))) {
+		psep = (type & 0xff0000) / 0x10000;
+		
+		if (!(sep = memchr(base, psep ? psep : '=', len))) {
 			return MPT_ERROR(BadValue);
 		}
 		/* needs data change */

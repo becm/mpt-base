@@ -46,7 +46,7 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			               MPT_tr("bad message format"));
 			return -1;
 		}
-		if (!(src = mpt_meta_message(mt.arg, &msg))) {
+		if (!(src = mpt_meta_message(&msg, mt.arg, '='))) {
 			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
 			               MPT_tr("failed to create argument stream"));
 			return -1;

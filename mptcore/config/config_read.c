@@ -23,23 +23,21 @@
  * 
  * \return parse result
  */
-extern int mpt_config_read(MPT_STRUCT(node) *root, const char *file, const char *fmt, const char *limit, MPT_INTERFACE(logger) *out)
+extern int mpt_config_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, const char *limit, MPT_INTERFACE(logger) *out)
 {
 	MPT_STRUCT(parse) parse;
 	MPT_STRUCT(node) conf;
 	MPT_TYPE(ParserFcn) next;
-	FILE *fd;
 	int err;
 	
-	if (!file) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("no file specified"));
-		errno = EFAULT;
-		return MPT_ERROR(BadArgument);
-	}
 	if (!root) {
 		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
 		               MPT_tr("missing configuration node"));
-		errno = EFAULT;
+		return MPT_ERROR(BadArgument);
+	}
+	if (!fd) {
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+		               MPT_tr("missing input file"));
 		return MPT_ERROR(BadArgument);
 	}
 	mpt_parse_init(&parse);
@@ -52,11 +50,6 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, const char *file, const char 
 	}
 	if ((err = mpt_parse_accept(&parse.name, limit)) < 0) {
 		return err;
-	}
-	if (!(fd = fopen(file, "r"))) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s \"%s\"",
-		               MPT_tr("unable to open file"), file);
-		return MPT_ERROR(BadValue);
 	}
 	parse.src.getc = (int (*)()) mpt_getchar_stdio;
 	parse.src.arg  = fd;
@@ -79,10 +72,15 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, const char *file, const char 
 			tmp = tmp->next;
 		}
 	}
-	fclose(fd);
 	if (err < 0) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u: %s",
-		               MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line, file);
+		const char *fname;
+		if ((fname = mpt_node_data(root, 0))) {
+			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u: %s",
+			               MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line, fname);
+		} else {
+			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u",
+			               MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line);
+		}
 	}
 	return err;
 }

@@ -16,6 +16,7 @@
 MPT_STRUCT(metaBuffer) {
 	MPT_INTERFACE(metatype) _meta;
 	MPT_STRUCT(slice)        s;
+	char                     psep;
 };
 
 static void bufferUnref(MPT_INTERFACE(metatype) *meta)
@@ -90,7 +91,7 @@ static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = &m->_meta;
 		return MPT_ENUM(TypeMeta);
 	}
-	return mpt_slice_conv(&m->s, type, ptr);
+	return mpt_slice_conv(&m->s, m->psep ? (m->psep * 0x10000) | (type & 0xffff) : type, ptr);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
@@ -103,13 +104,15 @@ static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
 	m->_meta._vptr = &_vptr_buffer;
 	m->s._a._buf = 0;
 	
-	if (!old) {
-		m->s._len = m->s._off = 0;
-	} else {
+	if (old) {
 		mpt_array_clone(&m->s._a, &old->s._a);
 		m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
-		m->s._off = 0;
+		m->psep = old->psep;
+	} else {
+		m->s._len = 0;
+		m->psep = '=';
 	}
+	m->s._off = 0;
 	return &m->_meta;
 }
 
@@ -154,12 +157,13 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(size_t len, const void *data)
  * Create metatype from message data to access arguments from
  * property assign interaction.
  * 
- * \param sep  argument separator
- * \param msg  message data
+ * \param msg   message data
+ * \param asep  argument separator
+ * \param psep  property name separator
  * 
  * \return hint to event controller (int)
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_message(int sep, const MPT_STRUCT(message) *ptr)
+extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep, int psep)
 {
 	MPT_STRUCT(metaBuffer) *m;
 	MPT_STRUCT(message) msg;
@@ -179,7 +183,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(int sep, const MPT_STRUCT(messa
 		return 0;
 	}
 	m->s._a._buf->used = 0;
-	while ((len = mpt_message_argv(&msg, sep)) >= 0) {
+	while ((len = mpt_message_argv(&msg, asep)) >= 0) {
 		char *base;
 		if (!(base = mpt_array_append(&m->s._a, len, 0))) {
 			bufferUnref(&m->_meta);
@@ -187,7 +191,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(int sep, const MPT_STRUCT(messa
 		}
 		mpt_message_read(&msg, len, base);
 		
-		if (!sep) {
+		if (!asep) {
 			continue;
 		}
 		if (!(base = mpt_array_append(&m->s._a, 1, 0))) {
@@ -197,6 +201,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(int sep, const MPT_STRUCT(messa
 	}
 	m->s._len = m->s._a._buf->used;
 	m->s._off = 0;
+	m->psep = psep;
 	
 	return &m->_meta;
 }

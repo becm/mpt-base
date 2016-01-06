@@ -106,7 +106,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
 
 /* read files to configuration */
-extern const char *mpt_client_read(MPT_STRUCT(node) *, MPT_STRUCT(message) *, int , MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern const char *mpt_client_read(MPT_STRUCT(node) *, MPT_INTERFACE(metatype) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 
 
 /* open/close library descriptor */

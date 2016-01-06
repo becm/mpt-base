@@ -105,8 +105,10 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, 
 /* use node to store environment */
 extern int mpt_node_environ(MPT_STRUCT(node) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 /* read configuration from file */
-extern int mpt_config_read(MPT_STRUCT(node) *, const char *, const char * __MPT_DEFPAR(0), const char * __MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern int mpt_config_read(MPT_STRUCT(node) *, FILE *, const char * __MPT_DEFPAR(0), const char * __MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+#endif
 
 /* set path data */
 extern size_t mpt_path_set(MPT_STRUCT(path) *, const char *, int __MPT_DEFPAR(-1));

@@ -111,8 +111,11 @@ enum MPT_ENUM(Types)
 	/* array types ('@'..'Z'..0x5f) */
 	MPT_ENUM(TypeArrBase)   = '@',   /* 0x40: generic array */
 	
-	/* scalar types ('a'..'z'..0x7f) */
-	MPT_ENUM(TypeFloat80)   = '`',   /* 0x60: 80bit float */
+	/* scalar types ('`'..'z'..0x7f) */
+	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar */
+	
+	/* reuse value for transfer-only 80bit float */
+	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),
 	
 	/* types with printable representation ('a'..'z') */
 #if __SIZEOF_LONG__ == 8
@@ -264,6 +267,13 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; 
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+
+template<typename T>
+inline __MPT_CONST_EXPR int vectorIdentifier() {
+    int t = typeIdentifier<T>();
+    if (t <= _TypeFinal && (t & ~TypeUser) >= TypeScalBase) return 0;
+    return t - TypeScalBase + TypeVecBase;
+}
 
 /*! container for reference type pointer */
 template<typename T>

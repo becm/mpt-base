@@ -33,20 +33,21 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	log = mpt_output_logger(cl->out);
 	
 	if (!ev->msg) {
-		err = mpt_client_read(conf, 0, 0, log);
+		err = mpt_client_read(conf, 0, log);
 	}
 	else {
 		MPT_STRUCT(message) msg = *ev->msg;
-		size_t part;
+		MPT_INTERFACE(metatype) *args;
 		
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
 			return MPT_event_fail(ev, MPT_tr("missing message type"));
 		}
-		/* consume command part */
-		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-			mpt_message_read(&msg, part, 0);
+		
+		if (!(args = mpt_meta_message(&msg, mt.arg, ':'))) {
+			return MPT_event_fail(ev, "unable to create argument source");
 		}
-		err = mpt_client_read(conf, &msg, mt.arg, log);
+		err = mpt_client_read(conf, args, log);
+		args->_vptr->unref(args);
 	}
 	if (err) {
 		return MPT_event_fail(ev, err);

@@ -2,7 +2,7 @@
  * read basic and specific configuration from files.
  */
 
-#include <string.h>
+#include <stdio.h>
 #include <errno.h>
 
 #include "node.h"
@@ -18,42 +18,46 @@
  * Try to get client and solver configuration files from message,
  * fall back to values in client configuration and read files.
  * 
- * \param conf configuration target
- * \param msg  message data
- * \param sep  message argument separator
- * \param log  logging descriptor
+ * \param conf  configuration target
+ * \param args  source for files to read
+ * \param log   logging descriptor
  * 
  * \return string describing error
  */
-extern const char *mpt_client_read(MPT_STRUCT(node) *conf, MPT_STRUCT(message) *msg, int sep, MPT_INTERFACE(logger) *log)
+extern const char *mpt_client_read(MPT_STRUCT(node) *conf, MPT_INTERFACE(metatype) *args, MPT_INTERFACE(logger) *log)
 {
+	MPT_STRUCT(node) tmp = MPT_NODE_INIT;
 	const char *fname;
-	char fbuf[1024];
-	ssize_t part = -1;
+	FILE *fd;
+	int res;
 	
 	if (!conf) {
 		errno = EFAULT;
 		return MPT_tr("missing configuration node");
 	}
-	/* use first argument as client configuration */
-	if (!msg || (part = mpt_message_argv(msg, sep)) <= 0) {
+	if (!args) {
 		if (!(fname = mpt_node_data(conf, 0))) {
-			return MPT_tr("no configuration specified");
+			return MPT_tr("default config file required");
 		}
-	} else if ((size_t) part < msg->used && (!sep || !((char *) msg->base)[part])) {
-		fname = msg->base;
-		(void) mpt_message_read(msg, part, 0);
-	} else if (part >= (ssize_t) sizeof(fbuf)) {
-		return MPT_tr("temporary buffer exceeded");
-	} else {
-		part = mpt_message_read(msg, part, fbuf);
-		fbuf[part] = '\0';
-		fname = fbuf;
 	}
-	/* read client configuration */
-	if (mpt_config_read(conf, fname, 0, "ns", log) < 0) {
-		return MPT_tr("reading config file failed");
+	else {
+		if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &fname)) < 0 || !fname) {
+			return MPT_tr("unable to get file name from argument");
+		}
 	}
+	if (!(fd = fopen(fname, "r"))) {
+		return MPT_tr("unable to open config file");
+	}
+	
+	res = mpt_config_read(&tmp, fd, 0, "ns", log);
+	fclose(fd);
+	
+	if (res < 0) {
+		return MPT_tr("unable to open config file");
+	}
+	mpt_node_clear(conf);
+	conf->children = tmp.children;
+	
 	return 0;
 }
 
