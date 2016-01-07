@@ -17,26 +17,15 @@
  * 
  * \return error code
  */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, MPT_STRUCT(parse) *parse, MPT_STRUCT(node) *root)
+extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, MPT_STRUCT(parse) *parse, MPT_TYPE(PathHandler) save, void *ctx)
 {
-	MPT_STRUCT(node) *curr, *(*save)(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, int, int);
 	MPT_STRUCT(path) path = MPT_PATH_INIT;
 	int ret;
 	
-	if (!(curr = root->children)) {
-		curr = root;
-		save = mpt_parse_append;
-		parse->lastop = MPT_ENUM(ParseSection);
-	} else {
-		save = (MPT_STRUCT(node) *(*)()) mpt_parse_insert;
-		parse->lastop = 0;
-	}
 	/* accuire next path element */
 	while ((ret = next(parse, &path)) > 0) {
-		MPT_STRUCT(node) *tmp;
-		
 		/* save to configuration */
-		if (!(tmp = save(curr, &path, parse->lastop, ret))) {
+		if (save(ctx, &path, parse->lastop, ret) < 0) {
 			ret = -0x80;
 			break;
 		}
@@ -45,7 +34,6 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, MPT_STRUCT(parse) *parse, 
 			mpt_path_del(&path);
 		}
 		mpt_path_invalidate(&path);
-		curr = tmp;
 		parse->lastop = ret;
 	}
 	mpt_path_fini(&path);

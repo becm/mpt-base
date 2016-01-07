@@ -98,6 +98,7 @@ MPT_STRUCT(parse)
 };
 
 typedef int (*MPT_TYPE(ParserFcn))(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, int, int);
 
 __MPT_EXTDECL_BEGIN
 
@@ -148,13 +149,14 @@ extern int mpt_parse_option(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 /* get data element */
 extern int mpt_parse_data(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
-/* insert/append elements */
-extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *, const MPT_STRUCT(path) *);
-extern MPT_STRUCT(node) *mpt_parse_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, int , int);
+/* create/modify current node element */
+extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, int , int);
 
 
-/* parse MPT configuration tree */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) , MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
+/* parse configuration tree */
+extern int mpt_parse_config(MPT_TYPE(ParserFcn) , MPT_STRUCT(parse) *, MPT_TYPE(PathHandler), void *);
+/* save config tree to node children */
+extern int mpt_parse_node(MPT_TYPE(ParserFcn) , MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
 
 __MPT_EXTDECL_END
 

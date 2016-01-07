@@ -2,30 +2,30 @@
 #include <errno.h>
 
 #include "node.h"
+
 #include "config.h"
-#include "parse.h"
 
 /*!
- * \ingroup mptParse
+ * \ingroup mptConfig
  * \brief insert path element
  * 
- * insert parsed element into configuration.
+ * insert path element into tree.
  * 
- * \param old   configuration list root
+ * \param base  configuration list reference
  * \param dest  element destination and data
  * 
  * \return (new/changed) configuration list
  */
-extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *old, const MPT_STRUCT(path) *dest)
+extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRUCT(path) *dest)
 {
 	MPT_STRUCT(path) path = *dest;
 	MPT_STRUCT(node) *conf;
 	const char *data;
 	
-	if (!(conf = mpt_node_query(old, &path, path.valid + 1))) {
+	if (!(conf = mpt_node_query(*base, &path, path.valid + 1))) {
 		return 0;
 	}
-	if (!old) old = conf;
+	if (!*base) *base = conf;
 	
 	if (path.len && !(conf = mpt_node_query(conf->children, &path, -1))) {
 		return 0;
@@ -36,6 +36,6 @@ extern MPT_STRUCT(node) *mpt_parse_insert(MPT_STRUCT(node) *old, const MPT_STRUC
 	}
 	mpt_node_set(conf, data);
 	
-	return old;
+	return conf;
 }
 

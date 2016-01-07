@@ -239,6 +239,10 @@ MPT_STRUCT(property)
 	{ }
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
+	static int convertAssign(int v)
+	{ return (v * 0x10000) | Type; }
+#else 
+# define MPT_property_assign(v) (((v) * 0x10000) | MPT_ENUM(TypeProperty))
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */

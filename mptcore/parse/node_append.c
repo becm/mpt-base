@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "config.h"
+
 #include "parse.h"
 
 /*!
@@ -11,12 +12,14 @@
  * 
  * append parsed element to configuration.
  * 
- * \param old  current configuration element
- * \param dest path data of current element
+ * \param old    current configuration element
+ * \param dest   path data of current element
+ * \param prevop previous append operation
+ * \param currop current append operation
  * 
  * \return created configuration element
  */
-extern MPT_STRUCT(node) *mpt_parse_append(MPT_STRUCT(node) *old, const MPT_STRUCT(path) *dest, int prevop, int currop)
+extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT(path) *dest, int prevop, int currop)
 {
 	MPT_STRUCT(path) path = *dest;
 	MPT_STRUCT(node) *conf;

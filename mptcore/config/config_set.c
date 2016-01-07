@@ -49,7 +49,12 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	if ((mt = *mp)) {
 		return 0;
 	}
-	if (!(mt = mpt_meta_new(strlen(val)+1)) || mt->_vptr->assign(mt, &d) < 0) {
+	/* backend requires explicit value creation */
+	if (!(mt = mpt_meta_new(strlen(val)+1))) {
+		return MPT_ERROR(BadOperation);
+	}
+	if (mt->_vptr->assign(mt, &d) < 0) {
+		mt->_vptr->unref(mt);
 		return MPT_ERROR(BadValue);
 	}
 	*mp = mt;

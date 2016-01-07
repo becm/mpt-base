@@ -143,6 +143,8 @@ extern int mpt_path_valid(MPT_STRUCT(path) *);
 extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *, const char *);
 #endif
 
+extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(path) *);
+
 __MPT_EXTDECL_END
 
 #if defined(__cplusplus)

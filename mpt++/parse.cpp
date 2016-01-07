@@ -86,56 +86,23 @@ bool Parse::setFormat(const char *fmt)
 
     return true;
 }
-
 int Parse::read(struct node &to, logger *out)
 {
     static const char fname[] = "mpt::Parse::read";
-    node *(*save)(node *, const path *, int , int);
-    node *curr;
-    path where;
     int ret;
 
     if (!_parse || !_parse->src.getc) {
         if (out) out->error(fname, "%s", MPT_tr("no parser input"));
         return -1;
     }
-    if (!(curr = to.children)) {
-        curr = &to;
-        _parse->lastop = ParseSection;
-        save = mpt_parse_append;
-    }
-    else {
-        save = (node *(*)(node *, const path *, int , int)) mpt_parse_insert;
-    }
-
-    while ((ret = _next(_parse, &where)) > 0) {
-        node *tmp;
-        if (!(tmp = save(curr, &where, _parse->lastop, ret))) {
-            if (out) out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _parse->src.line);
-            return -2;
-        }
-        else if (!curr) to.children = tmp;
-
-        curr = tmp;
-
-        metatype *m;
-        if ((m = curr->meta())) {
-            uint32_t line = _parse->src.line;
-            value val("u", &line);
-            m->assign(&val);
-        }
-        if (ret & ParseSectEnd) {
-            where.del();
+    if ((ret = mpt_parse_node(_next, _parse, &to)) < 0 && out) {
+        if (ret == BadOperation) {
+            out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _parse->src.line);
         } else {
-            where.clearData();
+            out->error(fname, "%s (%x): %s %u: %s", MPT_tr("parse error"), _parse->lastop, MPT_tr("line"), (int) _parse->src.line, fname);
         }
-        _parse->lastop = ret;
     }
-    if (!ret) return 0;
-
-    if (out) out->error(fname, "%s: %s %zu", MPT_tr("parse error"), MPT_tr("line"), _parse->src.line);
-
-    return -3;
+    return ret;
 }
 
 LayoutParser::LayoutParser() : _fn(0)
