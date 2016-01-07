@@ -23,11 +23,7 @@ enum MPT_ENUM(ParseFlags) {
 	MPT_ENUM(ParseSectEnd)  = 0x2,
 	MPT_ENUM(ParseOption)   = 0x3,
 	MPT_ENUM(ParseData)     = 0x4,
-	MPT_ENUM(ParseInternal) = 0x8,
-	
-	MPT_ENUM(ParseSectName) = 0x10,
-	MPT_ENUM(ParseOptName)  = 0x20,
-	MPT_ENUM(ParseDataEnd)  = 0x40,
+	MPT_ENUM(ParseName)     = 0x8,
 	
 	MPT_ENUM(NameNumStart)  = 0x1,  /* allow numeric initial character */
 	MPT_ENUM(NameNumCont)   = 0x2,  /* allow numeric continous character */
@@ -84,6 +80,8 @@ MPT_STRUCT(parse)
 {
 #ifdef __cplusplus
 	parse();
+#else
+# define MPT_parse_fail(v,c) ((v)->failed = (c))
 #endif
 	MPT_STRUCT(parseinput) src;  /* character source */
 	
@@ -93,7 +91,8 @@ MPT_STRUCT(parse)
 	} check;                     /* check path element before adding */
 	
 	MPT_STRUCT(parsefmt) format; /* parse format information */
-	uint16_t             lastop; /* previous operation */
+	uint8_t              lastop; /* previous operation */
+	uint8_t              failed; /* incomplete operation */
 	MPT_STRUCT(parseflg) name;   /* section/option name format */
 };
 

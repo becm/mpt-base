@@ -58,10 +58,10 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, co
 		const char *fname;
 		if ((fname = mpt_node_data(root, 0))) {
 			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u: %s",
-			               MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line, fname);
+			               MPT_tr("parse error"), parse.failed, MPT_tr("line"), (int) parse.src.line, fname);
 		} else {
 			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u",
-			               MPT_tr("parse error"), -err, MPT_tr("line"), (int) parse.src.line);
+			               MPT_tr("parse error"), parse.failed, MPT_tr("line"), (int) parse.src.line);
 		}
 	}
 	return err;

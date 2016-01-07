@@ -37,16 +37,22 @@ extern int mpt_parse_format_enc(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	}
 	/* get next visible character, no save */
 	else if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
-		return path->len ? -MPT_ENUM(ParseSectEnd) : curr;
+		if (!path->len && curr == -2) {
+			return curr;
+		}
+		MPT_parse_fail(parse, MPT_ENUM(ParseName));
+		return MPT_ERROR(MissingData);
 	}
 	/* section start missed */
 	if (curr != fmt->sstart) {
 		if (mpt_path_addchar(path, curr) < 0) {
-			return -1;
+			MPT_parse_fail(parse, MPT_ENUM(ParseOption));
+			return MPT_ERROR(MissingBuffer);
 		}
 		if (fmt->ostart) {
 			if (curr != fmt->ostart) {
-				return -MPT_ENUM(ParseOption);
+				MPT_parse_fail(parse, MPT_ENUM(ParseOption));
+				return MPT_ERROR(BadValue);
 			}
 		}
 		else {
@@ -56,16 +62,20 @@ extern int mpt_parse_format_enc(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	}
 	/* first character of section name */
 	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) <= 0) {
-		return -MPT_ENUM(ParseSection);
+		MPT_parse_fail(parse, MPT_ENUM(ParseSection));
+		return MPT_ERROR(MissingData);
 	}
+	
 	if (mpt_path_addchar(path, curr) < 0) {
-		return -1;
+		MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+		return MPT_ERROR(MissingBuffer);
 	}
 	mpt_path_valid(path);
 	
 	while (1) {
 		if ((curr = mpt_parse_getchar(&parse->src, path)) <= 0) {
-			return -MPT_ENUM(ParseSection);
+			MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+			return MPT_ERROR(MissingData);
 		}
 		/* found valid section separator */
 		if (isspace(curr)) {
@@ -80,10 +90,12 @@ extern int mpt_parse_format_enc(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	
 	if (parse->check.ctl
 	    && parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseSection)) < 0) {
-		return -MPT_ENUM(ParseSectName);
+		MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+		return MPT_ERROR(BadType);
 	}
 	if (mpt_path_add(path) < 0) {
-		return -(MPT_ENUM(ParseInternal) | MPT_ENUM(ParseSection));
+		MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+		return MPT_ERROR(BadOperation);
 	}
 	return MPT_ENUM(ParseSection);
 }

@@ -23,14 +23,19 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	
 	/* get next visible character, no save */
 	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
-		return path->len ? -MPT_ENUM(ParseSectEnd) : 0;
+		if (!path->len) {
+			return 0;
+		}
+		return MPT_ERROR(MissingData);
 	}
 	if (mpt_path_addchar(path, curr) < 0) {
-		return -MPT_ENUM(ParseInternal);
+		MPT_parse_fail(parse, MPT_ENUM(ParseName));
+		return MPT_ERROR(MissingBuffer);
 	}
 	do {
 		if (curr < 0) {
-			return curr;
+			MPT_parse_fail(parse, MPT_ENUM(ParseName));
+			return MPT_ERROR(MissingData);
 		}
 		/* found section end */
 		if (curr == fmt->send) {
@@ -48,10 +53,12 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		if (curr == fmt->assign) {
 			if (parse->check.ctl &&
 			    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseOption)) < 0) {
-				return -MPT_ENUM(ParseOptName);
+				MPT_parse_fail(parse, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName));
+				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {
-				return -(MPT_ENUM(ParseInternal) | MPT_ENUM(ParseOption));
+				MPT_parse_fail(parse, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName));
+				return MPT_ERROR(BadOperation);
 			}
 			/* clear trailing path data */
 			mpt_path_invalidate(path);
@@ -82,7 +89,8 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		else if (curr == '\n') {
 			curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com));
 			if (mpt_path_addchar(path, curr) < 0) {
-				return -MPT_ENUM(ParseInternal);
+				MPT_parse_fail(parse, MPT_ENUM(ParseName));
+				return MPT_ERROR(MissingBuffer);
 			}
 			break;
 		}
@@ -92,10 +100,12 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	if (fmt->sstart && curr == fmt->sstart) {
 		if (parse->check.ctl &&
 		    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseSection)) < 0) {
-			return -MPT_ENUM(ParseSectName);
+			MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+			return MPT_ERROR(BadType);
 		}
 		if (mpt_path_add(path) < 0) {
-			return -(MPT_ENUM(ParseInternal) | MPT_ENUM(ParseSection));
+			MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+			return MPT_ERROR(BadOperation);
 		}
 		return MPT_ENUM(ParseSection);
 	}
@@ -106,12 +116,14 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		path->valid = 0;
 		if (parse->check.ctl &&
 		    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseData)) < 0) {
+			MPT_parse_fail(parse, MPT_ENUM(ParseData));
 			path->valid = curr;
-			return -MPT_ENUM(ParseOptName);
+			return MPT_ERROR(BadType);
 		}
 		path->valid = curr;
 		return MPT_ENUM(ParseData);
 	}
-	return -MPT_ENUM(ParseSectName);
+	MPT_parse_fail(parse, MPT_ENUM(ParseName));
+	return MPT_ERROR(BadValue);
 }
 

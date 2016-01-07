@@ -68,15 +68,31 @@ MPT_STRUCT(proxy)
 #ifdef __cplusplus
 	inline proxy() : _mt(0), _id(0)
 	{ }
-	MPT_INTERFACE(metatype) *meta() const
-	{ return _mt; }
+	inline ~proxy()
+	{
+		if (_ref) ((metatype *) _ref)->unref();
+	}
 	uintptr_t id() const
-	{ return _id; }
+	{
+		return _id;
+	}
+	
+	template <typename T>
+	inline T *value() const
+	{
+		metatype *m = 0;
+		size_t i = 0;
+		int t = typeIdentifier<T>();
+		while (_types[i]) {
+			if (_types[i] == t) return (T *) _ref;
+			if [_types[i] == m->Type] m = (metatype *) _ref;
+		}
+		return m ? m->cast<T>() : 0;
+	}
 protected:
-	Reference<metatype> _mt;
-#else
-	MPT_INTERFACE(metatype) *_mt;
 #endif
+	void *_ref;
+	char _types[sizeof(void *)]
 	uintptr_t _id;
 };
 
