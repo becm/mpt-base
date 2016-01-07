@@ -66,8 +66,10 @@ MPT_STRUCT(libhandle)
 MPT_STRUCT(proxy)
 {
 #ifdef __cplusplus
-	inline proxy() : _mt(0), _id(0)
-	{ }
+	inline proxy() : _ref(0), _id(0)
+	{
+		for (size_t i = 0; i < sizeof(_types); ++i) _types[i] = 0;
+	}
 	inline ~proxy()
 	{
 		if (_ref) ((metatype *) _ref)->unref();
@@ -85,14 +87,14 @@ MPT_STRUCT(proxy)
 		int t = typeIdentifier<T>();
 		while (_types[i]) {
 			if (_types[i] == t) return (T *) _ref;
-			if [_types[i] == m->Type] m = (metatype *) _ref;
+			if (_types[i] == m->Type) m = (metatype *) _ref;
 		}
 		return m ? m->cast<T>() : 0;
 	}
 protected:
 #endif
 	void *_ref;
-	char _types[sizeof(void *)]
+	char _types[sizeof(void *)];
 	uintptr_t _id;
 };
 
@@ -131,6 +133,9 @@ extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *);
 extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
 /* replace binding if necessary */
 extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char * , MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+
+/* interpret type part of library symbol */
+int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
 
 /* dynamic binding with metatype proxy instance */
 MPT_INTERFACE(metatype) *mpt_meta_open(const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));

@@ -22,7 +22,7 @@
 extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFACE(logger) *out)
 {
 	char buf[128];
-	MPT_INTERFACE(metatype) *m;
+	MPT_INTERFACE(metatype) *m, *old;
 	const char *ldesc;
 	uintptr_t id, len;
 	
@@ -50,7 +50,7 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 	id = mpt_hash(conf, len);
 	
 	/* keep existing proxy object */
-	if ((m = px->_mt) && (id == px->_id)) {
+	if ((old = px->_ref) && (id == px->_id)) {
 		(void) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("instance types match"), conf);
 		return 0;
 	}
@@ -59,11 +59,14 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 		return -1;
 	}
 	/* delete old proxy */
-	if (px->_mt) {
-		px->_mt->_vptr->unref(px->_mt);
+	if (old) {
+		old->_vptr->unref(old);
 	}
-	px->_mt = m;
-	px->_id = id;
+	px->_ref = m;
+	px->_id  = id;
+	
+	memset(&px->_types, 0, sizeof(px->_types));
+	*px->_types = MPT_ENUM(TypeMeta);
 	
 	return len;
 }
