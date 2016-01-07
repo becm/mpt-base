@@ -203,11 +203,17 @@ MPT_STRUCT(value)
 	static bool isScalar(int);
 	static bool isVector(int);
 	static bool isArray(int);
-	
-	static const char *vectorFormat(int);
 #else
-# define MPT_value_isVector(v) (((v) & 0x7f) >= 0x20 && ((v) & 0x7f) < 0x40)
-# define MPT_value_isArray(v)  (((v) & 0x7f) >= 0x40 && ((v) & 0x7f) < 0x60)
+# define MPT_value_isVector(v)   (((v) & 0x7f) >= MPT_ENUM(TypeVecBase) && \
+                                  ((v) & 0x7f) < MPT_ENUM(TypeArrBase))
+# define MPT_value_isArray(v)    (((v) & 0x7f) >= MPT_ENUM(TypeArrBase) && \
+                                  ((v) & 0x7f) < MPT_ENUM(TypeScalBase))
+# define MPT_value_fromVector(v) (MPT_value_isVector(v) ? \
+                                  (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) : MPT_ENUM(BadValue))
+# define MPT_value_fromArray(v)  (MPT_value_isArray(v) ? \
+                                  (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) : MPT_ENUM(BadValue))
+# define MPT_value_toVector(v)   (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecBase))
+# define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecArray))
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
@@ -275,7 +281,7 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; 
 template<typename T>
 inline __MPT_CONST_EXPR int vectorIdentifier() {
     int t = typeIdentifier<T>();
-    if (t <= _TypeFinal && (t & ~TypeUser) >= TypeScalBase) return 0;
+    if (t > _TypeFinal || (t & ~TypeUser) < TypeScalBase) return 0;
     return t - TypeScalBase + TypeVecBase;
 }
 
@@ -501,7 +507,8 @@ public:
     }
     const char *fmt()
     {
-        return value::vectorFormat(typeIdentifier<T>());
+        static const char fmt[] = { vectorIdentifier<T>(), 0 };
+        return fmt;
     }
 protected:
     T *_base;
