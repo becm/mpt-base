@@ -176,9 +176,10 @@ extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const M
  * \param fmt   argument format
  * \param va    argument list
  */
-extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
+extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const char *format, va_list va)
 {
 	MPT_STRUCT(value) val;
+	const char *fmt = format;
 	uint8_t buf[1024];
 	size_t len = 0;
 	
@@ -222,7 +223,7 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 		len += curr;
 		++fmt;
 	}
-	val.fmt = fmt;
+	val.fmt = format;
 	val.ptr = buf;
 	
 	return mpt_object_pset(obj, prop, &val, 0);

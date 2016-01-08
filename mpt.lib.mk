@@ -70,7 +70,7 @@ extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_
 CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
 #
 # object dependancies
-${SHLIB_OBJS} ${STATIC_OBJS} : ${HEADER}
+${OBJS} : ${HEADER}
 #
 # header export
 .PHONY: header
