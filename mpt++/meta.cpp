@@ -157,10 +157,6 @@ int metatype::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type & 0xff;
 }
-metatype *metatype::clone()
-{
-    return 0;
-}
 
 // object
 bool object::set(const char *name, const value &val, logger *out)
@@ -182,10 +178,6 @@ bool object::set(const char *name, const value &val, logger *out)
         out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
     }
     return false;
-}
-uintptr_t object::addref()
-{
-    return 0;
 }
 struct propertyErrorOut { object *obj; logger *out; };
 static int objectSetProperty(void *addr, const property *pr)

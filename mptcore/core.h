@@ -422,21 +422,8 @@ public:
 };
 
 /*! generic object interface */
-#ifndef __cplusplus
-MPT_INTERFACE(object);
-MPT_INTERFACE_VPTR(object)
-{
-	void (*unref)(MPT_INTERFACE(object) *);
-	uintptr_t (*addref)(MPT_INTERFACE(object) *);
-	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
-};
 MPT_INTERFACE(object)
-{
-	const MPT_INTERFACE_VPTR(object) *_vptr;
-};
-#else
-class object
+#ifdef __cplusplus
 {
 protected:
 	inline ~object() {}
@@ -453,11 +440,25 @@ public:
 	
 	inline int type() const
 	{ return property(0); }
-};
+#else
+; MPT_INTERFACE_VPTR(object) {
+	void (*unref)(MPT_INTERFACE(object) *);
+	uintptr_t (*addref)(MPT_INTERFACE(object) *);
+	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
+	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
+}; MPT_INTERFACE(object) {
+	const MPT_INTERFACE_VPTR(object) *_vptr;
 #endif
+};
 
 
 #ifdef __cplusplus
+inline metatype *metatype::clone()
+{ return 0; }
+
+inline uintptr_t object::addref()
+{ return 0; }
+
 /* specialize metatype string cast */
 template <> inline const char *metatype::cast<const char>()
 { return string(); }
