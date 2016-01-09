@@ -90,11 +90,11 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 	if (src->val.fmt) {
 		const void *from = src->val.ptr;
 #ifdef MPT_NO_CONVERT
-		if (!src->val.fmt[0] || type != src->val.fmt[0]) {
-			return -1;
+		if (!src->val.fmt[0] || (type & 0xff) != src->val.fmt[0]) {
+			return MPT_ERROR(BadValue);
 		}
-		if ((len = mpt_valsize(type)) < 0) {
-			return -3;
+		if ((len = mpt_valsize(type & 0xff)) < 0) {
+			return MPT_ERROR(BadType);
 		}
 		if (!len) len = sizeof(void *);
 		
@@ -112,7 +112,7 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 		return len;
 	}
 	if (!(txt = src->val.ptr)) {
-		if (type != 'k' && type != 's') {
+		if ((type & 0xff) != 'k' && (type & 0xff) != 's') {
 			return -3;
 		}
 		if (dest) ((char **) dest)[0] = 0;

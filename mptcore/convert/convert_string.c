@@ -23,36 +23,46 @@ extern int mpt_convert_string(const char **from, int type, void *dest)
 	if (!(txt = *from)) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (type == MPT_ENUM(TypeProperty)) {
-		MPT_STRUCT(property) *pr;
-		if ((pr = dest)) {
-			pr->val.fmt = 0;
-			pr->val.ptr = txt;
+	if ((type & 0xff) == MPT_ENUM(TypeValue)) {
+		MPT_STRUCT(value) *val;
+		
+		if ((val = dest)) {
+			val->fmt = 0;
+			val->ptr = txt;
 		}
 		len = strlen(txt);
-		*from = txt + len;
+		if (type & MPT_ENUM(ValueConsume)) {
+			*from = txt + len;
+		}
 		return len;
 	}
-	if (type == 'k') {
+	if ((type & 0xff) == 'k') {
+		const char *tmp = *from;
 		size_t klen;
 		if (!(txt = mpt_convert_key(from, 0, &klen))) {
 			return MPT_ERROR(BadValue);
 		}
+		/* restore start address */
+		if (!(type & MPT_ENUM(ValueConsume))) {
+			*from = tmp;
+		}
 		if (dest) ((const char **) dest)[0] = txt;
 		return klen;
 	}
-	
-	if (type != 's') {
+	if ((type & 0xff) != 's') {
 		while (isspace(*txt)) {
 			++txt;
 		}
-		if ((len = mpt_convert_number(txt, type, dest)) >= 0) {
+		if ((len = mpt_convert_number(txt, type & 0xff, dest)) >= 0
+		    && type & MPT_ENUM(ValueConsume)) {
 			*from = txt + len;
 		}
 		return len;
 	}
 	if (dest) *(const char **) dest = txt;
 	len = strlen(txt);
-	*from = txt + len;
+	if (type & MPT_ENUM(ValueConsume)) {
+		*from = txt + len;
+	}
 	return len;
 }
