@@ -16,35 +16,6 @@
 
 #include "client.h"
 
-static char *get_prefix()
-{
-#ifdef MPT_NO_CONFIG
-	return getenv("MPT_PREFIX");
-#else
-	MPT_INTERFACE(metatype) *conf;
-	char *str;
-	if ((conf = mpt_config_get(0, "mpt.prefix", '.', 0))
-	    && conf->_vptr->conv(conf, 's', &str) >= 0) {
-		return str;
-	}
-	return 0;
-#endif
-}
-static char *get_prefix_lib()
-{
-#ifdef MPT_NO_CONFIG
-	return getenv("MPT_PREFIX_LIB");
-#else
-	MPT_INTERFACE(metatype) *conf;
-	char *str;
-	if ((conf = mpt_config_get(0, "mpt.prefix.lib", '.', 0))
-	    && conf->_vptr->conv(conf, 's', &str) >= 0) {
-		return str;
-	}
-	return 0;
-#endif
-}
-
 /*!
  * \ingroup mptLoader
  * \brief close handle
@@ -79,59 +50,49 @@ extern const char *mpt_library_close(MPT_STRUCT(libhandle) *handle)
  * 
  * \return dynamic loader error message
  */
-extern const char *mpt_library_open(MPT_STRUCT(libhandle) *handle, const char *lib)
+extern const char *mpt_library_open(MPT_STRUCT(libhandle) *handle, const char *lib, const char *lpath)
 {
 	static const char dlopen_err[] = "unknown dlopen() failure";
-	static const char prefix_err[] = "prefix exceeds buffer";
-	static const char path_err[] = "path exceeds buffer";
-	
 	void *newlib;
 	
 	if (!lib) {
 		static const char lib_err[] = "bad library path";
 		return lib_err;
 	}
-	/* search library in standard location(s) */
-	if (!(newlib = dlopen(lib, RTLD_NOW))) {
-		char	*lpath, buf[1024];
-		size_t	left, len;
+	/* no resolution if path absolute */
+	if (lpath && *lib != '/') {
+		char buf[1024];
+		size_t left, len;
 		
 		/* set library path */
-		if ((lpath = get_prefix_lib())) {
-			if ((left = strlen(lpath)) >= sizeof(buf)) {
-				errno = ERANGE; return prefix_err;
-			}
-			lpath = ((char *) memcpy(buf, lpath, left)) + left;
-			left = sizeof(buf) - left;
+		if ((len = strlen(lpath)) >= sizeof(buf)) {
+			static const char prefix_err[] = "prefix exceeds buffer";
+			errno = ERANGE;
+			return prefix_err;
 		}
-		/* create library path */
-		else if ((lpath = get_prefix())) {
-			if ( (left = strlen(lpath)) >= (sizeof(buf)-4) ) {
-				errno = ERANGE; return prefix_err;
-			}
-			lpath = memcpy(buf, lpath, left);
-			lpath = memcpy(lpath + left, "/lib", 4);
-			lpath += 4;
-			left = (sizeof(buf)-4) - left;
-		}
-		/* no path info, direct fail */
-		else {
-			newlib = dlerror();
-			return newlib ? newlib : dlopen_err;
-		}
-		if ( --left <= (len = strlen(lib)) ) {
-			errno = ERANGE; return path_err;
+		left = sizeof(buf) - len;
+		buf[len] = '/';
+		lpath = memcpy(buf, lpath, len++);
+		newlib = buf + len;
+		
+		/* buffer too small */
+		if (--left <= (len = strlen(lib))) {
+			static const char err[] = "path exceeds buffer";
+			errno = ERANGE;
+			return err;
 		}
 		/* append library name to path */
-		*(lpath++) = '/';
-		memcpy(lpath, lib, len+1);
+		memcpy(newlib, lib, len+1);
 		
 		if (!(newlib = dlopen(buf, RTLD_NOW))) {
 			return (newlib = dlerror()) ? newlib : dlopen_err;
 		}
 	}
+	else if (!(newlib = dlopen(lib, RTLD_NOW))) {
+		return (newlib = dlerror()) ? newlib : dlopen_err;
+	}
+	mpt_library_close(handle);
 	handle->lib = newlib;
-	handle->create = 0;
 	
 	return 0;
 }

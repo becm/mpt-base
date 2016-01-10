@@ -19,7 +19,7 @@
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFACE(logger) *out)
+extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
 	char buf[128];
 	MPT_INTERFACE(metatype) *m, *old;
@@ -55,8 +55,10 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, MPT_INTERFA
 		return 0;
 	}
 	/* create new proxy */
-	if (!(m = mpt_meta_open(conf, out))) {
-		return -1;
+	if (!(m = mpt_meta_open(conf, path, out))) {
+		if (path && !(m = mpt_meta_open(conf, 0, out))) {
+			return -1;
+		}
 	}
 	/* delete old proxy */
 	if (old) {

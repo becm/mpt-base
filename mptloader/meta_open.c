@@ -92,7 +92,7 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
  * 
  * \return metatype proxy pointer
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, MPT_INTERFACE(logger) *out)
+extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, const char *path, MPT_INTERFACE(logger) *out)
 {
 	struct _mpt_metaProxy *mp;
 	MPT_INTERFACE(metatype) *m;
@@ -108,9 +108,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, MPT_INTERFACE(l
 		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad reference type name"), descr);
 		return 0;
 	}
-	/* bind library handle */
-	if ((err = mpt_library_assign(&lh, descr+len))) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", err);
+	/* bind from explicit/global search path */
+	if (!(err = mpt_library_assign(&lh, descr+len, path))) {
+		(void) mpt_log(out, __func__, path ? MPT_FCNLOG(Info) : MPT_FCNLOG(Error), "%s", err);
 		return 0;
 	}
 	/* create remote instance */

@@ -20,7 +20,7 @@
  * 
  * \return dynamic loader error message
  */
-extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *handle, const char *descr)
+extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *handle, const char *descr, const char *lpath)
 {
 	char buf[128], *libname;
 	MPT_STRUCT(libhandle) lh = { 0, 0 };
@@ -44,7 +44,7 @@ extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *handle, const char 
 		buf[len] = '\0';
 		if (!*libname || isspace(*libname)) libname = 0;
 	}
-	if (libname && (err = mpt_library_open(&lh, libname))) {
+	if (libname && (err = mpt_library_open(&lh, libname, lpath))) {
 		return err;
 	}
 	/* bind controller to symbol */
