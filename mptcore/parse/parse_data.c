@@ -16,9 +16,8 @@
  * 
  * \return parser code for next element
  */
-extern int mpt_parse_data(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
+extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 {
-	const MPT_STRUCT(parsefmt) *fmt = &parse->format;
 	int curr, match = 0, last = -1;
 	
 	while ((curr = mpt_parse_getchar(&parse->src, path)) >= 0) {
@@ -59,7 +58,7 @@ extern int mpt_parse_data(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 	}
 	
 	if (fmt->oend && curr != fmt->oend) {
-		MPT_parse_fail(parse, MPT_ENUM(ParseData));
+		parse->curr = MPT_ENUM(ParseData);
 		return MPT_ERROR(BadValue);
 	}
 	return path->valid;

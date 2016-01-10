@@ -5,11 +5,12 @@
 #include "config.h"
 #include "parse.h"
 
-static int parseCheck(void *data, const MPT_STRUCT(path) *path, int op)
+static int parseCheck(void *data, const MPT_STRUCT(path) *path, int last, int op)
 {
 	const MPT_STRUCT(parseflg) *p = data;
 	const char *name;
 	
+	(void) last;
 	switch (op & 0x3) {
 	    case MPT_ENUM(ParseSection):
 		op = p->sect;
@@ -40,9 +41,8 @@ extern void mpt_parse_init(MPT_STRUCT(parse) *parse)
 	parse->check.ctl = parseCheck;
 	parse->check.arg = &parse->name;
 	
-	mpt_parse_format(&parse->format, 0);
-	
-	parse->lastop = 0;
+	parse->prev = 0;
+	parse->curr = 0;
 	
 	parse->name.sect = 0xff;
 	parse->name.opt  = 0xff;

@@ -16,9 +16,8 @@
  * 
  * \return parser code for next element
  */
-extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
+extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
 {
-	const MPT_STRUCT(parsefmt) *fmt = &parse->format;
 	int curr;
 	
 	/* get next visible character, no save */
@@ -28,18 +27,17 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		}
 		return MPT_ERROR(MissingData);
 	}
+	parse->curr = MPT_ENUM(ParseName);
 	if (mpt_path_addchar(path, curr) < 0) {
-		MPT_parse_fail(parse, MPT_ENUM(ParseName));
 		return MPT_ERROR(MissingBuffer);
 	}
 	do {
 		if (curr < 0) {
-			MPT_parse_fail(parse, MPT_ENUM(ParseName));
 			return MPT_ERROR(MissingData);
 		}
 		/* found section end */
 		if (curr == fmt->send) {
-			return MPT_ENUM(ParseSectEnd);
+			return parse->curr = MPT_ENUM(ParseSectEnd);
 		}
 		/* found section start */
 		if (curr == fmt->sstart) {
@@ -47,23 +45,22 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		}
 		/* parse option name */
 		if (curr == fmt->ostart) {
-			return mpt_parse_option(parse, path);
+			return mpt_parse_option(fmt, parse, path);
 		}
 		/* parse option data */
 		if (curr == fmt->assign) {
+			parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
 			if (parse->check.ctl &&
-			    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseOption)) < 0) {
-				MPT_parse_fail(parse, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName));
+			    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName)) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {
-				MPT_parse_fail(parse, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName));
 				return MPT_ERROR(BadOperation);
 			}
 			/* clear trailing path data */
 			mpt_path_invalidate(path);
 			
-			if ((curr = mpt_parse_data(parse, path)) < 0) {
+			if ((curr = mpt_parse_data(fmt, parse, path)) < 0) {
 				return curr;
 			}
 			if (!curr) {
@@ -80,6 +77,7 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
+		parse->curr = MPT_ENUM(ParseName);
 		
 		/* validate current length character */
 		if (!isspace(curr)) {
@@ -89,7 +87,6 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 		else if (curr == '\n') {
 			curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com));
 			if (mpt_path_addchar(path, curr) < 0) {
-				MPT_parse_fail(parse, MPT_ENUM(ParseName));
 				return MPT_ERROR(MissingBuffer);
 			}
 			break;
@@ -98,32 +95,31 @@ extern int mpt_parse_format_pre(MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path
 	
 	/* last chance to get section start */
 	if (fmt->sstart && curr == fmt->sstart) {
+		parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
 		if (parse->check.ctl &&
-		    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseSection)) < 0) {
-			MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
+		    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName)) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (mpt_path_add(path) < 0) {
-			MPT_parse_fail(parse, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName));
 			return MPT_ERROR(BadOperation);
 		}
 		return MPT_ENUM(ParseSection);
 	}
 	/* try to pass as data */
 	if (fmt->oend && curr == fmt->oend) {
+		parse->curr = MPT_ENUM(ParseData);
 		/* set zero length option name */
 		curr = path->valid;
 		path->valid = 0;
 		if (parse->check.ctl &&
-		    parse->check.ctl(parse->check.arg, path, MPT_ENUM(ParseData)) < 0) {
-			MPT_parse_fail(parse, MPT_ENUM(ParseData));
+		    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseData)) < 0) {
 			path->valid = curr;
 			return MPT_ERROR(BadType);
 		}
 		path->valid = curr;
 		return MPT_ENUM(ParseData);
 	}
-	MPT_parse_fail(parse, MPT_ENUM(ParseName));
+	parse->curr = MPT_ENUM(ParseName);
 	return MPT_ERROR(BadValue);
 }
 

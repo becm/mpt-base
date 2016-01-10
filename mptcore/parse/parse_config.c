@@ -17,15 +17,15 @@
  * 
  * \return error code
  */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, MPT_STRUCT(parse) *parse, MPT_TYPE(PathHandler) save, void *ctx)
+extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse) *parse, MPT_TYPE(PathHandler) save, void *ctx)
 {
 	MPT_STRUCT(path) path = MPT_PATH_INIT;
 	int ret;
 	
 	/* accuire next path element */
-	while ((ret = next(parse, &path)) > 0) {
+	while ((ret = next(npar, parse, &path)) > 0) {
 		/* save to configuration */
-		if (save(ctx, &path, parse->lastop, ret) < 0) {
+		if (save(ctx, &path, parse->prev, ret) < 0) {
 			ret = -0x80;
 			break;
 		}
@@ -34,7 +34,8 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, MPT_STRUCT(parse) *parse, 
 			mpt_path_del(&path);
 		}
 		mpt_path_invalidate(&path);
-		parse->lastop = ret;
+		parse->prev = parse->curr;
+		parse->curr = 0;
 	}
 	mpt_path_fini(&path);
 	

@@ -128,17 +128,18 @@ extern const char *mpt_client_read(MPT_STRUCT(node) *, MPT_INTERFACE(metatype) *
 
 
 /* open/close library descriptor */
-extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *);
-extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *);
+extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *, const char *);
 extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
 /* replace binding if necessary */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char * , MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, const char *);
 
 /* interpret type part of library symbol */
 int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
 
 /* dynamic binding with metatype proxy instance */
-MPT_INTERFACE(metatype) *mpt_meta_open(const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+/* open library handle as metatype */
+extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 
 __MPT_EXTDECL_END
 

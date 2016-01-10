@@ -28,78 +28,59 @@ parseinput::parseinput() : getc((int (*)(void *)) mpt_getchar_stdio), arg(stdin)
 parse::parse()
 { mpt_parse_init(this); }
 
-Parse::Parse() : _parse(0), _next(mpt_parse_format_pre)
-{ }
+Parse::Parse() : _next(0), _nextCtx(0)
+{
+    _d.src.getc = 0;
+    _d.src.arg  = 0;
+}
 Parse::~Parse()
 {
-    if (!_parse) return;
-    FILE *file = (FILE *) _parse->src.arg;
+    FILE *file = (FILE *) _d.src.arg;
     if (file) fclose(file);
-    delete _parse;
 }
-size_t Parse::line() const
-{ return _parse ? _parse->src.line : 0; }
 
 bool Parse::reset()
 {
-    if (!_parse) return false;
-    FILE *file = (FILE *) _parse->src.arg;
-    if (!file || (_parse->src.line && (fseek(file, 0, SEEK_SET) < 0))) return false;
-    _parse->src.line = 0;
+    FILE *file = (FILE *) _d.src.arg;
+    if (!file || (_d.src.line && (fseek(file, 0, SEEK_SET) < 0))) return false;
+    _d.src.line = 0;
     return true;
 }
 
 bool Parse::open(const char *fn)
 {
-    if (!_parse) {
+    if (!_d.src.arg) {
         if (!fn) return true;
-        _parse = new parse;
-        _parse->src.getc = 0;
     }
     FILE *old, *f = 0;
     if (fn && !(f = fopen(fn, "r"))) {
         return false;
     }
-    old = (FILE *)_parse->src.arg;
+    old = (FILE *)_d.src.arg;
     if (old) fclose(old);
-    _parse->src.getc = (int (*)(void *)) mpt_getchar_stdio;
-    _parse->src.arg  = f;
-    _parse->src.line = 0;
+    _d.src.getc = (int (*)(void *)) mpt_getchar_stdio;
+    _d.src.arg  = f;
+    _d.src.line = 0;
     return true;
 }
 
-bool Parse::setFormat(const char *fmt)
-{
-    int type;
-    ParserFcn n;
-
-    if (!_parse) {
-        _parse = new parse();
-    }
-    parsefmt p = _parse->format;
-    if ((type = mpt_parse_format(&p, fmt)) < 0
-        || !(n = mpt_parse_next_fcn(type))) {
-        return false;
-    }
-    _next = n;
-    _parse->format = p;
-
-    return true;
-}
 int Parse::read(struct node &to, logger *out)
 {
     static const char fname[] = "mpt::Parse::read";
     int ret;
 
-    if (!_parse || !_parse->src.getc) {
+    if (!_d.src.getc) {
         if (out) out->error(fname, "%s", MPT_tr("no parser input"));
         return -1;
     }
-    if ((ret = mpt_parse_node(_next, _parse, &to)) < 0 && out) {
+    if (!_next) {
+        if (out) out->error(fname, "%s", MPT_tr("no format specified"));
+    }
+    if ((ret = mpt_parse_node(_next, _nextCtx, &_d, &to)) < 0 && out) {
         if (ret == BadOperation) {
-            out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _parse->src.line);
+            out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _d.src.line);
         } else {
-            out->error(fname, "%s (%x): %s %u: %s", MPT_tr("parse error"), _parse->lastop, MPT_tr("line"), (int) _parse->src.line, fname);
+            out->error(fname, "%s (%x): %s %u: %s", MPT_tr("parse error"), _d.curr, MPT_tr("line"), (int) _d.src.line, fname);
         }
     }
     return ret;
@@ -107,20 +88,15 @@ int Parse::read(struct node &to, logger *out)
 
 LayoutParser::LayoutParser() : _fn(0)
 {
-    _parse = &_d;
-
-    _d.src.getc = 0;
-    _d.src.arg  = 0;
-
-    _d.check.ctl = (int (*)(void *, const path *, int)) checkName;
+    _d.check.ctl = (int (*)(void *, const path *, int, int)) checkName;
     _d.check.arg = &_d.name;
 
-    _next = mpt_parse_next_fcn(mpt_parse_format(&_d.format, defaultFormat()));
+    _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, defaultFormat()));
+    _nextCtx = &_fmt;
 }
 LayoutParser::~LayoutParser()
 {
     if (_fn) free(_fn);
-    _parse = 0;
 }
 bool LayoutParser::reset()
 {
@@ -144,8 +120,25 @@ bool LayoutParser::open(const char *fn)
 
     return true;
 }
+bool LayoutParser::setFormat(const char *fmt)
+{
+    int type;
+    ParserFcn n;
+    parsefmt p;
+    
+    if (!fmt) fmt = defaultFormat();
+    
+    if ((type = mpt_parse_format(&p, fmt)) < 0
+        || !(n = mpt_parse_next_fcn(type))) {
+        return false;
+    }
+    _next = n;
+    _fmt = p;
 
-int LayoutParser::checkName(const parseflg *flg, const path *p, int op)
+    return true;
+}
+
+int LayoutParser::checkName(const parseflg *flg, const path *p, int , int op)
 {
     Slice<const char> data = p->data();
     const char *name = data.base();

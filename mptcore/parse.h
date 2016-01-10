@@ -63,6 +63,8 @@ MPT_STRUCT(parseflg)
 	uint8_t sect,    /* section name format */
 	        opt;     /* option name format */
 };
+typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, int, int);
+
 /* parser input metadata */
 MPT_STRUCT(parseinput)
 {
@@ -80,24 +82,19 @@ MPT_STRUCT(parse)
 {
 #ifdef __cplusplus
 	parse();
-#else
-# define MPT_parse_fail(v,c) ((v)->failed = (c))
 #endif
 	MPT_STRUCT(parseinput) src;  /* character source */
 	
 	struct {
-	int (*ctl)(void *, const MPT_STRUCT(path) *, int);
+	MPT_TYPE(PathHandler) ctl;
 	void *arg;
 	} check;                     /* check path element before adding */
 	
-	MPT_STRUCT(parsefmt) format; /* parse format information */
-	uint8_t              lastop; /* previous operation */
-	uint8_t              failed; /* incomplete operation */
+	uint8_t              prev;   /* previous operation */
+	uint8_t              curr;   /* current operation */
 	MPT_STRUCT(parseflg) name;   /* section/option name format */
 };
-
-typedef int (*MPT_TYPE(ParserFcn))(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
-typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, int, int);
+typedef int (*MPT_TYPE(ParserFcn))(void *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
 __MPT_EXTDECL_BEGIN
 
@@ -137,25 +134,25 @@ extern int mpt_getchar_iovec(struct iovec *);
 
 
 /* get element for prepending section names */
-extern int mpt_parse_format_pre(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 /* get next element for encapsulated section names */
-extern int mpt_parse_format_enc(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 /* get element for separating section names */
-extern int mpt_parse_format_sep(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
 /* get option element */
-extern int mpt_parse_option(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 /* get data element */
-extern int mpt_parse_data(MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
 /* create/modify current node element */
 extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, int , int);
 
 
 /* parse configuration tree */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) , MPT_STRUCT(parse) *, MPT_TYPE(PathHandler), void *);
+extern int mpt_parse_config(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_TYPE(PathHandler), void *);
 /* save config tree to node children */
-extern int mpt_parse_node(MPT_TYPE(ParserFcn) , MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
+extern int mpt_parse_node(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
 
 __MPT_EXTDECL_END
 
@@ -166,16 +163,21 @@ public:
     Parse();
     virtual ~Parse();
     
-    virtual size_t line() const;
     virtual bool reset();
     virtual bool setFormat(const char *);
     virtual bool open(const char *);
     virtual int read(struct node &, logger * = logger::defaultInstance());
     
+    inline size_t line() const
+    { return _d.src.line; }
+    
 protected:
-    parse *_parse;
+    parse _d;
     ParserFcn _next;
+    void *_nextCtx;
 };
+inline bool Parse::setFormat(const char *)
+{ return false; }
 
 class LayoutParser : public Parse
 {
@@ -185,12 +187,13 @@ public:
     
     bool reset();
     bool open(const char *);
+    bool setFormat(const char *);
     
-    static int checkName(const parseflg *, const path *, int);
+    static int checkName(const parseflg *, const path *, int , int);
     static const char *defaultFormat();
     
 protected:
-    parse _d;
+    parsefmt _fmt;
     char *_fn;
 };
 #endif
