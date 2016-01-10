@@ -49,7 +49,7 @@ static int lattr_pset(unsigned char *val, MPT_INTERFACE(metatype) *src, int def[
 	if (!src) {
 		return (*val != *def) ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, 'i', &sym)) < 0) {
+	if ((len = src->_vptr->conv(src, 'i' | MPT_ENUM(ValueConsume), &sym)) < 0) {
 		return len;
 	}
 	if (!len) {
@@ -62,7 +62,7 @@ static int lattr_pset(unsigned char *val, MPT_INTERFACE(metatype) *src, int def[
 	}
 	*val = sym;
 	
-	return len;
+	return 1;
 }
 
 /*!

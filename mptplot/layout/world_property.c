@@ -2,7 +2,6 @@
  * get parameter from world structure.
  */
 
-#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -72,20 +71,19 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, from);
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = mpt_string_pset(&wld->_alias, src)) >= 0) {
 			return len;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
 			if (!len) wld->color = def_world.color;
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
 			if (!len) wld->attr = def_world.attr;
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* copy from sibling */
@@ -99,9 +97,8 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeWorld), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, from);
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	if (!strcasecmp(name, "cycles")) {
@@ -111,7 +108,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		}
 		if (!(len = src->_vptr->conv(src, 'u', &wld->cyc))) wld->cyc = def_world.cyc;
 		
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "color")) {
 		if (!src) {

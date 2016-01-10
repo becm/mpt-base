@@ -5,7 +5,6 @@
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "layout.h"
 
@@ -68,10 +67,10 @@ static int setPosition(char *val, MPT_INTERFACE(metatype) *src)
 	}
 	if ((len = src->_vptr->conv(src, 'k', &s)) >= 0) {
 		*val = s ? *s : 0;
-		return len;
+		return len ? 1 : 0;
 	}
 	if ((len = src->_vptr->conv(src, 'c', val)) >= 0) {
-		return len;
+		return len ? 1 : 0;
 	}
 	return len;
 }
@@ -99,12 +98,11 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeAxis), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, from);
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = mpt_string_pset(&ax->_title, src)) >= 0) {
 			return len;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* copy from sibling */
@@ -118,9 +116,8 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, from);
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	if (!strcasecmp(name, "title")) {
@@ -144,7 +141,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'd', &ax->end))) ax->end = def_axis.end;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "tlen")) {
 		if (!src) {
@@ -152,7 +149,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'f', &ax->tlen))) ax->tlen = def_axis.tlen;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "intv") || !strcasecmp(name, "intervals")) {
 		const char *l;
@@ -172,7 +169,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->format |= MPT_ENUM(AxisLg);
 			ax->intv = 0;
 		}
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "exp") || !strcasecmp(name, "exponent")) {
 		if (!src) {
@@ -180,7 +177,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'n', &ax->exp))) ax->exp = def_axis.exp;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "sub") || !strcasecmp(name, "subtick")) {
 		if (!src) {
@@ -188,7 +185,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'b', &ax->sub))) ax->sub = def_axis.sub;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "dec") || !strcasecmp(name, "decimals")) {
 		if (!src) {
@@ -196,7 +193,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'b', &ax->sub))) ax->sub = def_axis.sub;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos")) {
 		if (!src) {

@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #include "layout.h"
 
@@ -35,10 +34,10 @@ static int setPosition(float *val, MPT_INTERFACE(metatype) *src)
 		*val = 0;
 		return 0;
 	}
-	if (!(len = src->_vptr->conv(src, 'f', val))) {
+	if (!(len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), val))) {
 		*val = 0.0;
 	}
-	return len;
+	return len < 0 ? len : 1;;
 }
 /*!
  * \ingroup mptPlot
@@ -63,15 +62,14 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(me
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine), &from)) >= 0) {
 			*li = from ? *from : def_line;
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* copy from sibling */
@@ -84,9 +82,8 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(me
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			*li = from ? *from : def_line;
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	if (!strcmp(name, "x1")) {

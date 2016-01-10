@@ -81,15 +81,14 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
-			return len;
+			return len ? 1 : 0;
 		}
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* copy from sibling */
@@ -103,9 +102,8 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
-			return len;
+			return len ? 1 : 0;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* set properties */
@@ -128,14 +126,20 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->pos.x = def_text.pos.x;
 			return 0;
 		}
-		return src->_vptr->conv(src, 'f', &tx->pos.x);
+		if ((len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.x)) < 0) {
+			return len;
+		}
+		return len ? 1 : 0;
 	}
 	if (!strcasecmp(name, "y")) {
 		if (!src) {
 			tx->pos.y = def_text.pos.y;
 			return 0;
 		}
-		return src->_vptr->conv(src, 'f', &tx->pos.y);
+		if ((len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.y)) < 0) {
+			return len;
+		}
+		return len ? 1 : 0;
 	}
 	if (!strcasecmp(name, "pos")) {
 		int l1, l2;
@@ -145,18 +149,18 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->pos = def_text.pos;
 			return 0;
 		}
-		if ((l1 = src->_vptr->conv(src, 'f', &tmp)) < 0) {
+		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tmp)) < 0) {
 			return l1;
 		}
 		if (!l1) {
 			tx->pos = def_text.pos;
 			return 0;
 		}
-		if ((l2 = src->_vptr->conv(src, 'f', &tx->pos.y)) < 0) {
+		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.y)) < 0) {
 			return l2;
 		}
 		tx->pos.x = tmp;
-		return l1 + l2;
+		return l2 ? 2 : 1;
 	}
 	if (!strcasecmp(name, "color")) {
 		return mpt_color_pset(&tx->color, src);
@@ -167,7 +171,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'y', &tx->size))) tx->size = def_text.size;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "align")) {
 		if (!src) {
@@ -175,7 +179,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'c', &tx->align))) tx->align = def_text.align;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "angle")) {
 		if (!src) {
@@ -183,7 +187,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'd', &tx->angle))) tx->angle = def_text.angle;
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	return MPT_ERROR(BadArgument);
 }

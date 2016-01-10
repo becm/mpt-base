@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <errno.h>
 
 #include "layout.h"
 
@@ -90,12 +89,11 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
-			return len;
+			return len <= 0 ? len : 1;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
-			return len;
+			return len <= 0 ? len : 1;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	/* copy from sibling */
@@ -109,56 +107,81 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
-			return len;
+			return len <= 0 ? len : 1;
 		}
-		errno = ENOTSUP;
 		return MPT_ERROR(BadType);
 	}
 	if (!strcmp(name, "fg") || !strcasecmp(name, "foreground")) {
 		if (!src || !(len = mpt_color_pset(&gr->fg, src))) {
 			gr->fg = def_graph.fg;
 		}
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcmp(name, "bg") || !strcasecmp(name, "background")) {
 		if (!src || !(len = mpt_color_pset(&gr->bg, src))) {
 			gr->bg = def_graph.bg;
 		}
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcmp(name, "pos") || !strcasecmp(name, "position")) {
+		float val;
 		int l1, l2;
 		
 		if (!src) {
 			gr->pos = def_graph.pos;
 		}
-		if ((l1 = src->_vptr->conv(src, 'f', &gr->pos.x)) < 0) {
+		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
 			return l1;
 		}
-		if ((l2 = src->_vptr->conv(src, 'f', &gr->pos.y)) <= 0) {
-			gr->pos.y = gr->pos.x; l2 = 0;
+		if (!l1) {
+			gr->pos.y = gr->pos.x = 0.0;
+			return 0;
 		}
-		return l1 + l2;
+		if (!(l1 & MPT_ENUM(ValueConsume))) {
+			gr->pos.y = gr->pos.x = val;
+			return 1;
+		}
+		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &gr->pos.y)) < 0) {
+			return l2;
+		}
+		if (!l2) {
+			gr->pos.y = gr->pos.x = val;
+		}
+		gr->pos.x = val;
+		return 2;
 	}
 	if (!strcasecmp(name, "scale")) {
+		float val;
 		int l1, l2;
 		
 		if (!src) {
 			gr->scale = def_graph.scale;
 		}
-		if ((l1 = src->_vptr->conv(src, 'f', &gr->scale.x)) < 0) {
+		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
 			return l1;
 		}
-		if ((l2 = src->_vptr->conv(src, 'f', &gr->scale.y)) <= 0) {
-			gr->scale.y = gr->scale.x; l2 = 0;
+		if (!l1) {
+			gr->scale.y = gr->scale.x = 1.0;
+			return 0;
 		}
-		return l1 + l2;
+		if (!(l1 & MPT_ENUM(ValueConsume))) {
+			gr->scale.y = gr->scale.x = val;
+			return 1;
+		}
+		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &gr->scale.y)) < 0) {
+			return l2;
+		}
+		if (!l2) {
+			gr->scale.y = gr->scale.x = val;
+		}
+		gr->scale.x = val;
+		return 2;
 	}
 	if (!strcmp(name, "type") || !strcasecmp(name, "gridtype")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->grid))) {
 			gr->grid = def_graph.grid;
 		}
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcmp(name, "align") || !strcasecmp(name, "alignment")) {
 		const char *v;
@@ -171,10 +194,10 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		}
 		if ((len = src->_vptr->conv(src, 'y', &gr->align)) >= 0) {
 			if (!len) gr->align = def_graph.grid;
-			return len;
+			return len <= 0 ? len : 1;
 		}
 		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
-			return len;
+			return len <= 0 ? len : 1;
 		}
 		while (len ? i < len : v[i]) {
 			if (i >= 4) {
@@ -202,10 +225,10 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			return 0;
 		}
 		if ((len = src->_vptr->conv(src, 'y', &gr->clip)) > 0) {
-			return len;
+			return 1;
 		}
 		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
-			return len;
+			return 1;
 		}
 		while (len ? i < len : v[i]) {
 			switch (v[i++]) {
@@ -216,23 +239,25 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			  default:  n |= 8;
 			}
 		}
-		return len;
+		return 1;
 	}
 	if (!strcmp(name, "lpos")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->lpos))) {
 			gr->lpos = def_graph.lpos;
 		}
-		return len;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcmp(name, "axes")) {
 		if (!src) {
-			return mpt_string_set(&gr->_axes, 0, 0);
+			mpt_string_set(&gr->_axes, 0, 0);
+			return 0;
 		}
 		return mpt_string_pset(&gr->_axes, src);
 	}
 	if (!strcmp(name, "worlds")) {
 		if (!src) {
-			return mpt_string_set(&gr->_worlds, 0, 0);
+			mpt_string_set(&gr->_worlds, 0, 0);
+			return 0;
 		}
 		return mpt_string_pset(&gr->_worlds, src);
 	}

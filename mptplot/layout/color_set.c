@@ -69,13 +69,17 @@ extern int mpt_color_pset(MPT_STRUCT(color) *col, MPT_INTERFACE(metatype) *src)
 		/* default color is black, no transparency */
 		return memcmp(&tcol, col, sizeof(*col)) ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), col)) >= 0) {
-		return len;
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), col)) >= 0) {
+		return len & MPT_ENUM(ValueConsume) ? 1 : 0;
 	}
 	/* parse color name/format  */
-	if ((len = src->_vptr->conv(src, 's', &txt)) >= 0) {
-		return mpt_color_parse(col, txt);
+	if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &txt)) >= 0) {
+		int take;
+		if ((take = mpt_color_parse(col, txt)) < 0) {
+			return MPT_ERROR(BadValue);
+		}
+		return len & MPT_ENUM(ValueConsume) ? 1 : 0;
 	}
 	errno = ENOTSUP;
-	return -1;
+	return MPT_ERROR(BadType);
 }
