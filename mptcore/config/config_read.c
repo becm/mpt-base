@@ -25,7 +25,7 @@
  */
 extern int mpt_config_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, const char *limit, MPT_INTERFACE(logger) *out)
 {
-	MPT_STRUCT(parse) parse;
+	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
 	MPT_STRUCT(parsefmt) pfmt;
 	MPT_TYPE(ParserFcn) next;
 	int err;
@@ -40,7 +40,6 @@ extern int mpt_config_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, co
 		               MPT_tr("missing input file"));
 		return MPT_ERROR(BadArgument);
 	}
-	mpt_parse_init(&parse);
 	err = mpt_parse_format(&pfmt, fmt);
 	
 	if (!(next = mpt_parse_next_fcn(err))) {

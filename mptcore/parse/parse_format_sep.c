@@ -65,8 +65,7 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	while (1) {
 		if (curr == fmt->send) {
 			parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
-			if (parse->check.ctl &&
-			    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName)) < 0) {
+			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {

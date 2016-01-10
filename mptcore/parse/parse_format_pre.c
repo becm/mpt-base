@@ -27,6 +27,13 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		}
 		return MPT_ERROR(MissingData);
 	}
+	if (curr == fmt->sstart) {
+		parse->curr = MPT_ENUM(ParseSection);
+		if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
+			return MPT_ERROR(BadType);
+		}
+		return MPT_ENUM(ParseSection);
+	}
 	parse->curr = MPT_ENUM(ParseName);
 	if (mpt_path_addchar(path, curr) < 0) {
 		return MPT_ERROR(MissingBuffer);
@@ -50,8 +57,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		/* parse option data */
 		if (curr == fmt->assign) {
 			parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
-			if (parse->check.ctl &&
-			    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseOption) | MPT_ENUM(ParseName)) < 0) {
+			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.opt) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {
@@ -96,8 +102,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	/* last chance to get section start */
 	if (fmt->sstart && curr == fmt->sstart) {
 		parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
-		if (parse->check.ctl &&
-		    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseSection) | MPT_ENUM(ParseName)) < 0) {
+		if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (mpt_path_add(path) < 0) {
@@ -109,14 +114,10 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	if (fmt->oend && curr == fmt->oend) {
 		parse->curr = MPT_ENUM(ParseData);
 		/* set zero length option name */
-		curr = path->valid;
-		path->valid = 0;
-		if (parse->check.ctl &&
-		    parse->check.ctl(parse->check.arg, path, parse->prev, MPT_ENUM(ParseData)) < 0) {
+		if (mpt_parse_ncheck(path->base + path->off + path->len, 0, parse->name.opt) < 0) {
 			path->valid = curr;
 			return MPT_ERROR(BadType);
 		}
-		path->valid = curr;
 		return MPT_ENUM(ParseData);
 	}
 	parse->curr = MPT_ENUM(ParseName);

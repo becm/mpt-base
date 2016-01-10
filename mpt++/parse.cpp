@@ -25,9 +25,6 @@ parsefmt::parsefmt(const char *fmt)
 parseinput::parseinput() : getc((int (*)(void *)) mpt_getchar_stdio), arg(stdin), line(1)
 { }
 
-parse::parse()
-{ mpt_parse_init(this); }
-
 Parse::Parse() : _next(0), _nextCtx(0)
 {
     _d.src.getc = 0;
@@ -88,8 +85,8 @@ int Parse::read(struct node &to, logger *out)
 
 LayoutParser::LayoutParser() : _fn(0)
 {
-    _d.check.ctl = (int (*)(void *, const path *, int, int)) checkName;
-    _d.check.arg = &_d.name;
+    _d.name.sect = NameNumCont | NameSpace | NameSpecial;
+    _d.name.opt  = NameNumCont;
 
     _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, defaultFormat()));
     _nextCtx = &_fmt;
@@ -138,43 +135,6 @@ bool LayoutParser::setFormat(const char *fmt)
     return true;
 }
 
-int LayoutParser::checkName(const parseflg *flg, const path *p, int , int op)
-{
-    Slice<const char> data = p->data();
-    const char *name = data.base();
-    size_t len = data.len();
-    
-    switch (op & 0x3) {
-      case MPT_ENUM(ParseSection):
-        break;
-      case MPT_ENUM(ParseOption):
-        return mpt_parse_ncheck(name, len, flg->opt);
-      default:
-        return 0;
-    }
-    
-    // remove type info
-    if (len) {
-        while (!isspace(*name)) {
-            if (!--len) return -1;
-            ++name;
-        }
-        while (isspace(*name)) {
-            if (!--len) return -1;
-            ++name;
-        }
-    }
-    if (len) {
-        size_t pos = 1;
-        
-        // get element name end
-        while (pos < len && !isspace(name[pos]) && name[pos] != ':') {
-           ++pos;
-        }
-        return mpt_parse_ncheck(name, pos, flg->sect);
-    }
-    return -2;
-}
 const char *LayoutParser::defaultFormat()
 {
     static const char fmt[] = "{*} =;#! '\"\0";

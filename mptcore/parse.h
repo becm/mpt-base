@@ -60,6 +60,12 @@ MPT_STRUCT(parsefmt)
 /* parser name flags */
 MPT_STRUCT(parseflg)
 {
+#ifdef __cplusplus
+	inline parseflg() : sect(0xff), opt(0xff)
+	{ }
+#else
+# define MPT_PARSEFLG_INIT { 0xff, 0xff }
+#endif
 	uint8_t sect,    /* section name format */
 	        opt;     /* option name format */
 };
@@ -71,7 +77,7 @@ MPT_STRUCT(parseinput)
 #ifdef __cplusplus
 	parseinput();
 #else
-# define MPT_PARSEINPUT_INIT { 0, 0, 1 }
+# define MPT_PARSEINPUT_INIT { (int (*)(void *)) mpt_getchar_file, 0, 1 }
 #endif
 	int (*getc)(void *); /* byte read operation */
 	void *arg;           /* reader context */
@@ -81,14 +87,12 @@ MPT_STRUCT(parseinput)
 MPT_STRUCT(parse)
 {
 #ifdef __cplusplus
-	parse();
+	inline parse() : prev(0), curr(0)
+	{ }
+#else
+# define MPT_PARSE_INIT  { MPT_PARSEINPUT_INIT, 0, 0, MPT_PARSEFLG_INIT }
 #endif
 	MPT_STRUCT(parseinput) src;  /* character source */
-	
-	struct {
-	MPT_TYPE(PathHandler) ctl;
-	void *arg;
-	} check;                     /* check path element before adding */
 	
 	uint8_t              prev;   /* previous operation */
 	uint8_t              curr;   /* current operation */
@@ -112,9 +116,6 @@ extern int mpt_parse_post(MPT_STRUCT(path) *, int);
 extern int mpt_parse_format(MPT_STRUCT(parsefmt) *, const char *);
 extern MPT_TYPE(ParserFcn) mpt_parse_next_fcn(int);
 
-
-/* initialize parser structure */
-extern void mpt_parse_init(MPT_STRUCT(parse) *);
 
 /* read character from source, save in 'post' path area */
 extern int mpt_parse_getchar(MPT_STRUCT(parseinput) *, MPT_STRUCT(path) *);
@@ -189,7 +190,6 @@ public:
     bool open(const char *);
     bool setFormat(const char *);
     
-    static int checkName(const parseflg *, const path *, int , int);
     static const char *defaultFormat();
     
 protected:
