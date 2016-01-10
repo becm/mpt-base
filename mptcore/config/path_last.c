@@ -7,34 +7,6 @@
 
 /*!
  * \ingroup mptConfig
- * \brief get path data
- * 
- * return path data.
- * 
- * \param path  path information
- * 
- * \return path element data
- */
-extern const char *mpt_path_data(const MPT_STRUCT(path) *path)
-{
-	const char *data;
-	size_t	len;
-	
-	if (!path->valid || !(data = path->base)) {
-		return 0;
-	}
-	len  = path->off + path->len;
-	
-	if (path->flags & MPT_ENUM(PathHasArray)) {
-		MPT_STRUCT(buffer) *buf = (void *) data;
-		size_t	end = len + path->valid;
-		if (buf[-1].used > end) ((char *) data)[end] = 0;
-	}
-	return data + len;
-}
-
-/*!
- * \ingroup mptConfig
  * \brief get last path element
  * 
  * change path to contain only last element.
@@ -46,7 +18,7 @@ extern const char *mpt_path_data(const MPT_STRUCT(path) *path)
 extern int mpt_path_last(MPT_STRUCT(path) *path)
 {
 	const char *data;
-	size_t	len, pos;
+	size_t len, pos;
 	
 	if (!(pos = path->len) || !(data = path->base)) {
 		errno = EINVAL; return -2;
