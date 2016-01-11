@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_NODE_H
-#define _MPT_NODE_H	201502
+#define _MPT_NODE_H  @INTERFACE_VERSION@
 
 # include "core.h"
 

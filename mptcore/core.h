@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_CORE_H
-#define _MPT_CORE_H  201502
+#define _MPT_CORE_H  @INTERFACE_VERSION@
 
 #include <sys/types.h>
 #include <stdint.h>

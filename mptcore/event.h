@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_EVENT_H
-#define _MPT_EVENT_H  201502
+#define _MPT_EVENT_H  @INTERFACE_VERSION@
 
 #include "core.h"
 

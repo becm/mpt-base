@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_QUEUE_H
-#define _MPT_QUEUE_H  201502
+#define _MPT_QUEUE_H  @INTERFACE_VERSION@
 
 #include "core.h"
 

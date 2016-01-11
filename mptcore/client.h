@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_CLIENT_H
-#define _MPT_CLIENT_H  201502
+#define _MPT_CLIENT_H  @INTERFACE_VERSION@
 
 #include "config.h"
 

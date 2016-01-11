@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_OUTPUT_H
-#define _MPT_OUTPUT_H  201401
+#define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
 #include "core.h"
 

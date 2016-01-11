@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_VALUES_H
-#define _MPT_VALUES_H 201401
+#define _MPT_VALUES_H  @INTERFACE_VERSION@
 
 #include "core.h"
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_LAYOUT_H
-#define _MPT_LAYOUT_H  201502
+#define _MPT_LAYOUT_H  @INTERFACE_VERSION@
 
 #ifndef __cplusplus
 # include "core.h"

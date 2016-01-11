@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_PARSE_H
-#define _MPT_PARSE_H  201502
+#define _MPT_PARSE_H  @INTERFACE_VERSION@
 
 #include <ctype.h>
 #include <limits.h>

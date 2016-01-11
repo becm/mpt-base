@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_OBJECT_H
-#define _MPT_OBJECT_H  201502
+#define _MPT_OBJECT_H  @INTERFACE_VERSION@
 
 #include "core.h"
 

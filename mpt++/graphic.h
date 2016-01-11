@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_GRAPHIC_H
-#define _MPT_GRAPHIC_H  201502
+#define _MPT_GRAPHIC_H  @INTERFACE_VERSION@
 
 #include "array.h"
 #include "event.h"

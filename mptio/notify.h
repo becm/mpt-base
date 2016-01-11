@@ -4,7 +4,7 @@
  */
 
 #ifndef _MPT_NOTIFY_H
-#define _MPT_NOTIFY_H  201502
+#define _MPT_NOTIFY_H  @INTERFACE_VERSION@
 
 #include "core.h"
 
