@@ -44,7 +44,7 @@
 # define MPT_INTERFACE(i)      struct mpt_##i
 # define MPT_STRUCT(s)         struct mpt_##s
 # define MPT_ENUM(e)           MPT_##e
-# define MPT_TYPE(t)           MPT##t
+# define MPT_TYPE(t)           Mpt##t
 # define MPT_ERROR(t)          MPT_ERROR_##t
 
 # define __MPT_DEFPAR(v)

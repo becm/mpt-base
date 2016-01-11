@@ -77,7 +77,7 @@ MPT_STRUCT(parseinput)
 #ifdef __cplusplus
 	parseinput();
 #else
-# define MPT_PARSEINPUT_INIT { (int (*)(void *)) mpt_getchar_file, 0, 1 }
+# define MPT_PARSEINPUT_INIT { 0, 0, 1 }
 #endif
 	int (*getc)(void *); /* byte read operation */
 	void *arg;           /* reader context */
