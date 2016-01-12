@@ -35,6 +35,8 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!cl) {
 		MPT_ABORT("missing client descriptor");
 	}
+	/* apply command line client parameters */
+	src = 0;
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
 		MPT_STRUCT(msgtype) mt;

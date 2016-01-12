@@ -3,11 +3,9 @@
  * mpt type registry
  */
 
-#include <ctype.h>
 #include <stdlib.h>
 
 #include <sys/uio.h>
-#include <limits.h>
 
 #include "array.h"
 #include "convert.h"
@@ -19,13 +17,16 @@ static const struct {
 } static_ptypes[] = {
 	/* scalar system types */
 	{ MPT_ENUM(TypeSocket),   sizeof(MPT_STRUCT(socket)) },
+	{ MPT_ENUM(TypeValue),    sizeof(MPT_STRUCT(value)) },
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
-	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
 	
 	/* basic layout types */
 	{ MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color)) },
 	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
 	{ MPT_ENUM(TypeLine),     sizeof(MPT_STRUCT(line)) },
+	
+	/* number format */
+	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
 	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
@@ -75,44 +76,51 @@ static void ptypes_finish(void)
 extern ssize_t mpt_valsize(int type)
 {
 	/* builtin types */
-	if (type < 0) return -3;
-	
+	if (type < 0
+	    || type > MPT_ENUM(_TypeFinal)) {
+		return MPT_ERROR(BadArgument);
+	}
 	if (type < MPT_ENUM(TypeUser)) {
 		uint8_t i;
 		
-		/* generic array */
-		if (type == MPT_ENUM(TypeArrBase)) {
+		/* generic/typed array */
+		if (MPT_value_isArray(type)) {
 			return 0;
 		}
-		/* typed array */
-		if (MPT_value_isArray(type)) {
-			if (mpt_valsize(type - 0x20) < 0) {
-				return MPT_ERROR(BadType);
-			}
-			return 0;
+		/* generic/typed vector */
+		if (MPT_value_isVector(type)) {
+			return sizeof(struct iovec);
 		}
 		/* basic type */
 		for (i = 0; i < MPT_arrsize(static_ptypes); ++i) {
-			if (static_ptypes[i].key != (type & 0x7f)) continue;
-			if (type & 0x80) return sizeof(struct iovec);
-			return static_ptypes[i].size;
+			if (static_ptypes[i].key == type) {
+				return static_ptypes[i].size;
+			}
 		}
 		return MPT_ERROR(BadType);
+	}
+	/* user pointers */
+	if (pointers) {
+		if ((type - MPT_ENUM(TypeUser)) < pointers) {
+			return 0;
+		}
 	}
 	/* user types */
 	if (scalars._buf) {
 		ssize_t len = scalars._buf->used / sizeof(size_t);
+		int base;
 		type -= MPT_ENUM(TypeUser);
-		type -= 0x60; /* scalar type offset */
-		if (type < len) {
-			return ((size_t *) (scalars._buf+1))[type];
+		
+		if ((base = MPT_value_fromArray(type)) >= 0) {
+			return (base < len) ? 0 : MPT_ERROR(BadValue);
 		}
-	}
-	/* user pointers */
-	if (pointers) {
-		type -= MPT_ENUM(TypeUser);
-		if (type < pointers) {
-			return 0;
+		if ((base = MPT_value_fromVector(type)) >= 0) {
+			return (base < len) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
+		}
+		/* scalar type offset */
+		base = type - MPT_ENUM(TypeScalBase);
+		if (base < len) {
+			return ((size_t *) (scalars._buf+1))[type];
 		}
 	}
 	return MPT_ERROR(BadValue);
@@ -150,6 +158,6 @@ extern int mpt_valtype_add(size_t csize)
 	
 	if (!pos) atexit(ptypes_finish);
 	
-	return MPT_ENUM(TypeUser) + 0x60 + pos;
+	return MPT_ENUM(TypeUser) + MPT_ENUM(TypeScalBase) + pos;
 }
 

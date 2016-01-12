@@ -209,11 +209,11 @@ MPT_STRUCT(value)
 # define MPT_value_isArray(v)    (((v) & 0x7f) >= MPT_ENUM(TypeArrBase) && \
                                   ((v) & 0x7f) < MPT_ENUM(TypeScalBase))
 # define MPT_value_fromVector(v) (MPT_value_isVector(v) ? \
-                                  (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) : MPT_ENUM(BadValue))
+                                  (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) : MPT_ERROR(BadValue))
 # define MPT_value_fromArray(v)  (MPT_value_isArray(v) ? \
-                                  (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) : MPT_ENUM(BadValue))
+                                  (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) : MPT_ERROR(BadValue))
 # define MPT_value_toVector(v)   (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecBase))
-# define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecArray))
+# define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */

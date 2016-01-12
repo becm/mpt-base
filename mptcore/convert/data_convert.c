@@ -23,6 +23,7 @@
  * \retval mpt::BadArgument unknown source/target type
  * \retval mpt::BadValue    conversion not in allowd range
  * \retval mpt::BadType     unknown conversion
+ * \retval >0               destiantion data size
  */
 
 extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
@@ -31,17 +32,31 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 	int flen, dlen;
 	char dtype = to & 0xff;
 	
-	/* check type sizes */
+	/* check input type size */
 	if ((flen = mpt_valsize(ftype)) < 0) {
-		return MPT_ERROR(BadArgument);
-	}
-	dlen = flen;
-	if ((ftype != dtype)
-	    && (dlen = mpt_valsize(dtype)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	if (!flen) flen = sizeof(void *);
 	
+	/* allow object type downgrade */
+	if (dtype == MPT_ENUM(TypeObject)
+	    && ((ftype == MPT_ENUM(TypeOutput))
+	        || (ftype == MPT_ENUM(TypeGroup))
+	        || (ftype == MPT_ENUM(TypeSolver)))) {
+		ftype = MPT_ENUM(TypeObject);
+	}
+	/* same type */
+	if (ftype == dtype) {
+		if (dest) {
+			memcpy(dest, from, flen);
+		}
+		*fptr = from + flen;
+		return flen;
+	}
+	/* check output type size */
+	if ((dlen = mpt_valsize(dtype)) < 0) {
+		return MPT_ERROR(BadArgument);
+	}
 	/* advance source only */
 	if (!dest) {
 		*fptr = from + flen;
@@ -350,12 +365,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 	  }
 #endif
 	  /* allow metatype downgrade */
-	  case MPT_ENUM(TypeOutput):
-	  case MPT_ENUM(TypeCycle):
-	  case MPT_ENUM(TypeSolver):
-		if (dtype == MPT_ENUM(TypeMeta)) {
-			ftype = MPT_ENUM(TypeMeta);
-		}
 	  default:
 		/* array conversion */
 		if (MPT_value_isArray(dtype)) {
