@@ -85,7 +85,7 @@ extern int mpt_convert_number(const char *, int , void *);
 
 /* get keyword/type from text */
 extern const char *mpt_convert_key(const char **, const char *, size_t *);
-extern int mpt_convert_string(const char **, int , void *);
+extern int mpt_convert_string(const char *, int , void *);
 
 /* string conversions */
 extern int _mpt_convert_int(void *, size_t , const char *, int);

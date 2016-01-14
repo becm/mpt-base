@@ -16,14 +16,21 @@ struct paramSource {
 	MPT_STRUCT(value) val;
 };
 
-static int stringConvert(const char **from, const char *sep, int type, void *dest)
+static int stringConvert(const char *from, const char *sep, int type, void *dest)
 {
-	if (type == 'k') {
-		const char *txt;
+	if ((type & 0xff) == 'k') {
+		const char *key, *txt = from;
 		size_t klen;
-		if (!(txt = mpt_convert_key(from, sep, &klen))) return -2;
-		if (dest) ((const char **) dest)[0] = txt;
-		return klen;
+		if (!(key = mpt_convert_key(&txt, sep, &klen))) {
+			return MPT_ERROR(BadValue);
+		}
+		if (dest) {
+			((const char **) dest)[0] = key;
+		}
+		if (type & MPT_ENUM(ValueConsume)) {
+			return txt - from;
+		}
+		return key - from;
 	}
 #ifdef MPT_NO_CONVERT
 	return -2;
@@ -39,33 +46,63 @@ static int fromText(struct paramSource *par, int type, void *dest)
 	
 	if (*par->val.fmt == 's') {
 		txt = *(void **) par->val.ptr;
-		if (type == 's') {
-			*(const void **) dest = txt;
-			return txt ? strlen(txt) : 0;
+		if ((type & 0xff) == 's') {
+			if (dest) {
+				*(const void **) dest = txt;
+			}
+			if (type & MPT_ENUM(ValueConsume)) {
+				++par->val.fmt;
+				par->val.ptr = ((void **) par->val.ptr) + 1;
+				return 's' | MPT_ENUM(ValueConsume);
+			}
+			return 's';
 		}
-		if (!txt) return -2;
-	} else if (*par->val.fmt == MPT_value_toVector('c')) {
-		const struct iovec *vec = par->val.ptr;
-		if (type == *par->val.fmt || type == MPT_ENUM(TypeVecBase)) {
-			*((struct iovec *) dest) = *vec;
-			return sizeof(*vec);
+		if (!txt) {
+			return MPT_ERROR(BadValue);
 		}
-		if (type == 's') {
-			*(void **) dest = vec->iov_base;
-			return vec->iov_len;
-		}
-		if (!(txt = vec->iov_base) || !memchr(txt, 0, vec->iov_len)) return -2;
-	} else {
-		return -3;
 	}
-	len = stringConvert(&txt, par->sep, type, dest);
-	if (len <= 0 || !dest) {
+	else if (*par->val.fmt == MPT_value_toVector('c')) {
+		const struct iovec *vec = par->val.ptr;
+		if ((type & 0xff) == *par->val.fmt
+		    || (type & 0xff) == MPT_ENUM(TypeVecBase)) {
+			if (dest) {
+				*((struct iovec *) dest) = *vec;
+			}
+			if (type & MPT_ENUM(ValueConsume)) {
+				type = *par->val.fmt++;
+				par->val.ptr = vec + 1;
+				return type | MPT_ENUM(ValueConsume);
+			}
+			return *par->val.fmt;
+		}
+		/* text data not terminated */
+		if (!(txt = vec->iov_base)
+		    || !memchr(txt, 0, vec->iov_len)) {
+			return MPT_ERROR(BadType);
+		}
+		if ((type & 0xff) == 's') {
+			if (dest) {
+				*(void **) dest = vec->iov_base;
+			}
+			if (type & MPT_ENUM(ValueConsume)) {
+				type = *par->val.fmt++;
+				par->val.ptr = vec + 1;
+				return type | MPT_ENUM(ValueConsume);
+			}
+			return *par->val.fmt;
+		}
+	} else {
+		return MPT_ERROR(BadType);
+	}
+	if ((len = stringConvert(txt, par->sep, type, dest)) < 0) {
 		return len;
 	}
-	par->val.fmt = 0;
-	par->val.ptr = txt;
-	
-	return len;
+	if (type & MPT_ENUM(ValueConsume)) {
+		type = *par->val.fmt++;
+		par->val.ptr = ((void **) par->val.ptr) + 1;
+		return type | MPT_ENUM(ValueConsume);
+	}
+	return *par->val.fmt;
 }
 #endif
 
@@ -135,7 +172,7 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 		}
 		return 's';
 	}
-	len = stringConvert(&txt, src->sep, type, dest);
+	len = stringConvert(txt, src->sep, type | MPT_ENUM(ValueConsume), dest);
 	
 	if (len < 0) {
 		return len;
@@ -146,7 +183,7 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 	}
 	if (type & MPT_ENUM(ValueConsume)) {
 		src->val.ptr = txt + len;
-		return 's' | MPT_ENUM(ValueConsume);
+		return MPT_ENUM(ValueConsume) | 's';
 	}
 	return 's';
 }

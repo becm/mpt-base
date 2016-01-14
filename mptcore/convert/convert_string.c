@@ -10,59 +10,55 @@
  * 
  * convert string data to specified type
  * 
- * \param from pointer to current string position
+ * \param from pointer to string data
  * \param type convertion target type
  * \param dest target data address
  * 
  * \return length of converted type
  */
-extern int mpt_convert_string(const char **from, int type, void *dest)
+extern int mpt_convert_string(const char *from, int type, void *dest)
 {
-	const char *txt;
 	int len = 0;
-	if (!(txt = *from)) {
-		return MPT_ERROR(BadArgument);
-	}
+	
 	if ((type & 0xff) == MPT_ENUM(TypeValue)) {
 		MPT_STRUCT(value) *val;
 		
 		if ((val = dest)) {
 			val->fmt = 0;
-			val->ptr = txt;
+			val->ptr = from;
 		}
-		len = strlen(txt);
-		if (type & MPT_ENUM(ValueConsume)) {
-			*from = txt + len;
-		}
-		return len;
+		return (type & MPT_ENUM(ValueConsume)) ? strlen(from) : 0;
 	}
 	if ((type & 0xff) == 'k') {
-		const char *tmp = *from;
+		const char *key, *txt = from;
 		size_t klen;
-		if (!(txt = mpt_convert_key(from, 0, &klen))) {
+		if (!(key = mpt_convert_key(&txt, 0, &klen))) {
 			return MPT_ERROR(BadValue);
 		}
-		/* restore start address */
-		if (!(type & MPT_ENUM(ValueConsume))) {
-			*from = tmp;
+		if (dest) {
+			((const char **) dest)[0] = txt;
 		}
-		if (dest) ((const char **) dest)[0] = txt;
-		return klen;
+		/* restore start address */
+		if (type & MPT_ENUM(ValueConsume)) {
+			return txt - from;
+		}
+		return key - from;
 	}
 	if ((type & 0xff) != 's') {
+		const char *txt = from;
 		while (isspace(*txt)) {
 			++txt;
 		}
-		if ((len = mpt_convert_number(txt, type & 0xff, dest)) >= 0
-		    && type & MPT_ENUM(ValueConsume)) {
-			*from = txt + len;
+		if ((len = mpt_convert_number(txt, type & 0xff, dest)) < 0) {
+			return len;
 		}
-		return len;
+		if (type & MPT_ENUM(ValueConsume)) {
+			txt += len;
+		}
+		return txt - from;
 	}
-	if (dest) *(const char **) dest = txt;
-	len = strlen(txt);
-	if (type & MPT_ENUM(ValueConsume)) {
-		*from = txt + len;
+	if (dest) {
+		*(const char **) dest = from;
 	}
-	return len;
+	return (type & MPT_ENUM(ValueConsume)) ? strlen(from) : 0;
 }

@@ -35,7 +35,7 @@ extern const char *mpt_convert_key(const char **src, const char *sep, size_t *kl
 	
 	if (sep) {
 		const char *s = sep;
-		int	match = 0;
+		int match = 0;
 		
 		while (*s) { if (isspace(*s++)) { match = 1; break; } }
 		
