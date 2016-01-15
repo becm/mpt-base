@@ -60,14 +60,14 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(me
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			*li = from ? *from : def_line;
 			return len ? 1 : 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &li->color)) >= 0) {
 			return len ? 1 : 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr) | MPT_ENUM(ValueConsume), &li->attr)) >= 0) {
 			return len ? 1 : 0;
 		}
 		return MPT_ERROR(BadType);
@@ -80,7 +80,7 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(me
 			*li = def_line;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			*li = from ? *from : def_line;
 			return len ? 1 : 0;
 		}

@@ -86,12 +86,12 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &gr->fg)) >= 0) {
 			return len <= 0 ? len : 1;
 		}
 		return MPT_ERROR(BadType);
@@ -104,7 +104,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
@@ -192,11 +192,11 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			gr->align = def_graph.grid;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y', &gr->align)) >= 0) {
+		if ((len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &gr->align)) >= 0) {
 			if (!len) gr->align = def_graph.grid;
 			return len <= 0 ? len : 1;
 		}
-		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
+		if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &v)) < 0) {
 			return len <= 0 ? len : 1;
 		}
 		while (len ? i < len : v[i]) {
@@ -218,31 +218,34 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 	if (!strcmp(name, "clip") || !strcasecmp(name, "clipping")) {
 		const char *v;
 		uint8_t n = 0;
-		int i = 0;
 		
 		if (!src) {
 			gr->clip = def_graph.clip;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y', &gr->clip)) > 0) {
+		if ((len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &gr->clip)) > 0) {
 			return 1;
 		}
-		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
+		if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &v)) < 0) {
 			return 1;
 		}
-		while (len ? i < len : v[i]) {
-			switch (v[i++]) {
-			  case 0: len = i - 1; break;
+		if (!len || !v) {
+			gr->clip = def_graph.clip;
+			return 0;
+		}
+		while (*v) {
+			switch (*v++) {
 			  case 'x': n |= 1; break;
 			  case 'y': n |= 2; break;
 			  case 'z': n |= 4; break;
 			  default:  n |= 8;
 			}
 		}
+		gr->clip = n;
 		return 1;
 	}
 	if (!strcmp(name, "lpos")) {
-		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->lpos))) {
+		if (!src || !(len = src->_vptr->conv(src, 'c' | MPT_ENUM(ValueConsume), &gr->lpos))) {
 			gr->lpos = def_graph.lpos;
 		}
 		return len <= 0 ? len : 1;

@@ -78,7 +78,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return len ? 1 : 0;
@@ -86,7 +86,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &tx->color)) >= 0) {
 			return len ? 1 : 0;
 		}
 		return MPT_ERROR(BadType);
@@ -99,7 +99,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return len ? 1 : 0;
@@ -170,7 +170,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->size = def_text.size;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y', &tx->size))) tx->size = def_text.size;
+		if (!(len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &tx->size))) tx->size = def_text.size;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "align")) {
@@ -178,7 +178,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->align = def_text.align;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'c', &tx->align))) tx->align = def_text.align;
+		if (!(len = src->_vptr->conv(src, 'c' | MPT_ENUM(ValueConsume), &tx->align))) tx->align = def_text.align;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "angle")) {
@@ -186,7 +186,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->angle = def_text.angle;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &tx->angle))) tx->angle = def_text.angle;
+		if (!(len = src->_vptr->conv(src, 'd' | MPT_ENUM(ValueConsume), &tx->angle))) tx->angle = def_text.angle;
 		return len <= 0 ? len : 1;
 	}
 	return MPT_ERROR(BadArgument);

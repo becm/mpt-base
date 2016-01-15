@@ -280,9 +280,9 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; 
 
 template<typename T>
 inline __MPT_CONST_EXPR int vectorIdentifier() {
-    int t = typeIdentifier<T>();
-    if (t > _TypeFinal || (t & ~TypeUser) < TypeScalBase) return 0;
-    return t - TypeScalBase + TypeVecBase;
+    return (typeIdentifier<T>() > _TypeFinal ||
+            (typeIdentifier<T>() & ~TypeUser) < TypeScalBase)
+              ? 0 : typeIdentifier<T>() - TypeScalBase + TypeVecBase;
 }
 
 /*! container for reference type pointer */

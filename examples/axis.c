@@ -11,9 +11,10 @@ static int printm(void *out, const struct mpt_property *prop)
 	if (prop->val.fmt) return fprintf(out, "%s: <%s> %p\n", prop->name, prop->val.fmt, prop->val.ptr);
 	return fprintf(out, "%s = %s;\n", prop->name, (char *) prop->val.ptr);
 }
-
 static int getter(void *addr, struct mpt_property *pr)
-{ return mpt_axis_get(addr, pr); }
+{
+	return mpt_axis_get(addr, pr);
+}
 
 static void unref(MPT_INTERFACE(metatype) *src)
 {
@@ -21,7 +22,7 @@ static void unref(MPT_INTERFACE(metatype) *src)
 }
 static int convert(MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
-	return mpt_convert_string((void *) (src+1), type, dest);
+	return mpt_convert_string(*((char **) (src+1)), type, dest);
 }
 static int assign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
 {

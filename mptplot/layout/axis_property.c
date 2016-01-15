@@ -65,11 +65,11 @@ static int setPosition(char *val, MPT_INTERFACE(metatype) *src)
 	if (!src) {
 		return *val ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, 'k', &s)) >= 0) {
+	if ((len = src->_vptr->conv(src, 'k' | MPT_ENUM(ValueConsume), &s)) >= 0) {
 		*val = s ? *s : 0;
 		return len ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, 'c', val)) >= 0) {
+	if ((len = src->_vptr->conv(src, 'c' | MPT_ENUM(ValueConsume), val)) >= 0) {
 		return len ? 1 : 0;
 	}
 	return len;
@@ -95,7 +95,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeAxis), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeAxis) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, from);
 			return len ? 1 : 0;
@@ -113,7 +113,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			mpt_axis_fini(ax);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, from);
 			return len ? 1 : 0;
@@ -132,15 +132,15 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->begin = def_axis.begin;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &ax->begin))) ax->begin = def_axis.begin;
-		return len;
+		if (!(len = src->_vptr->conv(src, 'd' | MPT_ENUM(ValueConsume), &ax->begin))) ax->begin = def_axis.begin;
+		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "end")) {
 		if (!src) {
 			ax->end = def_axis.end;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &ax->end))) ax->end = def_axis.end;
+		if (!(len = src->_vptr->conv(src, 'd' | MPT_ENUM(ValueConsume), &ax->end))) ax->end = def_axis.end;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "tlen")) {
@@ -148,7 +148,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->tlen = def_axis.tlen;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'f', &ax->tlen))) ax->tlen = def_axis.tlen;
+		if (!(len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &ax->tlen))) ax->tlen = def_axis.tlen;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "intv") || !strcasecmp(name, "intervals")) {
@@ -158,11 +158,11 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->format &= ~MPT_ENUM(AxisLg);
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y', &ax->intv))) {
+		if (!(len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &ax->intv))) {
 			ax->format &= ~MPT_ENUM(AxisLg);
 			ax->intv = 0;
 		}
-		if (len >= 0 || (len = src->_vptr->conv(src, 's', &l)) < 0 || len < 0 || !l) {
+		if (len >= 0 || (len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &l)) < 0 || len < 0 || !l) {
 			ax->format &= ~MPT_ENUM(AxisLg);
 		}
 		else if (!strncasecmp(l, "log", 3)) {
@@ -176,7 +176,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->exp = def_axis.exp;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'n', &ax->exp))) ax->exp = def_axis.exp;
+		if (!(len = src->_vptr->conv(src, 'n' | MPT_ENUM(ValueConsume), &ax->exp))) ax->exp = def_axis.exp;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "sub") || !strcasecmp(name, "subtick")) {
@@ -184,15 +184,15 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 			ax->sub = def_axis.sub;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'b', &ax->sub))) ax->sub = def_axis.sub;
+		if (!(len = src->_vptr->conv(src, 'b' | MPT_ENUM(ValueConsume), &ax->sub))) ax->sub = def_axis.sub;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "dec") || !strcasecmp(name, "decimals")) {
 		if (!src) {
-			ax->sub = def_axis.sub;
+			ax->dec = def_axis.dec;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'b', &ax->sub))) ax->sub = def_axis.sub;
+		if (!(len = src->_vptr->conv(src, 'b' | MPT_ENUM(ValueConsume), &ax->dec))) ax->dec = def_axis.dec;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos")) {

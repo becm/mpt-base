@@ -2,8 +2,6 @@
  * set line attributes.
  */
 
-#include <errno.h>
-
 #include "layout.h"
 
 #define MPT_LineStyleMax   5
@@ -27,12 +25,12 @@
 extern int mpt_lattr_set(MPT_STRUCT(lineattr) *attr, int width, int style, int symbol, int size)
 {
 	if (!attr) {
-		errno = EFAULT; return -1;
+		return MPT_ERROR(BadArgument);
 	}
-	if (width  > MPT_ENUM(LineWidthMax) ) return -2;
-	if (style  > MPT_ENUM(LineStyleMax) ) return -2;
-	if (symbol > MPT_ENUM(SymbolTypeMax)) return -2;
-	if (size   > MPT_ENUM(SymbolSizeMax)) return -2;
+	if (width  > MPT_ENUM(LineWidthMax) ) return MPT_ERROR(BadValue);
+	if (style  > MPT_ENUM(LineStyleMax) ) return MPT_ERROR(BadValue);
+	if (symbol > MPT_ENUM(SymbolTypeMax)) return MPT_ERROR(BadValue);
+	if (size   > MPT_ENUM(SymbolSizeMax)) return MPT_ERROR(BadValue);
 	
 	attr->width  = width  >= 0 ? width  : 1;
 	attr->style  = style  >= 0 ? style  : 1;
@@ -47,7 +45,8 @@ static int lattr_pset(unsigned char *val, MPT_INTERFACE(metatype) *src, int def[
 	int len, sym;
 	
 	if (!src) {
-		return (*val != *def) ? 1 : 0;
+		*val = def[0];
+		return 0;
 	}
 	if ((len = src->_vptr->conv(src, 'i' | MPT_ENUM(ValueConsume), &sym)) < 0) {
 		return len;
@@ -57,8 +56,7 @@ static int lattr_pset(unsigned char *val, MPT_INTERFACE(metatype) *src, int def[
 		return 0;
 	}
 	if (sym < def[1] || sym > def[2]) {
-		errno = ERANGE;
-		return -1;
+		return MPT_ERROR(BadValue);
 	}
 	*val = sym;
 	
