@@ -87,30 +87,14 @@ bool config::set(const char *p, const char *val, int sep)
         return (remove(&where) < 0) ? false : true;
     }
     value tmp(0, val);
-    Reference<metatype> *r;
-    metatype *m;
-    if (!(r = query(&where, &tmp))) {
-        return false;
-    }
-    if (!(m = *r)) {
-        if (!(m = mpt_meta_new(strlen(val)+1))) {
-            return false;
-        }
-        if (m->assign(&tmp) < 0) {
-            return false;
-        }
-        r->setReference(m);
-    }
-    return true;
+
+    return assign(&where, &tmp) < 0 ? false : true;
 }
 metatype *config::get(const char *base, int sep, int len)
 {
     path to;
     to.set(base, len, sep, 0);
-    Reference<metatype> *r;
-    if (!(r = query(&to))) return 0;
-    metatype *m = *r;
-    return m;
+    return query(&to);
 }
 void config::del(const char *p, int sep, int len)
 {
@@ -135,7 +119,27 @@ void Config::unref()
 {
     delete this;
 }
-Config::Element *Config::getElement(Array<Config::Element> &arr, path &p, bool require)
+Config::Element *Config::getElement(const Array<Config::Element> &arr, path &p)
+{
+    const char *name;
+    int len;
+
+    name = p.base + p.off;
+    if ((len = mpt_path_next(&p)) < 0) {
+        return 0;
+    }
+    for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+        if (e->unused() || !e->equal(name, len)) {
+            continue;
+        }
+        if (p.len) {
+            return getElement(*e, p);
+        }
+        return e;
+    }
+    return 0;
+}
+Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
 {
     const char *name;
     int len;
@@ -153,12 +157,9 @@ Config::Element *Config::getElement(Array<Config::Element> &arr, path &p, bool r
             continue;
         }
         if (p.len) {
-            return getElement(*e, p, require);
+            return makeElement(*e, p);
         }
         return e;
-    }
-    if (!require) {
-        return 0;
     }
     if (!unused) {
         size_t pos = arr.size();
@@ -173,65 +174,74 @@ Config::Element *Config::getElement(Array<Config::Element> &arr, path &p, bool r
     }
     unused->setName(name, len);
 
-    return p.len ? getElement(*unused, p, require) : unused;
+    return p.len ? makeElement(*unused, p) : unused;
 }
-Reference<metatype> *Config::query(const path *dest, const value *val)
+int Config::assign(const path *dest, const value *val)
 {
     // metatype identity */
     if (!dest || !dest->len) {
-        if (!val) {
-            return this;
-        }
-        if (_ref && !_ref->assign(val)) {
-            return 0;
-        }
-        return this;
+        return BadArgument;
     }
     // find existing
     path p = *dest;
-    //const char *name = p.base;
-    //int len;
-    
-    Reference<metatype> *mr = this;
-    Element *curr = 0;
-    
-    if (dest && dest->len) {
-        if (!(curr = getElement(_sub, p, val))) {
+    metatype *m;
+    Element *curr;
+
+    if (!val) {
+        if (!(curr = getElement(_sub, p))
+            || !(m = *curr)) {
             return 0;
         }
-        mr = curr;
+        return m->assign(val);
     }
-    if (!val) {
-        return mr;
+    if (!(curr = makeElement(_sub, p))) {
+        return BadOperation;
     }
-    metatype *m;
-    if ((m = *mr)) {
-        if (m->assign(val)) {
-            return curr;
+    int ret = 0;
+    if (!(m = *curr) || (ret = m->assign(val) < 0)) {
+        if (val->fmt) return BadValue;
+        size_t len = val->ptr ? strlen((const char *) val->ptr) + 1 : 0;
+        if (!(m = metatype::create(len))) {
+            return BadOperation;
         }
+        if (len && (ret = m->assign(val)) < 0) {
+            m->unref();
+            return ret;
+        }
+        curr->setReference(m);
     }
-    // TODO: create and assign new metatype
-    return mr;
+    return ret;
+}
+metatype *Config::query(const path *dest) const
+{
+    // metatype identity */
+    if (!dest || !dest->len) {
+        return 0;
+    }
+    // find existing
+    path p = *dest;
+    Element *curr;
+
+    if (!(curr = getElement(_sub, p))) {
+        return 0;
+    }
+    return *curr;
 }
 int Config::remove(const path *dest)
 {
     // clear root element
     if (!dest) {
-        if (_ref) _ref->assign(0);
         return 0;
     }
     // clear configuration
     if (!dest->len) {
         _sub.clear();
-        if (_ref && _ref->assign(0) < 0) {
-            return 1;
-        }
         return 0;
     }
     path p = *dest;
     Element *curr;
     // requested element not found
-    if (!(curr = getElement(_sub, p, false))) {
+    if (!(curr = getElement(_sub, p))) {
         return BadOperation;
     }
     // remove childen from element

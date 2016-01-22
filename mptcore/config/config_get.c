@@ -14,20 +14,17 @@
  * 
  * \return config element if exists
  */
-extern MPT_INTERFACE(metatype) *mpt_config_get(MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
+extern MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
 {
-	MPT_INTERFACE(metatype) **mt;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	
-	p.sep = sep;
-	p.assign = assign;
-	mpt_path_set(&p, dest, -1);
-	
-	if (!conf) {
-		conf = mpt_config_global(0);
-	}
-	if (!(mt = conf->_vptr->query(conf, &p, 0))) {
+	if (!conf && !(conf = mpt_config_global(0))) {
 		return 0;
 	}
-	return *mt;
+	if (dest) {
+		p.sep = sep;
+		p.assign = assign;
+		mpt_path_set(&p, dest, -1);
+	}
+	return conf->_vptr->query(conf, &p);
 }

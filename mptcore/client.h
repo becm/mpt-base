@@ -42,7 +42,8 @@ public:
 	
 	client(class output * = 0);
 	
-	Reference<metatype> *query(const path *, const value *);
+	metatype *query(const path *) const;
+	int assign(const path *, const value *);
 	int remove(const path *);
 	
 	virtual int  init(MPT_INTERFACE(metatype) * = 0);
@@ -151,8 +152,10 @@ inline libhandle::~libhandle()
 
 inline client::client(class output *out) : Reference<class output>(out)
 { }
-inline Reference<metatype> *client::query(const path *p, const value *v)
-{ return config::global()->query(p, v); }
+inline int client::assign(const path *p, const value *v)
+{ return config::global()->assign(p, v); }
+inline metatype *client::query(const path *p) const
+{ return config::global()->query(p); }
 int client::remove(const path *p)
 { return config::global()->remove(p); }
 inline int client::init(metatype *)

@@ -23,8 +23,6 @@
 extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const char *val, int sep, int end)
 {
 	MPT_STRUCT(path) where = MPT_PATH_INIT;
-	MPT_INTERFACE(metatype) **mp;
-	MPT_INTERFACE(metatype) *mt;
 	MPT_STRUCT(value) d;
 	
 	where.sep = sep;
@@ -35,29 +33,10 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		conf = mpt_config_global(0);
 	}
 	if (!val) {
-		if (!(mp = conf->_vptr->query(conf, &where, 0))) {
-			return MPT_ERROR(BadValue);
-		}
-		return 0;
+		return conf->_vptr->assign(conf, &where, 0);
 	}
 	d.fmt = 0;
 	d.ptr = val;
 	
-	if (!(mp = conf->_vptr->query(conf, &where, &d))) {
-		return MPT_ERROR(BadType);
-	}
-	if ((mt = *mp)) {
-		return 0;
-	}
-	/* backend requires explicit value creation */
-	if (!(mt = mpt_meta_new(strlen(val)+1))) {
-		return MPT_ERROR(BadOperation);
-	}
-	if (mt->_vptr->assign(mt, &d) < 0) {
-		mt->_vptr->unref(mt);
-		return MPT_ERROR(BadValue);
-	}
-	*mp = mt;
-	
-	return 1;
+	return conf->_vptr->assign(conf, &where, &d);
 }

@@ -67,7 +67,8 @@ MPT_INTERFACE(config)
 {
 public:
 	virtual void unref() = 0;
-	virtual Reference<metatype> *query(const path *, const value * = 0) = 0;
+	virtual metatype *query(const path *) const = 0;
+	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 	
 	int environ(const char *filter = "mpt_*", int sep = '_', char * const env[] = 0);
@@ -75,13 +76,14 @@ public:
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	metatype *get(const char *path, int sep = '.', int len = -1);
 	
-	config *global(const path * = 0);
+	static config *global(const path * = 0);
 protected:
 	inline ~config() { }
 #else
 ; MPT_INTERFACE_VPTR(config) {
 	void (*unref)(MPT_INTERFACE(config) *);
-	MPT_INTERFACE(metatype) **(*query)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
+	MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
+	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
@@ -91,7 +93,7 @@ protected:
 __MPT_EXTDECL_BEGIN
 
 /* get/set config element */
-extern MPT_INTERFACE(metatype) *mpt_config_get(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
 extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
 /* use config data to store environment */
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
@@ -148,19 +150,21 @@ extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(p
 __MPT_EXTDECL_END
 
 #if defined(__cplusplus)
-class Config : public config, public Reference<metatype>
+class Config : public config
 {
 public:
     Config();
     virtual ~Config();
     
     void unref();
-    Reference<metatype> *query(const path *, const MPT_STRUCT(value) * = 0);
+    metatype *query(const path *) const;
+    int assign(const path *, const value * = 0);
     int remove(const path *);
     class Element;
     
 protected:
-    static Element *getElement(Array<Element> &, path &, bool = false);
+    static Element *getElement(const Array<Element> &, path &);
+    static Element *makeElement(Array<Element> &, path &);
     Array<Element> _sub;
 };
 

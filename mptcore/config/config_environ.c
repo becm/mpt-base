@@ -39,7 +39,6 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 	}
 	/* (re)evaluate environment */
 	while ((var = *(env++))) {
-		MPT_INTERFACE(metatype) **mt, *mp;
 		MPT_STRUCT(path) path;
 		char *end, *pos, tmp[1024];
 		MPT_STRUCT(value) d;
@@ -84,16 +83,9 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		d.fmt = 0;
 		d.ptr = end+1;
 		
-		if (!(mt = conf->_vptr->query(conf, &path, &d))) {
+		if (conf->_vptr->assign(conf, &path, &d) < 0) {
 			errno = EINVAL;
 			return -accept;
-		}
-		if (!(mp = *mt)) {
-			*mt = mp = mpt_meta_new(vlen);
-			if (!mp || (mp->_vptr->assign(mp, &d) < 0)) {
-				errno = ENOTSUP;
-				return -accept;
-			}
 		}
 	}
 	
