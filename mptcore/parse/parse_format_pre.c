@@ -32,6 +32,9 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 			return MPT_ERROR(BadType);
 		}
+		if (mpt_path_add(path) < 0) {
+			return MPT_ERROR(BadOperation);
+		}
 		return MPT_ENUM(ParseSection);
 	}
 	parse->curr = MPT_ENUM(ParseName);
