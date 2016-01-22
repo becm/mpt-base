@@ -21,7 +21,7 @@ extern int main(int , char * const [])
 	mtrace();
 	
 	output *out = mpt_output_new();
-	logger *log = mpt_output_logger(out);
+	logger *log = mpt_object_logger(out);
 	
 	log->error(__func__, "%s", "hallo");
 	mpt_output_log(out, 0, LogWarning, "%s", "hallo");

@@ -28,7 +28,8 @@
 int main(int argc, char *argv[])
 {
 	struct mpt_path path = MPT_PATH_INIT;
-	struct mpt_parse parse;
+	struct mpt_parse parse = MPT_PARSE_INIT;
+	struct mpt_parsefmt fmt;
 	MPT_TYPE(ParserFcn) next;
 	int type;
 	
@@ -36,8 +37,7 @@ int main(int argc, char *argv[])
 	
 	(void) mpt_config_environ(0, "mpt_*", '_', 0);
 	
-	mpt_parse_init(&parse);
-	type = mpt_parse_format(&parse.format, argv[1]);
+	type = mpt_parse_format(&fmt, argv[1]);
 	
 	if (!(next = mpt_parse_next_fcn(type))) {
 		return 3;
@@ -46,9 +46,12 @@ int main(int argc, char *argv[])
 	if (argc > 2 && mpt_parse_accept(&parse.name, argv[2]) < 0) {
 		return 4;
 	}
+	parse.src.getc = (int (*)(void *)) mpt_getchar_stdio;
+	parse.src.arg  = stdin;
+	
 	path.flags = MPT_ENUM(PathSepBinary);
 	
-	while ((type = next(&parse, &path)) > 0) {
+	while ((type = next(&fmt, &parse, &path)) > 0) {
 		/* skip section end events */
 		if (type & (MPT_ENUM(ParseSection) | MPT_ENUM(ParseData))) {
 			mpt_path_fputs(&path, stdout, " = ", "/");
@@ -60,7 +63,7 @@ int main(int argc, char *argv[])
 		} else {
 			mpt_path_invalidate(&path);
 		}
-		parse.lastop = type;
+		parse.prev = parse.curr;
 	}
 	if (type) {
 		fprintf(stderr, "parse error %d, line %lu\n", type, parse.src.line);

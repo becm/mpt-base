@@ -785,6 +785,8 @@ extern int _mpt_geninfo_conv(const uint64_t *, int , void *);
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
 
 
+/* get logging interface pointer from object data */
+extern MPT_INTERFACE(logger) *mpt_object_logger(const MPT_INTERFACE(object) *);
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 #if defined(_STDIO_H) || defined(_STDIO_H_)

@@ -30,7 +30,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!(conf = mpt_config_node(&path))) {
 		return MPT_event_fail(ev, MPT_tr("unable to query configuration"));
 	}
-	log = mpt_output_logger(cl->out);
+	log = mpt_object_logger((MPT_INTERFACE(object) *) cl->out);
 	
 	if (!ev->msg) {
 		err = mpt_client_read(conf, 0, log);

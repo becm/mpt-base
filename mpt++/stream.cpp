@@ -52,7 +52,7 @@ int output::message(const char *from, int type, const char *fmt, ... )
     char buf[1024];
     int slen = 0;
 
-    if ((log = mpt_output_logger(this))) {
+    if ((log = mpt_object_logger(this))) {
         va_list ap;
         va_start(ap, fmt);
         slen = log->log(from, type, fmt, ap);

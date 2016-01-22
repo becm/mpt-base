@@ -12,41 +12,6 @@
 
 /*!
  * \ingroup mptMessage
- * \brief get output log instance
- * 
- * Search log interface in output object properties.
- * 
- * \param out  output descriptor
- * 
- * \return logging descriptor
- */
-extern MPT_INTERFACE(logger) *mpt_output_logger(const MPT_INTERFACE(output) *out)
-{
-	MPT_STRUCT(property) pr = { "", 0, { 0, 0 } };
-	void * const *ptr;
-	uint8_t type;
-	
-	if (!out || out->_vptr->obj.property((void *) out, &pr) < 0) {
-		return 0;
-	}
-	if (!pr.val.fmt || !(ptr = pr.val.ptr)) {
-		return 0;
-	}
-	while ((type = *pr.val.fmt++)) {
-		if (type == MPT_ENUM(TypeLogger)) {
-			return *ptr;
-		}
-		/* abort on first non-pointer element */
-		if ((type < 0x8 || type >= 0x20)
-		    && (type < MPT_ENUM(TypeUser) || type >= (MPT_ENUM(TypeUser) + 0x20))) {
-			return 0;
-		}
-		++ptr;
-	}
-	return 0;
-}
-/*!
- * \ingroup mptMessage
  * \brief send extended message
  * 
  * Use output log operation for extended message.
@@ -68,7 +33,7 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 		if (!(type & 0xff)) return 0;
 		log = _mpt_log_default(0);
 	} else {
-		log = mpt_output_logger(out);
+		log = mpt_object_logger((MPT_INTERFACE(object) *) out);
 	}
 	if (log) {
 		va_start(ap, fmt);
