@@ -27,27 +27,6 @@ enum MPT_ENUM(ValueDescription)
 	MPT_ENUM(ValueFormatFile)
 };
 
-MPT_INTERFACE(iterator)
-#ifdef __cplusplus
-{
-	iterator();
-	
-	virtual int unref() = 0;
-	virtual double next(int pos = 1) = 0;
-	
-	inline double current()
-	{ return next(0); }
-protected:
-	inline ~iterator() { }
-#else
-; MPT_INTERFACE_VPTR(iterator) {
-	int (*unref)(MPT_INTERFACE(iterator) *);
-	double (*next)(MPT_INTERFACE(iterator) *, int);
-}; MPT_INTERFACE(iterator) {
-	MPT_INTERFACE_VPTR(iterator) *_vptr;
-#endif
-};
-
 __MPT_EXTDECL_BEGIN
 
 /* create profile of specific type */
@@ -63,25 +42,19 @@ extern double *mpt_values_prepare(MPT_STRUCT(array) *, int);
 extern int mpt_valtype_select(const char *, char **);
 extern int mpt_valtype_init(int , double *, int , const char *, int , const double *);
 
-/* get to current/next (valid) entry */
-extern double mpt_iterator_curr(MPT_INTERFACE(iterator) *);
-extern int mpt_iterator_next(MPT_INTERFACE(iterator) *, double *);
-
 /* create iterator (descr. includes type info) */
-extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *);
 /* create specific iterator */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_range (const char *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(const char *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(const char *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_range (const char *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(const char *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_values(const char *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(const char *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */
 extern int mpt_conf_file(FILE *, int , int , double *);
 #endif
 
-/* create iterator */
-extern int mpt_conf_iterator(MPT_INTERFACE(iterator) **, const MPT_STRUCT(node) *);
 /* set matrix columns from stream according to mapping */
 extern int mpt_conf_stream(MPT_STRUCT(array) * , void *, int , int);
 

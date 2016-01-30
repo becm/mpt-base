@@ -20,7 +20,7 @@
  * 
  * \return interable metatype
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *conf)
+extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 {
 	static const char delims[] = ": \t\r\n\f";
 	const char *str = NULL, *delim = delims;

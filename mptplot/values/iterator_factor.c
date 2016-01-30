@@ -3,8 +3,8 @@
  */
 
 #include <stdlib.h>
-#include <errno.h>
-#include <math.h>
+#include <limits.h>
+#include <string.h>
 
 #include "convert.h"
 
@@ -12,41 +12,141 @@
 
 struct _iter_fdata
 {
-	MPT_INTERFACE(iterator) _it;
+	MPT_INTERFACE(metatype) mt;
 	double curr, base, /* current/base value */
 	       fact;       /* multiplication factor */
 	int    pos, max;   /* iterations left */
 };
 
-static int iterUnref(MPT_INTERFACE(iterator) *iter)
+static void iterUnref(MPT_INTERFACE(metatype) *mt)
 {
-	free(iter);
-	return 0;
+	free(mt);
 }
-
-static double iterNext(MPT_INTERFACE(iterator) *iter, int step)
+static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 {
-	struct _iter_fdata *it = (void *) iter;
+	struct _iter_fdata *it = (void *) mt;
+	const char *str;
+	double first = 0.0, base = 1.0, fact = 10.;
+	int32_t max = 10;
+	int len, curr;
 	
-	if (step < 0) {
-		it->pos = 0;
-		return it->curr = it->base;
+	if (!val) {
+		len = 0;
 	}
-	if (step + it->pos >= it->max) {
-		return NAN;
-	}
-	else {
-		double curr = it->curr, fact = it->fact;
-		
-		while (step--) {
-			curr = curr ? curr * fact : fact;
-			++it->pos;
+	else if (!(str = val->fmt)) {
+		if (!(str = val->ptr)) {
+			curr = 0;
 		}
-		return it->curr = curr;
+		else if ((curr = mpt_cdouble(&fact, str, 0)) < 0) {
+			return curr;
+		}
+		len = 0;
+		if (curr) {
+			const int32_t range[2] = { 1, INT_MAX };
+			len = 1;
+			if ((curr = mpt_cint32(&max, str += curr, 0, range)) < 0) {
+				return curr;
+			}
+			if (curr) ++len;
+		}
+		if (curr) {
+			if ((curr = mpt_cdouble(&base, str += curr, 0)) < 0) {
+				return curr;
+			}
+			if (curr) ++len;
+		}
+		if (curr) {
+			if ((curr = mpt_cdouble(&first, str += curr, 0)) < 0) {
+				return curr;
+			}
+			if (curr) ++len;
+		}
 	}
+	else if (*str) {
+		const void *ptr = val->ptr;
+		
+		if ((curr = mpt_data_convert(&ptr, *str++, &fact, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+			return curr;
+		}
+		len = curr ? 1 : 0;
+		if (curr && *str) {
+			if ((curr = mpt_data_convert(&ptr, *str++, &max, 'i' | MPT_ENUM(ValueConsume))) < 0) {
+				return curr;
+			}
+			if (curr) {
+				++len;
+				if (max < 0) {
+					return MPT_ERROR(BadValue);
+				}
+				if (!max) {
+					max = INT_MAX;
+				}
+			}
+		}
+		if (curr && *str) {
+			if ((curr = mpt_data_convert(&ptr, *str++, &base, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+				return curr;
+			}
+			if (curr) ++len;
+		}
+		if (curr && *str) {
+			if ((curr = mpt_data_convert(&ptr, *str++, &first, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+				return curr;
+			}
+			if (curr) ++len;
+		}
+	}
+	it->curr = first;
+	it->base = base;
+	it->fact = fact;
+	it->pos = 0;
+	it->max = max;
+	
+	return len;
+}
+static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
+{
+	struct _iter_fdata *it = (void *) mt;
+	if (!t) {
+		static const char fmt[] = { 'd', 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return 0;
+	}
+	if ((t & 0xff) != 'd') {
+		return MPT_ERROR(BadType);
+	}
+	if (it->pos > it->max) {
+		return 0;
+	}
+	if (ptr) {
+		*((double *) ptr) = it->curr;
+	}
+	if (t & MPT_ENUM(ValueConsume)) {
+		if (!it->pos++) {
+			it->curr = it->base;
+		} else {
+			it->curr *= it->fact;
+		}
+		return 'd' | MPT_ENUM(ValueConsume);
+	}
+	return 'd';
+}
+static MPT_INTERFACE(metatype) *iterClone(MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_fdata *c;
+	
+	if (!(c = malloc(sizeof*c))) {
+		return 0;
+	}
+	return memcpy(c, mt, sizeof(*c));
 }
 
-static MPT_INTERFACE_VPTR(iterator) ictl = { iterUnref, iterNext };
+static MPT_INTERFACE_VPTR(metatype) iteratorFactor = {
+	iterUnref,
+	iterAssign,
+	iterConv,
+	iterClone
+};
 
 /*!
  * \ingroup mptValues
@@ -56,38 +156,23 @@ static MPT_INTERFACE_VPTR(iterator) ictl = { iterUnref, iterNext };
  * 
  * \param conf  factor iterator parameters
  * 
- * \return iterator interface
+ * \return factor iterator metatype
  */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(const char *conf)
+extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(const char *conf)
 {
-	struct _iter_fdata *it;
-	double base = 1.0, fact = 10.;
-	int max = 10, len;
+	struct _iter_fdata it;
+	MPT_STRUCT(value) val;
 	
-	if (!conf) {
-		errno = EFAULT;
+	if (!(val.ptr = conf)) {
 		return 0;
 	}
-	/* try to get initial value */
-	if ((len = mpt_cdouble(&base, conf, 0)) <= 0)
-		return 0;
+	val.fmt = 0;
 	
-	if ((len = mpt_cdouble(&fact, conf += len, 0)) <= 0)
-		fact = 10.0;
-	
-	else if ((len = mpt_cint(&max, conf += len, 0, 0)) <= 0)
-		max = 10;
-	
-	if (!(it = malloc(sizeof(*it)))) {
+	if (iterAssign(&it.mt, &val) < 0) {
 		return 0;
 	}
-	it->_it._vptr = &ictl;
-	it->base = base;
-	it->curr = 0.0;
-	it->fact = fact;
-	it->pos  = 0;
-	it->max  = max;
+	it.mt._vptr = &iteratorFactor;
 	
-	return &it->_it;
+	return iterClone(&it.mt);
 }
 

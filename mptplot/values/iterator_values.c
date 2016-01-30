@@ -13,47 +13,92 @@
 
 struct _iter_sdata
 {
-	MPT_INTERFACE(iterator) _it;
+	MPT_INTERFACE(metatype) mt;
 	const char *pos;  /* base/current position in string */
 	double curr;      /* current iterator value */
 };
 
-static int iterUnref(MPT_INTERFACE(iterator) *iter)
+static void iterUnref(MPT_INTERFACE(metatype) *mt)
 {
-	free(iter);
-	return 0;
+	free(mt);
 }
-static double iterNext(MPT_INTERFACE(iterator) *iter, int step)
+static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 {
-	struct _iter_sdata *it = (void *) iter;
-	const char *desc;
-	double curr;
+	struct _iter_sdata *it = (void *) mt;
+	const char *pos;
 	int len;
 	
-	if (step < 0) {
-		desc = (const char *) (it + 1);
-		if ((len = mpt_cdouble(&curr, desc, 0)) <= 0) {
-			return NAN;
-		}
-		it->pos = desc + len;
-		return it->curr = curr;
+	if (val) {
+		return MPT_ERROR(BadOperation);
 	}
-	if (!step) {
-		return it->curr;
-	}
-	desc = it->pos;
-	do {
-		if ((len = mpt_cdouble(&curr, desc, 0)) <= 0) {
-			return NAN;
-		}
-		desc += len;
-	} while (--step);
+	pos = (const char *) (it+1);
 	
-	it->pos = desc;
-	return it->curr = curr;
+	if ((len = mpt_cdouble(&it->curr, pos, 0)) < 0) {
+		return MPT_ERROR(BadValue);
+	}
+	it->pos = pos + len;
+	
+	return 0;
+}
+static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
+{
+	struct _iter_sdata *it = (void *) mt;
+	if (!t) {
+		static const char fmt[] = { 'd', 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return 0;
+	}
+	if ((t & 0xff) != 'd') {
+		return MPT_ERROR(BadType);
+	}
+	if (!it->pos) {
+		return 0;
+	}
+	if (ptr) {
+		*((double *) ptr) = it->curr;
+	}
+	if (t & MPT_ENUM(ValueConsume)) {
+		int len;
+		if ((len = mpt_cdouble(&it->curr, it->pos, 0)) <= 0 || isnan(it->curr)) {
+			it->pos = 0;
+		} else {
+			it->pos += len;
+		}
+		return 'd' | MPT_ENUM(ValueConsume);
+	}
+	return 'd';
+}
+static const MPT_INTERFACE_VPTR(metatype) iteratorValues;
+static MPT_INTERFACE(metatype) *iterClone(MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_sdata *it = (void *) mt;
+	const char *val;
+	size_t len, pos;
+	double curr;
+	
+	curr = it->curr;
+	val = (const char *) (it+1);
+	pos = it->pos - val;
+	len = strlen(val);
+	
+	if (!(it = malloc(sizeof(*it) + len + 1))) {
+		return 0;
+	}
+	val = memcpy(it+1, val, len+1);
+	
+	it->mt._vptr = &iteratorValues;
+	it->pos = val + pos;
+	it->curr = curr;
+	
+	return memcpy(it, mt, sizeof(*it));
 }
 
-static MPT_INTERFACE_VPTR(iterator) ictl = { iterUnref, iterNext };
+static const MPT_INTERFACE_VPTR(metatype) iteratorValues = {
+	iterUnref,
+	iterAssign,
+	iterConv,
+	iterClone
+};
 
 /*!
  * \ingroup mptValues
@@ -65,7 +110,7 @@ static MPT_INTERFACE_VPTR(iterator) ictl = { iterUnref, iterNext };
  * 
  * \return iterator interface
  */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *conf)
+extern MPT_INTERFACE(metatype) *_mpt_iterator_values(const char *conf)
 {
 	struct _iter_sdata *it;
 	size_t len;
@@ -73,7 +118,6 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *conf)
 	int adv;
 	
 	if (!conf) {
-		errno = EFAULT;
 		return 0;
 	}
 	/* convert first value */
@@ -87,9 +131,9 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *conf)
 	}
 	it->pos = memcpy(it+1, conf, len);
 	
-	it->_it._vptr = &ictl;
+	it->mt._vptr = &iteratorValues;
 	it->pos += adv;
 	it->curr = val;
 	
-	return &it->_it;
+	return &it->mt;
 }

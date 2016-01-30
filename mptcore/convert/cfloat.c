@@ -2,8 +2,8 @@
  * get float value from string.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "convert.h"
 
@@ -15,7 +15,6 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	char *end;
 	
 	if (!src) {
-		errno = EFAULT;
 		return MPT_ERROR(BadArgument);
 	}
 	if (!*src) {
@@ -24,10 +23,15 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 	tmp = strtof(src, &end);
 	
 	if (end == src) {
-		return MPT_ERROR(BadType);
+		/* accept space as empty string */
+		while (*src) {
+			if (!isspace(*src++)) {
+				return MPT_ERROR(BadType);
+			}
+		}
+		return 0;
 	}
 	if (range && (range[0] > tmp || tmp > range[1])) {
-		errno = ERANGE;
 		return MPT_ERROR(BadValue);
 	}
 	if (val) {
