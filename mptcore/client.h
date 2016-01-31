@@ -108,24 +108,17 @@ extern MPT_STRUCT(notify) *mpt_init(int , char **);
 /* get input from user */
 extern char *mpt_readline(const char *);
 
-/* create solver configuration */
-extern MPT_STRUCT(node) *mpt_client_config(const char *);
-
-/* initialize and clear solver data */
-extern void mpt_client_init(MPT_INTERFACE(client) *);
-extern void mpt_client_fini(MPT_INTERFACE(client) *);
-
 
 /* initialize/preprare solver, execute solver step */
 extern int mpt_cevent_init(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_cevent_prep(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 
+/* read files to configuration */
+extern const char *mpt_client_read(MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
+
 /* register events on notifier */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
-
-/* read files to configuration */
-extern const char *mpt_client_read(MPT_STRUCT(node) *, MPT_INTERFACE(metatype) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 
 
 /* open/close library descriptor */

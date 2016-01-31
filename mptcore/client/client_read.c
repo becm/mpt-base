@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #include "node.h"
 #include "message.h"
@@ -25,68 +24,67 @@
  * 
  * \return string describing error
  */
-extern const char *mpt_client_read(MPT_STRUCT(node) *conf, MPT_INTERFACE(metatype) *args, MPT_INTERFACE(logger) *log)
+extern const char *mpt_client_read(MPT_INTERFACE(client) *cl, MPT_INTERFACE(metatype) *args)
 {
-	MPT_STRUCT(node) tmp = MPT_NODE_INIT;
+	static const char fmtFile[] = { MPT_ENUM(TypeFile) , 0 };
+	
+	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
-	const char *fname;
 	FILE *fd;
 	int res;
 	
-	if (!conf) {
-		errno = EFAULT;
-		return MPT_tr("missing configuration node");
-	}
 	if (!args) {
-		if (!(fname = mpt_node_data(conf, 0))) {
-			return MPT_tr("default config file required");
+		if (cl->_vptr->cfg.assign((void *) cl, 0, 0) < 0) {
+			return MPT_tr("default client config required");
 		}
+		return 0;
 	}
 	/* try to get subtree target for config file */
-	else if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) >= 0) {
-		MPT_STRUCT(path) p = MPT_PATH_INIT;
-		MPT_STRUCT(node) *sub;
-		if (!pr.name) {
-			return MPT_tr("unable to get file name from argument");
-		}
-		if (pr.val.fmt || !(fname = pr.val.ptr)) {
-			return MPT_tr("bad file name value type");
-		}
-		p.sep = '.';
-		p.assign = 0;
-		if (!(sub = mpt_node_query(conf->children, &p, strlen(fname) + 1))) {
-			return MPT_tr("unable to register sub configuration");
-		}
-		if (!conf->children) {
-			conf->children = sub;
-		}
-		if (p.len && !(conf = mpt_node_query(sub->children, &p, -1))) {
-			return MPT_tr("unable to find sub configuration");
-		}
+	if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) > 0) {
+		;
 	}
-	/* save to base node */
-	else if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &fname)) >= 0) {
-		if (!fname) {
-			return MPT_tr("unable to get file name from argument");
+	/* try to get value data */
+	else if ((res = args->_vptr->conv(args, MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume), &pr.val)) > 0) {
+		pr.name = 0;
+	}
+	/* get simple filename */
+	else if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &pr.val.ptr)) >= 0) {
+		if (!res || !pr.val.ptr) {
+			if (cl->_vptr->cfg.assign((void *) cl, 0, 0) < 0) {
+				return MPT_tr("default client config required");
+			}
+			return 0;
 		}
+		pr.name = 0;
+		pr.val.fmt = 0;
 	}
 	else {
-		return MPT_tr("bad file name argument type");
+		return MPT_tr("unable to get file name from argument");
+	}
+	if (pr.name) {
+		mpt_path_set(&p, pr.name, -1);
+	}
+	/* direct assignment from name */
+	if (pr.val.fmt) {
+		if (cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val) < 0) {
+			return MPT_tr("bad config value type");
+		}
+		return 0;
 	}
 	/* atomic read of config file */
-	if (!(fd = fopen(fname, "r"))) {
+	if (!(fd = fopen(pr.val.ptr, "r"))) {
+		if (cl->out) mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad filename"), pr.val.ptr);
 		return MPT_tr("unable to open config file");
 	}
-	res = mpt_config_read(&tmp, fd, 0, "ns", log);
+	pr.val.fmt = fmtFile;
+	pr.val.ptr = &fd;
+	
+	res = cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val);
 	fclose(fd);
 	
 	if (res < 0) {
 		return MPT_tr("error while parsing file");
 	}
-	/* replace node elements */
-	mpt_node_clear(conf);
-	conf->children = tmp.children;
-	
 	return 0;
 }
 
