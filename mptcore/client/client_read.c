@@ -26,11 +26,8 @@
  */
 extern const char *mpt_client_read(MPT_INTERFACE(client) *cl, MPT_INTERFACE(metatype) *args)
 {
-	static const char fmtFile[] = { MPT_ENUM(TypeFile) , 0 };
-	
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
-	FILE *fd;
 	int res;
 	
 	if (!args) {
@@ -41,7 +38,9 @@ extern const char *mpt_client_read(MPT_INTERFACE(client) *cl, MPT_INTERFACE(meta
 	}
 	/* try to get subtree target for config file */
 	if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) > 0) {
-		;
+		if (pr.name) {
+			mpt_path_set(&p, pr.name, -1);
+		}
 	}
 	/* try to get value data */
 	else if ((res = args->_vptr->conv(args, MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume), &pr.val)) > 0) {
@@ -61,29 +60,9 @@ extern const char *mpt_client_read(MPT_INTERFACE(client) *cl, MPT_INTERFACE(meta
 	else {
 		return MPT_tr("unable to get file name from argument");
 	}
-	if (pr.name) {
-		mpt_path_set(&p, pr.name, -1);
-	}
 	/* direct assignment from name */
-	if (pr.val.fmt) {
-		if (cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val) < 0) {
-			return MPT_tr("bad config value type");
-		}
-		return 0;
-	}
-	/* atomic read of config file */
-	if (!(fd = fopen(pr.val.ptr, "r"))) {
-		if (cl->out) mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad filename"), pr.val.ptr);
-		return MPT_tr("unable to open config file");
-	}
-	pr.val.fmt = fmtFile;
-	pr.val.ptr = &fd;
-	
-	res = cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val);
-	fclose(fd);
-	
-	if (res < 0) {
-		return MPT_tr("error while parsing file");
+	if (cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val) < 0) {
+		return MPT_tr("failed to apply configuration");
 	}
 	return 0;
 }
