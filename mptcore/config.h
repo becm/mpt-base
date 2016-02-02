@@ -98,6 +98,9 @@ extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, i
 /* use config data to store environment */
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
+/* set configuration from arguments */
+extern int mpt_config_args(MPT_INTERFACE(config) *, MPT_INTERFACE(metatype) *);
+
 /* get global config node */
 extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *);
 /* get config of global (sub-)tree */
@@ -106,11 +109,6 @@ extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *);
 extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, ssize_t);
 /* use node to store environment */
 extern int mpt_node_environ(MPT_STRUCT(node) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
-
-#if defined(_STDIO_H) || defined(_STDIO_H_)
-/* read configuration from file */
-extern int mpt_config_read(MPT_STRUCT(node) *, FILE *, const char * __MPT_DEFPAR(0), const char * __MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
-#endif
 
 /* set path data */
 extern size_t mpt_path_set(MPT_STRUCT(path) *, const char *, int __MPT_DEFPAR(-1));

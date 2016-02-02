@@ -114,9 +114,6 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_cevent_prep(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 
-/* read files to configuration */
-extern const char *mpt_client_read(MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
-
 /* register events on notifier */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
 

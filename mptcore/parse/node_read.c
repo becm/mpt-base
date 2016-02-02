@@ -11,7 +11,7 @@
 #include "config.h"
 
 /*!
- * \ingroup mptConfig
+ * \ingroup mptParse
  * \brief read config file
  * 
  * Read config file with specific format description.
@@ -23,7 +23,7 @@
  * 
  * \return parse result
  */
-extern int mpt_config_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, const char *limit, MPT_INTERFACE(logger) *out)
+extern int mpt_node_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, const char *limit, MPT_INTERFACE(logger) *out)
 {
 	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
 	MPT_STRUCT(parsefmt) pfmt;

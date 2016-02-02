@@ -17,19 +17,22 @@
 
 static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	const char *err;
+	static const char defFmt[] = "no default configuration state";
 	
 	if (!ev) {
 		return 0;
 	}
 	if (!ev->msg) {
-		err = mpt_client_read(cl, 0);
+		if (mpt_config_args((void *) cl, 0) < 0) {
+			return MPT_event_fail(ev, MPT_tr(defFmt));
+		}
 	}
 	else {
 		MPT_STRUCT(message) msg = *ev->msg;
 		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_INTERFACE(metatype) *args;
 		ssize_t part;
+		int err;
 		
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
 			return MPT_event_fail(ev, MPT_tr("missing message type"));
@@ -39,15 +42,25 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			part = mpt_message_argv(&msg, mt.arg);
 		}
 		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg, ':'))) {
-			return MPT_event_fail(ev, "unable to create argument source");
+			return MPT_event_fail(ev, MPT_tr("unable to create argument source"));
 		}
-		err = mpt_client_read(cl, args);
+		err = mpt_config_args((void *) cl, args);
 		args->_vptr->unref(args);
+		
+		if (err < 0) {
+			if (args) {
+				return MPT_event_fail(ev, MPT_tr("bad client config element"));
+			} else {
+				return MPT_event_fail(ev, MPT_tr(defFmt));
+			}
+		}
+		if (err) {
+			char buf[128];
+			snprintf(buf, sizeof(buf), "%s: %d", MPT_tr("compatible argument count"), err);
+			return MPT_event_good(ev, buf);
+		}
 	}
-	if (err) {
-		return MPT_event_fail(ev, err);
-	}
-	return MPT_event_good(ev, MPT_tr("reading configuration files completed"));
+	return MPT_event_good(ev, MPT_tr("arguments applied to client configuration"));
 }
 
 static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)

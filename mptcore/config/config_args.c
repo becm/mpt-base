@@ -20,50 +20,63 @@
  * 
  * \param conf  configuration target
  * \param args  source for files to read
- * \param log   logging descriptor
  * 
  * \return string describing error
  */
-extern const char *mpt_client_read(MPT_INTERFACE(client) *cl, MPT_INTERFACE(metatype) *args)
+extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(metatype) *args)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
-	int res;
+	int res, count;
 	
 	if (!args) {
-		if (cl->_vptr->cfg.assign((void *) cl, 0, 0) < 0) {
-			return MPT_tr("default client config required");
+		if ((res = cfg->_vptr->assign(cfg, 0, 0)) < 0) {
+			return res;
 		}
 		return 0;
 	}
-	/* try to get subtree target for config file */
-	if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) > 0) {
-		if (pr.name) {
-			mpt_path_set(&p, pr.name, -1);
-		}
-	}
-	/* try to get value data */
-	else if ((res = args->_vptr->conv(args, MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume), &pr.val)) > 0) {
-		pr.name = 0;
-	}
-	/* get simple filename */
-	else if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &pr.val.ptr)) >= 0) {
-		if (!res || !pr.val.ptr) {
-			if (cl->_vptr->cfg.assign((void *) cl, 0, 0) < 0) {
-				return MPT_tr("default client config required");
+	count = 0;
+	do {
+		/* try to get subtree target for config file */
+		if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) > 0) {
+			if (pr.name) {
+				mpt_path_set(&p, pr.name, -1);
 			}
-			return 0;
+			else if (count) {
+				return count;
+			}
 		}
-		pr.name = 0;
-		pr.val.fmt = 0;
-	}
-	else {
-		return MPT_tr("unable to get file name from argument");
-	}
-	/* direct assignment from name */
-	if (cl->_vptr->cfg.assign((void *) cl, pr.name ? &p : 0, &pr.val) < 0) {
-		return MPT_tr("failed to apply configuration");
-	}
+		/* try to get value data */
+		else if ((res = args->_vptr->conv(args, MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume), &pr.val)) > 0) {
+			if (count) {
+				return count;
+			}
+			pr.name = 0;
+		}
+		/* get simple filename */
+		else if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &pr.val.ptr)) > 0) {
+			if (count) {
+				return count;
+			}
+			pr.name = 0;
+			pr.val.fmt = 0;
+		}
+		else if (!res) {
+			if (!count) {
+				res = cfg->_vptr->assign(cfg, 0, 0);
+			}
+			return res;
+		}
+		else {
+			return count ? count : res;
+		}
+		/* assign config */
+		if ((res = cfg->_vptr->assign(cfg, pr.name ? &p : 0, &pr.val)) < 0) {
+			return count ? count : res;
+		}
+		++count;
+	} while (res);
+	
 	return 0;
 }
 
