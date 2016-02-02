@@ -37,7 +37,10 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, int def, const char *conf, co
 		if (out) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("instance types match"), conf);
 		return 0;
 	}
-	if ((len = mpt_proxy_type(&tmp, def, conf)) < 0) {
+	memset(tmp._types, 0, sizeof(tmp._types));
+	tmp._types[0] = def;
+	if ((len = mpt_proxy_type(&tmp, conf)) < 0
+	    && (def <= 0 || def > 0xff)) {
 		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad reference type name"), conf);
 	}
 	/* create new proxy */
