@@ -19,45 +19,31 @@
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern int mpt_library_bind(MPT_STRUCT(proxy) *px, int def, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
-	char buf[128];
 	MPT_INTERFACE(metatype) *m, *old;
-	const char *ldesc;
-	uintptr_t id, len;
+	MPT_STRUCT(proxy) tmp;
+	uintptr_t id;
+	int len;
 	
 	if (!conf) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
-		return -1;
+		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
+		return MPT_ERROR(BadArgument);
 	}
-	/* resolve alias to full library description */
-	ldesc = conf;
-	while (*ldesc && !isspace(*ldesc)) {
-		++ldesc;
-	}
-	len = ldesc - conf;
-	if (!*ldesc) {
-		;
-	}
-	else if ((len = ldesc - conf) >= sizeof(buf)) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("invalid initializer length"), conf);
-		return 0;
-	}
-	else {
-		conf = memcpy(buf, conf, len);
-		buf[len] = 0;
-	}
-	id = mpt_hash(conf, len);
+	id = mpt_hash(conf, strlen(conf));
 	
 	/* keep existing proxy object */
 	if ((old = px->_ref) && (id == px->_id)) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("instance types match"), conf);
+		if (out) mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("instance types match"), conf);
 		return 0;
 	}
+	if ((len = mpt_proxy_type(&tmp, def, conf)) < 0) {
+		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("bad reference type name"), conf);
+	}
 	/* create new proxy */
-	if (!(m = mpt_meta_open(conf, path, out))) {
-		if (path && !(m = mpt_meta_open(conf, 0, out))) {
-			return -1;
+	if (!(m = mpt_meta_open(tmp._types, conf, path, out))) {
+		if (!path || !(m = mpt_meta_open(tmp._types, conf, 0, out))) {
+			return MPT_ERROR(BadOperation);
 		}
 	}
 	/* delete old proxy */

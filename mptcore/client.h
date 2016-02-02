@@ -131,9 +131,9 @@ extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, con
 int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
 
 /* dynamic binding with metatype proxy instance */
-MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 /* open library handle as metatype */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern int mpt_library_bind(MPT_STRUCT(proxy) *, int , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 
 __MPT_EXTDECL_END
 

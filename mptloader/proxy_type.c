@@ -22,54 +22,44 @@
 extern int mpt_proxy_type(MPT_STRUCT(proxy) *p, const char *desc)
 {
 	const char *sep;
-	int len, type = 0;
+	int len = 0, type = 0;
 	
 	/* typed reference */
 	if (!desc) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* no separator befor symbol end */
-	if (!(sep = strchr(desc, ':'))) {
-		len = -1;
+	if ((sep = strchr(desc, ':'))
+	    && !(len = sep - desc)) {
+		return MPT_ERROR(BadValue);
 	}
-	else if (memchr(desc, '@', len = sep - desc)) {
-		return 0;
-	}
-	if (len < 0 ? !strcmp(desc, "metatype") : !strncmp(desc, "metatype:", len+1)) {
+	if (len ? !strncmp(desc, "metatype:", len+1) : !strcmp(desc, "metatype")) {
 		type = MPT_ENUM(TypeMeta);
 	}
-	else if (len < 0 ? !strcmp(desc, "object") : !strncmp(desc, "object:", len+1)) {
+	else if (len ? !strncmp(desc, "io:", len+1) : (!strcmp(desc, "io") || !strcmp(desc, "I/O"))) {
+		type = MPT_ENUM(TypeIODevice);
+	}
+	else if (len ? !strncmp(desc, "input:", len+1) : !strcmp(desc, "input")) {
+		type = MPT_ENUM(TypeInput);
+	}
+	else if (len ? !strncmp(desc, "object:", len+1) : !strcmp(desc, "object")) {
 		type = MPT_ENUM(TypeObject);
 	}
-	else if (len < 0 ? !strcmp(desc, "solver") : !strncmp(desc, "solver:", len+1)) {
+	else if (len ? !strncmp(desc, "solver:", len+1) : !strcmp(desc, "solver")) {
 		type = MPT_ENUM(TypeSolver);
 	}
-	else if (len < 0 ? !strcmp(desc, "input") : !strncmp(desc, "input:", len+1)) {
-		type = MPT_ENUM(TypeInput);
+	else if (len ? !strncmp(desc, "layout:", len+1) : !strcmp(desc, "layout")) {
+		type = MPT_ENUM(TypeGroup);
 	}
 	else {
 		return MPT_ERROR(BadValue);
 	}
 	memset(&p->_types, 0, sizeof(p->_types));
-	switch (type) {
-	  case MPT_ENUM(TypeMeta):
-		*p->_types = MPT_ENUM(TypeMeta);
-		break;
-	  case MPT_ENUM(TypeObject):
-		*p->_types = MPT_ENUM(TypeObject);
-		break;
-	  case MPT_ENUM(TypeInput):
-		*p->_types = MPT_ENUM(TypeInput);
-		break;
-	  case MPT_ENUM(TypeSolver):
-		p->_types[0] = MPT_ENUM(TypeSolver);
+	
+	p->_types[0] = type;
+	if (type > MPT_ENUM(TypeObject)
+	    && type < MPT_ENUM(TypeVecBase)) {
 		p->_types[1] = MPT_ENUM(TypeObject);
-		break;
-	  case MPT_ENUM(TypeOutput):
-		p->_types[0] = MPT_ENUM(TypeOutput);
-		p->_types[1] = MPT_ENUM(TypeObject);
-		break;
-	  default:;
 	}
-	return len + 1;
+	return len ? len + 1 : 0;
 }
