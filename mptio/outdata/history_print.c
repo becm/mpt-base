@@ -32,10 +32,11 @@ static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
 	struct typeSource *ts = (void *) src;
 	ssize_t left;
+	size_t len;
 	
 	if ((type & 0xff) == MPT_ENUM(TypeValFmt)) {
 		if (!ts->fmtlen) {
-			return -2;
+			return 0;
 		}
 		if (dest) {
 			*((MPT_STRUCT(valfmt) *) dest) = *ts->fmt;
@@ -47,16 +48,26 @@ static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
 		--ts->fmtlen;
 		return MPT_ENUM(TypeValFmt) | MPT_ENUM(ValueConsume);
 	}
-	if ((type & 0xff) != ts->type) return MPT_ERROR(BadType);
-	if ((left = ts->srclen - (type = ts->esze)) < 0) return MPT_ERROR(BadOperation);
-	if (dest) memcpy(dest, ts->src, type);
+	if ((type & 0xff) != ts->type) {
+		return MPT_ERROR(BadType);
+	}
+	len  = ts->esze;
+	left = ts->srclen;
+	
+	if (!left) {
+		return 0;
+	}
+	if ((left -= len) < 0) {
+		return MPT_ERROR(BadOperation);
+	}
+	if (dest) memcpy(dest, ts->src, len);
 	
 	if (!(type & MPT_ENUM(ValueConsume))) {
-		return MPT_ENUM(TypeValFmt);
+		return ts->type | MPT_ENUM(ValueConsume);
 	}
-	ts->src += type;
+	ts->src += len;
 	ts->srclen = left;
-	return ts->type | MPT_ENUM(TypeValFmt);
+	return ts->type;
 }
 static MPT_INTERFACE(metatype) *histClone(MPT_INTERFACE(metatype) *src)
 {

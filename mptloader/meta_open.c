@@ -101,7 +101,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *types, const char *des
 	const char *err;
 	
 	/* bind from explicit/global search path */
-	if (!(err = mpt_library_assign(&lh, descr, path))) {
+	if ((err = mpt_library_assign(&lh, descr, path))) {
 		if (out) mpt_log(out, __func__, path ? MPT_FCNLOG(Info) : MPT_FCNLOG(Error), "%s", err);
 		return 0;
 	}
@@ -135,7 +135,10 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *types, const char *des
 	mp->_mt._vptr = &_mpt_metaProxyCtl;
 	mp->lh = lh;
 	
+	mp->px._ref = m;
 	memset(&mp->px._types, 0, sizeof(mp->px._types));
+	mp->px._id = mpt_hash(descr, strlen(descr));
+	
 	if (!types) {
 		mp->px._types[0] = MPT_ENUM(TypeMeta);
 	} else {

@@ -50,7 +50,7 @@ static MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, co
 	if (!path) {
 		return 0;
 	}
-	p = c->base;
+	p = *path;
 	base = p.base + p.off;
 	
 	while ((len = mpt_path_next(&p)) >= 0) {
