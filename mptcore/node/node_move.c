@@ -18,25 +18,47 @@
  */
 size_t mpt_node_move(MPT_STRUCT(node) *src, MPT_STRUCT(node) *dst)
 {
+	MPT_STRUCT(node) *last = dst;
 	size_t move = 0;
 	
 	/* move unchanged old configuration */
-	for ( ; src; src = src->next) {
+	while (src) {
 		MPT_STRUCT(node) *curr;
 		const void *id;
 		int len;
 		
 		id  = mpt_identifier_data(&src->ident);
 		len = mpt_identifier_len(&src->ident);
-		if ((curr = mpt_node_locate(dst, 1, id, len))) {
-			if (src->children && curr->children) {
-				move += mpt_node_move(curr->children, src->children);
-			}
+		
+		/* move complete node */
+		if (!(curr = mpt_node_locate(dst, 1, id, len))) {
+			curr = src;
+			src = src->next;
+			mpt_node_unlink(curr);
+			mpt_gnode_add(last, 0, curr);
+			last = curr;
+			++move;
 			continue;
 		}
-		mpt_node_unlink(src);
-		mpt_gnode_add(dst, 0, src);
-		++move;
+		/* move node children */
+		if (src->children) {
+			/* merge children */
+			if (curr->children) {
+				move += mpt_node_move(src->children, curr->children);
+			}
+			/* reparent children to target */
+			else {
+				MPT_STRUCT(node) *tmp = src->children;
+				
+				curr->children = tmp;
+				while (tmp) {
+					tmp->parent = curr;
+					tmp = tmp->next;
+					++move;
+				}
+			}
+		}
+		src = src->next;
 	}
 	return move;
 }
