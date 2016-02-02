@@ -23,7 +23,11 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
 {
 	MPT_STRUCT(node) *next, **base = ctx;
 	(void) last;
-	(void) curr;
+	
+	/* no data operation */
+	if (curr == MPT_ENUM(ParseSectEnd)) {
+		return 0;
+	}
 	if (!(next = mpt_node_assign(base, p))) {
 		return MPT_ERROR(BadOperation);
 	}
@@ -43,35 +47,34 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
  */
 extern int mpt_parse_node(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse) *parse, MPT_STRUCT(node) *root)
 {
-	MPT_STRUCT(node) conf = MPT_NODE_INIT;
 	int err;
 	
 	/* create new nodes */
-	conf.children = 0;
 	if (!(root->children)) {
-		MPT_STRUCT(node) *curr = &conf;
+		MPT_STRUCT(node) *curr = root;
 		parse->prev = MPT_ENUM(ParseSection);
 		err = mpt_parse_config(next, npar, parse, saveAppend, &curr);
-	} else {
-		parse->prev = 0;
-		err = mpt_parse_config(next, npar, parse, saveInsert, &conf.children);
-	}
-	/* clear created nodes on error */
-	if (err < 0) {
-		mpt_node_clear(&conf);
-	}
-	else {
-		MPT_STRUCT(node) *tmp;
-		/* move non-present */
-		if ((tmp = root->children)) {
-			mpt_node_move(tmp, conf.children);
+		
+		/* clear created nodes on error */
+		if (err < 0) {
 			mpt_node_clear(root);
 		}
-		/* reparent configuration list */
-		root->children = tmp = conf.children;
-		while (tmp) {
-			tmp->parent = root;
-			tmp = tmp->next;
+	}
+	/* add to existing */
+	else {
+		MPT_STRUCT(node) conf = MPT_NODE_INIT;
+		parse->prev = 0;
+		err = mpt_parse_config(next, npar, parse, saveInsert, &conf.children);
+		
+		/* clear created nodes on error */
+		if (err < 0) {
+			mpt_node_clear(&conf);
+		}
+		/* move non-present */
+		else if (conf.children) {
+			mpt_node_move(root->children, conf.children);
+			mpt_node_clear(root);
+			root->children = conf.children;
 		}
 	}
 	return err;
