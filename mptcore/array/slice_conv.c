@@ -26,9 +26,9 @@ extern int mpt_slice_conv(MPT_INTERFACE(slice) *s, int type, void *data)
 	size_t len;
 	
 	if (!(len = s->_len)) {
-		return MPT_ERROR(MissingData);
+		return 0;
 	}
-	base = ((char *) (s->_a._buf)) + s->_off;
+	base = ((char *) (s->_a._buf + 1)) + s->_off;
 	
 	if (!(end = memchr(base, 0,len))) {
 		return MPT_ERROR(BadValue);

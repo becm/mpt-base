@@ -16,7 +16,6 @@
 MPT_STRUCT(metaBuffer) {
 	MPT_INTERFACE(metatype) _meta;
 	MPT_STRUCT(slice)        s;
-	char                     psep;
 };
 
 static void bufferUnref(MPT_INTERFACE(metatype) *meta)
@@ -32,20 +31,30 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 	MPT_STRUCT(value) val;
 	
 	if (!vorg) {
-		mpt_array_clone(&m->s._a, 0);
-		m->s._off = m->s._len = 0;
+		m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
+		m->s._off = 0;
 		return MPT_ENUM(TypeArrBase);
 	}
 	val = *vorg;
 	
 	if (!val.fmt) {
-		size_t len = val.ptr ? strlen(val.ptr) + 1 : 0;
+		size_t len;
 		
+		if (!val.ptr) {
+			mpt_array_clone(&m->s._a, 0);
+			m->s._off = m->s._len = 0;
+			return 0;
+		}
+		len = strlen(val.ptr) + 1;
 		if (!mpt_array_append(&arr, len, val.ptr)) {
 			return MPT_ERROR(BadOperation);
 		}
 		mpt_array_clone(&m->s._a, &arr);
+		m->s._len = m->s._a._buf->used;
+		m->s._off = 0;
+		
 		mpt_array_clone(&arr, 0);
+		
 		return len;
 	}
 	while (*val.fmt) {
@@ -55,7 +64,7 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 		if (!(base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!mpt_array_append(&arr, len, base)) {
+		if (len && !mpt_array_append(&arr, len, base)) {
 			return MPT_ERROR(BadOperation);
 		}
 		if (!mpt_array_append(&arr, 1, 0)) {
@@ -76,11 +85,8 @@ static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	MPT_STRUCT(metaBuffer) *m = (void *) meta;
 	void **dest = ptr;
 	
-	if (type & MPT_ENUM(ValueConsume)) {
-		return MPT_ERROR(BadArgument);
-	}
 	if (!type) {
-		static const char types[] = { MPT_ENUM(TypeMeta), 'C', 's', 0 };
+		static const char types[] = { MPT_ENUM(TypeMeta), MPT_value_toArray('c'), 's', 0 };
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
@@ -91,7 +97,14 @@ static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = &m->_meta;
 		return MPT_ENUM(TypeMeta);
 	}
-	return mpt_slice_conv(&m->s, m->psep ? (m->psep * 0x10000) | (type & 0xffff) : type, ptr);
+	if ((type & 0xff) == MPT_value_toArray('c')) {
+		if (type & MPT_ENUM(ValueConsume)) {
+			return MPT_ERROR(BadArgument);
+		}
+		if (dest) *dest = &m->s._a;
+		return MPT_value_toArray('c');
+	}
+	return mpt_slice_conv(&m->s, type, ptr);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
@@ -107,10 +120,8 @@ static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
 	if (old) {
 		mpt_array_clone(&m->s._a, &old->s._a);
 		m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
-		m->psep = old->psep;
 	} else {
 		m->s._len = 0;
-		m->psep = '=';
 	}
 	m->s._off = 0;
 	return &m->_meta;
@@ -146,11 +157,10 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(size_t len, const void *data)
 		if (m->s._a._buf) m->s._len = m->s._a._buf->used;
 		return &m->_meta;
 	}
-	free(m);
+	bufferUnref(&m->_meta);
 	
 	return 0;
-}
-/*!
+}/*!
  * \ingroup mptArray
  * \brief create message metatype
  * 
@@ -159,14 +169,13 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(size_t len, const void *data)
  * 
  * \param msg   message data
  * \param asep  argument separator
- * \param psep  property name separator
  * 
  * \return hint to event controller (int)
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep, int psep)
+extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep)
 {
-	MPT_STRUCT(metaBuffer) *m;
 	MPT_STRUCT(message) msg;
+	MPT_STRUCT(metaBuffer) *m;
 	ssize_t len;
 	
 	if (!ptr) {
@@ -175,17 +184,25 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr,
 	if (!(m = (void *) bufferClone(0))) {
 		return 0;
 	}
-	if (!ptr || !(len = mpt_message_length(ptr))) {
+	if (!(len = mpt_message_length(ptr))) {
 		return &m->_meta;
 	}
-	if (!mpt_array_slice(&m->s._a, len+1, 0)) {
+	if (!mpt_array_slice(&m->s._a, 0, len+1)) {
 		bufferUnref(&m->_meta);
 		return 0;
 	}
 	m->s._a._buf->used = 0;
+	
+	msg = *ptr;
 	while ((len = mpt_message_argv(&msg, asep)) >= 0) {
 		char *base;
-		if (!(base = mpt_array_append(&m->s._a, len, 0))) {
+		
+		if (!len) {
+			if (asep) {
+				break;
+			}
+		}
+		else if (!(base = mpt_array_append(&m->s._a, len, 0))) {
 			bufferUnref(&m->_meta);
 			return 0;
 		}
@@ -199,11 +216,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr,
 			return 0;
 		}
 	}
+	/* update slice data */
 	m->s._len = m->s._a._buf->used;
 	m->s._off = 0;
-	m->psep = psep;
 	
 	return &m->_meta;
 }
-
-

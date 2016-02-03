@@ -58,7 +58,7 @@ extern ssize_t mpt_message_argv(MPT_STRUCT(message) *msg, int sep)
 	curr.iov_base = (void *) msg->base;
 	while (!(curr.iov_len = msg->used)) {
 		if (!msg->clen) {
-			return 0;
+			return MPT_ERROR(MissingData);
 		}
 		curr.iov_base = (void *) (msg->base = msg->cont->iov_base);
 		curr.iov_len = msg->used = msg->cont->iov_len;

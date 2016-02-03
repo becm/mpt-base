@@ -38,13 +38,21 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (ev->msg) {
 		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_STRUCT(message) msg = *ev->msg;
+		ssize_t part;
+		
 		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)
 		    || mt.cmd < MPT_ENUM(MessageCommand)
 		    || mt.cmd >= MPT_ENUM(MessageUserMin)) {
 			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad message format"));
 			return -1;
 		}
-		if (!(src = mpt_meta_message(&msg, mt.arg, '='))) {
+		/* consume command part  */
+		part = mpt_message_argv(&msg, mt.arg);
+		mpt_message_read(&msg, part, 0);
+		if (mt.arg) mpt_message_read(&msg, 1, 0);
+		part = mpt_message_argv(&msg, mt.arg);
+		
+		if (part >= 0 && !(src = mpt_meta_message(&msg, mt.arg))) {
 			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
 			               MPT_tr("failed to create argument stream"));
 			return -1;

@@ -40,20 +40,28 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
 		MPT_STRUCT(msgtype) mt;
+		ssize_t part;
 		
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < (ssize_t) sizeof(mt)
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
 		    || mt.cmd != MPT_ENUM(MessageCommand)) {
 			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
 			               MPT_tr("bad message format"));
 			return -1;
 		}
-		if (!(src = mpt_meta_message(&msg, mt.arg, '='))) {
+		/* consume command part  */
+		part = mpt_message_argv(&msg, mt.arg);
+		mpt_message_read(&msg, part, 0);
+		if (mt.arg) mpt_message_read(&msg, 1, 0);
+		part = mpt_message_argv(&msg, mt.arg);
+		
+		if (part >= 0 && !(src = mpt_meta_message(&msg, mt.arg))) {
 			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
 			               MPT_tr("failed to create argument stream"));
 			return -1;
 		}
 	}
-	mpt_output_log(cl->out, __func__, 0, 0);
+	/* line separation */
+	mpt_output_log(cl->out, 0, 0, 0);
 	
 	/* initialize and bind solver */
 	res = cl->_vptr->init(cl, src);

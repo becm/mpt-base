@@ -198,7 +198,7 @@ extern size_t mpt_message_length(const MPT_STRUCT(message) *);
 extern int mpt_message_pset(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
 
 /* apply property from message text argument */
-extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *, int , int);
+extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *, int);
 
 /* find position of first occurance */
 extern ssize_t mpt_memchr(const struct iovec *, size_t , int );

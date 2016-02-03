@@ -41,7 +41,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			mpt_message_read(&msg, part, 0);
 			part = mpt_message_argv(&msg, mt.arg);
 		}
-		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg, ':'))) {
+		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg))) {
 			return MPT_event_fail(ev, MPT_tr("unable to create argument source"));
 		}
 		err = mpt_config_args((void *) cl, args);

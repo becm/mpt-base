@@ -183,7 +183,7 @@ def message(msg, dest=None, messageID=None):
         return (header(MESSAGE_COMMAND, ord(' '), messageID), msg)
     if type(msg) == bytes:
         if dest: hdr = header(MESSAGE_VALUES, VALUES_NATIVE + VALUES_FLOAT + 8, messageID)
-        else: hdr = header(MESSAGE_OUTPUT, ' ', messageID)
+        else: hdr = header(MESSAGE_OUTPUT, ord(' '), messageID)
         return (hdr, msg)
     else:
         return None
@@ -256,7 +256,7 @@ class Graphic(Output):
         #print "Graphic.__del__ called"
         if not hasattr(self, 'process'): return
         if self.process.poll() != None: return
-        self.send(b'close')
+        self.send('close')
         #self.process.wait()
     
     def __str__(self):
