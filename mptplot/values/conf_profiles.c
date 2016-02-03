@@ -48,14 +48,16 @@ extern int mpt_conf_profiles(int len, double *val, int neqs, const MPT_STRUCT(no
 		while (prof) {
 			int err;
 			
-			if ((err = mpt_conf_profile(len, val += adv, ld, prof, grid)) < 0) {
+			if ((err = mpt_conf_profile(len, val, ld, prof, grid)) < 0) {
 				if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %d",
 				                 MPT_tr("bad profile"), np+1);
 				return np;
 			}
+			val += adv;
 			if (++np == neqs) {
 				return np;
 			}
+			prof = prof->next;
 		}
 		if (np < neqs && out) {
 			if (!np) {
@@ -69,7 +71,8 @@ extern int mpt_conf_profiles(int len, double *val, int neqs, const MPT_STRUCT(no
 				mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s (%d -> %d..%d)",
 				        MPT_tr("reuse initial values"), np, np+1, neqs);
 			}
-			(void) mpt_values_bound(len, val += adv, ld, 0., 0., 0.);
+			(void) mpt_values_bound(len, val, ld, 0., 0., 0.);
+			val += adv;
 			
 			err = np+1;
 			while (err++ < neqs) {
