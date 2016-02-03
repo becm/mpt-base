@@ -5,5 +5,4 @@ src = files(
   'cevent_prep.c',
   'cevent_step.c',
   'client_events.c',
-  'client_read.c',
 )

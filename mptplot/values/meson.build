@@ -3,7 +3,6 @@ src = files(
  # match: *.c
   'conf_file.c',
   'conf_grid.c',
-  'conf_iterator.c',
   'conf_param.c',
   'conf_profile.c',
   'conf_profiles.c',
@@ -12,7 +11,6 @@ src = files(
   'iterator_create.c',
   'iterator_factor.c',
   'iterator_linear.c',
-  'iterator_next.c',
   'iterator_values.c',
   'valtype_init.c',
   'valtype_select.c',

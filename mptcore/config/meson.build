@@ -1,11 +1,11 @@
 # meson.build.gen: suffix=c
 src = files(
  # match: *.c
+  'config_args.c',
   'config_environ.c',
   'config_get.c',
   'config_global.c',
   'config_node.c',
-  'config_read.c',
   'config_set.c',
   'node_assign.c',
   'node_query.c',

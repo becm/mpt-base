@@ -4,6 +4,8 @@ src = files(
   'getchar_file.c',
   'getchar_stdio.c',
   'node_append.c',
+  'node_parse.c',
+  'node_read.c',
   'parse_accept.c',
   'parse_config.c',
   'parse_data.c',
