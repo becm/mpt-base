@@ -1,5 +1,5 @@
 /*!
- * set profile data from descriptions
+ * append profile data to buffer
  */
 
 #include <stdlib.h>
@@ -7,8 +7,8 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "array.h"
 #include "node.h"
+#include "array.h"
 
 #include "values.h"
 
@@ -16,79 +16,84 @@
  * \ingroup mptValues
  * \brief configure parameter data
  * 
- * Get profile data from configuration list.
- * Use ld<0 for alignment by profile.
+ * Get profile data from configuration element.
  * 
- * \param len	length of profiles
- * \param dest	target address
- * \param ld	number of profiles
- * \param conf	profile configuration node
- * \param grid	grid data (needed for polynom type)
+ * \param arr  target array descriptor
+ * \param len  length of profiles
+ * \param neqs number of profiles
+ * \param conf profile configuration node
+ * \param out  error log descriptor
  * 
  * \return zero on success
  */
-extern int mpt_conf_profiles(int len, double *dest, int ld, const MPT_STRUCT(node) *conf, const double *grid)
+extern int mpt_conf_profiles(int len, double *val, int neqs, const MPT_STRUCT(node) *conf, const double *grid, MPT_INTERFACE(logger) *out)
 {
-	int	used = 0, adv, max, pos;
-	
-	if (len <= 0 || !ld)
-		return -2;
-	
-	if ((max = ld) < 0) {
-		max = -ld;
+	const MPT_STRUCT(node) *prof;
+	const char *desc;
+	int err, adv = 1, ld;
+
+	if (len < 1 || !(ld = neqs)) {
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: (len = %i) > (neqs = %i)",
+		               MPT_tr("bad solver data size"), len, neqs);
+		return MPT_ERROR(BadArgument);
+	}
+	if (neqs < 0) {
 		ld  = 1;
 		adv = len;
-	} else {
-		adv = 1;
+		neqs = -neqs;
 	}
-	
-	do {
-		MPT_INTERFACE(metatype) *meta;
-		const char *descr;
-		int	err = 0;
+	if (!(prof = conf) || (prof = conf->children) || !(desc = mpt_node_data(conf, 0))) {
+		int np = 0;
 		
-		if (!conf) break;
-		
-		if (!(descr = mpt_node_ident(conf))) {
-			return used;
+		while (prof) {
+			int err;
+			
+			if ((err = mpt_conf_profile(len, val += adv, ld, prof, grid)) < 0) {
+				if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %d",
+				                 MPT_tr("bad profile"), np+1);
+				return np;
+			}
+			if (++np == neqs) {
+				return np;
+			}
 		}
-		if (!(meta = conf->_meta)) {
-			return used;
+		if (np < neqs && out) {
+			if (!np) {
+				mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s",
+			                MPT_tr("use zero initial values"));
+			}
+			else if ((neqs - np) < 2) {
+				mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s (%d -> %d)",
+				        MPT_tr("reuse initial values"), np, neqs);
+			} else {
+				mpt_log(out, __func__, MPT_FCNLOG(Warning), "%s (%d -> %d..%d)",
+				        MPT_tr("reuse initial values"), np, np+1, neqs);
+			}
+			(void) mpt_values_bound(len, val += adv, ld, 0., 0., 0.);
+			
+			err = np+1;
+			while (err++ < neqs) {
+				mpt_copy64(len, val-adv, ld, val, ld);
+				val += adv;
+			}
 		}
-		err = mpt_valtype_select(descr, (char **) &descr);
-		
-		switch (err) {
-		  case 0: break; /* keep data */
-		  case MPT_ENUM(ValueFormatLinear):
-		  case MPT_ENUM(ValueFormatBoundaries):
-		  case MPT_ENUM(ValueFormatText):
-		  case MPT_ENUM(ValueFormatPolynom):
-				if (!(descr = mpt_meta_data(meta, 0))) descr = "";
-				if (mpt_valtype_init(len, dest, ld, descr, err, grid) < 0)
-					return used;
-				break;
-			default:
-				return used;
-		}
-		/* advance one profile */
-		dest += adv;
-		conf = conf->next;
-		
-		/* profile read */
-	} while (++used < max);
-	
-	/* set remaining profiles to zero */
-	if (!(pos = used)) {
-		(void) mpt_values_bound(len, dest, ld, 0., 0., 0.);
-		dest += adv;
-		pos = 1;
+		return np;
 	}
-	/* fill remaining entries with last profile */
-	while (pos++ < max) {
-		mpt_copy64(len, dest-adv, ld, dest, ld);
-		dest += adv;
+	if (neqs > 1) {
+		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+		                 MPT_tr("PDE needs verbose profile configuration"));
+		return MPT_ERROR(BadType);
 	}
-	
-	return used;
+	if ((err = mpt_valtype_select(&desc)) < 0) {
+		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s",
+		                 MPT_tr("bad profile description"), desc);
+		return MPT_ERROR(BadValue);
+	}
+	else if (mpt_valtype_init(err, desc, len, val, neqs, grid) < 0) {
+		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s",
+		               MPT_tr("bad profile parameter"), desc);
+		return MPT_ERROR(BadOperation);
+	}
+	return 1;
 }
 

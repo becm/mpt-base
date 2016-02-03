@@ -25,12 +25,12 @@ extern double *mpt_conf_values(MPT_STRUCT(array) *arr, int len, const char *desc
 	int type;
 	
 	/* enshure usage of "len" additional elements */
-	if (!(data = mpt_values_prepare(arr, len)) || !descr)
+	if (!(data = mpt_values_prepare(arr, len)) || !descr) {
 		return data;
-	
+	}
 	/* leave data initialized to zero */
-	if ((type = mpt_valtype_select(descr, (char **) &descr)) >= 0) {
-		if ((type = mpt_valtype_init(len, data, 1, descr, type, data)) >= 0) {
+	if ((type = mpt_valtype_select(&descr)) >= 0) {
+		if ((type = mpt_valtype_init(type, descr, len, data, 1, (double *) (arr->_buf+1))) >= 0) {
 			return data;
 		}
 	}

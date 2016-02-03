@@ -32,15 +32,15 @@ __MPT_EXTDECL_BEGIN
 /* create profile of specific type */
 extern int mpt_values_linear(int , double *, int , double , double);
 extern int mpt_values_bound (int , double *, int , double , double , double);
-extern int mpt_values_string(int , double *, int , const char *);
-extern int mpt_values_poly  (int , double *, int , const char *, const double *);
+extern int mpt_values_string(const char *, int , double *, int);
+extern int mpt_values_poly  (const char *, int , double *, int , const double *);
 
 /* prepare values on buffer offset */
 extern double *mpt_values_prepare(MPT_STRUCT(array) *, int);
 
 /* select/set solver profile type */
-extern int mpt_valtype_select(const char *, char **);
-extern int mpt_valtype_init(int , double *, int , const char *, int , const double *);
+extern int mpt_valtype_select(const char **);
+extern int mpt_valtype_init(int , const char *, int , double *, int , const double *);
 
 /* create iterator (descr. includes type info) */
 extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *);
@@ -59,8 +59,8 @@ extern int mpt_conf_file(FILE *, int , int , double *);
 extern int mpt_conf_stream(MPT_STRUCT(array) * , void *, int , int);
 
 /* create profile data */
-extern int mpt_conf_profile(const MPT_STRUCT(array) *, int , int , const MPT_STRUCT(node) *, MPT_INTERFACE(logger) *);
-extern int mpt_conf_profiles(int , double *, int , const MPT_STRUCT(node) *, const double *);
+extern int mpt_conf_profiles(int , double *, int , const MPT_STRUCT(node) *, const double *, MPT_INTERFACE(logger) *);
+extern int mpt_conf_profile (int , double *, int , const MPT_STRUCT(node) *, const double *);
 
 /* append user data */
 extern int mpt_conf_param(MPT_STRUCT(array) *, const MPT_STRUCT(node) *, int);

@@ -21,12 +21,12 @@
  * 
  * \return type of profile
  */
-extern int mpt_valtype_select(const char *start, char **end)
+extern int mpt_valtype_select(const char **end)
 {
+	const char *start;
 	int type, len;
 	
-	if (!start || *start == ':') {
-		if (end) *end = 0;
+	if (!end || !(start = *end) || *start == ':') {
 		return MPT_ENUM(ValueFormatLinear);
 	}
 	
@@ -44,11 +44,16 @@ extern int mpt_valtype_select(const char *start, char **end)
 	} else if (!strncasecmp(start, "file", len = 4)) {
 		type = MPT_ENUM(ValueFormatFile);
 	} else {
-		errno = EINVAL; return -1;
+		return MPT_ERROR(BadArgument);
 	}
-	
-	if (end) {
-		*end = (start = strchr(start + len, ':')) ? (char *) ++start : 0;
+	if (!start[len]) {
+		*end = start + len;
+	}
+	else if (start[len] == ':' || isspace(start[len])) {
+		*end = start + len + 1;
+	}
+	else {
+		return MPT_ERROR(BadValue);
 	}
 	return type;
 }

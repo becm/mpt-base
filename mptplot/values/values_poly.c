@@ -24,49 +24,51 @@
  * 
  * \return zero on success
  */
-extern int mpt_values_poly(int points, double *target, int ld, const char *descr, const double *src)
+extern int mpt_values_poly(const char *descr, int points, double *target, int ld, const double *src)
 {
-	double	coeff[128], shift[127];
-	int	i, nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
+	double coeff[128], shift[127];
+	int i, nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
 	
 	/* polynom coefficients */
 	do {
 		ssize_t len = mpt_cdouble(coeff+nc, descr, 0);
 		
 		if (len <= 0) {
-			if (!nc) return -2;
+			if (!nc) {
+				return -2;
+			}
 			break;
 		}
 		descr += len;
 	} while (++nc < ns);
 	
 	/* variable shift */
-	if (!nc || !descr || !(descr = strchr(descr, ':')))
+	if (!nc || !descr || !(descr = strchr(descr, ':'))) {
 		ns = 0;
-	else if ((ns = mpt_values_string(nc-1, shift, 1, descr+1)) < 0)
+	}
+	else if ((ns = mpt_values_string(descr+1, nc-1, shift, 1)) < 0) {
 		return ns;
-	
+	}
 	if (points && nc && (!target)) {
-		errno = EFAULT; return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	
 	for (i = 0; i < points; i++) {
-		double	sum;
-		int	j;
+		double sum;
+		int j;
 		for (j = 0, sum = 0.0; j < nc; j++ ) {
-			double	prod, tmp = src? src[i] : i;
-			int	k;
+			double prod, tmp = src? src[i] : i;
+			int k;
 			
 			if (j < ns) tmp += shift[j];
 			
-			for (k = j + 1, prod = coeff[j]; k < nc; k++)
+			for (k = j + 1, prod = coeff[j]; k < nc; k++) {
 				prod *= tmp;
-			
+			}
 			sum += prod;
 		}
 		target[i*ld] = sum;
 	}
-	
 	return 0;
 }
 
