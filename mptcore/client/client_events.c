@@ -156,6 +156,7 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		}
 		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
 			mpt_message_read(&msg, part, 0);
+			if (mt.arg) mpt_message_read(&msg, 1, 0);
 			part = mpt_message_argv(&msg, mt.arg);
 		}
 		if (part >= 0) {
