@@ -52,7 +52,7 @@ int logger::critical(const char *from, const char *fmt, ... )
 }
 logger *logger::defaultInstance()
 {
-    return _mpt_log_default(stderr);
+    return mpt_log_default(0, 0);
 }
 
 // logging store

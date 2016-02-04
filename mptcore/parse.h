@@ -161,16 +161,13 @@ extern int mpt_parse_node(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT
 
 #if _POSIX_C_SOURCE >= 200809L
 /* load configuration file/path */
-extern int mpt_config_load(MPT_TYPE(PathHandler), void *, MPT_INTERFACE(logger) *log, const char *__MPT_DEFPAR(0));
+extern int _mpt_config_load(const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0), MPT_TYPE(PathHandler)__MPT_DEFPAR(0), void *__MPT_DEFPAR(0));
+extern int mpt_config_load (const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0), const MPT_STRUCT(path) *__MPT_DEFPAR(0));
 #endif
 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-inline parsefmt()
-{
-	mpt_parse_format(this, 0);
-}
 class Parse
 {
 public:

@@ -21,6 +21,7 @@
 #include "convert.h"
 #include "message.h"
 #include "event.h"
+#include "parse.h"
 
 #include "stream.h"
 #include "notify.h"
@@ -59,6 +60,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	}
 	
 	/* load mpt environment variables */
+	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(0, 0), 0);
 	mpt_config_environ(0, "mpt_*", '_', 0);
 	
 	/* set client filename */

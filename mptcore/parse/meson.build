@@ -1,6 +1,8 @@
 # meson.build.gen: suffix=c
 src = files(
  # match: *.c
+  'config_load.c',
+  'config_load_gen.c',
   'getchar_file.c',
   'getchar_stdio.c',
   'node_append.c',

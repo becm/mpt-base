@@ -17,9 +17,9 @@
 __MPT_NAMESPACE_BEGIN
 
 // parser implementation
-parsefmt::parsefmt(const char *fmt)
+parsefmt::parsefmt()
 {
-    mpt_parse_format(this, fmt);
+    mpt_parse_format(this, 0);
 }
 
 parseinput::parseinput() : getc((int (*)(void *)) mpt_getchar_stdio), arg(stdin), line(1)

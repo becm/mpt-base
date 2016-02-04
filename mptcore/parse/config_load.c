@@ -17,79 +17,38 @@
 #include <strings.h>
 #include <ctype.h>
 
+#include "node.h"
 #include "config.h"
 
 #include "parse.h"
 
-int loadFile(int cfile, MPT_STRUCT(parse) *src, MPT_TYPE(PathHandler) save, void *ctx)
+struct loadCtx
 {
-	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
-	int res;
-	
-	if (!(src->src.arg = fdopen(cfile, "r"))) {
-		return 0;
-	}
-	src->src.line = 1;
-	res = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, src, save, ctx);
-	fclose(src->src.arg);
-	save(ctx, 0, 0, 0);
-	return res;
-}
+	const MPT_STRUCT(path) *dest;
+	MPT_INTERFACE(logger) *log;
+};
 
-int loadDir(int cdir, const char *name, MPT_TYPE(PathHandler) save, void *ctx, MPT_INTERFACE(logger) *log)
+static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 {
-	MPT_STRUCT(parse) src = MPT_PARSE_INIT;
-	MPT_STRUCT(path) p = MPT_PATH_INIT;
-	DIR *cfg;
-	struct dirent *dent;
+	static const char _func[] = "mpt_config_load\0";
 	
-	if (!(cfg = fdopendir(cdir))) {
+	struct loadCtx *ctx = ptr;
+	MPT_STRUCT(node) *n;
+	
+	(void) last;
+	
+	if ((curr & 0x3) != MPT_ENUM(ParseOption)) {
 		return 0;
 	}
-	src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
-	
-	while ((dent = readdir(cfg))) {
-		static const char _func[] = "mpt_config_load";
-		static const char dir[] = "/etc/mpt.conf.d";
-		
-		char buf[1024];
-		int res, cfile;
-		
-		
-		if (dent->d_name[0] == '.') {
-			continue;
-		}
-		if ((cfile = openat(cdir, dent->d_name, O_RDONLY)) < 0) {
-			continue;
-		}
-		if (name) {
-			snprintf(buf, sizeof(buf), "%s/%s/%s", name, dir+1, dent->d_name);
-		} else {
-			snprintf(buf, sizeof(buf), "%s/%s", dir, dent->d_name);
-		}
-		p.sep = 0;
-		mpt_path_set(&p, buf, -1);
-		p.len = p.off = 0;
-		save(ctx, &p, 0, 0);
-		
-		res = loadFile(cfile, &src, save, ctx);
-		close(cfile);
-		
-		if (log) {
-			int line = src.src.line;
-			if (res < 0) {
-				mpt_log(log, _func, MPT_FCNLOG(Error), "%s: %d (line %d): %s", MPT_tr("parse error"), res, line, buf);
-			} else {
-				mpt_log(log, _func, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), buf);
-			}
-		}
-		if (res < 0) {
-			closedir(cfg);
-			return res;
-		}
+	if (!(n = mpt_config_node(ctx->dest))) {
+		if (ctx->log) mpt_log(ctx->log, _func, MPT_FCNLOG(Error), "%s", MPT_tr("failed to get global config"));
+		return MPT_ERROR(BadOperation);
 	}
-	closedir(cfg);
-	return 1;
+	if (!(mpt_node_assign(&n->children, p))) {
+		if (ctx->log) mpt_log(ctx->log, _func, MPT_FCNLOG(Error), "%s", MPT_tr("failed to set global config element"));
+		return MPT_ERROR(BadOperation);
+	}
+	return 0;
 }
 /*!
  * \ingroup mptParse
@@ -97,101 +56,19 @@ int loadDir(int cdir, const char *name, MPT_TYPE(PathHandler) save, void *ctx, M
  * 
  * Process configuration file/directory.
  * 
- * \param save  path handler for configuration elements
- * \param ctx   handler context
  * \param root  configuration in alternative file root
+ * \param log   optional log descriptor
+ * \param dest  target config path
  * 
  * \return solver creator library description
  */
-extern int mpt_config_load(MPT_TYPE(PathHandler) save, void *ctx, MPT_INTERFACE(logger) *log, const char *root)
+extern int mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, const MPT_STRUCT(path) *dest)
 {
-	static const char sol_cdir[] = "/etc/mpt.conf.d";
-	static const char sol_cfile[] = "/etc/mpt.conf";
+	struct loadCtx ctx;
 	
-	int cfg, ret = 0;
-	
-	/* try prefixed config directory */
-	if (root) {
-		int sub;
-		if ((sub = open(root, O_RDONLY | O_DIRECTORY)) < 0) {
-			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("unable to open alternative root"), root);
-			return MPT_ERROR(BadArgument);
-		}
-		if ((cfg = openat(sub, sol_cfile+1, O_RDONLY)) >= 0) {
-			MPT_STRUCT(parse) src = MPT_PARSE_INIT;
-			MPT_STRUCT(path) p = MPT_PATH_INIT;
-			char buf[1024];
-			int curr;
-			
-			snprintf(buf, sizeof(buf), "%s%s", root, sol_cdir);
-			
-			p.sep = 0;
-			mpt_path_set(&p, buf, -1);
-			p.len = p.off = 0;
-			save(ctx, &p, 0, 0);
-			
-			src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
-			curr = loadFile(cfg, &src, save, ctx);
-			close(cfg);
-			
-			if (log) {
-				if (curr < 0) {
-					mpt_log(log, __func__, MPT_FCNLOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, buf);
-					return curr;
-				} else {
-					mpt_log(log, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), buf);
-				}
-			}
-			else if (curr < 0) {
-				return curr;
-			}
-			ret |= 2;
-		}
-		if ((cfg = openat(sub, sol_cdir+1, O_RDONLY | O_DIRECTORY)) >= 0) {
-			int curr;
-			curr = loadDir(cfg, root, save, ctx, log);
-			close(cfg);
-			
-			if (curr < 0) {
-				return curr;
-			}
-			ret |= 1;
-		}
-		close(sub);
-		
-		return ret;
+	if (!(mpt_config_node(ctx.dest = dest))) {
+		if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("require existing global config target"));
+		return MPT_ERROR(BadArgument);
 	}
-	/* global config dir */
-	if ((cfg = open(sol_cfile, O_RDONLY)) >= 0) {
-		MPT_STRUCT(parse) src = MPT_PARSE_INIT;
-		int curr;
-		curr = loadFile(cfg, &src, save, ctx);
-		close(cfg);
-		if (curr < 0) {
-			return curr;
-		}
-		if (log) {
-			if (curr < 0) {
-				mpt_log(log, __func__, MPT_FCNLOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, sol_cfile);
-				return curr;
-			} else {
-				mpt_log(log, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), sol_cfile);
-			}
-		}
-		else if (curr < 0) {
-			return curr;
-		}
-		ret |= 1;
-	}
-	if ((cfg = open(sol_cdir, O_RDONLY | O_DIRECTORY)) >= 0) {
-		int curr;
-		curr = loadDir(cfg, 0, save, ctx, log);
-		close(cfg);
-		if (curr < 0) {
-			return curr;
-		}
-		ret |= 2;
-	}
-	return ret;
+	return _mpt_config_load(root, ctx.log = log, nodeSet, &ctx);
 }
-

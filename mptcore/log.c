@@ -77,6 +77,7 @@ static void loggerUnref(MPT_INTERFACE(logger) *out)
 	(void) out;
 }
 static FILE *loggerErr = 0;
+static int logMax = MPT_ENUM(LogDebug) - 1;
 
 static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, const char *fmt, va_list ap)
 {
@@ -88,7 +89,10 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	
 	if (!(type & 0xff)) {
 		fd = stdout;
-	} else {
+	} else if ((type &0x7f) > logMax) {
+		return 0;
+	}
+	else {
 		if (!(type & MPT_ENUM(LogPretty))) {
 			type |= MPT_ENUM(LogPrefix) | MPT_ENUM(LogSelect);
 		}
@@ -143,8 +147,9 @@ extern int mpt_log(MPT_INTERFACE(logger) *out, const char *where, int type, cons
  * 
  * \return log operation result
  */
-extern MPT_INTERFACE(logger) *mpt_log_default(FILE *err)
+extern MPT_INTERFACE(logger) *mpt_log_default(int max, FILE *err)
 {
+	if (max) logMax = max;
 	if (err) loggerErr = err;
 	return &defaultLogger;
 }
