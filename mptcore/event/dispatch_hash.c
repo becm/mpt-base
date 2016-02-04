@@ -39,20 +39,20 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		return 0;
 	}
 	if (!ev->msg) {
-		return MPT_event_fail(ev, MPT_tr("missing message data"));
+		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message data"));
 	}
 	msg = *ev->msg;
 	
-	if ((len = mpt_message_read(&msg, 2, &mt)) < 2) {
-		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad message length"));
-		return MPT_ERROR(MissingData);
+	if ((len = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+		if (len) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 	}
 	if (mt.cmd != MPT_ENUM(MessageCommand)) {
 		mt.arg = 0;
 	}
 	/* get message command (string) */
 	if ((len = mpt_message_argv(&msg, mt.arg)) <= 0) {
-		return MPT_event_fail(ev, MPT_tr("unable to get text command"));
+		return MPT_event_fail(ev, len, MPT_tr("unable to get text command"));
 	}
 	/* continous data */
 	if (msg.used >= (size_t) len) {
@@ -65,7 +65,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	else {
 		char buf[128];
 		if ((size_t) len > sizeof(buf)) {
-			return MPT_event_fail(ev, MPT_tr("large unaligned text command"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingBuffer), MPT_tr("large unaligned text command"));
 		}
 		if (mpt_message_read(&msg, len, buf) != (size_t) len) {
 			MPT_ABORT("conflicting message length");
@@ -78,7 +78,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	/* execute matching command */
 	if ((cmd = mpt_command_get(&disp->_cmd, ev->id))) {
 		if ((len = cmd->cmd(cmd->arg, ev)) < 0) {
-			return MPT_event_fail(ev, MPT_tr("failed to execute command"));
+			return MPT_event_fail(ev, len, MPT_tr("failed to execute command"));
 		}
 		return len;
 	}
@@ -90,6 +90,6 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	if (disp->_err.cmd) {
 		return disp->_err.cmd(disp->_err.arg, ev);
 	}
-	return MPT_event_fail(ev, MPT_tr("unable to find corresponding command"));
+	return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("unable to find corresponding command"));
 }
 

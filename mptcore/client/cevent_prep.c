@@ -40,22 +40,21 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		MPT_STRUCT(msgtype) mt;
 		ssize_t part;
 		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
-		    || mt.cmd != MPT_ENUM(MessageCommand)) {
-			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
-			               MPT_tr("bad message format"));
-			return MPT_ERROR(BadArgument);
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
+		}
+		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message format"));
 		}
 		/* consume command part  */
-		part = mpt_message_argv(&msg, mt.arg);
-		mpt_message_read(&msg, part, 0);
-		if (mt.arg) mpt_message_read(&msg, 1, 0);
-		part = mpt_message_argv(&msg, mt.arg);
-		
+		if ((part = mpt_message_argv(&msg, mt.arg)) >= 0) {
+			mpt_message_read(&msg, part, 0);
+			if (mt.arg) mpt_message_read(&msg, 1, 0);
+			part = mpt_message_argv(&msg, mt.arg);
+		}
 		if (part >= 0 && !(src = mpt_meta_message(&msg, mt.arg))) {
-			mpt_output_log(cl->out, __func__, MPT_FCNLOG(Error), "%s",
-			               MPT_tr("failed to create argument stream"));
-			return MPT_ERROR(BadOperation);
+			return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("failed to create argument stream"));
 		}
 	}
 	/* prepare client */
@@ -63,7 +62,7 @@ extern int mpt_cevent_prep(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (src) src->_vptr->unref(src);
 	
 	if (res < 0) {
-		return MPT_event_fail(ev, MPT_tr("client preparation failed"));
+		return MPT_event_fail(ev, res, MPT_tr("client preparation failed"));
 	}
 	return MPT_event_good(ev, MPT_tr("client preparation completed"));
 }

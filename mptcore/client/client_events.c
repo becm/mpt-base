@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-#include <errno.h>
 #include <inttypes.h>
 
 #include <string.h>
@@ -19,12 +18,14 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	static const char defFmt[] = "no default configuration state";
 	
+	int err;
+	
 	if (!ev) {
 		return 0;
 	}
 	if (!ev->msg) {
-		if (mpt_config_args((void *) cl, 0) < 0) {
-			return MPT_event_fail(ev, MPT_tr(defFmt));
+		if ((err = mpt_config_args((void *) cl, 0)) < 0) {
+			return MPT_event_fail(ev, err, MPT_tr(defFmt));
 		}
 	}
 	else {
@@ -32,26 +33,29 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_INTERFACE(metatype) *args;
 		ssize_t part;
-		int err;
 		
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 		}
-		if ((part = mpt_message_argv(&msg, mt.arg)) < 0) {
+		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
+		}
+		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
 			mpt_message_read(&msg, part, 0);
 			part = mpt_message_argv(&msg, mt.arg);
 		}
 		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg))) {
-			return MPT_event_fail(ev, MPT_tr("unable to create argument source"));
+			return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("unable to create argument source"));
 		}
 		err = mpt_config_args((void *) cl, args);
 		args->_vptr->unref(args);
 		
 		if (err < 0) {
 			if (args) {
-				return MPT_event_fail(ev, MPT_tr("bad client config element"));
+				return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
 			} else {
-				return MPT_event_fail(ev, MPT_tr(defFmt));
+				return MPT_event_fail(ev, err, MPT_tr(defFmt));
 			}
 		}
 		if (err) {
@@ -72,8 +76,11 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	}
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		ssize_t part;
+		
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 		}
 	}
 	return MPT_event_term(ev, MPT_tr("terminate event loop"));
@@ -85,8 +92,11 @@ static int clientClear(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!ev) return 0;
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		ssize_t part;
+		
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 		}
 	}
 	cl->_vptr->clear(cl);
@@ -100,8 +110,11 @@ static int clientGrapic(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (!ev) return 0;
 	if (ev->msg && (out = cl->out)) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		ssize_t part;
+		
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		}
 		return mpt_output_graphic(out, ev);
 	}
@@ -132,18 +145,52 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 	if (!ev) return 0;
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		ssize_t part;
+		
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+		}
+		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
+		}
+		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
+			mpt_message_read(&msg, part, 0);
+			part = mpt_message_argv(&msg, mt.arg);
+		}
+		if (part >= 0) {
+			if (part <= (ssize_t) msg.used) {
+				if (!mt.arg && part && !((char *) msg.base)[part-1]) {
+					--part;
+				}
+				id = mpt_hash(msg.base, part);
+			}
+			else if (part > 128) {
+				return MPT_event_fail(ev, MPT_ERROR(MissingBuffer), MPT_tr("continue argument too large for buffer"));
+			}
+			else {
+				char buf[128];
+				mpt_message_read(&msg, part, buf);
+				
+				if (!mt.arg && part && !buf[part-1]) {
+					--part;
+				}
+				id = mpt_hash(buf, part);
+			}
+		}
+		else {
+			id = mpt_hash("step", 4);
 		}
 	}
 	/* configure default event to solver step */
-	id = mpt_hash("step", 4);
+	else {
+		id = mpt_hash("step", 4);
+	}
 	
 	if (!mpt_command_get(&d->_cmd, id)) {
-		mpt_output_log(d->_out, __func__, MPT_FCNLOG(Warning), "%s (%"PRIxPTR")",
-		               MPT_tr("invalid default command id"), id);
-		
-		return MPT_event_fail(ev, MPT_tr("step operation not defined"));
+		char buf[128];
+		snprintf(buf, sizeof(buf), "%s (%"PRIxPTR")", MPT_tr("invalid default command id"), id);
+		return MPT_event_fail(ev, MPT_ERROR(BadValue), buf);
 	}
 	mpt_output_log(d->_out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR")",
 	               MPT_tr("assigned default command id"), id);
@@ -161,8 +208,11 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
 	if (!ev) return 0;
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		if (mpt_message_read(&msg, sizeof(mt), &mt) < sizeof(mt)) {
-			return MPT_event_fail(ev, MPT_tr("missing message type"));
+		ssize_t part;
+		
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		}
 	}
 	if (d->_def) {
@@ -192,8 +242,7 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 	size_t i;
 	
 	if (!dsp || !cl) {
-		errno = EFAULT;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	
 	if (!cl->out && dsp->_out && dsp->_out->_vptr->obj.addref((void *) dsp->_out)) {

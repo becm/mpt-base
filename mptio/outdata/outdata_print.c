@@ -102,7 +102,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 			return 0;
 		}
 		if (!src) {
-			return -2;
+			return MPT_ERROR(MissingData);
 		}
 		outputWrite(hist, len, src);
 		
@@ -110,7 +110,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 	}
 	/* limit min setup size */
 	if (len < 2 || !(mt = src)) {
-		return -2;
+		return MPT_ERROR(MissingData);
 	}
 	od->state &= ~(0x7 | MPT_ENUM(OutputActive));
 	
@@ -124,7 +124,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		flags = AnswerFlags(od->level);
 	}
 	else {
-		return -1;
+		return MPT_ERROR(BadType);
 	}
 	flags = mpt_output_file(type, flags);
 	
@@ -162,6 +162,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 	/* mark answer message */
 	if (mt->cmd == MPT_ENUM(MessageAnswer)) {
 		fputc('@', hist);
+		fprintf(hist, "[%d]: ", mt->arg);
 	}
 	if (len > 2) {
 		outputWrite(hist, len-2, mt+1);

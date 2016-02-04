@@ -33,30 +33,31 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 	
 	if (!ev) return 0;
 	
+	/* need existing output */
+	if (!out) {
+		return MPT_event_fail(ev, MPT_ERROR(BadArgument), MPT_tr("no output pointer"));
+	}
 	/* graphic command needs arguments */
 	if (!ev->msg) {
-		return MPT_event_fail(ev, MPT_tr("missing data for graphic command"));
+		return MPT_event_fail(ev, MPT_ERROR(BadArgument), MPT_tr("missing data for graphic command"));
 	}
 	/* get command type */
 	msg = *ev->msg;
-	if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)
-	    || mt.cmd != MPT_ENUM(MessageCommand)) {
-		mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad message format"));
-		return MPT_ERROR(MissingData);
+	if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+		if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 	}
-	/* need existing output */
-	if (!out) {
-		errno = EFAULT;
-		return MPT_event_fail(ev, MPT_tr("unable to configure output"));
+	if (mt.cmd != MPT_ENUM(MessageCommand)) {
+		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("bad message format"));
 	}
 	/* first argument (consume command) */
 	if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
 	    || (mpt_message_read(&msg, part, 0) < (size_t) part)
 	    || ((part = mpt_message_argv(&msg, mt.arg)) <= 0)) {
-		return MPT_event_fail(ev, MPT_tr("missing graphic arguments"));
+		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing graphic arguments"));
 	}
 	if (part >= (ssize_t) sizeof(buf)) {
-		return MPT_event_fail(ev, MPT_tr("unaligned command message"));
+		return MPT_event_fail(ev, MPT_ERROR(MissingBuffer), MPT_tr("unaligned command message"));
 	}
 	tmp = msg;
 	mpt_message_read(&msg, part, buf);
@@ -65,7 +66,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 	/* open new connection */
 	if (part >= 4 && !strncmp("open", buf, part)) {
 		if ((part = mpt_message_argv(&msg, mt.arg)) < 0) {
-			return MPT_event_fail(ev, MPT_tr("missing connect argument"));
+			return MPT_event_fail(ev, part, MPT_tr("missing connect argument"));
 		}
 		if ((size_t) part < msg.used) {
 			;
@@ -74,20 +75,20 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, MPT_STRUCT(event) *ev)
 			(void) mpt_message_read(&msg, part, buf);
 			msg.base = buf;
 		} else {
-			return MPT_event_fail(ev, MPT_tr("unaligned connect argument"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingBuffer), MPT_tr("unaligned connect argument"));
 		}
 		val.fmt = 0;
 		val.ptr = msg.base;
 		
-		if (mpt_object_pset((void *) out, 0, &val, 0) < 0) {
-			return MPT_event_fail(ev, MPT_tr("unable to open connection"));
+		if ((part = mpt_object_pset((void *) out, 0, &val, 0)) < 0) {
+			return MPT_event_fail(ev, part, MPT_tr("unable to open connection"));
 		}
 		return MPT_event_good(ev, MPT_tr("created new graphic connection"));
 	}
 	/* command is close operation */
 	else if (part >= 5 && !strncmp("close", buf, part)) {
-		if (out->_vptr->obj.setProperty((void *) out, "", 0) < 0) {
-			return MPT_event_fail(ev, MPT_tr("error on graphic close"));
+		if ((part = out->_vptr->obj.setProperty((void *) out, "", 0)) < 0) {
+			return MPT_event_fail(ev, part, MPT_tr("error on graphic close"));
 		}
 		return MPT_event_good(ev, MPT_tr("closed graphic connection"));
 	}

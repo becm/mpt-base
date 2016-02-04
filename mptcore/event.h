@@ -84,8 +84,8 @@ MPT_STRUCT(dispatch);
 #define MPT_event_term(ev,txt) \
 	(mpt_event_reply(ev, 3, txt), \
 	 MPT_ENUM(EventTerminate))
-#define MPT_event_fail(ev,txt) \
-	(mpt_event_reply(ev,-1,txt), \
+#define MPT_event_fail(ev,code,txt) \
+	(mpt_event_reply(ev,(code) >= 0 ? MPT_ERROR(BadOperation) : (code),txt), \
 	 (ev)->id = 0, ((MPT_ENUM(EventFail) | MPT_ENUM(EventDefault))))
 
 /* generic command registration */
