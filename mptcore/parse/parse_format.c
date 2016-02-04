@@ -7,12 +7,6 @@
 
 #include "parse.h"
 
-static MPT_STRUCT(parsefmt) pfmt_default = {
-	'{', '}',
-	0, '=', 0,
-	"",
-	"#"
-};
 
 /*!
  * \ingroup mptParse
@@ -28,6 +22,8 @@ static MPT_STRUCT(parsefmt) pfmt_default = {
 
 extern int mpt_parse_format(MPT_STRUCT(parsefmt) *fmt, const char *str)
 {
+	static const MPT_STRUCT(parsefmt) pfmt_default = MPT_PARSEFMT_INIT;
+	
 	int i = pfmt_default.sstart, ret = '*';
 	
 	if (!str) {

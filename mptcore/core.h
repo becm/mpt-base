@@ -791,7 +791,7 @@ extern MPT_INTERFACE(logger) *mpt_object_logger(const MPT_INTERFACE(object) *);
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* get default logger instance */
-extern MPT_INTERFACE(logger) *_mpt_log_default(FILE *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(logger) *mpt_log_default(FILE *__MPT_DEFPAR(0));
 /* start log message */
 extern const char *mpt_log_start(FILE *, const char *, int);
 #endif

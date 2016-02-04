@@ -31,7 +31,7 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 	
 	if (!out) {
 		if (!(type & 0xff)) return 0;
-		log = _mpt_log_default(0);
+		log = mpt_log_default(0);
 	} else {
 		log = mpt_object_logger((MPT_INTERFACE(object) *) out);
 	}
@@ -49,31 +49,33 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 		hdr[0] = MPT_ENUM(MessageOutput);
 		hdr[1] = type;
 		
-		if (out->_vptr->push(out, sizeof(hdr), hdr) < 0) {
-			return -1;
+		if ((err = out->_vptr->push(out, sizeof(hdr), hdr)) < 0) {
+			return err;
 		}
-		if (from && out->_vptr->push(out, strlen(from)+1, from) < 0) {
+		if (from && (err = out->_vptr->push(out, strlen(from)+1, from)) < 0) {
 			out->_vptr->push(out, 1, 0);
-			return -1;
+			return err;
 		}
 		if (fmt) {
 			char buf[1024];
+			int len;
 			
 			va_start(ap, fmt);
-			err = vsnprintf(buf, sizeof(buf)-1, fmt, ap);
+			len = vsnprintf(buf, sizeof(buf)-1, fmt, ap);
 			va_end(ap);
 			
-			if (err < 0) {
-				return err;
+			if (len < 0) {
+				return MPT_ERROR(BadType);
 			}
 			if (err > (int) (sizeof(buf) - 3)) {
 				buf[sizeof(buf)-3] = buf[sizeof(buf)-2] = buf[sizeof(buf)-1] = '.';
 				err = sizeof(buf);
 			}
-			if (out->_vptr->push(out, err, buf) < 0) {
+			if ((err = out->_vptr->push(out, err, buf)) < 0) {
 				out->_vptr->push(out, 1, 0);
+				return err;
 			}
-			return -1;
+			return len;
 		}
 		if (out->_vptr->push(out, 0, 0) < 0) {
 			out->_vptr->push(out, 1, 0);

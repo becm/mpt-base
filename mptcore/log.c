@@ -143,7 +143,7 @@ extern int mpt_log(MPT_INTERFACE(logger) *out, const char *where, int type, cons
  * 
  * \return log operation result
  */
-extern MPT_INTERFACE(logger) *_mpt_log_default(FILE *err)
+extern MPT_INTERFACE(logger) *mpt_log_default(FILE *err)
 {
 	if (err) loggerErr = err;
 	return &defaultLogger;

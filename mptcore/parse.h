@@ -39,13 +39,14 @@ enum MPT_ENUM(ParseFlags) {
 MPT_STRUCT(parsefmt)
 {
 #ifdef __cplusplus
-	parsefmt(const char *fmt = 0);
+	inline parsefmt();
 	
 	inline bool isComment(int c) const
 	{ return c && (c==com[0] || c==com[1] || c==com[2] || c==com[3]); }
 	inline bool isEscape(int c) const
 	{ return c && (c==esc[0] || c==esc[1] || c==esc[2]); }
 #else
+# define MPT_PARSEFMT_INIT  { '{', '}', 0, '=', 0, { '"', '\'' }, { '#' } }
 # define MPT_iscomment(f,c) ((c) && ((c)==(f)->com[0]||(c)==(f)->com[1]||(c)==(f)->com[2]||(c)==(f)->com[3]))
 # define MPT_isescape(f,c)  ((c) && ((c)==(f)->esc[0]||(c)==(f)->esc[1]||(c)==(f)->esc[2]))
 #endif
@@ -158,9 +159,18 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, M
 /* save config tree to node children */
 extern int mpt_parse_node(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
 
+#if _POSIX_C_SOURCE >= 200809L
+/* load configuration file/path */
+extern int mpt_config_load(MPT_TYPE(PathHandler), void *, MPT_INTERFACE(logger) *log, const char *__MPT_DEFPAR(0));
+#endif
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+inline parsefmt()
+{
+	mpt_parse_format(this, 0);
+}
 class Parse
 {
 public:
