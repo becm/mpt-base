@@ -4,10 +4,10 @@
 DIRS = core io cxx lua
 TESTS = client axis iter gen
 PROGS = readline ${TESTS}
-OBJS = $(PROGS:%=%.o)
 
 DIR_TOP = ${MPT_PREFIX}
 include ../mpt.example.mk
+CLEAN_FILES += ${CLEAR_FILES}
 
 # library config
 client : LDLIBS=-lmpt++ -lmptio -lmptcore

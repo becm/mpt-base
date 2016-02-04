@@ -15,6 +15,7 @@ LDLIBS = -lmpt++
 # general targets and definitions
 DIR_TOP = ${MPT_PREFIX}
 include ../../mpt.example.mk
+CLEAN_FILES += ${CLEAR_FILES}
 
 # library config
 config : LDLIBS+=-lmptcore

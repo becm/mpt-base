@@ -17,8 +17,8 @@
 #elif defined(RELEASE_MAJOR)
 # define RELEASE_BUILD _MAKE_RELEASE(RELEASE_MAJOR,RELEASE_MINOR,RELEASE_TEENY)
 # define BUILD_VERSION RELEASE_BUILD
-#elif defined(__VCS_REVISION__)
-# define BUILD_VERSION "dev_"__VCS_REVISION__
+#elif defined(__VCS_TAG__)
+# define BUILD_VERSION "dev_"__VCS_TAG__
 #elif defined(__ISO_DATE__)
 # define BUILD_VERSION "devel ("__ISO_DATE__")"
 #else
