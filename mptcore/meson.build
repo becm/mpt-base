@@ -37,7 +37,7 @@ if with_shared
     install : with_core)
 
   if with_core
-    pkgconfig_gen(
+    pkg.generate(
       description : 'mpt core library',
       libraries : libcore,
       version : '1.0.0',

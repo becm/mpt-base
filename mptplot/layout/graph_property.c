@@ -2,7 +2,10 @@
  * get properties from line structure.
  */
 
+#define _POSIX_C_SOURCE 200809L /* for strdup() */
+
 #include <string.h>
+#include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 #include <ctype.h>
 

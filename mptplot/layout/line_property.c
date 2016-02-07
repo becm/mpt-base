@@ -2,8 +2,8 @@
  * get properties from line structure.
  */
 
-#include <stdio.h>
 #include <string.h>
+#include <strings.h> /* for strcasecmp() */
 
 #include "layout.h"
 

@@ -2,7 +2,10 @@
  * get parameter from world structure.
  */
 
+#define _POSIX_C_SOURCE 200809L /* need for strdup() */
+
 #include <string.h>
+#include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 
 #include "layout.h"

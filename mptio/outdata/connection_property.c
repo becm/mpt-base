@@ -2,9 +2,11 @@
  * set initial parameter for output descriptor
  */
 
+#define _POSIX_C_SOURCE 1 /* for fdopen() */
+
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
+#include <strings.h> /* for strcasecmp() */
 
 #include "array.h"
 #include "queue.h"

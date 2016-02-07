@@ -19,12 +19,14 @@ if with_shared
     dependencies : core,
     install : with_plot)
   
-  pkgconfig_gen(
-    description : 'mpt plotting library',
-    libraries : libplot,
-    version : '1.0.0',
-    name : 'mptplot')
-
+  if with_plot
+    pkg.generate(
+      description : 'mpt plotting library',
+      libraries : libplot,
+      version : '1.0.0',
+      name : 'mptplot')
+  endif
+  
   plot = declare_dependency(link_with : libplot,
     include_directories : include_directories('.'))
 endif

@@ -6,6 +6,8 @@ project('mpt', 'c', default_options : [
   'c_std=c11'
 ])
 
+pkg = import('pkgconfig')
+
 # conditionals from configuration
 with_plot = get_option('with_plot')
 with_io = get_option('with_io')
@@ -84,14 +86,14 @@ if with_static
     include_directories : inc,
     install : true)
 
-  pkgconfig_gen(
+  pkg.generate(
     description : 'static mpt library',
     libraries : [ mpt ],
     version : '1.0.0',
     name : 'mpt')
 endif
 
-pkgconfig_gen(
+pkg.generate(
   description : 'mpt header directory',
   subdirs : 'mpt',
   version : '1.0.0',

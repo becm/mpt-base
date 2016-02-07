@@ -27,7 +27,7 @@ if with_shared
     install : with_io)
 
   if with_io
-    pkgconfig_gen(
+    pkg.generate(
       description : 'mpt I/O library',
       libraries : libio,
       version : '1.0.0',

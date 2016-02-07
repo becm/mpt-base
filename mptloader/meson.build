@@ -23,7 +23,7 @@ if with_shared
   load = declare_dependency(link_with : libloader)
 
   if with_loader
-    pkgconfig_gen(
+    pkg.generate(
       description : 'mpt loader operations',
       libraries : libloader,
       version : '1.0.0',

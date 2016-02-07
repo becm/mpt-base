@@ -2,10 +2,12 @@
  * get properties from text structure.
  */
 
+#define _POSIX_C_SOURCE 200809L /* need for strdup() */
+
 #include <stdio.h>
 #include <string.h>
+#include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
-#include <errno.h>
 
 #include "layout.h"
 

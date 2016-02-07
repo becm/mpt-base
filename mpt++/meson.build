@@ -54,7 +54,7 @@ if with_shared
     install : with_cxx)
 
   if with_cxx
-    pkgconfig_gen(
+    pkg.generate(
       description : 'mpt C++ library',
       libraries : libcxx,
       version : '1.0.0',
