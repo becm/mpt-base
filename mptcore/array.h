@@ -49,7 +49,7 @@ MPT_STRUCT(array)
 	size_t used() const;
 	void *base() const;
 	bool shared() const;
-	Reference<buffer> ref() const;
+	const Reference<buffer> &ref() const;
 	
 	char *string();
 	bool compact();
@@ -61,6 +61,7 @@ MPT_STRUCT(array)
 	int set(metatype &);
 	int printf(const char *fmt, ... );
 	
+	array & operator=  (const Reference<buffer> &);
 	array & operator=  (const array &);
 	array & operator=  (const slice &);
 	array & operator+= (const array &);
@@ -78,8 +79,8 @@ protected:
 #ifdef __cplusplus
 struct slice : array
 {
-	slice(array const& );
-	slice(slice const& );
+	slice(const array &);
+	slice(const slice &);
 	slice(buffer * = 0);
 	~slice();
 	
@@ -97,8 +98,8 @@ MPT_STRUCT(slice)
 # define MPT_SLICE_INIT { MPT_ARRAY_INIT, 0, 0 }
 	MPT_STRUCT(array) _a;
 #endif
-	uintptr_t         _off,
-	                  _len;
+	uintptr_t _off, /* start position on array */
+	          _len; /* used data size on array */
 };
 
 #ifdef __cplusplus
@@ -176,7 +177,7 @@ extern void mpt_copy_df(int , const double *, int , float  *, int);
 #endif
 
 /* metatype with buffer data */
-extern MPT_INTERFACE(metatype) *mpt_meta_buffer(size_t , const void *);
+extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *);
 
 /* array manipulation */
 extern size_t mpt_array_reduce(MPT_STRUCT(array) *);
@@ -289,7 +290,7 @@ class Buffer : public metatype, public IODevice, public EncodingArray
 {
 public:
     enum { Type = TypeIODevice };
-    Buffer();
+    Buffer(const Reference<buffer> & = Reference<buffer>(0));
     ~Buffer();
     
     void unref();

@@ -14,16 +14,9 @@
 #include "object.h"
 
 // buffer metatype override
-extern "C" mpt::metatype *mpt_meta_buffer(size_t size, const void *base)
+extern "C" mpt::metatype *mpt_meta_buffer(const mpt::array *a)
 {
-    mpt::Buffer *b = new mpt::Buffer;
-    if (!b) return 0;
-    if (base) {
-        b->write(1, base, size);
-    } else {
-        b->write(size, 0, 0);
-    }
-    return b;
+    return new mpt::Buffer(a ? a->ref() : mpt::Reference<mpt::buffer>(0));
 }
 // metatype creator override
 extern "C" mpt::metatype *mpt_meta_new(size_t size)

@@ -106,7 +106,14 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t post)
 		post = min;
 	}
 	else if (post > UINT8_MAX) {
-		return mpt_meta_buffer(post, 0);
+		MPT_STRUCT(array) a = MPT_ARRAY_INIT;
+		
+		if (!mpt_array_slice(&a, 0, post)) {
+			return 0;
+		}
+		meta = mpt_meta_buffer(&a);
+		mpt_array_clone(&a, 0);
+		return meta;
 	}
 	else {
 		post = MPT_align(post);

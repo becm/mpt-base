@@ -119,11 +119,15 @@ static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
 	
 	if (old) {
 		mpt_array_clone(&m->s._a, &old->s._a);
-		m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
-	} else {
-		m->s._len = 0;
+		if (m->s._a._buf) {
+			m->s._len = old->s._len;
+			m->s._off = old->s._off;
+			return &m->_meta;
+		}
 	}
+	m->s._len = 0;
 	m->s._off = 0;
+	
 	return &m->_meta;
 }
 
@@ -146,79 +150,16 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer = {
  * 
  * \return new metatype
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_buffer(size_t len, const void *data)
+extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 {
 	MPT_STRUCT(metaBuffer) *m;
 	
 	if (!(m = (void *) bufferClone(0))) {
 		return 0;
 	}
-	if (!len || mpt_array_append(&m->s._a, len, data)) {
+	if (a) {
+		mpt_array_clone(&m->s._a, a);
 		if (m->s._a._buf) m->s._len = m->s._a._buf->used;
-		return &m->_meta;
 	}
-	bufferUnref(&m->_meta);
-	
-	return 0;
-}/*!
- * \ingroup mptArray
- * \brief create message metatype
- * 
- * Create metatype from message data to access arguments from
- * property assign interaction.
- * 
- * \param msg   message data
- * \param asep  argument separator
- * 
- * \return hint to event controller (int)
- */
-extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep)
-{
-	MPT_STRUCT(message) msg;
-	MPT_STRUCT(metaBuffer) *m;
-	ssize_t len;
-	
-	if (!ptr) {
-		return 0;
-	}
-	if (!(m = (void *) bufferClone(0))) {
-		return 0;
-	}
-	if (!(len = mpt_message_length(ptr))) {
-		return &m->_meta;
-	}
-	if (!mpt_array_slice(&m->s._a, 0, len+1)) {
-		bufferUnref(&m->_meta);
-		return 0;
-	}
-	m->s._a._buf->used = 0;
-	
-	msg = *ptr;
-	while ((len = mpt_message_argv(&msg, asep)) >= 0) {
-		char *base;
-		
-		if (!len) {
-			if (asep) {
-				break;
-			}
-		}
-		else if (!(base = mpt_array_append(&m->s._a, len, 0))) {
-			bufferUnref(&m->_meta);
-			return 0;
-		}
-		mpt_message_read(&msg, len, base);
-		
-		if (!asep) {
-			continue;
-		}
-		if (!(base = mpt_array_append(&m->s._a, 1, 0))) {
-			bufferUnref(&m->_meta);
-			return 0;
-		}
-	}
-	/* update slice data */
-	m->s._len = m->s._a._buf->used;
-	m->s._off = 0;
-	
 	return &m->_meta;
 }

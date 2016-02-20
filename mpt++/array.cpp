@@ -46,7 +46,7 @@ void buffer::unref()
 }
 uintptr_t buffer::addref()
 {
-    if (!++shared) return shared;
+    if (++shared) return shared;
     --shared; return 0;
 }
 
@@ -63,14 +63,21 @@ array::array(const array &a) : _buf(0)
 array &array::operator= (const array &a)
 {
     if (_buf) _buf->unref();
-    if ((_buf = a._buf)) ++_buf->shared;
+    _buf = (a._buf && a._buf->addref()) ? a._buf : 0;
+    return *this;
+}
+// copy buffer reference
+array &array::operator= (const Reference<buffer> &a)
+{
+    if (_buf) _buf->unref();
+    Reference<buffer> t = a;
+    _buf = t.detach();
     return *this;
 }
 // create buffer reference
-Reference<buffer> array::ref() const
+const Reference<buffer> &array::ref() const
 {
-    if (_buf) ++_buf->shared;
-    return Reference<buffer>(_buf);
+    return *((Reference<buffer> *) this);
 }
 // array size modifier
 array &array::operator= (struct iovec const& vec)
@@ -328,8 +335,10 @@ ssize_t PointerArray::offset(const void *ref) const
 }
 
 // buffer metatype
-Buffer::Buffer()
-{ }
+Buffer::Buffer(const Reference<buffer> &a)
+{
+    _d = a;
+}
 Buffer::~Buffer()
 { }
 void Buffer::unref()

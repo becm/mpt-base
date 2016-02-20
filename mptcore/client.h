@@ -17,8 +17,6 @@ MPT_STRUCT(event);
 MPT_STRUCT(message);
 MPT_STRUCT(dispatch);
 
-MPT_STRUCT(data);
-
 #ifndef __cplusplus
 MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
