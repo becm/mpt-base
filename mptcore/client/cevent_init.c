@@ -51,8 +51,7 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		}
 		/* consume command part  */
 		if ((part = mpt_message_argv(&msg, mt.arg)) >= 0) {
-			mpt_message_read(&msg, part, 0);
-			if (mt.arg) mpt_message_read(&msg, 1, 0);
+			mpt_message_read(&msg, part+1, 0);
 			part = mpt_message_argv(&msg, mt.arg);
 		}
 		if (part >= 0 && !(src = mpt_meta_message(&msg, mt.arg))) {

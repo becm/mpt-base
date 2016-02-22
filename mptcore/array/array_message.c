@@ -53,15 +53,13 @@ extern int mpt_array_message(MPT_STRUCT(array) *arr, const MPT_STRUCT(message) *
 			mpt_message_read(&msg, len, base);
 		}
 		++narg;
-		
-		if (!asep) {
-			continue;
-		}
 		/* save argument separation */
 		if (!(base = mpt_array_append(&a, 1, 0))) {
 			mpt_array_clone(&a, 0);
 			return MPT_ERROR(MissingBuffer);
 		}
+		/* skip argument separation */
+		mpt_message_read(&msg, 1, 0);
 	}
 	mpt_array_clone(arr, &a);
 	mpt_array_clone(&a, 0);

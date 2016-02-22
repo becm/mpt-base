@@ -42,7 +42,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
 		}
 		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-			mpt_message_read(&msg, part, 0);
+			mpt_message_read(&msg, part+1, 0);
 			part = mpt_message_argv(&msg, mt.arg);
 		}
 		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg))) {
