@@ -1,0 +1,6 @@
+# exclude example binaries
+axis
+client
+gen
+iter
+readline

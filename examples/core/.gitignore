@@ -1,0 +1,5 @@
+# exclude basic example binaries
+coding
+environ
+ident
+parse

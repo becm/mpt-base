@@ -1,0 +1,6 @@
+# exclude I/O example binaries
+mclient
+mserver
+pipe
+sread
+swrite

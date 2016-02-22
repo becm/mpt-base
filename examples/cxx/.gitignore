@@ -1,0 +1,9 @@
+# exclude C++ example binaries
+buffer
+comp
+config
+layout
+map
+object
+output
+queue
