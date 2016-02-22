@@ -125,29 +125,22 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 		keep = 0;
 	}
 	if (fd[1].fd >= 0) {
-		ssize_t len;
-		
 		/* avoid removal if input not queried */
 		if (!(fd[0].revents & POLLOUT)) {
 			if (srm->_wd.len && keep < 0) keep = 0;
 		}
-		/* no further writable data */
-		else if (!srm->_wd.len) {
-		}
-		/* write queue data */
-		else if ((len = mpt_queue_save(&srm->_wd, fd[1].fd)) > 0) {
-			mpt_stream_clearerror(&srm->_info, MPT_ENUM(ErrorFull) | MPT_ENUM(ErrorWrite));
-			if (keep < 0) keep = POLLOUT;
-			else keep |= POLLOUT;
-		}
-		/* temporary failure */
-		else if (!len) {
-			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorFull));
-			if (!(fd[1].revents & POLLHUP) && keep < 0) keep = 0;
-		}
-		/* no further output action possilble */
+		/* remaining data on output */
 		else {
-			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorWrite));
+			int ret;
+			
+			if ((ret = mpt_stream_flush(srm)) < 0) {
+				return keep;
+			}
+			if (ret) {
+				if (keep < 0) keep = POLLOUT;
+				else keep |= POLLOUT;
+			}
+			mpt_stream_clearerror(&srm->_info, MPT_ENUM(ErrorFull) | MPT_ENUM(ErrorWrite));
 		}
 	}
 	return keep;

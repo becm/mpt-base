@@ -38,7 +38,7 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 		/* terminate current message */
 		if (!len) {
 			if ((post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, 0)) >= 0) {
-				stream->_info._fd |= MPT_ENUM(StreamMesgAct);
+				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
 			}
 			return post;
 		}
