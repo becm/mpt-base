@@ -39,7 +39,7 @@ ${LIB} : ${OBJS}
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 
-${LUA_SHARE}/% :
+${LUA_SHARE}/% : %
 	$(call install_files,${@D},${@F})
 
 clear :

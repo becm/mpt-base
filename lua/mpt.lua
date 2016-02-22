@@ -50,72 +50,92 @@ function mpt.connect(...)
 end
 
 -- create client process
-function mpt.client(dest, w)
-  local client = mpt.pipe(dest, '-c-')
-  local wait = w
+function mpt.client(c, w, o)
+  local con = c
+  local twait = w
+  local out = o
   
-  client.encoding = "command"
+  if not w then twait = 1000 end
+  if not o then out = io.output() end
   
-  if not w then wait = 1000 end
-  
-  -- client process closure
-  local function cmd(arg, t)
-    if arg then
-      client:push(arg)
-      client:push()
-      client:flush()
-    end
-    if t == nil then t = wait end
-    return client:read(t)
-  end
-  
-  return cmd
-end
-
--- register operations in environment
-function mpt.setup(c, g)
-  local client = c
-  local out = io.output()
-  local env = g
-  
-  if not env then env = _G end
-  
-  -- auto-generate client
-  if type(c) == "string" then
-    client = mpt.client(c)
-  end
-  
-  -- create command
-  local function join(cmd, ...)
-    local a = {...}
-    return cmd..' '..table.concat(a, ' ')
+  -- single command submission
+  local function command(...)
+    con:push('\x04\x00')
+    con:push(...)
+    con:push()
+    con:flush()
   end
   
   -- print output from passed command
-  local function wait(command, tcont)
-    local ret = client(command, tcont)
+  local function wait(t)
+    if not t then t = twait end
+    local ret = con:read(t)
     while ret and #ret > 0 do
       out:write(ret)
-      if tcont == nil then return end
-      ret = client(nil, tcont)
+      if t == nil then return end
+      ret = con:read(t)
     end
   end
   
-  -- functions with output
-  function env.init (...) wait(join('init', ...)) end
-  function env.prep (...) wait(join('prep', ...)) end
-  function env.start(...) wait(join('start',...)) end
-  function env.step (...) wait(join('step', ...)) end
+  return {
+    command = command,
+    wait = wait
+  }
+end
+
+-- register operations in environment
+function mpt.setup(c, e)
+  local client
+  
+  if not e then e = _G end
+  
+  -- auto-generate client
+  if type(c) == "string" then
+    c = mpt.pipe(c, '-c-')
+    if not c then
+      error('failed to start client process')
+    end
+    c.encoding = "command"
+  end
+  client = mpt.client(c)
+  
+  function e.init(...)
+    client.command('init', ...)
+    client.wait()
+  end
+  function e.prep(...)
+    client.command('prep', ...)
+    client.wait()
+  end
+  function e.start(...)
+    client.command('start',...)
+    client.wait()
+  end
+  function e.step(...)
+    client.command('step',...)
+    client.wait()
+  end
   -- no regular return
-  function env.read (...) wait(join('read', ...), 0) end
-  function env.cont ()    wait('cont', 0) end
-  function env.stop ()    wait('stop', 0) end
+  function e.read(...)
+    client.command('read', ...)
+    client.wait(0)
+  end
+  function e.cont(...)
+    client.command('cont', ...)
+    client.wait(0)
+  end
+  function e.stop(...)
+    client.command('stop', ...)
+    client.wait(0)
+  end
   
   -- try to read remaining data
-  function env.flush(len)
-    if not len then len = 0 end
-    wait(nil, len)
+  function e.flush(t)
+    if not t then t = 0 end
+    client.wait(t)
   end
+  
+  return client
 end
 
 return mpt

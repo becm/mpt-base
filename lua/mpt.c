@@ -97,9 +97,17 @@ static int streamRead(lua_State *L)
 	size_t len;
 	void *base;
 	int timeout = -1;
+	int flg;
 	luaL_Buffer b;
 	
 	streamWait(s);
+	
+	flg = mpt_stream_flags(&s->srm._info);
+	
+	if (MPT_stream_writable(flg)
+	    && !(flg & MPT_ENUM(StreamRdWr))) {
+		return 0;
+	}
 	
 	if (lua_isnumber(L, 2)) {
 		timeout = lua_tonumber(L, 2);
@@ -152,7 +160,7 @@ static int streamWrite(lua_State *L)
 static int streamPush(lua_State *L)
 {
 	struct luaStream *s = luaL_checkudata(L, 1, streamClassString);
-	int i, t, len;
+	int i, flg, len;
 	size_t old;
 	
 	streamWait(s);
@@ -169,103 +177,87 @@ static int streamPush(lua_State *L)
 			lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to terminate data"));
 			return lua_error(L);
 		}
+		s->mt.cmd = 0;
+		s->mt.arg = 0;
 		old = s->srm._wd.len - old;
 		lua_pushinteger(L, old);
 		return 1;
 	}
+	flg = mpt_stream_flags(&s->srm._info);
 	
 	i = 2;
-	t = lua_type(L, i);
-	/* determine message type */
-	if (!(mpt_stream_flags(&s->srm._info) & MPT_ENUM(StreamMesgAct))) {
-		if (t == LUA_TNUMBER) {
-			s->mt.cmd = MPT_ENUM(MessageValRaw);
-			s->mt.arg = (int8_t) (MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(double));
-		}
-		/* simple continous command */
-		else if (t == LUA_TSTRING) {
-			s->mt.cmd = MPT_ENUM(MessageCommand);
-			s->mt.arg = ' ';
-		}
-		else {
-			lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("invalid message type"));
-			return lua_error(L);
-		}
-		++i;
-	}
-	if (s->mt.cmd == MPT_ENUM(MessageValRaw)
-	    || s->mt.cmd == MPT_ENUM(MessageValFmt)
-	    || s->mt.cmd == MPT_ENUM(MessageDest)) {
-		/* check arguments */
-		for (; i <= len; ++i) {
-			if (lua_type(L, i) != LUA_TNUMBER) {
-				lua_pushfstring(L, "%s\t%d (pos %d)", streamClassString, MPT_tr("invalid number data"), i);
-				return lua_error(L);
-			}
-		}
-		if (!(mpt_stream_flags(&s->srm._info) & MPT_ENUM(StreamMesgAct))) {
-			size_t pre = 0;
-			uint8_t hdr[sizeof(MPT_STRUCT(msgtype))+sizeof(MPT_STRUCT(laydest))+sizeof(MPT_STRUCT(msgworld))] = { 0 };
+	if (!(flg & MPT_ENUM(StreamMesgAct))) {
+		if (flg & MPT_ENUM(StreamRdWr)) {
+			uint16_t mid = 0;
 			
-			switch (s->mt.cmd) {
-			  case MPT_ENUM(MessageValRaw):
-				hdr[0] = s->mt.cmd;
-				hdr[3] = s->mt.arg;
-				pre = 4;
-				break;
-			  case MPT_ENUM(MessageValFmt):
-				hdr[0] = s->mt.cmd;
-				hdr[1] = 1;
-				hdr[2] = 1;
-				hdr[3] = s->mt.arg;
-				pre = 4;
-				break;
-			  case MPT_ENUM(MessageDest):
-				hdr[0] = s->mt.cmd;
-				hdr[3] = s->mt.arg;
-				pre = sizeof(hdr);
-			  default:;
-			}
-			if (pre && mpt_stream_push(&s->srm, pre, hdr) < 0) {
-				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
+			if (mpt_stream_push(&s->srm, sizeof(mid), &mid) < 0) {
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to terminate data"));
 				return lua_error(L);
 			}
 		}
-		for (i = 2; i <= len; ++i) {
-			double v = lua_tonumber(L, i);
-			if (mpt_stream_push(&s->srm, sizeof(v), &v) < 0) {
-				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
-				return lua_error(L);
-			}
-		}
-	}
-	else if (s->mt.cmd == MPT_ENUM(MessageCommand)) {
-		for (; i <= len; ++i) {
-			if (lua_type(L, i) != LUA_TSTRING) {
-				lua_pushfstring(L, "%s\t%s (pos %d)", streamClassString, MPT_tr("invalid string data"), i);
-				return lua_error(L);
-			}
-		}
-		if (!(mpt_stream_flags(&s->srm._info) & MPT_ENUM(StreamMesgAct))) {
-			if (mpt_stream_push(&s->srm, sizeof(s->mt.cmd), &s->mt.cmd) < 0) {
-				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
-				return lua_error(L);
-			}
-		}
-		for (i = 2; i <= len; ++i) {
+		/* header without string separation */
+		if (lua_type(L, i) == LUA_TSTRING) {
 			const char *d;
 			size_t l;
 			
-			if (!(d = lua_tolstring(L, i, &l))) {
-				continue;
+			if (!(d = lua_tolstring(L, i++, &l))) {
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("bad header data"));
+				return lua_error(L);
 			}
-			/* include separation */
-			if ((mpt_stream_push(&s->srm, 1, &s->mt.arg) < 0)
-			    || (mpt_stream_push(&s->srm, l, d) < 0)) {
-				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
+			if (l) {
+				s->mt.cmd = d[0];
+			}
+			if (l > 1) {
+				s->mt.arg = d[1];
+			}
+			if (s->mt.cmd == MPT_ENUM(MessageCommand)) {
+				l = 1;
+			}
+			if (mpt_stream_push(&s->srm, l, d) < 0) {
+				mpt_stream_push(&s->srm, 1, 0);
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push header data"));
 				return lua_error(L);
 			}
 		}
+	}
+	while (i <= len) {
+		int t = lua_type(L, i);
+		
+		/* write raw number data */
+		if (t == LUA_TNUMBER) {
+			double v = lua_tonumber(L, i);
+			if (mpt_stream_push(&s->srm, sizeof(v), &v) < 0) {
+				mpt_stream_push(&s->srm, 1, 0);
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
+				return lua_error(L);
+			}
+			++i;
+			continue;
+		}
+		/* simple continous command */
+		if (t == LUA_TSTRING) {
+			const char *d;
+			size_t l;
+			
+			if ((s->mt.cmd == MPT_ENUM(MessageCommand))
+			    && mpt_stream_push(&s->srm, 1, &s->mt.arg) < 0) {
+				mpt_stream_push(&s->srm, 1, 0);
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push separator"));
+				return lua_error(L);
+			}
+			/* include separation */
+			if ((d = lua_tolstring(L, i, &l))
+			    && ((mpt_stream_push(&s->srm, l, d) < 0))) {
+				mpt_stream_push(&s->srm, 1, 0);
+				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push data"));
+				return lua_error(L);
+			}
+			++i;
+			continue;
+		}
+		mpt_stream_push(&s->srm, 1, 0);
+		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("invalid data type"));
+		return lua_error(L);
 	}
 	old = s->srm._wd.len - old;
 	lua_pushinteger(L, old);
