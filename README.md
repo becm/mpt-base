@@ -1,12 +1,11 @@
 # Message Passing Toolkit
 
-A collection of interfaces and routines originally built
+A collection of interfaces and routines
 to transfer opaque binary messages via stream connections
-and processing of received messages.
+and processing of received data.
 
-Extensions to read/query configuration data,
-some buffers and queues and additional interfaces
-were added to extend functionality.
+Extended funtionality includes configuration handling
+and simple buffer/queue implementations.
 
 To maximize reusability and minimize dependencies, functionality
 is split into multiple (shared) libraries.
@@ -14,22 +13,40 @@ is split into multiple (shared) libraries.
 ## Core
 Most interface definitions and in-memory operations.
 
-Operations for coding, data stores, configuration, messages and configuration.
+Implementation of message coding, data buffers and event processing.
+
+Definitions and operations for generic file parsing
+and configuration interface.
 
 ## Plot
-Datatypes and operations for data plotting.
+Types and operations for data plotting.
 
-Additional operations for data output, value source and profile generation.
+Definitions for generic graphic objects.
+
+Additional operations for data output,
+value source and profile generation.
 
 ## Input/Output
 Socket operations and input loop.
 
-Own implementation of buffered data stream was deemed necessary
-for control over buffers and additional data for encoding/decoding.
+Buffered data stream with integrated
+data encoding/decoding and message send/receive.
+
+Implementation of output interface with channel selection
+(stdout/stderr, history file, remote process) depending
+on MPT message type.
 
 Notification system for registering and waiting for multiple inputs.
 
-Interface for dynamic loading of shared library modules.
+## Loader
+Wrappers to load functionality from shared libraries.
+
+Provide abstration for line input from user.
+
+## C++
+Implementation and extensions of basic (core, plot, I/O) elements.
+
+Generic graphic display implementation.
 
 ## LUA bindings
 Interface to use MPT stream and COBS encoding.
