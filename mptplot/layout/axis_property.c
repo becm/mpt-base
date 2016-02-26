@@ -153,7 +153,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 		if (!(len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &ax->tlen))) ax->tlen = def_axis.tlen;
 		return len <= 0 ? len : 1;
 	}
-	if (!strcasecmp(name, "intv") || !strcasecmp(name, "intervals")) {
+	if (!strcasecmp(name, "int") || !strcasecmp(name, "intv") || !strcasecmp(name, "intervals")) {
 		const char *l;
 		if (!src) {
 			ax->intv = def_axis.intv;
@@ -197,14 +197,14 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(me
 		if (!(len = src->_vptr->conv(src, 'b' | MPT_ENUM(ValueConsume), &ax->dec))) ax->dec = def_axis.dec;
 		return len <= 0 ? len : 1;
 	}
-	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos")) {
+	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos") || !strcasecmp(name, "label position")) {
 		if (!src) {
 			ax->lpos = def_axis.lpos;
 			return 0;
 		}
 		return setPosition(&ax->lpos, src);
 	}
-	if (!strcasecmp(name, "tpos") || !strcasecmp(name, "titlepos")) {
+	if (!strcasecmp(name, "tpos") || !strcasecmp(name, "titlepos") || !strcasecmp(name, "title position")) {
 		if (!src) {
 			ax->tpos = def_axis.tpos;
 			return 0;

@@ -39,7 +39,7 @@ enum MPT_ENUM(ParseFlags) {
 MPT_STRUCT(parsefmt)
 {
 #ifdef __cplusplus
-	inline parsefmt();
+	parsefmt();
 	
 	inline bool isComment(int c) const
 	{ return c && (c==com[0] || c==com[1] || c==com[2] || c==com[3]); }

@@ -104,7 +104,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		}
 		return MPT_ERROR(BadType);
 	}
-	if (!strcasecmp(name, "cycles")) {
+	if (!strcasecmp(name, "cyc") || !strcasecmp(name, "cycles")) {
 		if (!src) {
 			wld->cyc = def_world.cyc;
 			return 0;
@@ -113,7 +113,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		
 		return len <= 0 ? len : 1;
 	}
-	if (!strcasecmp(name, "color")) {
+	if (!strcasecmp(name, "color") || !strcasecmp(name, "colour")) {
 		if (!src) {
 			wld->cyc = def_world.cyc;
 			return 0;
@@ -141,7 +141,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		}
 		return mpt_lattr_style(&wld->attr, src);
 	}
-	if (!strcasecmp(name, "symbol")) {
+	if (!strcasecmp(name, "sym") || !strcasecmp(name, "symbol")) {
 		if (!src) {
 			wld->attr.symbol = def_world.attr.symbol;
 			return 0;
