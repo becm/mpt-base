@@ -5,11 +5,6 @@ lua_version = run_command('pkg-config',
   '--variable=major_version',
   'lua' + get_option('lua')).stdout().strip()
 
-lua_cmod = run_command('pkg-config',
-  '--define-variable=prefix=' + get_option('prefix'),
-  '--variable=INSTALL_CMOD',
-  'lua' + get_option('lua')).stdout().strip()
-
 lua_lmod = run_command('pkg-config',
   '--define-variable=prefix=' + get_option('prefix'),
   '--variable=INSTALL_LMOD',
@@ -24,10 +19,10 @@ install_data('mathbox.lua', 'mpt.lua',
 
 if with_shared
   lua = shared_library('lua' + lua_version + '-mpt', 'mpt.c',
+    version : '1.0.0', soversion : '1',
     install_rpath : get_option('prefix') + '/' + get_option('libdir'),
     c_args : lua_inc,
     include_directories : inc,
-    link_with : libcore,
-    install_dir : lua_cmod,
+    link_with : libio,
     install : true)
 endif

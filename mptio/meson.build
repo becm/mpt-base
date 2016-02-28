@@ -15,15 +15,12 @@ endforeach
 install_headers('notify.h', 'stream.h',
   subdir : 'mpt')
 
-# on platforms with dynamic loader library
-dlib = find_library('dl', required : false)
-
 if with_shared
   libio = shared_library('mptio', src_io, 'libinfo.c',
+    version : '1.0.0', soversion : '1',
     include_directories : include_directories('../mptplot', '..'),
     install_rpath : '$ORIGIN',
-    version : '1.0.0', soversion : '1',
-    dependencies : [ core, dlib ],
+    dependencies : [ core ],
     install : with_io)
 
   if with_io

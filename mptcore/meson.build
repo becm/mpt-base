@@ -32,8 +32,8 @@ install_headers(
 
 if with_shared
   libcore = shared_library('mptcore', src_core, 'libinfo.c',
-    include_directories : inc,
     version : '1.0.0', soversion : '1',
+    include_directories : inc,
     install : with_core)
 
   if with_core

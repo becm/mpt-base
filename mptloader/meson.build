@@ -10,12 +10,14 @@ src_loader = files(
 )
 
 if with_shared
+  # need explicit dynamic loader library
   if host_machine.system() == 'linux'
     load_dep = [ core, find_library('dl') ]
   else
     load_dep = core
   endif
   libloader = shared_library('mptloader', src_loader, 'libinfo.c',
+    version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
     dependencies : load_dep,
     install : with_loader)

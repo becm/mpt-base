@@ -63,6 +63,5 @@ if with_shared
 
   cxx = [ declare_dependency(
       link_with : libcxx,
-      include_directories : include_directories('.'))
-    ] + cxx
+      include_directories : include_directories('.'))] + cxx
 endif
