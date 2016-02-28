@@ -3,7 +3,9 @@
 # lua version to build for
 LUA = 5.2
 #
-LIB = ${DIR_LIB}/liblua${LUA}-mpt.so
+# shared library version
+VER = 1
+LIB = ${DIR_LIB}/liblua${LUA}-mpt.so.${VER}
 #
 # include lua and MPT core header
 INC_LUA = /usr/include/lua${LUA}
