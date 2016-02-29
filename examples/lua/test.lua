@@ -13,9 +13,10 @@ end
 function testmpt()
   local n = os.tmpname()
   local s = mpt.open(n, 'w')
+  local t = n..n
   
   s.encoding = 'cobs'
-  s:push('hallo')
+  s:push(t)
   s:push()
   s:flush()
   
@@ -24,7 +25,7 @@ function testmpt()
   
   os.remove(n)
   
-  return s == mpt.cobs('\x04\x20hallo')
+  return s == mpt.cobs(t)
 end
 
 -- test math loading

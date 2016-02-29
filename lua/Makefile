@@ -4,39 +4,33 @@
 LUA = 5.2
 #
 # shared library version
-VER = 1
-LIB = ${DIR_LIB}/liblua${LUA}-mpt.so.${VER}
+LIB = lua${LUA}-mpt
 #
 # include lua and MPT core header
 INC_LUA = /usr/include/lua${LUA}
 INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
 #
-# import global settings
-DIR_TOP = ${MPT_PREFIX}
-include ../mpt.config.mk
-#
 # library sources
 SRCS = mpt.c
 OBJS = $(SRCS:%.c=%_lua${LUA}.o)
 #
-# preprocessor/compiler flags
-CPPFLAGS ?= -Wall -Werror -W -Wpedantic $(INC:%=-I%) $(DEF:%=-D'%')
-CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
-#
-# link parameters
-LDFLAGS = -L${DIR_LIB} -zorigin -rpath=\$$ORIGIN
-LDLIBS = -lmptio -lmptcore
+# shared library options
+SHLIB_MAJOR = 1
+SHLIB_MINOR = 0
+SHLIB_TEENY = 0
+LDLIBS = -lmptio
+DIR_TOP = ${MPT_PREFIX}
+include ../mpt.lib.mk
 #
 SHARE = mpt.lua mathbox.lua
 LUA_SHARE = ${DIR_SHARE}/lua/${LUA}
+CLEAN_FILES += ${CLEAR_FILES}
+CLEAR_FILES += $(SHARE:%=${LUA_SHARE}/%)
 #
 # service targets
 .PHONY : install clear clean test devel shared
 # file creation
-shared devel : ${LIB}
-install : ${LIB} $(SHARE:%=${LUA_SHARE}/%)
-${LIB} : ${OBJS}
-	${LD} -shared ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
+install : $(SHARE:%=${LUA_SHARE}/%)
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
@@ -44,11 +38,5 @@ ${LIB} : ${OBJS}
 ${LUA_SHARE}/% : %
 	$(call install_files,${@D},${@F})
 
-clear :
-	${RM} ${LIB}
-
-clean :
-	${RM} ${OBJS}
-
-distclean :
-	${RM} ${LIB} ${OBJS} $(SHARE:%=${LUA_SHARE}/%)
+%${LUA}.o : %c
+	${CC} ${CPPFLAGS} ${CFLAGS} -o ${@} ${^}
