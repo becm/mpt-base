@@ -638,7 +638,6 @@ public:
     int setProperty(const char *, metatype *);
     
     bool bind(const Relation &from, logger * = logger::defaultInstance());
-    bool set(const char *, const value &, logger * = logger::defaultInstance());
     
     virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
     const Item<Axis> &axis(int pos) const;
@@ -676,7 +675,6 @@ public:
     int setProperty(const char *pr, metatype *src);
     
     bool bind(const Relation &, logger * = logger::defaultInstance());
-    bool set(const char *, const value &, logger *);
     
     virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());

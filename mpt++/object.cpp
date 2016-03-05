@@ -7,6 +7,40 @@
 
 __MPT_NAMESPACE_BEGIN
 
+// object assignment
+bool object::set(const char *name, const value &val, logger *out)
+{
+    static const char _fname[] = "mpt::object::set";
+    int ret;
+    if ((ret = mpt_object_pset(this, name, &val)) >= 0) return true;
+    if (!out) return false;
+    struct property pr;
+    if (property(&pr) < 0) pr.name = "object";
+    pr.val.fmt = val.fmt;
+    if (!(pr.val.ptr = val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
+
+    if (ret == BadArgument) {
+        out->error(_fname, "%s: %s.%s", MPT_tr("bad property"), pr.name, name);
+    } else if (ret == BadValue) {
+        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, name, pr.val.ptr);
+    } else if (ret == BadType) {
+        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
+    }
+    return false;
+}
+struct propertyErrorOut { object *obj; logger *out; };
+static int objectSetProperty(void *addr, const property *pr)
+{
+    struct propertyErrorOut *dat = (propertyErrorOut *) addr;
+    if (dat->obj->set(pr->name, pr->val, dat->out)) return 0;
+    return dat->out ? 1 : -1;
+}
+bool object::setProperties(const object &from, logger *out)
+{
+    propertyErrorOut dat = { this, out };
+    return mpt_object_foreach(&from, objectSetProperty, &dat);
+}
+
 // class extension for basic property
 Property::Property(const Reference<object> &from) : Reference<object>(from)
 { }

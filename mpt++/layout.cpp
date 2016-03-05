@@ -502,10 +502,6 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     return true;
 }
-bool Graph::set(const char *name, const value &val, logger *out)
-{
-    return object::set(name, val, out);
-}
 const Item<Axis> &Graph::axis(int pos) const
 {
     static const Item<Axis> def;
@@ -786,10 +782,6 @@ bool Layout::bind(const Relation &rel, logger *out)
     }
     _graphs = arr;
     return true;
-}
-bool Layout::set(const char *name, const value &val, logger *log)
-{
-    return object::set(name, val, log);
 }
 
 bool Layout::load(logger *out)
