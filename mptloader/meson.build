@@ -2,6 +2,7 @@
 # create loader library
 
 src_loader = files(
+  'proxy_type.c',
   'library_assign.c',
   'library_open.c',
   'meta_open.c',
@@ -19,6 +20,7 @@ if with_shared
   libloader = shared_library('mptloader', src_loader, 'libinfo.c',
     version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
+    install_rpath : '$ORIGIN',
     dependencies : load_dep,
     install : with_loader)
 

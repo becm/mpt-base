@@ -24,6 +24,9 @@ def config(line):
 def isgenerated(hdr):
   elem = hdr.split()
   
+  if len(elem) == 0:
+    return False
+  
   if elem[0] == b'#' + marker + b':':
     return True
   

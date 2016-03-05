@@ -6,7 +6,8 @@ src_core = files(
   'abort.c',
   'identifier.c',
   'log.c',
-  'mode_parse.c'
+  'mode_parse.c',
+  'reference.c'
 )
 # process subdirectory sources
 foreach d : [
@@ -26,8 +27,10 @@ foreach d : [
 endforeach
 
 install_headers(
-  'array.h', 'client.h', 'config.h', 'convert.h',
-  'core.h', 'message.h', 'node.h', 'parse.h', 'queue.h',
+  'array.h', 'client.h', 'config.h',
+  'convert.h', 'core.h',
+  'event.h', 'message.h',
+  'node.h', 'parse.h', 'queue.h',
   subdir : 'mpt')
 
 if with_shared
