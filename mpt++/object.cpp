@@ -3,9 +3,52 @@
  */
 
 #include "node.h"
+#include "convert.h"
+
 #include "object.h"
 
+static int stdWrite(void *o, const char *d, size_t n)
+{
+    ((std::basic_ostream<char> *) o)->write(d, n);
+    return n;
+}
+
+std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::value &v)
+{
+    mpt_tostring(&v, stdWrite, &o);
+    return o;
+}
+
 __MPT_NAMESPACE_BEGIN
+
+property::iterator::iterator() : property((uintptr_t) 0), _pos(0)
+{ }
+
+bool property::iterator::select(const object &o, uintptr_t pos)
+{
+    property::name = 0;
+    property::desc = (const char *) pos;
+    if (o.property(this) < 0) {
+        _pos = -1;
+        return false;
+    }
+    _pos = pos;
+    return true;
+}
+
+object::const_iterator::const_iterator(const class object *o) : _ref(o)
+{
+    if (!o || o->property(this) < 0) {
+        _pos = -1;
+    }
+}
+
+object::iterator::iterator(class object *o) : _ref(o)
+{
+    if (!o || o->property(this) < 0) {
+        _pos = -1;
+    }
+}
 
 // object assignment
 bool object::set(const char *name, const value &val, logger *out)

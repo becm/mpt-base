@@ -1,10 +1,12 @@
 /*!
  * MPT C++ library
- *  metatype extensions
+ *  object extensions
  */
 
 #ifndef _MPT_OBJECT_H
 #define _MPT_OBJECT_H  @INTERFACE_VERSION@
+
+#include <ostream>
 
 #include "core.h"
 
@@ -12,6 +14,112 @@ namespace mpt {
 
 struct color;
 struct lineattr;
+
+class property::iterator : property
+{
+public:
+    iterator();
+
+    inline const char *name() const
+    {
+        return property::name;
+    }
+    inline const char *desc() const
+    {
+        return property::desc;
+    }
+    inline operator const value&() const
+    {
+        return property::val;
+    }
+    inline operator const property *() const
+    {
+        return this;
+    }
+    inline bool operator ==(const iterator &cmp) const
+    {
+         return _pos == cmp._pos;
+    }
+protected:
+    friend class object::iterator;
+    friend class object::const_iterator;
+    bool select(const object &, uintptr_t);
+    intptr_t _pos;
+};
+
+class object::iterator : public property::iterator
+{
+public:
+    iterator(class object *);
+
+    inline iterator &operator ++()
+    {
+        if (_ref && _pos >= 0) {
+            select(*_ref, _pos+1);
+        }
+        return *this;
+    }
+    inline class object *object() const
+    {
+        return _ref;
+    }
+    inline bool operator ==(const iterator &cmp) const
+    {
+         return _pos == cmp._pos;
+    }
+protected:
+    class object *_ref;
+};
+
+class object::const_iterator : public property::iterator
+{
+public:
+    const_iterator(const class object *);
+
+    inline iterator &operator ++()
+    {
+        if (_ref && _pos >= 0) {
+            select(*_ref, _pos+1);
+        }
+        return *this;
+    }
+    inline const class object *object() const
+    {
+        return _ref;
+    }
+    inline bool operator ==(const const_iterator &cmp) const
+    {
+         return _pos == cmp._pos;
+    }
+protected:
+    const class object *_ref;
+};
+
+inline object::iterator object::begin()
+{
+    return iterator(this);
+}
+inline object::iterator object::end()
+{
+    return iterator(0);
+}
+
+inline object::const_iterator object::const_begin() const
+{
+    return const_iterator(this);
+}
+inline object::const_iterator object::const_end() const
+{
+    return const_iterator(0);
+}
+inline object::const_iterator object::begin() const
+{
+    return const_iterator(this);
+}
+inline object::const_iterator object::end() const
+{
+    return const_iterator(0);
+}
 
 class Property : Reference<object>
 {
@@ -161,5 +269,16 @@ protected:
 };
 
 } /* namespace mpt */
+
+inline bool operator !=(const mpt::object::iterator &i1, const mpt::object::iterator &i2)
+{
+    return !(i1 == i2);
+}
+inline bool operator !=(const mpt::object::const_iterator &i1, const mpt::object::const_iterator &i2)
+{
+    return !(i1 == i2);
+}
+
+std::basic_ostream<char> &operator<<(std::basic_ostream<char> &, const mpt::value &);
 
 #endif // MPT_OBJECT_H

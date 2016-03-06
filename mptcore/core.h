@@ -239,6 +239,8 @@ MPT_STRUCT(property)
     public:
 	enum { Type = TypeProperty };
 	
+	class iterator;
+	
 	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(0, v)
 	{ }
 	inline property(const char *n, const char *f, const void *d) : name(n), desc(0), val(f, d)
@@ -430,16 +432,27 @@ protected:
 public:
 	enum { Type = TypeObject };
 	
-	virtual void unref() = 0;
-	virtual uintptr_t addref();
-	virtual int property(struct property *) const = 0;
-	virtual int setProperty(const char *, metatype * = 0) = 0;
+	class iterator;
+	class const_iterator;
+	
+	class iterator begin();
+	class iterator end();
+	
+	class const_iterator const_begin() const;
+	class const_iterator const_end() const;
+	class const_iterator begin() const;
+	class const_iterator end() const;
 	
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
 	bool setProperties(const object &, logger * = logger::defaultInstance());
 	
 	inline int type() const
 	{ return property(0); }
+	
+	virtual void unref() = 0;
+	virtual uintptr_t addref();
+	virtual int property(struct property *) const = 0;
+	virtual int setProperty(const char *, metatype * = 0) = 0;
 #else
 ; MPT_INTERFACE_VPTR(object) {
 	void (*unref)(MPT_INTERFACE(object) *);
