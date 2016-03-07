@@ -94,6 +94,9 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 			}
 		}
 	}
+	else {
+		len = 0;
+	}
 	it->base = base;
 	it->step = step;
 	it->pos = 0;

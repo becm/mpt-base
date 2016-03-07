@@ -96,6 +96,9 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 			if (curr) ++len;
 		}
 	}
+	else {
+		len = 0;
+	}
 	it->curr = first;
 	it->base = base;
 	it->fact = fact;

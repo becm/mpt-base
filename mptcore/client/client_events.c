@@ -31,7 +31,7 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	else {
 		MPT_STRUCT(message) msg = *ev->msg;
 		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
-		MPT_INTERFACE(metatype) *args;
+		MPT_INTERFACE(metatype) *args = 0;
 		ssize_t part;
 		
 		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
