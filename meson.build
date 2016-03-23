@@ -92,9 +92,3 @@ if with_static
     version : '1.0.0',
     name : 'mpt')
 endif
-
-pkg.generate(
-  description : 'mpt header directory',
-  subdirs : 'mpt',
-  version : '1.0.0',
-  name : 'mpt-local-headers')

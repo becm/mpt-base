@@ -13,7 +13,7 @@ src_loader = files(
 if with_shared
   # need explicit dynamic loader library
   if host_machine.system() == 'linux'
-    load_dep = [ core, find_library('dl') ]
+    load_dep = [ core, meson.get_compiler('c').find_library('dl') ]
   else
     load_dep = core
   endif
