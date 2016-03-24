@@ -187,6 +187,8 @@ static int streamPush(lua_State *L)
 	
 	i = 2;
 	if (!(flg & MPT_ENUM(StreamMesgAct))) {
+		s->mt.cmd = 0;
+		s->mt.arg = 0;
 		if (flg & MPT_ENUM(StreamRdWr)) {
 			uint16_t mid = 0;
 			
@@ -209,9 +211,6 @@ static int streamPush(lua_State *L)
 			}
 			if (l > 1) {
 				s->mt.arg = d[1];
-			}
-			if (s->mt.cmd == MPT_ENUM(MessageCommand)) {
-				l = 1;
 			}
 			if (mpt_stream_push(&s->srm, l, d) < 0) {
 				mpt_stream_push(&s->srm, 1, 0);
