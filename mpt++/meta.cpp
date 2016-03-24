@@ -10,6 +10,7 @@
 #include "queue.h"
 #include "array.h"
 #include "node.h"
+#include "convert.h"
 
 #include "object.h"
 
@@ -31,6 +32,10 @@ extern "C" mpt::node *mpt_node_new(size_t nlen, size_t dlen)
 { return mpt::node::create(nlen, dlen); }
 
 __MPT_NAMESPACE_BEGIN
+
+// data conversion
+int convert(const void **from, int ft, void *dest, int dt)
+{ return mpt_data_convert(from, ft, dest, dt); }
 
 // private data for node containing single reference metadata
 class NodePrivate : public node

@@ -17,76 +17,11 @@
 
 #include "queue.h"
 #include "array.h"
-#include "event.h"
 #include "message.h"
-#include "convert.h"
 
 #include "stream.h"
 
 __MPT_NAMESPACE_BEGIN
-
-int convert(const void **from, int ft, void *dest, int dt)
-{ return mpt_data_convert(from, ft, dest, dt); }
-
-float80 &float80::swapOrder()
-{
-    mpt_bswap_80(1, this);
-    return *this;
-}
-float80 & float80::operator= (const long double &val)
-{
-    mpt_float80_encode(1, &val, this);
-    return *this;
-}
-long double float80::value() const
-{
-    long double v;
-    mpt_float80_decode(1, this, &v);
-    return v;
-}
-
-int output::message(const char *from, int type, const char *fmt, ... )
-{
-    logger *log;
-    const char mt[2] = { MessageOutput, (char) type };
-    char buf[1024];
-    int slen = 0;
-
-    if ((log = mpt_object_logger(this))) {
-        va_list ap;
-        va_start(ap, fmt);
-        slen = log->log(from, type, fmt, ap);
-        va_end(ap);
-        return slen;
-    }
-    if (push(sizeof(mt), &mt) < 0) {
-        return -1;
-    }
-    if (from && (slen = push(strlen(from)+1, from)) < 0) {
-        slen = 0;
-    }
-    slen += sizeof(mt);
-
-    if (fmt) {
-        va_list ap;
-        int alen;
-        va_start(ap, fmt);
-        alen = vsnprintf(buf, sizeof(buf), fmt, ap);
-        va_end(ap);
-        if (alen < 0) {
-            alen = snprintf(buf, sizeof(buf), "<%s: %s>", MPT_tr("invalid format string"), fmt);
-        }
-        if (alen >= (int) sizeof(buf)) {
-            alen = sizeof(buf) - 1;
-        }
-        if (alen && (alen = push(alen, buf)) > 0) {
-            slen += alen;
-        }
-    }
-    push(0, 0);
-
-    return slen;
-}
 
 // streaminfo access
 streaminfo::~streaminfo()

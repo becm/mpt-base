@@ -3,8 +3,6 @@
  *   type ID classification
  */
 
-#include <cstdlib>
-
 #include "core.h"
 
 __MPT_NAMESPACE_BEGIN
