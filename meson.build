@@ -47,10 +47,8 @@ if not meson.is_subproject()
   endif
 endif
 
-inc = [ include_directories('.') ]
 with_core = true
 subdir('mptcore')
-inc += include_directories('mptcore')
 src_all = [ src_core ]
 
 if with_loader
@@ -60,13 +58,11 @@ endif
 
 if with_plot
   subdir('mptplot')
-  inc += include_directories('mptplot')
   src_all += src_plot
 endif
 
 if with_io
   subdir('mptio')
-  inc += include_directories('mptio')
   src_all += src_io
 endif
 
@@ -77,13 +73,18 @@ endif
 if with_cxx
   add_languages('cpp')
   subdir('mpt++')
-  inc += include_directories('mpt++')
   src_all += src_cxx
 endif
 
 if with_static
   mpt = static_library('mpt', src_all,
-    include_directories : inc,
+    include_directories : include_directories(
+      '.',
+      'mptcore',
+      'mptplot',
+      'mptio',
+      'mpt++'
+    ),
     install : true)
 
   pkg.generate(
