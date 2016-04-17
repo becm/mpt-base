@@ -27,6 +27,7 @@ if with_shared
     pkg.generate(
       description : 'mpt I/O library',
       libraries : libio,
+      requires : 'mptcore',
       version : '1.0.0',
       name : 'mptio')
   endif

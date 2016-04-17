@@ -23,6 +23,7 @@ if with_shared
     pkg.generate(
       description : 'mpt plotting library',
       libraries : libplot,
+      requires : 'mptcore',
       version : '1.0.0',
       name : 'mptplot')
   endif

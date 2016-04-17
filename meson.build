@@ -15,18 +15,15 @@ with_cxx = get_option('with_cxx')
 with_loader = get_option('with_loader')
 libs = get_option('libraries')
 
-
-if not (is_variable('with_static') and is_variable('with_shared'))
-  if libs == 'shared'
-    with_static = false
-    with_shared = true
-  elif libs == 'static'
-    with_static = true
-    with_shared = false
-  else
-    with_static = true
-    with_shared = true
-  endif
+if libs == 'shared'
+  with_static = false
+  with_shared = true
+elif libs == 'static'
+  with_static = true
+  with_shared = false
+else
+  with_static = true
+  with_shared = true
 endif
 
 if not meson.is_subproject()

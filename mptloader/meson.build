@@ -30,6 +30,7 @@ if with_shared
     pkg.generate(
       description : 'mpt loader operations',
       libraries : libloader,
+      requires : 'mptcore',
       version : '1.0.0',
       name : 'mptloader')
   endif

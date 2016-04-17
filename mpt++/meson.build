@@ -15,6 +15,7 @@ src_cxx = files(
 )
 if with_shared
   cxx = [ core ]
+  cxx_requires = 'mptcore'
 endif
 
 if with_plot
@@ -29,6 +30,7 @@ if with_plot
   )
   if with_shared
     cxx = [ plot ] + cxx
+    cxx_requires = 'mptplot ' + cxx_requires
   endif
 endif
 
@@ -39,6 +41,7 @@ if with_io
   )
   if with_shared
     cxx = [ io ] + cxx
+    cxx_requires = 'mptio ' + cxx_requires
   endif
 endif
 
@@ -57,6 +60,7 @@ if with_shared
     pkg.generate(
       description : 'mpt C++ library',
       libraries : libcxx,
+      requires : cxx_requires,
       version : '1.0.0',
       name : 'mpt++')
   endif
