@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'array_append.c',
   'array_callunref.c',
   'array_compact.c',

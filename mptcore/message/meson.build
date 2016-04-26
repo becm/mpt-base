@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'ansi_code.c',
   'memchr.c',
   'memcpy.c',

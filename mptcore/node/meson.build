@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'gnode_after.c',
   'gnode_before.c',
   'gnode_level.c',

@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'cevent_init.c',
   'cevent_prep.c',
   'cevent_step.c',

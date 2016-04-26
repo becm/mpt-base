@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'memrev.c',
   'qpop.c',
   'qpost.c',

@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'loop.c',
   'notify_add.c',
   'notify_bind.c',

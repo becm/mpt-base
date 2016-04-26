@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'command_get.c',
   'command_set.c',
   'dispatch_emit.c',

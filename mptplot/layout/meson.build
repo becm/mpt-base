@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'apply_linear.c',
   'axis_property.c',
   'color_html.c',

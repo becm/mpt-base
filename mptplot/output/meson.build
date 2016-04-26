@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'conf_graphic.c',
   'conf_history.c',
   'layout_open.c',

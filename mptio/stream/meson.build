@@ -1,6 +1,5 @@
-# meson.build.gen: suffix=c
+# meson.build.gen: *.c
 src = files(
- # match: *.c
   'accept.c',
   'stream_close.c',
   'stream_dispatch.c',
