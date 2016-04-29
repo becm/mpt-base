@@ -35,7 +35,7 @@ STATIC_OBJS ?= ${OBJS}
 # linker and link options
 LDDIRS ?= '${DIR_LIB}'
 LDFLAGS ?= '-hlib${LIB}.so.${SHLIB_MAJOR}' -zorigin -rpath=\$$ORIGIN $(LDDIRS:%=-L%)
-LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS} -o
+LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS}
 LINK ?= ${CC} ${CFLAGS}
 #
 # path to library without type suffix
@@ -64,7 +64,7 @@ ${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MI
 	cd '${@D}'; ln -fs '${@F}.${SHLIB_MINOR}.${SHLIB_TEENY}' '${@F}'
 
 ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${SHLIB_OBJS}
-	${LINK} ${LINK_FLAGS} '${@}' ${SHLIB_OBJS}
+	${LINK} -o '${@}' ${SHLIB_OBJS} ${LINK_FLAGS}
 
 extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
