@@ -15,11 +15,3 @@ set(MPT_INSTALL_INCLUDE include
 if (NOT IS_ABSOLUTE ${MPT_INSTALL_INCLUDE})
   set(MPT_INSTALL_INCLUDE ${CMAKE_INSTALL_PREFIX}/${MPT_INSTALL_INCLUDE})
 endif()
-
-
-# release information
-set(MPT_RELEASE "" CACHE STRING "set to non-emty for release info")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/release.h "/* release info */\n")
-if (MPT_RELEASE)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/release.h "#define __RELEASE__ \"${MPT_RELEASE}\"\n")
-endif(MPT_RELEASE)
