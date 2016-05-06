@@ -30,6 +30,7 @@ extern int main(int argc, char *argv[])
 			}
 			fprintf(stdout, "%g ", val);
 		}
+		mt->_vptr->unref(mt);
 		fputc('\n', stdout);
 	}
 	

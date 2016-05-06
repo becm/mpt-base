@@ -45,5 +45,6 @@ extern int main(int argc, char *argv[])
 		for (i = 0; i < len; ++i) fprintf(stdout, "%g ", val[i]);
 		fputc('\n', stdout);
 	}
+	free(val);
 	return 0;
 }
