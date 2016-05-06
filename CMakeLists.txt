@@ -9,15 +9,6 @@ include(mpt-config.cmake)
 # non-optional basic library
 add_subdirectory(mptcore)
 
-# release information
-set(MPT_RELEASE "" CACHE STRING "set to non-emty for release info")
-if (MPT_RELEASE)
-  file(WRITE ${CMAKE_BINARY_DIR}/version.h "/* release info */
-#define RELEASE_BUILD \"${MPT_RELEASE}\"
-#include \"${CMAKE_SOURCE_DIR}/version.h\"
-")
-endif(MPT_RELEASE)
-
 # conditional libraries to build
 option(MPT_WITH_LOADER "create MPT loader library" ON)
 if (MPT_WITH_LOADER)
