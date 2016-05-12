@@ -11,8 +11,12 @@
 # define mtrace()
 #endif
 
-#include <mpt/node.h>
-#include <mpt/config.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(node.h)
+#include MPT_INCLUDE(config.h)
 
 static int table_print(struct mpt_node *node, void *file, size_t depth)
 {

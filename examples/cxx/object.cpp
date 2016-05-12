@@ -5,14 +5,18 @@
 #include <typeinfo>
 #include <iostream>
 
-#include <mpt/node.h>
-#include <mpt/config.h>
-#include <mpt/message.h>
-#include <mpt/convert.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/layout.h>
+#include MPT_INCLUDE(node.h)
+#include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(message.h)
+#include MPT_INCLUDE(convert.h)
 
-#include <mpt/object.h>
+#include MPT_INCLUDE(layout.h)
+
+#include MPT_INCLUDE(object.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -25,6 +29,7 @@
 class Double {
     public:
     Double(double d) { _d = d; }
+    virtual ~Double() { }
     virtual int f0() { return _d; }
     virtual int f1(int) { return 1; }
     virtual int f2(int) { return 2; }
@@ -41,6 +46,7 @@ class Double {
 class Int {
     public:
     Int(int d) { _d = d; }
+    virtual ~Int() { }
     static int (*get)();
     virtual int f0() { return _d; }
     private:

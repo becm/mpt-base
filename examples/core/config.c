@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <mpt/config.h>
-#include <mpt/parse.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(parse.h)
 
 static int save(void *ctx, const MPT_STRUCT(path) *porg, int last, int curr)
 {

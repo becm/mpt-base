@@ -2,11 +2,14 @@
  * test buffer/queue object
  */
 
-
 #include <iostream>
 
-#include <mpt/queue.h>
-#include <mpt/array.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(queue.h)
+#include MPT_INCLUDE(array.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

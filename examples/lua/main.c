@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 		}
 		return 2;
 	}
-	else if ((str = getenv("MPT_PREFIX"))) {
+	if (!str && (str = getenv("MPT_PREFIX"))) {
 		char buf[256];
 		
 		snprintf(buf, sizeof(buf), "%s/%s", str, "share/lua/"LUA_VERSION_MAJOR"."LUA_VERSION_MINOR"/mathbox.lua");

@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <mpt/config.h>
-#include <mpt/convert.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/layout.h>
+#include MPT_INCLUDE(convert.h)
+#include MPT_INCLUDE(config.h)
+
+#include MPT_INCLUDE(layout.h)
 
 static int printm(void *out, const struct mpt_property *prop)
 {

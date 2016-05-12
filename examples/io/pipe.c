@@ -6,8 +6,12 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include <mpt/queue.h>
-#include <mpt/stream.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(queue.h)
+#include MPT_INCLUDE(stream.h)
 
 int main(int argc, char * const argv[])
 {

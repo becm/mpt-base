@@ -2,11 +2,15 @@
 #include <string.h>
 #include <poll.h>
 
-#include <mpt/array.h>
-#include <mpt/convert.h>
-#include <mpt/message.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/output.h>
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(convert.h)
+#include MPT_INCLUDE(message.h)
+
+#include MPT_INCLUDE(output.h)
 
 int main(int argc, char *argv[])
 {

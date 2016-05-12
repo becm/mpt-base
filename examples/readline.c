@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <mpt/client.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(client.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

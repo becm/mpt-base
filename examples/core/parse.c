@@ -20,10 +20,14 @@
 # define mtrace()
 #endif
 
-#include <mpt/array.h>
-#include <mpt/config.h>
-#include <mpt/parse.h>
-#include <mpt/stream.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(parse.h)
+#include MPT_INCLUDE(stream.h)
 
 int main(int argc, char *argv[])
 {

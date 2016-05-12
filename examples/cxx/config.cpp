@@ -1,12 +1,15 @@
 /*!
  * test config/path object
  */
-
 #include <typeinfo>
 #include <iostream>
 
-#include <mpt/node.h>
-#include <mpt/config.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(node.h)
+#include MPT_INCLUDE(config.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

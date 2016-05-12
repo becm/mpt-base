@@ -2,7 +2,11 @@
  * test config/path object
  */
 
-#include <mpt/layout.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(layout.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

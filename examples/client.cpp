@@ -2,8 +2,12 @@
  * instance of MPT client
  */
 
-#include <mpt/client.h>
-#include <mpt/output.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(client.h)
+#include MPT_INCLUDE(output.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

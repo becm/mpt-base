@@ -1,10 +1,13 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <mpt/convert.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/values.h>
+#include MPT_INCLUDE(convert.h)
+
+#include MPT_INCLUDE(values.h)
 
 static void fail(const char *txt)
 {

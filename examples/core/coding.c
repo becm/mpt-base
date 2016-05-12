@@ -8,8 +8,12 @@
 
 #include <sys/uio.h>
 
-#include <mpt/array.h>
-#include <mpt/convert.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(convert.h)
 
 /* hex dump of data */
 static void disp(MPT_STRUCT(array) *arr, size_t len)

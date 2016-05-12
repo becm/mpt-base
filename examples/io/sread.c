@@ -18,11 +18,15 @@
 # define mtrace()
 #endif
 
-#include <mpt/array.h>
-#include <mpt/queue.h>
-#include <mpt/message.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/stream.h>
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(queue.h)
+#include MPT_INCLUDE(message.h)
+
+#include MPT_INCLUDE(stream.h)
 
 /* easyest/general way to access envionment */
 extern char **environ;

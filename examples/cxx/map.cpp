@@ -4,10 +4,14 @@
 
 #include <iostream>
 
-#include <mpt/message.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/output.h>
-#include <mpt/layout.h>
+#include MPT_INCLUDE(message.h)
+
+#include MPT_INCLUDE(output.h)
+#include MPT_INCLUDE(layout.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

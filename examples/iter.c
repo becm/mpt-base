@@ -1,8 +1,10 @@
-
-
 #include <stdio.h>
 
-#include <mpt/values.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(values.h)
 
 extern int main(int argc, char *argv[])
 {

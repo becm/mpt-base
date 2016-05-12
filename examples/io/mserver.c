@@ -4,17 +4,21 @@
 #include <string.h>
 #include <sys/uio.h>
 
-#include <mpt/array.h>
-#include <mpt/message.h>
-#include <mpt/event.h>
-
-#include <mpt/notify.h>
-
 #ifdef __GLIBC__
 # include <mcheck.h>
 #else
 # define mtrace()
 #endif
+
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
+
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(message.h)
+#include MPT_INCLUDE(event.h)
+
+#include MPT_INCLUDE(notify.h)
 
 static int wrap_io(void *fd, struct mpt_event *ev)
 {
