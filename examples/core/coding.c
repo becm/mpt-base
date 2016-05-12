@@ -93,6 +93,7 @@ int main(int argc, char * const argv[])
 	
 	if (argc-- < 2) {
 		fprintf(stderr, "%s: %s\n", *argv, "{encoding}");
+		return 1;
 	}
 	++argv;
 	

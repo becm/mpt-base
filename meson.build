@@ -88,3 +88,7 @@ if with_static
     version : '1.0.0',
     name : 'mpt')
 endif
+
+if get_option('with_tests')
+  subdir('examples')
+endif

@@ -14,6 +14,6 @@ CLEAN_FILES += ${CLEAR_FILES}
 %_static : LDLIBS=-lmpt
 
 # special test arguments
-test_ident : ARGS=1024 1025
+test_ident : ARGS=1020 1021
 test_environ : ARGS='mpt_*'
 test_coding : ARGS=cobs
