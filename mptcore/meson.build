@@ -33,6 +33,8 @@ install_headers(
   'node.h', 'parse.h', 'queue.h',
   subdir : 'mpt')
 
+core_inc = include_directories('.')
+
 if with_shared
   core_lib = shared_library('mptcore', core_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
@@ -47,6 +49,8 @@ if with_shared
       name : 'mptcore')
   endif
 
-  core = declare_dependency(link_with : core_lib,
-    include_directories : include_directories('.'))
+  core = declare_dependency(
+    link_with : core_lib,
+    include_directories : core_inc
+  )
 endif

@@ -15,7 +15,8 @@ cxx_src = files(
 )
 if with_shared
   cxx = [ core ]
-  cxx_requires = 'mptcore'
+  cxx_inc = [ core_inc ]
+  cxx_req = 'mptcore'
 endif
 
 if with_plot
@@ -30,7 +31,8 @@ if with_plot
   )
   if with_shared
     cxx = [ plot ] + cxx
-    cxx_requires = 'mptplot ' + cxx_requires
+    cxx_inc = [ plot_inc ] + cxx_inc
+    cxx_req = 'mptplot ' + cxx_req
   endif
 endif
 
@@ -41,12 +43,15 @@ if with_io
   )
   if with_shared
     cxx = [ io ] + cxx
-    cxx_requires = 'mptio ' + cxx_requires
+    cxx_inc = [ io_inc ] + cxx_inc
+    cxx_req = 'mptio ' + cxx_req
   endif
 endif
 
 install_headers('object.h', 'graphic.h',
   subdir : 'mpt')
+
+cxx_inc = [ include_directories('.') ] + cxx_inc
 
 if with_shared
   cxx_lib = shared_library('mpt++', cxx_src, 'libinfo.c',
@@ -60,12 +65,15 @@ if with_shared
     pkg.generate(
       description : 'mpt C++ library',
       libraries : cxx_lib,
-      requires : cxx_requires,
+      requires_private : cxx_req,
       version : '1.0.0',
       name : 'mpt++')
   endif
-
-  cxx = [ declare_dependency(link_with : cxx_lib,
-            include_directories : include_directories('.'))
-        ] + cxx
+  
+  cxx = declare_dependency(
+    link_with : cxx_lib,
+    include_directories : cxx_inc
+  )
 endif
+
+cxx_inc = [ include_directories('.') ]

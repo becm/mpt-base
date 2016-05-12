@@ -47,6 +47,7 @@ endif
 with_core = true
 subdir('mptcore')
 static_src = [ core_src ]
+static_inc = [ include_directories('.'), core_inc ]
 
 if with_loader
   subdir('mptloader')
@@ -56,14 +57,17 @@ endif
 if with_plot
   subdir('mptplot')
   static_src += plot_src
+  static_inc += plot_inc
 endif
 
 if with_io
   subdir('mptio')
   static_src += io_src
+  static_inc += io_inc
 endif
 
-if dependency('lua' + get_option('lua'), required : false).found()
+with_lua = dependency('lua' + get_option('lua'), required : false).found()
+if with_lua
   subdir('lua')
 endif
 
@@ -75,13 +79,7 @@ endif
 
 if with_static
   mpt = static_library('mpt', static_src,
-    include_directories : include_directories(
-      '.',
-      'mptcore',
-      'mptplot',
-      'mptio',
-      'mpt++'
-    ),
+    include_directories : static_inc,
     install : true)
 
   pkg.generate(

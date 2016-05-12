@@ -24,14 +24,17 @@ if with_shared
     dependencies : load_dep,
     install : with_loader)
 
-  load = declare_dependency(link_with : load_lib)
-
   if with_loader
     pkg.generate(
       description : 'mpt loader operations',
       libraries : load_lib,
-      requires : 'mptcore',
+      requires_private : 'mptcore',
       version : '1.0.0',
       name : 'mptloader')
   endif
+
+  load = declare_dependency(
+    link_with : load_lib,
+    include_directories : core_inc
+  )
 endif

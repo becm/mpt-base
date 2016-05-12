@@ -15,6 +15,8 @@ endforeach
 install_headers('notify.h', 'stream.h',
   subdir : 'mpt')
 
+io_inc = include_directories('.')
+
 if with_shared
   io_lib = shared_library('mptio', io_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
@@ -27,11 +29,13 @@ if with_shared
     pkg.generate(
       description : 'mpt I/O library',
       libraries : io_lib,
-      requires : 'mptcore',
+      requires_private : 'mptcore',
       version : '1.0.0',
       name : 'mptio')
   endif
 
-  io = declare_dependency(link_with : io_lib,
-    include_directories : include_directories('.'))
+  io = declare_dependency(
+    link_with : io_lib,
+    include_directories : [ io_inc, core_inc ]
+  )
 endif
