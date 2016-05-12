@@ -18,11 +18,11 @@ install_data('mathbox.lua', 'mpt.lua',
   install_dir : lua_lmod)
 
 if with_shared
-  lua = shared_library('lua' + lua_version + '-mpt', 'mpt.c',
+  lua_lib = shared_library('lua' + lua_version + '-mpt', 'mpt.c',
     version : '1.0.0', soversion : '1',
     install_rpath : '$ORIGIN',
     c_args : lua_inc,
     include_directories : include_directories('../mptcore'),
-    link_with : libio,
+    link_with : io_lib,
     install : true)
 endif

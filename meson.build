@@ -46,21 +46,21 @@ endif
 
 with_core = true
 subdir('mptcore')
-src_all = [ src_core ]
+static_src = [ core_src ]
 
 if with_loader
   subdir('mptloader')
-  src_all += src_loader
+  static_src += load_src
 endif
 
 if with_plot
   subdir('mptplot')
-  src_all += src_plot
+  static_src += plot_src
 endif
 
 if with_io
   subdir('mptio')
-  src_all += src_io
+  static_src += io_src
 endif
 
 if dependency('lua' + get_option('lua'), required : false).found()
@@ -70,11 +70,11 @@ endif
 if with_cxx
   add_languages('cpp')
   subdir('mpt++')
-  src_all += src_cxx
+  static_src += cxx_src
 endif
 
 if with_static
-  mpt = static_library('mpt', src_all,
+  mpt = static_library('mpt', static_src,
     include_directories : include_directories(
       '.',
       'mptcore',

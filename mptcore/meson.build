@@ -2,7 +2,7 @@
 # build definition for mptcore library
 
 # top level source files
-src_core = files(
+core_src = files(
   'abort.c',
   'identifier.c',
   'log.c',
@@ -23,7 +23,7 @@ foreach d : [
   'queue'
 ]
   subdir(d)
-  src_core += src
+  core_src += src
 endforeach
 
 install_headers(
@@ -34,7 +34,7 @@ install_headers(
   subdir : 'mpt')
 
 if with_shared
-  libcore = shared_library('mptcore', src_core, 'libinfo.c',
+  core_lib = shared_library('mptcore', core_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
     install : with_core)
@@ -42,11 +42,11 @@ if with_shared
   if with_core
     pkg.generate(
       description : 'mpt core library',
-      libraries : libcore,
+      libraries : core_lib,
       version : '1.0.0',
       name : 'mptcore')
   endif
 
-  core = declare_dependency(link_with : libcore,
+  core = declare_dependency(link_with : core_lib,
     include_directories : include_directories('.'))
 endif

@@ -1,7 +1,7 @@
 # mpt-base/mptloader/meson.build
 # create loader library
 
-src_loader = files(
+load_src = files(
   'proxy_type.c',
   'library_assign.c',
   'library_open.c',
@@ -17,19 +17,19 @@ if with_shared
   else
     load_dep = core
   endif
-  libloader = shared_library('mptloader', src_loader, 'libinfo.c',
+  load_lib = shared_library('mptloader', load_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : load_dep,
     install : with_loader)
 
-  load = declare_dependency(link_with : libloader)
+  load = declare_dependency(link_with : load_lib)
 
   if with_loader
     pkg.generate(
       description : 'mpt loader operations',
-      libraries : libloader,
+      libraries : load_lib,
       requires : 'mptcore',
       version : '1.0.0',
       name : 'mptloader')

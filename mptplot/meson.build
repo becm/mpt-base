@@ -2,17 +2,17 @@
 # build definition for mptcore library
 
 # collect source files
-src_plot = []
+plot_src = []
 foreach d : [ 'output', 'layout', 'values' ]
   subdir(d)
-  src_plot += src
+  plot_src += src
 endforeach
 
 install_headers('output.h', 'layout.h', 'values.h',
   subdir : 'mpt')
 
 if with_shared
-  libplot = shared_library('mptplot', src_plot, 'libinfo.c',
+  plot_lib = shared_library('mptplot', plot_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
@@ -22,12 +22,12 @@ if with_shared
   if with_plot
     pkg.generate(
       description : 'mpt plotting library',
-      libraries : libplot,
+      libraries : plot_lib,
       requires : 'mptcore',
       version : '1.0.0',
       name : 'mptplot')
   endif
   
-  plot = declare_dependency(link_with : libplot,
+  plot = declare_dependency(link_with : plot_lib,
     include_directories : include_directories('.'))
 endif
