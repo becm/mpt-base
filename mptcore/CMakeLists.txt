@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 2.6)
 
 set(headers core.h)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} . .. ../mptplot ../mptio)
-
 set(subdirs
   array
   config
@@ -30,6 +28,7 @@ set(sources ${sources} abort.c identifier.c log.c mode_parse.c reference.c)
 
 add_library(mptcore SHARED ${sources} libinfo.c)
 set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)
+target_include_directories(mptcore PRIVATE .. . ${Mpt_PLOT_INCLUDE_DIRS} ${Mpt_IO_INCLUDE_DIRS})
 
 install(TARGETS mptcore  DESTINATION ${MPT_INSTALL_LIB})
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

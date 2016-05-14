@@ -22,44 +22,80 @@ if (NOT IS_ABSOLUTE ${MPT_INSTALL_INCLUDE})
   set(MPT_INSTALL_INCLUDE ${CMAKE_INSTALL_PREFIX}/${MPT_INSTALL_INCLUDE})
 endif()
 
+
+# version and libinfo headers
 set(Mpt_INCLUDE_DIRS "${Mpt_DIR}")
 
-foreach(_mod ${Mpt_FIND_COMPONENTS})
-  string(TOLOWER ${_mod} _mod)
-  set(_comp ${_mod})
-  string(TOUPPER ${_mod} _up)
+# available modules
+set(modules "core")
+list(APPEND modules "io")
+list(APPEND modules "plot")
+list(APPEND modules "loader")
+list(APPEND modules "cxx")
 
-  # clean names
-  if(${_comp} STREQUAL "cxx")
-    set(_comp "++")
+# need rebuild of module library
+if(NOT "${MPT_INSTALL_LIB}" STREQUAL "${libdir}")
+  if(NOT libdir)
+    message(STATUS "build cache -> ${MPT_INSTALL_LIB}")
+  else()
+    message(STATUS "rebuild cache -> ${MPT_INSTALL_LIB}")
   endif()
+  set(libdir "${MPT_INSTALL_LIB}" CACHE INTERNAL "save library location")
   
-  # clear cache entries
-  unset(Mpt_${_up} CACHE)
-  unset(Mpt_${_up}_BUILD_DIR CACHE)
+  foreach(_mod ${modules})
+    set(_comp ${_mod})
+    string(TOUPPER ${_mod} _up)
   
-  # library in target location
-  if(NOT Mpt_${_up})
-     find_library(Mpt_${_up} NAMES mpt${_comp} PATHS "${MPT_INSTALL_LIB}" NO_DEFAULT_PATH DOC "mpt ${_comp} library")
-  endif()
-  # local build definition
-  if(NOT Mpt_${_up})
-    find_path(Mpt_${_up} "CMakeLists.txt" PATH "${CMAKE_CURRENT_SOURCE_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
-  endif()
-  # remote build definition
-  if(NOT Mpt_${_up})
-    find_path(Mpt_${_up} "CMakeLists.txt" PATH "${Mpt_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
-    set(Mpt_${_up}_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/mpt/${_comp}" CACHE PATH "build directory for mpt${_comp}")
-  endif()
+    # clean names
+    if(${_comp} STREQUAL "cxx")
+      set(_comp "++")
+    endif()
+    
+    # clear cache entries
+    unset(Mpt_${_up} CACHE)
+    unset(Mpt_${_up}_BUILD_DIR CACHE)
+    
+    # library in target location
+    if(NOT Mpt_${_up})
+      find_library(Mpt_${_up} NAMES mpt${_comp} PATHS "${MPT_INSTALL_LIB}" NO_DEFAULT_PATH DOC "mpt ${_mod} library")
+    endif()
+    # local build definition
+    if(NOT Mpt_${_up})
+      find_path(Mpt_${_up} "CMakeLists.txt" PATH "${CMAKE_CURRENT_SOURCE_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
+    endif()
+    # remote build definition
+    if(NOT Mpt_${_up})
+      find_path(Mpt_${_up} "CMakeLists.txt" PATH "${Mpt_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
+      set(Mpt_${_up}_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/mpt/${_mod}" CACHE PATH "build directory for mpt${_comp}")
+    endif()
+    
+    # clear missing entries
+    if(NOT Mpt_${_up})
+      unset(Mpt_${_up} CACHE)
+      unset(Mpt_${_up}_BUILD_DIR CACHE)
+      list(REMOVE_ITEM modules "${_mod}")
+      message(STATUS "no definition for component ${_mod}")
+    endif()
+  endforeach()
+endif()
+
+# definitions for modules
+foreach(_comp ${modules})
+  string(TOUPPER ${_comp} _up)
   
-  if(NOT Mpt_${_up})
-    message(FATAL_ERROR "no definition for component ${_comp}")
+  # use created module
+  if(IS_DIRECTORY "${Mpt_${_up}}")
+    set(Mpt_${_up}_INCLUDE_DIRS "${Mpt_${_up}}")
+    set(Mpt_${_up}_LIBRARIES "mpt${_comp}")
+  # use existing library
+  else()
+    set(Mpt_${_up}_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt")
+    set(Mpt_${_up}_LIBRARIES "${Mpt_${_up}}")
   endif()
-  
 endforeach()
 
-foreach(_comp ${Mpt_FIND_COMPONENTS})
-  string(TOLOWER ${_comp} _comp)
+# module target/library and definitions
+function(mpt_module _comp)
   string(TOUPPER ${_comp} _up)
   
   # create library
@@ -71,15 +107,42 @@ foreach(_comp ${Mpt_FIND_COMPONENTS})
       message(STATUS "${_comp}: ${Mpt_${_up}}")
       add_subdirectory(${Mpt_${_up}})
     endif()
-    set(Mpt_${_up}_INCLUDE_DIRS "${Mpt_${_up}}")
-    list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_up}_INCLUDE_DIRS}")
-    set(Mpt_${_up}_LIBRARIES "mpt${_comp}")
-  # use existing library
+    list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_up}_INCLUDE_DIRS}" PARENT_SCOPE)
   else()
     message(STATUS "${_comp} lib: ${Mpt_${_up}}")
-    set(Mpt_${_up}_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt")
-    list(APPEND Mpt_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt")
-    set(Mpt_${_up}_LIBRARIES "${Mpt_${_up}}")
+    list(APPEND Mpt_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt" PARENT_SCOPE)
   endif()
-  list(INSERT Mpt_LIBRARIES 0 "${Mpt_${_up}_LIBRARIES}")
+endfunction()
+
+# normalize component names
+unset(components)
+foreach(_comp ${Mpt_FIND_COMPONENTS})
+  string(TOLOWER ${_comp} _comp)
+  list(APPEND components ${_comp})
 endforeach()
+
+if(components)
+  # all components need core module
+  mpt_module("core")
+  list(FIND components "core" _pos)
+  if (NOT _pos LESS 0)
+    list(REMOVE_ITEM components "core")
+    list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_CORE_INCLUDE_DIRS}")
+    list(INSERT Mpt_LIBRARIES 0 "${Mpt_CORE_LIBRARIES}")
+  endif()
+  # find conditional modules in correct order
+  foreach(_mod "loader" "plot" "io" "cxx")
+    list(FIND components ${_mod} _pos)
+    list(REMOVE_ITEM components ${_mod})
+    if (NOT _pos LESS 0)
+      mpt_module(${_mod})
+      string(TOUPPER ${_mod} _mod)
+      list(INSERT Mpt_LIBRARIES 0 "${Mpt_${_mod}_LIBRARIES}")
+      if(IS_DIRECTORY "${Mpt_${_up}}")
+        list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_mod}_INCLUDE_DIRS}")
+      else()
+        list(APPEND Mpt_INCLUDE_DIRS "${Mpt_${_mod}_INCLUDE_DIRS}")
+      endif()
+    endif()
+  endforeach(_mod)
+endif(components)

@@ -12,7 +12,7 @@ set(headers notify.h stream.h)
 
 add_library(mptio SHARED ${sources} libinfo.c)
 set_target_properties(mptio PROPERTIES VERSION 1.0.0 SOVERSION 1)
-target_include_directories(mptio PRIVATE .. . ../mptplot ${Mpt_CORE_INCLUDE_DIRS})
+target_include_directories(mptio PRIVATE .. . ${Mpt_PLOT_INCLUDE_DIRS} ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(mptio ${Mpt_CORE_LIBRARIES})
 
 install(TARGETS mptio    DESTINATION ${MPT_INSTALL_LIB})
