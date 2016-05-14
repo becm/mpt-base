@@ -73,10 +73,6 @@ int path::add()
 bool path::next()
 { return (mpt_path_next(this) < 0) ? false : true; }
 
-Slice<const char> path::data() const
-{
-    return Slice<const char>(mpt_path_data(this), valid);
-}
 
 // default implementation for config
 bool config::set(const char *p, const char *val, int sep)
@@ -121,18 +117,17 @@ void Config::unref()
 }
 Config::Element *Config::getElement(const Array<Config::Element> &arr, path &p)
 {
-    const char *name;
+    const Slice<const char> name = p.value();
     int len;
 
-    name = p.base + p.off;
     if ((len = mpt_path_next(&p)) < 0) {
         return 0;
     }
     for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
-        if (e->unused() || !e->equal(name, len)) {
+        if (e->unused() || !e->equal(name.base(), len)) {
             continue;
         }
-        if (p.len) {
+        if (!p.empty()) {
             return getElement(*e, p);
         }
         return e;
@@ -141,10 +136,9 @@ Config::Element *Config::getElement(const Array<Config::Element> &arr, path &p)
 }
 Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
 {
-    const char *name;
+    const Slice<const char> name = p.value();
     int len;
 
-    name = p.base + p.off;
     if ((len = mpt_path_next(&p)) < 0) {
         return 0;
     }
@@ -153,10 +147,10 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
         if (e->unused()) {
             if (!unused) unused = e;
         }
-        if (!e->equal(name, len)) {
+        if (!e->equal(name.base(), len)) {
             continue;
         }
-        if (p.len) {
+        if (!p.empty()) {
             return makeElement(*e, p);
         }
         return e;
@@ -172,14 +166,14 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
         metatype *m = *unused;
         if (m) m->assign(0);
     }
-    unused->setName(name, len);
+    unused->setName(name.base(), len);
 
-    return p.len ? makeElement(*unused, p) : unused;
+    return p.empty() ? unused : makeElement(*unused, p);
 }
 int Config::assign(const path *dest, const value *val)
 {
-    // metatype identity */
-    if (!dest || !dest->len) {
+    // no 'self' element(s)
+    if (!dest || dest->empty()) {
         return BadArgument;
     }
     // find existing
@@ -214,8 +208,8 @@ int Config::assign(const path *dest, const value *val)
 }
 metatype *Config::query(const path *dest) const
 {
-    // metatype identity */
-    if (!dest || !dest->len) {
+    // no 'self' element(s)
+    if (!dest || dest->empty()) {
         return 0;
     }
     // find existing
@@ -234,7 +228,7 @@ int Config::remove(const path *dest)
         return 0;
     }
     // clear configuration
-    if (!dest->len) {
+    if (dest->empty()) {
         _sub.clear();
         return 0;
     }

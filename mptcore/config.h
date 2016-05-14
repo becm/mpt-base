@@ -33,7 +33,10 @@ MPT_STRUCT(path)
 	bool append(const char *path, int len = -1);
 	
 	bool next();
+	
+	bool empty() const;
 	Slice<const char> data() const;
+	Slice<const char> value() const;
 	
 	path & operator=(path const &);
 	
@@ -41,12 +44,9 @@ MPT_STRUCT(path)
 	int del();
 	
 	bool setValid();
-	inline void clearData()
-	{ valid = 0; }
+	void clearData();
 	
     protected:
-	friend MPT_INTERFACE(config);
-	friend class Config;
 #else
 # define MPT_PATH_INIT  { 0,  0, 0, 0,  0, 0,  '.', '=' }
 #endif
@@ -148,6 +148,23 @@ extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(p
 __MPT_EXTDECL_END
 
 #if defined(__cplusplus)
+inline bool path::empty() const
+{
+    return len == 0;
+}
+inline Slice<const char> path::data() const
+{
+    return Slice<const char>(base + off + len, valid);
+}
+inline Slice<const char> path::value() const
+{
+    return Slice<const char>(base + off, len);
+}
+inline void path::clearData()
+{
+	valid = 0;
+}
+
 class Config : public config
 {
 public:
