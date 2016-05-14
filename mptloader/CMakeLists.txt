@@ -1,7 +1,11 @@
 # create MPT plotting library
 cmake_minimum_required(VERSION 2.6)
 
-aux_source_directory(. sources)
+set(sources
+  library_assign.c library_bind.c
+  meta_open.c proxy_type.c
+  readline.c
+)
 
 set(linklibs ${Mpt_CORE_LIBRARIES})
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)

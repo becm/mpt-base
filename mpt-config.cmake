@@ -95,7 +95,7 @@ foreach(_comp ${modules})
 endforeach()
 
 # module target/library and definitions
-function(mpt_module _comp)
+macro(mpt_module _comp)
   string(TOUPPER ${_comp} _up)
   
   # create library
@@ -107,12 +107,12 @@ function(mpt_module _comp)
       message(STATUS "${_comp}: ${Mpt_${_up}}")
       add_subdirectory(${Mpt_${_up}})
     endif()
-    list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_up}_INCLUDE_DIRS}" PARENT_SCOPE)
+    list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_up}_INCLUDE_DIRS}")
   else()
     message(STATUS "${_comp} lib: ${Mpt_${_up}}")
-    list(APPEND Mpt_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt" PARENT_SCOPE)
+    list(APPEND Mpt_INCLUDE_DIRS "${MPT_INSTALL_INCLUDE}/mpt")
   endif()
-endfunction()
+endmacro()
 
 # normalize component names
 unset(components)
@@ -138,7 +138,7 @@ if(components)
       mpt_module(${_mod})
       string(TOUPPER ${_mod} _mod)
       list(INSERT Mpt_LIBRARIES 0 "${Mpt_${_mod}_LIBRARIES}")
-      if(IS_DIRECTORY "${Mpt_${_up}}")
+      if(IS_DIRECTORY "${Mpt_${_mod}}")
         list(INSERT Mpt_INCLUDE_DIRS 0 "${Mpt_${_mod}_INCLUDE_DIRS}")
       else()
         list(APPEND Mpt_INCLUDE_DIRS "${Mpt_${_mod}_INCLUDE_DIRS}")
