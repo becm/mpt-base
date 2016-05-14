@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#include <sys/uio.h>
+
 #include <arpa/inet.h>
 
 #include "array.h"
