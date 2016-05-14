@@ -122,29 +122,35 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 			return MPT_ERROR(BadOperation);
 		}
 	}
-	if (len < 0) {
+	if (len <= 0) {
 		if ((mt = n->_meta)) {
 			return mt->_vptr->assign(mt, 0);
 		}
 		return 0;
 	}
-	if (!len) {
-		if (!(mt = n->_meta)) {
-			return 0;
+	/* try assign existing data */
+	if ((mt = n->_meta)) {
+		int ret;
+		if ((ret = mt->_vptr->assign(mt, val)) >= 0) {
+			return ret;
+		}
+		/* keep non-default types */
+		if (mt->_vptr->conv(mt, 0, 0)) {
+			return ret;
 		}
 	}
-	else if (!(mt = n->_meta)) {
-		if (!(mt = mpt_meta_new(len))) {
-			return MPT_ERROR(BadOperation);
-		}
-		if ((len = mt->_vptr->assign(mt, val)) < 0) {
-			mt->_vptr->unref(mt);
-			return MPT_ERROR(BadValue);
-		}
-		n->_meta = mt;
-		return len;
+	if (!(mt = mpt_meta_new(len))) {
+		return MPT_ERROR(BadOperation);
 	}
-	return mt->_vptr->assign(mt, val);
+	if ((len = mt->_vptr->assign(mt, val)) < 0) {
+		mt->_vptr->unref(mt);
+		return MPT_ERROR(BadValue);
+	}
+	if (n->_meta) {
+		n->_meta->_vptr->unref(mt);
+	}
+	n->_meta = mt;
+	return len;
 }
 static const MPT_INTERFACE_VPTR(config) configGlobal = {
 	configUnref,
