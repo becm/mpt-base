@@ -38,5 +38,5 @@ else()
   target_compile_features(mpt++ PUBLIC cxx_decltype cxx_range_for)
 endif()
 
-install(TARGETS mpt++    DESTINATION ${MPT_INSTALL_LIB})
+install(TARGETS mpt++    DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

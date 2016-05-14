@@ -13,5 +13,5 @@ set_target_properties(mptloader PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mptloader PRIVATE .. ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(mptloader ${linklibs})
 
-install(TARGETS mptloader  DESTINATION ${MPT_INSTALL_LIB})
+install(TARGETS mptloader  DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

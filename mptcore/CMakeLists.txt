@@ -30,5 +30,5 @@ add_library(mptcore SHARED ${sources} libinfo.c)
 set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mptcore PRIVATE .. . ${Mpt_PLOT_INCLUDE_DIRS} ${Mpt_IO_INCLUDE_DIRS})
 
-install(TARGETS mptcore  DESTINATION ${MPT_INSTALL_LIB})
+install(TARGETS mptcore  DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

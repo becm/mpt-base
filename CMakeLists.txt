@@ -27,8 +27,10 @@ if (MPT_WITH_CXX)
   list(APPEND components cxx)
 endif(MPT_WITH_CXX)
 
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ".")
+list(APPEND CMAKE_PREFIX_PATH ".")
 find_package(Mpt REQUIRED COMPONENTS ${components})
+
+install(EXPORT mpt-targets DESTINATION share/mpt)
 
 set(CPACK_PACKAGE_NAME "mpt-base")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")

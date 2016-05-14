@@ -15,5 +15,5 @@ set_target_properties(mptio PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mptio PRIVATE .. . ${Mpt_PLOT_INCLUDE_DIRS} ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(mptio ${Mpt_CORE_LIBRARIES})
 
-install(TARGETS mptio    DESTINATION ${MPT_INSTALL_LIB})
+install(TARGETS mptio    DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)

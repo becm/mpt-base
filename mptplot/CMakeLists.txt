@@ -12,5 +12,5 @@ set_target_properties(mptplot PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mptplot PRIVATE .. . ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(mptplot ${Mpt_CORE_LIBRARIES})
 
-install(TARGETS mptplot  DESTINATION ${MPT_INSTALL_LIB})
+install(TARGETS mptplot  DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)
