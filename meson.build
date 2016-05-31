@@ -47,7 +47,7 @@ endif
 with_core = true
 subdir('mptcore')
 static_src = [ core_src ]
-static_inc = [ include_directories('.'), core_inc ]
+static_inc = [ core_inc ]
 
 if with_loader
   subdir('mptloader')

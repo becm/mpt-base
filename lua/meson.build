@@ -30,4 +30,6 @@ if with_shared and with_io
     declare_dependency(link_with : lua_lib),
     dependency('lua' + get_option('lua'))
   ]
+else
+  with_lua = false
 endif
