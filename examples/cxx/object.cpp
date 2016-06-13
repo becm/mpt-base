@@ -99,6 +99,10 @@ extern int main(int , char * const [])
 	
 	std::cout << "lo: " << lo.type() << std::endl;
 	
+	for (auto &i : *static_cast<const mpt::object *>(li)) {
+		std::cout << "  " << i.name << " = " << i.val << std::endl;
+	}
+	
 	obj = ao;
 	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
 	obj = lo;

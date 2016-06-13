@@ -239,8 +239,6 @@ MPT_STRUCT(property)
     public:
 	enum { Type = TypeProperty };
 	
-	class iterator;
-	
 	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(0, v)
 	{ }
 	inline property(const char *n, const char *f, const void *d) : name(n), desc(0), val(f, d)

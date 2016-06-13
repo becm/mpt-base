@@ -15,110 +15,108 @@ namespace mpt {
 struct color;
 struct lineattr;
 
-class property::iterator : property
+class object::const_iterator
 {
 public:
-    iterator();
+    inline const_iterator(const class object &obj) : _ref(obj), _pos(-1)
+    { }
 
-    inline const char *name() const
+    inline const_iterator &operator ++()
     {
-        return property::name;
-    }
-    inline const char *desc() const
-    {
-        return property::desc;
-    }
-    inline operator const value&() const
-    {
-        return property::val;
-    }
-    inline operator const property *() const
-    {
-        return this;
-    }
-    inline bool operator ==(const iterator &cmp) const
-    {
-         return _pos == cmp._pos;
-    }
-protected:
-    friend class object::iterator;
-    friend class object::const_iterator;
-    bool select(const object &, uintptr_t);
-    intptr_t _pos;
-};
-
-class object::iterator : public property::iterator
-{
-public:
-    iterator(class object *);
-
-    inline iterator &operator ++()
-    {
-        if (_ref && _pos >= 0) {
-            select(*_ref, _pos+1);
+        if (_pos >= 0 && !select(++_pos)) {
+            setInvalid();
         }
         return *this;
-    }
-    inline class object *object() const
-    {
-        return _ref;
-    }
-    inline bool operator ==(const iterator &cmp) const
-    {
-         return _pos == cmp._pos;
-    }
-protected:
-    class object *_ref;
-};
-
-class object::const_iterator : public property::iterator
-{
-public:
-    const_iterator(const class object *);
-
-    inline iterator &operator ++()
-    {
-        if (_ref && _pos >= 0) {
-            select(*_ref, _pos+1);
-        }
-        return *this;
-    }
-    inline const class object *object() const
-    {
-        return _ref;
     }
     inline bool operator ==(const const_iterator &cmp) const
     {
          return _pos == cmp._pos;
     }
+    inline void setInvalid()
+    {
+        _prop.name = nullptr;
+        _pos = -1;
+    }
+    inline const char *name()
+    {
+        return _prop.name;
+    }
+    inline const struct property &operator *() const
+    {
+        return _prop;
+    }
+    bool select(uintptr_t);
 protected:
-    const class object *_ref;
+    const class object &_ref;
+    intptr_t _pos;
+    struct ::mpt::property _prop;
+};
+
+class object::iterator
+{
+public:
+    inline iterator(class object &obj) : _ref(obj), _pos(-1), _name(nullptr)
+    { }
+
+    inline iterator &operator ++()
+    {
+        if (_pos >= 0 && !select(++_pos)) {
+            setInvalid();
+        }
+        return *this;
+    }
+    inline bool operator ==(const iterator &cmp) const
+    {
+         return _pos == cmp._pos;
+    }
+    inline void setInvalid()
+    {
+        _name = nullptr;
+        _pos = -1;
+    }
+    inline const char *name()
+    {
+        return _name;
+    }
+    inline const char *operator *() const
+    {
+        return _name;
+    }
+    bool select(uintptr_t);
+protected:
+    const class object &_ref;
+    intptr_t _pos;
+    const char *_name;
 };
 
 inline object::iterator object::begin()
 {
-    return iterator(this);
+    iterator it(*this);
+    it.select(0);
+    return it;
 }
 inline object::iterator object::end()
 {
-    return iterator(0);
+    return iterator(*this);
 }
 
 inline object::const_iterator object::const_begin() const
 {
-    return const_iterator(this);
+    const_iterator it(*this);
+    it.select(0);
+    return it;
 }
 inline object::const_iterator object::const_end() const
 {
-    return const_iterator(0);
+    return const_iterator(*this);
 }
 inline object::const_iterator object::begin() const
 {
-    return const_iterator(this);
+    return const_begin();
 }
 inline object::const_iterator object::end() const
 {
-    return const_iterator(0);
+    return const_end();
 }
 
 class Property : Reference<object>

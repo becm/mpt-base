@@ -21,33 +21,25 @@ std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::val
 
 __MPT_NAMESPACE_BEGIN
 
-property::iterator::iterator() : property((uintptr_t) 0), _pos(0)
-{ }
-
-bool property::iterator::select(const object &o, uintptr_t pos)
+bool object::const_iterator::select(uintptr_t pos)
 {
-    property::name = 0;
-    property::desc = (const char *) pos;
-    if (o.property(this) < 0) {
-        _pos = -1;
+    _prop.name = 0;
+    _prop.desc = (const char *) pos;
+    if (_ref.property(&_prop) < 0) {
         return false;
     }
     _pos = pos;
     return true;
 }
-
-object::const_iterator::const_iterator(const class object *o) : _ref(o)
+bool object::iterator::select(uintptr_t pos)
 {
-    if (!o || o->property(this) < 0) {
-        _pos = -1;
+    struct property pr(pos);
+    if (_ref.property(&pr) < 0) {
+        return false;
     }
-}
-
-object::iterator::iterator(class object *o) : _ref(o)
-{
-    if (!o || o->property(this) < 0) {
-        _pos = -1;
-    }
+    _name = pr.name;
+    _pos = pos;
+    return true;
 }
 
 // object assignment
