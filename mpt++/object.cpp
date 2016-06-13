@@ -133,10 +133,9 @@ bool Property::set(const value &val)
 // create storage
 Object::Object(Object &other) : Item<object>(0), _hash(0)
 {
-    Reference<object> &ref = *this;
-    ref = other.ref();
-    Slice<const char> d = other.identifier::data();
-    if (identifier::setName(d.base(), d.len())) {
+    Reference<object>::operator=(other.ref());
+    if (identifier::setName(other)) {
+        Slice<const char> d = nameData();
         _hash = mpt_hash(d.base(), d.len());
     }
 }
@@ -156,7 +155,7 @@ const Reference<object> &Object::ref()
 { return *this; }
 
 // replace existing store
-bool Object::setObject(object *o)
+bool Object::setPointer(object *o)
 {
     if (!o || o == _ref) return false;
     if (_ref) _ref->unref();
@@ -166,16 +165,18 @@ bool Object::setObject(object *o)
 Object & Object::operator =(Reference<object> const & from)
 {
     Reference<object> ref(from);
-    if (ref && setObject(ref)) ref.detach();
+    object *obj = ref.pointer();
+    if (obj && setPointer(obj)) ref.detach();
     return *this;
 }
 Object & Object::operator =(Object & other)
 {
     Reference<object> ref(other.ref());
-    if (ref && setObject(ref)) ref.detach();
+    object *obj = ref.pointer();
+    if (obj && setPointer(obj)) ref.detach();
 
-    Slice<const char> d = other.identifier::data();
-    if (identifier::setName(d.base(), d.len())) {
+    if (identifier::setName(other)) {
+        Slice<const char> d = nameData();
         _hash = mpt_hash(d.base(), d.len());
     }
     return *this;
@@ -187,7 +188,7 @@ bool Object::setName(const char *name, int len)
     if (!identifier::setName(name, len)) {
         return false;
     }
-    Slice<const char> d = identifier::data();
+    Slice<const char> d = nameData();
 
     _hash = mpt_hash(d.base(), d.len());
 

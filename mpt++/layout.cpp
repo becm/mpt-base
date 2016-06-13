@@ -422,7 +422,7 @@ bool Graph::bind(const Relation &rel, logger *out)
 
     if (!(names = axes())) {
         for (auto &it : _items) {
-            if (!(m = it) || m->type() != Axis::Type) continue;
+            if (!(m = it.pointer()) || m->type() != Axis::Type) continue;
             curr = it.name();
             Axis *a = makeAxis(m, out, _func, curr, -1);
             if (addAxis(a, curr)) {
@@ -456,7 +456,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     if (!(names = worlds())) {
         for (auto &it : _items) {
-            if (!(m = it) || m->type() != World::Type) continue;
+            if (!(m = it.pointer()) || m->type() != World::Type) continue;
             curr = it.name();
             World *w = makeWorld(m, out, _func, curr, -1);
             if (addWorld(w, curr)) {
@@ -492,7 +492,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     for (auto &it : _items) {
         Group *g;
-        if (!(m = it) || !(g = m->cast<Group>())) continue;
+        if (!(m = it.pointer()) || !(g = m->cast<Group>())) continue;
         GroupRelation gr(*g, &rel);
         if (!g->bind(gr, out)) {
             _axes = oldaxes;
@@ -518,7 +518,7 @@ Item<Axis> *Graph::addAxis(Axis *from, const char *name, int nlen)
     }
     else {
         for (auto &it : _axes) {
-            if (a == it) return 0; // deny multiple dimensions sharing same transformation
+            if (a == it.pointer()) return 0; // deny multiple dimensions sharing same transformation
         }
     }
     Item<Axis> *it;
@@ -561,11 +561,11 @@ const Reference<Cycle> &Graph::cycle(int pos) const
     static const Reference<Cycle> def;
     if (pos < 0 && (pos += _worlds.size()) < 0) return def;
     Data *d = _worlds.get(pos);
-    if (!d->cycle) {
-        d->cycle = Reference<Cycle>(new Reference<Cycle>::instance);
+    if (!d->cycle.pointer()) {
+        d->cycle.setPointer(new Reference<Cycle>::instance);
         World *w;
-        if ((w = *d)) {
-            static_cast<Cycle *>(d->cycle)->setSize(w->cyc);
+        if ((w = d->pointer())) {
+            d->cycle.pointer()->setSize(w->cyc);
         }
     }
     return d->cycle;
@@ -592,7 +592,7 @@ bool Graph::updateTransform(int dim)
     Item<Axis> *it = _axes.get(dim);
     Axis *a;
 
-    if (!it || !(a = *it)) {
+    if (!it || !(a = it->pointer())) {
         return false;
     }
     cut = clip;
@@ -740,8 +740,7 @@ bool Layout::update(metatype *m)
 {
     if (!m) return false;
     for (auto &it : _items) {
-        metatype *ref = it;
-        if (m == ref) return true;
+        if (m == it.pointer()) return true;
     }
     return false;
 }
@@ -755,7 +754,7 @@ bool Layout::bind(const Relation &rel, logger *out)
     for (auto &it : _items) {
         metatype *m;
         Graph *g;
-        if (!(m = it) || m->type() != Graph::Type) continue;
+        if (!(m = it.pointer()) || m->type() != Graph::Type) continue;
 
         const char *name = it.name();
         if (!(g = dynamic_cast<Graph *>(m)) || !g->addref()) {
@@ -847,7 +846,7 @@ fpoint Layout::minScale() const
 
     for (auto &it : _graphs) {
         Graph *g;
-        if (!(g = it)) continue;
+        if (!(g = it.pointer())) continue;
         if (g->scale.x < x) x = g->scale.x;
         if (g->scale.y < y) y = g->scale.y;
     }

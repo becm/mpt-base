@@ -103,9 +103,9 @@ extern int main(int , char * const [])
 		std::cout << "  " << i.name << " = " << i.val << std::endl;
 	}
 	
-	obj = ao;
+	obj = ao.pointer();
 	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
-	obj = lo;
+	obj = lo.pointer();
 	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
 	mpt::Axis *na = new mpt::Axis;
@@ -131,12 +131,12 @@ extern int main(int , char * const [])
 	op = lo;
 	
 	// failing assignments for empty/same metatype
-	op.setObject(0);
-	op.setObject(lo);
+	op.setPointer(0);
+	op.setPointer(lo.pointer());
 	opt = &lo;
-	opt->setObject(lo);
+	opt->setPointer(lo.pointer());
 	opt = &op;
-	opt->setObject(lo);
+	opt->setPointer(lo.pointer());
 	
 	double t = -.3e-5;
 	mpt::float80 v = t;

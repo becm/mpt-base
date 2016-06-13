@@ -163,7 +163,7 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
     }
     else {
         unused->clear();
-        metatype *m = *unused;
+        metatype *m = unused->pointer();
         if (m) m->assign(0);
     }
     unused->setName(name.base(), len);
@@ -183,7 +183,7 @@ int Config::assign(const path *dest, const value *val)
 
     if (!val) {
         if (!(curr = getElement(_sub, p))
-            || !(m = *curr)) {
+            || !(m = curr->pointer())) {
             return 0;
         }
         return m->assign(val);
@@ -192,7 +192,7 @@ int Config::assign(const path *dest, const value *val)
         return BadOperation;
     }
     int ret = 0;
-    if (!(m = *curr) || (ret = m->assign(val) < 0)) {
+    if (!(m = curr->pointer()) || (ret = m->assign(val) < 0)) {
         if (val->fmt) return BadValue;
         size_t len = val->ptr ? strlen((const char *) val->ptr) + 1 : 0;
         if (!(m = metatype::create(len))) {
@@ -202,7 +202,7 @@ int Config::assign(const path *dest, const value *val)
             m->unref();
             return ret;
         }
-        curr->setReference(m);
+        curr->setPointer(m);
     }
     return ret;
 }
@@ -219,7 +219,7 @@ metatype *Config::query(const path *dest) const
     if (!(curr = getElement(_sub, p))) {
         return 0;
     }
-    return *curr;
+    return curr->pointer();
 }
 int Config::remove(const path *dest)
 {
@@ -245,7 +245,7 @@ int Config::remove(const path *dest)
     curr->setName(0);
 
     // try to reset element
-    metatype *m = *curr;
+    metatype *m = curr->pointer();
     if (m && m->assign(0)) {
         return 2;
     }

@@ -316,10 +316,10 @@ public:
     inline ~Reference()
     { if (_ref) _ref->unref(); }
     
-    inline operator T*() const
+    inline T *pointer() const
     { return _ref; }
     
-    inline void setReference(T *ref)
+    inline void setPointer(T *ref)
     {
         if (_ref) _ref->unref();
         _ref = ref;
@@ -579,7 +579,7 @@ MPT_STRUCT(identifier)
 	{ setName(0); }
 	
 	bool equal(const char *, int) const;
-	Slice<const char> data() const;
+	Slice<const char> nameData() const;
 	const char *name() const;
 	
 	bool setName(const char *, int = -1);
@@ -603,9 +603,6 @@ class Item : public Reference<T>, public identifier
 public:
     Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
     { }
-    inline void unref()
-    { delete this; }
-    
 protected:
     char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
 };
@@ -760,6 +757,7 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, 
 extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
 extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
+extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
 
 
 /* create meta type element */

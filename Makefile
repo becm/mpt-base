@@ -5,7 +5,7 @@ SUB = ${MODULES} lua
 # creation targets
 .PHONY : ${SUB} all clear clean devel install static static_clear sub_% examples_%
 devel : sub_devel
-install : devel static
+install : sub_install static
 shared : sub_shared
 test : examples_test
 examples_test : devel

@@ -47,6 +47,10 @@ bool identifier::equal(const char *name, int nlen) const
 {
     return mpt_identifier_compare(this, name, nlen) ? false : true;
 }
+bool identifier::setName(const identifier &id)
+{
+    return (mpt_identifier_copy(this, &id)) ? true : false;
+}
 bool identifier::setName(const char *name, int nlen)
 {
     if (nlen < 0) {
@@ -58,7 +62,7 @@ const char *identifier::name() const
 {
     return (mpt_identifier_len(this) <= 0) ? 0 : (const char *) mpt_identifier_data(this);
 }
-Slice<const char> identifier::data() const
+Slice<const char> identifier::nameData() const
 {
     const char *id = (const char *) mpt_identifier_data(this);
     return Slice<const char>(id, _len);

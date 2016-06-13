@@ -48,7 +48,7 @@ bool Group::copy(const Group &from, logger *)
             if (c == t) { t = 0; break; }
         }
         metatype *m;
-        if (!t || !(m = *c) || !(m = m->clone())) continue;
+        if (!t || !(m = c->pointer()) || !(m = m->clone())) continue;
         Item<metatype> *id;
         if ((id = append(m))) {
             id->setName(c->name());
@@ -260,10 +260,10 @@ size_t Collection::clear(const metatype *mt)
     }
     size_t empty = 0;
     for (auto &it : _items) {
-        metatype *ref = it;
+        metatype *ref = it.pointer();
         if (!ref) { ++empty; continue; }
         if (mt != ref) continue;
-        it.detach()->unref();
+        it.setPointer(nullptr);
         ++remove;
     }
     if ((remove + empty) > _items.size()/2) {
@@ -276,7 +276,7 @@ bool Collection::bind(const Relation &from, logger *out)
     for (auto &it : _items) {
         metatype *m;
         Group *g;
-        if (!(m = it) || !(g = m->cast<Group>())) {
+        if (!(m = it.pointer()) || !(g = m->cast<Group>())) {
             continue;
         }
         if (!g->bind(GroupRelation(*g, &from), out)) {
@@ -300,7 +300,7 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
         for (int i = 0; (c = _curr.item(i)); ++i) {
             const Group *g;
             metatype *m;
-            if (!c || !(m = *c)) continue;
+            if (!c || !(m = c->pointer())) continue;
             if (!(g = m->cast<Group>())) continue;
             if (!c->equal(name, plen)) continue;
             if ((m = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
@@ -311,7 +311,7 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
             metatype *m;
-            if (!c || !(m = *c) || !c->equal(name, nlen)) continue;
+            if (!c || !(m = c->pointer()) || !c->equal(name, nlen)) continue;
             if (type) {
                 object *obj = m->cast<object>();
                 if (!obj || (obj->type() != type)) continue;

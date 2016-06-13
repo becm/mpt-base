@@ -18,7 +18,7 @@ __MPT_NAMESPACE_BEGIN
 // add data mapping
 int Mapping::add(const msgbind &src, const laydest &dst, int client)
 {
-    if (!getCycle(dst)) {
+    if (!getCycle(dst).pointer()) {
         return -2;
     }
     mapping map(src, dst, client);
@@ -60,7 +60,7 @@ bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
     }
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
         const Reference<Cycle> &d = graph.cycle(i);
-        if (!d) continue;
+        if (!d.pointer()) continue;
         if (!set(laydest(layId+1, graphID+1, i+1), d)) {
             return false;
         }
@@ -72,7 +72,7 @@ bool Mapping::saveCycles(int layId, const Layout &lay)
     for (size_t i = 0, max = lay.graphCount(); i < max; ++i) {
         const Item<Graph> &gi = lay.graph(i);
         Graph *g;
-        if (!(g = gi)) continue;
+        if (!(g = gi.pointer())) continue;
         if (!saveCycles(layId, i, *g)) {
             return false;
         }
@@ -101,7 +101,7 @@ bool Mapping::loadCycles(int layId, const Layout &lay) const
     for (size_t i = 0, max = lay.graphCount(); i < max; ++i) {
         const Item<Graph> &gi = lay.graph(i);
         Graph *g;
-        if (!(g = gi)) continue;
+        if (!(g = gi.pointer())) continue;
         if (!loadCycles(layId, i, *g)) {
             return false;
         }
@@ -130,7 +130,7 @@ const Reference<Cycle> &Mapping::getCycle(const laydest &dest) const
         }
         // cycle not active
         Cycle *c;
-        if (!(c = e.value)) {
+        if (!(c = e.value.pointer())) {
             return def;
         }
         // bad dimension

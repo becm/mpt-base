@@ -237,7 +237,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
             if (g <= 0 || g > UINT8_MAX) {
                 return -3;
             }
-            grf = lay->graph(g-1);
+            grf = lay->graph(g-1).pointer();
             dst.grf = g;
         }
         else {
@@ -249,7 +249,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
                 const Item<Graph> &g = lay->graph(i);
                 if (g.equal(buf, part)) {
                     dst.grf = i+1;
-                    grf = g;
+                    grf = g.pointer();
                     break;
                 }
             }
@@ -257,7 +257,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
         mask |= 2;
     }
     else if (dst.grf) {
-        grf = lay->graph(dst.grf-1);
+        grf = lay->graph(dst.grf-1).pointer();
     }
     if (!grf) {
         return -2;
@@ -311,7 +311,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
             if (w <= 0 || w > UINT8_MAX) {
                 return -3;
             }
-            wld = grf->world(w-1);
+            wld = grf->world(w-1).pointer();
             dst.wld = w;
         }
         else {
@@ -323,7 +323,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
                 const Item<World> &it = grf->world(i);
                 if (it.equal(buf, part)) {
                     dst.wld = i+1;
-                    wld = it;
+                    wld = it.pointer();
                     break;
                 }
             }
@@ -331,7 +331,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
         mask |= 4;
     }
     else if (dst.wld) {
-        wld = grf->world(dst.wld-1);
+        wld = grf->world(dst.wld-1).pointer();
     }
     if (!wld) {
         return -3;

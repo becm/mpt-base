@@ -454,7 +454,7 @@ public:
         Item<T> *space = 0;
         size_t len = 0;
         for (Item<T> *pos = Array<Item<T> >::begin(), *to = Array<Item<T> >::end(); pos != to; ++pos) {
-            metatype *m = *pos;
+            metatype *m = pos->pointer();
             if (!m) {
                 if (!space) space = pos;
                 continue;
@@ -462,7 +462,7 @@ public:
             ++len;
             if (!space) continue;
             memcpy(space, pos, sizeof(*space));
-            do { ++space; } while (!(m = *space) && space < pos);
+            do { ++space; } while (!(m = space->pointer()) && space < pos);
         }
         if (!space) return false;
         Array<Item<T> >::_d.set(len * sizeof(*space));
@@ -684,7 +684,7 @@ public:
     V *get(const K &key) const
     {
         for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
-            if (e->key == key) return &e->value;
+            if (c->key == key) return &e->value;
         }
         return 0;
     }
@@ -696,7 +696,7 @@ public:
     {
         Array<V> a;
         for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
-            if (!key || e->key == *key) a.insert(a.size(), e->value);
+            if (!key || c->key == *key) a.insert(a.size(), c->value);
         }
         return a;
     }

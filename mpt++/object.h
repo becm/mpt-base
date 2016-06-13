@@ -203,8 +203,8 @@ public:
         if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
         return *this;
     }
-    inline operator T*() const
-    { return Reference<T>::_ref; }
+    inline T *pointer() const
+    { return Reference<T>::pointer(); }
 };
 
 class Object : protected Item<object>
@@ -225,15 +225,16 @@ public:
     Object & operator=(Reference<T> const from)
     {
         Reference<T> ref = from;
-        if (ref && setObject(ref)) ref.detach();
+        T *ptr = ref.pointer();
+        if (ptr && setObject(ptr)) ref.detach();
         return *this;
     }
 
     // get/replace meta pointer
-    inline operator object*() const
+    inline object *pointer() const
     { return _ref; }
     virtual const Reference<object> &ref();
-    virtual bool setObject(object *);
+    virtual bool setPointer(object *);
 
     // object store identifier
     inline const char *name() const

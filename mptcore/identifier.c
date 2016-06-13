@@ -119,11 +119,37 @@ extern void mpt_identifier_init(MPT_STRUCT(identifier) *id, size_t len)
 	memset(id->_val, 0, len);
 }
 
+
 /*!
  * \ingroup mptCore
- * \brief initialize identifier
+ * \brief copy identifier
  * 
- * Set identifier data tp specified value.
+ * Copy identifier data.
+ * 
+ * \param id    address of identifier header
+ * \param from  source identifier
+ */
+extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *from)
+{
+	const void *base;
+	if (!from) {
+		return mpt_identifier_set(id, 0, 0);
+	}
+	base = (from->_flags & MPT_IdentifierPointer) ? from->_base : from->_val;
+	
+	if (!(base = mpt_identifier_set(id, base, -from->_len))) {
+		return 0;
+	}
+	id->_flags = (id->_flags ^ MPT_IdentifierPrintable) | (from->_flags | MPT_IdentifierPrintable);
+	
+	return base;
+}
+
+/*!
+ * \ingroup mptCore
+ * \brief assign identifier
+ * 
+ * Set identifier data to specified value.
  * Pass zero pointer for base address to indicate non-printable data.
  * 
  * \param id    address of identifier header
