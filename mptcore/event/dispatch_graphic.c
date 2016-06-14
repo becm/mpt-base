@@ -53,10 +53,14 @@ extern int mpt_dispatch_graphic(MPT_STRUCT(dispatch) *dsp)
 	MPT_INTERFACE(output) *out;
 	uintptr_t id;
 	
-	if (!dsp || !(out = dsp->_out)) {
+	if (!dsp) {
 		return MPT_ERROR(BadArgument);
 	}
 	id = mpt_hash("graphic", 7);
+	
+	if (!(out = dsp->_out)) {
+		return mpt_dispatch_set(dsp, id, 0, 0);
+	}
 	if (!out->_vptr->obj.addref((void *) out)) {
 		return MPT_ERROR(BadType);
 	}
