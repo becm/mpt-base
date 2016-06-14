@@ -238,7 +238,7 @@ int mpt_output_level(const char *);
 /* get message on queue */
 extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);
 
-/* access to output/error functions */
+/* push output/error message */
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
 
 __MPT_EXTDECL_END

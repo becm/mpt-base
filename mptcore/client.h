@@ -33,12 +33,10 @@ MPT_INTERFACE(client)
 	const MPT_INTERFACE_VPTR(client) *_vptr;
 	MPT_INTERFACE(output) *out;
 #else
-MPT_INTERFACE(client) : public config, public Reference<output>
+MPT_INTERFACE(client) : public config
 {
 public:
 	enum { LogLevel = MPT_FCNLOG(Debug2) };
-	
-	client(class output * = 0);
 	
 	metatype *query(const path *) const;
 	int assign(const path *, const value *);
@@ -48,6 +46,8 @@ public:
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
 	virtual void clear();
+	
+	Reference<class output> output;
 #endif
 };
 
@@ -115,6 +115,11 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 /* register events on notifier */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
 
+/* set client output */
+MPT_INTERFACE(output) *mpt_client_output(MPT_INTERFACE(client) *, MPT_INTERFACE(output) * const *);
+/* set/create client logger */
+MPT_INTERFACE(logger) *mpt_client_logger(MPT_INTERFACE(client) *, MPT_INTERFACE(object) *);
+
 
 /* open/close library descriptor */
 extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *, const char *);
@@ -138,8 +143,6 @@ inline libhandle::~libhandle()
     mpt_library_close(this);
 }
 
-inline client::client(class output *out) : Reference<class output>(out)
-{ }
 inline int client::assign(const path *p, const value *v)
 { return config::global()->assign(p, v); }
 inline metatype *client::query(const path *p) const

@@ -18,7 +18,10 @@
 class MyClient : public mpt::client
 {
 public:
-    MyClient() : mpt::client(mpt::mpt_output_new()) { }
+    MyClient()
+    {
+        output.setPointer(mpt::mpt_output_new());
+    }
     virtual ~MyClient() { }
     
     void unref();
@@ -35,7 +38,7 @@ int main()
 {
     mtrace();
     mpt::client *c = new MyClient;
-    mpt::output *o = *c;
+    mpt::output *o = c->output.pointer();
 
     o->set("history", "/dev/stdout", 0);
     o->set("level", "debug2", 0);
