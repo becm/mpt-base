@@ -105,10 +105,14 @@ static int clientClear(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 
 static int clientGrapic(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
+	MPT_INTERFACE(metatype) *m;
 	MPT_INTERFACE(output) *out;
 	if (!ev) return 0;
-	if (ev->msg && (out = cl->out)) {
+	if (ev->msg
+	    && (m = mpt_config_get((void *) cl, 0, 0, 0))
+	    && (m->_vptr->conv(m, MPT_ENUM(TypeOutput), &out) >= 0)
+	    && out) {
+		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_STRUCT(message) msg = *ev->msg;
 		ssize_t part;
 		
@@ -239,17 +243,23 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
  */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *cl)
 {
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(output) *out;
 	uintptr_t id;
 	size_t i;
 	
 	if (!dsp || !cl) {
 		return MPT_ERROR(BadArgument);
 	}
-	
-	if (!cl->out && dsp->_out && dsp->_out->_vptr->obj.addref((void *) dsp->_out)) {
-		cl->out = dsp->_out;
+	/* assign output to client */
+	if ((out = dsp->_out)) {
+		static const char fmt[2] = { MPT_ENUM(TypeOutput) };
+		MPT_STRUCT(value) val;
+		val.fmt = fmt;
+		val.ptr = &out;
+		
+		cl->_vptr->cfg.assign((void *) cl, 0, &val);
 	}
-	
 	/* mapping of command type messages */
 	id = MPT_ENUM(MessageCommand);
 	if (mpt_dispatch_set(dsp, id, (int (*)()) mpt_dispatch_hash, dsp) < 0) {

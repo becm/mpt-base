@@ -58,9 +58,6 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("failed to create argument stream"));
 		}
 	}
-	/* line separation */
-	mpt_output_log(cl->out, 0, 0, 0);
-	
 	/* initialize and bind solver */
 	res = cl->_vptr->init(cl, src);
 	if (src) src->_vptr->unref(src);

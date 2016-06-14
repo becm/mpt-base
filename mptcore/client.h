@@ -31,7 +31,6 @@ MPT_INTERFACE_VPTR(client)
 MPT_INTERFACE(client)
 {
 	const MPT_INTERFACE_VPTR(client) *_vptr;
-	MPT_INTERFACE(output) *out;
 #else
 MPT_INTERFACE(client) : public config
 {
@@ -46,8 +45,6 @@ public:
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
 	virtual void clear();
-	
-	Reference<class output> output;
 #endif
 };
 
