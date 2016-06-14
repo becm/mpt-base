@@ -226,15 +226,6 @@ extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *c
 	if (!dsp || !cl) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (dsp->_out) {
-		static const char fmt[2] = { MPT_ENUM(TypeOutput) };
-		MPT_STRUCT(value) val;
-		val.fmt = fmt;
-		val.ptr = &dsp->_out;
-		
-		/* assign output to client */
-		cl->_vptr->cfg.assign((void *) cl, 0, &val);
-	}
 	/* mapping of command type messages */
 	id = MPT_ENUM(MessageCommand);
 	if (mpt_dispatch_set(dsp, id, (int (*)()) mpt_dispatch_hash, dsp) < 0) {
