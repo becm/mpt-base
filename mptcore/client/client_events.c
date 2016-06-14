@@ -103,28 +103,6 @@ static int clientClear(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	return MPT_event_stop(ev, MPT_tr("solver cleared"));
 }
 
-static int clientGrapic(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
-{
-	MPT_INTERFACE(metatype) *m;
-	MPT_INTERFACE(output) *out;
-	if (!ev) return 0;
-	if (ev->msg
-	    && (m = mpt_config_get((void *) cl, 0, 0, 0))
-	    && (m->_vptr->conv(m, MPT_ENUM(TypeOutput), &out) >= 0)
-	    && out) {
-		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
-		MPT_STRUCT(message) msg = *ev->msg;
-		ssize_t part;
-		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-		}
-		return mpt_output_graphic(out, ev);
-	}
-	return MPT_event_good(ev, MPT_tr("skip graphic binding"));
-}
-
 static const struct
 {
 	const char *name;
@@ -136,7 +114,6 @@ cmdsolv[] = {
 	{"prep",    mpt_cevent_prep },
 	{"step",    mpt_cevent_step },
 	{"clear",   clientClear     },
-	{"graphic", clientGrapic    },
 	{"close",   clientClose     }
 };
 
@@ -243,21 +220,19 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
  */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(client) *cl)
 {
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(output) *out;
 	uintptr_t id;
 	size_t i;
 	
 	if (!dsp || !cl) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* assign output to client */
-	if ((out = dsp->_out)) {
+	if (dsp->_out) {
 		static const char fmt[2] = { MPT_ENUM(TypeOutput) };
 		MPT_STRUCT(value) val;
 		val.fmt = fmt;
-		val.ptr = &out;
+		val.ptr = &dsp->_out;
 		
+		/* assign output to client */
 		cl->_vptr->cfg.assign((void *) cl, 0, &val);
 	}
 	/* mapping of command type messages */

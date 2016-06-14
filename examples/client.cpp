@@ -18,15 +18,40 @@
 class MyClient : public mpt::client
 {
 public:
-    MyClient()
-    {
-        output.setPointer(mpt::mpt_output_new());
-    }
+    MyClient();
     virtual ~MyClient() { }
     
     void unref();
     int step(mpt::metatype *);
+    int log(const char *, const char *, ...);
+    
+protected:
+    mpt::Reference<mpt::logger> _log;
 };
+MyClient::MyClient()
+{
+    mpt::output *o = mpt::mpt_output_new();
+
+    o->set("history", "/dev/stdout", 0);
+    o->set("level", "debug2", 0);
+    
+    _log.setPointer(mpt::mpt_object_logger(o));
+}
+int MyClient::log(const char *fcn, const char *fmt, ...)
+{
+    mpt::logger *l;
+    if (!(l = _log.pointer())) {
+        return -1;
+    }
+    else {
+        va_list ap;
+        int ret;
+        va_start(ap, fmt);
+        ret = l->log(fcn, LogLevel | mpt::LogFile, fmt, ap);
+        va_end(ap);
+        return ret;
+    }
+}
 
 int MyClient::step(mpt::metatype *)
 { return 0; }
@@ -37,13 +62,9 @@ void MyClient::unref()
 int main()
 {
     mtrace();
-    mpt::client *c = new MyClient;
-    mpt::output *o = c->output.pointer();
+    MyClient *c = new MyClient;
 
-    o->set("history", "/dev/stdout", 0);
-    o->set("level", "debug2", 0);
-
-    o->message(__func__, mpt::client::LogLevel | mpt::LogFile, "%s = %i", "value", 5);
+    c->log(__func__, "%s = %i", "value", 5);
 
     c->init();
     c->unref();
