@@ -23,12 +23,13 @@ extern void *mpt_proxy_cast(const MPT_STRUCT(proxy) *pr, int t)
 {
 	MPT_INTERFACE(metatype) *m = 0;
 	size_t i = 0;
+	int c;
 	
-	while (pr->_types[i]) {
-		if (pr->_types[i] == t) {
+	while ((c = pr->_types[i++]) && i < sizeof(pr->_types)) {
+		if (c == t) {
 			return pr->_ref;
 		}
-		if (pr->_types[i] == MPT_ENUM(TypeMeta)) {
+		if (c == MPT_ENUM(TypeMeta)) {
 			m = pr->_ref;
 		}
 	}
