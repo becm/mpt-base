@@ -6,7 +6,7 @@ INC = .. ../mptcore
 #
 # source summary
 SRCS := library_assign.c library_bind.c library_open.c \
-	meta_open.c proxy_type.c readline.c
+	meta_open.c readline.c
 #
 # shared library options
 SHLIB_MAJOR = 1
