@@ -70,7 +70,7 @@ MPT_STRUCT(proxy)
 		inline ~instance() { };
 		virtual void unref() = 0;
 	};
-	inline proxy() : _ref(0), _id(0)
+	inline proxy() : _ref(0)
 	{
 		for (size_t i = 0; i < sizeof(_types); ++i) _types[i] = 0;
 	}
@@ -79,22 +79,18 @@ MPT_STRUCT(proxy)
 		instance *i = (instance *) _ref;
 		if (i) i->unref();
 	}
-	uintptr_t id() const
-	{
-		return _id;
-	}
 	template <typename T>
 	inline T *value() const
 	{
 		return mpt_proxy_cast(this, typeIdentifier<T>());
 	}
 protected:
+	instance *_ref;
 #else
 # define MPT_PROXY_INIT { 0, { 0 }, 0 }
-#endif
 	void *_ref;
-	char _types[sizeof(void *)];
-	uintptr_t _id;
+#endif
+	char  _types[sizeof(void *)];
 };
 
 __MPT_EXTDECL_BEGIN
@@ -132,7 +128,7 @@ int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
 void *mpt_proxy_cast(const MPT_STRUCT(proxy) *, int);
 
 /* dynamic binding with metatype proxy instance */
-MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 /* open library handle as metatype */
 extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 

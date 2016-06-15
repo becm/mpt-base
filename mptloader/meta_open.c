@@ -34,17 +34,31 @@ static int mpAssign(MPT_INTERFACE(metatype) *m, const MPT_STRUCT(value) *val)
 	if (!(m = mp->px._ref)) {
 		return MPT_ERROR(BadArgument);
 	}
+	/* update vompatible types */
+	if (val && val->fmt && !val->ptr) {
+		size_t len;
+		if (*mp->px._types) {
+			return MPT_ERROR(BadOperation);
+		}
+		len = strlen(val->fmt);
+		if (len >= sizeof(mp->px._types)) {
+			len = sizeof(mp->px._types) - 1;
+		}
+		memcpy(mp->px._types, val->fmt, len);
+		memset(mp->px._types+len, 0, sizeof(mp->px._types) - len);
+		return len;
+	}
 	if (strchr(mp->px._types, MPT_ENUM(TypeMeta))) {
 		return m->_vptr->assign(m, val);
 	}
-	if (!strchr(mp->px._types, MPT_ENUM(TypeObject))) {
+	if (strchr(mp->px._types, MPT_ENUM(TypeObject))) {
 		return MPT_ERROR(BadOperation);
 	}
 	obj = mp->px._ref;
 	if (!val) {
 		return obj->_vptr->setProperty(obj, 0, 0);
 	}
-	return mpt_object_set(mp->px._ref, 0, fmt, *val);
+	return mpt_object_set(obj, 0, fmt, *val);
 }
 static int mpConv(MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
@@ -88,11 +102,12 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
  * Create metatype proxy to library instance.
  * 
  * \param descr symbol @ library to open
+ * \param path  additional library search path
  * \param out   logging instance
  * 
  * \return metatype proxy pointer
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *types, const char *descr, const char *path, MPT_INTERFACE(logger) *out)
+extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *descr, const char *path, MPT_INTERFACE(logger) *out)
 {
 	struct _mpt_metaProxy *mp;
 	MPT_INTERFACE(metatype) *m;
@@ -111,25 +126,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *types, const char *des
 		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("error in library initializer"), descr);
 		return 0;
 	}
-	if (out) {
-		MPT_INTERFACE(object) *obj = 0;
-		if (!types) {
-			m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj);
-		}
-		else if (strchr(types, MPT_ENUM(TypeObject))) {
-			obj = (void *) m;
-		}
-		else if (strchr(types, MPT_ENUM(TypeMeta))) {
-			m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj);
-		}
-		if (!obj || !(err = mpt_object_typename(obj))) {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created proxy instance"));
-		} else {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("created proxy instance"), err);
-		}
-	}
 	if (!(mp = malloc(sizeof(*mp)))) {
-		if (out) mpt_log(out, __func__, MPT_FCNLOG(Critical), "%s", MPT_tr("out of memory"));
+		mpt_library_close(&lh);
+		mpt_log(out, __func__, MPT_FCNLOG(Critical), "%s", MPT_tr("out of memory"));
 		return 0;
 	}
 	mp->_mt._vptr = &_mpt_metaProxyCtl;
@@ -137,14 +136,6 @@ extern MPT_INTERFACE(metatype) *mpt_meta_open(const char *types, const char *des
 	
 	mp->px._ref = m;
 	memset(&mp->px._types, 0, sizeof(mp->px._types));
-	mp->px._id = mpt_hash(descr, strlen(descr));
 	
-	if (!types) {
-		mp->px._types[0] = MPT_ENUM(TypeMeta);
-	} else {
-		size_t len = strlen(types);
-		if (len > sizeof(mp->px._types)) len = sizeof(mp->px._types);
-		memcpy(mp->px._types, types, len);
-	}
 	return &mp->_mt;
 }
