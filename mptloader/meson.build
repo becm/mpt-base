@@ -2,7 +2,6 @@
 # create loader library
 
 load_src = files(
-  'proxy_type.c',
   'library_assign.c',
   'library_open.c',
   'meta_open.c',
