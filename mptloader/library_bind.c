@@ -50,9 +50,11 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, const char 
 		m->_vptr->assign(m, &val);
 	}
 	/* assign predefined proxy types */
-	else if (len < 0 && *px->_types) {
-		val.fmt = px->_types;
-		m->_vptr->assign(m, &val);
+	else if (len < 0) {
+		if (*px->_types) {
+			val.fmt = px->_types;
+			m->_vptr->assign(m, &val);
+		}
 		len = 0;
 	}
 	/* delete old proxy */
