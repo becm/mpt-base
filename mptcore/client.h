@@ -87,7 +87,7 @@ MPT_STRUCT(proxy)
 protected:
 	instance *_ref;
 #else
-# define MPT_PROXY_INIT { 0, { 0 }, 0 }
+# define MPT_PROXY_INIT { 0, { 0 } }
 	void *_ref;
 #endif
 	char  _types[sizeof(void *)];
