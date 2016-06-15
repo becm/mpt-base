@@ -45,6 +45,8 @@ public:
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
 	virtual void clear();
+protected:
+	inline ~client() { }
 #endif
 };
 
@@ -62,32 +64,33 @@ MPT_STRUCT(libhandle)
 MPT_STRUCT(proxy)
 {
 #ifdef __cplusplus
+	class instance
+	{
+	public:
+		inline ~instance() { };
+		virtual void unref() = 0;
+	};
 	inline proxy() : _ref(0), _id(0)
 	{
 		for (size_t i = 0; i < sizeof(_types); ++i) _types[i] = 0;
 	}
 	inline ~proxy()
 	{
-		if (_ref) ((metatype *) _ref)->unref();
+		instance *i = (instance *) _ref;
+		if (i) i->unref();
 	}
 	uintptr_t id() const
 	{
 		return _id;
 	}
-	
 	template <typename T>
 	inline T *value() const
 	{
-		metatype *m = 0;
-		size_t i = 0;
-		int t = typeIdentifier<T>();
-		while (_types[i]) {
-			if (_types[i] == t) return (T *) _ref;
-			if (_types[i] == m->Type) m = (metatype *) _ref;
-		}
-		return m ? m->cast<T>() : 0;
+		return mpt_proxy_cast(this, typeIdentifier<T>());
 	}
 protected:
+#else
+# define MPT_PROXY_INIT { 0, { 0 }, 0 }
 #endif
 	void *_ref;
 	char _types[sizeof(void *)];
@@ -126,11 +129,12 @@ extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, con
 
 /* interpret type part of library symbol */
 int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
+void *mpt_proxy_cast(const MPT_STRUCT(proxy) *, int);
 
 /* dynamic binding with metatype proxy instance */
 MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 /* open library handle as metatype */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *, int , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 
 __MPT_EXTDECL_END
 
@@ -144,7 +148,7 @@ inline int client::assign(const path *p, const value *v)
 { return config::global()->assign(p, v); }
 inline metatype *client::query(const path *p) const
 { return config::global()->query(p); }
-int client::remove(const path *p)
+inline int client::remove(const path *p)
 { return config::global()->remove(p); }
 inline int client::init(metatype *)
 { return 0; }

@@ -45,7 +45,5 @@ sub_% :
 
 # static template
 static : ${STATIC} sub_static
-%_static : %.cpp
-	${CXX} -static ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS} -o ${@} $^ ${LDLIBS}
-%_static : %.c
-	${CC} -static ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} $^ ${LDLIBS}
+%_static : %.o
+	${CC} -static ${LDFLAGS} -o ${@} $^ ${LDLIBS}
