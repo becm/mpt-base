@@ -442,7 +442,7 @@ protected:
     inline ~Transform() { }
 };
 
-extern int applyLineData(dpoint *dest, const linepart *lp, int plen, Transform &tr, polyline &part);
+extern int applyLineData(point<double> *dest, const linepart *lp, int plen, Transform &tr, polyline &part);
 
 class Transform3 : public Transform
 {
@@ -466,6 +466,12 @@ public:
 class Polyline : public polyline
 {
 public:
+#if __cplusplus < 201103L
+    typedef dpoint Point;
+#else
+    using Point = point<double>;
+#endif
+    
     class Parts : public array
     {
     public:
@@ -479,8 +485,10 @@ public:
     class Points : public array
     {
     public:
-        Slice<const dpoint> data() const;
-        dpoint *resize(size_t);
+        Slice<const Point> data() const;
+        Point *resize(size_t);
+        inline size_t length() const
+        { return array::length() / sizeof(Point); }
     };
     Polyline(int dim = -1);
     virtual ~Polyline();
@@ -490,7 +498,7 @@ public:
     ssize_t truncate(int dim = -1, ssize_t pos = -1);
     const char *format() const;
     
-    virtual Slice<dpoint> values(int part = -1) const;
+    virtual Slice<Point> values(int part = -1) const;
     virtual Slice<const linepart> vis() const;
     virtual void transform(const Transform &);
     

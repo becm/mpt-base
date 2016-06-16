@@ -8,7 +8,7 @@ devel : sub_devel
 install : sub_install
 shared : sub_shared
 test : examples_test
-examples_test : devel
+examples_test : install
 clear : examples_clear sub_clear
 clean : examples_clean sub_clean
 static : "${MPT_PREFIX_LIB}/libmpt.a"
