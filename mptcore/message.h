@@ -170,7 +170,7 @@ public:
 	
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
-	virtual int await(int (*)(void *, const message *) = 0, void * = 0) = 0;
+	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
 	
 	int open(const char *);
 	int setHistory(const char *);

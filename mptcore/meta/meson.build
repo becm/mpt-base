@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'geninfo.c',
+  'geninfo_clone.c',
   'meta_data.c',
   'meta_new.c',
   'object_logger.c',

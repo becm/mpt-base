@@ -7,11 +7,11 @@ cxx_src = files(
   'message.cpp',
   'value.cpp',
   'logger.cpp',
-  'meta.cpp',
+  'meta.cpp', 'meta_new.cpp',
   'object.cpp',
   'parse.cpp',
   'queue.cpp',
-  'reference.cpp'
+  'reference_wrap.cpp'
 )
 if with_shared
   cxx = [ core ]

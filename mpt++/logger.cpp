@@ -14,45 +14,67 @@
 __MPT_NAMESPACE_BEGIN
 
 // logger interfaces
-int logger::debug(const char *from, const char *fmt, ... )
+int debug(const char *from, const char *fmt, ... )
 {
+    logger *log = logger::defaultInstance();
+    if (!log) return 0;
     va_list va;
-    int ret;
-    va_start(va, fmt);
-    ret = log(from, Debug, fmt, va);
-    va_end(va);
+    if (fmt) va_start(va, fmt);
+    int ret = log->log(from, log->Debug, fmt, va);
+    if (fmt) va_end(va);
     return ret;
 }
-int logger::warning(const char *from, const char *fmt, ... )
+int warning(const char *from, const char *fmt, ... )
 {
+    logger *log = logger::defaultInstance();
+    if (!log) return 0;
     va_list va;
-    int ret;
-    va_start(va, fmt);
-    ret = log(from, Warning, fmt, va);
-    va_end(va);
+    if (fmt) va_start(va, fmt);
+    int ret = log->log(from, log->Warning, fmt, va);
+    if (fmt) va_end(va);
     return ret;
 }
-int logger::error(const char *from, const char *fmt, ... )
+int error(const char *from, const char *fmt, ... )
 {
+    logger *log = logger::defaultInstance();
+    if (!log) return 0;
     va_list va;
-    int ret;
-    va_start(va, fmt);
-    ret = log(from, Error, fmt, va);
-    va_end(va);
+    if (fmt) va_start(va, fmt);
+    int ret = log->log(from, log->Error, fmt, va);
+    if (fmt) va_end(va);
     return ret;
 }
-int logger::critical(const char *from, const char *fmt, ... )
+int critical(const char *from, const char *fmt, ... )
 {
+    logger *log = logger::defaultInstance();
+    if (!log) return 0;
     va_list va;
-    int ret;
-    va_start(va, fmt);
-    ret = log(from, Critical, fmt, va);
-    va_end(va);
+    if (fmt) va_start(va, fmt);
+    int ret = log->log(from, log->Critical, fmt, va);
+    if (fmt) va_end(va);
+    return ret;
+}
+int message(const char *fmt, ... )
+{
+    logger *log = logger::defaultInstance();
+    if (!log) return 0;
+    va_list va;
+    if (fmt) va_start(va, fmt);
+    int ret = log->log(0, LogMessage, fmt, va);
+    if (fmt) va_end(va);
     return ret;
 }
 logger *logger::defaultInstance()
 {
     return mpt_log_default(0, 0);
+}
+int logger::message(const char *from, int err, const char *fmt, ...)
+{
+    va_list va;
+    if (fmt) va_start(va, fmt);
+    int ret = log(from, err, fmt, va);
+    if (fmt) va_end(va);
+    return ret;
 }
 
 // logging store

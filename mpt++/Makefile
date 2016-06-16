@@ -24,8 +24,8 @@ DIR_TOP = ${MPT_PREFIX}
 DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
-# extend preprocessor for C++11
-CXXFLAGS += -std=c++11
+# use C++11 for compilation
+CXX += -std=c++11
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h

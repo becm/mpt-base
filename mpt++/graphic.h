@@ -156,8 +156,8 @@ public:
     virtual Layout *createLayout();
 
     // mapping helpers
-    int target(laydest &, message &, size_t = 0) const;
-    metatype *item(message &, size_t = 0) const;
+    int target(laydest &, struct message &, size_t = 0) const;
+    metatype *item(struct message &, size_t = 0) const;
 
     // untracked references to shedule update
     virtual bool registerUpdate(const metatype *, const UpdateHint & = UpdateHint());

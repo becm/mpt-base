@@ -127,6 +127,17 @@ enum MPT_ENUM(Types)
 #else
 # error: bad sizeof(long)
 #endif
+#ifdef __SIZEOF_LONG_LONG__
+ #if __SIZEOF_LONG_LONG__ == 8
+	MPT_ENUM(TypeLongLong)  = 'x',
+	MPT_ENUM(TypeULongLong) = 't',
+# elif __SIZEOF_LONG_LONG__ == 4
+	MPT_ENUM(TypeLongLong)  = 'i',
+	MPT_ENUM(TypeULongLong) = 'u',
+# else
+#  error: bad sizeof(long)
+# endif
+#endif
 	MPT_ENUM(TypeUser)      = 0x80,
 	MPT_ENUM(_TypeFinal)    = 0xff,
 	
@@ -263,6 +274,8 @@ extern int convert(const void **, int , void *, int);
 
 template<typename T>
 inline __MPT_CONST_EXPR int typeIdentifier() { return T::Type; }
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const T &) { return typeIdentifier<T>(); }
 
 /* floating point values */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()  { return 'f'; }
@@ -277,6 +290,21 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; 
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+
+#if __SIZEOF_LONG__ != 8
+/* TODO: better detection when needed/conflicting */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<long>() { return TypeLong; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<unsigned long>() { return TypeULong; }
+#endif
+
+template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>()
+{
+	return sizeof(long double) == 16 ? 'e'
+	: sizeof(long double) == 12 ? MPT_ENUM(TypeFloat80)
+	: sizeof(long double) == 8 ? 'd'
+	: sizeof(long double) == 4 ? 'f'
+	: 0;
+}
 
 template<typename T>
 inline __MPT_CONST_EXPR int vectorIdentifier() {
@@ -358,11 +386,7 @@ public:
 		Debug    = MPT_FCNLOG(Debug),
 		File     = MPT_FCNLOG(File)
 	};
-	
-	int critical(const char *, const char *, ... );
-	int error(const char *, const char *, ... );
-	int warning(const char *, const char *, ... );
-	int debug(const char *, const char *, ... );
+	int message(const char *, int , const char *, ...);
 	
 	static logger *defaultInstance();
 	
@@ -376,6 +400,12 @@ public:
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
 #endif
 };
+int critical(const char *, const char *, ... );
+int error(const char *, const char *, ... );
+int warning(const char *, const char *, ... );
+int debug(const char *, const char *, ... );
+
+int message(const char *, ... );
 
 /*! generic metatype interface */
 MPT_INTERFACE(metatype)

@@ -81,7 +81,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         const char *name;
 
         if (!(name = mpt_node_ident(head))) {
-            if (out) out->error(_func, "%s %p: %s", MPT_tr("node"), head, MPT_tr("bad element name"));
+            if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("node"), head, MPT_tr("bad element name"));
             return false;
         }
 
@@ -98,14 +98,14 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         val.fmt = pos = name;
         name = mpt_convert_key(&pos, 0, &len);
         if (!name || name != val.fmt || !*name) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("bad object name"), val.fmt);
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("bad object name"), val.fmt);
             continue;
         }
 
         // create item
         metatype *it = create(name, len);
         if (!it) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("invalid object type"), std::string(name, len).c_str());
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("invalid object type"), std::string(name, len).c_str());
             continue;
         }
 
@@ -113,13 +113,13 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         name = mpt_convert_key(&pos, ":", &len);
 
         if (!name || !len) {
-            if (out) out->warning(_func, "%s", MPT_tr("empty object name"));
+            if (out) out->message(_func, out->Warning, "%s", MPT_tr("empty object name"));
             it->unref();
             continue;
         }
 
         if (GroupRelation(*this).find(it->type(), name, len)) {
-            if (out) out->warning(_func, "%s: %s", MPT_tr("conflicting object name"), std::string(name, len).c_str());
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("conflicting object name"), std::string(name, len).c_str());
             it->unref();
             continue;
         }
@@ -138,14 +138,15 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                 obj->setProperties(*from, out);
                 continue;
             }
-            if (out) out->error(_func, "%s: %s: %s", MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s: %s",
+                                  MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
             return false;
         }
         // add item to group
         Item<metatype> *ni = append(it);
         if (!ni) {
             it->unref();
-            if (out) out->error(_func, "%s: %s", MPT_tr("unable add item"), std::string(ident, ilen).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("unable add item"), std::string(ident, ilen).c_str());
             continue;
         }
         ni->setName(ident, ilen);
@@ -180,18 +181,18 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             value *val;
             if ((val = mt->cast<value>())) {
                 if (!obj->set(name, *val, out) && out) {
-                    out->warning(_func, "%s: %s: %s = <%s>", MPT_tr("failed to assign property"), ni->name(), name, val->fmt);
+                    out->message(_func, out->Warning, "%s: %s: %s = <%s>", MPT_tr("failed to assign property"), ni->name(), name, val->fmt);
                 }
                 continue;
             }
             if (mt->conv('s', &data) >= 0) {
                 value txt(0, data);
                 if (!obj->set(name, txt, out) && out) {
-                    out->warning(_func, "%s: %s: %s = %s", MPT_tr("failed to assign property"), ni->name(), name, txt.ptr);
+                    out->message(_func, out->Warning, "%s: %s: %s = %s", MPT_tr("failed to assign property"), ni->name(), name, txt.ptr);
                 }
                 continue;
             }
-            if (out) out->warning(_func, "%s: %s: %s", MPT_tr("bad value type"), ni->name(), name);
+            if (out) out->message(_func, out->Warning, "%s: %s: %s", MPT_tr("bad value type"), ni->name(), name);
         }
     }
     return true;

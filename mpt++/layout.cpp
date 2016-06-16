@@ -373,11 +373,11 @@ static Axis *makeAxis(metatype *m, logger *out, const char *_func, const char *n
         if (out) {
             const char *msg = MPT_tr("unable to get axis information");
             if (!name || !*name || len == 0) {
-                out->warning(_func, "%s", msg);
+                out->message(_func, out->Warning, "%s", msg);
             } else if (len < 0) {
-                out->warning(_func, "%s: %s", msg, name);
+                out->message(_func, out->Warning, "%s: %s", msg, name);
             } else {
-                out->warning(_func, "%s: %s", msg, std::string(name, len).c_str());
+                out->message(_func, out->Warning, "%s: %s", msg, std::string(name, len).c_str());
             }
         }
         base = 0;
@@ -396,11 +396,11 @@ static World *makeWorld(metatype *m, logger *out, const char *_func, const char 
         if (out) {
             const char *msg = MPT_tr("unable to get axis information");
             if (!name || !*name || len == 0) {
-                out->warning(_func, "%s", msg);
+                out->message(_func, out->Warning, "%s", msg);
             } else if (len < 0) {
-                out->warning(_func, "%s: %s", msg, name);
+                out->message(_func, out->Warning, "%s: %s", msg, name);
             } else {
-                out->warning(_func, "%s: %s", msg, std::string(name, len).c_str());
+                out->message(_func, out->Warning, "%s: %s", msg, std::string(name, len).c_str());
             }
         }
         base = 0;
@@ -430,14 +430,14 @@ bool Graph::bind(const Relation &rel, logger *out)
             }
             a->unref();
             _axes = oldaxes;
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not create axis"), curr ? curr : "");
             return false;
         }
     }
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         m = rel.find(Axis::Type, curr, len);
         if (!m) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not find axis"), std::string(curr, len).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not find axis"), std::string(curr, len).c_str());
             _axes = oldaxes;
             return false;
         }
@@ -450,7 +450,7 @@ bool Graph::bind(const Relation &rel, logger *out)
         if (!addAxis(a, curr, len)) {
             a->unref();
             _axes = oldaxes;
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
             return false;
         }
     }
@@ -465,13 +465,13 @@ bool Graph::bind(const Relation &rel, logger *out)
             w->unref();
             _axes = oldaxes;
             _worlds = oldworlds;
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not assign world"), curr ? curr : "<>");
             return false;
         }
     }
     else while ((curr = mpt_convert_key(&names, 0, &len))) {
         if (!(m = rel.find(World::Type, curr, len))) {
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not find world"), std::string(curr, len).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not find world"), std::string(curr, len).c_str());
             _axes = oldaxes;
             _worlds = oldworlds;
             return false;
@@ -486,7 +486,7 @@ bool Graph::bind(const Relation &rel, logger *out)
             w->unref();
             _axes = oldaxes;
             _worlds = oldworlds;
-            if (out) out->error(_func, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not assign world"), std::string(curr, len).c_str());
             return false;
         }
     }
@@ -764,9 +764,9 @@ bool Layout::bind(const Relation &rel, logger *out)
                     static const char _func[] = "mpt::Layout::bind\0";
                     const char *msg = MPT_tr("unable to get graph information");
                     if (!name || !*name) {
-                        out->warning(_func, "%s", msg);
+                        out->message(_func, out->Warning, "%s", msg);
                     } else {
-                        out->warning(_func, "%s: %s", msg, name);
+                        out->message(_func, out->Warning, "%s: %s", msg, name);
                     }
                 }
                 base = 0;
@@ -785,8 +785,9 @@ bool Layout::bind(const Relation &rel, logger *out)
 
 bool Layout::load(logger *out)
 {
+    static const char _func[] = "mpt::Layout::load\0";
     if (!_parse) {
-        if (out) out->warning(__func__, "%s", MPT_tr("no input for layout"));
+        if (out) out->message(_func, out->Warning, "%s", MPT_tr("no input for layout"));
         return false;
     }
 
@@ -801,8 +802,8 @@ bool Layout::load(logger *out)
     if (!(conf = root.children)) {
         if (out) {
             const char *n = alias();
-            out->error(__func__, n ? "%s" : "%s: '%s'",
-                       MPT_tr("empty layout"), n);
+            out->message(_func, out->Error, n ? "%s" : "%s: '%s'",
+                         MPT_tr("empty layout"), n);
         }
     }
     // add items

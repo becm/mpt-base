@@ -55,11 +55,11 @@ bool object::set(const char *name, const value &val, logger *out)
     if (!(pr.val.ptr = val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
 
     if (ret == BadArgument) {
-        out->error(_fname, "%s: %s.%s", MPT_tr("bad property"), pr.name, name);
+        out->message(_fname, out->Error, "%s: %s.%s", MPT_tr("bad property"), pr.name, name);
     } else if (ret == BadValue) {
-        out->error(_fname, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, name, pr.val.ptr);
+        out->message(_fname, out->Error, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, name, pr.val.ptr);
     } else if (ret == BadType) {
-        out->error(_fname, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
+        out->message(_fname, out->Error, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
     }
     return false;
 }

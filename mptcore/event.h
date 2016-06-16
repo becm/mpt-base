@@ -145,9 +145,9 @@ public:
     virtual ~MessageSource()
     { }
 
-    virtual const message *currentMessage(bool align = false) = 0;
+    virtual const struct message *currentMessage(bool align = false) = 0;
     virtual size_t pendingMessages(int wait = 0) = 0;
-    virtual int reply(const message * = 0);
+    virtual int reply(const struct message * = 0);
 };
 #endif
 

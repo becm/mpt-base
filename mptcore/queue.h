@@ -93,7 +93,7 @@ public:
     ~DecodingQueue();
     
     bool pendingMessage();
-    bool currentMessage(message &, struct iovec * = 0);
+    bool currentMessage(struct message &, struct iovec * = 0);
     bool advance();
 
 protected:

@@ -239,7 +239,7 @@ ssize_t EncodingArray::push(size_t len, const void *data)
     return mpt_array_push(&_d, &_state, _enc, len ? &vec : 0);
 }
 
-bool EncodingArray::setData(const message *msg)
+bool EncodingArray::setData(const struct message *msg)
 {
     if (!msg) {
         if (mpt_array_push(&_d, &_state, _enc, 0) < 0) {

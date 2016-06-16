@@ -63,21 +63,23 @@ bool Parse::open(const char *fn)
 
 int Parse::read(struct node &to, logger *out)
 {
-    static const char fname[] = "mpt::Parse::read";
+    static const char _func[] = "mpt::Parse::read";
     int ret;
 
     if (!_d.src.getc) {
-        if (out) out->error(fname, "%s", MPT_tr("no parser input"));
+        if (out) out->message(_func, out->Error, "%s", MPT_tr("no parser input"));
         return -1;
     }
     if (!_next) {
-        if (out) out->error(fname, "%s", MPT_tr("no format specified"));
+        if (out) out->message(_func, out->Error, "%s", MPT_tr("no format specified"));
     }
     if ((ret = mpt_parse_node(_next, _nextCtx, &_d, &to)) < 0 && out) {
+        const char *fname;
+        if (!(fname = to.data())) fname = "";
         if (ret == BadOperation) {
-            out->error(fname, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _d.src.line);
+            out->message(_func, out->Error, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _d.src.line);
         } else {
-            out->error(fname, "%s (%x): %s %u: %s", MPT_tr("parse error"), _d.curr, MPT_tr("line"), (int) _d.src.line, fname);
+            out->message(_func, out->Error, "%s (%x): %s %u: %s", MPT_tr("parse error"), _d.curr, MPT_tr("line"), (int) _d.src.line, fname);
         }
     }
     return ret;

@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.6)
 
 set(sources
   array.cpp config.cpp message.cpp value.cpp logger.cpp
-  meta.cpp object.cpp parse.cpp queue.cpp reference.cpp
+  meta.cpp object.cpp parse.cpp queue.cpp
+  meta_new.cpp reference_wrap.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
 set(includedirs ${Mpt_CORE_INCLUDE_DIRS})
