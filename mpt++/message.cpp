@@ -19,7 +19,7 @@ size_t message::length() const
 { return mpt_message_length(this); }
 
 // message source interface
-int MessageSource::reply(const struct message *)
+int MessageSource::reply(const message *)
 {
     return -1;
 }

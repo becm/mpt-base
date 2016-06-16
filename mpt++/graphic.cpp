@@ -127,7 +127,7 @@ Layout *Graphic::createLayout()
     return lay;
 }
 
-static ssize_t nextPart(const struct message &msg, size_t len)
+static ssize_t nextPart(const message &msg, size_t len)
 {
     const char *end, *dest;
 
@@ -163,9 +163,9 @@ static ssize_t nextPart(const struct message &msg, size_t len)
     }
 }
 
-int Graphic::target(laydest &addr, struct message &msg, size_t len) const
+int Graphic::target(laydest &addr, message &msg, size_t len) const
 {
-    struct message tmp;
+    message tmp;
     laydest dst(_lastTarget.lay, _lastTarget.grf, _lastTarget.wld);
     Layout *lay = 0;
     Graph *grf = 0;
@@ -275,7 +275,7 @@ int Graphic::target(laydest &addr, struct message &msg, size_t len) const
         return -3;
     }
     else {
-        struct message after;
+        message after;
         char dim, post;
 
         mpt_message_read(&tmp, part+1, buf);
@@ -341,9 +341,9 @@ int Graphic::target(laydest &addr, struct message &msg, size_t len) const
 
     return mask;
 }
-metatype *Graphic::item(struct message &msg, size_t len) const
+metatype *Graphic::item(message &msg, size_t len) const
 {
-    struct message tmp = msg;
+    message tmp = msg;
     ssize_t part;
     char buf[128];
     bool term = false;

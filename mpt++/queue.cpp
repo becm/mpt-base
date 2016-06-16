@@ -37,7 +37,7 @@ DecodingQueue::~DecodingQueue()
     if (_dec) _dec(&_state, 0, 0);
 }
 
-bool DecodingQueue::currentMessage(struct message &msg, struct iovec *cont)
+bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
 {
     if (!pendingMessage()) {
         return false;

@@ -400,12 +400,15 @@ public:
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
 #endif
 };
+
+#ifdef __cplusplus
 int critical(const char *, const char *, ... );
 int error(const char *, const char *, ... );
 int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
-int message(const char *, ... );
+int log(const char *, ... );
+#endif
 
 /*! generic metatype interface */
 MPT_INTERFACE(metatype)
