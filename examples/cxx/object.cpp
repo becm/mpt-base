@@ -71,11 +71,6 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	mpt::Config config;
-	mpt::metatype *mt;
-	mpt::object *obj;
-	Double d(46);
-	
 	mpt::Object ao(new mpt::Axis);
 	
 	std::cout << "ao: " << ao.type() << std::endl;
@@ -84,14 +79,17 @@ extern int main(int , char * const [])
 	std::cout << "dbl: " << has_get<Double>() << std::endl;
 	std::cout << toString(hallo) << std::endl;
 	
+	Double d(46);
 	std::cout << d.f0() << std::endl;
 	
-	mt = config.get(0);
-// 	std::cout << "top identifier: " << typeid(*mt).name() << std::endl;
-	
+	mpt::Config config;
+	mpt::metatype *mt;
+	if ((mt = config.get(0))) {
+		std::cout << "base type: " << typeid(*mt).name() << std::endl;
+	}
 	config.set("next", "val");
 	mt = config.get("next");
-	std::cout << "next identifier: " << typeid(*mt).name() << std::endl;
+	std::cout << "next type: " << typeid(*mt).name() << std::endl;
 	
 	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
 	mpt::Object lo(li);
@@ -103,6 +101,7 @@ extern int main(int , char * const [])
 		std::cout << "  " << i.name << " = " << i.val << std::endl;
 	}
 	
+	mpt::object *obj;
 	obj = ao.pointer();
 	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
 	obj = lo.pointer();

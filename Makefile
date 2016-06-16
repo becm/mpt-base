@@ -1,12 +1,13 @@
 # Makefile: create base MPT modules
-MODULES = mptcore mptplot mptio mptloader mpt++
+MERGE = mptcore mptplot mptio mptloader
+MODULES = ${MERGE} mpt++
 SUB = ${MODULES} lua
 
 DIR_TOP=${MPT_PREFIX}
 include mpt.config.mk
 #
 # creation targets
-.PHONY : ${SUB} all clear clean devel install static static_clear sub_% examples_%
+.PHONY : ${SUB} all clear clean devel install static static++ sub_% examples_%
 devel : sub_devel
 install : sub_install
 shared : sub_shared
@@ -14,7 +15,7 @@ test : examples_test
 examples_test : install
 clear : examples_clear sub_clear
 clean : examples_clean sub_clean
-static : "${DIR_LIB}/libmpt.a"
+static : "${DIR_LIB}/libmpt.a" static++
 mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
 lua : mptio
@@ -27,6 +28,9 @@ sub_% :
 
 ${SUB} :
 	${MAKE} -C "${@}"
+
+static++ :
+	${MAKE} -C "mpt++" static
 #
 # examples operations
 examples_% :
@@ -37,7 +41,7 @@ clear :
 	${RM} "${DIR_LIB}/libmpt.a"
 
 "${DIR_LIB}/libmpt.a" :
-	@for m in ${MODULES}; do \
+	@for m in ${MERGE}; do \
 		if ! ${MAKE} -C "$${m}" static LIB=mpt "DIR_LIB=${DIR_LIB}"; then exit 1; fi; \
 	done
 	${AR} s "${DIR_LIB}/libmpt.a"

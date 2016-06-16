@@ -74,7 +74,6 @@ endif
 if with_cxx
   add_languages('cpp')
   subdir('mpt++')
-  static_src += cxx_src
 endif
 
 if with_static
@@ -89,6 +88,6 @@ if with_static
     name : 'mpt')
 endif
 
-if get_option('with_tests')
+if with_shared and get_option('with_tests')
   subdir('examples')
 endif

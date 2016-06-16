@@ -28,7 +28,7 @@ ${PROG} : ${OBJS}
 	${CC} ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
 ${PROG}_static : ${SRCS}
-	${CC} -static -D_STATIC ${CPPFLAGS} ${LDFLAGS} -o ${@} ${SRCS} -llua${LUA} -ldl -lm
+	${CC} -static -D_STATIC ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} ${SRCS} -llua${LUA} -ldl -lm
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}

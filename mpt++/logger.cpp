@@ -54,7 +54,7 @@ int critical(const char *from, const char *fmt, ... )
     if (fmt) va_end(va);
     return ret;
 }
-int message(const char *fmt, ... )
+int log(const char *fmt, ... )
 {
     logger *log = logger::defaultInstance();
     if (!log) return 0;

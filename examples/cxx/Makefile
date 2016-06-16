@@ -22,7 +22,8 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 config : LDLIBS+=-lmptcore
 output : LDLIBS+=-lmptio -lmptcore
 comp : LDLIBS+=-lmptio
-%_static : LDLIBS=-lmpt
+%_static : LDLIBS=-lmpt++ -lmpt
+%_static : CPPFLAGS+=-D_STATIC
 
 # special test arguments
 test_layout : ARGS=layout.lay

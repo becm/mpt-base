@@ -15,7 +15,7 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 client : LDLIBS=-lmpt++ -lmptio -lmptcore
 readline : LDLIBS=-lmptloader
 axis iter gen : LDLIBS=-lmptplot -lmptcore
-%_static : LDLIBS=-lmpt
+%_static : LDLIBS=-lmpt++ -lmpt
 readline_static : LDLIBS=-lmpt -ldl
 
 # special test arguments
