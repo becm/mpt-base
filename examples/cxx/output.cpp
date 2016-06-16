@@ -11,6 +11,8 @@
 #include MPT_INCLUDE(message.h)
 #include MPT_INCLUDE(output.h)
 
+#include MPT_INCLUDE(node.h)
+
 #ifdef __GLIBC__
 # include <mcheck.h>
 #else
@@ -23,10 +25,13 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
+	node *n = mpt_node_new(0, 0);
+	delete n;
+	
 	output *out = mpt_output_new();
 	logger *log = mpt_object_logger(out);
 	
-	log->error(__func__, "%s", "hallo");
+	log->message(__func__, log->Error, "%s", "hallo");
 	mpt_output_log(out, 0, LogWarning, "%s", "hallo");
 	
 	out->sync();

@@ -21,7 +21,7 @@
 
 static int printMessage(mpt::input *in, mpt::event *ev)
 {
-	mpt::message msg;
+	struct mpt::message msg;
 	mpt::msgtype mt(0);
 	char buf[128];
 	int len, total = 0;

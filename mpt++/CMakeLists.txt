@@ -3,8 +3,14 @@ cmake_minimum_required(VERSION 2.6)
 
 set(sources
   array.cpp config.cpp message.cpp value.cpp logger.cpp
-  meta.cpp object.cpp parse.cpp queue.cpp
-  meta_new.cpp reference_wrap.cpp
+  object.cpp parse.cpp queue.cpp
+  meta.cpp
+  reference_wrap.cpp
+)
+set (sources_shared
+  meta_new.cpp
+  meta_buffer.cpp
+  node_new.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
 set(includedirs ${Mpt_CORE_INCLUDE_DIRS})
@@ -28,7 +34,7 @@ endif(MPT_WITH_IO)
 
 set(headers object.h graphic.h)
 
-add_library(mpt++ SHARED ${sources} libinfo.c)
+add_library(mpt++ SHARED ${sources} ${shared} libinfo.c)
 set_target_properties(mpt++ PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mpt++ PRIVATE .. ${includedirs})
 target_link_libraries(mpt++ ${linklibs})

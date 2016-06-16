@@ -7,12 +7,19 @@ cxx_src = files(
   'message.cpp',
   'value.cpp',
   'logger.cpp',
-  'meta.cpp', 'meta_new.cpp',
+  'meta.cpp', 
   'object.cpp',
   'parse.cpp',
   'queue.cpp',
-  'reference_wrap.cpp'
+  'reference_wrap.cpp',
 )
+# files with conflicting symbols to 'core'
+cxx_special = files(
+  'meta_new.cpp',
+  'meta_buffer.cpp',
+  'node_new.cpp',
+)
+
 if with_shared
   cxx = [ core ]
   cxx_inc = [ core_inc ]
@@ -54,7 +61,7 @@ install_headers('object.h', 'graphic.h',
 cxx_inc = [ include_directories('.') ] + cxx_inc
 
 if with_shared
-  cxx_lib = shared_library('mpt++', cxx_src, 'libinfo.c',
+  cxx_lib = shared_library('mpt++', cxx_src, cxx_special, 'libinfo.c',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : cxx,
