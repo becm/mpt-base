@@ -418,6 +418,8 @@ inline int linepart::cutRaw() const
 { return _cut; }
 inline int linepart::trimRaw() const
 { return _trim; }
+
+#if __cplusplus >= 201103L
 inline bool linepart::setRaw(int c, int t)
 {
     if (c > std::numeric_limits<decltype(_cut)>::max()
@@ -429,6 +431,7 @@ inline bool linepart::setRaw(int c, int t)
     _cut = c; _trim = t;
     return true;
 }
+#endif
 
 class Transform
 {

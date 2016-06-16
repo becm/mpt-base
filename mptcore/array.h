@@ -724,4 +724,4 @@ protected:
 
 __MPT_NAMESPACE_END
 
-#endif /* _MPT_BUFFER_H */
+#endif /* _MPT_ARRAY_H */

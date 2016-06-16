@@ -4,3 +4,6 @@ client
 gen
 iter
 readline
+
+# exclude static binaries
+*_static

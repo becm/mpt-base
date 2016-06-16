@@ -34,7 +34,7 @@ public:
     }
     inline void setInvalid()
     {
-        _prop.name = nullptr;
+        _prop.name = 0;
         _pos = -1;
     }
     inline const char *name()
@@ -55,7 +55,7 @@ protected:
 class object::iterator
 {
 public:
-    inline iterator(class object &obj) : _ref(obj), _pos(-1), _name(nullptr)
+    inline iterator(class object &obj) : _ref(obj), _pos(-1), _name(0)
     { }
 
     inline iterator &operator ++()
@@ -71,7 +71,7 @@ public:
     }
     inline void setInvalid()
     {
-        _name = nullptr;
+        _name = 0;
         _pos = -1;
     }
     inline const char *name()
