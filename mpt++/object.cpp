@@ -136,7 +136,7 @@ Object::Object(Object &other) : Item<object>(0), _hash(0)
     Reference<object>::operator=(other.ref());
     if (identifier::setName(other)) {
         Slice<const char> d = nameData();
-        _hash = mpt_hash(d.base(), d.len());
+        _hash = mpt_hash(d.base(), d.length());
     }
 }
 Object::Object(object *from) : Item<object>(from), _hash(0)
@@ -177,7 +177,7 @@ Object & Object::operator =(Object & other)
 
     if (identifier::setName(other)) {
         Slice<const char> d = nameData();
-        _hash = mpt_hash(d.base(), d.len());
+        _hash = mpt_hash(d.base(), d.length());
     }
     return *this;
 }
@@ -190,7 +190,7 @@ bool Object::setName(const char *name, int len)
     }
     Slice<const char> d = nameData();
 
-    _hash = mpt_hash(d.base(), d.len());
+    _hash = mpt_hash(d.base(), d.length());
 
     return true;
 }

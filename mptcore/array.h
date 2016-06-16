@@ -46,7 +46,7 @@ MPT_STRUCT(array)
 	~array();
 	
 	size_t left() const;
-	size_t used() const;
+	size_t length() const;
 	void *base() const;
 	bool shared() const;
 	const Reference<buffer> &ref() const;
@@ -242,7 +242,7 @@ inline array::~array()
 { if (_buf) _buf->unref(); }
 inline void *array::base() const
 { return _buf ? (void *) (_buf+1) : 0; }
-inline size_t array::used() const
+inline size_t array::length() const
 { return _buf ? _buf->used : 0; }
 inline size_t array::left() const
 { return _buf ? _buf->size - _buf->used : 0; }
@@ -250,14 +250,14 @@ inline bool array::shared() const
 { return _buf && _buf->shared; }
 
 inline array &array::operator= (slice const& from)
-{ Slice<uint8_t> d = from.data(); set(d.len(), d.base()); return *this; }
+{ Slice<uint8_t> d = from.data(); set(d.length(), d.base()); return *this; }
 inline array &array::operator+= (array const& from)
-{ append(from.used(), from.base()); return *this; }
+{ append(from.length(), from.base()); return *this; }
 inline array &array::operator+= (slice const& from)
-{ Slice<uint8_t> d = from.data(); append(d.len(), d.base()); return *this; }
+{ Slice<uint8_t> d = from.data(); append(d.length(), d.base()); return *this; }
 
 inline slice::slice(array const& a) : array(a), _off(0)
-{ _len = used(); }
+{ _len = length(); }
 inline slice::~slice()
 { }
 inline Slice<uint8_t> slice::data() const
@@ -340,7 +340,7 @@ public:
     { return (T *) _d.base(); }
     
     inline iterator end() const
-    { return ((T *) _d.base())+size(); }
+    { return ((T *) _d.base())+length(); }
     
     Array & operator=(const Array &a)
     {
@@ -350,7 +350,7 @@ public:
     }
     bool set(size_t pos, T const &v)
     {
-        if (pos >= size() || !detach()) return false;
+        if (pos >= length() || !detach()) return false;
         T *b = (T *) _d.base();
         b[pos] = v;
         return true;
@@ -358,7 +358,7 @@ public:
     bool insert(size_t pos, const T &v)
     {
         if (!_d.shared()) {
-            size_t i = size();
+            size_t i = length();
             T *b = (T *) _d.prepend(sizeof(*b), pos*sizeof(*b));
             if (!b) return false;
             new (b) T(v);
@@ -366,7 +366,7 @@ public:
             for (; i < pos; ++i) new (b+i) T();
             return true;
         }
-        size_t end, pre = size();
+        size_t end, pre = length();
         array a;
         T *to;
         if (!(to = (T *) a.set(((pos < pre ? pre : pos) + 1) * sizeof(T)))) {
@@ -392,19 +392,19 @@ public:
     }
     inline T *get(size_t pos) const
     {
-        if (pos >= size()) return 0;
+        if (pos >= length()) return 0;
         return ((T*) _d.base())+pos;
     }
-    inline size_t size() const
-    { return _d.used()/sizeof(T); }
+    inline size_t length() const
+    { return _d.length()/sizeof(T); }
     
     inline Slice<const T> slice() const
-    { return Slice<const T>(get(0), size()); }
+    { return Slice<const T>(get(0), length()); }
     
     bool detach()
     {
         if (!_d.shared()) return true;
-        size_t len = size();
+        size_t len = length();
         array a;
         T *to;
         if (!(to = (T *) a.set(len * sizeof(T)))) return false;
@@ -422,7 +422,7 @@ public:
             return;
         }
         T *b = (T *) _d.base();
-        for (size_t i = 0, len = size(); i < len; ++i) b[i].~T();
+        for (size_t i = 0, len = length(); i < len; ++i) b[i].~T();
         _d.set(0);
     }
 protected:
@@ -440,13 +440,14 @@ public:
     
     Item<T> *append(T *t, const char *id, int len = -1)
     {
+        Array<Item<T> > &arr = *this;
         Item<T> *it = (Item<T> *) Array<Item<T> >::_d.append(sizeof(*it));
         if (!it) return 0;
         new (it) Item<T>(t);
         if (it->setName(id, len)) {
             return it;
         }
-        Array<Item<T> >::_d.set(Array<Item<T> >::_d.used() - sizeof(*it));
+        Array<Item<T> >::_d.set(Array<Item<T> >::_d.length() - sizeof(*it));
         return 0;
     }
     bool compact()
@@ -488,18 +489,18 @@ public:
     { return (void **) _d.base(); }
     
     inline iterator end() const
-    { return ((void **) _d.base())+size(); }
+    { return ((void **) _d.base())+length(); }
     
-    inline size_t size() const
+    inline size_t length() const
     {
-        return _d.used()/sizeof(void *);
+        return _d.length()/sizeof(void *);
     }
     bool insert(size_t , void *);
     void compact();
     
     inline void *get(size_t pos) const
     {
-        if (pos >= size()) return 0;
+        if (pos >= length()) return 0;
         return ((void **) _d.base())[pos];
     }
     bool set(size_t , void *) const;
@@ -536,11 +537,11 @@ public:
     { return (const T **) _d.base(); }
     
     inline iterator end() const
-    { return ((const T **) _d.base())+size(); }
+    { return ((const T **) _d.base())+length(); }
     
     bool set(size_t pos, T *ref) const
     {
-        if (_d.shared() || pos >= size()) return false;
+        if (_d.shared() || pos >= length()) return false;
         T **b = ((T **) _d.base()) + pos;
         if (*b) (*b)->unref();
         *b = ref;
@@ -553,7 +554,7 @@ public:
     T **resize(size_t len)
     {
         if (_d.shared()) return 0;
-        size_t s = size();
+        size_t s = length();
         if (len <= s) {
             T **b = (T**) _d.base();
             for (size_t i = len; i < s; ++i) {
@@ -565,7 +566,7 @@ public:
     size_t clear(const T *ref = 0) const
     {
         T **pos = (T**) _d.base();
-        size_t elem = 0, len = size();
+        size_t elem = 0, len = length();
         if (!ref) {
             for (size_t i = 0; i < len; ++i) {
                 T *match;
@@ -673,13 +674,13 @@ public:
     bool set(const K &key, const V &value)
     {
         V *d = get(key);
-        if (!d) return _d.insert(_d.size(), Element(key, value));
+        if (!d) return _d.insert(_d.length(), Element(key, value));
         *d = value;
         return true;
     }
     bool append(const K &key, const V &value)
     {
-        return _d.insert(_d.size(), Element(key, value));
+        return _d.insert(_d.length(), Element(key, value));
     }
     V *get(const K &key) const
     {
@@ -696,7 +697,7 @@ public:
     {
         Array<V> a;
         for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
-            if (!key || c->key == *key) a.insert(a.size(), c->value);
+            if (!key || c->key == *key) a.insert(a.length(), c->value);
         }
         return a;
     }

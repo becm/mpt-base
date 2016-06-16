@@ -470,7 +470,7 @@ public:
     {
     public:
         inline Slice<const linepart> data() const
-        { return Slice<const linepart>((linepart *) base(), used()/sizeof(linepart)); }
+        { return Slice<const linepart>((linepart *) base(), length()/sizeof(linepart)); }
         
         bool create(const Transform &, polyline &);
         size_t userLength();
@@ -641,11 +641,11 @@ public:
     
     virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
     const Item<Axis> &axis(int pos) const;
-    inline int axisCount() const { return _axes.size(); }
+    inline int axisCount() const { return _axes.length(); }
     
     virtual Data *addWorld(World * = 0, const char * = 0, int = -1);
     const Data &world(int pos) const;
-    inline int worldCount() const { return _worlds.size(); }
+    inline int worldCount() const { return _worlds.length(); }
     
     virtual bool setCycle(int pos, const Reference<Cycle> &) const;
     virtual const Reference<Cycle> &cycle(int pos) const;
@@ -682,7 +682,7 @@ public:
     virtual void reset();
     
     const Item<Graph> &graph(int pos) const;
-    inline int graphCount() const { return _graphs.size(); }
+    inline int graphCount() const { return _graphs.length(); }
     
     virtual bool setAlias(const char *, int = -1);
     inline const char *alias() const

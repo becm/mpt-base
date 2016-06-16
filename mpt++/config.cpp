@@ -156,7 +156,7 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
         return e;
     }
     if (!unused) {
-        size_t pos = arr.size();
+        size_t pos = arr.length();
         if (!arr.insert(pos, Element()) || !(unused = arr.get(pos))) {
             return 0;
         }

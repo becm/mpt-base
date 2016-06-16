@@ -80,7 +80,7 @@ int Graphic::addLayout(Layout *lay, bool reuse)
     if (!lay) {
         return -3;
     }
-    size_t max = _layouts.size();
+    size_t max = _layouts.length();
 
     // insert layout on vacant position
     if (reuse) {
@@ -98,7 +98,7 @@ int Graphic::removeLayout(const Layout *lay)
     if (!lay) {
         return -1;
     }
-    for (size_t i = 0, max = _layouts.size(); i < max; ++i) {
+    for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         if (_layouts.get(i) != lay) continue;
         _layouts.set(i, 0);
         return i;
@@ -109,7 +109,7 @@ int Graphic::removeLayout(const Layout *lay)
 int Graphic::layoutCount() const
 {
     int lay = 0;
-    for (size_t i = 0, max = _layouts.size(); i < max; ++i) {
+    for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         if (!_layouts.get(i)) continue;
         ++lay;
     }
@@ -199,7 +199,7 @@ int Graphic::target(laydest &addr, message &msg, size_t len) const
             dst.lay = l;
         }
         else {
-            size_t max = _layouts.size();
+            size_t max = _layouts.length();
             if (max > UINT8_MAX) {
                 return max = UINT8_MAX;
             }
@@ -366,7 +366,7 @@ metatype *Graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
-    for (size_t i = 0, max = _layouts.size(); i < max; ++i) {
+    for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         Layout *l;
         if (!(l = _layouts.get(i))) {
             continue;

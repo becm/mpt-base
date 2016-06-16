@@ -53,7 +53,7 @@ Polyline *Cycle::append()
 {
     Polyline *pl;
     pl = new Polyline(_dim);
-    if (_part.insert(_part.size(), pl)) return pl;
+    if (_part.insert(_part.length(), pl)) return pl;
     pl->unref();
     return 0;
 }
@@ -67,7 +67,7 @@ Polyline *Cycle::part(int i) const
 Polyline *Cycle::advance()
 {
     Polyline *pl;
-    if (++_act > _part.size()) {
+    if (++_act > _part.length()) {
         if (!(_flags & AutoGrow)) {
             _act = 0;
         }
@@ -78,7 +78,7 @@ Polyline *Cycle::advance()
         return 0;
     }
     if ((pl = _part.get(_act))) return pl;
-    if (!_part.size()) return 0;
+    if (!_part.length()) return 0;
     pl = new Polyline(_dim);
     if (_part.set(_act, pl)) return pl;
     pl->unref();
@@ -86,7 +86,7 @@ Polyline *Cycle::advance()
 }
 int Cycle::size() const
 {
-    return _part.size();
+    return _part.length();
 }
 
 bool Cycle::setSize(int cyc)

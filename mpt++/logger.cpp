@@ -60,7 +60,7 @@ int LogEntry::type() const
 {
     Header *h;
 
-    if (used() < sizeof(*h)) {
+    if (length() < sizeof(*h)) {
         return -2;
     }
     h = (Header *) base();
@@ -70,7 +70,7 @@ const char *LogEntry::source() const
 {
     Header *h;
 
-    if (used() < (sizeof(*h)+1)) {
+    if (length() < (sizeof(*h)+1)) {
         return 0;
     }
     h = (Header *) base();
@@ -84,7 +84,7 @@ Slice<const char> LogEntry::data(int part) const
 {
     Header *h = (Header *) base();
     const char *data;
-    size_t skip, len = used();
+    size_t skip, len = length();
 
     if ((len < sizeof(*h)) || ((len <= (skip = h->from + sizeof(*h))))) {
         return Slice<const char>(0, 0);
@@ -159,7 +159,7 @@ int LogEntry::set(const char *from, int type, const char *fmt, va_list arg)
 
     mpt_array_clone(this, &d);
 
-    return used();
+    return length();
 }
 
 LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(FlowNormal), _ignore(LogDebug), _level(0)
@@ -173,7 +173,7 @@ void LogStore::unref()
 int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
 {
     int save = 0, pass = 0, code = 0x7f & type;
-    
+
     if (!code) {
         save |= _flags & SaveMessage;
         pass |= _flags & PassMessage;
@@ -199,13 +199,13 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     }
     LogEntry m;
     int ret;
-    
+
     if (code && code < _level) _level = code;
 
     if ((ret = m.set(from, type, fmt, arg)) < 0) {
         return ret;
     }
-    if (!_msg.insert(_msg.size(), m)) {
+    if (!_msg.insert(_msg.length(), m)) {
         return -1;
     }
     return ret;

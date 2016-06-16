@@ -254,7 +254,7 @@ size_t Collection::clear(const metatype *mt)
 {
     size_t remove = 0;
     if (!mt) {
-        remove = _items.size();
+        remove = _items.length();
         _items = ItemArray<metatype>();
         return remove ? true : false;
     }
@@ -266,7 +266,7 @@ size_t Collection::clear(const metatype *mt)
         it.setPointer(nullptr);
         ++remove;
     }
-    if ((remove + empty) > _items.size()/2) {
+    if ((remove + empty) > _items.length()/2) {
         _items.compact();
     }
     return remove;

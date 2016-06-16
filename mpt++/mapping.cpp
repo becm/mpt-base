@@ -33,14 +33,14 @@ int Mapping::del(const msgbind *src, const laydest *dest, int client) const
 Array<laydest> Mapping::destinations(const msgbind &src, int client) const
 {
     const mapping *map = (mapping *) _bind.base();
-    size_t len = _bind.used() / sizeof(*map);
+    size_t len = _bind.length() / sizeof(*map);
     Array<laydest> arr;
 
     for (size_t i = 0; i < len; ++i) {
         if (mpt_mapping_cmp(map, &src, client)) {
             continue;
         }
-        arr.set(arr.size(), map->dest);
+        arr.set(arr.length(), map->dest);
     }
     return arr;
 }

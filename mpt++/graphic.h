@@ -74,14 +74,16 @@ public:
         uint32_t used;
     };
     inline Slice<const Element> slice() const
-    { return Slice<const Element>((const Element *) base(), used()/sizeof(Element)); }
+    { return Slice<const Element>((const Element *) base(), length()); }
+    
+    inline size_t length() const
+    { return array::length() / sizeof(Element); }
     
     int add(const T &m, const UpdateHint &d = UpdateHint())
     {
         Element *cmp = (Element *) base();
-        int max = used() / sizeof(*cmp);
 
-        for (int i = 0; i < max; ++i) {
+        for (size_t i = 0, max = length(); i < max; ++i) {
             // different data elements
             if (m != cmp[i].data) {
                 continue;
@@ -102,7 +104,7 @@ public:
         Element *u = 0, *c = (Element *) base();
         size_t len = 0;
 
-        for (size_t i = 0, max = used() / sizeof(*c); i < max; ++i) {
+        for (size_t i = 0, max = length(); i < max; ++i) {
             if (!c[i].used) {
                 if (!u) u = c;
                 continue;

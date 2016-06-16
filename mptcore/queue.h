@@ -189,7 +189,7 @@ public:
         if (!_ref->push(0, sizeof(T))) return 0;
         Slice<uint8_t> d = _ref->data();
         T *t = (T*) d.base();
-        size_t len = d.len() / sizeof(T);
+        size_t len = d.length() / sizeof(T);
         if (t) new (t+=len-1) T(elem);
         return t;
     }
@@ -198,7 +198,7 @@ public:
         if (!_ref) return false;
         Slice<uint8_t> d = _ref->data();
         T *t = (T *) d.base();
-        size_t len = d.len() / sizeof(T);
+        size_t len = d.length() / sizeof(T);
         if (!len) return false;
         if (data) *data = t[len-1];
         t[len-1].~T();
@@ -220,7 +220,7 @@ public:
         if (!_ref) return false;
         Slice<uint8_t> d = _ref->data();
         T *t = (T *) d.base();
-        size_t len = d.len() / sizeof(T);
+        size_t len = d.length() / sizeof(T);
         if (!len) return false;
         if (data) *data = t[0];
         t[0].~T();
@@ -232,7 +232,7 @@ public:
     {
         if (!_ref) return Slice<T>(0, 0);
         Slice<uint8_t> r = _ref->data();
-        return Slice<T>((T *) r.base(), r.len() / sizeof(T));
+        return Slice<T>((T *) r.base(), r.length() / sizeof(T));
     }
 };
 

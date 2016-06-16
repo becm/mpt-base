@@ -38,7 +38,7 @@ const char *MyQueue::string()
 {
 	if (!prepare(1)) return 0;
 	char *base = (char *) data().base();
-	base[data().len()] = 0;
+	base[data().length()] = 0;
 	return base;
 }
 
@@ -75,7 +75,7 @@ extern int main(int , char * const [])
 	buf.peek(2);
 	mpt::Slice<uint8_t> data = buf.data();
 	
-	fwrite(data.base(), data.len(), 1, stdout);
+	fwrite(data.base(), data.length(), 1, stdout);
 	fputc('\n', stdout);
 	
 	qu.prepare(456);

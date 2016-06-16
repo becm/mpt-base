@@ -167,11 +167,14 @@ slice::slice(slice const& from) : array(from), _off(0), _len(0)
 slice::slice(buffer *b) : _off(0), _len(0)
 {
     if (!(_buf = b)) return;
-    _len = used();
+    _len = length();
 }
 bool slice::shift(ssize_t len)
 {
-    if ((len < 0 ? (len < (ssize_t) _off) : (len > (ssize_t) _len))) return false;
+    if (len < 0) {
+       if (-len > (ssize_t) _off) return false;
+    }
+    else if (len > (ssize_t) _len) return false;
     _len -= len;
     _off += len;
     return true;
@@ -179,7 +182,7 @@ bool slice::shift(ssize_t len)
 bool slice::trim(ssize_t len)
 {
     if (len < 0) {
-        if (used() < (_off + _len - len)) return false;
+        if (length() < (_off + _len - len)) return false;
     }
     else if ((size_t) len > _len) return false;
     _len -= len;
@@ -192,7 +195,7 @@ int slice::set(metatype &src)
         return len;
     }
     _off = 0;
-    _len = used();
+    _len = length();
     return len;
 }
 ssize_t slice::write(size_t nblk, const void *addr, size_t esze)
@@ -210,7 +213,7 @@ EncodingArray::~EncodingArray()
 Slice<uint8_t> EncodingArray::data() const
 {
     uint8_t *base = (uint8_t *) _d.base();
-    size_t off = _d.used() - (_state.done - _state.scratch);
+    size_t off = _d.length() - (_state.done - _state.scratch);
 
     return Slice<uint8_t>(base + off, _state.done);
 }
@@ -288,8 +291,8 @@ bool EncodingArray::setData(const message *msg)
 // basic pointer array
 size_t PointerArray::unused() const
 {
-    void **pos = (void **) _d.base();
-    size_t elem = 0, len = size();
+    void **pos = begin();
+    size_t elem = 0, len = length();
     for (size_t i = 0; i < len; ++i) {
         if (!pos[i]) ++elem;
     }
@@ -297,14 +300,14 @@ size_t PointerArray::unused() const
 }
 void PointerArray::compact()
 {
-    size_t len = ::mpt::compact((void **) _d.base(), size());
+    size_t len = ::mpt::compact(begin(), length());
     _d.set(len * sizeof(void *));
 }
 bool PointerArray::swap(size_t p1, size_t p2) const
 {
-    size_t len = size();
+    size_t len = length();
     if (p1 > len || p2 > len) return false;
-    void *t, **b = (void **) _d.base();
+    void *t, **b = begin();
     t = b[p1];
     b[p1] = b[p2];
     b[p2] = t;
@@ -312,9 +315,9 @@ bool PointerArray::swap(size_t p1, size_t p2) const
 }
 bool PointerArray::move(size_t p1, size_t p2) const
 {
-    size_t len = size();
+    size_t len = length();
     if (p1 >= len || p2 >= len) return false;
-    ::mpt::move((void **) _d.base(), p1, p2);
+    ::mpt::move(begin(), p1, p2);
     return true;
 }
 bool PointerArray::insert(size_t pos, void *ref)
@@ -326,8 +329,8 @@ bool PointerArray::insert(size_t pos, void *ref)
 }
 ssize_t PointerArray::offset(const void *ref) const
 {
-    void **pos = (void **) _d.base();
-    size_t len = size();
+    void **pos = begin();
+    size_t len = length();
     for (size_t i = 0; i < len; ++i) {
          if (ref == pos[i]) return i;
     }
@@ -426,11 +429,11 @@ ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {
     Slice<uint8_t> d = data();
     if (!esze) {
-        if (d.len() < nblk) return -2;
+        if (d.length() < nblk) return -2;
         if (dest) memcpy(dest, d.base(), nblk);
         return nblk;
     }
-    size_t avail = d.len() / esze;
+    size_t avail = d.length() / esze;
 
     if (nblk > avail) nblk = avail;
 
@@ -470,7 +473,7 @@ ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
 int64_t Buffer::pos()
 {
     size_t len = _state.done + _state.scratch;
-    return _d.used() - len;
+    return _d.length() - len;
 }
 bool Buffer::seek(int64_t pos)
 {
@@ -494,7 +497,8 @@ bool Buffer::seek(int64_t pos)
 Slice<uint8_t> Buffer::peek(size_t see)
 {
     Slice<uint8_t> d = EncodingArray::data();
-    return  Slice<uint8_t>(d.base(), see < d.len() ? see : d.len());
+    size_t len = d.length();
+    return  Slice<uint8_t>(d.base(), see < len ? see : len);
 }
 
 __MPT_NAMESPACE_END

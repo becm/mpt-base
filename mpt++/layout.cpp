@@ -505,7 +505,7 @@ bool Graph::bind(const Relation &rel, logger *out)
 const Item<Axis> &Graph::axis(int pos) const
 {
     static const Item<Axis> def;
-    if (pos < 0 && (pos += _axes.size()) < 0) return def;
+    if (pos < 0 && (pos += _axes.length()) < 0) return def;
     Item<Axis> *a = _axes.get(pos);
     return a ? *a : def;
 }
@@ -532,7 +532,7 @@ Item<Axis> *Graph::addAxis(Axis *from, const char *name, int nlen)
 const Graph::Data &Graph::world(int pos) const
 {
     static const Data def;
-    if (pos < 0 && (pos += _worlds.size()) < 0) return def;
+    if (pos < 0 && (pos += _worlds.length()) < 0) return def;
     Data *d = _worlds.get(pos);
     return d ? *d : def;
 }
@@ -548,7 +548,7 @@ Graph::Data *Graph::addWorld(World *from, const char *name, int nlen)
         d = new Data(w);
     }
     if (d->setName(name, nlen)
-        && _worlds.insert(_worlds.size(), d)) {
+        && _worlds.insert(_worlds.length(), d)) {
         return d;
     }
     if (!from) d->Item<World>::detach();
@@ -559,7 +559,7 @@ Graph::Data *Graph::addWorld(World *from, const char *name, int nlen)
 const Reference<Cycle> &Graph::cycle(int pos) const
 {
     static const Reference<Cycle> def;
-    if (pos < 0 && (pos += _worlds.size()) < 0) return def;
+    if (pos < 0 && (pos += _worlds.length()) < 0) return def;
     Data *d = _worlds.get(pos);
     if (!d->cycle.pointer()) {
         d->cycle.setPointer(new Reference<Cycle>::instance);
@@ -572,7 +572,7 @@ const Reference<Cycle> &Graph::cycle(int pos) const
 }
 bool Graph::setCycle(int pos, const Reference<Cycle> &cyc) const
 {
-    if (pos < 0 && (pos += _worlds.size()) < 0) return false;
+    if (pos < 0 && (pos += _worlds.length()) < 0) return false;
     Data *d = _worlds.get(pos);
     if (!d) return false;
     d->cycle = cyc;
@@ -731,7 +731,7 @@ metatype *Layout::clone()
 const Item<Graph> &Layout::graph(int pos) const
 {
     static const Item<Graph> def;
-    if (pos < 0 && (pos += _graphs.size()) < 0) return def;
+    if (pos < 0 && (pos += _graphs.length()) < 0) return def;
     Item<Graph> *g;
     return (g = _graphs.get(pos)) ? *g : def;
 }

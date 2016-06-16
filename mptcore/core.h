@@ -498,22 +498,22 @@ public:
     { return _base; }
     
     inline iterator end() const
-    { return _base+len(); }
+    { return _base+length(); }
     
-    inline size_t len() const
+    inline size_t length() const
     { return _len / sizeof(T); }
     inline T *base() const
     { return _base; };
     bool skip(size_t l)
     {
-        if (l > len()) return false;
+        if (l > length()) return false;
         if (!(_len -= l * sizeof(T))) _base = 0;
         else _base += l;
         return true;
     }
     bool trim(size_t l)
     {
-        if (l > len()) return false;
+        if (l > length()) return false;
         if (!(_len -= (l * sizeof(T)))) _base = 0;
         return true;
     }
