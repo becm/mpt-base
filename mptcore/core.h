@@ -741,7 +741,7 @@ protected:
 # define MPT_SOCKET_INIT       { -1 }
 # define MPT_socket_active(s)  ((s)->_id >= 0)
 #endif
-	int32_t  _id;     /* message descriptor */
+	int32_t  _id;     /* socket descriptor */
 };
 #ifdef __cplusplus
 class Stream;

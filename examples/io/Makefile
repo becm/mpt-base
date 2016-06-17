@@ -4,6 +4,7 @@ TESTS = pipe
 PROGS = \
 	swrite sread \
 	mserver mclient \
+	dispatch \
 	${TESTS}
 
 LDLIBS = -lmptio
@@ -14,7 +15,7 @@ include ../../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
 # library config
-sread mclient : LDLIBS+=-lmptcore
+sread mclient dispatch : LDLIBS+=-lmptcore
 %_static : LDLIBS=-lmpt
 
 # special test arguments

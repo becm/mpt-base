@@ -2,6 +2,7 @@
  * init/fini MPT dispatch descriptor.
  */
 
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "array.h"
@@ -50,6 +51,8 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
 	
 	disp->_err.cmd = unknownEvent;
 	disp->_err.arg = disp;
+	
+	disp->_ctx = 0;
 }
 
 /*!
@@ -62,6 +65,8 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
  */
 extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 {
+	MPT_STRUCT(dispatch_context) *ctx;
+	
 	/* dereference registered commands */
 	disp->_def  = 0;
 	mpt_command_clear(&disp->_cmd);
@@ -76,4 +81,15 @@ extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 		disp->_err.cmd = 0;
 		disp->_err.arg = 0;
 	}
+	ctx = disp->_ctx;
+	
+	while (ctx) {
+		MPT_STRUCT(dispatch_context) *next = ctx->_next;
+		/* delete unused context elements */
+		if (!ctx->dsp) {
+			free(ctx);
+		}
+		ctx = next;
+	}
+	disp->_ctx = 0;
 }

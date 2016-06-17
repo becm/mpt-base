@@ -56,16 +56,20 @@ public:
 	size_t used() const { return _fdused; }
 	
 protected:
+	RefArray<input>
+# else
+	MPT_STRUCT(array)
+#  define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
 # endif /* __cplusplus */
+	             _slot,   /* compound part pointer array */
+	             _wait;   /* temporary data for poll info */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;
-	} _disp;                      /* dispatch controller */
+	} _disp;              /* dispatch controller */
 	
-	MPT_STRUCT(array)    _slot,   /* compound part pointer array */
-	                     _wait;   /* temporary data for poll info */
-	int                  _sysfd;  /* system poll descriptor */
-	unsigned int         _fdused; /* number of used descriptors */
+	int          _sysfd;  /* system poll descriptor */
+	unsigned int _fdused; /* number of used descriptors */
 }
 #endif /* _MPT_ARRAY_H */
 ;

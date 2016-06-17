@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -14,16 +15,27 @@
 
 static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
 {
+	MPT_STRUCT(dispatch_context) *ctx;
 	MPT_STRUCT(message) msg;
 	MPT_STRUCT(output) *ans;
 	const uint8_t *base;
 	
 	/* allow single message only */
-	if (!(ans = *((void **) ptr))) {
-		return -3;
+	if (!(ctx = ptr)) {
+		return MPT_ERROR(BadArgument);
 	}
-	/* add reply data */
-	if (!mptr) {
+	/* connected dispatcher was deleted */
+	if (!ctx->dsp) {
+		free(ctx);
+		return MPT_ERROR(MissingData);
+	}
+	ans = ctx->dsp->_out;
+	
+	/* mark context unused */
+	ctx->dsp = 0;
+	
+	/* no output target/source */
+	if (!ans || !mptr) {
 		return 0;
 	}
 	msg = *mptr;
@@ -114,8 +126,8 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
  */
 extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 {
-	MPT_STRUCT(output) *ans;
 	MPT_STRUCT(event) tmp;
+	MPT_STRUCT(dispatch_context) *ctx;
 	const MPT_STRUCT(command) *cmd;
 	int state;
 	
@@ -151,9 +163,15 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		cmd = mpt_command_get(&disp->_cmd, ev->id = id);
 	}
 	/* fallback on dispatcher output */
-	if (!ev->reply.set && (ans = disp->_out)) {
-		ev->reply.set = (int (*)()) printReply;
-		ev->reply.context = &ans;
+	if (!ev->reply.set && (ctx = disp->_ctx)) {
+		if (!(ctx = mpt_dispatch_context(&disp->_ctx))) {
+			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Critical), "%s",
+			               MPT_tr("unable to register dispatch context"));
+		} else {
+			ctx->dsp = disp;
+			ev->reply.set = (int (*)()) printReply;
+			ev->reply.context = ctx;
+		}
 	}
 	/* execute resolved command */
 	if (cmd) {
@@ -164,12 +182,14 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state = disp->_err.cmd(disp->_err.arg, ev);
 	}
 	else {
-		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Warning), "%s (%"PRIx8")",
+		mpt_event_reply(ev, MPT_ERROR(BadType), "unknown command");
+		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Warning), "%s (%"PRIxPTR")",
 		               MPT_tr("invalid command id"), ev->id);
 		return -2;
 	}
 	/* bad execution of command */
 	if (state < 0) {
+		mpt_event_reply(ev, MPT_ERROR(BadArgument), "unknown command");
 		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Debug), "%s (%"PRIxPTR")",
 		               MPT_tr("command execution failed"), ev->id);
 		return state;
