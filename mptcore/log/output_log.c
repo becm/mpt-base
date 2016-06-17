@@ -31,7 +31,7 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 	
 	if (!out) {
 		if (!(type & 0xff)) return 0;
-		log = mpt_log_default(0, 0);
+		log = mpt_log_default();
 	} else {
 		log = mpt_object_logger((MPT_INTERFACE(object) *) out);
 	}

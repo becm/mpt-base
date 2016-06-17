@@ -145,6 +145,16 @@ enum MPT_ENUM(Types)
 };
 
 enum MPT_ENUM(LogType) {
+	MPT_ENUM(LogLevelNone)      = 0x0,  /* filter messages down to ... */
+	MPT_ENUM(LogLevelCritical)  = 0x1,
+	MPT_ENUM(LogLevelError)     = 0x2,
+	MPT_ENUM(LogLevelWarning)   = 0x3,
+	MPT_ENUM(LogLevelInfo)      = 0x4,
+	MPT_ENUM(LogLevelDebug1)    = 0x5,
+	MPT_ENUM(LogLevelDebug2)    = 0x6,
+	MPT_ENUM(LogLevelDebug3)    = 0x7,
+	MPT_ENUM(LogLevelFile)      = 0x8,
+	
 	MPT_ENUM(LogMessage)   = 0x0,   /* user (terminal) messages */
 	MPT_ENUM(LogFatal)     = 0x1,
 	MPT_ENUM(LogCritical)  = 0x2,
@@ -831,12 +841,24 @@ extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
 extern MPT_INTERFACE(logger) *mpt_object_logger(const MPT_INTERFACE(object) *);
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
-#if defined(_STDIO_H) || defined(_STDIO_H_)
 /* get default logger instance */
-extern MPT_INTERFACE(logger) *mpt_log_default(int __MPT_DEFPAR(0), FILE *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(logger) *mpt_log_default(void);
+/* set default logger options */
+extern int mpt_log_default_set(int);
+#if defined(_STDIO_H) || defined(_STDIO_H_)
 /* start log message */
-extern const char *mpt_log_start(FILE *, const char *, int);
+extern const char *mpt_log_intro(FILE *, int, const char *);
 #endif
+
+/* determine output file type */
+extern int mpt_output_file(uint8_t arg, int min);
+/* determine message ANSI colour code */
+extern const char *mpt_ansi_code(uint8_t);
+extern const char *mpt_ansi_reset(void);
+/* message type description */
+extern const char *mpt_log_identifier(int);
+/* determine message level */
+int mpt_log_level(const char *);
 
 /* write error message and abort program */
 extern void _mpt_abort(const char *, const char *, const char *, int) __attribute__ ((__noreturn__));

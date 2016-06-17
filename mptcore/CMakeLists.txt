@@ -23,8 +23,9 @@ endforeach(dir)
 
 # metatype operations defined in core.h
 aux_source_directory(meta sources)
+aux_source_directory(log sources)
 
-set(sources ${sources} abort.c identifier.c log.c mode_parse.c reference.c)
+set(sources ${sources} abort.c identifier.c mode_parse.c reference.c)
 
 add_library(mptcore SHARED ${sources} libinfo.c)
 set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)

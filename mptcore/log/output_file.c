@@ -4,7 +4,7 @@
 #include "message.h"
 
 /*!
- * \ingroup mptMessage
+ * \ingroup mptLog
  * \brief get file type
  * 
  * Determine file descriptor for message of
@@ -26,17 +26,17 @@ extern int mpt_output_file(uint8_t arg, int min)
 	if (!arg) return MPT_ENUM(OutputPrintNormal);
 	
 	switch (min & 0x7) {
-	  case MPT_ENUM(OutputLevelNone):     skip = MPT_ENUM(LogCritical); break;
-	  case MPT_ENUM(OutputLevelCritical): skip = MPT_ENUM(LogError);    break;
-	  case MPT_ENUM(OutputLevelError):    skip = MPT_ENUM(LogWarning);  break;
-	  case MPT_ENUM(OutputLevelWarning):  skip = MPT_ENUM(LogInfo);     break;
-	  case MPT_ENUM(OutputLevelInfo):     skip = MPT_ENUM(LogDebug);    break;
-	  case MPT_ENUM(OutputLevelDebug1):   skip = MPT_ENUM(LogDebug2);   break;
-	  case MPT_ENUM(OutputLevelDebug2):   skip = MPT_ENUM(LogDebug3);   break;
-	  default: skip = MPT_ENUM(LogFile); /* MPT_ENUM(OutputLevelDebug3) */
+	  case MPT_ENUM(LogLevelNone):     skip = MPT_ENUM(LogCritical); break;
+	  case MPT_ENUM(LogLevelCritical): skip = MPT_ENUM(LogError);    break;
+	  case MPT_ENUM(LogLevelError):    skip = MPT_ENUM(LogWarning);  break;
+	  case MPT_ENUM(LogLevelWarning):  skip = MPT_ENUM(LogInfo);     break;
+	  case MPT_ENUM(LogLevelInfo):     skip = MPT_ENUM(LogDebug);    break;
+	  case MPT_ENUM(LogLevelDebug1):   skip = MPT_ENUM(LogDebug2);   break;
+	  case MPT_ENUM(LogLevelDebug2):   skip = MPT_ENUM(LogDebug3);   break;
+	  default: skip = MPT_ENUM(LogFile);
 	}
 	
-	if (min & MPT_ENUM(OutputLevelLog)) {
+	if (min & MPT_ENUM(LogLevelFile)) {
 		if ((arg & 0x7f) < skip) return MPT_ENUM(OutputPrintHistory) | MPT_ENUM(OutputPrintRestore) | MPT_ENUM(OutputPrintNormal);
 		return 0;
 	}

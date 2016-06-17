@@ -2,19 +2,20 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(sources
-  array.cpp config.cpp message.cpp value.cpp logger.cpp
-  object.cpp parse.cpp queue.cpp config.cpp
-  meta.cpp meta_new.cpp meta_buffer.cpp
-  reference_wrap.cpp
+  array.cpp config.cpp client.cpp
+  logger.cpp
+  message.cpp meta.cpp meta_new.cpp meta_buffer.cpp
   node_new.cpp
+  object.cpp parse.cpp queue.cpp
+  reference_wrap.cpp value.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
 set(includedirs ${Mpt_CORE_INCLUDE_DIRS})
 
 if(MPT_WITH_PLOT)
   set(sources ${sources}
-    cycle.cpp graphic.cpp item.cpp mapping.cpp
-    layout.cpp polyline.cpp transform.cpp
+    cycle.cpp graphic.cpp item.cpp layout.cpp
+    mapping.cpp polyline.cpp transform.cpp
   )
   list(APPEND includedirs ${Mpt_PLOT_INCLUDE_DIRS})
   list(INSERT linklibs 0 ${Mpt_PLOT_LIBRARIES})

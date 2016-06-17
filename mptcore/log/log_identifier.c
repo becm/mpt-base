@@ -4,7 +4,7 @@
 #include "message.h"
 
 /*!
- * \ingroup mptMessage
+ * \ingroup mptLog
  * \brief message type description
  * 
  * Determine text description for message type.
@@ -13,7 +13,7 @@
  * 
  * \return message type description
  */
-extern const char *mpt_message_identifier(int type)
+extern const char *mpt_log_identifier(int type)
 {
 	if (type <= 0) {
 		return 0;

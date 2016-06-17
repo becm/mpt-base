@@ -5,7 +5,6 @@
 core_src = files(
   'abort.c',
   'identifier.c',
-  'log.c',
   'mode_parse.c',
   'reference.c'
 )
@@ -16,6 +15,7 @@ foreach d : [
   'config',
   'convert',
   'event',
+  'log',
   'message',
   'meta',
   'node',

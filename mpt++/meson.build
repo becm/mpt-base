@@ -3,17 +3,17 @@
 
 cxx_src = files(
   'array.cpp',
+  'client.cpp',
   'config.cpp',
-  'message.cpp',
-  'value.cpp',
   'logger.cpp',
+  'message.cpp',
   'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
+  'node_new.cpp',
   'object.cpp',
   'parse.cpp',
   'queue.cpp',
-  'config.cpp',
   'reference_wrap.cpp',
-  'node_new.cpp',
+  'value.cpp',
 )
 
 cxx_inc = [ core_inc ]
@@ -26,8 +26,8 @@ if with_plot
     'cycle.cpp',
     'graphic.cpp',
     'item.cpp',
-    'mapping.cpp',
     'layout.cpp',
+    'mapping.cpp',
     'polyline.cpp',
     'transform.cpp'
   )

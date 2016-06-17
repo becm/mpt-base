@@ -89,7 +89,7 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int
 			}
 		}
 	}
-	ansi = mpt_log_start(fd, from, type);
+	ansi = mpt_log_intro(fd, type, from);
 	if (fmt) {
 		vfprintf(fd, fmt, va);
 	}

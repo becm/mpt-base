@@ -88,10 +88,10 @@ static int outdataLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 	}
 	if ((ret = src->_vptr->conv(src, 'k', &arg)) >= 0) {
 		int type;
-		if ((type = mpt_output_level(arg)) < 0) {
+		if ((type = mpt_log_level(arg)) < 0) {
 			return MPT_ERROR(BadValue);
 		}
-		if (arg && isupper(*arg)) type |= MPT_ENUM(OutputLevelLog);
+		if (arg && isupper(*arg)) type |= MPT_ENUM(LogLevelFile);
 		*level = type;
 		return ret;
 	}
@@ -132,7 +132,7 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERF
 			return ret;
 		}
 		else if (!ret) {
-			od->level = (MPT_ENUM(OutputLevelInfo) << 4) | MPT_ENUM(OutputLevelWarning);
+			od->level = (MPT_ENUM(LogLevelInfo) << 4) | MPT_ENUM(LogLevelWarning);
 		}
 		else {
 			od->level = ((v & 0xf) << 4) | (v & 0xf);
@@ -140,7 +140,7 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERF
 		return ret;
 	}
 	if (!strcasecmp(name, "debug")) {
-		uint8_t v = MPT_ENUM(OutputLevelDebug3);
+		uint8_t v = MPT_ENUM(LogLevelDebug3);
 		ret = 0;
 		if (src && (ret = src->_vptr->conv(src, 'y', &v)) < 0) {
 			return MPT_ERROR(BadType);

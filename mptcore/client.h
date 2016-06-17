@@ -67,8 +67,9 @@ MPT_STRUCT(proxy)
 	class instance
 	{
 	public:
-		inline ~instance() { };
 		virtual void unref() = 0;
+	protected:
+		inline ~instance() { }
 	};
 	inline proxy(const char *fmt = 0) : _ref(0)
 	{
@@ -136,9 +137,9 @@ int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
 void *mpt_proxy_cast(const MPT_STRUCT(proxy) *, int);
 
 /* dynamic binding with metatype proxy instance */
-MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 /* open library handle as metatype */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

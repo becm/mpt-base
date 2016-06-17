@@ -264,7 +264,7 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 	*odata = defOut;
 	
 	odata->con.out.state = MPT_ENUM(OutputPrintColor);
-	odata->con.out.level = (MPT_ENUM(OutputLevelWarning) << 4) | MPT_ENUM(OutputLevelWarning);
+	odata->con.out.level = (MPT_ENUM(LogLevelWarning) << 4) | MPT_ENUM(LogLevelWarning);
 	
 	odata->_no = no;
 	

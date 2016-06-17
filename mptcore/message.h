@@ -92,16 +92,6 @@ enum MPT_ENUM(CommandType) {
 };
 
 enum MPT_ENUM(OutputFlags) {
-	MPT_ENUM(OutputLevelNone)      = 0x0,  /* filter messages down to ... */
-	MPT_ENUM(OutputLevelCritical)  = 0x1,
-	MPT_ENUM(OutputLevelError)     = 0x2,
-	MPT_ENUM(OutputLevelWarning)   = 0x3,
-	MPT_ENUM(OutputLevelInfo)      = 0x4,
-	MPT_ENUM(OutputLevelDebug1)    = 0x5,
-	MPT_ENUM(OutputLevelDebug2)    = 0x6,
-	MPT_ENUM(OutputLevelDebug3)    = 0x7,
-	MPT_ENUM(OutputLevelLog)       = 0x8,
-	
 	MPT_ENUM(OutputPrintNormal)  = 0x1,
 	MPT_ENUM(OutputPrintError)   = 0x2,
 	MPT_ENUM(OutputPrintHistory) = 0x3,
@@ -225,21 +215,11 @@ extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct 
 extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
 #endif
 
-/* determine output file type */
-extern int mpt_output_file(uint8_t arg, int min);
-/* determine message ANSI colour code */
-extern const char *mpt_ansi_code(uint8_t);
-extern const char *mpt_ansi_reset(void);
-/* message type description */
-extern const char *mpt_message_identifier(int);
-/* determine message level */
-int mpt_output_level(const char *);
+/* push output/error message */
+extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
 
 /* get message on queue */
 extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);
-
-/* push output/error message */
-extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
 
 __MPT_EXTDECL_END
 

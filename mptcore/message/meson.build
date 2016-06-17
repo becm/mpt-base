@@ -8,12 +8,8 @@ src = files(
   'memtok.c',
   'message_argv.c',
   'message_get.c',
-  'message_identifier.c',
   'message_nextid.c',
   'message_print.c',
   'message_pset.c',
   'message_read.c',
-  'output_file.c',
-  'output_level.c',
-  'output_log.c',
 )

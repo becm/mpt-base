@@ -10,7 +10,7 @@ HEADER = core.h \
 	client.h event.h parse.h
 #
 # source summary
-SRCS := $(wildcard */*.c) abort.c reference.c identifier.c log.c mode_parse.c
+SRCS := $(wildcard */*.c) abort.c reference.c identifier.c mode_parse.c
 #
 # shared library options
 SHLIB_MAJOR = 1

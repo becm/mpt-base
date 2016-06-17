@@ -82,7 +82,7 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 		}
 	}
 	else {
-		const char *desc = mpt_message_identifier(arg);
+		const char *desc = mpt_log_identifier(arg);
 		fputc('[', out);
 		fputs(desc, out);
 		fputc(']', out);

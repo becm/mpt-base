@@ -66,7 +66,7 @@ int log(const char *fmt, ... )
 }
 logger *logger::defaultInstance()
 {
-    return mpt_log_default(0, 0);
+    return mpt_log_default();
 }
 int logger::message(const char *from, int err, const char *fmt, ...)
 {

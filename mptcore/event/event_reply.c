@@ -58,7 +58,7 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		}
 		fputc('[', fd);
 		fputc('>', fd);
-		fputs(mpt_message_identifier(code), fd);
+		fputs(mpt_log_identifier(code), fd);
 		fputc(']', fd);
 		fputc(' ', fd);
 		
