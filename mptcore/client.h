@@ -147,13 +147,6 @@ inline libhandle::~libhandle()
 {
     mpt_library_close(this);
 }
-
-inline int client::assign(const path *p, const value *v)
-{ return config::global()->assign(p, v); }
-inline metatype *client::query(const path *p) const
-{ return config::global()->query(p); }
-inline int client::remove(const path *p)
-{ return config::global()->remove(p); }
 inline int client::init(metatype *)
 { return 0; }
 inline int client::prep(metatype *)

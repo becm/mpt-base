@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(sources
   array.cpp config.cpp message.cpp value.cpp logger.cpp
-  object.cpp parse.cpp queue.cpp
+  object.cpp parse.cpp queue.cpp config.cpp
   meta.cpp meta_new.cpp meta_buffer.cpp
   reference_wrap.cpp
   node_new.cpp

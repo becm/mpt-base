@@ -11,6 +11,7 @@ cxx_src = files(
   'object.cpp',
   'parse.cpp',
   'queue.cpp',
+  'config.cpp',
   'reference_wrap.cpp',
   'node_new.cpp',
 )
