@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 
 # to dir sources and submodules
 set(sources connect.c init.c output_new.c)
-foreach(dir IN ITEMS outdata notify stream)
+foreach(dir IN ITEMS notify outdata stream)
   aux_source_directory(${dir} sources)
 endforeach(dir)
 

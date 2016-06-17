@@ -3,12 +3,12 @@
 
 # collect source files
 plot_src = []
-foreach d : [ 'output', 'layout', 'values' ]
+foreach d : [ 'layout', 'output', 'values' ]
   subdir(d)
   plot_src += src
 endforeach
 
-install_headers('output.h', 'layout.h', 'values.h',
+install_headers('layout.h', 'output.h', 'values.h',
   subdir : 'mpt')
 
 plot_inc = include_directories('.')

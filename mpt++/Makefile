@@ -5,7 +5,7 @@ LIB = mpt++
 INC = .. ../mptcore ../mptplot ../mptio
 #
 # header to export
-HEADER = object.h graphic.h
+HEADER = graphic.h object.h
 #
 # shared library options
 SHLIB_MAJOR = 1
@@ -24,9 +24,9 @@ DIR_TOP = ${MPT_PREFIX}
 DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
-# use C++11 for compilation
-CXX += -std=c++11
+# require C++11 for compilation
+item.o layout.o mapping.o : CXX+=-std=c++11
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h
-CLEAN_FILES += libinfo.o
+CLEAR_FILES += libinfo.o

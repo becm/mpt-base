@@ -5,12 +5,13 @@ LIB = mptcore
 INC = . ..
 #
 # header to export
-HEADER = core.h \
-	array.h convert.h config.h message.h node.h queue.h \
-	client.h event.h parse.h
+HEADER =\
+	array.h core.h client.h config.h convert.h \
+	event.h message.h node.h parse.h queue.h
 #
 # source summary
-SRCS := $(wildcard */*.c) abort.c reference.c identifier.c mode_parse.c
+sources = abort.c identifier.c mode_parse.c reference.c
+SRCS := $(wildcard */*.c) ${sources}
 #
 # shared library options
 SHLIB_MAJOR = 1
@@ -25,4 +26,4 @@ include ../mpt.lib.mk
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h
-CLEAN_FILES += libinfo.o
+CLEAR_FILES += libinfo.o

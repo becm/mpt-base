@@ -5,7 +5,7 @@ LIB = mptplot
 INC = . .. ../mptcore
 #
 # header to export
-HEADER = output.h layout.h values.h
+HEADER = layout.h output.h values.h
 #
 # source summary
 SRCS := $(wildcard */*.c)
@@ -24,4 +24,4 @@ include ../mpt.lib.mk
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h
-CLEAN_FILES += libinfo.o
+CLEAR_FILES += libinfo.o

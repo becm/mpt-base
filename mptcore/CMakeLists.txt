@@ -5,14 +5,14 @@ set(headers core.h)
 
 set(subdirs
   array
+  client
   config
+  convert
   event
   message
   node
   parse
   queue
-  convert
-  client
 )
 
 # submodules have headers
