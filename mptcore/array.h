@@ -440,7 +440,6 @@ public:
     
     Item<T> *append(T *t, const char *id, int len = -1)
     {
-        Array<Item<T> > &arr = *this;
         Item<T> *it = (Item<T> *) Array<Item<T> >::_d.append(sizeof(*it));
         if (!it) return 0;
         new (it) Item<T>(t);

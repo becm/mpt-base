@@ -74,8 +74,12 @@ protected:
         uint64_t _info;
         inline ~Meta() { }
     };
+    struct Data
+    {
+        int8_t raw[128-sizeof(node)];
+    };
     friend struct node;
-    int8_t data[128-sizeof(node)];
+    struct Data data;
 };
 
 NodePrivate::NodePrivate(size_t len) : node()
@@ -91,7 +95,7 @@ NodePrivate::NodePrivate(size_t len) : node()
     }
     size_t left = sizeof(data) + sizeof(ident) - skip;
     if (left >= sizeof(Meta)) {
-        _meta = new (data-sizeof(ident)+skip) Meta(left, this);
+        _meta = new (data.raw-sizeof(ident)+skip) Meta(left, this);
     }
 }
 NodePrivate::~NodePrivate()
@@ -247,7 +251,7 @@ node *node::create(size_t ilen, size_t dlen)
     isize = MPT_align(isize);
 
     node *n;
-    size_t left = sizeof(NodePrivate::data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
+    size_t left = sizeof(NodePrivate::Data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
     if (left >= (isize + dlen)) {
         if (!(n = (NodePrivate *) malloc(sizeof(NodePrivate)))) return 0;
         new (n) NodePrivate(ilen);
