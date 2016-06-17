@@ -74,6 +74,7 @@ extern int main(int , char * const [])
 	mpt::Object ao(new mpt::Axis);
 	
 	std::cout << "ao: " << ao.type() << std::endl;
+	std::cout << "axis type: " << typeid(*ao.pointer()).name() << std::endl;
 	
 	std::cout << "int: " << has_get<Int>() << std::endl;
 	std::cout << "dbl: " << has_get<Double>() << std::endl;

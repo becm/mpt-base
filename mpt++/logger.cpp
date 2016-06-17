@@ -151,7 +151,7 @@ int LogEntry::set(const char *from, int type, const char *fmt, va_list arg)
     h->type = type;
     h->_cmd = 0;
 
-    static const size_t maxlen = std::numeric_limits<decltype(h->from)>::max();
+    static const size_t maxlen = std::numeric_limits<__decltype(h->from)>::max();
     if (!from) {
         len = 0;
     }

@@ -71,11 +71,6 @@ if with_lua
   subdir('lua')
 endif
 
-if with_cxx
-  add_languages('cpp')
-  subdir('mpt++')
-endif
-
 if with_static
   mpt = static_library('mpt', static_src,
     include_directories : static_inc,
@@ -86,6 +81,11 @@ if with_static
     libraries : [ mpt ],
     version : '1.0.0',
     name : 'mpt')
+endif
+
+if with_cxx
+  add_languages('cpp')
+  subdir('mpt++')
 endif
 
 if with_shared and get_option('with_tests')

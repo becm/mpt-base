@@ -281,8 +281,8 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
         else {
             linepart tmp;
 
-            while (plen > std::numeric_limits<decltype(tmp.usr)>::max()) {
-                tmp.usr = tmp.raw = std::numeric_limits<decltype(tmp.usr)>::max();
+            while (plen > std::numeric_limits<__decltype(tmp.usr)>::max()) {
+                tmp.usr = tmp.raw = std::numeric_limits<__decltype(tmp.usr)>::max();
                 plen -= tmp.usr;
                 tr.apply(i, tmp, to, from);
                 to   += tmp.usr;
