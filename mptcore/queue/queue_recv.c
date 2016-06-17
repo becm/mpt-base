@@ -42,13 +42,16 @@ extern ssize_t mpt_queue_recv(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 	}
 	/* get new data part */
 	if (!dec) {
-		pre = info->done;
-		max = info->scratch;
+		pre = info->done + info->scratch;
 		
-		if ((max + pre) > len) {
+		if (pre > len) {
 			return -1;
 		}
-		return info->scratch = len - pre;
+		len -= pre;
+		info->done = pre;
+		info->scratch = len;
+		
+		return len ? (ssize_t) len : -2;
 	}
 	pre = qu->off;
 	max = qu->max;

@@ -102,12 +102,14 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 		}
 		else if (mpt_message_length(&msg) < idlen) {
 			mpt_queue_crop(&srm->_rd, 0, off);
+			srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
 			return -1;
 		}
 		tmp = msg;
 		/* read (first part of) message id */
 		if (mpt_message_read(&msg, pos, rbuf) < pos) {
 			mpt_queue_crop(&srm->_rd, 0, off);
+			srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
 			return -1;
 		}
 		/* marked as reply */
@@ -148,6 +150,7 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 			while (1) {
 				if (mpt_stream_push(srm, pos, rbuf) < 0) {
 					mpt_queue_crop(&srm->_rd, 0, off);
+					srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
 					return -3;
 				}
 				off -= pos;
