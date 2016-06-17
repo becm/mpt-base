@@ -70,9 +70,17 @@ MPT_STRUCT(proxy)
 		inline ~instance() { };
 		virtual void unref() = 0;
 	};
-	inline proxy() : _ref(0)
+	inline proxy(const char *fmt = 0) : _ref(0)
 	{
-		for (size_t i = 0; i < sizeof(_types); ++i) _types[i] = 0;
+		size_t i = 0;
+		if (fmt) {
+			while (*fmt && i < (sizeof(_types) - 1)) {
+				_types[i++] = *fmt++;
+			}
+		}
+		while (i < sizeof(_types)) {
+			_types[i++] = 0;
+		}
 	}
 	inline ~proxy()
 	{

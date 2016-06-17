@@ -30,10 +30,11 @@ extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, const char 
 		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
 		return MPT_ERROR(BadArgument);
 	}
-	if ((len = mpt_proxy_type(&tmp, conf)) < 0) {
-		if (out) mpt_log(out, __func__, MPT_FCNLOG(Debug2), "%s: %s", MPT_tr("unspecified instance type"), conf);
-	} else {
+	if ((len = mpt_proxy_type(&tmp, conf)) >= 0) {
 		conf += len;
+	}
+	else if (out && !*px->_types) {
+		mpt_log(out, __func__, MPT_FCNLOG(Debug2), "%s: %s", MPT_tr("unspecified instance type"), conf);
 	}
 	/* create new proxy */
 	if (!(m = mpt_meta_open(conf, path, out))) {
