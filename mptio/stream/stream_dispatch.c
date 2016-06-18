@@ -2,6 +2,7 @@
  * stream message dispatching.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
@@ -14,36 +15,33 @@
 
 #include "stream.h"
 
-/* check for non-zero ID */
-static ssize_t nonZeroID(MPT_STRUCT(message) *msg, size_t idlen)
+static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
 {
-	struct iovec *cont = msg->cont;
-	const uint8_t *base = msg->base;
-	size_t used = msg->used, clen = msg->clen;
-	ssize_t pos = 0;
+	MPT_STRUCT(stream_context) *ctx = ctxp;
+	MPT_STRUCT(stream) *srm;
 	
-	while (idlen) {
-		size_t i;
-		if (used > idlen) {
-			used = idlen;
-		}
-		for (i = 0; i < used; ++i) {
-			if (base[i]) {
-				return pos;
-			}
-			++pos;
-		}
-		if (!(idlen -= used)) {
-			return -2;
-		}
-		if (!clen--) {
-			return -1;
-		}
-		base = cont->iov_base;
-		used = cont->iov_len;
-		++cont;
+	if (!(srm = ctx->srm)) {
+		free(ctx);
+		return 0;
 	}
-	return -2;
+	if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
+		return MPT_ERROR(MissingBuffer);
+	}
+	if (ctx->len) {
+		mpt_stream_push(srm, ctx->len, ctx->_val);
+	}
+	/* detach context */
+	ctx->srm = 0;
+	
+	/* send message or termination */
+	if (msg) {
+		mpt_stream_send(srm, msg);
+	} else {
+		mpt_stream_push(srm, 0, 0);
+	}
+	mpt_stream_flush(srm);
+	
+	return 0;
 }
 
 /*!
@@ -60,7 +58,7 @@ static ssize_t nonZeroID(MPT_STRUCT(message) *msg, size_t idlen)
  * 
  * \return created input
  */
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(EventHandler) cmd, void *arg)
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(stream_context) *ctx, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct iovec vec;
 	MPT_STRUCT(message) msg;
@@ -69,15 +67,11 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 	size_t off;
 	int ret;
 	
-	if (idlen && !srm->_dec.fcn) {
+	/* require message separation */
+	if (ctx && !srm->_dec.fcn) {
 		return -1;
 	}
-	
-	/* message in progress */
-	if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-		errno = EAGAIN;
-		return -2;
-	}
+	/* use existing or new message */
 	if ((len = srm->_dec.mlen) < 0
 	    && (srm->_dec.mlen = len = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) < 0) {
 		return -2;
@@ -88,86 +82,29 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 	
 	ev.id = 0;
 	ev.msg = &msg;
-	ev.reply.set = 0;
-	ev.reply.context = 0;
+	ev.reply.set = srm->_dec.fcn ? sendMessage : 0;
+	ev.reply.context = ctx;
 	
-	/* setup reply channel */
-	if (idlen) {
-		MPT_STRUCT(message) tmp;
-		uint8_t rbuf[sizeof(ev.id)];
-		size_t pos = sizeof(rbuf);
+	/* reserve reply context */
+	if (ctx) {
+		ctx->srm = srm;
 		
-		if (pos > idlen) {
-			pos = idlen;
-		}
-		else if (mpt_message_length(&msg) < idlen) {
+		if ((len = ctx->len)
+		    && (mpt_message_read(&msg, len, ctx->_val) < (size_t) len)) {
 			mpt_queue_crop(&srm->_rd, 0, off);
 			srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
-			return -1;
-		}
-		tmp = msg;
-		/* read (first part of) message id */
-		if (mpt_message_read(&msg, pos, rbuf) < pos) {
-			mpt_queue_crop(&srm->_rd, 0, off);
-			srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
-			return -1;
-		}
-		/* marked as reply */
-		if (rbuf[0] & 0x80) {
-			/* id fits event size */
-			if (pos <= sizeof(ev.id)) {
-				size_t i;
-				ev.id = rbuf[0] & 0x7f;
-				for (i = 1; i < pos; ++i) {
-					ev.id = (ev.id * 0x100) + rbuf[pos];
-				}
-			}
-			/* use pseudo-id */
-			else {
-				ev.id = -1;
-				if (idlen > pos) {
-					mpt_message_read(&msg, idlen - pos, 0);
-				}
-			}
-			/* message was a reply */
-			idlen = 0;
-		}
-		/* no reply needed */
-		else if (!srm->_enc.fcn || (nonZeroID(&tmp, idlen) < 0)) {
-			/* consume remaining id */
-			if (idlen > pos) {
-				mpt_message_read(&msg, idlen - pos, 0);
-			}
-			idlen = 0;
-		}
-		/* reply setup */
-		else {
-			rbuf[0] |= 0x80;
-			ev.reply.set = (int (*)()) mpt_stream_send;
-			ev.reply.context = srm;
-			
-			/* push reply id */
-			while (1) {
-				if (mpt_stream_push(srm, pos, rbuf) < 0) {
-					mpt_queue_crop(&srm->_rd, 0, off);
-					srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
-					return -3;
-				}
-				off -= pos;
-				if (!(idlen -= pos)) {
-					break;
-				}
-				pos = (idlen > sizeof(rbuf)) ? sizeof(rbuf) : idlen;
-				if (mpt_message_read(&msg, pos, rbuf) < pos) {
-					MPT_ABORT("invalid ID processing");
-				}
-			}
+			return MPT_ERROR(BadValue);
 		}
 	}
-	/* dispatch data to command */
+	/* consume message */
 	if (!cmd) {
+		/* reply to non-return message */
+		if (ctx && ctx->len && ctx->_val[0] & 0x80) {
+			sendMessage(ctx, 0);
+		}
 		ret = 0;
 	}
+	/* dispatch data to command */
 	else if ((ret = cmd(arg, &ev)) < 0) {
 		ret = MPT_ENUM(EventCtlError);
 	} else {
@@ -175,14 +112,6 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(E
 	}
 	/* remove message data from queue */
 	mpt_queue_crop(&srm->_rd, 0, off);
-	
-	/* finalize reply */
-	if (idlen) {
-		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-			mpt_stream_push(srm, 0, 0);
-		}
-		mpt_stream_flush(srm);
-	}
 	
 	/* further message on queue */
 	if ((srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) >= 0) {

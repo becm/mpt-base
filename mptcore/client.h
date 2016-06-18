@@ -91,7 +91,7 @@ MPT_STRUCT(proxy)
 	template <typename T>
 	inline T *value() const
 	{
-		return mpt_proxy_cast(this, typeIdentifier<T>());
+		return (T *) mpt_proxy_cast(this, typeIdentifier<T>());
 	}
 protected:
 	instance *_ref;

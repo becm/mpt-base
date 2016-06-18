@@ -27,14 +27,19 @@
 
 static int printMessage(void *fd, MPT_STRUCT(event) *ev)
 {
-	
-	if (ev && ev->msg) {
+	if (!ev) {
+		return 0;
+	}
+	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
 		fwrite(msg.base, msg.used, 1, fd);
 		while (msg.clen--) {
 			fwrite(msg.cont->iov_base, msg.cont->iov_len, 1, fd);
 			++msg.cont;
 		}
+	}
+	if (ev->reply.set) {
+		ev->reply.set(ev->reply.context, ev->msg);
 	}
 	return 0;
 }

@@ -13,15 +13,15 @@
  * \ingroup mptEvent
  * \brief dispatch context
  * 
- * Create dispatch context for dispatch descriptor.
+ * Find/Create available dispatch context entry.
  * 
- * \param disp dispatch controller
+ * \param ptr  reference to context base pointer
  * 
  * \return existing or created dispatch context
  */
-extern MPT_STRUCT(dispatch_context) *mpt_dispatch_context(MPT_STRUCT(dispatch_context) **disp)
+extern MPT_STRUCT(dispatch_context) *mpt_dispatch_context(MPT_STRUCT(dispatch_context) **ptr)
 {
-	MPT_STRUCT(dispatch_context) *ctx = *disp;
+	MPT_STRUCT(dispatch_context) *ctx = *ptr;
 	while (1) {
 		/* no free context found */
 		if (!ctx) {
@@ -30,14 +30,14 @@ extern MPT_STRUCT(dispatch_context) *mpt_dispatch_context(MPT_STRUCT(dispatch_co
 			}
 			ctx->dsp = 0;
 			ctx->_next = 0;
-			*disp = ctx;
+			*ptr = ctx;
 			return ctx;
 		}
 		/* reuse empty context */
 		if (!ctx->dsp) {
 			return ctx;
 		}
-		disp = &ctx->_next;
+		ptr = &ctx->_next;
 		ctx = ctx->_next;
 	}
 }

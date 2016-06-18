@@ -22,13 +22,23 @@
 struct streamInput {
 	MPT_INTERFACE(input) _in;
 	MPT_STRUCT(stream)    data;
+	MPT_STRUCT(stream_context) *_ctx;
 	size_t                idlen;
 };
 
 static void streamUnref(MPT_INTERFACE(input) *in)
 {
+	MPT_STRUCT(stream_context) *ctx;
 	struct streamInput *srm = (void *) in;
 	(void) mpt_stream_close(&srm->data);
+	ctx = srm->_ctx;
+	while (ctx) {
+		MPT_STRUCT(stream_context) *next = ctx->_next;
+		if (!ctx->srm) {
+			free(ctx);
+		}
+		ctx = next;
+	}
 	free(srm);
 }
 static int streamNext(MPT_INTERFACE(input) *in, int what)
@@ -39,6 +49,7 @@ static int streamNext(MPT_INTERFACE(input) *in, int what)
 static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct streamInput *srm = (void *) in;
+	MPT_STRUCT(stream_context) *ctx = 0;
 	
 	if (!cmd) {
 		ssize_t avail = mpt_queue_peek(&srm->data._rd, &srm->data._dec.info, srm->data._dec.fcn,  0);
@@ -50,7 +61,10 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 		}
 		return 0;
 	}
-	return mpt_stream_dispatch(&srm->data, srm->idlen, cmd, arg);
+	if (srm->data._dec.fcn && !(ctx = mpt_stream_context(&srm->_ctx, srm->idlen))) {
+		return -3;
+	}
+	return mpt_stream_dispatch(&srm->data, ctx, cmd, arg);
 }
 static int streamFile(MPT_INTERFACE(input) *in)
 {

@@ -121,7 +121,7 @@ bool socket::set(const value *val)
 }
 
 // stream class
-Stream::Stream(const streaminfo *from) : _inputFile(-1)
+Stream::Stream(const streaminfo *from) : _ctx(0), _inputFile(-1)
 {
     if (!from) return;
     _mpt_stream_setfile(&_info, _mpt_stream_fread(from), _mpt_stream_fwrite(from));
@@ -139,6 +139,12 @@ Stream::~Stream()
 // object interface
 void Stream::unref()
 {
+    context *ctx = _ctx;
+    while (ctx) {
+        context *next = ctx->_next;
+        if (!ctx->srm) free(ctx);
+        ctx = next;
+    }
     delete this;
 }
 int Stream::property(struct property *pr) const
@@ -241,10 +247,14 @@ int Stream::next(int what)
 }
 int Stream::dispatch(EventHandler cmd, void *arg)
 {
+    context *ctx = 0;
     if (!cmd) {
         return (mpt_queue_peek(&_rd, &_dec.info, _dec.fcn, 0) < 0) ? -1 : 0;
     }
-    return mpt_stream_dispatch(this, _idlen, cmd, arg);
+    if (_dec.fcn && !(ctx = mpt_stream_context(&_ctx, _idlen))) {
+        return BadOperation;
+    }
+    return mpt_stream_dispatch(this, ctx, cmd, arg);
 }
 int Stream::_file()
 {

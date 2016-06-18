@@ -80,6 +80,7 @@ MPT_STRUCT(streaminfo)
 #define MPT_stream_newline_write(f) (((f) & 0xc000) >> 14)
 
 
+MPT_STRUCT(stream_context);
 MPT_STRUCT(stream)
 #if defined(_MPT_QUEUE_H)
 {
@@ -94,6 +95,8 @@ MPT_STRUCT(stream)
 	
 	int errors() const;
 	void setError(int);
+	
+	typedef stream_context context;
 	
 	bool open(const char *, const char * = "r");
     protected:
@@ -114,6 +117,17 @@ MPT_STRUCT(stream)
 }
 #endif
 ;
+MPT_STRUCT(stream_context)
+{
+#ifdef __cplusplus
+	stream_context() : srm(0), _next(0), len(sizeof(_val))
+	{ }
+#endif
+	MPT_STRUCT(stream) *srm;
+	MPT_STRUCT(stream_context) *_next;
+	uint8_t len;
+	uint8_t _val[7];
+};
 
 __MPT_EXTDECL_BEGIN
 
@@ -165,8 +179,10 @@ extern int mpt_stream_send(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , MPT_STRUCT(array) *, int __MPT_DEFPAR(-1));
 /* dispatch next message */
 #ifdef _MPT_EVENT_H
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, size_t , MPT_TYPE(EventHandler) , void *);
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, MPT_STRUCT(stream_context) *, MPT_TYPE(EventHandler) , void *);
 #endif
+/* query empty stream context */
+extern MPT_STRUCT(stream_context) *mpt_stream_context(MPT_STRUCT(stream_context) **, size_t);
 
 /* perform delayed write operations */
 extern int mpt_stream_flush(MPT_STRUCT(stream) *);
@@ -215,6 +231,7 @@ public:
     
 protected:
     array _msg;
+    context *_ctx;
     int _inputFile;
     uint8_t _idlen;
 };
