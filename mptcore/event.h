@@ -44,11 +44,36 @@ MPT_STRUCT(event)
 };
 typedef int (*MPT_TYPE(EventHandler))(void *, MPT_STRUCT(event) *);
 
+/* event reply dispatcher */
+MPT_STRUCT(reply_context)
+{
+#ifdef __cplusplus
+	reply_context() : ptr(0), _max(sizeof(_val)), len(0), used(0)
+	{ }
+	bool valid() const
+	{ return used; }
+	
+	void unref();
+# ifdef _MPT_ARRAY_H
+	class array : public RefArray<reply_context>
+	{
+	public:
+		reply_context *reserve(size_t len = 2);
+	};
+# endif
+#endif
+	void *ptr;
+	uint8_t _max;
+	uint8_t len;
+	uint16_t used;
+	uint8_t _val[4];
+};
+
 /* command dispatcher */
-MPT_STRUCT(dispatch_context);
+MPT_STRUCT(reply_context);
 #ifdef _MPT_ARRAY_H
 # ifdef __cplusplus
-MPT_STRUCT(dispatch) : public Reference<output>
+MPT_STRUCT(dispatch) : public Reference<output>, public reply_context::array
 {
 	
 	dispatch();
@@ -57,14 +82,13 @@ MPT_STRUCT(dispatch) : public Reference<output>
 	bool set(uintptr_t, EventHandler , void *);
 	bool setDefault(uintptr_t);
 	void setError(EventHandler , void *);
-	
-	typedef dispatch_context context;
 protected:
 # else
 MPT_STRUCT(dispatch)
 {
-#  define MPT_DISPATCH_INIT { 0, MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
+#  define MPT_DISPATCH_INIT { 0, MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0, { 0, 0 } }
 	MPT_INTERFACE(output) *_out;
+	MPT_STRUCT(array) _ctx;
 # endif
 	MPT_STRUCT(array) _cmd; /* available commands for event */
 	uintptr_t         _def; /* default command id */
@@ -72,17 +96,10 @@ MPT_STRUCT(dispatch)
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;
 	} _err;                 /* handler for unknown ids */
-	MPT_STRUCT(dispatch_context) *_ctx;
 };
 #else /* _MPT_ARRAY_H */
 MPT_STRUCT(dispatch);
 #endif
-
-MPT_STRUCT(dispatch_context)
-{
-	MPT_STRUCT(dispatch) *dsp;
-	MPT_STRUCT(dispatch_context) *_next;
-};
 
 #define MPT_event_good(ev,txt) \
 	(mpt_event_reply(ev, 0, txt), \
@@ -143,13 +160,15 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
-/* create reply context for dispatch data */
-extern MPT_STRUCT(dispatch_context) *mpt_dispatch_context(MPT_STRUCT(dispatch_context) **);
-
 /* register graphic operations for dispatch output */
 extern int mpt_dispatch_graphic(MPT_STRUCT(dispatch) *dsp);
 /* setup graphic(data) output channel */
 extern int mpt_output_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
+
+/* new/available context on array */
+extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size_t len);
+/* invalidate/delete context references */
+size_t mpt_reply_clear(MPT_STRUCT(reply_context) **, size_t);
 
 __MPT_EXTDECL_END
 

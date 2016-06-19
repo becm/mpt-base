@@ -17,12 +17,19 @@
 
 static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
 {
-	MPT_STRUCT(stream_context) *ctx = ctxp;
+	MPT_STRUCT(reply_context) *ctx = ctxp;
 	MPT_STRUCT(stream) *srm;
 	
-	if (!(srm = ctx->srm)) {
+	if (!(srm = ctx->ptr)) {
+		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Debug), "%s",
+		        "source stream deleted");
 		free(ctx);
 		return 0;
+	}
+	if (!ctx->used) {
+		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Critical), "%s",
+		        "called with unregistered context");
+		return MPT_ERROR(MissingData);
 	}
 	if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
 		return MPT_ERROR(MissingBuffer);
@@ -31,7 +38,7 @@ static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
 		mpt_stream_push(srm, ctx->len, ctx->_val);
 	}
 	/* detach context */
-	ctx->srm = 0;
+	ctx->ptr = 0;
 	
 	/* send message or termination */
 	if (msg) {
@@ -58,7 +65,7 @@ static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
  * 
  * \return created input
  */
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(stream_context) *ctx, MPT_TYPE(EventHandler) cmd, void *arg)
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(reply_context) *ctx, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct iovec vec;
 	MPT_STRUCT(message) msg;
@@ -87,8 +94,6 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(stream_contex
 	
 	/* reserve reply context */
 	if (ctx) {
-		ctx->srm = srm;
-		
 		if ((len = ctx->len)
 		    && (mpt_message_read(&msg, len, ctx->_val) < (size_t) len)) {
 			mpt_queue_crop(&srm->_rd, 0, off);

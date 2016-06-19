@@ -13,8 +13,9 @@
 #include <unistd.h>
 
 #include "convert.h"
-#include "event.h"
 #include "queue.h"
+#include "array.h"
+#include "event.h"
 
 #include "notify.h"
 #include "stream.h"
@@ -22,23 +23,21 @@
 struct streamInput {
 	MPT_INTERFACE(input) _in;
 	MPT_STRUCT(stream)    data;
-	MPT_STRUCT(stream_context) *_ctx;
+	MPT_STRUCT(array)     ctx;
 	size_t                idlen;
 };
 
 static void streamUnref(MPT_INTERFACE(input) *in)
 {
-	MPT_STRUCT(stream_context) *ctx;
 	struct streamInput *srm = (void *) in;
-	(void) mpt_stream_close(&srm->data);
-	ctx = srm->_ctx;
-	while (ctx) {
-		MPT_STRUCT(stream_context) *next = ctx->_next;
-		if (!ctx->srm) {
-			free(ctx);
-		}
-		ctx = next;
+	MPT_STRUCT(buffer) *buf;
+	
+	if ((buf = srm->ctx._buf)) {
+		MPT_STRUCT(reply_context) **ctx = (void *) (buf+1);
+		mpt_reply_clear(ctx, buf->size / sizeof(*ctx));
+		mpt_array_clone(&srm->ctx, 0);
 	}
+	(void) mpt_stream_close(&srm->data);
 	free(srm);
 }
 static int streamNext(MPT_INTERFACE(input) *in, int what)
@@ -49,7 +48,7 @@ static int streamNext(MPT_INTERFACE(input) *in, int what)
 static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct streamInput *srm = (void *) in;
-	MPT_STRUCT(stream_context) *ctx = 0;
+	MPT_STRUCT(reply_context) *ctx = 0;
 	
 	if (!cmd) {
 		ssize_t avail = mpt_queue_peek(&srm->data._rd, &srm->data._dec.info, srm->data._dec.fcn,  0);
@@ -61,8 +60,12 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 		}
 		return 0;
 	}
-	if (srm->data._dec.fcn && !(ctx = mpt_stream_context(&srm->_ctx, srm->idlen))) {
-		return -3;
+	if (srm->data._dec.fcn) {
+		if (!(ctx = mpt_reply_reserve(&srm->ctx, srm->idlen))) {
+			return -3;
+		}
+		ctx->len = srm->idlen;
+		ctx->used = 1;
 	}
 	return mpt_stream_dispatch(&srm->data, ctx, cmd, arg);
 }

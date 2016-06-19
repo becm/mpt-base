@@ -20,7 +20,7 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
 # library config
 config : LDLIBS+=-lmptcore
-output : LDLIBS+=-lmptio -lmptcore
+output : LDLIBS+=-lmptcore
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt++ -lmpt
 %_static : CPPFLAGS+=-D_STATIC

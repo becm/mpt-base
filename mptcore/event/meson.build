@@ -9,4 +9,5 @@ src = files(
   'dispatch_set.c',
   'event_reply.c',
   'output_graphic.c',
+  'reply_context.c',
 )

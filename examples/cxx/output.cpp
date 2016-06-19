@@ -10,8 +10,9 @@
 
 #include MPT_INCLUDE(message.h)
 #include MPT_INCLUDE(output.h)
-
 #include MPT_INCLUDE(node.h)
+
+#include MPT_INCLUDE(stream.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -28,7 +29,7 @@ extern int main(int , char * const [])
 	node *n = mpt_node_new(0, 0);
 	delete n;
 	
-	output *out = mpt_output_new();
+	output *out = new Stream;
 	logger *log = mpt_object_logger(out);
 	
 	log->message(__func__, log->Error, "%s", "hallo");

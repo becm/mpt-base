@@ -7,7 +7,8 @@ set(sources
   message.cpp meta.cpp meta_new.cpp meta_buffer.cpp
   node_new.cpp
   object.cpp parse.cpp queue.cpp
-  reference_wrap.cpp value.cpp
+  reply.cpp reference_wrap.cpp
+  value.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
 set(includedirs ${Mpt_CORE_INCLUDE_DIRS})

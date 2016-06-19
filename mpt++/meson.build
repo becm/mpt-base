@@ -29,6 +29,8 @@ if with_plot
     'layout.cpp',
     'mapping.cpp',
     'polyline.cpp',
+    'reply.cpp',
+    'reference_wrap.cpp',
     'transform.cpp'
   )
   if with_shared

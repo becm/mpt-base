@@ -121,8 +121,13 @@ bool socket::set(const value *val)
 }
 
 // stream class
-Stream::Stream(const streaminfo *from) : _ctx(0), _inputFile(-1)
+Stream::Stream(const streaminfo *from) : _inputFile(-1)
 {
+    _conv.out = this;
+    _conv.in  = this;
+    _conv.log = this;
+    _conv.dev = this;
+    
     if (!from) return;
     _mpt_stream_setfile(&_info, _mpt_stream_fread(from), _mpt_stream_fwrite(from));
     int flags = mpt_stream_flags(from);
@@ -139,12 +144,6 @@ Stream::~Stream()
 // object interface
 void Stream::unref()
 {
-    context *ctx = _ctx;
-    while (ctx) {
-        context *next = ctx->_next;
-        if (!ctx->srm) free(ctx);
-        ctx = next;
-    }
     delete this;
 }
 int Stream::property(struct property *pr) const
@@ -161,8 +160,19 @@ int Stream::property(struct property *pr) const
             return -3;
         }
     }
+    else {
+        // get stream interface types
+        if (!*name) {
+            static const char fmt[] = { output::Type, input::Type, logger::Type, IODevice::Type, 0 };
+            pr->name = "stream";
+            pr->desc = "interfaces to stream data";
+            pr->val.fmt = fmt;
+            pr->val.ptr = &_conv;
+            return mpt_stream_flags(&_info);
+        }
+    }
     intptr_t id = 0;
-    if (name ? strcasecmp(name, "idlen") : (pos == id++)) {
+    if (name ? !strcasecmp(name, "idlen") : (pos == id++)) {
         pr->name = "idlen";
         pr->desc = "message id length";
         pr->val.fmt = "y";
@@ -184,7 +194,7 @@ int Stream::setProperty(const char *pr, metatype *src)
         }
         int ret;
         uint8_t l;
-        
+
         if (!src) {
             ret = l = 0;
         } else {
@@ -251,8 +261,12 @@ int Stream::dispatch(EventHandler cmd, void *arg)
     if (!cmd) {
         return (mpt_queue_peek(&_rd, &_dec.info, _dec.fcn, 0) < 0) ? -1 : 0;
     }
-    if (_dec.fcn && !(ctx = mpt_stream_context(&_ctx, _idlen))) {
-        return BadOperation;
+    if (_dec.fcn) {
+        if (!(ctx = _ctx.reserve(_idlen))) {
+            return BadOperation;
+        }
+        ctx->len = _idlen;
+        ctx->used = 1;
     }
     return mpt_stream_dispatch(this, ctx, cmd, arg);
 }

@@ -52,7 +52,7 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
 	disp->_err.cmd = unknownEvent;
 	disp->_err.arg = disp;
 	
-	disp->_ctx = 0;
+	disp->_ctx._buf = 0;
 }
 
 /*!
@@ -65,7 +65,7 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
  */
 extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 {
-	MPT_STRUCT(dispatch_context) *ctx;
+	MPT_STRUCT(buffer) *buf;
 	
 	/* dereference registered commands */
 	disp->_def  = 0;
@@ -81,15 +81,9 @@ extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 		disp->_err.cmd = 0;
 		disp->_err.arg = 0;
 	}
-	ctx = disp->_ctx;
-	
-	while (ctx) {
-		MPT_STRUCT(dispatch_context) *next = ctx->_next;
-		/* delete unused context elements */
-		if (!ctx->dsp) {
-			free(ctx);
-		}
-		ctx = next;
+	if ((buf = disp->_ctx._buf)) {
+		MPT_STRUCT(reply_context) **ctx = (void *) (buf+1);
+		mpt_reply_clear(ctx, buf->used / sizeof(*ctx));
+		mpt_array_clone(&disp->_ctx, 0);
 	}
-	disp->_ctx = 0;
 }
