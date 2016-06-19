@@ -54,6 +54,13 @@ extern int mpt_stream_send(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m
 			continue;
 		}
 		if (!clen) {
+			if ((curr = mpt_stream_push(srm, 0, 0)) < 0) {
+				if (mpt_stream_push(srm, 1, 0) < 0) {
+					return -1;
+				} else {
+					return -2;
+				}
+			}
 			(void) mpt_stream_flush(srm);
 			return 0;
 		}

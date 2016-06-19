@@ -50,6 +50,9 @@ extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *qu, MPT_TYPE(DataEncoder) enc, 
 			return -1;
 		}
 		low = qu->max - qu->len;
+		if (!low) {
+			return MPT_ERROR(MissingBuffer);
+		}
 		if (low > high) {
 			low = high;
 		}
@@ -59,7 +62,7 @@ extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *qu, MPT_TYPE(DataEncoder) enc, 
 		
 		info->scratch += low;
 		
-		return info->done;
+		return low;
 	}
 	dest = qu->base;
 	

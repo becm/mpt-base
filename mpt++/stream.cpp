@@ -311,10 +311,26 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
 
 int Stream::log(const char *from, int type, const char *fmt, va_list va)
 {
-    char buf[1024];
-    int len = 0;
-
+    // check no active message is composed
+    if (mpt_stream_flags(&_info) & StreamMesgAct) {
+        return MPT_ERROR(MissingData);
+    }
+    // message header for encoded data
+    if (_enc.fcn) {
+        uint8_t hdr[2] = { MessageOutput, (uint8_t) type };
+        mpt_stream_push(this, 2, hdr);
+    }
+    if (from) {
+        mpt_stream_push(this, strlen(from), from);
+        if (_enc.fcn) {
+            mpt_stream_push(this, 1, "");
+        } else {
+            mpt_stream_push(this, 2, ": ");
+        }
+    }
     if (fmt) {
+        char buf[1024];
+        int len = 0;
         if ((len = vsnprintf(buf, sizeof(buf)-1, fmt, va)) < 0) {
             *buf = 0;
             len  = 1;
@@ -324,24 +340,15 @@ int Stream::log(const char *from, int type, const char *fmt, va_list va)
             buf[len-4] = buf[len-3] = buf[len-2] = '.';
             buf[len-1] = 0;
         }
-    }
-
-    if (_enc.fcn) {
-        uint8_t hdr[2] = { 0, (uint8_t) type };
-        mpt_stream_push(this, 2, hdr);
-    }
-    if (from) {
-        mpt_stream_push(this, strlen(from), from);
-        mpt_stream_push(this, 2, ": ");
-    }
-    if (len) {
         mpt_stream_push(this, len, buf);
     }
-    if (_enc.fcn) {
-        mpt_stream_push(this, 0, 0);
-    } else {
+    // append message newline
+    if (!_enc.fcn) {
         mpt_stream_push(this, 1, "\n");
     }
+    // terminate and flush message */
+    mpt_stream_push(this, 0, 0);
+    mpt_stream_flush(this);
     return 1;
 }
 

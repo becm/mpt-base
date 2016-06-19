@@ -38,15 +38,17 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 		/* terminate current message */
 		if (!len) {
 			if ((post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, 0)) >= 0) {
+				if (!stream->_enc.fcn) stream->_enc.info.done = 0;
 				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
 			}
 			return post;
 		}
 		/* error during data append */
-		if ((post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, &from)) < 0
-		    && stream->_wd.len) {
-			total = len - from.iov_len;
-			return total ? total : -2;
+		post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, &from);
+		total = len - from.iov_len;
+		
+		if (post < 0 && total) {
+			return total;
 		}
 		stream->_info._fd |= MPT_ENUM(StreamMesgAct);
 		
@@ -54,11 +56,9 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 		if (!from.iov_len) {
 			return len;
 		}
-		total = len - from.iov_len;
-		
 		/* queue not resizable */
 		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
-			return total ? total : -2;
+			return total ? total : MPT_ERROR(BadArgument);
 		}
 		if (!mpt_queue_prepare(&stream->_wd, 256)) {
 			return total ? total : -1;
