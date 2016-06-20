@@ -78,31 +78,31 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 	if (fd[0].fd >= 0) {
 		ssize_t len;
 		
-		if ((len = srm->_dec.info.done)) {
-			if ((mpt_queue_crop(&srm->_rd, 0, len) < 0)) {
+		if ((len = srm->_rd._state.done)) {
+			if ((mpt_queue_crop(&srm->_rd.data, 0, len) < 0)) {
 				(void) mpt_log(0, __func__, MPT_ENUM(LogFatal), "%s",
 				               MPT_tr("inconsistent queue/decoder state"));
 			} else {
-				srm->_dec.info.done = 0;
+				srm->_rd._state.done = 0;
 			}
 		}
 		
 		/* avoid removal if input not queried */
 		if (!(fd[0].revents & POLLIN)) {
-			if (!(what & POLLIN) && srm->_wd.len) {
+			if (!(what & POLLIN) && srm->_rd.data.len) {
 				keep = 0;
 			}
 		}
 		/* prepare input buffer */
-		else if ((srm->_rd.len == srm->_rd.max) && !mpt_queue_prepare(&srm->_rd, 64)) {
+		else if ((srm->_rd.data.len == srm->_rd.data.max)
+		         && ((flags & MPT_ENUM(StreamWriteMap)) || !mpt_queue_prepare(&srm->_rd.data, 64))) {
 			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorRead));
 		}
 		/* read further input data */
-		else if ((len = mpt_queue_load(&srm->_rd, fd[0].fd, 0)) > 0) {
+		else if ((len = mpt_queue_load(&srm->_rd.data, fd[0].fd, 0)) > 0) {
 			mpt_stream_clearerror(&srm->_info, MPT_ENUM(ErrorEmpty) | MPT_ENUM(ErrorRead));
-			if (srm->_dec.fcn
-			    && (srm->_dec.mlen < 0)
-			    && ((srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) < 0)) {
+			if ((srm->_mlen < 0)
+			    && ((srm->_mlen = mpt_queue_recv(&srm->_rd)) < 0)) {
 				keep = 0;
 			} else {
 				keep = POLLIN;
@@ -117,17 +117,17 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 			mpt_stream_seterror(&srm->_info, (fd[0].revents & POLLHUP) ? MPT_ENUM(ErrorEmpty) : MPT_ENUM(ErrorRead));
 		}
 		/* all available data reveived */
-		if (fd[0].revents & POLLHUP && srm->_rd.len) {
+		if (fd[0].revents & POLLHUP && srm->_rd.data.len) {
 			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorEmpty));
 		}
 	}
-	else if (srm->_rd.len) {
+	else if (srm->_rd.data.len) {
 		keep = 0;
 	}
 	if (fd[1].fd >= 0) {
 		/* avoid removal if input not queried */
 		if (!(fd[0].revents & POLLOUT)) {
-			if (srm->_wd.len && keep < 0) keep = 0;
+			if (srm->_wd._state.done && keep < 0) keep = 0;
 		}
 		/* remaining data on output */
 		else {

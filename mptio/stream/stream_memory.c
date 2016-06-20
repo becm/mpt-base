@@ -34,8 +34,8 @@ extern int mpt_stream_memory(MPT_STRUCT(stream) *stream, const struct iovec *in,
 	mpt_stream_setmode(stream, 0);
 	
 	if (out) {
-		stream->_wd.base = out->iov_base;
-		stream->_wd.max  = out->iov_len;
+		stream->_wd.data.base = out->iov_base;
+		stream->_wd.data.max  = out->iov_len;
 		if (!in) {
 			return MPT_ENUM(StreamWrite);
 		}
@@ -47,8 +47,8 @@ extern int mpt_stream_memory(MPT_STRUCT(stream) *stream, const struct iovec *in,
 		mode |= MPT_ENUM(StreamWrite);
 	}
 	if (in) {
-		stream->_rd.base = in->iov_base;
-		stream->_rd.max  = stream->_rd.len = in->iov_len;
+		stream->_rd.data.base = in->iov_base;
+		stream->_rd.data.max  = stream->_rd.data.len = in->iov_len;
 		mode |= MPT_ENUM(StreamRead);
 	}
 	return mode;

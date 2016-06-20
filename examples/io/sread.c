@@ -73,16 +73,16 @@ int main(int argc, char *argv[])
 		const void *base;
 		size_t low, len;
 		
-		if (!(len = srm._rd.len)) {
+		if (!(len = srm._rd.data.len)) {
 			continue;
 		}
-		base = mpt_queue_data(&srm._rd, &low);
+		base = mpt_queue_data(&srm._rd.data, &low);
 		fwrite(base, 1, low, stdout);
 		
 		if ((len -= low)) {
-			fwrite(srm._rd.base, 1, len, stdout);
+			fwrite(srm._rd.data.base, 1, len, stdout);
 		}
-		srm._rd.len = 0;
+		srm._rd.data.len = 0;
 		
 		/* udp: exit after first message */
 		if (type == SOCK_DGRAM) {

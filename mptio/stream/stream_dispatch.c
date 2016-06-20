@@ -71,40 +71,39 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(reply_context
 	MPT_STRUCT(message) msg;
 	MPT_STRUCT(event) ev;
 	ssize_t len;
-	size_t off;
 	int ret;
 	
 	/* require message separation */
-	if (ctx && !srm->_dec.fcn) {
+	if (ctx && !srm->_rd._dec) {
 		return -1;
 	}
 	/* use existing or new message */
-	if ((len = srm->_dec.mlen) < 0
-	    && (srm->_dec.mlen = len = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) < 0) {
+	if ((len = srm->_mlen) < 0
+	    && (srm->_mlen = len = mpt_queue_recv(&srm->_rd)) < 0) {
 		return -2;
 	}
-	off = srm->_dec.info.done;
-	srm->_dec.info.done = 0;
-	mpt_message_get(&srm->_rd, off, len, &msg, &vec);
+	/* remove message data from queue */
+	mpt_queue_crop(&srm->_rd.data, 0, srm->_rd._state.done);
+	srm->_rd._state.done = 0;
+	
+	/* get message data */
+	mpt_message_get(&srm->_rd.data, 0, len, &msg, &vec);
 	
 	ev.id = 0;
 	ev.msg = &msg;
-	ev.reply.set = srm->_dec.fcn ? sendMessage : 0;
+	ev.reply.set = ctx ? sendMessage : 0;
 	ev.reply.context = ctx;
 	
-	/* reserve reply context */
-	if (ctx) {
-		if ((len = ctx->len)
-		    && (mpt_message_read(&msg, len, ctx->_val) < (size_t) len)) {
-			mpt_queue_crop(&srm->_rd, 0, off);
-			srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn);
-			return MPT_ERROR(BadValue);
-		}
+	/* error to get message ID for reply context */
+	if (ctx
+	    && (len = ctx->len)
+	    && (mpt_message_read(&msg, len, ctx->_val) < (size_t) len)) {
+		return MPT_ERROR(BadValue);
 	}
 	/* consume message */
 	if (!cmd) {
 		/* reply to non-return message */
-		if (ctx && ctx->len && ctx->_val[0] & 0x80) {
+		if (ctx && len && ctx->_val[0] & 0x80) {
 			sendMessage(ctx, 0);
 		}
 		ret = 0;
@@ -115,11 +114,8 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(reply_context
 	} else {
 		ret &= MPT_ENUM(EventFlags);
 	}
-	/* remove message data from queue */
-	mpt_queue_crop(&srm->_rd, 0, off);
-	
 	/* further message on queue */
-	if ((srm->_dec.mlen = mpt_queue_recv(&srm->_rd, &srm->_dec.info, srm->_dec.fcn)) >= 0) {
+	if ((srm->_mlen = mpt_queue_recv(&srm->_rd)) >= 0) {
 		ret |= MPT_ENUM(EventRetry);
 	}
 	return ret;

@@ -56,28 +56,28 @@ extern int mpt_connection_sync(MPT_STRUCT(connection) *con, int timeout)
 		return 0;
 	}
 	while (1) {
-		uint16_t buf[64];
-		struct iovec vec;
+		uint8_t buf[32];
 		
-		vec.iov_base = buf;
-		vec.iov_len = sizeof(buf);
-		if (mpt_queue_peek(&con->in.data, &con->in.info, con->in.dec, &vec) >= 2) {
+		if (mpt_queue_peek(&con->in, sizeof(buf), buf) >= 2) {
 			ssize_t raw;
+			uint16_t id;
 			
-			buf[0] = ntohs(buf[0]);
-			
-			if (!(buf[0] & 0x8000)) {
+			if (!(buf[0] & 0x80)) {
 				return MPT_ERROR(BadType);
 			}
-			if (!(ans = mpt_command_get(&con->_wait, buf[0] & 0x7fff))) {
+			buf[0] &= 0x7f;
+			id = ntohs(*((uint16_t *) buf));
+			
+			if (!(ans = mpt_command_get(&con->_wait, id))) {
 				return MPT_ERROR(BadValue);
 			}
-			if ((raw = mpt_queue_recv(&con->in.data, &con->in.info, con->in.dec)) >= 0) {
+			if ((raw = mpt_queue_recv(&con->in)) >= 0) {
 				MPT_STRUCT(message) msg;
-				size_t off;
+				struct iovec vec;
 				
-				off = con->in.info.done;
-				mpt_message_get(&con->in.data, off, raw, &msg, &vec);
+				mpt_queue_crop(&con->in.data, 0, con->in._state.done);
+				con->in._state.done = 0;
+				mpt_message_get(&con->in.data, 0, raw, &msg, &vec);
 				
 				/* consume message ID */
 				mpt_message_read(&msg, sizeof(*buf), 0);
@@ -85,7 +85,6 @@ extern int mpt_connection_sync(MPT_STRUCT(connection) *con, int timeout)
 				/* process reply and clear wait state */
 				ret = ans->cmd(ans->arg, &msg);
 				ans->cmd = 0;
-				mpt_queue_crop(&con->in.data, 0, off);
 				if (ret < 0) {
 					return MPT_ERROR(BadOperation);
 				}

@@ -98,7 +98,7 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	if (oldFd != odata->con.out.sock._id) {
 		MPT_STRUCT(outdata) *od = &odata->con.out;
 		MPT_TYPE(DataEncoder) enc = od->_enc.fcn;
-		MPT_TYPE(DataDecoder) dec = odata->con.in.dec;
+		MPT_TYPE(DataDecoder) dec = odata->con.in._dec;
 		
 		if (od->_sflg & MPT_ENUM(SocketStream)) {
 			if (!odata->con._coding) {
@@ -112,9 +112,9 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 			od->_enc.fcn(&od->_enc.info, 0, 0);
 			od->_enc.fcn = enc;
 		}
-		if (odata->con.in.dec) {
-			odata->con.in.dec(&odata->con.in.info, 0, 0);
-			odata->con.in.dec = dec;
+		if (odata->con.in._dec) {
+			odata->con.in._dec(&odata->con.in._state, 0, 0);
+			odata->con.in._dec = dec;
 		}
 		if (!odata->_no || (od->sock._id == oldFd)) {
 			return ret;

@@ -21,64 +21,62 @@
  * 
  * \return size of finished data
  */
-extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *qu, MPT_TYPE(DataEncoder) enc, MPT_STRUCT(codestate) *info, struct iovec *from)
+extern ssize_t mpt_queue_push(MPT_STRUCT(encode_queue) *qu, size_t len, const void *base)
 {
-	struct iovec vec;
+	struct iovec vec, from;
 	ssize_t push;
-	size_t low, high, len;
+	size_t low, high, done;
 	uint8_t *dest;
 	
 	/* direct data append */
-	if (!enc) {
-		if (!from) {
-			info->done = qu->len;
-			info->scratch = 0;
-			return qu->len;
+	if (!qu->_enc) {
+		if (!len) {
+			len = qu->data.len;
+			qu->_state.done = len;
+			qu->_state.scratch = 0;
+			return len;
 		}
-		if (!(high = from->iov_len)) {
-			return -1;
-		}
-		if (!(dest = from->iov_base)) {
-			if (!qu->len || from->iov_len > 1) {
-				return -2;
+		if (!base) {
+			if (!qu->_state.scratch || len > 1) {
+				return MPT_ERROR(BadOperation);
 			}
-			qu->len = 0;
+			qu->data.len = qu->_state.done;
+			qu->_state.scratch = 0;
 			return 0;
 		}
-		len = info->done + info->scratch;
-		if (len != qu->len) {
-			return -1;
+		done = qu->_state.done + qu->_state.scratch;
+		if (done != qu->data.len) {
+			return MPT_ERROR(BadEncoding);
 		}
-		low = qu->max - qu->len;
+		low = qu->data.max - qu->data.len;
 		if (!low) {
 			return MPT_ERROR(MissingBuffer);
 		}
-		if (low > high) {
-			low = high;
+		if (low > len) {
+			low = len;
 		}
-		mpt_qpush(qu, low, dest);
-		from->iov_base = dest + low;
-		from->iov_len -= low;
-		
-		info->scratch += low;
+		mpt_qpush(&qu->data, low, base);
+		qu->_state.scratch += low;
 		
 		return low;
 	}
-	dest = qu->base;
+	from.iov_base = (void *) base;
+	from.iov_len  = len;
+	dest = qu->data.base;
 	
 	/* clean aligned data */
-	if (!(high = qu->off)) {
+	if (!(high = qu->data.off)) {
 		vec.iov_base = dest;
-		vec.iov_len  = low = qu->max;
-		push = enc(info, &vec, from);
+		vec.iov_len  = low = qu->data.max;
+		push = qu->_enc(&qu->_state, &vec, len ? &from : 0);
 	}
 	/* encode in upper part */
-	else if ((len = info->done) >= (low = qu->max - high)) {
-		vec.iov_base = dest;
+	else if ((done = qu->_state.done) >= (low = qu->data.max - high)) {
+		vec.iov_base = dest + (done - low);
 		vec.iov_len  = high;
-		info->done -= low;
-		push = enc(info, &vec, from);
-		info->done += low;
+		qu->_state.done -= low;
+		push = qu->_enc(&qu->_state, &vec, len ? &from : 0);
+		qu->_state.done += low;
 	}
 	/* start encoding in lower part */
 	else {
@@ -86,75 +84,79 @@ extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *qu, MPT_TYPE(DataEncoder) enc, 
 		vec.iov_len  = low;
 		
 		/* encoder data wrapping */
-		if ((low - len) >= info->scratch) {
-			push = enc(info, &vec, from);
+		if ((low - done) >= qu->_state.scratch) {
+			push = qu->_enc(&qu->_state, &vec, len ? &from : 0);
+			done = qu->_state.done;
 		}
 		/* exceed temporary buffer */
-		else if (info->scratch >= 256) {
+		else if (qu->_state.scratch >= 256) {
 			push = -1;
 		}
 		/* try out-of-band wrapping */
 		else {
 			uint8_t buf[256];
-			size_t max = qu->max - len;
+			size_t max = qu->data.max - done;
 			
 			if (max > sizeof(buf)) {
 				max = sizeof(buf);
 			}
-			mpt_queue_get(qu, len, info->scratch, buf);
+			mpt_queue_get(&qu->data, done, qu->_state.scratch, buf);
 			vec.iov_base = buf;
 			vec.iov_len  = max;
 			
-			info->done = 0;
-			if ((push = enc(info, &vec, from)) >= 0) {
-				size_t set = info->done + info->scratch;
-				max = len + set;
-				if (max > qu->max) {
+			qu->_state.done = 0;
+			if ((push = qu->_enc(&qu->_state, &vec, len ? &from : 0)) >= 0) {
+				size_t set = qu->_state.done + qu->_state.scratch;
+				max = done + set;
+				if (max > qu->data.max) {
 					MPT_ABORT("invalid encoder state for queue");
 				}
-				qu->len = max;
-				mpt_queue_set(qu, len, set, buf);
+				qu->data.len = max;
+				mpt_queue_set(&qu->data, done, set, buf);
 			}
-			info->done += len;
+			done += qu->_state.done;
+			qu->_state.done = done;
 		}
-		len = info->done;
-		vec.iov_base = qu->base;
+		vec.iov_base = qu->data.base;
 		
 		/* bad encoding attempt */
 		if (push < 0) {
-			mpt_queue_align(qu, 0);
-			vec.iov_len = qu->max;
-			push = enc(info, &vec, from);
+			mpt_queue_align(&qu->data, 0);
+			vec.iov_len = qu->data.max;
+			push = qu->_enc(&qu->_state, &vec, len ? &from : 0);
 		}
 		/* incomlete append action */
-		else if (from && from->iov_base && from->iov_len && (from->iov_len -= push)) {
-			from->iov_base = ((uint8_t *) from->iov_base) + push;
+		else if ((size_t) push < len) {
+			ssize_t push2;
 			
-			if (len < low) {
-				mpt_queue_align(qu, 0);
-				vec.iov_len = qu->max;
-				push = enc(info, &vec, from);
+			from.iov_base = ((uint8_t *) base) + push;
+			from.iov_len  = len - push;
+			
+			/* encode on alignd data */
+			if (done < low) {
+				mpt_queue_align(&qu->data, 0);
+				vec.iov_len = qu->data.max;
+				push2 = qu->_enc(&qu->_state, &vec, &from);
 			}
+			/* second push in upper part only */
 			else {
-				info->done  = len - low;
+				done -= low;
+				qu->_state.done = done;
 				vec.iov_len = high;
-				push = enc(info, &vec, from);
-				info->done += len - low;
+				push2 = qu->_enc(&qu->_state, &vec, &from);
+				qu->_state.done += done;
+			}
+			if (push2 > 0) {
+				push += push2;
 			}
 		}
 	}
-	/* correct data range */
-	if (push >= 0 && from && from->iov_base && from->iov_len) {
-		from->iov_base = ((uint8_t *) from->iov_base) + push;
-		from->iov_len -= push;
-		push = info->done;
-	}
-	len = info->done + info->scratch;
+	/* correct queue range */
+	len = qu->_state.done + qu->_state.scratch;
+	qu->data.len = len;
 	
-	if (len > qu->max) {
+	if (len > qu->data.max) {
 		MPT_ABORT("invalid encoder state for queue");
 	}
-	qu->len = len;
-	
 	return push;
 }

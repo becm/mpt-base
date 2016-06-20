@@ -73,15 +73,17 @@ MPT_STRUCT(reply_context)
 MPT_STRUCT(reply_context);
 #ifdef _MPT_ARRAY_H
 # ifdef __cplusplus
-MPT_STRUCT(dispatch) : public Reference<output>, public reply_context::array
+MPT_STRUCT(dispatch) : public Reference<output>
 {
-	
+public:
 	dispatch();
 	~dispatch();
 	
 	bool set(uintptr_t, EventHandler , void *);
 	bool setDefault(uintptr_t);
 	void setError(EventHandler , void *);
+	
+	reply_context::array array;
 protected:
 # else
 MPT_STRUCT(dispatch)

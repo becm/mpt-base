@@ -74,8 +74,8 @@ extern int mpt_stream_dopen(MPT_STRUCT(stream) *stream, const MPT_STRUCT(socket)
 	if (mpt_stream_setmode(&tmp, mode & ~0x3) < 0) {
 		return -2;
 	}
-	tmp._enc = stream->_enc;
-	tmp._dec = stream->_dec;
+	tmp._rd._dec = stream->_rd._dec;
+	tmp._wd._enc = stream->_wd._enc;
 	mpt_stream_close(stream);
 	*stream = tmp;
 	

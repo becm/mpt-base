@@ -10,7 +10,6 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "queue.h"
 #include "stream.h"
@@ -30,6 +29,8 @@
  */
 extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode)
 {
+	MPT_STRUCT(queue) *qu;
+	MPT_STRUCT(codestate) *state;
 	off_t add = 0;
 	int flags, file = -1;
 	
@@ -37,24 +38,44 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode
 	
 	switch (flags & (MPT_ENUM(StreamWrite) | MPT_ENUM(StreamRdWr))) {
 	    case MPT_ENUM(StreamRead):
-		if (mode == SEEK_CUR && (flags & (MPT_ENUM(StreamReadBuf) | MPT_ENUM(StreamReadMap)))) {
-			pos -= stream->_rd.len; add = stream->_rd.off;
-			
+		if (stream->_rd._dec) {
+			return MPT_ERROR(BadArgument);
+		}
+		qu = &stream->_rd.data;
+		state = &stream->_wd._state;
+		if (mode == SEEK_CUR && (flags & MPT_ENUM(StreamReadBuf))) {
+			pos -= qu->len;
+			add = qu->off;
 		}
 		file = _mpt_stream_fread(&stream->_info);
+		stream->_mlen = -2;
 		break;
 	    case MPT_ENUM(StreamWrite):
-		if (mode == SEEK_CUR && (flags & (MPT_ENUM(StreamWriteBuf) | MPT_ENUM(StreamWriteMap)))) {
-			pos += stream->_wd.len; stream->_wd.len = stream->_wd.off = 0;
+		if (stream->_wd._enc) {
+			return MPT_ERROR(BadArgument);
 		}
+		qu = &stream->_wd.data;
+		state = &stream->_wd._state;
+		if (mode == SEEK_CUR && (flags & MPT_ENUM(StreamWriteBuf))) {
+			pos += qu->len;
+		}
+		mpt_stream_flush(stream);
 		file = _mpt_stream_fread(&stream->_info);
 		break;
 	    default:
-		errno = ENOTSUP; return -1;
+		return MPT_ERROR(BadArgument);
 	}
-	if (file < 0) return add;
+	if (file < 0) {
+		return add;
+	}
+	if ((pos = lseek64(file, pos, mode)) < 0) {
+		return MPT_ERROR(BadOperation);
+	}
+	qu->len = 0;
+	qu->off = 0;
 	
-	if ((pos = lseek64(file, pos, mode)) < 0) return pos;
+	state->done = 0;
+	state->scratch = 0;
 	
 	return pos + add;
 }

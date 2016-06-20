@@ -19,44 +19,37 @@
  * Message starts at codestate::done.
  * 
  * If no decoder function is supplied
- * assume zero terminated data is message.
- * 
+ * use current available data as message.
  * 
  * \param qu   message source queue
- * \param dec  data decoder
- * \param info decoder state
  * 
  * \return size of message
  */
-extern ssize_t mpt_queue_recv(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate) *info, MPT_TYPE(DataDecoder) dec)
+extern ssize_t mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
 {
 	struct iovec src[2];
 	uint8_t *base;
 	size_t pre, len, max;
 	
-	if (!info) {
-		return -1;
-	}
-	if (!(len = qu->len)) {
+	if (!(len = qu->data.len)) {
 		return -2;
 	}
 	/* get new data part */
-	if (!dec) {
-		pre = info->done + info->scratch;
+	if (!qu->_dec) {
+		pre = qu->_state.done;
 		
 		if (pre > len) {
-			return -1;
+			return MPT_ERROR(BadEncoding);
 		}
 		len -= pre;
-		info->done = pre;
-		info->scratch = len;
+		qu->_state.scratch = len;
 		
-		return len ? (ssize_t) len : -2;
+		return len ? (ssize_t) len : MPT_ERROR(MissingData);
 	}
-	pre = qu->off;
-	max = qu->max;
+	pre = qu->data.off;
+	max = qu->data.max;
 	
-	base = (uint8_t *) qu->base;
+	base = (uint8_t *) qu->data.base;
 	/* unaligned message data */
 	if ((pre + len) > max) {
 		src[0].iov_base = base + pre;
@@ -71,5 +64,5 @@ extern ssize_t mpt_queue_recv(const MPT_STRUCT(queue) *qu, MPT_STRUCT(codestate)
 		src[0].iov_len  = len;
 		max = 1;
 	}
-	return dec(info, src, max);
+	return qu->_dec(&qu->_state, src, max);
 }

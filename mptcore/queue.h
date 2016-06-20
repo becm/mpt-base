@@ -29,6 +29,53 @@ MPT_STRUCT(queue)
 	        off;   /* queue start offset */
 };
 
+#ifdef __cplusplus
+MPT_STRUCT(decode_queue) : public queue
+{
+	decode_queue(DataDecoder d = 0) : _dec(d)
+	{ }
+	~decode_queue()
+	{ if (_dec) _dec(&_state, 0, 0); }
+	
+	ssize_t peek(size_t len, const void *);
+	ssize_t receive();
+	
+	bool encoded() const
+	{ return _dec; }
+protected:
+#else
+MPT_STRUCT(decode_queue)
+{
+#define MPT_DECODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_CODESTATE_INIT, 0 }
+	MPT_STRUCT(queue) data;
+#endif
+	MPT_STRUCT(codestate) _state;
+	MPT_TYPE(DataDecoder) _dec;
+};
+
+#ifdef __cplusplus
+MPT_STRUCT(encode_queue) : public queue
+{
+	encode_queue(DataEncoder e = 0) : _enc(e)
+	{ }
+	~encode_queue()
+	{ if (_enc) _enc(&_state, 0, 0); }
+	
+	ssize_t push(size_t len, const void *);
+	
+	bool encoded() const
+	{ return _enc; }
+protected:
+#else
+MPT_STRUCT(encode_queue)
+{
+#define MPT_ENCODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_CODESTATE_INIT, 0 }
+	MPT_STRUCT(queue) data;
+#endif
+	MPT_STRUCT(codestate) _state;
+	MPT_TYPE(DataEncoder) _enc;
+};
+
 __MPT_EXTDECL_BEGIN
 
 /* switch memory before and after pivot */
@@ -76,31 +123,28 @@ extern ssize_t mpt_queue_save(MPT_STRUCT(queue) *, int);
 extern void mpt_queue_align(MPT_STRUCT(queue) *, size_t);
 
 /* get next message */
-extern ssize_t mpt_queue_peek(const MPT_STRUCT(queue) *, MPT_STRUCT(codestate) *, MPT_TYPE(DataDecoder), const struct iovec *);
-extern ssize_t mpt_queue_recv(const MPT_STRUCT(queue) *, MPT_STRUCT(codestate) *, MPT_TYPE(DataDecoder));
+extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *, size_t , void *);
+extern ssize_t mpt_queue_recv(MPT_STRUCT(decode_queue) *);
 /* send message */
-extern ssize_t mpt_queue_push(MPT_STRUCT(queue) *, MPT_TYPE(DataEncoder), MPT_STRUCT(codestate) *, struct iovec *);
+extern ssize_t mpt_queue_push(MPT_STRUCT(encode_queue) *, size_t , const void *);
 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 
 /*!  */
-class DecodingQueue
+class DecodingQueue : decode_queue
 {
 public:
-    DecodingQueue(DataDecoder);
+    DecodingQueue(DataDecoder = 0);
     ~DecodingQueue();
     
     bool pendingMessage();
     bool currentMessage(struct message &, struct iovec * = 0);
     bool advance();
-
+    
 protected:
-    DataDecoder _dec;
-    codestate _state;
     ssize_t _mlen;
-    queue _d;
 };
 
 /*! interface to raw device */
@@ -161,9 +205,10 @@ class Pipe : Reference<Queue>
 public:
     Pipe(const T &v, size_t len)
     {
-        if (!len) return;
-        _ref = new Queue(len);
-        while (len--) push(v);
+        ref();
+        if (len && _ref && _ref->prepare(len * sizeof(T))) {
+            while (len--) push(v);
+        }
     }
     inline Pipe(const Pipe &from)
     {
@@ -179,14 +224,13 @@ public:
     { }
     const Reference<Queue> &ref()
     {
-        if (!_ref) _ref = new Queue(0);
+        if (!_ref) _ref = new Reference<Queue>::instance;
         return *this;
     }
     
     T *push(const T & elem)
     {
-        if (!_ref) _ref = new Queue;
-        if (!_ref->push(0, sizeof(T))) return 0;
+        if (!_ref || !_ref->push(0, sizeof(T))) return 0;
         Slice<uint8_t> d = _ref->data();
         T *t = (T*) d.base();
         size_t len = d.length() / sizeof(T);
@@ -208,8 +252,7 @@ public:
     
     T *unshift(const T & elem)
     {
-        if (!_ref) _ref = new Queue;
-        if (!_ref->unshift(0, sizeof(T))) return 0;
+        if (!_ref || !_ref->unshift(0, sizeof(T))) return 0;
         Slice<uint8_t> d = _ref->data();
         T *t = (T*) d.base();
         if (t) new (t) T(elem);

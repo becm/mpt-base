@@ -29,12 +29,11 @@ int IODevice::getchar()
     return letter;
 }
 
-DecodingQueue::DecodingQueue(DataDecoder dec) : _dec(dec), _mlen(-1)
+DecodingQueue::DecodingQueue(DataDecoder dec) : decode_queue(dec), _mlen(-1)
 { }
 DecodingQueue::~DecodingQueue()
 {
-    mpt_queue_resize(&_d, 0);
-    if (_dec) _dec(&_state, 0, 0);
+    mpt_queue_resize(this, 0);
 }
 
 bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
@@ -42,7 +41,7 @@ bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
     if (!pendingMessage()) {
         return false;
     }
-    mpt_message_get(&_d, _state.done, _mlen, &msg, cont);
+    mpt_message_get(this, _state.done, _mlen, &msg, cont);
 
     return true;
 }
@@ -51,11 +50,11 @@ bool DecodingQueue::pendingMessage()
     if (_mlen >= 0) {
         return true;
     }
-    if ((_mlen = mpt_queue_recv(&_d, &_state, _dec)) < 0) {
+    if ((_mlen = mpt_queue_recv(this)) < 0) {
         return false;
     }
     if (_state.done) {
-        mpt_queue_crop(&_d, 0, _state.done);
+        mpt_queue_crop(this, 0, _state.done);
         _state.done = 0;
     }
     return true;
@@ -65,11 +64,11 @@ bool DecodingQueue::advance()
     if (_mlen < 0) {
         return false;
     }
-    mpt_queue_crop(&_d, 0, _mlen + _state.done);
+    mpt_queue_crop(this, 0, _mlen + _state.done);
     _state.scratch -= _mlen;
     _state.done = 0;
 
-    _mlen = mpt_queue_recv(&_d, &_state, _dec);
+    _mlen = mpt_queue_recv(this);
 
     return true;
 }

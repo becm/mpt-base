@@ -11,36 +11,15 @@
 
 extern size_t mpt_stream_read(MPT_STRUCT(stream) *stream, size_t count, void *data, size_t part)
 {
-	MPT_STRUCT(queue) *queue = &stream->_rd;
+	MPT_STRUCT(queue) *queue = &stream->_rd.data;
 	size_t tchunk = 0;
 	int flags, file = -1;
 	
-	if (stream->_dec.fcn) {
+	if (stream->_rd._dec) {
 		errno = EINVAL;
 		return 0;
 	}
 	flags = mpt_stream_flags(&stream->_info);
-	
-	if (!(flags & (MPT_ENUM(StreamReadBuf) | MPT_ENUM(StreamReadMap)))) {
-		/* use unbuffered read operation */
-		if ((file = _mpt_stream_fread(&stream->_info)) >= 0) {
-			ssize_t len;
-			if (!data || part != 1) {
-				return 0;
-			}
-			if ((file = _mpt_stream_fread(&stream->_info)) < 0) {
-				return 0;
-			}
-			if ((len = read(file, data, count)) <= 0) {
-				return 0;
-			}
-			return len;
-		}
-		if (flags & MPT_ENUM(StreamRdWr) && !queue->max) {
-			queue = &stream->_wd;
-			flags |= MPT_ENUM(StreamReadMap);
-		}
-	}
 	
 	if (!count) {
 		return queue->len;
@@ -52,6 +31,9 @@ extern size_t mpt_stream_read(MPT_STRUCT(stream) *stream, size_t count, void *da
 				return 0;
 			}
 			if ((file = _mpt_stream_fread(&stream->_info)) < 0) {
+				return 0;
+			}
+			if (flags & MPT_ENUM(StreamReadMap)) {
 				return 0;
 			}
 			if (!mpt_queue_prepare(queue, count - part)) {

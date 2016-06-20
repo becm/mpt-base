@@ -29,16 +29,19 @@ extern int mpt_stream_setmode(MPT_STRUCT(stream) *stream, int mode)
 	}
 	/* clear read queue */
 	else {
-		if (stream->_rd.max) {
+		if (stream->_rd._dec) {
+			stream->_rd._dec(&stream->_wd._state, 0, 0);
+		}
+		if (stream->_rd.data.max) {
 			if (flags & MPT_ENUM(StreamReadMap)) {
-				munmap(stream->_rd.base, stream->_rd.max);
+				munmap(stream->_rd.data.base, stream->_rd.data.max);
 			}
 			else if (flags & MPT_ENUM(StreamReadBuf)) {
-				free(stream->_rd.base);
+				free(stream->_rd.data.base);
 			}
 		}
 		/* invalidate read queue */
-		stream->_rd = qinit;
+		stream->_rd.data = qinit;
 	}
 	/* keep write queue */
 	if (mode & (MPT_ENUM(StreamWriteBuf))) {
@@ -46,16 +49,19 @@ extern int mpt_stream_setmode(MPT_STRUCT(stream) *stream, int mode)
 	}
 	/* clear write queue */
 	else {
-		if (stream->_wd.max) {
+		if (stream->_wd._enc) {
+			stream->_wd._enc(&stream->_wd._state, 0, 0);
+		}
+		if (stream->_wd.data.max) {
 			if (flags & MPT_ENUM(StreamWriteMap)) {
-				munmap(stream->_wd.base, stream->_wd.max);
+				munmap(stream->_wd.data.base, stream->_wd.data.max);
 			}
 			else if (flags & MPT_ENUM(StreamWriteBuf)) {
-				free(stream->_wd.base);
+				free(stream->_wd.data.base);
 			}
 		}
 		/* invalidate write queue */
-		stream->_wd = qinit;
+		stream->_wd.data = qinit;
 	}
 	stream->_info._fd = (stream->_info._fd & ~0xfc) | mode;
 	

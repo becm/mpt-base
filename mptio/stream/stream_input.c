@@ -34,7 +34,7 @@ static void streamUnref(MPT_INTERFACE(input) *in)
 	
 	if ((buf = srm->ctx._buf)) {
 		MPT_STRUCT(reply_context) **ctx = (void *) (buf+1);
-		mpt_reply_clear(ctx, buf->size / sizeof(*ctx));
+		mpt_reply_clear(ctx, buf->used / sizeof(*ctx));
 		mpt_array_clone(&srm->ctx, 0);
 	}
 	(void) mpt_stream_close(&srm->data);
@@ -50,17 +50,17 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	struct streamInput *srm = (void *) in;
 	MPT_STRUCT(reply_context) *ctx = 0;
 	
-	if (!cmd) {
-		ssize_t avail = mpt_queue_peek(&srm->data._rd, &srm->data._dec.info, srm->data._dec.fcn,  0);
-		if (avail >= 0) {
-			return POLLIN;
-		}
+	if (srm->data._mlen < 0
+	    && (srm->data._mlen = mpt_queue_recv(&srm->data._rd)) < 0) {
 		if (_mpt_stream_fread(&srm->data._info) < 0) {
 			return -2;
 		}
 		return 0;
 	}
-	if (srm->data._dec.fcn) {
+	if (!cmd) {
+		return 1;
+	}
+	if (srm->data._rd._dec) {
 		if (!(ctx = mpt_reply_reserve(&srm->ctx, srm->idlen))) {
 			return -3;
 		}
@@ -114,16 +114,16 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 	}
 	else {
 		/* input codec for message */
-		if (!(tmp._dec.fcn = mpt_message_decoder(code))) {
+		if (!(tmp._rd._dec = mpt_message_decoder(code))) {
 			return 0;
 		}
 		/* bidirectional codec for reply */
 		if ((mode & MPT_ENUM(StreamWrite))
-		    && !(tmp._enc.fcn = mpt_message_encoder(code))) {
+		    && !(tmp._wd._enc = mpt_message_encoder(code))) {
 			return 0;
 		}
-		memset(&tmp._dec.info, 0, sizeof(tmp._dec.info));
-		memset(&tmp._enc.info, 0, sizeof(tmp._enc.info));
+		memset(&tmp._rd._state, 0, sizeof(tmp._rd._state));
+		memset(&tmp._wd._state, 0, sizeof(tmp._wd._state));
 	}
 	/* set temporary data, no resource leakage on error */
 	if ((mpt_stream_dopen(&tmp, from, mode) < 0)

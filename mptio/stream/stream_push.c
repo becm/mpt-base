@@ -22,48 +22,43 @@
  */
 extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const void *src)
 {
-	struct iovec from;
+	ssize_t total = 0;
 	int flags = mpt_stream_flags(&stream->_info);
-	
-	from.iov_base = (void *) src;
-	from.iov_len  = len;
 	
 	if (flags & MPT_ENUM(StreamWriteMap)) {
 		flags &= ~MPT_ENUM(StreamWriteBuf);
 	}
 	
 	while (1) {
-		ssize_t post, total;
+		ssize_t post;
 		
 		/* terminate current message */
 		if (!len) {
-			if ((post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, 0)) >= 0) {
-				if (!stream->_enc.fcn) stream->_enc.info.done = 0;
+			if ((post = mpt_queue_push(&stream->_wd, 0, 0)) >= 0) {
 				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
 			}
 			return post;
 		}
 		/* error during data append */
-		post = mpt_queue_push(&stream->_wd, stream->_enc.fcn, &stream->_enc.info, &from);
-		total = len - from.iov_len;
+		post = mpt_queue_push(&stream->_wd, len, src);
 		
-		if (post < 0 && total) {
-			return total;
-		}
-		stream->_info._fd |= MPT_ENUM(StreamMesgAct);
-		
-		/* push operation finished */
-		if (!from.iov_len) {
-			return len;
+		/* pushed some data */
+		if (post >= 0) {
+			stream->_info._fd |= MPT_ENUM(StreamMesgAct);
+			total += post;
+			/* push operation finished */
+			if (!(len -= post)) {
+				return total;
+			}
+			src = ((uint8_t *) src) + post;
+			continue;
 		}
 		/* queue not resizable */
 		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
 			return total ? total : MPT_ERROR(BadArgument);
 		}
-		if (!mpt_queue_prepare(&stream->_wd, 256)) {
+		if (!mpt_queue_prepare(&stream->_wd.data, 256)) {
 			return total ? total : -1;
 		}
 	}
-	
-	return len;
 }

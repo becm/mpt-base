@@ -115,17 +115,17 @@ static int streamRead(lua_State *L)
 	if (mpt_stream_poll(&s->srm, POLLIN, timeout) < 0) {
 		return 0;
 	}
-	if (s->srm._rd.len == s->srm._rd.max) {
+	if (s->srm._rd.data.len == s->srm._rd.data.max) {
 		while ((timeout = mpt_stream_poll(&s->srm, POLLIN, 0)) > 0
 		       && timeout & POLLIN);
 	}
 	luaL_buffinit(L, &b);
-	base = mpt_queue_data(&s->srm._rd, &len);
+	base = mpt_queue_data(&s->srm._rd.data, &len);
 	if (len) luaL_addlstring(&b, base, len);
-	len = s->srm._rd.len - len;
-	if (len) luaL_addlstring(&b, s->srm._rd.base, len);
+	len = s->srm._rd.data.len - len;
+	if (len) luaL_addlstring(&b, s->srm._rd.data.base, len);
 	
-	mpt_queue_crop(&s->srm._rd, 0, s->srm._rd.len);
+	mpt_queue_crop(&s->srm._rd.data, 0, s->srm._rd.data.len);
 	
 	luaL_pushresult(&b);
 	return 1;
@@ -137,7 +137,7 @@ static int streamWrite(lua_State *L)
 	
 	streamWait(s);
 	
-	if (s->srm._enc.fcn) {
+	if (s->srm._wd._enc) {
 		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("write to encoded stream"));
 		return lua_error(L);
 	}
@@ -165,11 +165,11 @@ static int streamPush(lua_State *L)
 	
 	streamWait(s);
 	
-	if (!s->srm._enc.fcn) {
+	if (!s->srm._wd._enc) {
 		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("push to raw stream"));
 		return lua_error(L);
 	}
-	old = s->srm._wd.len;
+	old = s->srm._wd.data.len;
 	
 	/* signal no further data */
 	if ((len = lua_gettop(L)) == 1) {
@@ -179,7 +179,7 @@ static int streamPush(lua_State *L)
 		}
 		s->mt.cmd = 0;
 		s->mt.arg = 0;
-		old = s->srm._wd.len - old;
+		old = s->srm._wd.data.len - old;
 		lua_pushinteger(L, old);
 		return 1;
 	}
@@ -258,7 +258,7 @@ static int streamPush(lua_State *L)
 		lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("invalid data type"));
 		return lua_error(L);
 	}
-	old = s->srm._wd.len - old;
+	old = s->srm._wd.data.len - old;
 	lua_pushinteger(L, old);
 	return 1;
 }
@@ -332,10 +332,10 @@ static int streamIndex(lua_State *L)
 		return 1;
 	}
 	if (!strcmp(id, "encoding")) {
-		if (s->srm._enc.fcn == mpt_encode_cobs) {
+		if (s->srm._wd._enc == mpt_encode_cobs) {
 			lua_pushcfunction(L, bufferCobs);
 		}
-		else if (s->srm._enc.fcn || s->srm._dec.fcn) {
+		else if (s->srm._wd._enc || s->srm._rd._dec) {
 			lua_pushboolean(L, 1);
 		}
 		else {
@@ -355,7 +355,7 @@ static int streamNewIndex(lua_State *L)
 		MPT_TYPE(DataDecoder) dec;
 		int type = -1;
 		
-		if (s->srm._rd.base || s->srm._wd.base) {
+		if (s->srm._rd.data.base || s->srm._wd.data.base) {
 			lua_pushstring(L, "stream is active");
 			lua_error(L);
 		}
@@ -390,8 +390,8 @@ static int streamNewIndex(lua_State *L)
 			lua_pushstring(L, "invalid encoding");
 			return lua_error(L);
 		}
-		s->srm._enc.fcn = enc;
-		s->srm._dec.fcn = dec;
+		s->srm._wd._enc = enc;
+		s->srm._rd._dec = dec;
 	}
 	
 	return 0;

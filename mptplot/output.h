@@ -111,19 +111,16 @@ protected:
 # else
 MPT_STRUCT(connection)
 {
-	MPT_STRUCT(outdata)    out;    /* base output data */
 #  define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, MPT_ARRAY_INIT, \
-                                { MPT_QUEUE_INIT, 0, MPT_CODESTATE_INIT }, \
+                                MPT_DECODE_QUEUE_INIT, MPT_ARRAY_INIT, \
                                 { MPT_HISTINFO_INIT, 0 }, \
                                 0, 0 }
 # endif
+	MPT_STRUCT(outdata)    out;    /* base output data */
 	MPT_STRUCT(array)     _wait;   /* pending message operations */
 	
-	struct {
-	MPT_STRUCT(queue)      data;
-	MPT_TYPE(DataDecoder)  dec;
-	MPT_STRUCT(codestate)  info;
-	} in;                         /* input data */
+	MPT_STRUCT(decode_queue) in;   /* input data */
+	MPT_STRUCT(array)      _ctx;   /* reply context buffer */
 	
 	struct {
 	MPT_STRUCT(histinfo)   info;
@@ -133,7 +130,7 @@ MPT_STRUCT(connection)
 	void
 #endif
 	                      *file;
-	} hist;                       /* history file parapeters */
+	} hist;                       /* history file parameters */
 	
 	uint16_t               cid;
 	uint8_t               _coding;

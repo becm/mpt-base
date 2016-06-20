@@ -96,9 +96,9 @@ static int outputEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *
 		con->out._enc.fcn(&con->out._enc.info, 0, 0);
 		con->out._enc.fcn = enc;
 	}
-	if (con->in.dec) {
-		con->in.dec(&con->in.info, 0, 0);
-		con->in.dec = dec;
+	if (con->in._dec) {
+		con->in._dec(&con->in._state, 0, 0);
+		con->in._dec = dec;
 	}
 	con->_coding = rtype;
 	

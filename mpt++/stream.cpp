@@ -36,11 +36,8 @@ bool streaminfo::setFlags(int fl)
 }
 
 // stream data operations
-stream::stream()
-{
-    _enc.fcn = 0;
-    _dec.fcn = 0;
-}
+stream::stream() : _mlen(0)
+{ }
 stream::~stream()
 {
     mpt_stream_close(this);
@@ -258,10 +255,18 @@ int Stream::next(int what)
 int Stream::dispatch(EventHandler cmd, void *arg)
 {
     context *ctx = 0;
-    if (!cmd) {
-        return (mpt_queue_peek(&_rd, &_dec.info, _dec.fcn, 0) < 0) ? -1 : 0;
+    
+    if (_mlen < 0
+        && (_mlen = mpt_queue_recv(&_rd)) < 0) {
+        if (_mpt_stream_fread(&_info) < 0) {
+            return -2;
+        }
+        return 0;
     }
-    if (_dec.fcn) {
+    if (!cmd) {
+        return 1;
+    }
+    if (_rd.encoded()) {
         if (!(ctx = _ctx.reserve(_idlen))) {
             return BadOperation;
         }
@@ -316,13 +321,13 @@ int Stream::log(const char *from, int type, const char *fmt, va_list va)
         return MPT_ERROR(MissingData);
     }
     // message header for encoded data
-    if (_enc.fcn) {
+    if (_wd.encoded()) {
         uint8_t hdr[2] = { MessageOutput, (uint8_t) type };
         mpt_stream_push(this, 2, hdr);
     }
     if (from) {
         mpt_stream_push(this, strlen(from), from);
-        if (_enc.fcn) {
+        if (_wd.encoded()) {
             mpt_stream_push(this, 1, "");
         } else {
             mpt_stream_push(this, 2, ": ");
@@ -343,7 +348,7 @@ int Stream::log(const char *from, int type, const char *fmt, va_list va)
         mpt_stream_push(this, len, buf);
     }
     // append message newline
-    if (!_enc.fcn) {
+    if (_wd.encoded()) {
         mpt_stream_push(this, 1, "\n");
     }
     // terminate and flush message */

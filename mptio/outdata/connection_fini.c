@@ -21,6 +21,7 @@
  */
 extern void mpt_connection_fini(MPT_STRUCT(connection) *con)
 {
+	MPT_STRUCT(buffer) *buf;
 	FILE *fd;
 	
 	mpt_outdata_fini(&con->out);
@@ -36,5 +37,10 @@ extern void mpt_connection_fini(MPT_STRUCT(connection) *con)
 	    && (fd != stderr)) {
 		fclose(fd);
 		con->hist.file = 0;
+	}
+	if ((buf = con->_ctx._buf)) {
+		MPT_STRUCT(reply_context) **ctx = (void *) (buf+1);
+		mpt_reply_clear(ctx, buf->used / sizeof(*ctx));
+		mpt_array_clone(&con->_ctx, 0);
 	}
 }

@@ -28,10 +28,10 @@ static ssize_t flushPosition(MPT_STRUCT(stream) *stream, const uint8_t *data, si
 		return pos - data + 1;
 	}
 	if (flush == MPT_ENUM(NewlineNet)) {
-		size_t curr;
-		if ((data[0] == '\n') && (stream->_wd.len)) {
+		size_t curr, max;
+		if ((data[0] == '\n') && (max = stream->_wd.data.len)) {
 			uint8_t last;
-			mpt_queue_get(&stream->_wd, stream->_wd.len - 1, 1, &last);
+			mpt_queue_get(&stream->_wd.data, max - 1, 1, &last);
 			
 			if (last == '\r') {
 				return 1;
@@ -78,84 +78,30 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 	if (!count) {
 		return count;
 	}
-	if (stream->_enc.fcn) {
+	if (stream->_wd._enc) {
 		errno = EINVAL;
 		return 0;
 	}
 	flags = mpt_stream_flags(&stream->_info);
 	file = -1;
 	
-	/* no data resize */
-	if (!(flags & (MPT_ENUM(StreamWriteBuf)))) {
-		/* direct file access */
-		if ((file = _mpt_stream_fwrite(&stream->_info)) >= 0) {
-			ssize_t len;
-			if (!data || part != 1) {
-				errno = ENOTSUP; return 0;
-			}
-			if ((len = write(file, data, count)) < 0) {
+	/* reserve data on queue */
+	if (!part) {
+		if (count > (part = stream->_wd.data.max - stream->_wd.data.len)) {
+			if (!(flags & MPT_ENUM(StreamWriteBuf))
+			    || (flags & MPT_ENUM(StreamWriteMap))
+			    || !mpt_queue_prepare(&stream->_wd.data, count)) {
 				return 0;
 			}
-			return len;
+			part = stream->_wd.data.max - stream->_wd.data.len;
 		}
-		/* prepared data is available */
-		tchunk = stream->_wd.max - stream->_wd.len;
-		if (!part) {
-			return tchunk > count ? 0 : tchunk;
-		}
-		if (!(tchunk /= part)) {
-			return 0;
-		}
-		/* contigous growth only */
-		if (flags & MPT_ENUM(StreamWriteMap)) {
-			uint8_t * dest = stream->_wd.base;
-			dest += stream->_wd.off;
-			count = tchunk * part;
-			if (data) {
-				size_t flush = flushPosition(stream, data, count);
-				memcpy(dest, data, count);
-				if (flush) {
-					stream->_wd.len += flush;
-					mpt_stream_flush(stream);
-					count -= flush;
-				}
-				stream->_wd.len += count;
-			} else {
-				memset(dest, 0, count);
-				stream->_wd.len += count;
-				if (MPT_stream_flush(flags) == 0) {
-					mpt_stream_flush(stream);
-				}
-			}
-			return tchunk;
-		}
-	}
-	/* prepare write buffer */
-	else if (part == 0) {
-		if (count > (part = stream->_wd.max - stream->_wd.len)) {
-			if (flags & MPT_ENUM(StreamWriteMap) || !mpt_queue_prepare(&stream->_wd, count)) {
-				return 0;
-			}
-			part = stream->_wd.max - stream->_wd.len;
-		}
-		return part;
-	}
-	/* buffer bypass */
-	else if (data && part == 1 && !stream->_wd.len && (file = _mpt_stream_fwrite(&stream->_info)) >= 0) {
-		ssize_t len;
-		if ((len = write(file, data, count)) > 0) {
-			return len;
-		}
-	}
-	/* disable resize for private mmap */
-	else if (flags & MPT_ENUM(StreamWriteMap)) {
-		flags &= ~MPT_ENUM(StreamWriteBuf);
+		return part/count;
 	}
 	
 	do {
 		size_t left, curr;
 		
-		left = stream->_wd.max - stream->_wd.len;
+		left = stream->_wd.data.max - stream->_wd.data.len;
 		
 		/* get available chunks from buffer */
 		if ((curr = left / part)) {
@@ -169,42 +115,61 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 			
 			/* fill with zeros */
 			if (!data) {
-				part = stream->_wd.len;
-				mpt_qpush(&stream->_wd, curr, 0);
+				part = stream->_wd.data.len;
+				mpt_qpush(&stream->_wd.data, curr, 0);
 				
 				if (MPT_stream_flush(flags) == 0) {
 					mpt_stream_flush(stream);
 				}
 				continue;
 			}
-			left = 0;
 			while (curr && (take = flushPosition(stream, data, curr))) {
-				left += take;
-				mpt_qpush(&stream->_wd, take, data);
+				mpt_qpush(&stream->_wd.data, take, data);
+				stream->_wd._state.done = stream->_wd.data.len;
 				data = ((char *) data) + take;
 				curr -= take;
 			}
-			if (left) {
-				mpt_stream_flush(stream);
-			}
+			mpt_stream_flush(stream);
+			
 			/* add data to queue */
-			mpt_qpush(&stream->_wd, curr, data);
+			mpt_qpush(&stream->_wd.data, curr, data);
 			data = ((char *) data) + curr;
 			continue;
 		}
-		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
-			break;
-		}
-		/* flush to make room for new data */
+		/* force flush to make room for new data */
 		if (file < 0 && (file = _mpt_stream_fwrite(&stream->_info)) < 0) {
-			break;
+			if (!tchunk) {
+				errno = EBADF;
+			}
+			return tchunk;
 		}
-		(void) mpt_queue_save(&stream->_wd, file);
+		(void) mpt_queue_save(&stream->_wd.data, file);
+		stream->_wd._state.done = stream->_wd.data.len;
 		
-		left = stream->_wd.max - stream->_wd.len;
+		left = stream->_wd.data.max - stream->_wd.data.len;
 		
-		if (left < part && !mpt_queue_prepare(&stream->_wd, part)) {
-			break;
+		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
+			ssize_t len;
+			if (!data || part != 1 || stream->_wd.data.len) {
+				if (!tchunk) {
+					errno = ENOTSUP;
+				}
+				return tchunk;
+			}
+			if ((len = write(file, data, count)) < 0) {
+				return 0;
+			}
+			return len;
+		}
+		if (left < part) {
+			if (flags & MPT_ENUM(StreamWriteMap)) {
+				if (!tchunk) errno = EBADF;
+				break;
+			}
+			if (!mpt_queue_prepare(&stream->_wd.data, part)) {
+				if (!tchunk) errno = EAGAIN;
+				break;
+			}
 		}
 	} while (tchunk < count);
 	

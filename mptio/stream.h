@@ -101,19 +101,12 @@ MPT_STRUCT(stream)
 	bool open(const char *, const char * = "r");
     protected:
 #else
-# define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_QUEUE_INIT, MPT_QUEUE_INIT, { 0, MPT_CODESTATE_INIT }, { 0, MPT_CODESTATE_INIT, -1 } }
+# define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_DECODE_QUEUE_INIT, MPT_ENCODE_QUEUE_INIT, -1 }
 #endif
-	MPT_STRUCT(streaminfo) _info;    /* stream state */
-	MPT_STRUCT(queue)      _rd, _wd; /* read/write queue */
-	struct {
-		MPT_TYPE(DataEncoder) fcn;
-		MPT_STRUCT(codestate) info;
-	} _enc;
-	struct {
-		MPT_TYPE(DataDecoder) fcn;
-		MPT_STRUCT(codestate) info;
-		ssize_t               mlen;
-	} _dec;
+	MPT_STRUCT(streaminfo)   _info;  /* stream state */
+	MPT_STRUCT(decode_queue) _rd;    /* read data */
+	MPT_STRUCT(encode_queue) _wd;    /* write data */
+	ssize_t                  _mlen;  /* current message length */
 }
 #endif
 ;
