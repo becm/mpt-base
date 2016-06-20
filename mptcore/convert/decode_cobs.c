@@ -66,7 +66,7 @@ static ssize_t _decode
 {
 	MPT_STRUCT(message) tmp;
 	const struct iovec *dvec;
-	size_t dveclen, dlen, clen;
+	size_t dlen, clen;
 	const uint8_t *restrict src;
 	uint8_t *restrict dst, code, pos;
 	size_t proc, mlen, done;
@@ -78,14 +78,16 @@ static ssize_t _decode
 		if (!sourcelen) {
 			info->_ctx = 0;
 		} else {
+			/* get expected/sufficient scratch area */
 			return MPT_cobs_max_dec(sourcelen) + mlen;
 		}
 		return 0;
 	}
-	
-	/* get minimum scratch area */
+	/* get decoded data size */
 	if (!sourcelen) {
-		return mlen;
+		if (!(info->_ctx & _MPT_COBS_MSG_COMPLETE)) {
+			return mlen;
+		}
 	}
 	/* decoder data sizes */
 	code = info->_ctx & 0xff;
@@ -95,7 +97,7 @@ static ssize_t _decode
 	tmp.base = 0;
 	tmp.used = 0;
 	tmp.cont = (void *) source;
-	tmp.clen = sourcelen;
+	tmp.clen = sourcelen ? sourcelen : 1;
 	
 	/* check info for data vector */
 	dlen = mlen + done;
@@ -142,7 +144,6 @@ static ssize_t _decode
 	dst  = (uint8_t *) tmp.base;
 	dlen = tmp.used;
 	dvec = tmp.cont;
-	dveclen = tmp.clen;
 	
 	/* encoded data start */
 	mpt_message_read(&tmp, proc, 0);
@@ -189,35 +190,38 @@ static ssize_t _decode
 				if (!tmp.clen--) {
 					info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
 					info->scratch = proc + mlen;
-					return MPT_ERROR(MissingData);
+					return sourcelen ? MPT_ERROR(MissingData) : (ssize_t) mlen;
 				}
 				src  = tmp.cont->iov_base;
 				clen = tmp.cont->iov_len;
 				++tmp.cont;
 			}
-			/* regular data */
-			if ((val = *src++)) {
-			/* no remaining target space */
-				if (!proc) {
-					info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
-					info->scratch = proc + mlen;
-					return MPT_ERROR(MissingBuffer);
-				}
-				/* no remaining data on current part */
-				while (!dlen--) {
-					dst  = (uint8_t *) dvec->iov_base;
-					dlen = dvec->iov_len;
-					++dvec;
-					--dveclen;
-				}
-				*dst++ = val;
-				++mlen;
-				continue;
+			/* inline zero byte */
+			if (!(val = *src++)) {
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return MPT_ERROR(BadEncoding);
 			}
-			/* tail byte inline */
+			/* no remaining target space */
+			if (!proc) {
+				info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
+				info->scratch = proc + mlen;
+				return sourcelen ? MPT_ERROR(MissingBuffer) : (ssize_t) mlen;
+			}
+			/* no remaining data on current part */
+			while (!dlen--) {
+				dst  = (uint8_t *) dvec->iov_base;
+				dlen = dvec->iov_len;
+				++dvec; /* total position limited by `proc` and dst <= src */
+			}
+			*dst++ = val;
+			++mlen;
+		}
+		/* only process first block */
+		if (!sourcelen) {
 			info->_ctx = MPT_cobs_msg_state(mlen, code, pos);
-			info->scratch = proc + mlen + 1;
-			return MPT_ERROR(BadEncoding);
+			info->scratch = proc + mlen;
+			return mlen;
 		}
 		/* read next element */
 		while (!clen--) {
@@ -230,7 +234,6 @@ static ssize_t _decode
 			clen = tmp.cont->iov_len;
 			++tmp.cont;
 		}
-		++proc;
 		next = *src++;
 		
 		/* needed numbers of zeros */
@@ -247,14 +250,14 @@ static ssize_t _decode
 			while (!dlen--) {
 				dst  = (uint8_t *) dvec->iov_base;
 				dlen = dvec->iov_len;
-				++dvec;
-				--dveclen;
+				++dvec; /* total position limited by `proc` and dst <= src */
 			}
 			*dst++ = 0;
 			++mlen;
 			--proc;
 		}
-		/* start next part */
+		/* save next part code */
+		++proc;
 		code = next;
 		pos = 0;
 	}
@@ -318,6 +321,7 @@ static ssize_t _decode_r
 		++ret;
 		
 		info->_ctx = (ret * _MPT_COBS_MLEN_FACT) | _MPT_COBS_MSG_COMPLETE;
+		++info->scratch;
 	}
 	return ret;
 }

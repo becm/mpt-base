@@ -30,8 +30,8 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 	msg.base = ((uint8_t *) qu->data.base) + off;
 	
 	/* message setup */
-	if (len > off) {
-		msg.used = len - off;
+	if (len > (qu->data.max - off)) {
+		msg.used = qu->data.max - off;
 		msg.clen = 1;
 		msg.cont = &src;
 		src.iov_base = qu->data.base;
