@@ -48,9 +48,15 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 	len  = info->done;
 	left = cobs->iov_len;
 	
+	/* uninitialized target */
+	if (!(dst = cobs->iov_base)) {
+		if (code || len || left) {
+			return -1;
+		}
+		return -2;
+	}
 	/* bad encoder state */
-	if (!(dst = cobs->iov_base)
-	    || (len > left)
+	if ((len > left)
 	    || (code > (left -= len))
 	    || (code > left)) {
 		return -1;
@@ -72,7 +78,7 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 		info->done = len;
 		info->scratch = 0;
 		
-		return code;
+		return 0;
 	}
 	src = base->iov_base;
 	len = base->iov_len;

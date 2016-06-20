@@ -5,6 +5,9 @@
 
 #ifndef MPT_cobs_check_inline
 # define MPT_cobs_check_inline(c,e,p)    ((c) < ((e) = (p)[(c)-1]))
+#endif
+
+#ifndef MPT_encode_cobs_regular
 # define MPT_encode_cobs_regular(i,c,d)  mpt_encode_cobs(i, c, d)
 /*!
  * \ingroup mptConvert
@@ -57,5 +60,5 @@ extern ssize_t mpt_encode_cobs_r(MPT_STRUCT(codestate) *info, const struct iovec
 	info->done = off + code;
 	info->scratch = 0;
 	
-	return code;
+	return 0;
 }

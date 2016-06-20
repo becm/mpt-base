@@ -1,5 +1,5 @@
 /*!
- * COBS/ZPE binary massage encoding
+ * COBS/ZPE binary message encoding
  */
 
 #include "sys/uio.h"

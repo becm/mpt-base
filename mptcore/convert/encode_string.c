@@ -60,7 +60,7 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(codestate) *info, const struct iovec
 		info->done = off;
 		
 		/* push delimiter data */
-		return off;
+		return 0;
 	}
 	/* start priority data */
 	if (!(len = from->iov_len)) {
