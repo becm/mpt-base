@@ -252,7 +252,7 @@ extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
 /* process return messages */
 extern int mpt_outdata_open(MPT_STRUCT(outdata) *, const char *, const char *);
 /* clear outdata connection */
-extern int mpt_outdata_connect(MPT_STRUCT(outdata) *, const char *, MPT_STRUCT(fdmode) *);
+extern int mpt_outdata_connect(MPT_STRUCT(outdata) *, const char *, const MPT_STRUCT(fdmode) *);
 /* clear outdata connection */
 extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
 /* get/set outdata property */

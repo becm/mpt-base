@@ -280,26 +280,17 @@ static int streamConnect(lua_State *L)
 	
 	if (type) {
 		if ((flg = mpt_mode_parse(&mode, type)) < 0) {
-			(void) mpt_mode_parse(&mode, 0);
+			type = 0;
 		}
 	}
 	if ((flg = mpt_connect(&sock, dest, type ? &mode : 0)) < 0) {
 		return 0;
 	}
-	if (!(flg & MPT_ENUM(SocketStream))) {
+	if ((flg = mpt_stream_sockflags(flg)) < 0) {
 		(void) close(sock._id);
 		return 0;
 	}
-	if (flg & MPT_ENUM(SocketWrite)) {
-		if (flg & MPT_ENUM(SocketRead)) {
-			flg = MPT_ENUM(StreamRdWr);
-		} else {
-			flg = MPT_ENUM(StreamWrite);
-		}
-	} else {
-		flg = MPT_ENUM(StreamRead);
-	}
-	if (mpt_stream_dopen(&s->srm, &sock, flg | MPT_ENUM(StreamBuffer)) < 0) {
+	if (mpt_stream_dopen(&s->srm, &sock, type ? mode.stream : flg) < 0) {
 		close(sock._id);
 		return 0;
 	}

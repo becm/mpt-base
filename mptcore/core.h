@@ -178,9 +178,10 @@ enum MPT_ENUM(LogType) {
 #define MPT_FCNLOG(x) (MPT_ENUM(Log##x) | MPT_ENUM(LogFunction))
 
 enum MPT_ENUM(SocketFlags) {
-	MPT_ENUM(SocketStream) = 0x1,
-	MPT_ENUM(SocketWrite)  = 0x2,
-	MPT_ENUM(SocketRead)   = 0x4
+	MPT_ENUM(SocketWrite)  = 0x1,
+	MPT_ENUM(SocketRead)   = 0x2,
+	MPT_ENUM(SocketRdWr)   = 0x3,
+	MPT_ENUM(SocketStream) = 0x4
 };
 
 enum MPT_ENUM(TypeErrors) {

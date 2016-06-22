@@ -46,6 +46,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			if (len) {
 				od->state |= MPT_ENUM(OutputActive);
 			} else {
+				mpt_stream_flush(srm);
 				od->state &= ~MPT_ENUM(OutputActive);
 			}
 		}

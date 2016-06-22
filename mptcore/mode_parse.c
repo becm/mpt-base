@@ -42,7 +42,7 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 	}
 	/* force unix socket */
 	if (!strncasecmp(path, "socket", len = 6) || !strncasecmp(path, "sock", len = 4)) {
-		if (path[len] && (path[len+1] == '/' || path[len+1] == '.')) {
+		if (path[len] == ':' && (path[len+1] == '/' || path[len+1] == '.')) {
 			mode->family = AF_UNIX;
 			mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_DGRAM;
 			mode->param.sock.proto = 0;
@@ -56,36 +56,42 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 				mode->param.sock.proto = IPPROTO_UDP;
 			}
 		}
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	/* force unix socket */
 	else if (!strncasecmp(path, "unix", len = 4)) {
 		mode->family = AF_UNIX;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_DGRAM;
 		mode->param.sock.proto = 0;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	/* name is ipv4 address */
 	else if (!strncasecmp(path, "ip4", len = 3) || !strncasecmp(path, "ipv4", len = 5)) {
 		mode->family = AF_INET;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_DGRAM;
 		mode->param.sock.proto = 0;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	/* name is ipv4 tcp address */
 	else if (!strncasecmp(path, "tcp4", len = 4)) {
 		mode->family = AF_INET;
 		mode->param.sock.type  = SOCK_STREAM;
 		mode->param.sock.proto = IPPROTO_TCP;
+		mode->stream = MPT_ENUM(StreamBuffer);
 	}
 	/* name is ipv4 udp address */
 	else if (!strncasecmp(path, "udp4", len = 4)) {
 		mode->family = AF_INET;
 		mode->param.sock.type  = SOCK_DGRAM;
 		mode->param.sock.proto = IPPROTO_UDP;
+		mode->stream = 0;
 	}
 	/* name is ipv4 sctp address */
 	else if (!strncasecmp(path, "sctp4", len = 5)) {
 		mode->family = AF_INET;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_SEQPACKET;
 		mode->param.sock.proto = IPPROTO_SCTP;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	
 	/* name is ipv6 address */
@@ -93,24 +99,28 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->family = AF_INET6;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_DGRAM;
 		mode->param.sock.proto = 0;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	/* name is ipv6 tcp address */
 	else if (!strncasecmp(path, "tcp6", len = 4)) {
 		mode->family = AF_INET6;
 		mode->param.sock.type  = SOCK_STREAM;
 		mode->param.sock.proto = IPPROTO_TCP;
+		mode->stream = MPT_ENUM(StreamBuffer);
 	}
 	/* name is ipv6 udp address */
 	else if (!strncasecmp(path, "udp6", len = 4)) {
 		mode->family = AF_INET6;
 		mode->param.sock.type  = SOCK_DGRAM;
 		mode->param.sock.proto = IPPROTO_UDP;
+		mode->stream = 0;
 	}
 	/* name is ipv4 sctp address */
 	else if (!strncasecmp(path, "sctp6", len = 5)) {
 		mode->family = AF_INET6;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_SEQPACKET;
 		mode->param.sock.proto = IPPROTO_SCTP;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	
 	/* name is unspecified ip address */
@@ -118,29 +128,34 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->family = AF_UNSPEC;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_DGRAM;
 		mode->param.sock.proto = 0;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	/* name is unspecified tcp address */
 	else if (!strncasecmp(path, "tcp", len = 3)) {
 		mode->family = AF_UNSPEC;
 		mode->param.sock.type  = SOCK_STREAM;
 		mode->param.sock.proto = IPPROTO_TCP;
+		mode->stream = MPT_ENUM(StreamBuffer);
 	}
 	/* name is unspecified udp address */
 	else if (!strncasecmp(path, "udp", len = 3)) {
 		mode->family = AF_UNSPEC;
 		mode->param.sock.type  = SOCK_DGRAM;
 		mode->param.sock.proto = IPPROTO_UDP;
+		mode->stream = 0;
 	}
 	/* name is unspecified sctp address */
 	else if (!strncasecmp(path, "sctp", len = 4)) {
 		mode->family = AF_UNSPEC;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_SEQPACKET;
 		mode->param.sock.proto = IPPROTO_SCTP;
+		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
 	else {
 		return -2;
 	}
 	mode->param.sock.port = 0;
+	mode->stream |= MPT_ENUM(StreamRdWr);
 	return len;
 }
 
@@ -228,9 +243,9 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			*smode = sm;
 			return 1;
 		case 'M':
-			sm.stream    |= MPT_ENUM(StreamForceMap);
+			sm.stream |= MPT_ENUM(StreamForceMap);
 		case 'm':
-			sm.stream    |= MPT_ENUM(StreamReadMap);
+			sm.stream |= MPT_ENUM(StreamReadMap);
 			sm.param.file.open |= O_RDONLY;
 			lineSeparator(&sm, &end);
 			break;
@@ -240,12 +255,12 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			lineSeparator(&sm, &end);
 			if (*end == '+') {
 				sm.param.file.open |= O_RDWR;
-				sm.stream    |= MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamBuffer);
+				sm.stream |= MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamBuffer);
 				++end;
 			}
 			else {
 				sm.param.file.open |= O_RDONLY;
-				sm.stream    |= MPT_ENUM(StreamRead) | MPT_ENUM(StreamReadBuf);
+				sm.stream |= MPT_ENUM(StreamRead) | MPT_ENUM(StreamReadBuf);
 			}
 			break;
 		case 'A':
@@ -254,12 +269,12 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			lineSeparator(&sm, &end);
 			sm.param.file.open |= O_APPEND | O_CREAT;
 			if (*end == '+') {
-				sm.stream    |= MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamWriteBuf);
+				sm.stream |= MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamWriteBuf);
 				sm.param.file.open |= O_RDWR;
 				++end;
 			}
 			else {
-				sm.stream    |= MPT_ENUM(StreamWrite) | MPT_ENUM(StreamWriteBuf);
+				sm.stream |= MPT_ENUM(StreamWrite) | MPT_ENUM(StreamWriteBuf);
 				sm.param.file.open |= O_WRONLY;
 			}
 			break;
@@ -274,7 +289,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 				++end;
 			}
 			else {
-				sm.stream    |= MPT_ENUM(StreamWrite) | MPT_ENUM(StreamWriteBuf);
+				sm.stream |= MPT_ENUM(StreamWrite) | MPT_ENUM(StreamWriteBuf);
 				sm.param.file.open |= O_WRONLY;
 			}
 			break;

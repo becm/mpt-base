@@ -139,6 +139,9 @@ extern int mpt_stream_open(MPT_STRUCT(stream) *, const char *, const char *);
 extern int mpt_stream_dopen(MPT_STRUCT(stream) *, const MPT_STRUCT(socket) *, int);
 extern int mpt_stream_memory(MPT_STRUCT(stream) *, const struct iovec *, const struct iovec * __MPT_DEFPAR(0));
 
+/* convert socket connect to stream open flags */
+extern int mpt_stream_sockflags(int);
+
 /* accept connection */
 extern MPT_INTERFACE(input) *mpt_accept(const MPT_STRUCT(socket) *);
 /* create stream interface */

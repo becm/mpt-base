@@ -25,12 +25,12 @@
  * \param to   stream/socket target
  * \param mp   connection type description
  */
-extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, MPT_STRUCT(fdmode) *mp)
+extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, const MPT_STRUCT(fdmode) *mp)
 {
 	MPT_STRUCT(fdmode) mode;
 	MPT_STRUCT(socket) tmp = MPT_SOCKET_INIT;
 	MPT_STRUCT(stream) *srm = 0;
-	int flg = 0;
+	int flg = 0, ret;
 	
 	if (out->state & MPT_ENUM(OutputActive)) {
 		return MPT_ERROR(BadOperation);
@@ -40,15 +40,18 @@ extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, MPT_STR
 		return 0;
 	}
 	/* get mode from target string */
-	if (!mp && (flg = mpt_mode_parse(mp = &mode, to)) < 0) {
-		flg = 0;
-		mp = 0;
+	if (!mp) {
+		if ((flg = mpt_mode_parse(&mode, to)) < 0) {
+			flg = 0;
+		} else {
+			mp = &mode;
+		}
 	}
 	/* create new connection */
-	if ((flg = mpt_connect(&tmp, to+flg, mp)) < 0) {
+	if ((ret = mpt_connect(&tmp, to+flg, mp)) < 0) {
 		return MPT_ERROR(BadValue);
 	}
-	if (flg & MPT_ENUM(SocketStream)) {
+	if ((flg = mpt_stream_sockflags(ret)) >= 0) {
 		MPT_STRUCT(stream) s = MPT_STREAM_INIT;
 		MPT_TYPE(DataEncoder) enc = 0;
 		MPT_TYPE(DataDecoder) dec = 0;
@@ -58,7 +61,7 @@ extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, MPT_STR
 		        || !(dec = mpt_message_decoder(out->_coding)))) {
 			return MPT_ERROR(BadEncoding);
 		}
-		if (mpt_stream_dopen(&s, &tmp, mode.stream) < 0) {
+		if (mpt_stream_dopen(&s, &tmp, mp ? mp->stream : flg) < 0) {
 			(void) close(tmp._id);
 			return MPT_ERROR(BadOperation);
 		}
@@ -80,5 +83,5 @@ extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, MPT_STR
 	} else {
 		out->sock = tmp;
 	}
-	return flg;
+	return ret;
 }
