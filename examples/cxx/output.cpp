@@ -30,7 +30,7 @@ extern int main(int , char * const [])
 	delete n;
 	
 	Stream *out = new Stream;
-	logger *log = mpt_object_logger(out);
+	logger *log = mpt_output_logger(out);
 	
 	out->open("/dev/stdout", "w");
 	

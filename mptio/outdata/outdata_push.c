@@ -12,6 +12,8 @@
 #include "array.h"
 #include "message.h"
 
+#include "stream.h"
+
 #include "output.h"
 
 /*!
@@ -29,68 +31,68 @@
  */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void *src)
 {
-	struct iovec vec;
-	ssize_t total;
+	ssize_t ret;
 	
-	/* answer in progress */
-	if (od->state & MPT_ENUM(OutputRemote)) {
-		return -3;
-	}
-	/* need encoder for stream output */
-	if (MPT_socket_active(&od->sock)
-	    && (od->_sflg & MPT_ENUM(SocketStream))
-	    && !od->_enc.fcn) {
-		return -4;
-	}
-	/* add data to array */
-	if (len) {
-		vec.iov_base = (void *) src;
-		vec.iov_len  = len;
+	/* use stream data */
+	if (!MPT_socket_active(&od->sock)) {
+		MPT_STRUCT(stream) *srm;
 		
-		if ((total = mpt_array_push(&od->_buf, &od->_enc.info, od->_enc.fcn, &vec)) < 0) {
-			return total;
+		if (!(srm = od->_buf)) {
+			return MPT_ERROR(BadArgument);
 		}
-		/* set active state */
+		ret = mpt_stream_push(srm, len, src);
+		
+		if (ret >= 0) {
+			if (len) {
+				od->state |= MPT_ENUM(OutputActive);
+			} else {
+				od->state &= ~MPT_ENUM(OutputActive);
+			}
+		}
+		return ret;
+	}
+	if (len) {
+		/* answer in progress */
+		if (od->state & MPT_ENUM(OutputRemote)) {
+			return MPT_ERROR(MessageInput);
+		}
+		if (!mpt_array_append((MPT_STRUCT(array) *) &od->_buf, len, src)) {
+			return MPT_ERROR(BadOperation);
+		}
 		od->state |= MPT_ENUM(OutputActive);
+		return len;
 	}
 	else {
+		struct msghdr mhdr;
+		struct iovec out;
 		MPT_STRUCT(buffer) *buf;
-		MPT_STRUCT(slice) s;
 		
-		/* message termination */
-		if ((total = mpt_array_push(&od->_buf, &od->_enc.info, od->_enc.fcn, 0)) < 0) {
-			return total;
-		}
-		/* set inactive state */
-		od->state &= ~MPT_ENUM(OutputActive);
-		
-		/* no data or connection */
-		if (!MPT_socket_active(&od->sock) || !(len = od->_enc.info.done)) {
-			return total;
-		}
-		s._len = len;
-		len += od->_enc.info.scratch;
-		
-		/* bad data ranges */
-		if (!(buf = od->_buf._buf) || (len > buf->used)) {
-			if (od->_enc.fcn) od->_enc.fcn(&od->_enc.info, 0, 0);
-			return -1;
-		}
-		s._off = buf->used - len;
-		
-		/* send completed data */
-		s._a._buf = buf;
-		if ((total = mpt_array_flush(od->sock._id, &s, 0, (od->_sflg & MPT_ENUM(SocketStream)) ? 0 : 1)) < 0) {
-			return total;
+		if (!(buf = od->_buf)) {
+			len = 0;
+		} else {
+			len = buf->used;
 		}
 		
-		od->_enc.info.done -= total;
-		len = s._off + total;
+		/* destination address */
+		mhdr.msg_name    = 0;
+		mhdr.msg_namelen = 0;
 		
-		/* remove head data */
-		if ((len > buf->size/4) && (len > buf->used/2)) {
-			mpt_array_cut(&od->_buf, 0, len);
+		/* set output */
+		out.iov_base = buf+1;
+		out.iov_len  = len;
+		mhdr.msg_iov = &out;
+		mhdr.msg_iovlen = 1;
+		
+		/* additional options */
+		mhdr.msg_control = 0; mhdr.msg_controllen = 0;
+		mhdr.msg_flags = 0;
+		
+		ret = sendmsg(od->sock._id, &mhdr, 0);
+		
+		if (ret >= 0) {
+			od->state &= ~MPT_ENUM(OutputActive);
 		}
+		
+		return ret;
 	}
-	return total;
 }

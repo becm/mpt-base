@@ -8,6 +8,8 @@
 #include <string.h>
 #include <strings.h> /* for strcasecmp() */
 
+#include <ctype.h> /* for isupper() */
+
 #include "array.h"
 #include "queue.h"
 #include "event.h"
@@ -56,53 +58,26 @@ static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
 	
 	return len;
 }
-static int outputEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *src)
+/* set level limit */
+static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 {
-	MPT_TYPE(DataEncoder) enc;
-	MPT_TYPE(DataDecoder) dec;
-	char *where;
-	int32_t val;
-	int type;
-	uint8_t rtype;
+	const char *arg;
+	int ret;
 	
-	if (!src) return con->_coding;
-	
-	if (MPT_socket_active(&con->out.sock)) {
-		return -4;
+	if (!src) {
+		*level = 0;
+		return 0;
 	}
-	if ((type = src->_vptr->conv(src, 's', &where)) >= 0) {
-		val = mpt_encoding_value(where, -1);
-		if (val < 0 || val > UINT8_MAX) {
-			return -2;
+	if ((ret = src->_vptr->conv(src, 'k', &arg)) >= 0) {
+		int type;
+		if ((type = mpt_log_level(arg)) < 0) {
+			return MPT_ERROR(BadValue);
 		}
-		rtype = val;
+		if (arg && isupper(*arg)) type |= MPT_ENUM(LogLevelFile);
+		*level = type;
+		return ret;
 	}
-	else if ((type = src->_vptr->conv(src, 'y', &rtype)) < 0) {
-		type = src->_vptr->conv(src, 'i', &val);
-		if (type < 0 || val < 0 || val > UINT8_MAX) {
-			return -3;
-		}
-		rtype = val;
-	}
-	if (!rtype) {
-		enc = 0;
-		dec = 0;
-	}
-	else if (!(enc = mpt_message_encoder(rtype))
-	    || !(dec = mpt_message_decoder(rtype))) {
-		return -3;
-	}
-	if (con->out._enc.fcn) {
-		con->out._enc.fcn(&con->out._enc.info, 0, 0);
-		con->out._enc.fcn = enc;
-	}
-	if (con->in._dec) {
-		con->in._dec(&con->in._state, 0, 0);
-		con->in._dec = dec;
-	}
-	con->_coding = rtype;
-	
-	return type;
+	return MPT_ERROR(BadType);
 }
 /*!
  * \ingroup mptOutput
@@ -118,8 +93,13 @@ static int outputEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *
  */
 extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT_INTERFACE(metatype) *src)
 {
+	int ret;
 	if (!name || !*name) {
-		return mpt_outdata_set(&con->out, name, src);
+		if ((ret = mpt_outdata_set(&con->out, name, src)) >= 0) {
+			/* clear waiting commands on connection */
+			mpt_command_clear(&con->_wait);
+		}
+		return ret;
 	}
 	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
 		return setHistfile(&con->hist.file, src);
@@ -127,8 +107,47 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 	else if (!strcasecmp(name, "histfmt")) {
 		return mpt_valfmt_set(&con->hist.info._fmt, src);
 	}
-	else if (!strcasecmp(name, "encoding")) {
-		return outputEncoding(con, src);
+	if (!strcasecmp(name, "level")) {
+		uint8_t v = con->level;
+		
+		if (src && (ret = src->_vptr->conv(src, 'y', &v)) > 0) {
+			con->level = v;
+		}
+		else if ((ret = connectionLevel(&v, src)) < 0) {
+			return ret;
+		}
+		else if (!ret) {
+			con->level = (MPT_ENUM(LogLevelInfo) << 4) | MPT_ENUM(LogLevelWarning);
+		}
+		else {
+			con->level = ((v & 0xf) << 4) | (v & 0xf);
+		}
+		return ret;
+	}
+	if (!strcasecmp(name, "debug")) {
+		uint8_t v = MPT_ENUM(LogLevelDebug3);
+		ret = 0;
+		if (src && (ret = src->_vptr->conv(src, 'y', &v)) < 0) {
+			return MPT_ERROR(BadType);
+		}
+		con->level = (con->level & 0xf0) | (v & 0xf);
+		return ret;
+	}
+	if (!strcasecmp(name, "print")) {
+		uint8_t v = con->level & 0xf;
+		if ((ret = connectionLevel(&v, src)) < 0) {
+			return ret;
+		}
+		con->level = (con->level & 0xf0) | (v & 0xf);
+		return ret;
+	}
+	if (!strcasecmp(name, "answer")) {
+		uint8_t v = (con->level & 0xf0) >> 4;
+		if ((ret = connectionLevel(&v, src)) < 0) {
+			return ret;
+		}
+		con->level = (con->level & 0xf) | ((v & 0xf) << 4);
+		return ret;
 	}
 	return mpt_outdata_set(&con->out, name, src);
 }
@@ -152,9 +171,12 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		return MPT_ENUM(TypeOutput);
 	}
 	if (!(name = pr->name)) {
-		return mpt_outdata_get(&con->out, pr);
+		if ((uintptr_t) pr->desc != 1) {
+			return mpt_outdata_get(&con->out, pr);
+		}
+		name = "level";
 	}
-	if (!*name) {
+	else if (!*name) {
 		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
 		
 		pr->name = "connection";
@@ -180,12 +202,12 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		buf = con->hist.info._fmt._buf;
 		return buf ? buf->used : 0;
 	}
-	if (!strcasecmp(name, "encoding")) {
-		pr->name = "encoding";
-		pr->desc = "socket stream encoding";
+	if (!strcmp(name, "level") || !strcmp(name, "debug") || !strcasecmp(name, "answer")) {
+		pr->name = "level";
+		pr->desc = MPT_tr("output level");
 		pr->val.fmt = "y";
-		pr->val.ptr = &con->_coding;
-		return con->_coding;
+		pr->val.ptr = &con->level;
+		return con->level;
 	}
 	return mpt_outdata_get(&con->out, pr);
 }

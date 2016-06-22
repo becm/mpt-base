@@ -17,9 +17,6 @@
 
 #include "output.h"
 
-#define AnswerFlags(a) ((a & 0xf0) >> 4)
-#define OutputFlags(a) (a & 0xf)
-
 static int answerType(int code)
 {
 	if (!code) {
@@ -30,6 +27,7 @@ static int answerType(int code)
 	}
 	return MPT_ENUM(LogInfo);
 }
+
 /* print message */
 static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 {
@@ -72,17 +70,17 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
  * 
  * \return output file descriptor
  */
-extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, const void *src)
+extern ssize_t mpt_outdata_print(uint8_t *state, FILE *hist, size_t len, const void *src)
 {
 	const MPT_STRUCT(msgtype) *mt;
 	const char *prefix;
 	int type, flags;
 	
-	if (od->state & MPT_ENUM(OutputActive)) {
-		if (!(od->state & 0x7)) {
-			return -1;
+	if (*state & MPT_ENUM(OutputActive)) {
+		if (!(*state & 0x7)) {
+			return MPT_ERROR(BadArgument);
 		}
-		switch (od->state & 0x3) {
+		switch (*state & 0x3) {
 		  case MPT_ENUM(OutputPrintNormal):
 		    hist = stdout; break;
 		  case MPT_ENUM(OutputPrintError):
@@ -93,12 +91,12 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		  default: return 0;
 		}
 		if (!len) {
-			if ((od->state & MPT_ENUM(OutputPrintRestore))
+			if ((*state & MPT_ENUM(OutputPrintRestore))
 			    && isatty(fileno(hist))) {
 				fputs(mpt_ansi_reset(), hist);
 			}
 			fputc('\n', hist);
-			od->state &= ~(0x7 | MPT_ENUM(OutputActive));
+			*state &= ~(0x7 | MPT_ENUM(OutputActive));
 			return 0;
 		}
 		if (!src) {
@@ -112,26 +110,25 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 	if (len < 2 || !(mt = src)) {
 		return MPT_ERROR(MissingData);
 	}
-	od->state &= ~(0x7 | MPT_ENUM(OutputActive));
+	flags = *state & 0x7;
+	*state &= ~0x7;
 	
 	/* setup answer output */
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
 		type  = mt->arg;
-		flags = OutputFlags(od->level);
 	}
 	else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
 		type  = answerType(mt->arg);
-		flags = AnswerFlags(od->level);
 	}
 	else {
 		return MPT_ERROR(BadType);
 	}
-	flags = mpt_output_file(type, flags);
 	
+	*state |= MPT_ENUM(OutputActive);
 	switch (flags & 0x3) {
 	  case 0:
-		hist = 0;
-		break;
+		*state |= MPT_ENUM(OutputPrintRestore);
+		return len;
 	  case MPT_ENUM(OutputPrintNormal):
 		hist = stdout;
 		break;
@@ -139,21 +136,13 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 		hist = stderr;
 		break;
 	  case MPT_ENUM(OutputPrintHistory):
-		break;
-	}
-	if (flags & MPT_ENUM(OutputPrintRestore)) {
 		if (hist) {
 			flags = MPT_ENUM(OutputPrintHistory);
 		} else {
 			hist = stderr;
 			flags = MPT_ENUM(OutputPrintError);
 		}
-	}
-	od->state |= MPT_ENUM(OutputActive);
-	
-	if (!hist) {
-		od->state |= MPT_ENUM(OutputPrintRestore);
-		return 0;
+		break;
 	}
 	if ((isatty(fileno(hist)) > 0) && (prefix = mpt_ansi_code(type))) {
 		flags |= MPT_ENUM(OutputPrintRestore);
@@ -167,7 +156,7 @@ extern int mpt_outdata_print(MPT_STRUCT(outdata) *od, FILE *hist, size_t len, co
 	if (len > 2) {
 		outputWrite(hist, len-2, mt+1);
 	}
-	od->state |= flags & 0x7;
+	*state |= flags & 0x7;
 	
 	return len;
 }

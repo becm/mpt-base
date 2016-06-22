@@ -21,6 +21,23 @@ MPT_STRUCT(message);
 
 MPT_INTERFACE(output);
 
+enum MPT_ENUM(OutputFlags) {
+	MPT_ENUM(OutputPrintNormal)  = 0x1,
+	MPT_ENUM(OutputPrintError)   = 0x2,
+	MPT_ENUM(OutputPrintHistory) = 0x3,
+	MPT_ENUM(OutputPrintRestore) = 0x4,
+	MPT_ENUM(OutputPrintColor)   = 0x8,   /* enable coloring */
+	
+	MPT_ENUM(OutputActive)       = 0x10,  /* message is active */
+	MPT_ENUM(OutputRemote)       = 0x20,  /* skip internal filter */
+	
+	MPT_ENUM(OutputStateInit)    = 0x1,   /* data states */
+	MPT_ENUM(OutputStateStep)    = 0x2,
+	MPT_ENUM(OutputStateFini)    = 0x4,
+	MPT_ENUM(OutputStateFail)    = 0x8,
+	MPT_ENUM(OutputStates)       = 0x7
+};
+
 /* source data type */
 MPT_STRUCT(msgbind)
 {
@@ -83,22 +100,26 @@ MPT_STRUCT(outdata)
 {
 # ifdef __cplusplus
 	outdata();
+	~outdata();
 	
 	ssize_t push(size_t, const void *);
 protected:
 # else
-#  define MPT_OUTDATA_INIT { MPT_SOCKET_INIT,  0,0,0,0,  MPT_ARRAY_INIT, { 0, MPT_CODESTATE_INIT } }
+#  define MPT_OUTDATA_INIT { MPT_SOCKET_INIT, 0, MPT_ARRAY_INIT, 0,0,0,0 }
 # endif
-	MPT_STRUCT(socket) sock;
-	uint8_t           _sflg;    /* socket flags */
-	uint8_t            state;   /* output state */
-	uint8_t            level;   /* output level */
-	uint8_t            curr;    /* type of active message */
-	MPT_STRUCT(array) _buf;
-	struct {
-		MPT_TYPE(DataEncoder) fcn;
-		MPT_STRUCT(codestate) info;
-	} _enc;
+	MPT_STRUCT(socket) sock;  /* connected datagram socket */
+	void *_buf;               /* array buffer or stream pointer */
+#if defined(__cplusplus) && defined(_MPT_EVENT_H)
+	reply_context::array
+#else
+	MPT_STRUCT(array)
+#endif
+	         _ctx;     /* reply context buffer */
+	
+	uint8_t   state;   /* output state */
+	uint8_t  _socklen; /* socket address size */
+	uint8_t  _coding;  /* encoding identifier */
+	uint8_t  _idlen;   /* identifier length */
 }
 #endif
 ;
@@ -107,33 +128,35 @@ protected:
 # ifdef __cplusplus
 MPT_STRUCT(connection) : public outdata
 {
+public:
+	connection();
+	~connection();
 protected:
 # else
 MPT_STRUCT(connection)
 {
-#  define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, MPT_ARRAY_INIT, \
-                                MPT_DECODE_QUEUE_INIT, MPT_ARRAY_INIT, \
-                                { MPT_HISTINFO_INIT, 0 }, \
-                                0, 0 }
+#  define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
+                                0, 0, \
+                                0, MPT_ARRAY_INIT, \
+                                { MPT_HISTINFO_INIT, 0 } }
 # endif
-	MPT_STRUCT(outdata)    out;    /* base output data */
-	MPT_STRUCT(array)     _wait;   /* pending message operations */
+	MPT_STRUCT(outdata)  out;   /* base output data */
+	uint8_t curr;               /* type of active message */
+	uint8_t level;              /* output level */
 	
-	MPT_STRUCT(decode_queue) in;   /* input data */
-	MPT_STRUCT(array)      _ctx;   /* reply context buffer */
+	uintptr_t            cid;   /* active message id */
+	MPT_STRUCT(array)   _wait;  /* pending message reply actions */
 	
 	struct {
-	MPT_STRUCT(histinfo)   info;
+	MPT_STRUCT(histinfo) info;  /* history state */
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 	FILE
 #else
 	void
 #endif
-	                      *file;
-	} hist;                       /* history file parameters */
+	      *file;
+	} hist;         /* history file parameters */
 	
-	uint16_t               cid;
-	uint8_t               _coding;
 };
 #else
 MPT_STRUCT(connection);
@@ -215,19 +238,30 @@ extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgbind) *);
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
 /* outdata print setup and processing */
-extern int mpt_outdata_print(MPT_STRUCT(outdata) *, FILE *, size_t , const void *);
+extern ssize_t mpt_outdata_print(uint8_t *, FILE *, size_t , const void *);
 
 /* printing values */
 extern int mpt_fprint_val(FILE *, MPT_INTERFACE(metatype) *);
 #endif
 
+/* determine output print type */
+extern int mpt_outdata_type(uint8_t arg, int min);
+
 /* clear outdata */
 extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
+/* process return messages */
+extern int mpt_outdata_open(MPT_STRUCT(outdata) *, const char *, const char *);
+/* clear outdata connection */
+extern int mpt_outdata_connect(MPT_STRUCT(outdata) *, const char *, MPT_STRUCT(fdmode) *);
+/* clear outdata connection */
+extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
 /* get/set outdata property */
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
 extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(metatype) *);
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
+/* process return messages */
+extern int mpt_outdata_sync(MPT_STRUCT(outdata) *, const MPT_STRUCT(array) *, int);
 
 
 /* clear connection data */
@@ -237,7 +271,6 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(propert
 extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, MPT_INTERFACE(metatype) *);
 /* push to outdata */
 extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void *);
-extern int mpt_connection_sync(MPT_STRUCT(connection) *, int);
 extern int mpt_connection_await(MPT_STRUCT(connection) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 /* handle connection input */
 extern int mpt_connection_next(MPT_STRUCT(connection) *, int);

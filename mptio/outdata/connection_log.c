@@ -78,7 +78,7 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int
 			fd = con->hist.file;
 			type &= ~MPT_ENUM(LogFile);
 		}
-		else if (mpt_output_file(type & 0x7f, con->out.level & 0xf) <= 0) {
+		else if (mpt_outdata_type(type & 0x7f, con->level & 0xf) <= 0) {
 			return 0;
 		}
 		/* use default log config */

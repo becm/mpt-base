@@ -33,9 +33,9 @@ MyClient::MyClient()
     mpt::output *o = mpt::mpt_output_new();
 
     o->set("history", "/dev/stdout", 0);
-    o->set("level", "debug2", 0);
+    o->set("level", "info", 0);
     
-    _log.setPointer(mpt::mpt_object_logger(o));
+    _log.setPointer(mpt::mpt_output_logger(o));
 }
 int MyClient::log(const char *fcn, const char *fmt, ...)
 {

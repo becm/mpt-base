@@ -12,16 +12,17 @@
 
 /*!
  * \ingroup mptMessage
- * \brief send extended message
+ * \brief send log message
  * 
  * Use output log operation for extended message.
+ * Fallback to default log descriptor for output.
  * 
  * \param out  output descriptor
  * \param from message source information
  * \param type text message type
  * \param fmt  argument format
  * 
- * \return result of push operation
+ * \return result of log operation
  */
 extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, ... )
 {
@@ -32,55 +33,18 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 	if (!out) {
 		if (!(type & 0xff)) return 0;
 		log = mpt_log_default();
-	} else {
-		log = mpt_object_logger((MPT_INTERFACE(object) *) out);
 	}
-	if (log) {
+	if (fmt) {
 		va_start(ap, fmt);
+	}
+	if (out) {
+		err = out->_vptr->log(out, from, type, fmt, ap);
+	} else if (log) {
 		err = log->_vptr->log(log, from, type, fmt, ap);
+	}
+	if (fmt) {
 		va_end(ap);
-		return err;
 	}
-	if (!out) {
-		return 0;
-	}
-	if (from || fmt) {
-		uint8_t hdr[2];
-		hdr[0] = MPT_ENUM(MessageOutput);
-		hdr[1] = type;
-		
-		if ((err = out->_vptr->push(out, sizeof(hdr), hdr)) < 0) {
-			return err;
-		}
-		if (from && (err = out->_vptr->push(out, strlen(from)+1, from)) < 0) {
-			out->_vptr->push(out, 1, 0);
-			return err;
-		}
-		if (fmt) {
-			char buf[1024];
-			int len;
-			
-			va_start(ap, fmt);
-			len = vsnprintf(buf, sizeof(buf)-1, fmt, ap);
-			va_end(ap);
-			
-			if (len < 0) {
-				return MPT_ERROR(BadType);
-			}
-			if (err > (int) (sizeof(buf) - 3)) {
-				buf[sizeof(buf)-3] = buf[sizeof(buf)-2] = buf[sizeof(buf)-1] = '.';
-				err = sizeof(buf);
-			}
-			if ((err = out->_vptr->push(out, err, buf)) < 0) {
-				out->_vptr->push(out, 1, 0);
-				return err;
-			}
-			return len;
-		}
-		if (out->_vptr->push(out, 0, 0) < 0) {
-			out->_vptr->push(out, 1, 0);
-		}
-	}
-	return 0;
+	return err;
 }
 

@@ -45,45 +45,13 @@ long double float80::value() const
 // send text message to output
 int output::message(const char *from, int type, const char *fmt, ... )
 {
-    logger *log;
-    const char mt[2] = { MessageOutput, (char) type };
-    char buf[1024];
-    int slen = 0;
+    int ret;
 
-    if ((log = mpt_object_logger(this))) {
-        va_list ap;
-        va_start(ap, fmt);
-        slen = log->log(from, type, fmt, ap);
-        va_end(ap);
-        return slen;
-    }
-    if (push(sizeof(mt), &mt) < 0) {
-        return -1;
-    }
-    if (from && (slen = push(strlen(from)+1, from)) < 0) {
-        slen = 0;
-    }
-    slen += sizeof(mt);
-
-    if (fmt) {
-        va_list ap;
-        int alen;
-        va_start(ap, fmt);
-        alen = vsnprintf(buf, sizeof(buf), fmt, ap);
-        va_end(ap);
-        if (alen < 0) {
-            alen = snprintf(buf, sizeof(buf), "<%s: %s>", MPT_tr("invalid format string"), fmt);
-        }
-        if (alen >= (int) sizeof(buf)) {
-            alen = sizeof(buf) - 1;
-        }
-        if (alen && (alen = push(alen, buf)) > 0) {
-            slen += alen;
-        }
-    }
-    push(0, 0);
-
-    return slen;
+    va_list ap;
+    if (fmt) va_start(ap, fmt);
+    ret = log(from, type, fmt, ap);
+    if (fmt) va_end(ap);
+    return ret;
 }
 
 __MPT_NAMESPACE_END

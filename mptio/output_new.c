@@ -26,6 +26,7 @@
 #include "convert.h"
 #include "message.h"
 
+#include "stream.h"
 #include "notify.h"
 
 #include "output.h"
@@ -33,10 +34,9 @@
 #define OutputFlags(a) (a & 0xf)
 
 MPT_STRUCT(out_data) {
-	MPT_INTERFACE(output) _base;
-	MPT_INTERFACE(logger) _log;
+	MPT_INTERFACE(output) _out;
 	MPT_INTERFACE(input)  _in;
-	void                  *conv[3];
+	void                  *conv[2];
 	
 	MPT_STRUCT(reference) _ref;
 	MPT_STRUCT(notify)   *_no;
@@ -69,7 +69,7 @@ static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 		return MPT_ENUM(TypeOutput);
 	}
 	if (pr->name && !*pr->name) {
-		static const char fmt[] = { MPT_ENUM(TypeOutput), MPT_ENUM(TypeLogger), MPT_ENUM(TypeInput), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
 		pr->name = "output";
 		pr->desc = "generic output interface";
 		pr->val.fmt = fmt;
@@ -82,67 +82,49 @@ static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	MPT_STRUCT(out_data) *odata = (void *) obj;
-	int ret, oldFd = odata->con.out.sock._id;
+	MPT_INTERFACE(input) *in = &odata->_in;
+	int ret, oldFd, newFd;
+	
+	oldFd = in->_vptr->_file(in);
 	
 	ret = mpt_connection_set(&odata->con, name, src);
-	
 	if (ret < 0) {
 		if (!name || !*name) {
-			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s",
-			        MPT_tr("unable to assign output"));
+			mpt_output_log(&odata->_out, _fcn, MPT_FCNLOG(Debug), "%s",
+			               MPT_tr("unable to assign output"));
 		} else {
-			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Debug), "%s: %s",
-			        MPT_tr("unable to set property"), name);
+			mpt_output_log(&odata->_out, _fcn, MPT_FCNLOG(Debug), "%s: %s",
+			               MPT_tr("unable to set property"), name);
 		}
 	}
-	if (oldFd != odata->con.out.sock._id) {
-		MPT_STRUCT(outdata) *od = &odata->con.out;
-		MPT_TYPE(DataEncoder) enc = od->_enc.fcn;
-		MPT_TYPE(DataDecoder) dec = odata->con.in._dec;
-		
-		if (od->_sflg & MPT_ENUM(SocketStream)) {
-			if (!odata->con._coding) {
-				odata->con._coding = MPT_ENUM(EncodingCobs);
-				enc = mpt_message_encoder(odata->con._coding);
-				dec = mpt_message_decoder(odata->con._coding);
-			}
-		}
-		/* conditions for notification change */
-		if (od->_enc.fcn) {
-			od->_enc.fcn(&od->_enc.info, 0, 0);
-			od->_enc.fcn = enc;
-		}
-		if (odata->con.in._dec) {
-			odata->con.in._dec(&odata->con.in._state, 0, 0);
-			odata->con.in._dec = dec;
-		}
-		if (!odata->_no || (od->sock._id == oldFd)) {
-			return ret;
-		}
-		/* remove old registration */
-		if (oldFd > 2) {
-			mpt_notify_clear(odata->_no, oldFd);
-		}
-		if (!MPT_socket_active(&od->sock)) {
-			return ret;
-		}
-		
-		/* add local reference for event controller */
-		if (!outputRef((void *) odata)) {
-			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
-			        MPT_tr("failed"),
-			        MPT_tr("reference output"),
-			        od);
-		}
-		/* use first reference for notifier */
-		else if (mpt_notify_add(odata->_no, POLLIN, &odata->_in) < 0) {
-			mpt_log(&odata->_log, _fcn, MPT_FCNLOG(Error), "%s: %s: fd%i",
-			        MPT_tr("failed"),
-			        MPT_tr("register notifier"),
-			        (int) od->sock._id);
-			/* clear references */
-			outputUnref((void *) odata);
-		}
+	
+	newFd = in->_vptr->_file(in);
+	
+	if (!odata->_no || oldFd == newFd) {
+		return ret;
+	}
+	/* remove old registration */
+	if (oldFd > 2) {
+		mpt_notify_clear(odata->_no, oldFd);
+	}
+	if (ret < 0 || newFd < 0) {
+		return ret;
+	}
+	/* add local reference for event controller */
+	if (!outputRef((void *) odata)) {
+		mpt_output_log(&odata->_out, _fcn, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
+		               MPT_tr("failed"),
+		               MPT_tr("reference output"),
+		               odata);
+	}
+	/* use first reference for notifier */
+	else if (mpt_notify_add(odata->_no, POLLIN, &odata->_in) < 0) {
+		mpt_output_log(&odata->_out, _fcn, MPT_FCNLOG(Error), "%s: %s: fd%i",
+		               MPT_tr("failed"),
+		               MPT_tr("register notifier"),
+		               newFd);
+		/* clear references */
+		outputUnref((void *) odata);
 	}
 	return ret;
 }
@@ -155,83 +137,83 @@ static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *sr
 static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 {
 	MPT_STRUCT(out_data) *od = (void *) out;
-	return mpt_connection_sync(&od->con, timeout);
+	return mpt_outdata_sync(&od->con.out, &od->con._wait, timeout);
 }
 static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
 {
 	MPT_STRUCT(out_data) *od = (void *) out;
 	return mpt_connection_await(&od->con, ctl, udata);
 }
+static int outputLog(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list va)
+{
+	MPT_STRUCT(out_data) *od = (void *) out;
+	return mpt_connection_log(&od->con, from, type, fmt, va);
+}
 static const MPT_INTERFACE_VPTR(output) outCtl = {
 	{ outputUnref, outputRef, outputProperty, outputSetProperty },
 	outputPush,
 	outputSync,
-	outputAwait
-};
-
-/* logger interface */
-static void outputLoggerUnref(MPT_INTERFACE(logger) *log)
-{
-	outputUnref(MPT_reladdr(out_data, log, _log, _base));
-}
-static int outputLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list va)
-{
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, log, _log, _base);
-	return mpt_connection_log(&odata->con, from, type, fmt, va);
-}
-static const MPT_INTERFACE_VPTR(logger) logCtl = {
-	outputLoggerUnref,
+	outputAwait,
 	outputLog
 };
 
 static void outputInputUnref(MPT_INTERFACE(input) *in)
 {
-	outputUnref(MPT_reladdr(out_data, in, _in, _base));
+	outputUnref(MPT_reladdr(out_data, in, _in, _out));
 }
-static int outputNext(MPT_INTERFACE(input) *in, int what)
+static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
+	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
+	MPT_STRUCT(stream) *srm;
+	MPT_STRUCT(buffer) *buf;
+	int keep = 0;
 	
 	if (!MPT_socket_active(&odata->con.out.sock)) {
-		return -3;
+		if (!(srm = odata->con.out._buf)) {
+			return -3;
+		}
+		return mpt_stream_poll(srm, what, 0);
 	}
 	if (what & POLLIN) {
-		MPT_STRUCT(queue) *in = &odata->con.in.data;
-		ssize_t len;
+		/* handle datagram in dispatch */
+		keep = POLLIN;
 		
-		if (in->len >= in->max && !mpt_queue_prepare(in, 64)) {
-			return 0;
-		}
-		if ((len = mpt_queue_load(in, odata->con.out.sock._id, 0)) > 0) {
-			return POLLIN;
-		}
+	}
+	if ((what & POLLOUT)
+	    && (buf = odata->con.out._buf)
+	    && buf->used) {
+		keep |= POLLOUT;
+	}
+	if (what & POLLHUP) {
 		close(odata->con.out.sock._id);
 		odata->con.out.sock._id = -1;
 		
-		if (!in->len) {
-			return -3;
-		}
+		return -2;
 	}
 	/* dispatch dereference to notifier */
-	return (what & POLLHUP) ? -2 : 0;
+	return keep;
 }
 
-static int outputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
+static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
+	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
 	return mpt_connection_dispatch(&odata->con, cmd, arg);
 }
-static int outputFile(MPT_INTERFACE(input) *in)
+static int outputInputFile(MPT_INTERFACE(input) *in)
 {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _base);
+	const MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
+	MPT_STRUCT(stream) *srm;
+	
+	if (odata->con.out.sock._id < 0 && (srm = odata->con.out._buf)) {
+		return _mpt_stream_fread(&srm->_info);
+	}
 	return odata->con.out.sock._id;
 }
 const MPT_INTERFACE_VPTR(input) inputCtl = {
 	outputInputUnref,
-	
-	outputNext,
-	outputDispatch,
-	outputFile
+	outputInputNext,
+	outputInputDispatch,
+	outputInputFile
 };
 
 /*!
@@ -252,7 +234,7 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
 extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 {
 	static const MPT_STRUCT(out_data) defOut = {
-		{ &outCtl }, { &logCtl }, { &inputCtl }, { 0 },
+		{ &outCtl }, { &inputCtl }, { 0 },
 		{ 1 }, 0,
 		MPT_CONNECTION_INIT
 	};
@@ -264,13 +246,13 @@ extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) *no)
 	*odata = defOut;
 	
 	odata->con.out.state = MPT_ENUM(OutputPrintColor);
-	odata->con.out.level = (MPT_ENUM(LogLevelWarning) << 4) | MPT_ENUM(LogLevelWarning);
+	
+	odata->con.level = (MPT_ENUM(LogLevelWarning) << 4) | MPT_ENUM(LogLevelWarning);
 	
 	odata->_no = no;
 	
-	odata->conv[0] = &odata->_base;
-	odata->conv[1] = &odata->_log;
-	odata->conv[2] = &odata->_in;
+	odata->conv[0] = &odata->_out;
+	odata->conv[1] = &odata->_in;
 	
-	return &odata->_base;
+	return &odata->_out;
 }

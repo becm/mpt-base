@@ -10,11 +10,15 @@
 #include MPT_INCLUDE(convert.h)
 #include MPT_INCLUDE(message.h)
 
+#include MPT_INCLUDE(queue.h)
+#include MPT_INCLUDE(stream.h)
+
 #include MPT_INCLUDE(output.h)
 
 int main(int argc, char *argv[])
 {
 	struct mpt_outdata out = MPT_OUTDATA_INIT;
+	struct mpt_stream *srm;
 	int flg;
 	char txt[8];
 	
@@ -23,12 +27,13 @@ int main(int argc, char *argv[])
 		fputs(" <target>\n", stderr);
 		return 1;
 	}
-	if ((flg = mpt_connect(&out.sock, argv[1], 0)) < 0) {
+	if ((flg = mpt_outdata_connect(&out, argv[1], 0)) < 0) {
 		perror("connect");
 		return 1;
 	}
-	out._enc.fcn = mpt_encode_cobs;
-	out._sflg = flg;
+	if (flg & MPT_ENUM(SocketStream) && (srm = out._buf)) {
+		srm->_wd._enc = mpt_encode_cobs;
+	}
 	
 	while (fgets(txt, sizeof(txt), stdin)) {
 		const char *end;

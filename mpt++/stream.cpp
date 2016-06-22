@@ -348,7 +348,7 @@ int Stream::log(const char *from, int type, const char *fmt, va_list va)
         mpt_stream_push(this, len, buf);
     }
     // append message newline
-    if (_wd.encoded()) {
+    if (!_wd.encoded()) {
         mpt_stream_push(this, 1, "\n");
     }
     // terminate and flush message */

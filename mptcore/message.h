@@ -91,23 +91,6 @@ enum MPT_ENUM(CommandType) {
 	MPT_ENUM(ValuesFloat)     = 0x40   /* floating point data */
 };
 
-enum MPT_ENUM(OutputFlags) {
-	MPT_ENUM(OutputPrintNormal)  = 0x1,
-	MPT_ENUM(OutputPrintError)   = 0x2,
-	MPT_ENUM(OutputPrintHistory) = 0x3,
-	MPT_ENUM(OutputPrintRestore) = 0x4,
-	MPT_ENUM(OutputPrintColor)   = 0x8,   /* enable coloring */
-	
-	MPT_ENUM(OutputActive)       = 0x10,  /* message is active */
-	MPT_ENUM(OutputRemote)       = 0x20,  /* skip internal filter */
-	
-	MPT_ENUM(OutputStateInit)  = 0x1,      /* data states */
-	MPT_ENUM(OutputStateStep)  = 0x2,
-	MPT_ENUM(OutputStateFini)  = 0x4,
-	MPT_ENUM(OutputStateFail)  = 0x8,
-	MPT_ENUM(OutputStates)     = 0x7
-};
-
 /* interactive message header */
 MPT_STRUCT(msgtype)
 {
@@ -145,6 +128,7 @@ MPT_INTERFACE_VPTR(output)
 	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
 	int     (*sync)(MPT_INTERFACE(output) *, int);
 	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
+	int     (*log)(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 };
 MPT_INTERFACE(output)
 {
@@ -161,6 +145,7 @@ public:
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
+	virtual int log(const char *, int , const char *, va_list) = 0;
 	
 	int open(const char *);
 	int setHistory(const char *);
@@ -220,6 +205,12 @@ extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const cha
 
 /* get message on queue */
 extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);
+
+
+/* convert message IDs */
+extern int mpt_message_id2buf(uint8_t *, size_t, uint64_t);
+extern int mpt_message_buf2id(const uint8_t *, size_t, uint64_t *);
+
 
 __MPT_EXTDECL_END
 

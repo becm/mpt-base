@@ -158,7 +158,7 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 /* push message and flush stream */
 extern int mpt_stream_send(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
-extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , MPT_STRUCT(array) *, int __MPT_DEFPAR(-1));
+extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const MPT_STRUCT(array) *, int __MPT_DEFPAR(-1));
 /* dispatch next message */
 #ifdef _MPT_EVENT_H
 extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, MPT_STRUCT(reply_context) *, MPT_TYPE(EventHandler) , void *);

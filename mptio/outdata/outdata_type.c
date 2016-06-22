@@ -1,21 +1,21 @@
 
 #include <stdio.h>
 
-#include "message.h"
+#include "output.h"
 
 /*!
- * \ingroup mptLog
- * \brief get file type
+ * \ingroup mptOutput
+ * \brief get print state
  * 
- * Determine file descriptor for message of
+ * Determine print flags for message of
  * specified severity and limit.
  * 
  * \param arg  type of message
  * \param min  output limit for messages
  * 
- * \return output file descriptor
+ * \return outdata print state
  */
-extern int mpt_output_file(uint8_t arg, int min)
+extern int mpt_outdata_type(uint8_t arg, int min)
 {
 	int skip;
 	

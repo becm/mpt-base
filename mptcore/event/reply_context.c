@@ -18,22 +18,22 @@
  * \param base  context references base pointer
  * \param len   number of context references
  * 
- * \return created stream context
+ * \return number of active contexts
  */
 extern size_t mpt_reply_clear(MPT_STRUCT(reply_context) **base, size_t len)
 {
 	size_t bad = 0;
 	
-	while (len) {
+	while (len--) {
 		MPT_STRUCT(reply_context) *ctx;
 		if ((ctx = *base++)) {
 			if (ctx->used) {
 				++bad;
 				ctx->ptr = 0;
 			} else {
-				base[-1] = 0;
 				free(ctx);
 			}
+			base[-1] = 0;
 		}
 	}
 	return bad;

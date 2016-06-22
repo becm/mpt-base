@@ -60,6 +60,7 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
+MPT_STRUCT(output);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
@@ -189,7 +190,10 @@ enum MPT_ENUM(TypeErrors) {
 	MPT_ERROR(BadOperation)   = -0x4,
 	MPT_ERROR(BadEncoding)    = -0x8,
 	MPT_ERROR(MissingData)    = -0x10,
-	MPT_ERROR(MissingBuffer)  = -0x11
+	MPT_ERROR(MissingBuffer)  = -0x11,
+	
+	MPT_ERROR(MessageInput)      = -0x20,
+	MPT_ERROR(MessageInProgress) = -0x21
 };
 
 MPT_STRUCT(codestate)
@@ -837,8 +841,8 @@ extern int _mpt_geninfo_conv(const uint64_t *, int , void *);
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
 
 
-/* get logging interface pointer from object data */
-extern MPT_INTERFACE(logger) *mpt_object_logger(const MPT_INTERFACE(object) *);
+/* create logging interface with output reference */
+extern MPT_INTERFACE(logger) *mpt_output_logger(MPT_INTERFACE(output) *);
 /* log output */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 /* get default logger instance */
@@ -850,8 +854,6 @@ extern int mpt_log_default_set(int);
 extern const char *mpt_log_intro(FILE *, int, const char *);
 #endif
 
-/* determine output file type */
-extern int mpt_output_file(uint8_t arg, int min);
 /* determine message ANSI colour code */
 extern const char *mpt_ansi_code(uint8_t);
 extern const char *mpt_ansi_reset(void);

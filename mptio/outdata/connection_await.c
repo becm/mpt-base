@@ -31,7 +31,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 {
 	MPT_STRUCT(command) *cmd;
 	
-	if (!MPT_socket_active(&con->out.sock) || !(con->out._sflg & MPT_ENUM(SocketRead))) {
+	if (!MPT_socket_active(&con->out.sock) || !(con->out._buf)) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* message in progress */

@@ -30,7 +30,7 @@
  * \retval -2 unable to flush data
  * \retval 1  remaining data in write buffer
  */
-extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, MPT_STRUCT(array) *arr, int timeout)
+extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_STRUCT(array) *arr, int timeout)
 {
 	MPT_STRUCT(command) *cmd;
 	int count, pos, sav, len = 0;

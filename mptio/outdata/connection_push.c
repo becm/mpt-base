@@ -16,6 +16,20 @@
 
 #include "output.h"
 
+#define AnswerFlags(a) ((a & 0xf0) >> 4)
+#define OutputFlags(a) (a & 0xf)
+
+static int answerType(int code)
+{
+	if (!code) {
+		return MPT_ENUM(LogDebug);
+	}
+	else if (code < 0) {
+		return MPT_ENUM(LogError);
+	}
+	return MPT_ENUM(LogInfo);
+}
+
 /*!
  * \ingroup mptOutput
  * \brief push to connection
@@ -36,9 +50,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 	if (con->out.state & MPT_ENUM(OutputActive)) {
 		/* local print condition */
 		if (con->out.state & 0x7) {
-			if (!(ret = mpt_outdata_print(&con->out, con->hist.file, len, src))) {
-				ret = len;
-			}
+			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
 		}
 		/* history output triggered */
 		else if (con->hist.info.size) {
@@ -60,9 +72,9 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 			return ret;
 		}
 		if (!len) {
+			con->cid = 0;
 			con->out.state &= MPT_ENUM(OutputPrintColor);
 			con->hist.info.size = 0;
-			con->cid = 0;
 		}
 		return ret;
 	}
@@ -71,8 +83,29 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 	}
 	if (len > 1 && !(con->out.state & MPT_ENUM(OutputRemote))) {
 		const MPT_STRUCT(msgtype) *mt = src;
-		if ((ret = mpt_outdata_print(&con->out, con->hist.file, len, src)) >= 0) {
-			return ret ? ret : (ssize_t) len;
+		int type, flags = -1;
+		
+		if (!mt) {
+			return MPT_ERROR(BadOperation);
+		}
+		/* setup answer output */
+		if (mt->cmd == MPT_ENUM(MessageOutput)) {
+			type  = mt->arg;
+			flags = OutputFlags(con->level);
+		}
+		else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
+			type  = answerType(mt->arg);
+			flags = AnswerFlags(con->level);
+		}
+		if (flags >= 0) {
+			flags = mpt_outdata_type(type, flags);
+			
+			if (!flags) {
+				flags = MPT_ENUM(OutputPrintRestore);
+			}
+			con->out.state = (con->out.state & ~0x7) | (flags & 0x7);
+			
+			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
 		}
 		/* convert history to printable output */
 		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
@@ -104,26 +137,20 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 			return len;
 		}
 	}
-	/* TODO: semantics to skip ID */
-	if (!(con->out.state & 0x40)) {
-		struct iovec vec;
-		uint16_t mid = htons(con->cid);
+	/* prepend message ID */
+	if (con->out._idlen) {
+		uint8_t buf[sizeof(uintptr_t)];
 		
-		vec.iov_base = &mid;
-		vec.iov_len  = sizeof(mid);
-		
-		if (MPT_socket_active(&con->out.sock)
-		    && (ret = mpt_array_push(&con->out._buf, &con->out._enc.info, con->out._enc.fcn, &vec)) < (ssize_t) sizeof(mid)) {
-			return -3;
+		if ((ret = mpt_message_id2buf(buf, con->out._idlen, con->cid)) < 0) {
+			return ret;
+		}
+		if ((ret = mpt_outdata_push(&con->out, con->out._idlen, buf)) < 0) {
+			return ret;
 		}
 	}
 	con->out.state &= ~MPT_ENUM(OutputRemote);
 	if ((ret = mpt_outdata_push(&con->out, len, src)) < 0) {
-		MPT_STRUCT(command) *cmd;
-		if (con->cid && (cmd = mpt_command_get(&con->_wait, con->cid))) {
-			cmd->cmd(cmd->arg, 0);
-			cmd->cmd = 0;
-		}
+		mpt_outdata_push(&con->out, 1, 0);
 	}
 	return ret;
 }

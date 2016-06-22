@@ -215,11 +215,6 @@ extern char *mpt_array_string(MPT_STRUCT(array) *);
 /* add message to array */
 extern ssize_t mpt_array_push(MPT_STRUCT(array) *, MPT_STRUCT(codestate) *, MPT_TYPE(DataEncoder), const struct iovec *);
 
-/* write/send array data */
-#if defined(_SYS_SOCKET_H) || defined(_SYS_SOCKET_H_)
-extern ssize_t mpt_array_flush(int , const MPT_STRUCT(slice) *, const struct sockaddr *, socklen_t);
-#endif
-
 /* pointer/metatype array */
 extern size_t mpt_array_compact(void **, size_t);
 extern size_t mpt_array_move(void *, size_t , size_t , size_t);

@@ -2,6 +2,10 @@
  * dispatch event or reply from connection input
  */
 
+/* request format definitions */
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <string.h>
 
 #include <sys/uio.h>
@@ -12,6 +16,8 @@
 #include "event.h"
 
 #include "message.h"
+
+#include "stream.h"
 
 #include "output.h"
 
@@ -31,13 +37,13 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 {
 	MPT_STRUCT(connection) *con;
 	MPT_STRUCT(reply_context) *rc = ptr;
-	uint16_t id, orgid;
+	uint64_t id = 0;
 	int ret;
 	
-	id = ntohs(*((uint16_t *) rc->_val));
+	mpt_message_buf2id(rc->_val, rc->len, &id);
 	
 	if (!(con = rc->ptr)) {
-		mpt_log(0, __func__, MPT_FCNLOG(Error), "%s (%04x): %s",
+		mpt_log(0, __func__, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("processed reply detected"));
 		return -3;
 	}
@@ -52,18 +58,18 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			      MPT_tr("unable to reply"), id, MPT_tr("message in progress"));
 		return -1;
 	}
-	orgid = con->cid;
-	con->cid = id | 0x8000;
-	ret = mpt_connection_send(con, src);
-	con->cid = orgid;
+	/* mark as reply */
+	rc->_val[0] |= 0x80;
 	
-	if (ret < 0) {
+	/* start with raw push of message ID */
+	if ((ret = mpt_outdata_push(&con->out, rc->len, rc->_val)) < 0
+	    || (ret = mpt_connection_send(con, src)) < 0) {
 		connectionLog(con, __func__, MPT_FCNLOG(Error), "%s (%04x): %s",
 			      MPT_tr("unable to reply"), id, MPT_tr("send failed"));
+		return MPT_ERROR(BadArgument);
 	}
 	return ret;
 }
-
 /*!
  * \ingroup mptOutput
  * \brief dispatch data on connection
@@ -77,90 +83,69 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
  */
 extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHandler) cmd, void *arg)
 {
+	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(message) msg;
-	struct iovec vec;
-	ssize_t len;
+	MPT_STRUCT(event) ev;
+	MPT_STRUCT(reply_context) *rc = 0;
+	size_t ilen;
 	int ret;
-	uint8_t buf[4];
-	int16_t id;
 	
-	/* message trnasfer in progress */
+	ilen = con->out._idlen;
+	
+	if (!MPT_socket_active(&con->out.sock)) {
+		MPT_STRUCT(stream) *srm;
+		
+		if (!(srm = con->out._buf)) {
+			return MPT_ERROR(BadArgument);
+		}
+		if (ilen) {
+			if (!(rc = mpt_reply_reserve(&con->out._ctx, ilen))) {
+				connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+					      MPT_tr("dispatch failed"), MPT_tr("no reply context available"));
+				return MPT_ERROR(BadArgument);
+			}
+			rc->len = ilen;
+			rc->used = 1;
+		}
+		return mpt_stream_dispatch(srm, rc, cmd, arg);
+	}
+	/* message transfer in progress */
 	if (con->out.state & MPT_ENUM(OutputActive)) {
 		return MPT_ENUM(EventRetry);
 	}
-	if (!con->in._dec) {
-		return MPT_ERROR(BadEncoding);
-	}
-	/* get next message */
-	if ((len = mpt_queue_recv(&con->in)) < 0) {
-		return len;
-	}
-	mpt_queue_crop(&con->in.data, 0, con->in._state.done);
-	con->in._state.done = 0;
-	mpt_message_get(&con->in.data, 0, len, &msg, &vec);
-	
-	/* remove message id */
-	if (mpt_message_read(&msg, sizeof(buf), buf) < sizeof(id)) {
+	if (!(buf = con->out._buf) || buf->used < ilen) {
 		return MPT_ERROR(MissingData);
 	}
-	id = 0x7fff & *((uint16_t *) buf);
+	if (ilen) {
+		if (!(rc = mpt_reply_reserve(&con->out._ctx, ilen))) {
+			connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+				      MPT_tr("dispatch failed"), MPT_tr("no reply context available"));
+			return MPT_ERROR(BadArgument);
+		}
+		rc->len = ilen;
+		rc->used = 1;
+		memcpy(rc->_val, buf+1, ilen);
+	}
+	if (!cmd) {
+		/* TODO: discard input data */
+		if (rc) {
+			mpt_outdata_push(&con->out, rc->len, rc->_val);
+			mpt_outdata_push(&con->out, 0, 0);
+		}
+		return 0;
+	}
+	msg.base = ((uint8_t *) (buf+1)) + ilen;
+	msg.used = buf->used - ilen;
+	msg.cont = 0;
+	msg.clen = 0;
 	
-	/* process reply */
-	if (buf[0] & 0x80) {
-		MPT_STRUCT(command) *ans;
-		
-		if ((ans = mpt_command_get(&con->_wait, id))) {
-			if (ans->cmd(ans->arg, &msg) < 0) {
-				connectionLog(con, __func__, MPT_FCNLOG(Warning), "%s: %04x",
-				              MPT_tr("reply processing error"), id);
-			}
-			ans->cmd = 0;
-		} else {
-			connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %04x",
-			              MPT_tr("unregistered reply id"), id);
-		}
-	}
-	/* process regular input */
-	else {
-		MPT_STRUCT(event) ev;
-		
-		/* event setup */
-		ev.id = 0;
-		ev.msg = &msg;
-		
-		/* force remote message */
-		if (id) {
-			MPT_STRUCT(reply_context) *rc;
-			rc = mpt_reply_reserve(&con->_ctx, sizeof(id));
-			
-			ev.reply.set = 0;
-			ev.reply.context = rc;
-			
-			if (rc) {
-				ev.reply.set = replySet;
-				
-				rc->ptr = con;
-				rc->len = sizeof(id);
-				rc->used = 1;
-				memcpy(rc->_val, buf, sizeof(id));
-			}
-		}
-		/* dispatch data to command */
-		if (!cmd) {
-			if (ev.reply.set) {
-				ev.reply.set(ev.reply.context, 0);
-			}
-			ret = 0;
-		}
-		else if ((ret = cmd(arg, &ev)) < 0) {
-			ret = MPT_ENUM(EventCtlError);
-		} else {
-			ret &= MPT_ENUM(EventFlags);
-		}
-	}
-	/* further message on queue */
-	if ((len = mpt_queue_peek(&con->in, sizeof(buf), buf)) >= 0) {
-		ret |= MPT_ENUM(EventRetry);
-	}
-	return ret;
+	
+	ev.id = 0;
+	ev.msg = &msg;
+	ev.reply.set = rc ? replySet : 0;
+	ev.reply.context = rc;
+	
+	ret = cmd(arg, &ev);
+	
+	return ret < 0 ? MPT_ENUM(EventFail) : 0;
 }

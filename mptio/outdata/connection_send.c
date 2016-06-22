@@ -23,55 +23,55 @@
  */
 extern int mpt_connection_send(MPT_STRUCT(connection) *con, const MPT_STRUCT(message) *src)
 {
-	struct iovec vec;
 	ssize_t take;
-	uint16_t id;
 	
-	if (con->out.state & MPT_ENUM(OutputActive)) {
-		return -2;
+	if (!(con->out.state & MPT_ENUM(OutputActive)) && con->out._idlen) {
+		uint8_t buf[64];
+		if (con->out._idlen > sizeof(buf)
+		    || mpt_message_id2buf(buf, con->out._idlen, con->cid) < 0) {
+			return MPT_ERROR(BadValue);
+		}
+		if (mpt_outdata_push(&con->out, con->out._idlen, buf) < 0) {
+			return MPT_ERROR(BadOperation);
+		}
+		con->out.state |= MPT_ENUM(OutputActive);
 	}
-	id = htons(con->cid);
-	vec.iov_base = &id;
-	vec.iov_len  = sizeof(id);
-	
-	if (mpt_array_push(&con->out._buf, &con->out._enc.info, con->out._enc.fcn, &vec) < (ssize_t) sizeof(id)) {
-		return -1;
-	}
-	con->out.state |= MPT_ENUM(OutputActive);
 	
 	if (src) {
+		const uint8_t *base = src->base;
+		size_t used = src->used;
 		struct iovec *cont = src->cont;
 		size_t clen = src->clen;
 		
-		vec.iov_base = cont->iov_base;
-		vec.iov_len  = cont->iov_len;
-		
 		while (1) {
-			if (!vec.iov_len) {
+			/* go to next non-empty part */
+			if (!used) {
 				if (!--clen) {
 					break;
 				}
-				vec = *(cont++);
+				base = cont->iov_base;
+				used = cont->iov_len;
+				++cont;
 				
 				continue;
 			}
-			take = mpt_outdata_push(&con->out, vec.iov_len, vec.iov_base);
+			take = mpt_outdata_push(&con->out, used, base);
 			
-			if (take < 0 || (size_t) take > vec.iov_len) {
-				if ((take = mpt_outdata_push(&con->out, 1, 0)) < 0) {
+			if (take < 0 || (size_t) take > used) {
+				if ((con->out.state & MPT_ENUM(OutputActive))
+				    && (take = mpt_outdata_push(&con->out, 1, 0)) < 0) {
 					return take;
 				}
 				return -1;
 			}
-			vec.iov_base = ((uint8_t *) vec.iov_base) + take;
-			vec.iov_len -= take;
-			
-			/* mark written data */
-			id = 0;
+			/* advance part data */
+			con->out.state |= MPT_ENUM(OutputActive);
+			base += take;
+			used -= take;
 		}
 	}
 	if ((take = mpt_outdata_push(&con->out, 0, 0)) < 0) {
-		if (!id) {
+		if ((con->out.state & MPT_ENUM(OutputActive))) {
 			(void) mpt_outdata_push(&con->out, 1, 0);
 		}
 		take = -1;
