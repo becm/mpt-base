@@ -53,12 +53,18 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 			src = ((uint8_t *) src) + post;
 			continue;
 		}
+		/* incompatible error state */
+		if (post != MPT_ERROR(MissingBuffer)) {
+			return total ? total : post;
+		}
 		/* queue not resizable */
-		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
+		if (!(flags & MPT_ENUM(StreamWriteBuf))
+		    || (flags & MPT_ENUM(StreamWriteMap))) {
 			return total ? total : MPT_ERROR(BadArgument);
 		}
+		/* append queue data */
 		if (!mpt_queue_prepare(&stream->_wd.data, 256)) {
-			return total ? total : -1;
+			return total ? total : MPT_ERROR(BadOperation);
 		}
 	}
 }

@@ -51,23 +51,23 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 	/* uninitialized target */
 	if (!(dst = cobs->iov_base)) {
 		if (code || len || left) {
-			return -1;
+			return MPT_ERROR(BadArgument);
 		}
-		return -2;
+		return MPT_ERROR(MissingBuffer);
 	}
 	/* bad encoder state */
 	if ((len > left)
 	    || (code > (left -= len))
 	    || (code > left)) {
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	dst += len;
 	
 	/* message termination */
 	if (!base) {
 		/* need enough data to save end */
-		if (code > left) {
-			return -2;
+		if (code >= left) {
+			return MPT_ERROR(MissingBuffer);
 		}
 		/* cobs message termination */
 		*dst = code;
@@ -85,7 +85,7 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 	
 	/* start priority data */
 	if (!len) {
-		return -1;
+		return MPT_ERROR(BadValue);
 	}
 	/* message deletion */
 	if (!src) {
@@ -100,7 +100,7 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 		while (len--) {
 			tmp.iov_len  = pos;
 			if ((pos = mpt_memrchr(&tmp, 1, 0)) < 0) {
-				return -1;
+				return MPT_ERROR(BadValue);
 			}
 		}
 		info->_ctx = 0;
@@ -113,9 +113,9 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *
 	
 	/* remaining data in cobs */
 	if (code) {
-		if (!(left -= code)) return -1;
+		if (!(left -= code)) return MPT_ERROR(MissingBuffer);
 	} else {
-		if (left <= (code = 1)) return -1;
+		if (left <= (code = 1)) return MPT_ERROR(MissingBuffer);
 		--left;
 	}
 	dst += code;
