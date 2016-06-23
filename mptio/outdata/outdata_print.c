@@ -34,8 +34,6 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 	size_t all = 0;
 	const uint8_t *sep;
 	
-	if (!(fd)) return 0;
-	
 	if (!len) {
 		fputc('\n', fd);
 		return 1;
@@ -88,26 +86,32 @@ extern ssize_t mpt_outdata_print(uint8_t *state, FILE *hist, size_t len, const v
 		  case MPT_ENUM(OutputPrintHistory):
 		    if (!hist) hist = stderr;
 		    break;
-		  default: return 0;
+		  default: hist = 0;
 		}
 		if (!len) {
-			if ((*state & MPT_ENUM(OutputPrintRestore))
-			    && isatty(fileno(hist))) {
-				fputs(mpt_ansi_reset(), hist);
+			if (hist) {
+				if ((*state & MPT_ENUM(OutputPrintRestore))
+				    && isatty(fileno(hist))) {
+					fputs(mpt_ansi_reset(), hist);
+				}
+				fputc('\n', hist);
 			}
-			fputc('\n', hist);
 			*state &= ~(0x7 | MPT_ENUM(OutputActive));
 			return 0;
 		}
 		if (!src) {
 			return MPT_ERROR(MissingData);
 		}
-		outputWrite(hist, len, src);
-		
+		if (hist) {
+			outputWrite(hist, len, src);
+		}
 		return len;
 	}
+	if (!(mt = src)) {
+		return MPT_ERROR(BadArgument);
+	}
 	/* limit min setup size */
-	if (len < 2 || !(mt = src)) {
+	if (len < 2) {
 		return MPT_ERROR(MissingData);
 	}
 	flags = *state & 0x7;

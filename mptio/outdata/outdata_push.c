@@ -37,18 +37,18 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 	if (!MPT_socket_active(&od->sock)) {
 		MPT_STRUCT(stream) *srm;
 		
-		if (!(srm = od->_buf)) {
+		ret = len;
+		if ((srm = od->_buf)
+		    && (ret = mpt_stream_push(srm, len, src))) {
 			return MPT_ERROR(BadArgument);
 		}
-		ret = mpt_stream_push(srm, len, src);
-		
-		if (ret >= 0) {
-			if (len) {
-				od->state |= MPT_ENUM(OutputActive);
-			} else {
+		if (len) {
+			od->state |= MPT_ENUM(OutputActive);
+		} else {
+			if (srm) {
 				mpt_stream_flush(srm);
-				od->state &= ~MPT_ENUM(OutputActive);
 			}
+			od->state &= ~MPT_ENUM(OutputActive);
 		}
 		return ret;
 	}

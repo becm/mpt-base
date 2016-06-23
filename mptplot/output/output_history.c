@@ -98,8 +98,7 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 	
 	/* terminate history block */
 	hdr.type.cmd = MPT_ENUM(MessageValFmt);
-	hdr.type.arg = 0;
-	out->_vptr->push(out, sizeof(hdr.type), &hdr.type);
+	out->_vptr->push(out, sizeof(hdr.type.cmd), &hdr.type.cmd);
 	out->_vptr->push(out, 0, 0);
 	
 	return msgs;

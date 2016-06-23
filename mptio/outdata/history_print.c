@@ -101,8 +101,11 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 	}
 	/* finish data block */
 	if (!len) {
-		fputc('\n', fd);
-		return 1;
+		if (hist->pos) {
+			fputc('\n', fd);
+			return 1;
+		}
+		return 0;
 	}
 	if (!src) {
 		return -3;

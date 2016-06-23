@@ -79,42 +79,31 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 		return ret;
 	}
 	if (!src) {
-		return -2;
+		return MPT_ERROR(BadOperation);
 	}
-	if (len > 1 && !(con->out.state & MPT_ENUM(OutputRemote))) {
+	if (!(con->out.state & MPT_ENUM(OutputRemote))) {
 		const MPT_STRUCT(msgtype) *mt = src;
 		int type, flags = -1;
 		
-		if (!mt) {
-			return MPT_ERROR(BadOperation);
-		}
-		/* setup answer output */
-		if (mt->cmd == MPT_ENUM(MessageOutput)) {
-			type  = mt->arg;
-			flags = OutputFlags(con->level);
-		}
-		else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
-			type  = answerType(mt->arg);
-			flags = AnswerFlags(con->level);
-		}
-		if (flags >= 0) {
-			flags = mpt_outdata_type(type, flags);
-			
-			if (!flags) {
-				flags = MPT_ENUM(OutputPrintRestore);
-			}
-			con->out.state = (con->out.state & ~0x7) | (flags & 0x7);
-			
-			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
-		}
 		/* convert history to printable output */
 		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-			size_t parts = mt->arg;
+			size_t parts;
+			
+			/* reset history state */
+			mpt_history_set(&con->hist.info, 0);
+			
+			/* assume block termination */
+			if (len < 2) {
+				con->hist.info.size = sizeof(uint64_t);
+				con->hist.info.pos = 1;
+				con->out.state |= MPT_ENUM(OutputActive);
+				return 1;
+			}
+			parts = mt->arg;
 			ret = 2 + parts * 2;
 			if (len < (size_t) ret) {
-				return -2;
+				return MPT_ERROR(MissingData);
 			}
-			mpt_history_set(&con->hist.info, 0);
 			
 			if (!parts) {
 				con->hist.info.size = sizeof(uint64_t);
@@ -135,6 +124,28 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 				return 0;
 			}
 			return len;
+		}
+		if (len < 2) {
+			return MPT_ERROR(MissingData);
+		}
+		/* setup answer output */
+		if (mt->cmd == MPT_ENUM(MessageOutput)) {
+			type  = mt->arg;
+			flags = OutputFlags(con->level);
+		}
+		else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
+			type  = answerType(mt->arg);
+			flags = AnswerFlags(con->level);
+		}
+		if (flags >= 0) {
+			flags = mpt_outdata_type(type, flags);
+			
+			if (!flags) {
+				flags = MPT_ENUM(OutputPrintRestore);
+			}
+			con->out.state = (con->out.state & ~0xf) | (flags & 0xf);
+			
+			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
 		}
 	}
 	/* prepend message ID */
