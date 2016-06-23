@@ -77,8 +77,8 @@ int logger::message(const char *from, int err, const char *fmt, ...)
     return ret;
 }
 
-// logging store
-int LogEntry::type() const
+// logging store entry
+int LogStore::Entry::type() const
 {
     Header *h;
 
@@ -88,7 +88,7 @@ int LogEntry::type() const
     h = (Header *) base();
     return h->type;
 }
-const char *LogEntry::source() const
+const char *LogStore::Entry::source() const
 {
     Header *h;
 
@@ -102,7 +102,7 @@ const char *LogEntry::source() const
     }
     return (const char *) (h+1);
 }
-Slice<const char> LogEntry::data(int part) const
+Slice<const char> LogStore::Entry::data(int part) const
 {
     Header *h = (Header *) base();
     const char *data;
@@ -137,7 +137,7 @@ Slice<const char> LogEntry::data(int part) const
 }
 
 
-int LogEntry::set(const char *from, int type, const char *fmt, va_list arg)
+int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list arg)
 {
     Header *h;
     array d;
@@ -219,7 +219,7 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     if (!save) {
         return 0;
     }
-    LogEntry m;
+    Entry m;
     int ret;
 
     if (code && code < _level) _level = code;
@@ -233,9 +233,9 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     return ret;
 }
 
-const LogEntry *LogStore::nextEntry()
+const LogStore::Entry *LogStore::nextEntry()
 {
-    LogEntry *e;
+    Entry *e;
 
     if ((e = _msg.get(_act))) {
         ++_act;

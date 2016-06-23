@@ -584,23 +584,6 @@ public:
     { return *((const Array<Reference<T> > *) this); }
 };
 
-/*! storage for log messages */
-class LogEntry : array
-{
-public:
-    int type() const;
-    const char *source() const;
-    Slice<const char> data(int part = 0) const;
-    int set(const char *, int, const char *, va_list );
-protected:
-    struct Header
-    {
-        uint8_t from;
-        uint8_t args;
-        uint8_t _cmd;
-        uint8_t type;
-    };
-};
 class LogStore : public logger
 {
 public:
@@ -621,10 +604,12 @@ public:
     LogStore(logger * = logger::defaultInstance());
     virtual ~LogStore();
     
+    class Entry;
+    
     void unref();
     int log(const char *, int, const char *, va_list);
     
-    virtual const LogEntry *nextEntry();
+    virtual const Entry *nextEntry();
     virtual void clearLog();
     
     virtual bool setIgnoreLevel(int);
@@ -633,16 +618,33 @@ public:
     inline int flowFlags() const
     { return _flags; }
     
-    inline const Slice<const LogEntry> logEnries() const
+    inline const Slice<const Entry> logEnries() const
     { return _msg.slice(); }
     
 protected:
-    Array<LogEntry> _msg;
+    Array<Entry> _msg;
     logger  *_next;
     uint32_t _act;
     uint8_t  _flags;
     uint8_t  _ignore;
     uint8_t  _level;
+};
+/*! storage for log messages */
+class LogStore::Entry : array
+{
+public:
+    int type() const;
+    const char *source() const;
+    Slice<const char> data(int part = 0) const;
+    int set(const char *, int, const char *, va_list);
+protected:
+    struct Header
+    {
+        uint8_t from;
+        uint8_t args;
+        uint8_t _cmd;
+        uint8_t type;
+    };
 };
 
 /*! linear search map type */

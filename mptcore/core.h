@@ -810,8 +810,6 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUC
 
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t);
-/* new generic metatype with same data and identifier */
-extern MPT_INTERFACE(metatype) *mpt_meta_clone(MPT_INTERFACE(metatype) *);
 
 /* get node/metatype text/raw data */
 extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
