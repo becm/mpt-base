@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 set(sources
   library_assign.c
   library_bind.c
+  library_meta.c
   library_open.c
-  meta_open.c
   readline.c
 )
 

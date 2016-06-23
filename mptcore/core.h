@@ -106,14 +106,33 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeGroup)     = 0x1a,  /* SUB */
 	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
 	
+#define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
+                             && (v) < MPT_ENUM(TypeVecBase))
+	
 	/* vector types (0x20..0x3f) */
 	MPT_ENUM(TypeVecBase)   = ' ',   /* 0x20: generic vector */
+#define MPT_value_isVector(v) (((v) & 0x7f) >= MPT_ENUM(TypeVecBase) \
+                            && ((v) & 0x7f) <  MPT_ENUM(TypeArrBase))
 	
 	/* array types ('@'..'Z'..0x5f) */
 	MPT_ENUM(TypeArrBase)   = '@',   /* 0x40: generic array */
+#define MPT_value_isArray(v)  (((v) & 0x7f) >= MPT_ENUM(TypeArrBase) \
+                            && ((v) & 0x7f) < MPT_ENUM(TypeScalBase))
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar */
+#define MPT_value_fromVector(v) (MPT_value_isVector(v) \
+                               ? (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) \
+                               : 0)
+#define MPT_value_fromArray(v)  (MPT_value_isArray(v) \
+                               ? (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) \
+                               : 0)
+#define MPT_value_toVector(v)   (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
+                               ? 0 \
+                               : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecBase))
+#define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
+                               ? 0 \
+                               : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
 	
 	/* reuse value for transfer-only 80bit float */
 	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),
@@ -212,6 +231,27 @@ MPT_STRUCT(codestate)
 typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
 typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
 
+
+__MPT_EXTDECL_BEGIN
+
+/* get type position from data description */
+extern int mpt_position(const char *, int);
+/* get position offset from data description */
+extern int mpt_offset(const char *, int);
+
+/* get/add registered (primitive) types */
+extern ssize_t mpt_valsize(int);
+extern int mpt_valtype_add(size_t);
+
+/* determine message ANSI color code */
+extern const char *mpt_ansi_code(uint8_t);
+extern const char *mpt_ansi_reset(void);
+
+/* calculate environment-depending hash for data */
+extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
+
+__MPT_EXTDECL_END
+
 /*! generic struct reference */
 MPT_STRUCT(value)
 {
@@ -225,21 +265,10 @@ MPT_STRUCT(value)
 	inline void set(const struct value &v)
 	{ fmt = v.fmt; ptr = v.ptr; }
 	
-	static bool isPointer(int);
-	static bool isScalar(int);
-	static bool isVector(int);
-	static bool isArray(int);
-#else
-# define MPT_value_isVector(v)   (((v) & 0x7f) >= MPT_ENUM(TypeVecBase) && \
-                                  ((v) & 0x7f) < MPT_ENUM(TypeArrBase))
-# define MPT_value_isArray(v)    (((v) & 0x7f) >= MPT_ENUM(TypeArrBase) && \
-                                  ((v) & 0x7f) < MPT_ENUM(TypeScalBase))
-# define MPT_value_fromVector(v) (MPT_value_isVector(v) ? \
-                                  (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) : MPT_ERROR(BadValue))
-# define MPT_value_fromArray(v)  (MPT_value_isArray(v) ? \
-                                  (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) : MPT_ERROR(BadValue))
-# define MPT_value_toVector(v)   (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecBase))
-# define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) ? 0 : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
+	bool isPointer(int = 0);
+	bool isScalar(int = 0);
+	bool isVector(int = 0);
+	bool isArray(int = 0);
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
@@ -440,7 +469,7 @@ public:
 	inline T *cast()
 	{
 	    int t = typeIdentifier<T>();
-	    if (!value::isPointer(t)) return 0;
+	    if (!mpt_valsize(t)) return 0;
 	    T *ptr;
 	    if (conv(t, &ptr) < 0) return 0;
 	    return ptr;
@@ -768,26 +797,10 @@ public:
 
 __MPT_EXTDECL_BEGIN
 
-
-/* get type position from data description */
-extern int mpt_position(const char *, int);
-/* get position offset from data description */
-extern int mpt_offset(const char *, int);
-/* compare data types */
-extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
-
-/* get/add registered (primitive) types */
-extern ssize_t mpt_valsize(int);
-extern int mpt_valtype_add(size_t);
-
-
 /* reference operations */
 extern uintptr_t mpt_reference_raise(MPT_STRUCT(reference) *);
 extern uintptr_t mpt_reference_lower(MPT_STRUCT(reference) *);
 
-
-/* calculate environment-depending hash for data */
-extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
 
 /* get file/socket properties from string */
 extern int mpt_mode_parse(MPT_STRUCT(fdmode) *, const char *);
@@ -818,6 +831,8 @@ extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR
 /* get object type name */
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 
+/* compare data types */
+extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
 /* get matching property by name */
 extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
 
@@ -853,9 +868,6 @@ extern int mpt_log_default_set(int);
 extern const char *mpt_log_intro(FILE *, int, const char *);
 #endif
 
-/* determine message ANSI colour code */
-extern const char *mpt_ansi_code(uint8_t);
-extern const char *mpt_ansi_reset(void);
 /* message type description */
 extern const char *mpt_log_identifier(int);
 /* determine message level */

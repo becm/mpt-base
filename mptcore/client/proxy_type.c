@@ -19,19 +19,22 @@
  * 
  * \return metatype proxy pointer
  */
-extern int mpt_proxy_type(MPT_STRUCT(proxy) *p, const char *desc)
+extern int mpt_proxy_type(const char *desc, const char **end)
 {
 	const char *sep;
 	int len = 0, type = 0;
 	
-	/* typed reference */
-	if (!desc) {
+	if (*desc) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* no separator befor symbol end */
-	if ((sep = strchr(desc, ':'))
-	    && !(len = sep - desc)) {
-		return MPT_ERROR(BadValue);
+	if ((sep = strchr(desc, ':'))) {
+		if (!(len = sep - desc)) {
+			return MPT_ERROR(BadValue);
+		}
+		if (!*++sep) {
+			return MPT_ERROR(BadArgument);
+		}
 	}
 	if (len ? !strncmp(desc, "metatype:", len+1) : !strcmp(desc, "metatype")) {
 		type = MPT_ENUM(TypeMeta);
@@ -54,12 +57,8 @@ extern int mpt_proxy_type(MPT_STRUCT(proxy) *p, const char *desc)
 	else {
 		return MPT_ERROR(BadValue);
 	}
-	memset(&p->_types, 0, sizeof(p->_types));
-	
-	p->_types[0] = type;
-	if (type > MPT_ENUM(TypeObject)
-	    && type < MPT_ENUM(TypeVecBase)) {
-		p->_types[1] = MPT_ENUM(TypeObject);
+	if (end) {
+		*end = sep;
 	}
-	return len ? len + 1 : 0;
+	return type;
 }

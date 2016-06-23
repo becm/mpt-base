@@ -61,47 +61,6 @@ MPT_STRUCT(libhandle)
 	void *(*create)();   /* new/unique instance */
 };
 
-MPT_STRUCT(proxy)
-{
-#ifdef __cplusplus
-	class instance
-	{
-	public:
-		virtual void unref() = 0;
-	protected:
-		inline ~instance() { }
-	};
-	inline proxy(const char *fmt = 0) : _ref(0)
-	{
-		size_t i = 0;
-		if (fmt) {
-			while (*fmt && i < (sizeof(_types) - 1)) {
-				_types[i++] = *fmt++;
-			}
-		}
-		while (i < sizeof(_types)) {
-			_types[i++] = 0;
-		}
-	}
-	inline ~proxy()
-	{
-		instance *i = (instance *) _ref;
-		if (i) i->unref();
-	}
-	template <typename T>
-	inline T *value() const
-	{
-		return (T *) mpt_proxy_cast(this, typeIdentifier<T>());
-	}
-protected:
-	instance *_ref;
-#else
-# define MPT_PROXY_INIT { 0, { 0 } }
-	void *_ref;
-#endif
-	char  _types[sizeof(void *)];
-};
-
 __MPT_EXTDECL_BEGIN
 
 
@@ -121,9 +80,9 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
 
 /* set client output */
-MPT_INTERFACE(output) *mpt_client_output(MPT_INTERFACE(client) *, MPT_INTERFACE(output) * const *);
+extern MPT_INTERFACE(output) *mpt_client_output(MPT_INTERFACE(client) *, MPT_INTERFACE(output) * const *);
 /* set/create client logger */
-MPT_INTERFACE(logger) *mpt_client_logger(MPT_INTERFACE(client) *, MPT_INTERFACE(object) *);
+extern MPT_INTERFACE(logger) *mpt_client_logger(MPT_INTERFACE(client) *, MPT_INTERFACE(object) *);
 
 
 /* open/close library descriptor */
@@ -133,13 +92,12 @@ extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
 extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, const char *);
 
 /* interpret type part of library symbol */
-int mpt_proxy_type(MPT_STRUCT(proxy) *, const char *);
-void *mpt_proxy_cast(const MPT_STRUCT(proxy) *, int);
+extern int mpt_proxy_type(const char *, const char **);
 
 /* dynamic binding with metatype proxy instance */
-MPT_INTERFACE(metatype) *mpt_meta_open(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *, int);
 /* open library handle as metatype */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

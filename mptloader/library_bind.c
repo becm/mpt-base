@@ -19,69 +19,47 @@
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern int mpt_library_bind(MPT_STRUCT(proxy) *px, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
-	MPT_INTERFACE(metatype) *m, *old;
-	MPT_STRUCT(value) val;
-	MPT_STRUCT(proxy) tmp;
-	int len;
+	MPT_INTERFACE(metatype) *m;
+	MPT_INTERFACE(object) *obj;
+	MPT_STRUCT(libhandle) lh;
+	const char *err;
+	int type;
 	
 	if (!conf) {
 		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
-		return MPT_ERROR(BadArgument);
+		return 0;
 	}
-	if ((len = mpt_proxy_type(&tmp, conf)) >= 0) {
-		conf += len;
+	if ((type = mpt_proxy_type(conf, &conf)) < 0) {
+		if (!def && out) {
+			mpt_log(out, __func__, MPT_FCNLOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
+		}
+		type = def;
 	}
-	else if (out && !*px->_types) {
-		mpt_log(out, __func__, MPT_FCNLOG(Debug2), "%s: %s", MPT_tr("unspecified instance type"), conf);
+	if ((err = mpt_library_open(&lh, conf, path))) {
+		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
+			if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", err);
+		}
+		return 0;
 	}
 	/* create new proxy */
-	if (!(m = mpt_meta_open(conf, path, out))) {
-		if (!path || !(m = mpt_meta_open(conf, 0, out))) {
-			return MPT_ERROR(BadOperation);
+	if (!(m = mpt_library_meta(&lh, type))) {
+		mpt_library_close(&lh);
+		return 0;
+	}
+	/* created object type */
+	if (m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj) >= 0 && obj) {
+		const char *name;
+		if (!(name = mpt_object_typename(obj))) {
+			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created proxy object"));
+		} else {
+			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
 		}
 	}
-	val.ptr = 0;
-	val.fmt = 0;
-	
-	/* set new proxy types */
-	if (len > 0) {
-		val.fmt = tmp._types;
-		m->_vptr->assign(m, &val);
+	/* generic instance */
+	else {
+		mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %02x", MPT_tr("created proxy instance"), type);
 	}
-	/* assign predefined proxy types */
-	else if (len < 0) {
-		if (*px->_types) {
-			val.fmt = px->_types;
-			m->_vptr->assign(m, &val);
-		}
-		len = 0;
-	}
-	/* delete old proxy */
-	if ((old = px->_ref)) {
-		old->_vptr->unref(old);
-	}
-	px->_ref = m;
-	
-	memset(&px->_types, 0, sizeof(px->_types));
-	*px->_types = MPT_ENUM(TypeMeta);
-	
-	if (out) {
-		/* created object type */
-		if (val.fmt && m->_vptr->conv(m, MPT_ENUM(TypeObject), &old) >= 0 && old) {
-			const char *name;
-			if (!(name = mpt_object_typename((void *) old))) {
-				mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created proxy object"));
-			} else {
-				mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
-			}
-		}
-		/* generic instance */
-		else {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created proxy instance"));
-		}
-	}
-	
-	return len;
+	return m;
 }
