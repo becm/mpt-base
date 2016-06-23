@@ -56,10 +56,37 @@ MPT_STRUCT(libhandle)
 	inline libhandle() : lib(0), create(0)
 	{ }
 	~libhandle();
+#else
+# define MPT_LIBHANDLE_INIT { 0, 0 }
 #endif
 	void *lib;           /* library handle */
 	void *(*create)();   /* new/unique instance */
 };
+
+/* combined references to interface types */
+MPT_STRUCT(proxy);
+#ifdef _MPT_CONFIG_H
+# ifdef __cplusplus
+#  ifdef _MPT_MESSAGE_H
+MPT_STRUCT(proxy) : public Reference<metatype>
+{
+	Reference<logger> log;
+	Reference<output> out;
+protected:
+	uintptr_t hash;
+};
+#  endif /* _MPT_MESSAGE_H */
+# else /* __cplusplus */
+MPT_STRUCT(proxy)
+{
+# define MPT_PROXY_INIT { 0, 0, 0, 0 }
+	MPT_INTERFACE(metatype) *_mt;
+	MPT_INTERFACE(output) *out;
+	MPT_INTERFACE(logger) *log;
+	uintptr_t hash;
+};
+# endif /* __cplusplus */
+#endif /* _MPT_CONFIG_H */
 
 __MPT_EXTDECL_BEGIN
 
@@ -98,6 +125,11 @@ extern int mpt_proxy_type(const char *, const char **);
 extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *, int);
 /* open library handle as metatype */
 extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+
+/* clear proxy references */
+extern void mpt_proxy_fini(MPT_STRUCT(proxy) *);
+/* set matching proxy reference */
+extern int mpt_proxy_assign(MPT_STRUCT(proxy) *, const MPT_STRUCT(value) *);
 
 __MPT_EXTDECL_END
 

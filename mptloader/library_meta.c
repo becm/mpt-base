@@ -37,9 +37,11 @@ static int mpAssign(MPT_INTERFACE(metatype) *m, const MPT_STRUCT(value) *val)
 	struct _mpt_metaProxy *mp = (void *) m;
 	int type;
 	
-	if (!(m = mp->ptr)
-	    || !(mp->ptr = m = mp->lh.create())) {
-		return MPT_ERROR(BadArgument);
+	if (!(m = mp->ptr)) {
+		if (!(m = mp->lh.create())) {
+			return MPT_ERROR(BadArgument);
+		}
+		mp->ptr = m;
 	}
 	type = mp->type;
 	/* assign metatype */
@@ -56,9 +58,11 @@ static int mpConv(MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
-	if (!(m = mp->ptr)
-	    || !(mp->ptr = m = mp->lh.create())) {
-		return MPT_ERROR(BadArgument);
+	if (!(m = mp->ptr)) {
+		if (!(m = mp->lh.create())) {
+			return MPT_ERROR(BadArgument);
+		}
+		mp->ptr = m;
 	}
 	if (type & ~0xff) {
 		return MPT_ERROR(BadValue);

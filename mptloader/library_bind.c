@@ -23,7 +23,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 {
 	MPT_INTERFACE(metatype) *m;
 	MPT_INTERFACE(object) *obj;
-	MPT_STRUCT(libhandle) lh;
+	MPT_STRUCT(libhandle) lh = MPT_LIBHANDLE_INIT;
 	const char *err;
 	int type;
 	
@@ -37,7 +37,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 		}
 		type = def;
 	}
-	if ((err = mpt_library_open(&lh, conf, path))) {
+	if ((err = mpt_library_assign(&lh, conf, path))) {
 		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
 			if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", err);
 		}
