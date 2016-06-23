@@ -30,3 +30,4 @@ item.o layout.o mapping.o : CXX+=-std=c++11
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h
 CLEAR_FILES += libinfo.o
+CLEAN_FILES += libinfo.o

@@ -5,7 +5,6 @@ src = files(
   'array_compact.c',
   'array_cut.c',
   'array_data.c',
-  'array_flush.c',
   'array_insert.c',
   'array_message.c',
   'array_push.c',

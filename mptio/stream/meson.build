@@ -17,6 +17,7 @@ src = files(
   'stream_send.c',
   'stream_setmode.c',
   'stream_setter.c',
+  'stream_sockflags.c',
   'stream_sync.c',
   'stream_write.c',
   'streaminfo.c',
