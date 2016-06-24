@@ -18,7 +18,7 @@
 
 #include "client.h"
 
-static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
+static int clientConfig(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	static const char defFmt[] = "no default configuration state";
 	
@@ -33,34 +33,21 @@ static int clientRead(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		}
 	}
 	else {
-		MPT_STRUCT(message) msg = *ev->msg;
-		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_INTERFACE(metatype) *args = 0;
-		ssize_t part;
+		const char *cmd;
 		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
+		if (!(args = mpt_event_command(ev))) {
+			ev->id = 0;
+			return MPT_ENUM(EventFail) | MPT_ENUM(EventDefault);
 		}
-		if (mt.cmd != MPT_ENUM(MessageCommand)) {
-			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
-		}
-		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-			mpt_message_read(&msg, part+1, 0);
-			part = mpt_message_argv(&msg, mt.arg);
-		}
-		if (part > 0 && !(args = mpt_meta_message(&msg, mt.arg))) {
-			return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("unable to create argument source"));
-		}
+		/* consume command */
+		args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &cmd);
+		/* process config arguments */
 		err = mpt_config_args((void *) cl, args);
 		args->_vptr->unref(args);
 		
 		if (err < 0) {
-			if (args) {
-				return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
-			} else {
-				return MPT_event_fail(ev, err, MPT_tr(defFmt));
-			}
+			return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
 		}
 		if (err) {
 			char buf[128];
@@ -96,64 +83,40 @@ static const struct
 	int (*ctl)(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 }
 cmdsolv[] = {
-	{"read",    clientRead      },
+	{"set",     clientConfig    },
 	{"init",    mpt_cevent_init },
-	{"prep",    mpt_cevent_prep },
 	{"step",    mpt_cevent_step },
 	{"close",   clientClose     }
 };
 
 static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 {
-	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	MPT_STRUCT(dispatch) *d = ptr;
+	const char *cmd = "step";
 	uintptr_t id;
 	
-	if (!ev) return 0;
+	if (!ev) {
+		return 0;
+	}
 	if (ev->msg) {
-		MPT_STRUCT(message) msg = *ev->msg;
-		ssize_t part;
+		MPT_INTERFACE(metatype) *args;
+		const char *next;
+		int ret;
 		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+		if (!(args = mpt_event_command(ev))) {
+			ev->id = 0;
+			return MPT_ENUM(EventFail) | MPT_ENUM(EventDefault);
 		}
-		if (mt.cmd != MPT_ENUM(MessageCommand)) {
-			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
+		/* use second command element */
+		if ((ret = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &next)) > 0
+		    && (ret & MPT_ENUM(ValueConsume))
+		    && (ret = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &next)) > 0
+		    && next) {
+			cmd = next;
 		}
-		if ((part = mpt_message_argv(&msg, mt.arg)) > 0) {
-			mpt_message_read(&msg, part, 0);
-			if (mt.arg) mpt_message_read(&msg, 1, 0);
-			part = mpt_message_argv(&msg, mt.arg);
-		}
-		if (part >= 0) {
-			if (part <= (ssize_t) msg.used) {
-				if (!mt.arg && part && !((char *) msg.base)[part-1]) {
-					--part;
-				}
-				id = mpt_hash(msg.base, part);
-			}
-			else if (part > 128) {
-				return MPT_event_fail(ev, MPT_ERROR(MissingBuffer), MPT_tr("continue argument too large for buffer"));
-			}
-			else {
-				char buf[128];
-				mpt_message_read(&msg, part, buf);
-				
-				if (!mt.arg && part && !buf[part-1]) {
-					--part;
-				}
-				id = mpt_hash(buf, part);
-			}
-		}
-		else {
-			id = mpt_hash("step", 4);
-		}
+		args->_vptr->unref(args);
 	}
-	/* configure default event to solver step */
-	else {
-		id = mpt_hash("step", 4);
-	}
+	id = mpt_hash(cmd, strlen(cmd));
 	
 	if (!mpt_command_get(&d->_cmd, id)) {
 		char buf[128];

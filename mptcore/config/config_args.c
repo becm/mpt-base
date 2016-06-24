@@ -27,55 +27,54 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(metatype) *
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
-	int res, count;
+	int res, count, val;
 	
 	if (!args) {
-		if ((res = cfg->_vptr->assign(cfg, 0, 0)) < 0) {
-			return res;
-		}
-		return 0;
+		res = cfg->_vptr->assign(cfg, &p, 0);
+		return res < 0 ? res : 0;
 	}
 	count = 0;
+	val = 0;
+	p.assign = '=';
 	do {
-		/* try to get subtree target for config file */
-		if ((res = args->_vptr->conv(args, MPT_property_assign(':') | MPT_ENUM(ValueConsume), &pr)) > 0) {
-			if (pr.name) {
-				mpt_path_set(&p, pr.name, -1);
-			}
-			else if (count) {
-				return count;
+		/* get assign target */
+		if ((res = args->_vptr->conv(args, MPT_property_assign('=') | MPT_ENUM(ValueConsume), &pr)) > 0) {
+			if (!pr.name) {
+				return count ? count : MPT_ERROR(BadArgument);
 			}
 		}
 		/* try to get value data */
 		else if ((res = args->_vptr->conv(args, MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume), &pr.val)) > 0) {
-			if (count) {
+			if (val) {
 				return count;
 			}
 			pr.name = 0;
 		}
 		/* get simple filename */
 		else if ((res = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &pr.val.ptr)) > 0) {
-			if (count) {
-				return count;
-			}
 			pr.name = 0;
 			pr.val.fmt = 0;
+			pr.val.ptr = 0;
 		}
-		else if (!res) {
-			if (!count) {
-				res = cfg->_vptr->assign(cfg, 0, 0);
-			}
-			return res;
-		}
+		/* end or error return */
 		else {
-			return count ? count : res;
+			return res && !count ? res : count;
+		}
+		/* only single top level assign */
+		if (!pr.name) {
+			if (val++) {
+				return count;
+			}
+			p.len = 0;
+		} else {
+			mpt_path_set(&p, pr.name, -1);
+		}
+		if (cfg->_vptr->assign(cfg, &p, &pr.val) < 0) {
+			return count ? count : MPT_ERROR(BadValue);
 		}
 		/* assign config */
-		if ((res = cfg->_vptr->assign(cfg, pr.name ? &p : 0, &pr.val)) < 0) {
-			return count ? count : res;
-		}
 		++count;
-	} while (res);
+	} while (res & MPT_ENUM(ValueConsume));
 	
 	return 0;
 }

@@ -11,11 +11,10 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(array);
-MPT_STRUCT(slice);
-MPT_STRUCT(queue);
-
 MPT_STRUCT(message);
+
 MPT_INTERFACE(output);
+MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(EventFlags) {
 	MPT_ENUM(EventNone)       = 0x0,     /* no special operation */
@@ -168,6 +167,9 @@ extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *);
 extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size_t len);
 /* invalidate/delete context references */
 size_t mpt_reply_clear(MPT_STRUCT(reply_context) **, size_t);
+
+/* command message content */
+extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 
 __MPT_EXTDECL_END
 
