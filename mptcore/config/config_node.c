@@ -3,6 +3,8 @@
 #include <errno.h>
 
 #include "node.h"
+#include "meta.h"
+
 #include "config.h"
 
 static MPT_STRUCT(node) __mpt_config_root;

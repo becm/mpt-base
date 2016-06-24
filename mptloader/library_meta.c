@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "meta.h"
+
+#include "object.h"
+
 #include "client.h"
 
 struct _mpt_metaProxy

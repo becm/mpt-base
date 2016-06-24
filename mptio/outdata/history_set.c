@@ -24,7 +24,7 @@
  * 
  * \return zero on success
  */
-extern int mpt_history_set(MPT_STRUCT(histinfo) *hist, const MPT_STRUCT(msgbind) *bnd)
+extern int mpt_history_set(MPT_STRUCT(histinfo) *hist, const MPT_STRUCT(msgvalfmt) *bnd)
 {
 	size_t part;
 	uint8_t type, size;
@@ -37,9 +37,9 @@ extern int mpt_history_set(MPT_STRUCT(histinfo) *hist, const MPT_STRUCT(msgbind)
 		hist->size = 0;
 		return 0;
 	}
-	type = bnd->type;
+	type = bnd->fmt;
 	size = type & 0x3f;
-	part = size * bnd->dim;
+	part = size * bnd->len;
 	
 	/* bad element size */
 	if (!(type & 0x3f)) {

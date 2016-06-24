@@ -1,5 +1,5 @@
 /*!
- * MPT C++ stream and socket implementation
+ * MPT C++ stream implementation
  */
 
 #include <cstring>
@@ -7,17 +7,16 @@
 #include <cstdio>
 #include <cerrno>
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <poll.h>
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#include <sys/uio.h>
 
 #include "queue.h"
 #include "array.h"
 #include "message.h"
+
+#include "output.h"
+#include "meta.h"
 
 #include "stream.h"
 
@@ -72,49 +71,6 @@ bool stream::open(const char *fn, const char *mode)
 {
     if (!fn) { mpt_stream_close(this); return true; }
     return mpt_stream_open(this, fn, mode) < 0 ? false : true;
-}
-
-// socket data operations
-socket::~socket()
-{ mpt_bind(this, 0, 0, 0); }
-
-bool socket::bind(const char *addr, int listen)
-{
-    return (mpt_bind(this, addr, 0, listen) < 0) ? false : true;
-}
-
-bool socket::set(metatype &src)
-{
-    socket tmp;
-    const char *dst;
-    if (src.conv('s', &dst) < 0 || !dst || mpt_connect(&tmp, dst, 0) < 0) {
-        return false;
-    }
-    if (_id) {
-        (void) close(_id);
-    }
-    _id = tmp._id;
-    return true;
-}
-bool socket::set(const value *val)
-{
-    if (!val) {
-        mpt_bind(this, 0, 0, 0);
-        return 0;
-    }
-    socket tmp;
-    if (!val->fmt) {
-        const char *dst = (const char *) val->ptr;
-        if (!dst || mpt_connect(&tmp, dst, 0) < 0) {
-            return false;
-        }
-        if (_id) {
-            (void) close(_id);
-        }
-        _id = tmp._id;
-        return true;
-    }
-    return false;
 }
 
 // stream class
@@ -368,64 +324,6 @@ int Stream::getchar()
         return base[_rd.off++];
     }
     return IODevice::getchar();
-}
-
-// socket class
-Socket::Socket(struct socket *from)
-{
-    if (!from) return;
-    *static_cast<socket *>(this) = *from;
-    new (from) socket;
-}
-Socket::~Socket()
-{ }
-
-void Socket::unref()
-{
-    delete this;
-}
-int Socket::assign(const value *val)
-{
-    return (socket::set(val)) ? (val ? 1 : 0) : BadOperation;
-}
-int Socket::conv(int type, void *ptr)
-{
-    void **dest = (void **) ptr;
-
-    if (type & ValueConsume) {
-        return BadOperation;
-    }
-    if (!type) {
-        static const char types[] = { socket::Type, metatype::Type, 0 };
-        if (dest) *dest = (void *) types;
-        return socket::Type;
-    }
-    switch (type &= 0xff) {
-    case metatype::Type: ptr = static_cast<metatype *>(this); break;
-    case socket::Type: ptr = static_cast<metatype *>(this); break;
-    default: return BadType;
-    }
-    if (dest) *dest = ptr;
-    return type;
-}
-
-Reference<Stream> Socket::accept()
-{
-    int sock;
-
-    if ((sock = ::accept(_id, 0, 0)) < 0) {
-        return 0;
-    }
-    streaminfo info;
-
-    if (_mpt_stream_setfile(&info, sock, sock) < 0) {
-        return 0;
-    }
-    info.setFlags(StreamBuffer);
-
-    Stream *s = new Stream(&info);
-
-    return s;
 }
 
 __MPT_NAMESPACE_END

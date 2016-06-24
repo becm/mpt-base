@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sys/uio.h>
 
+#include "meta.h"
+
 #include "node.h"
 
 struct _inline_meta

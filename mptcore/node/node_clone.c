@@ -4,6 +4,8 @@
 
 #include <errno.h>
 
+#include "meta.h"
+
 #include "node.h"
 
 extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *node)

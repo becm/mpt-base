@@ -16,7 +16,7 @@
 #include "message.h"
 #include "convert.h"
 
-#include "../mptplot/output.h"
+#include "output.h"
 
 #include "../mptio/stream.h"
 

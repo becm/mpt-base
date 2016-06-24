@@ -7,6 +7,7 @@
 
 #include MPT_INCLUDE(convert.h)
 #include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(meta.h)
 
 #include MPT_INCLUDE(layout.h)
 

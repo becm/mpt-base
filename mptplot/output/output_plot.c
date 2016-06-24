@@ -21,12 +21,12 @@
  * \param val  value start address
  * \param ld   distance to next element
  */
-extern int mpt_output_plot(MPT_INTERFACE(output) *out, const MPT_STRUCT(laydest) *dest, int len, const double *val, int ld)
+extern int mpt_output_plot(MPT_INTERFACE(output) *out, const MPT_STRUCT(msgdest) *dest, int len, const double *val, int ld)
 {
 	MPT_STRUCT(msgtype)  *type;
 	MPT_STRUCT(msgworld) *wld;
 	uint8_t hdr[sizeof(*type) + sizeof(*dest) + sizeof(*wld)];
-	MPT_STRUCT(msgval) v;
+	MPT_STRUCT(output_values) v;
 	int total = 0;
 	
 	if (dest) {

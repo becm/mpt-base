@@ -70,7 +70,6 @@ MPT_STRUCT(reply_context)
 };
 
 /* command dispatcher */
-MPT_STRUCT(reply_context);
 #ifdef _MPT_ARRAY_H
 # ifdef __cplusplus
 MPT_STRUCT(dispatch) : public Reference<output>
@@ -162,10 +161,8 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
-/* register graphic operations for dispatch output */
-extern int mpt_dispatch_graphic(MPT_STRUCT(dispatch) *dsp);
-/* setup graphic(data) output channel */
-extern int mpt_output_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
+/* register dispatch output control operations */
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *);
 
 /* new/available context on array */
 extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size_t len);

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "convert.h"
+#include "meta.h"
 
 #include "output.h"
 

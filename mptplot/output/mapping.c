@@ -3,8 +3,9 @@
  */
 
 #include "array.h"
+#include "message.h"
 
-#include "output.h"
+#include "layout.h"
 
 /*!
  * \ingroup mptOutput
@@ -69,7 +70,7 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
  * \param dst  layout target
  * \param cli  source client
  */
-extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, const MPT_STRUCT(laydest) *dst, int cli)
+extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, const MPT_STRUCT(msgdest) *dst, int cli)
 {
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(mapping) *map;

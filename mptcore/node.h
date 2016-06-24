@@ -6,7 +6,11 @@
 #ifndef _MPT_NODE_H
 #define _MPT_NODE_H  @INTERFACE_VERSION@
 
+#ifdef __cplusplus
+# include "meta.h"
+#else
 # include "core.h"
+#endif
 
 __MPT_NAMESPACE_BEGIN
 
@@ -54,27 +58,6 @@ protected:
     const node *_curr;
 };
 #endif
-
-/* tree and list operation flags */
-enum MPT_ENUM(TraverseFlags) {
-	/* node traverse operations */
-	MPT_ENUM(TraverseLeafs)       = 0x00000001,
-	MPT_ENUM(TraverseNonLeafs)    = 0x00000002,
-	MPT_ENUM(TraverseAll)         = 0x00000003,
-	MPT_ENUM(TraverseFlags)       = 0x00000003,
-	/* node traverse order */
-	MPT_ENUM(TraversePostOrder)   = 0x00000000,
-	MPT_ENUM(TraversePreOrder)    = 0x00000004,
-	MPT_ENUM(TraverseInOrder)     = 0x00000008,
-	MPT_ENUM(TraverseLevelOrder)  = 0x0000000C,
-	MPT_ENUM(TraverseOrders)      = 0x0000000C,
-	/* property traverse flags */
-	MPT_ENUM(TraverseChange)      = 0x00000010,
-	MPT_ENUM(TraverseDefault)     = 0x00000020,
-	/* alert on empty/unknown properties */
-	MPT_ENUM(TraverseEmpty)       = 0x00000040,
-	MPT_ENUM(TraverseUnknown)     = 0x00000080
-};
 
 typedef int (*MPT_TYPE(TraverseFcn))(MPT_STRUCT(node) *, void *, size_t);
 

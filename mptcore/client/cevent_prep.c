@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "meta.h"
 #include "message.h"
 #include "event.h"
 

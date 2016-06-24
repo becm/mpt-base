@@ -2,8 +2,7 @@
  * call function for all object/metatype properties
  */
 
-#include "node.h"
-#include "convert.h"
+#include "core.h"
 
 /*!
  * \ingroup mptConvert
@@ -31,8 +30,8 @@ extern int mpt_generic_foreach(int (*get)(void *, MPT_STRUCT(property) *), void 
 	
 	while ((err = get(obj, &prop)) >= 0) {
 		prop.desc = 0;
-		if (((err && !(mask & MPT_ENUM(TraverseChange)))
-		     || (!err && !(mask & MPT_ENUM(TraverseDefault))))
+		if (((err && (mask & MPT_ENUM(TraverseChange)))
+		     || (!err && (mask & MPT_ENUM(TraverseDefault))))
 		    && (err = proc(data, &prop)) < 0)
 			return err;
 		
@@ -40,28 +39,4 @@ extern int mpt_generic_foreach(int (*get)(void *, MPT_STRUCT(property) *), void 
 		prop.desc = (void *)(++pos);
 	}
 	return pos - 1;
-}
-
-static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
-{
-	MPT_INTERFACE(object) *obj = ptr;
-	return obj->_vptr->property(obj, pr);
-}
-
-/*!
- * \ingroup mptConvert
- * \brief process properties
- * 
- * Process properties of metatype.
- * 
- * \param meta property source
- * \param proc process retreived properties
- * \param data argumernt for property processing
- * \param mask ignore default/changed properties
- * 
- * \return index of requested property
- */
-extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
-{
-	return mpt_generic_foreach(getProperty, (void *) obj, proc, data, mask);
 }

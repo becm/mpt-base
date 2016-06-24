@@ -4,7 +4,8 @@
 
 #include <string.h>
 
-#include "message.h"
+#include "meta.h"
+#include "output.h"
 
 #include "client.h"
 
@@ -26,13 +27,13 @@ extern void mpt_proxy_fini(MPT_STRUCT(proxy) *pr)
 		m->_vptr->unref(m);
 		pr->_mt = 0;
 	}
-	if ((o = pr->out)) {
+	if ((o = pr->output)) {
 		o->_vptr->obj.unref((void *) o);
-		pr->out = 0;
+		pr->output = 0;
 	}
-	if ((l = pr->log)) {
+	if ((l = pr->logger)) {
 		l->_vptr->unref(l);
-		pr->log = 0;
+		pr->logger = 0;
 	}
 	pr->hash = 0;
 }

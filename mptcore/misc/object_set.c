@@ -6,8 +6,7 @@
 
 #include <stdarg.h>
 
-#include "convert.h"
-#include "core.h"
+#include "object.h"
 
 /*!
  * \ingroup mptMeta

@@ -6,10 +6,10 @@
 #ifndef _MPT_CONFIG_H
 #define _MPT_CONFIG_H  @INTERFACE_VERSION@
 
-#include "core.h"
-
 #ifdef __cplusplus
 # include "array.h"
+#else
+# include "core.h"
 #endif
 
 __MPT_NAMESPACE_BEGIN

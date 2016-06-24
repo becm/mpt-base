@@ -11,5 +11,4 @@ src = files(
   'output_history.c',
   'output_plot.c',
   'output_values.c',
-  'string_dest.c',
 )

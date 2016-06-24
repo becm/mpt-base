@@ -31,8 +31,8 @@
 extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double *ref, int rlen, const double *val, int vlen)
 {
 	struct {
-		MPT_STRUCT(msgtype) type;
-		MPT_STRUCT(msgbind) bnd[2];
+		MPT_STRUCT(msgtype)   type;
+		MPT_STRUCT(msgvalfmt) bnd[2];
 	} hdr;
 	int plen, msgs, i, ldr, ldv;
 	
@@ -62,10 +62,10 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 	hdr.type.cmd = MPT_ENUM(MessageValFmt);
 	hdr.type.arg = 2;
 	
-	hdr.bnd[0].type = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*ref);
-	hdr.bnd[0].dim  = ref ? rlen : 0;
-	hdr.bnd[1].type = hdr.bnd[0].type;
-	hdr.bnd[1].dim  = val ? vlen : 0;
+	hdr.bnd[0].fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*ref);
+	hdr.bnd[0].len = ref ? rlen : 0;
+	hdr.bnd[1].fmt = hdr.bnd[0].fmt;
+	hdr.bnd[1].len = val ? vlen : 0;
 	
 	out->_vptr->push(out, MPT_fmtHdrLen(hdr), &hdr);
 	msgs = 1;

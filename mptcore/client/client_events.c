@@ -9,8 +9,12 @@
 #include <sys/uio.h>
 
 #include "array.h"
+
 #include "message.h"
 #include "event.h"
+
+#include "meta.h"
+#include "output.h"
 
 #include "client.h"
 

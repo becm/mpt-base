@@ -7,7 +7,7 @@
 
 #include "node.h"
 #include "message.h"
-#include "config.h"
+#include "meta.h"
 
 #include "client.h"
 

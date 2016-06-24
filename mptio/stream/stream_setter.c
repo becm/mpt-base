@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 
 #include "queue.h"
+#include "meta.h"
+
 #include "stream.h"
 
 /*!

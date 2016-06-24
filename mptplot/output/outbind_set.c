@@ -28,15 +28,15 @@ extern int mpt_outbind_set(MPT_STRUCT(msgbind) *bnd, const char *data)
 	
 	/* special validity for binding */
 	switch (data[0]) {
-		case 'i': type = MPT_ENUM(OutputStateInit); break;
-		case 'I': type = MPT_ENUM(OutputStates) & ~MPT_ENUM(OutputStateInit); break;
-		case 's': type = MPT_ENUM(OutputStateStep); break;
-		case 'S': type = MPT_ENUM(OutputStates) & ~MPT_ENUM(OutputStateStep); break;
-		case 'f': type = MPT_ENUM(OutputStateFini); break;
-		case 'F': type = MPT_ENUM(OutputStates) & ~MPT_ENUM(OutputStateFini); break;
+		case 'i': type = MPT_ENUM(DataStateInit); break;
+		case 'I': type = MPT_ENUM(DataStateAll) & ~MPT_ENUM(DataStateInit); break;
+		case 's': type = MPT_ENUM(DataStateStep); break;
+		case 'S': type = MPT_ENUM(DataStateAll) & ~MPT_ENUM(DataStateStep); break;
+		case 'f': type = MPT_ENUM(DataStateFini); break;
+		case 'F': type = MPT_ENUM(DataStateAll) & ~MPT_ENUM(DataStateFini); break;
 		case 'A': type = 0; break;
 		case 'a':
-		default:  type = MPT_ENUM(OutputStates);
+		default:  type = MPT_ENUM(DataStateAll);
 	}
 	if (isalpha(data[0])) {
 		++data;

@@ -3,12 +3,12 @@
  */
 
 #include <string.h>
-#include <errno.h>
 #include <limits.h>
 
 #include <sys/uio.h>
 
 #include "message.h"
+#include "meta.h"
 
 #include "output.h"
 
@@ -29,15 +29,15 @@ extern int mpt_outbind_string(MPT_INTERFACE(output) *out, const char *descr)
 	MPT_STRUCT(msgtype) mt;
 	struct {
 		MPT_STRUCT(msgbind) src;
-		MPT_STRUCT(laydest) dst;
+		MPT_STRUCT(msgdest) dst;
 	} bnd;
-	int	len, dim = 1;
+	int len, dim = 1;
 	
 	if (!out) {
-		errno = EFAULT; return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	
-	bnd.src.type = MPT_ENUM(OutputStates);
+	bnd.src.type = MPT_ENUM(DataStateAll);
 	bnd.src.dim  = 0;
 	
 	bnd.dst.lay = bnd.dst.grf = bnd.dst.wld = 1;

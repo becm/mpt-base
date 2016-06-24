@@ -2,6 +2,8 @@
  * node identifier
  */
 
+#include "meta.h"
+
 #include "node.h"
 
 /*!

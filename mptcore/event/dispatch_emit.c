@@ -11,6 +11,8 @@
 
 #include "array.h"
 #include "message.h"
+#include "output.h"
+
 #include "event.h"
 
 static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)

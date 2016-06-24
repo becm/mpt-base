@@ -7,11 +7,12 @@ INC = . ..
 # header to export
 HEADER =\
 	array.h core.h client.h config.h convert.h \
-	event.h message.h node.h parse.h queue.h
+	event.h message.h meta.h node.h \
+	object.h output.h \
+	parse.h queue.h
 #
 # source summary
-sources = abort.c identifier.c mode_parse.c reference.c
-SRCS := $(wildcard */*.c) ${sources}
+SRCS := $(wildcard */*.c)
 #
 # shared library options
 SHLIB_MAJOR = 1

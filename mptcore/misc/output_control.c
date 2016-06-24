@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/uio.h>
 
+#include "output.h"
 #include "message.h"
 #include "event.h"
 
@@ -23,7 +24,7 @@
  * 
  * \return hint to event controller (int)
  */
-extern int mpt_output_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(message) *mptr)
+extern int mpt_output_control(MPT_INTERFACE(output) *out, const MPT_STRUCT(message) *mptr)
 {
 	MPT_STRUCT(msgtype) mt;
 	MPT_STRUCT(message) msg, tmp;
@@ -47,7 +48,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 	if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
 	    || (mpt_message_read(&msg, part, 0) < (size_t) part)
 	    || ((part = mpt_message_argv(&msg, mt.arg)) <= 0)) {
-		mpt_output_log(out, __func__, MPT_FCNLOG(Warning), "%s", MPT_tr("missing graphic arguments"));
+		mpt_output_log(out, __func__, MPT_FCNLOG(Warning), "%s", MPT_tr("missing control arguments"));
 		return MPT_ERROR(MissingData);
 	}
 	if (part >= (ssize_t) sizeof(buf)) {
@@ -81,16 +82,16 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 			mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("unable to open connection"));
 			return MPT_ERROR(BadOperation);
 		}
-		mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created new graphic connection"));
+		mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created new connection"));
 		return 0;
 	}
 	/* command is close operation */
 	else if (part >= 5 && !strncmp("close", buf, part)) {
 		if ((part = out->_vptr->obj.setProperty((void *) out, "", 0)) < 0) {
-			mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("error on graphic close"));
+			mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("error on connection close"));
 			return MPT_ERROR(BadOperation);
 		}
-		mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("closed graphic connection"));
+		mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("closed connection"));
 		return 0;
 	}
 	msg = tmp;
@@ -105,7 +106,7 @@ extern int mpt_output_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 		++msg.cont;
 	}
 	out->_vptr->push(out, 0, 0);
-	mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("sent graphic command to output"));
+	mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("sent command to output"));
 	
 	return 0;
 }

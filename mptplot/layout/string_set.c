@@ -2,9 +2,10 @@
  * set text string pointer data.
  */
 
-#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "meta.h"
 
 #include "layout.h"
 

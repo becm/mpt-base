@@ -2,6 +2,8 @@
  * set line attributes.
  */
 
+#include "meta.h"
+
 #include "layout.h"
 
 #define MPT_LineStyleMax   5

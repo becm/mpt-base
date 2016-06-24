@@ -14,12 +14,11 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include "node.h"
+#include "meta.h"
 #include "config.h"
 
 #include "array.h"
 #include "convert.h"
-#include "message.h"
 #include "event.h"
 #include "parse.h"
 

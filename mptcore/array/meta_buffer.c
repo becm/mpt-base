@@ -9,9 +9,9 @@
 #include <sys/uio.h>
 
 #include "convert.h"
-#include "message.h"
-
 #include "array.h"
+
+#include "meta.h"
 
 MPT_STRUCT(metaBuffer) {
 	MPT_INTERFACE(metatype) _meta;

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 #include "node.h"
+#include "meta.h"
+
 #include "config.h"
 
 /*!

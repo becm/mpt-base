@@ -6,7 +6,7 @@
 
 #include <sys/uio.h>
 
-#include "core.h"
+#include "meta.h"
 
 /*!
  * \ingroup mptMeta

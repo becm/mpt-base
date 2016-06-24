@@ -8,6 +8,8 @@
 #include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 
+#include "meta.h"
+
 #include "layout.h"
 
 static const MPT_STRUCT(world) def_world = {

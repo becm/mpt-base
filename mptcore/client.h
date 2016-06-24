@@ -8,6 +8,11 @@
 
 #include "config.h"
 
+#ifdef __cplusplus
+# include "meta.h"
+# include "output.h"
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(output);
@@ -16,6 +21,8 @@ MPT_STRUCT(node);
 MPT_STRUCT(event);
 MPT_STRUCT(message);
 MPT_STRUCT(dispatch);
+
+MPT_INTERFACE(object);
 
 #ifndef __cplusplus
 MPT_INTERFACE(client);
@@ -64,29 +71,38 @@ MPT_STRUCT(libhandle)
 };
 
 /* combined references to interface types */
-MPT_STRUCT(proxy);
-#ifdef _MPT_CONFIG_H
 # ifdef __cplusplus
-#  ifdef _MPT_MESSAGE_H
 MPT_STRUCT(proxy) : public Reference<metatype>
 {
-	Reference<logger> log;
-	Reference<output> out;
+	int log(const char *, int , const char *, ...) const;
+	
+	proxy &operator =(const Reference<output> &from)
+	{
+		output = from;
+		return *this;
+	}
+#if __MPT_REFERENCE_MOVE
+	proxy &operator =(Reference<logger> &&from)
+	{
+		logger = std::move(from);
+		return *this;
+	}
+#endif
+	Reference<class output> output;
+	Reference<class logger> logger;
 protected:
 	uintptr_t hash;
 };
-#  endif /* _MPT_MESSAGE_H */
 # else /* __cplusplus */
 MPT_STRUCT(proxy)
 {
 # define MPT_PROXY_INIT { 0, 0, 0, 0 }
 	MPT_INTERFACE(metatype) *_mt;
-	MPT_INTERFACE(output) *out;
-	MPT_INTERFACE(logger) *log;
+	MPT_INTERFACE(output) *output;
+	MPT_INTERFACE(logger) *logger;
 	uintptr_t hash;
 };
-# endif /* __cplusplus */
-#endif /* _MPT_CONFIG_H */
+#endif /* __cplusplus */
 
 __MPT_EXTDECL_BEGIN
 

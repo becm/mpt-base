@@ -7,8 +7,8 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "array.h"
 #include "node.h"
+#include "meta.h"
 
 #include "values.h"
 

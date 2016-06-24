@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "output.h"
+#include "message.h"
 
 /*!
  * \ingroup mptOutput
@@ -23,9 +23,9 @@
  */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *addr, int sep, const char *descr)
 {
-	char	*end;
-	size_t	pos = 0, max, i;
-	long	val;
+	char *end;
+	size_t pos = 0, max, i;
+	long val;
 	
 	if (!(max = addr->change)) {
 		max = sizeof(addr->val);

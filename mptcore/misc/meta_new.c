@@ -9,6 +9,8 @@
 
 #include "array.h"
 
+#include "meta.h"
+
 static void metaUnref(MPT_INTERFACE(metatype) *meta)
 {
 	free(meta);

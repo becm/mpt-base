@@ -3,6 +3,8 @@
 #include <limits.h>
 #include <string.h>
 
+#include "meta.h"
+
 #include "layout.h"
 
 /*!

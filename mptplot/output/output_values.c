@@ -20,7 +20,7 @@
  * 
  * \return number of consumed elements
  */
-extern int mpt_output_values(MPT_INTERFACE(output) *out, const MPT_STRUCT(msgval) *val, size_t esize)
+extern int mpt_output_values(MPT_INTERFACE(output) *out, const MPT_STRUCT(output_values) *val, size_t esize)
 {
 	ssize_t wr;
 	size_t len;

@@ -2,7 +2,8 @@
  * solver client data operations
  */
 
-#include "message.h"
+#include "output.h"
+#include "meta.h"
 
 #include "client.h"
 
@@ -19,27 +20,29 @@
  */
 extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
 {
+	MPT_INTERFACE(metatype) *m;
 	MPT_INTERFACE(output) *out;
 	
 	if (!val) {
-		out = pr->out;
-		if (!out || pr->log || !out->_vptr->obj.addref((void *) out)) {
+		out = pr->output;
+		if (!out || pr->logger || !out->_vptr->obj.addref((void *) out)) {
 			return 0;
 		}
-		if ((pr->log = mpt_output_logger(out))) {
+		if ((pr->logger = mpt_output_logger(out))) {
 			return 1;
 		}
 		out->_vptr->obj.unref((void *) out);
 		return MPT_ERROR(BadOperation);
 	}
 	if (!val->fmt) {
-		if ((out = pr->out)) {
-			return mpt_object_pset((void *) out, 0, val, 0);
+		if ((m = pr->_mt)) {
+			return m->_vptr->assign(m, val);
 		}
 		return 0;
 	}
 	if (val->fmt[0] == MPT_ENUM(TypeMeta)) {
-		MPT_INTERFACE(metatype) *m = 0, *o;
+		MPT_INTERFACE(metatype) *m, *o;
+		m = 0;
 		if (val->ptr && (m = *((void **) val->ptr))) {
 			if (!(m = m->_vptr->clone(m))) {
 				return MPT_ERROR(BadOperation);
@@ -61,16 +64,16 @@ extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
 		if (!out->_vptr->obj.addref((void *) out)) {
 			return MPT_ERROR(BadOperation);
 		}
-		if (!pr->log && out->_vptr->obj.addref((void *) out)) {
-			if (!(pr->log = mpt_output_logger(out))) {
+		if (!pr->logger && out->_vptr->obj.addref((void *) out)) {
+			if (!(pr->logger = mpt_output_logger(out))) {
 				out->_vptr->obj.unref((void *) out);
 			}
 		}
 	}
-	if (pr->out) {
-		pr->out->_vptr->obj.unref((void *) pr->out);
+	if (pr->output) {
+		pr->output->_vptr->obj.unref((void *) pr->output);
 	}
-	pr->out = out;
+	pr->output = out;
 	
 	return 1;
 }

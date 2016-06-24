@@ -4,9 +4,7 @@
 
 #include <string.h>
 
-#include "node.h"
-#include "array.h"
-#include "config.h"
+#include "meta.h"
 #include "message.h"
 #include "event.h"
 

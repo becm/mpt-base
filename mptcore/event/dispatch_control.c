@@ -2,12 +2,14 @@
  * graphic event for dispatch output
  */
 
+#include <string.h>
+
 #include "array.h"
-#include "message.h"
+#include "output.h"
 
 #include "event.h"
 
-static int clientGrapic(void *ptr, MPT_STRUCT(event) *ev)
+static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 {
 	MPT_INTERFACE(output) *out = ptr;
 	if (!ev) {
@@ -17,7 +19,7 @@ static int clientGrapic(void *ptr, MPT_STRUCT(event) *ev)
 	if (ev->msg) {
 		int err;
 		
-		if ((err = mpt_output_graphic(out, ev->msg)) >= 0) {
+		if ((err = mpt_output_control(out, ev->msg)) >= 0) {
 			return MPT_event_good(ev, MPT_tr("graphic command processed"));
 		}
 		if (err == MPT_ERROR(MissingData)) {
@@ -48,15 +50,15 @@ static int clientGrapic(void *ptr, MPT_STRUCT(event) *ev)
  * \retval 0  success
  * \retval <0 assignment error
  */
-extern int mpt_dispatch_graphic(MPT_STRUCT(dispatch) *dsp)
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name)
 {
 	MPT_INTERFACE(output) *out;
 	uintptr_t id;
 	
-	if (!dsp) {
+	if (!dsp || !name) {
 		return MPT_ERROR(BadArgument);
 	}
-	id = mpt_hash("graphic", 7);
+	id = mpt_hash(name, strlen(name));
 	
 	if (!(out = dsp->_out)) {
 		return mpt_dispatch_set(dsp, id, 0, 0);
@@ -64,7 +66,7 @@ extern int mpt_dispatch_graphic(MPT_STRUCT(dispatch) *dsp)
 	if (!out->_vptr->obj.addref((void *) out)) {
 		return MPT_ERROR(BadType);
 	}
-	if (mpt_dispatch_set(dsp, id, clientGrapic, out) < 0) {
+	if (mpt_dispatch_set(dsp, id, clientOutput, out) < 0) {
 		out->_vptr->obj.unref((void *) out);
 		return MPT_ERROR(BadOperation);
 	}

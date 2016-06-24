@@ -8,7 +8,7 @@ foreach d : [ 'layout', 'output', 'values' ]
   plot_src += src
 endforeach
 
-install_headers('layout.h', 'output.h', 'values.h',
+install_headers('layout.h', 'values.h',
   subdir : 'mpt')
 
 plot_inc = include_directories('.')

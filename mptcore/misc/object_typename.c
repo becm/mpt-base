@@ -1,6 +1,6 @@
 
 
-#include "core.h"
+#include "object.h"
 
 /* get metatype name */
 /*!

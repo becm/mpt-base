@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "meta.h"
+
 #include "layout.h"
 
 static const MPT_STRUCT(graph) def_graph = {

@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "meta.h"
+
 #include "node.h"
 
 /*!

@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "array.h"
+#include "output.h"
 #include "message.h"
 #include "event.h"
 

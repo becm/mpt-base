@@ -6,8 +6,13 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(client.h)
+#include <iostream>
+
 #include MPT_INCLUDE(output.h)
+#include MPT_INCLUDE(message.h)
+#include MPT_INCLUDE(object.h)
+
+#include MPT_INCLUDE(client.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -15,7 +20,7 @@
 # define mtrace()
 #endif
 
-class MyClient : public mpt::client
+class MyClient : public mpt::client, public mpt::proxy
 {
 public:
     MyClient();
@@ -23,33 +28,18 @@ public:
     
     void unref();
     int step(mpt::metatype *);
-    int log(const char *, const char *, ...);
-    
-protected:
-    mpt::Reference<mpt::logger> _log;
 };
 MyClient::MyClient()
 {
-    mpt::output *o = mpt::mpt_output_new();
+    class mpt::output *o = mpt::mpt_output_new();
+    output.setPointer(o);
 
     o->set("history", "/dev/stdout", 0);
     o->set("level", "info", 0);
-    
-    _log.setPointer(mpt::mpt_output_logger(o));
-}
-int MyClient::log(const char *fcn, const char *fmt, ...)
-{
-    mpt::logger *l;
-    if (!(l = _log.pointer())) {
-        return -1;
-    }
-    else {
-        va_list ap;
-        int ret;
-        va_start(ap, fmt);
-        ret = l->log(fcn, LogLevel | mpt::LogFile, fmt, ap);
-        va_end(ap);
-        return ret;
+
+    if (o->addref()) {
+        mpt::Reference<class mpt::logger> r(mpt::mpt_output_logger(o));
+        logger = std::move(r);
     }
 }
 
@@ -64,8 +54,12 @@ int main()
     mtrace();
     MyClient *c = new MyClient;
 
-    c->log(__func__, "%s = %i", "value", 5);
+    c->log(__func__, mpt::LogMessage | mpt::LogPretty, "%s = %i", "value", 5);
 
+    const mpt::object *o = c->output.pointer();
+    for (auto p : *o) {
+        std::cout << p << std::endl;
+    }
     c->init();
     c->unref();
 }

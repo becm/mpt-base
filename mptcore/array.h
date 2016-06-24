@@ -6,17 +6,20 @@
 #ifndef _MPT_ARRAY_H
 #define _MPT_ARRAY_H  @INTERFACE_VERSION@
 
-#include "core.h"
-
 #ifdef __cplusplus
 # include <new>
 # include <cstring>
+# include "object.h"
 struct iovec;
+#else
+# include "core.h"
 #endif
 
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(slice);
+
+MPT_INTERFACE(metatype);
 
 /*! header for data segment */
 MPT_STRUCT(buffer)

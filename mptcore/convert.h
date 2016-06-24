@@ -15,6 +15,7 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(array);
+MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */
@@ -150,9 +151,8 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(codestate) *, const struct iovec *, 
 extern ssize_t mpt_decode_command(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
 
 
-/* loop trough properties */
-extern int mpt_generic_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
-extern int mpt_generic_print  (int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+/* print all properties */
+extern int mpt_generic_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 /* convert structured data to string */
 extern int mpt_data_print(char *, size_t , int , const void *);

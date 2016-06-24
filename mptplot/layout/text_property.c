@@ -9,6 +9,8 @@
 #include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 
+#include "meta.h"
+
 #include "layout.h"
 
 /* default text values */

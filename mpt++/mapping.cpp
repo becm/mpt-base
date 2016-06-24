@@ -16,7 +16,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // add data mapping
-int Mapping::add(const msgbind &src, const laydest &dst, int client)
+int Mapping::add(const msgbind &src, const msgdest &dst, int client)
 {
     if (!getCycle(dst).pointer()) {
         return -2;
@@ -25,16 +25,16 @@ int Mapping::add(const msgbind &src, const laydest &dst, int client)
     return mpt_mapping_add(&_bind, &map);
 }
 // clear data mapping
-int Mapping::del(const msgbind *src, const laydest *dest, int client) const
+int Mapping::del(const msgbind *src, const msgdest *dest, int client) const
 {
     return mpt_mapping_del(&_bind, src, dest, client);
 }
 // get data mapping
-Array<laydest> Mapping::destinations(const msgbind &src, int client) const
+Array<msgdest> Mapping::destinations(const msgbind &src, int client) const
 {
     const mapping *map = (mapping *) _bind.base();
     size_t len = _bind.length() / sizeof(*map);
-    Array<laydest> arr;
+    Array<msgdest> arr;
 
     for (size_t i = 0; i < len; ++i) {
         if (mpt_mapping_cmp(map, &src, client)) {
@@ -61,7 +61,7 @@ bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
         const Reference<Cycle> &d = graph.cycle(i);
         if (!d.pointer()) continue;
-        if (!set(laydest(layId+1, graphID+1, i+1), d)) {
+        if (!set(msgdest(layId+1, graphID+1, i+1), d)) {
             return false;
         }
     }
@@ -88,7 +88,7 @@ bool Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
         return false;
     }
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
-        Reference<Cycle> *cyc = Map::get(laydest(layId+1, graphID+1, i+1));
+        Reference<Cycle> *cyc = Map::get(msgdest(layId+1, graphID+1, i+1));
         if (!cyc) continue;
         if (!graph.setCycle(i, *cyc)) {
             return false;
@@ -119,13 +119,13 @@ void Mapping::clearCycles(int lay, int grf, int wld) const
     }
 }
 // get cycle reference
-const Reference<Cycle> &Mapping::getCycle(const laydest &dest) const
+const Reference<Cycle> &Mapping::getCycle(const msgdest &dest) const
 {
     static const Reference<Cycle> def;
     // search matching destination
     for (auto &e : _d) {
         // match target cycle
-        if (!(e.key == laydest(dest.lay, dest.grf, dest.wld))) {
+        if (!(e.key == msgdest(dest.lay, dest.grf, dest.wld))) {
             continue;
         }
         // cycle not active

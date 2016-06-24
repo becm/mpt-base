@@ -8,11 +8,10 @@
 
 #include <arpa/inet.h>
 
-#include "array.h"
-#include "queue.h"
 #include "event.h"
-
 #include "message.h"
+
+#include "array.h"
 
 #include "output.h"
 
@@ -87,6 +86,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 		
 		/* convert history to printable output */
 		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
+			const MPT_STRUCT(msgvalfmt) *fmt = (void *) (mt+1);
 			size_t parts;
 			
 			/* reset history state */
@@ -100,7 +100,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 				return 1;
 			}
 			parts = mt->arg;
-			ret = 2 + parts * 2;
+			ret = sizeof(*mt) + parts * sizeof(*fmt);
 			if (len < (size_t) ret) {
 				return MPT_ERROR(MissingData);
 			}
@@ -109,7 +109,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 				con->hist.info.size = sizeof(uint64_t);
 			}
 			else while (parts--) {
-				if (mpt_history_set(&con->hist.info, (void *) (++mt)) < 0) {
+				if (mpt_history_set(&con->hist.info, fmt++) < 0) {
 					con->hist.info.line = 0;
 					con->hist.info.type = 0;
 				}

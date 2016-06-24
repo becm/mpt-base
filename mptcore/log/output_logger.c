@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-#include "message.h"
+#include "output.h"
 
 struct mptLogWrapper
 {

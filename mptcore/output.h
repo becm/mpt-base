@@ -1,16 +1,12 @@
 /*!
- * MPT plotting library
+ * MPT core library
  *  output operations
  */
 
 #ifndef _MPT_OUTPUT_H
 #define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
-#include "core.h"
-
-#ifdef __cplusplus
-# include "message.h"
-#endif
+#include "object.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -18,8 +14,7 @@ MPT_STRUCT(node);
 MPT_STRUCT(array);
 MPT_STRUCT(notify);
 MPT_STRUCT(message);
-
-MPT_INTERFACE(output);
+MPT_STRUCT(msgvalfmt);
 
 enum MPT_ENUM(OutputFlags) {
 	MPT_ENUM(OutputPrintNormal)  = 0x1,
@@ -29,46 +24,50 @@ enum MPT_ENUM(OutputFlags) {
 	MPT_ENUM(OutputPrintColor)   = 0x8,   /* enable coloring */
 	
 	MPT_ENUM(OutputActive)       = 0x10,  /* message is active */
-	MPT_ENUM(OutputRemote)       = 0x20,  /* skip internal filter */
-	
-	MPT_ENUM(OutputStateInit)    = 0x1,   /* data states */
-	MPT_ENUM(OutputStateStep)    = 0x2,
-	MPT_ENUM(OutputStateFini)    = 0x4,
-	MPT_ENUM(OutputStateFail)    = 0x8,
-	MPT_ENUM(OutputStates)       = 0x7
+	MPT_ENUM(OutputRemote)       = 0x20   /* skip internal filter */
 };
 
-/* source data type */
-MPT_STRUCT(msgbind)
-{
 #ifdef __cplusplus
-	inline msgbind(int d, int m = OutputStateInit | OutputStateStep) : dim(d), type(m)
-	{ }
-#else
-# define MPT_MSGBIND_INIT { 0, (MPT_ENUM(OutputStateInit) | MPT_ENUM(OutputStateStep)) }
-#endif
-	uint8_t dim,   /* source dimension */
-	        type;  /* type of data */
-};
-/* layout destination */
-MPT_STRUCT(laydest)
+MPT_INTERFACE(output) : public object
 {
-#ifdef __cplusplus
-	inline laydest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
-		lay(l), grf(g), wld(w), dim(d)
-	{ }
-	inline bool operator==(const laydest &ld) const
-	{ return lay == ld.lay && grf == ld.grf && wld == ld.wld; }
-	inline bool same(const laydest &ld) const
-	{ return *this == ld && dim == ld.dim; }
-#else
-# define MPT_LAYDEST_INIT { 0, 0, 0, 0 }
-#endif
-	uint8_t lay,  /* target layout */
-	        grf,  /* target graph */
-	        wld,  /* target world */
-	        dim;  /* target dimension */
+protected:
+	inline ~output() {}
+public:
+	enum { Type = TypeOutput };
+	
+	virtual ssize_t push(size_t, const void *) = 0;
+	virtual int sync(int = -1) = 0;
+	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
+	virtual int log(const char *, int , const char *, va_list) = 0;
+	
+	int open(const char *);
+	int setHistory(const char *);
+	int setHistFormat(const char *);
+	
+	int message(const char *, int, const char *, ... );
 };
+class Output : public Object
+{
+public:
+	inline Output(output *o) : Object(o)
+	{ }
+	
+};
+#else
+MPT_INTERFACE(output);
+MPT_INTERFACE_VPTR(output)
+{
+	MPT_INTERFACE_VPTR(object) obj;
+	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
+	int     (*sync)(MPT_INTERFACE(output) *, int);
+	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
+	int     (*log)(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
+};
+MPT_INTERFACE(output)
+{
+	const MPT_INTERFACE_VPTR(output) *_vptr;
+};
+#endif /* __cplusplus */
 
 /* history information */
 MPT_STRUCT(histinfo)
@@ -80,7 +79,7 @@ public:
 	{ }
 	
 	bool setFormat(const char *fmt);
-	bool setup(size_t , const msgbind *);
+	bool setup(size_t , const msgvalfmt *);
 protected:
 # else
 #  define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT,  0, 0, 0,  0, 0 }
@@ -124,7 +123,7 @@ protected:
 #endif
 ;
 
-#if defined(_MPT_ARRAY_H) && defined(_MPT_QUEUE_H)
+#if defined(_MPT_ARRAY_H)
 # ifdef __cplusplus
 MPT_STRUCT(connection) : public outdata
 {
@@ -162,37 +161,10 @@ MPT_STRUCT(connection)
 MPT_STRUCT(connection);
 #endif
 
-/* binding to layout mapping */
-MPT_STRUCT(mapping)
+MPT_STRUCT(output_values)
 {
 #ifdef __cplusplus
-	inline mapping(const msgbind &m = msgbind(0), const laydest &d = laydest(), int c = 0) :
-		src(m), client(c), dest(d)
-	{ }
-	inline bool valid() const
-	{ return src.type != 0; }
-#else
-# define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_LAYDEST_INIT }
-#endif
-	MPT_STRUCT(msgbind) src;
-	uint16_t            client;
-	MPT_STRUCT(laydest) dest;
-};
-
-/* world position */
-MPT_STRUCT(msgworld)
-{
-#ifdef __cplusplus
-	inline msgworld() : cycle(0), offset(0) { }
-#endif
-	int32_t cycle,   /* target cycle (<0: offset from current) */
-	        offset;  /* data offset (<0: append) */
-};
-
-MPT_STRUCT(msgval)
-{
-#ifdef __cplusplus
-	msgval(uint count, const double *from, int ld = 1);
+	output_values(uint count, const double *from, int ld = 1);
 #else
 # define MPT_MSGVAL_INIT { 0, 0, 0, 0 }
 #endif
@@ -202,39 +174,18 @@ MPT_STRUCT(msgval)
 	int            ld;    /* leading dimension */
 };
 
-MPT_STRUCT(strdest)
-{
-	uint8_t change,  /* positions which were changed */
-	        val[7];  /* values before/after reading */
-};
-
 __MPT_EXTDECL_BEGIN
-
-/* decode string to MPT destination */
-extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
 
 /* configure graphic output and bindings */
 extern int mpt_conf_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 /* configure history output and format */
 extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 
-/* send layout open command */
-extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
-
-/* parse graphic binding */
-extern int mpt_outbind_set(MPT_STRUCT(msgbind) *, const char *);
-/* set output bindings */
-extern int mpt_outbind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-extern int mpt_outbind_string(MPT_INTERFACE(output) *, const char *);
-
-/* data output formats */
-extern int mpt_output_data(MPT_INTERFACE(output) *, int, int , int , const double *, int);
-extern int mpt_output_history(MPT_INTERFACE(output) *, int, const double *, int, const double *, int);
-extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(msgval) *, size_t);
-extern int mpt_output_plot(MPT_INTERFACE(output) *, const MPT_STRUCT(laydest) *, int, const double *, int);
+/* filter control message (open/close), push others */
+extern int mpt_output_control(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* history operations */
-extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgbind) *);
+extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgvalfmt) *);
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
 /* outdata print setup and processing */
@@ -258,10 +209,13 @@ extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
 /* get/set outdata property */
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
 extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(metatype) *);
+
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* process return messages */
 extern int mpt_outdata_sync(MPT_STRUCT(outdata) *, const MPT_STRUCT(array) *, int);
+/* push message to connection */
+extern int mpt_outdata_send(MPT_STRUCT(outdata) *, const MPT_STRUCT(message) *);
 
 
 /* clear connection data */
@@ -279,14 +233,11 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandl
 #endif
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *, va_list);
-/* send message via connection */
-extern int mpt_connection_send(MPT_STRUCT(connection) *, const MPT_STRUCT(message) *);
 
-/* data mapping operations */
-extern int mpt_mapping_add(MPT_STRUCT(array) *, const MPT_STRUCT(mapping) *);
-extern int mpt_mapping_del(const MPT_STRUCT(array) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(laydest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
-extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
-
+/* push output/error message */
+extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
+/* push value data to putput */
+extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(output_values) *, size_t);
 
 /* create output instance */
 extern MPT_INTERFACE(output) *mpt_output_new(MPT_STRUCT(notify) * __MPT_DEFPAR(0));

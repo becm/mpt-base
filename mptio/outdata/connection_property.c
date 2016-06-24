@@ -11,10 +11,10 @@
 #include <ctype.h> /* for isupper() */
 
 #include "array.h"
-#include "queue.h"
 #include "event.h"
 
 #include "convert.h"
+#include "meta.h"
 
 #include "output.h"
 

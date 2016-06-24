@@ -7,7 +7,7 @@
 
 #include "event.h"
 #include "message.h"
-#include "array.h"
+#include "meta.h"
 
 #include "client.h"
 

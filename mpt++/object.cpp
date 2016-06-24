@@ -7,18 +7,6 @@
 
 #include "object.h"
 
-static int stdWrite(void *o, const char *d, size_t n)
-{
-    ((std::basic_ostream<char> *) o)->write(d, n);
-    return n;
-}
-
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::value &v)
-{
-    mpt_tostring(&v, stdWrite, &o);
-    return o;
-}
-
 __MPT_NAMESPACE_BEGIN
 
 bool object::const_iterator::select(uintptr_t pos)

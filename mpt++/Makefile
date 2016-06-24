@@ -5,7 +5,7 @@ LIB = mpt++
 INC = .. ../mptcore ../mptplot ../mptio
 #
 # header to export
-HEADER = graphic.h object.h
+HEADER = graphic.h
 #
 # shared library options
 SHLIB_MAJOR = 1

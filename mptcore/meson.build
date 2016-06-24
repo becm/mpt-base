@@ -2,12 +2,7 @@
 # build definition for mptcore library
 
 # top level source files
-core_src = files(
-  'abort.c',
-  'identifier.c',
-  'mode_parse.c',
-  'reference.c'
-)
+core_src = []
 # process subdirectory sources
 foreach d : [
   'array',
@@ -17,7 +12,7 @@ foreach d : [
   'event',
   'log',
   'message',
-  'meta',
+  'misc',
   'node',
   'parse',
   'queue'
@@ -28,9 +23,10 @@ endforeach
 
 install_headers(
   'array.h', 'client.h', 'config.h',
-  'convert.h', 'core.h',
-  'event.h', 'message.h',
-  'node.h', 'parse.h', 'queue.h',
+  'convert.h', 'core.h', 'event.h',
+  'message.h', 'meta.h', 'node.h',
+  'object.h', 'output.h',
+  'parse.h', 'queue.h',
   subdir : 'mpt')
 
 core_inc = include_directories('.')

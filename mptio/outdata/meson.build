@@ -6,7 +6,6 @@ src = files(
   'connection_log.c',
   'connection_property.c',
   'connection_push.c',
-  'connection_send.c',
   'fprint_val.c',
   'history_print.c',
   'history_set.c',
@@ -16,6 +15,7 @@ src = files(
   'outdata_print.c',
   'outdata_property.c',
   'outdata_push.c',
+  'outdata_send.c',
   'outdata_sync.c',
   'outdata_type.c',
 )

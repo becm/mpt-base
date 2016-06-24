@@ -3,11 +3,9 @@
  *   message operations
  */
 
-#include "cstdio"
-#include "cstring"
-
 #include "convert.h"
 #include "message.h"
+#include "output.h"
 #include "event.h"
 
 __MPT_NAMESPACE_BEGIN

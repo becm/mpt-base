@@ -5,6 +5,8 @@
 #include <string.h>
 #include <strings.h> /* for strcasecmp() */
 
+#include "meta.h"
+
 #include "layout.h"
 
 static const MPT_STRUCT(line) def_line = {

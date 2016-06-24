@@ -21,7 +21,6 @@ src = files(
   'encoder.c',
   'encoding.c',
   'float80.c',
-  'generic_foreach.c',
   'generic_print.c',
   'hash.c',
   'hash_djb2.c',

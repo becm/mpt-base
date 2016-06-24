@@ -10,9 +10,11 @@ cxx_src = files(
   'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
   'node_new.cpp',
   'object.cpp',
+  'proxy.cpp',
   'parse.cpp',
   'queue.cpp',
   'reference_wrap.cpp',
+  'std_cout.cpp',
   'value.cpp',
 )
 
@@ -50,8 +52,7 @@ if with_io
   endif
 endif
 
-install_headers('object.h', 'graphic.h',
-  subdir : 'mpt')
+install_headers('graphic.h', subdir : 'mpt')
 
 cxx_inc = [ include_directories('.') ] + cxx_inc
 

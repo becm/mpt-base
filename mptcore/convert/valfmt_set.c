@@ -8,6 +8,8 @@
 #include <errno.h>
 
 #include "array.h"
+#include "meta.h"
+
 #include "convert.h"
 
 /*!

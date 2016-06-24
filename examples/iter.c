@@ -4,6 +4,8 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include MPT_INCLUDE(meta.h)
+
 #include MPT_INCLUDE(values.h)
 
 extern int main(int argc, char *argv[])

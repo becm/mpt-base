@@ -17,18 +17,18 @@ class Cycle;
 class Graph;
 class Layout;
 
-struct laydest;
+struct msgdest;
 struct message;
 struct msgbind;
 struct mapping;
 struct event;
 
-class Mapping : Map<laydest, Reference<Cycle> >
+class Mapping : Map<msgdest, Reference<Cycle> >
 {
 public:
-    int add(const msgbind &, const laydest &, int = 0);
-    int del(const msgbind *, const laydest * = 0, int = 0) const;
-    Array<laydest> destinations(const msgbind &, int = 0) const;
+    int add(const msgbind &, const msgdest &, int = 0);
+    int del(const msgbind *, const msgdest * = 0, int = 0) const;
+    Array<msgdest> destinations(const msgbind &, int = 0) const;
 
     // save/load layout cycles
     bool saveCycles(int , const Layout &);
@@ -37,7 +37,7 @@ public:
     bool loadCycles(int , int , const Graph &) const;
     void clearCycles(int = -1, int = -1, int = -1) const;
 
-    const Reference<Cycle> &getCycle(const laydest &dest) const;
+    const Reference<Cycle> &getCycle(const msgdest &dest) const;
 
     void clear();
 protected:
@@ -156,7 +156,7 @@ public:
     virtual Layout *createLayout();
 
     // mapping helpers
-    int target(laydest &, message &, size_t = 0) const;
+    int target(msgdest &, message &, size_t = 0) const;
     metatype *item(message &, size_t = 0) const;
 
     // untracked references to shedule update

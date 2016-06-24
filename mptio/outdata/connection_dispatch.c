@@ -63,7 +63,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	
 	/* start with raw push of message ID */
 	if ((ret = mpt_outdata_push(&con->out, rc->len, rc->_val)) < 0
-	    || (ret = mpt_connection_send(con, src)) < 0) {
+	    || (ret = mpt_outdata_send(&con->out, src)) < 0) {
 		connectionLog(con, __func__, MPT_FCNLOG(Error), "%s (%04x): %s",
 			      MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 		return MPT_ERROR(BadArgument);

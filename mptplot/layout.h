@@ -6,11 +6,12 @@
 #ifndef _MPT_LAYOUT_H
 #define _MPT_LAYOUT_H  @INTERFACE_VERSION@
 
-#ifndef __cplusplus
-# include "core.h"
-#else
+#ifdef __cplusplus
+# include "meta.h"
 # include "array.h"
 # include <limits>
+#else
+# include "core.h"
 #endif
 
 struct iovec;
@@ -18,6 +19,7 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(array);
+MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(AxisFlag) {
 	MPT_ENUM(AxisStyleGen)  = 0,
@@ -327,6 +329,26 @@ MPT_INTERFACE(cycle)
 #endif
 };
 
+/* binding to layout mapping */
+MPT_STRUCT(mapping)
+#ifdef _MPT_MESSAGE_H
+{
+#ifdef __cplusplus
+	inline mapping(const msgbind &m = msgbind(0), const msgdest &d = msgdest(), int c = 0) :
+		src(m), client(c), dest(d)
+	{ }
+	inline bool valid() const
+	{ return src.type != 0; }
+#else
+# define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
+#endif
+	MPT_STRUCT(msgbind) src;
+	uint16_t            client;
+	MPT_STRUCT(msgdest) dest;
+}
+#endif
+;
+
 __MPT_EXTDECL_BEGIN
 
 extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt);
@@ -404,6 +426,12 @@ extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *,
 extern void mpt_ticks_linear(MPT_STRUCT(dpoint) *, size_t , double , double);
 extern double mpt_tick_log10(int);
 
+#ifdef _MPT_MESSAGE_H
+/* data mapping operations */
+extern int mpt_mapping_add(MPT_STRUCT(array) *, const MPT_STRUCT(mapping) *);
+extern int mpt_mapping_del(const MPT_STRUCT(array) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(msgdest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
+extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
+#endif
 
 __MPT_EXTDECL_END
 

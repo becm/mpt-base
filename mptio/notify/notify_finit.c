@@ -9,8 +9,11 @@
 #endif
 
 #include "array.h"
+
 #include "event.h"
 #include "message.h"
+
+#include "output.h"
 
 #include "notify.h"
 

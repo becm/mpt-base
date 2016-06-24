@@ -6,8 +6,9 @@ set(sources
   logger.cpp
   message.cpp meta.cpp meta_new.cpp meta_buffer.cpp
   node_new.cpp
-  object.cpp parse.cpp queue.cpp
+  object.cpp parse.cpp proxy.cpp queue.cpp
   reply.cpp reference_wrap.cpp
+  std_cout.cpp
   value.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
@@ -30,7 +31,7 @@ if(MPT_WITH_IO)
   list(INSERT linklibs 0 ${Mpt_IO_LIBRARIES})
 endif(MPT_WITH_IO)
 
-set(headers object.h graphic.h)
+set(headers graphic.h)
 
 add_library(mpt++ SHARED ${sources} ${shared} libinfo.c)
 set_target_properties(mpt++ PROPERTIES VERSION 1.0.0 SOVERSION 1)

@@ -6,6 +6,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "meta.h"
+#include "output.h"
+
 #include "client.h"
 
 /*!

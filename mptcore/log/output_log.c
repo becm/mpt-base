@@ -8,7 +8,7 @@
 
 #include <sys/uio.h>
 
-#include "message.h"
+#include "output.h"
 
 /*!
  * \ingroup mptMessage

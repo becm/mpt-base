@@ -1,19 +1,76 @@
 /*!
- * MPT C++ library
+ * MPT core library
  *  object extensions
  */
 
 #ifndef _MPT_OBJECT_H
 #define _MPT_OBJECT_H  @INTERFACE_VERSION@
 
-#include <ostream>
-
 #include "core.h"
 
-namespace mpt {
+__MPT_NAMESPACE_BEGIN
 
-struct color;
-struct lineattr;
+MPT_INTERFACE(metatype);
+
+/*! generic object interface */
+MPT_INTERFACE(object)
+#ifdef __cplusplus
+{
+protected:
+	inline ~object() {}
+public:
+	enum { Type = TypeObject };
+	
+	class iterator;
+	class const_iterator;
+	
+	class iterator begin();
+	class iterator end();
+	
+	class const_iterator const_begin() const;
+	class const_iterator const_end() const;
+	class const_iterator begin() const;
+	class const_iterator end() const;
+	
+	bool set(const char *, const value &, logger * = logger::defaultInstance());
+	bool setProperties(const object &, logger * = logger::defaultInstance());
+	
+	inline int type() const
+	{ return property(0); }
+	
+	virtual void unref() = 0;
+	virtual uintptr_t addref();
+	virtual int property(struct property *) const = 0;
+	virtual int setProperty(const char *, metatype * = 0) = 0;
+#else
+; MPT_INTERFACE_VPTR(object) {
+	void (*unref)(MPT_INTERFACE(object) *);
+	uintptr_t (*addref)(MPT_INTERFACE(object) *);
+	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
+	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
+}; MPT_INTERFACE(object) {
+	const MPT_INTERFACE_VPTR(object) *_vptr;
+#endif
+};
+
+__MPT_EXTDECL_BEGIN
+
+/* get object type name */
+extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
+
+/* loop trough metatype/generic properties */
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+
+/* set metatype property to match argument */
+extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const MPT_STRUCT(value) *, const char * __MPT_DEFPAR(0));
+extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
+extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
+
+__MPT_EXTDECL_END
+
+#ifdef __cplusplus
+inline uintptr_t object::addref()
+{ return 0; }
 
 class object::const_iterator
 {
@@ -162,65 +219,20 @@ private:
     Property & operator= (const Property &);
 };
 
-template <typename T>
-class Source : public metatype
-{
-public:
-    Source(const T *val, size_t len = 1) : _d(val, len)
-    { }
-    virtual ~Source()
-    { }
-
-    void unref()
-    { delete this; }
-
-    int conv(int type, void *dest)
-    {
-        if (!_d.len()) return -2;
-        const T *val = _d.base();
-        type = convert((const void **) &val, typeIdentifier<T>(), dest, type);
-        if ((type < 0) || !dest) return type;
-        _d.shift(1);
-        return sizeof(T);
-    }
-protected:
-    Slice<const T> _d;
-};
-
-// auto-create reference
-template <typename T>
-class Container : protected Reference<T>
-{
-public:
-    inline Container(T *ref = 0) : Reference<T>(ref)
-    { }
-    inline Container(const Reference<T> &ref) : Reference<T>(ref)
-    { }
-    virtual ~Container()
-    { }
-    virtual const Reference<T> &ref()
-    {
-        if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
-        return *this;
-    }
-    inline T *pointer() const
-    { return Reference<T>::pointer(); }
-};
-
 class Object : protected Item<object>
 {
 public:
-    // create storage
+    /* create storage */
     Object(Object &);
     Object(object * = 0);
     Object(const Reference<object> &);
     virtual ~Object();
 
-    // get/replace meta pointer
+    /* get/replace meta pointer */
     Object & operator=(Object &);
     Object & operator=(Reference<object> const &);
 
-    // convert from other object type
+    /* convert from other object type */
     template <typename T>
     Object & operator=(Reference<T> const from)
     {
@@ -230,45 +242,84 @@ public:
         return *this;
     }
 
-    // get/replace meta pointer
+    /* get/replace meta pointer */
     inline object *pointer() const
     { return _ref; }
     virtual const Reference<object> &ref();
     virtual bool setPointer(object *);
 
-    // object store identifier
+    /* object store identifier */
     inline const char *name() const
     { return Item::name(); }
     virtual bool setName(const char *, int = -1);
 
-    // get property by name/position
+    /* get property by name/position */
     Property operator [](const char *);
     Property operator [](int);
     int type();
 
-    // object name hash
-    inline long hash() const
+    /* object name hash */
+    inline uintptr_t hash() const
     { return _hash; }
-    // name and object data printable
+    /* name and object data printable */
     inline bool printable() const
     { return name() && (!_ref || _ref->type() == 's'); }
 
-    // get properties from node list
+    /* get properties from node list */
     const node *getProperties(const node *, PropertyHandler , void *) const;
-    // set non-default/all child entrys
+    /* set non-default/all child entrys */
     int setProperties(node *) const;
     int setAllProperties(node *) const;
 
-    // get next node with default/unknown property
+    /* get next node with default/unknown property */
     node *getDefault(const node *) const;
     node *getAlien(const node *) const;
 
 protected:
-    long _hash;
+    uintptr_t _hash;
 };
 
-} /* namespace mpt */
+/*! interface to generic groups of metatypes elements */
+class Group : public object
+{
+public:
+    enum { Type = TypeGroup };
+    
+    int property(struct property *) const;
+    int setProperty(const char *, metatype *);
+    
+    virtual const Item<metatype> *item(size_t pos) const;
+    virtual Item<metatype> *append(metatype *);
+    virtual size_t clear(const metatype * = 0);
+    virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
+    
+    virtual const Transform &transform();
+    
+    bool copy(const Group &from, logger * = 0);
+    bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
+    
+protected:
+    inline ~Group() {}
+    virtual metatype *create(const char *, int = -1);
+};
+/*! Relation implemetation using Group as current element */
+class GroupRelation : public Relation
+{
+public:
+    inline GroupRelation(const Group &g, const Relation *p = 0, char sep = ':') : Relation(p), _curr(g), _sep(sep)
+    { }
+    virtual ~GroupRelation()
+    { }
+    metatype *find(int type, const char *, int = -1) const;
+protected:
+    const Group &_curr;
+    char _sep;
+};
+#endif /* C++ */
 
+__MPT_NAMESPACE_END
+
+#ifdef __cplusplus
 inline bool operator !=(const mpt::object::iterator &i1, const mpt::object::iterator &i2)
 {
     return !(i1 == i2);
@@ -278,6 +329,6 @@ inline bool operator !=(const mpt::object::const_iterator &i1, const mpt::object
     return !(i1 == i2);
 }
 
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &, const mpt::value &);
+#endif /* C++ */
 
-#endif // MPT_OBJECT_H
+#endif /* MPT_OBJECT_H */

@@ -163,10 +163,10 @@ static ssize_t nextPart(const message &msg, size_t len)
     }
 }
 
-int Graphic::target(laydest &addr, message &msg, size_t len) const
+int Graphic::target(msgdest &addr, message &msg, size_t len) const
 {
     message tmp;
-    laydest dst(_lastTarget.lay, _lastTarget.grf, _lastTarget.wld);
+    msgdest dst(_lastTarget.lay, _lastTarget.grf, _lastTarget.wld);
     Layout *lay = 0;
     Graph *grf = 0;
     World *wld = 0;

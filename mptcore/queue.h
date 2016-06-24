@@ -6,7 +6,11 @@
 #ifndef _MPT_QUEUE_H
 #define _MPT_QUEUE_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#ifdef __cplusplus
+# include "meta.h"
+#else
+# include "core.h"
+#endif
 
 __MPT_NAMESPACE_BEGIN
 

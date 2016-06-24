@@ -6,8 +6,10 @@
 
 #include <sys/uio.h>
 
+#include "meta.h"
 #include "convert.h"
-#include "core.h"
+
+#include "object.h"
 
 
 struct paramSource {

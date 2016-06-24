@@ -6,13 +6,14 @@
 #ifndef _MPT_STREAM_H
 #define _MPT_STREAM_H  @INTERFACE_VERSION@
 
-#include "core.h"
-
 #ifdef __cplusplus
 # include "array.h"
 # include "event.h"
 # include "notify.h"
 # include "queue.h"
+# include "output.h"
+#else
+# include "core.h"
 #endif
 
 struct sockaddr;
@@ -20,8 +21,9 @@ struct sockaddr;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(array);
-MPT_STRUCT(socket);
 MPT_STRUCT(message);
+
+MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(StreamFlags) {
 	/* state flags */
