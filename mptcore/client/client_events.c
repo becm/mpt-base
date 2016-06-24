@@ -90,23 +90,6 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	return MPT_event_term(ev, MPT_tr("terminate event loop"));
 }
 
-static int clientClear(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
-{
-	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
-	if (!ev) return 0;
-	if (ev->msg) {
-		MPT_STRUCT(message) msg = *ev->msg;
-		ssize_t part;
-		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
-		}
-	}
-	cl->_vptr->clear(cl);
-	return MPT_event_stop(ev, MPT_tr("solver cleared"));
-}
-
 static const struct
 {
 	const char *name;
@@ -117,7 +100,6 @@ cmdsolv[] = {
 	{"init",    mpt_cevent_init },
 	{"prep",    mpt_cevent_prep },
 	{"step",    mpt_cevent_step },
-	{"clear",   clientClear     },
 	{"close",   clientClose     }
 };
 

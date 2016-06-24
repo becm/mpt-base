@@ -32,7 +32,6 @@ MPT_INTERFACE_VPTR(client)
 	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*prep) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
-	void (*clear)(MPT_INTERFACE(client) *);
 };
 # define MPT_CLIENT_LOGLEVEL MPT_FCNLOG(Debug2)
 MPT_INTERFACE(client)
@@ -51,7 +50,6 @@ public:
 	virtual int  init(MPT_INTERFACE(metatype) * = 0);
 	virtual int  prep(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
-	virtual void clear();
 protected:
 	inline ~client() { }
 #endif
@@ -158,8 +156,6 @@ inline int client::init(metatype *)
 { return 0; }
 inline int client::prep(metatype *)
 { return 0; }
-inline void client::clear()
-{ }
 #endif /* C++ */
 
 __MPT_NAMESPACE_END
