@@ -107,9 +107,10 @@ static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	return mpt_slice_conv(&m->s, type, ptr);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer;
-static MPT_INTERFACE(metatype) *bufferClone(MPT_INTERFACE(metatype) *meta)
+static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 {
-	MPT_STRUCT(metaBuffer) *m, *old = (void *) meta;
+	const MPT_STRUCT(metaBuffer) *old = (void *) meta;
+	MPT_STRUCT(metaBuffer) *m; 
 	
 	if (!(m = malloc(sizeof(*m)))) {
 		return 0;

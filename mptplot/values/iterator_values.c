@@ -70,7 +70,7 @@ static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
 	return 'd';
 }
 static const MPT_INTERFACE_VPTR(metatype) iteratorValues;
-static MPT_INTERFACE(metatype) *iterClone(MPT_INTERFACE(metatype) *mt)
+static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 {
 	struct _iter_sdata *it = (void *) mt;
 	const char *val;

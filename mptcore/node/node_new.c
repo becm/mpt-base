@@ -53,9 +53,9 @@ static int nodeConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	if (dest) *dest = ptr;
 	return type & 0xff;
 }
-static MPT_INTERFACE(metatype) *nodeClone(MPT_INTERFACE(metatype) *meta)
+static MPT_INTERFACE(metatype) *nodeClone(const MPT_INTERFACE(metatype) *meta)
 {
-	struct _inline_meta *m = (void *) meta;
+	const struct _inline_meta *m = (void *) meta;
 	return _mpt_geninfo_clone(&m->info);
 }
 

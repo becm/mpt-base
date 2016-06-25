@@ -38,7 +38,7 @@ public:
 	virtual void unref() = 0;
 	virtual int assign(const value *);
 	virtual int conv(int, void *);
-	virtual metatype *clone();
+	virtual metatype *clone() const;
 	
 	inline int type()
 	{ return conv(0, 0); }
@@ -48,7 +48,7 @@ public:
 	void (*unref)(MPT_INTERFACE(metatype) *);
 	int (*assign)(MPT_INTERFACE(metatype) *, const MPT_INTERFACE(value) *);
 	int (*conv)(MPT_INTERFACE(metatype) *, int, void *);
-	MPT_INTERFACE(metatype) *(*clone)(MPT_INTERFACE(metatype) *);
+	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
 	const MPT_INTERFACE_VPTR(metatype) *_vptr;
 #endif
@@ -56,7 +56,7 @@ public:
 
 
 #ifdef __cplusplus
-inline metatype *metatype::clone()
+inline metatype *metatype::clone() const
 { return 0; }
 
 /* specialize metatype string cast */

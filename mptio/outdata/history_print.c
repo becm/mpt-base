@@ -70,7 +70,7 @@ static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
 	ts->srclen = left;
 	return ts->type;
 }
-static MPT_INTERFACE(metatype) *histClone(MPT_INTERFACE(metatype) *src)
+static MPT_INTERFACE(metatype) *histClone(const MPT_INTERFACE(metatype) *src)
 {
 	(void) src; return 0;
 }

@@ -189,7 +189,7 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 	}
 	return 's';
 }
-static MPT_INTERFACE(metatype) *propClone(MPT_INTERFACE(metatype) *ctl)
+static MPT_INTERFACE(metatype) *propClone(const MPT_INTERFACE(metatype) *ctl)
 {
 	(void) ctl; return 0;
 }

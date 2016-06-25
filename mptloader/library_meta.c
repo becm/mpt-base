@@ -92,10 +92,21 @@ static int mpConv(MPT_INTERFACE(metatype) *m, int type, void *ptr)
 	}
 	return MPT_ERROR(BadType);
 }
-static MPT_INTERFACE(metatype) *mpClone(MPT_INTERFACE(metatype) *m)
+static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 {
-	(void) m;
-	return 0;
+	const struct _mpt_metaProxy *mp = (void *) m;
+	struct _mpt_metaProxy *n;
+	
+	if (mp->lh.lib) {
+		return 0;
+	}
+	if (!(n = malloc(sizeof(*n)))) {
+		return 0;
+	}
+	*n = *mp;
+	n->ptr = 0;
+	
+	return &n->_mt;
 }
 static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
 	mpUnref,

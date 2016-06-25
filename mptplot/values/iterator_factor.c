@@ -135,7 +135,7 @@ static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
 	}
 	return 'd';
 }
-static MPT_INTERFACE(metatype) *iterClone(MPT_INTERFACE(metatype) *mt)
+static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 {
 	struct _iter_fdata *c;
 	

@@ -43,7 +43,7 @@ static int metaConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	if (dest) *dest = ptr;
 	return type & 0xff;
 }
-static MPT_INTERFACE(metatype) *metaClone(MPT_INTERFACE(metatype) *meta)
+static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *meta)
 {
 	uint64_t *info = (uint64_t *) (meta + 1);
 	return _mpt_geninfo_clone(info);
