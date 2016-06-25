@@ -27,14 +27,18 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	FILE *fd;
 	int res, len;
 	
-	if (!val) {
-		return MPT_ERROR(BadArgument);
-	}
 	format = 0;
 	limit = "ns";
 	
-	if (!val->fmt) {
+	if (!val) {
+		if (!(fname = mpt_node_data(conf, 0))) {
+			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("no default filename"));
+			return MPT_ERROR(BadArgument);
+		}
+	}
+	else if (!val->fmt) {
 		if (!(fname = val->ptr)) {
+			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad file name argument"));
 			return MPT_ERROR(BadArgument);
 		}
 		len = 0;
@@ -43,6 +47,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		FILE * const *ptr = val->ptr;
 		fname = 0;
 		if (!(fd = *ptr)) {
+			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad file argument"));
 			return MPT_ERROR(BadValue);
 		}
 		len = 1;
@@ -50,6 +55,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	else if (val->fmt[0] == 's') {
 		char * const *ptr = val->ptr;
 		if (!(fname = *ptr)) {
+			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad file name part"));
 			return MPT_ERROR(BadValue);
 		}
 		len = 1;
