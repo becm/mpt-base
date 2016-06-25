@@ -21,7 +21,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 		
 		/* skip masked types */
 		flag = head->children ? MPT_ENUM(TraverseNonLeafs) : MPT_ENUM(TraverseLeafs);
-		if (flag & match) {
+		if (!(flag & match)) {
 			continue;
 		}
 		prop.desc = 0;
