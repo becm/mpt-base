@@ -29,8 +29,10 @@
  * 
  * \return result of send operation
  */
-extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *data)
+extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fmt, ...)
 {
+	va_list va;
+	
 	if (code < CHAR_MIN || code > CHAR_MAX) {
 		errno = ERANGE;
 		return -2;
@@ -40,6 +42,9 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		FILE *fd = stderr;
 		const char *ansi = 0;
 		
+		if (!fmt) {
+			return 0;
+		}
 		if (!code) {
 			code = MPT_ENUM(LogDebug);
 		}
@@ -50,9 +55,6 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 			code = MPT_ENUM(LogError);
 		}
 		
-		if (!data) {
-			return 0;
-		}
 		if ((isatty(fileno(fd)) > 0) && (ansi = mpt_ansi_code(code))) {
 			fputs(ansi, fd);
 		}
@@ -65,12 +67,15 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		if (ansi) {
 			fputs(mpt_ansi_reset(), stderr);
 		}
-		fputs(data, fd);
+		va_start(va, fmt);
+		fprintf(fd, fmt, va);
+		va_end(va);
 		fputc('\n', stderr);
 		
 		return 1;
 	}
 	else {
+		char buf[256];
 		MPT_STRUCT(message) msg;
 		struct iovec cont;
 		MPT_STRUCT(msgtype) mt;
@@ -81,16 +86,26 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *da
 		
 		msg.base = &mt;
 		msg.used = sizeof(mt);
+		msg.clen = 0;
 		
-		
-		if (data && (cont.iov_len = strlen(data))) {
-			cont.iov_base = (void *) data;
-			msg.cont = &cont;
-			msg.clen = 1;
-		} else {
-			msg.clen = 0;
+		if (fmt) {
+			int len;
+			va_start(va, fmt);
+			len = vsnprintf(buf, sizeof(buf), fmt, va);
+			va_end(va);
+			if (len > 0) {
+				if (len > (int) sizeof(buf)) {
+					len = sizeof(buf);
+					buf[len-1] = '.';
+					buf[len-2] = '.';
+					buf[len-3] = '.';
+				}
+				cont.iov_base = buf;
+				cont.iov_len  = len;
+				msg.cont = &cont;
+				msg.clen = 1;
+			}
 		}
-		
 		if ((ret = ev->reply.set(ev->reply.context, &msg)) < 0) {
 			return ret;
 		}

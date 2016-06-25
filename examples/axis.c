@@ -33,7 +33,7 @@ static int assign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
 {
 	(void) src; (void) val; return MPT_ERROR(BadOperation);
 }
-static MPT_INTERFACE(metatype) *clone(MPT_INTERFACE(metatype) *src)
+static MPT_INTERFACE(metatype) *clone(const MPT_INTERFACE(metatype) *src)
 {
 	(void) src; return 0;
 }

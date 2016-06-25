@@ -102,19 +102,19 @@ MPT_STRUCT(dispatch);
 #endif
 
 #define MPT_event_good(ev,txt) \
-	(mpt_event_reply(ev, 0, txt), \
+	(mpt_event_reply(ev, 0, "%s", txt), \
 	 MPT_ENUM(EventNone))
 #define MPT_event_stop(ev,txt) \
-	(mpt_event_reply(ev, 1, txt), \
+	(mpt_event_reply(ev, 1, "%s", txt), \
 	 (ev)->id = 0, MPT_ENUM(EventDefault))
 #define MPT_event_cont(ev,txt) \
-	(mpt_event_reply(ev, 2, txt), \
+	(mpt_event_reply(ev, 2, "%s", txt), \
 	 MPT_ENUM(EventDefault))
 #define MPT_event_term(ev,txt) \
-	(mpt_event_reply(ev, 3, txt), \
+	(mpt_event_reply(ev, 3, "%s", txt), \
 	 MPT_ENUM(EventTerminate))
 #define MPT_event_fail(ev,code,txt) \
-	(mpt_event_reply(ev,(code) >= 0 ? MPT_ERROR(BadOperation) : (code),txt), \
+	(mpt_event_reply(ev, (code) >= 0 ? MPT_ERROR(BadOperation) : (code), "%s", txt), \
 	 (ev)->id = 0, ((MPT_ENUM(EventFail) | MPT_ENUM(EventDefault))))
 
 /* generic command registration */
@@ -137,7 +137,7 @@ public:
 __MPT_EXTDECL_BEGIN
 
 /* reply with message */
-extern int mpt_event_reply(const MPT_STRUCT(event) *, int , const char *);
+extern int mpt_event_reply(const MPT_STRUCT(event) *, int , const char *, ...);
 
 /* get/set event command */
 extern int mpt_command_set(MPT_STRUCT(array) *, const MPT_STRUCT(command) *);
