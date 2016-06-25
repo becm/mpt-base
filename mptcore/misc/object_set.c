@@ -27,39 +27,59 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 	size_t len = 0;
 	
 	while (*fmt) {
+		union {
+			int8_t   b;
+			uint8_t   y;
+			int16_t n;
+			uint16_t q;
+			int32_t i;
+			uint32_t u;
+			int64_t x;
+			uint64_t t;
+			
+			long l;
+			
+			float f;
+			double d;
+#ifdef _MPT_FLOAT_EXTENDED_H
+			long double e;
+#endif
+			void *p;
+		} val;
 		int curr;
 		
 		if ((curr = mpt_valsize(*fmt)) < 0) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((sizeof(buf) - len) < (curr ? (size_t) curr : sizeof(void*))) {
-			return MPT_ERROR(BadOperation);
-		}
 		switch (*fmt) {
-		  case 'b': *((int8_t  *)   (buf+len)) = va_arg(va, int32_t); break;
-		  case 'y': *((uint8_t  *)  (buf+len)) = va_arg(va, uint32_t); break;
-		  case 'n': *((int16_t *)   (buf+len)) = va_arg(va, int32_t); break;
-		  case 'q': *((uint16_t *)  (buf+len)) = va_arg(va, uint32_t); break;
-		  case 'i': *((int32_t *)   (buf+len)) = va_arg(va, int32_t); break;
-		  case 'u': *((uint32_t *)  (buf+len)) = va_arg(va, uint32_t); break;
-		  case 'x': *((int64_t *)   (buf+len)) = va_arg(va, int64_t); break;
-		  case 't': *((uint64_t *)  (buf+len)) = va_arg(va, uint64_t); break;
+		  case 'b': val.b = va_arg(va, int32_t); break;
+		  case 'y': val.y = va_arg(va, uint32_t); break;
+		  case 'n': val.n = va_arg(va, int32_t); break;
+		  case 'q': val.q = va_arg(va, uint32_t); break;
+		  case 'i': val.i = va_arg(va, int32_t); break;
+		  case 'u': val.u = va_arg(va, uint32_t); break;
+		  case 'x': val.x = va_arg(va, int64_t); break;
+		  case 't': val.t = va_arg(va, uint64_t); break;
 		  
-		  case 'l': *((long *)  (buf+len)) = va_arg(va, long); break;
+		  case 'l': val.l = va_arg(va, long); break;
 		  
-		  case 'f': *((float *) (buf+len))  = va_arg(va, double); break;
-		  case 'd': *((double *) (buf+len)) = va_arg(va, double); break;
+		  case 'f': val.f = va_arg(va, double); break;
+		  case 'd': val.d = va_arg(va, double); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case 'e': *((long double *) (buf+len)) = va_arg(va, long double); break;
+		  case 'e': val.e = va_arg(va, long double); break;
 #endif
 		  default:
 			if (!curr) {
-				void *ptr = va_arg(va, void *);
-				memcpy(buf+len, &ptr, curr = sizeof(ptr));
+				val.p = va_arg(va, void *);
+				curr = sizeof(val.p);
 				break;
 			}
 			return MPT_ERROR(BadType);
 		}
+		if ((sizeof(buf) - len) < (size_t) curr) {
+			return MPT_ERROR(BadOperation);
+		}
+		memcpy(buf+len, &val, curr);
 		len += curr;
 		++fmt;
 	}

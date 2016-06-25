@@ -39,7 +39,6 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 	}
 	
 	if (!ev || !ev->reply.set) {
-		FILE *fd = stderr;
 		const char *ansi = 0;
 		
 		if (!fmt) {
@@ -55,20 +54,20 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 			code = MPT_ENUM(LogError);
 		}
 		
-		if ((isatty(fileno(fd)) > 0) && (ansi = mpt_ansi_code(code))) {
-			fputs(ansi, fd);
+		if ((isatty(fileno(stderr)) > 0) && (ansi = mpt_ansi_code(code))) {
+			fputs(ansi, stderr);
 		}
-		fputc('[', fd);
-		fputc('>', fd);
-		fputs(mpt_log_identifier(code), fd);
-		fputc(']', fd);
-		fputc(' ', fd);
+		fputc('[', stderr);
+		fputc('>', stderr);
+		fputs(mpt_log_identifier(code), stderr);
+		fputc(']', stderr);
+		fputc(' ', stderr);
 		
 		if (ansi) {
 			fputs(mpt_ansi_reset(), stderr);
 		}
 		va_start(va, fmt);
-		fprintf(fd, fmt, va);
+		fprintf(stderr, fmt, va);
 		va_end(va);
 		fputc('\n', stderr);
 		
