@@ -7,6 +7,7 @@ src = files(
   'dispatch_finit.c',
   'dispatch_hash.c',
   'dispatch_set.c',
+  'event_command.c',
   'event_reply.c',
   'reply_context.c',
 )

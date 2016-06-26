@@ -67,7 +67,7 @@ protected:
         void unref();
         int assign(const value *);
         int conv(int, void *);
-        metatype *clone();
+        metatype *clone() const;
 
     protected:
         node *_base;
@@ -137,7 +137,7 @@ int NodePrivate::Meta::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type & 0xff;
 }
-metatype *NodePrivate::Meta::clone()
+metatype *NodePrivate::Meta::clone() const
 {
     return _mpt_geninfo_clone(&_info);
 }
@@ -189,7 +189,7 @@ void Metatype::unref()
     delete this;
 }
 
-metatype *Metatype::clone()
+metatype *Metatype::clone() const
 {
     return _mpt_geninfo_clone(&_info);
 }

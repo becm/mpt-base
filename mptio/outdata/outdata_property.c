@@ -46,22 +46,22 @@ static int outputEncoding(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src
 	MPT_STRUCT(stream) *srm;
 	char *where;
 	int32_t val;
-	int type;
+	int res;
 	uint8_t rtype;
 	
 	if (!src) {
-		type = out->_coding;
+		rtype = out->_coding;
 	}
-	else if ((type = src->_vptr->conv(src, 's', &where)) >= 0) {
+	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {
 		val = mpt_encoding_value(where, -1);
 		if (val < 0 || val > UINT8_MAX) {
 			return -2;
 		}
 		rtype = val;
 	}
-	else if ((type = src->_vptr->conv(src, 'y', &rtype)) < 0) {
-		type = src->_vptr->conv(src, 'i', &val);
-		if (type < 0 || val < 0 || val > UINT8_MAX) {
+	else if ((res = src->_vptr->conv(src, 'y', &rtype)) < 0) {
+		res = src->_vptr->conv(src, 'i', &val);
+		if (res < 0 || val < 0 || val > UINT8_MAX) {
 			return -3;
 		}
 		rtype = val;
@@ -80,7 +80,7 @@ static int outputEncoding(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src
 	}
 	if (MPT_socket_active(&out->sock) || !(srm = out->_buf)) {
 		out->_coding = rtype;
-		return type;
+		return res;
 	}
 	if (srm->_wd._enc) {
 		srm->_wd._enc(&srm->_wd._state, 0, 0);
@@ -92,7 +92,7 @@ static int outputEncoding(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src
 	}
 	out->_coding = rtype;
 	
-	return type;
+	return res;
 }
 
 static int outdataColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)

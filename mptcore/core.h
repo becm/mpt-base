@@ -68,7 +68,8 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
-MPT_STRUCT(output);
+
+MPT_INTERFACE(output);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))

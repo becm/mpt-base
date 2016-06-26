@@ -79,7 +79,7 @@ public:
     void unref();
     int assign(const value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
 
     Slice<const char> data() const;
     class Small;

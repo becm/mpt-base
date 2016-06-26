@@ -592,7 +592,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
 };
 
 class Text : public object, public metatype, public text
@@ -609,7 +609,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
 };
 
 class Axis : public object, public metatype, public axis
@@ -627,7 +627,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
 };
 
 class World : public object, public metatype, public world
@@ -645,7 +645,7 @@ public:
     
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
 };
 
 class Graph : public Collection, public metatype, public Transform3, public graph
@@ -669,7 +669,7 @@ public:
     void unref();
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
     
     int property(struct property *) const;
     int setProperty(const char *, metatype *);
@@ -706,7 +706,7 @@ public:
     void unref();
     int assign(const struct value *);
     int conv(int, void *);
-    metatype *clone();
+    metatype *clone() const;
     
     int property(struct property *pr) const;
     int setProperty(const char *pr, metatype *src);

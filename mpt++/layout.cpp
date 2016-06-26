@@ -75,7 +75,7 @@ int Line::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *Line::clone()
+metatype *Line::clone() const
 {
     return new Line(this);
 }
@@ -148,7 +148,7 @@ int Text::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *Text::clone()
+metatype *Text::clone() const
 {
     return new Text(this);
 }
@@ -214,7 +214,7 @@ int Axis::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *Axis::clone()
+metatype *Axis::clone() const
 {
     return new Axis(this);
 }
@@ -287,7 +287,7 @@ int World::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *World::clone()
+metatype *World::clone() const
 {
     return new World(this);
 }
@@ -356,7 +356,7 @@ int Graph::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *Graph::clone()
+metatype *Graph::clone() const
 {
     return new Graph(this);
 }
@@ -715,7 +715,7 @@ int Layout::conv(int type, void *ptr)
     if (dest) *dest = ptr;
     return type;
 }
-metatype *Layout::clone()
+metatype *Layout::clone() const
 {
     Layout *lay = new Layout;
 
