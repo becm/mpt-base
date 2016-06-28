@@ -14,16 +14,16 @@ static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
  * \ingroup mptObject
  * \brief process properties
  * 
- * Process object properties matching to mask.
+ * Process object properties matching traverse types.
  * 
- * \param obj  property source
- * \param proc process retreived properties
- * \param data argumernt for property processing
- * \param mask properties to process
+ * \param obj   property source
+ * \param proc  process retreived properties
+ * \param data  argumernt for property processing
+ * \param match properties to process
  * 
  * \return index of requested property
  */
-extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
 {
-	return mpt_generic_foreach(getProperty, (void *) obj, proc, data, mask);
+	return mpt_generic_foreach(getProperty, (void *) obj, proc, data, match);
 }

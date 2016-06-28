@@ -67,6 +67,11 @@ MPT_STRUCT(encode_queue) : public queue
 	
 	ssize_t push(size_t len, const void *);
 	
+	inline size_t done()
+	{ return _state.done; }
+	
+	bool trim(size_t);
+	
 	bool encoded() const
 	{ return _enc; }
 protected:
@@ -137,7 +142,7 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 
 /*!  */
-class DecodingQueue : decode_queue
+class DecodingQueue : protected decode_queue
 {
 public:
     DecodingQueue(DataDecoder = 0);

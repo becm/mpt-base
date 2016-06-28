@@ -29,6 +29,27 @@ int IODevice::getchar()
     return letter;
 }
 
+ssize_t decode_queue::receive()
+{
+    return mpt_queue_recv(this);
+}
+ssize_t encode_queue::push(size_t len, const void *data)
+{
+    return mpt_queue_push(this, len, data);
+}
+bool encode_queue::trim(size_t take)
+{
+    if (_state.done > len) {
+        return false;
+    }
+    if (take > _state.done) {
+        return false;
+    }
+    mpt_queue_crop(this, 0, take);
+    _state.done -= take;
+    return true;
+}
+
 DecodingQueue::DecodingQueue(DataDecoder dec) : decode_queue(dec), _mlen(-1)
 { }
 DecodingQueue::~DecodingQueue()
@@ -38,7 +59,7 @@ DecodingQueue::~DecodingQueue()
 
 bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
 {
-    if (!pendingMessage()) {
+    if (_mlen < 0) {
         return false;
     }
     mpt_message_get(this, _state.done, _mlen, &msg, cont);

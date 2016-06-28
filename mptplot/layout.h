@@ -560,6 +560,12 @@ public:
     void unref();
     virtual uintptr_t addref();
     
+    inline const Reference<Polyline> *begin() const
+    { return _part.begin(); }
+    
+    inline const Reference<Polyline> *end() const
+    { return _part.end(); }
+    
     Polyline *current() const;
     Polyline *advance();
     Polyline *append();

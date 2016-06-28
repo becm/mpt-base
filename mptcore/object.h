@@ -59,7 +59,7 @@ __MPT_EXTDECL_BEGIN
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 
 /* loop trough metatype/generic properties */
-extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 /* set metatype property to match argument */
 extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const MPT_STRUCT(value) *, const char * __MPT_DEFPAR(0));

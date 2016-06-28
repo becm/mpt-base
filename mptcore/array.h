@@ -515,7 +515,7 @@ template <typename T>
 class RefArray : public PointerArray
 {
 public:
-    typedef const T** iterator;
+    typedef Reference<T>* iterator;
     
     RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
     { }
@@ -531,10 +531,10 @@ public:
     }
 
     inline iterator begin() const
-    { return (const T **) _d.base(); }
+    { return reinterpret_cast<Reference<T>*>(_d.base()); }
     
     inline iterator end() const
-    { return ((const T **) _d.base())+length(); }
+    { return reinterpret_cast<Reference<T>*>(_d.base())+length(); }
     
     bool set(size_t pos, T *ref) const
     {

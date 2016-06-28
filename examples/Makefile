@@ -5,7 +5,7 @@ DIRS = core io cxx lua
 TESTS = client axis iter gen
 PROGS = readline ${TESTS}
 
-client client_static : CC=${CXX}
+client_static : CC=${CXX}
 
 DIR_TOP = ${MPT_PREFIX}
 include ../mpt.example.mk
@@ -17,6 +17,7 @@ readline : LDLIBS=-lmptloader
 axis iter gen : LDLIBS=-lmptplot -lmptcore
 %_static : LDLIBS=-lmpt++ -lmpt
 readline_static : LDLIBS=-lmpt -ldl
+graphic : LDLIBS=-lmpt++
 
 client : CPPFLAGS+=-std=c++11
 
