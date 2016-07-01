@@ -5,7 +5,7 @@
 #include "core.h"
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptCore
  * \brief process properties
  * 
  * Get properties from element via first

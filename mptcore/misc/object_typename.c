@@ -4,7 +4,7 @@
 
 /* get metatype name */
 /*!
- * \ingroup mptMeta
+ * \ingroup mptObject
  * \brief metatype name
  * 
  * Get type name for metatype.

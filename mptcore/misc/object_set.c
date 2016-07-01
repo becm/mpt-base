@@ -9,7 +9,7 @@
 #include "object.h"
 
 /*!
- * \ingroup mptMeta
+ * \ingroup mptObject
  * \brief set object property
  * 
  * Set property to data in argument list.

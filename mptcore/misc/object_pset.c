@@ -202,7 +202,7 @@ static const MPT_INTERFACE_VPTR(metatype) _prop_vptr = {
 
 
 /*!
- * \ingroup mptMeta
+ * \ingroup mptObject
  * \brief set object property
  * 
  * Set property data to value.
@@ -217,12 +217,11 @@ extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const M
 	struct paramSource src;
 	
 	src.ctl._vptr = &_prop_vptr;
-	src.sep = sep ? sep : " ,;/:";
 	
 	if (!val) {
-		src.val.fmt = 0;
-		src.val.ptr = 0;
+		src.sep = 0;
 	} else {
+		src.sep = sep ? sep : " ,;/:";
 		src.val = *val;
 	}
 	return obj->_vptr->setProperty(obj, name, &src.ctl);

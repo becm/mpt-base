@@ -14,7 +14,7 @@
 #include "client.h"
 
 /*!
- * \ingroup mptClient
+ * \ingroup mptOutput
  * \brief client output modification
  * 
  * Determine operations from event data.
@@ -24,10 +24,9 @@
  * 
  * \return hint to event controller (int)
  */
-extern int mpt_output_control(MPT_INTERFACE(output) *out, const MPT_STRUCT(message) *mptr)
+extern int mpt_output_control(MPT_INTERFACE(output) *out, int sep, const MPT_STRUCT(message) *mptr)
 {
-	MPT_STRUCT(msgtype) mt;
-	MPT_STRUCT(message) msg, tmp;
+	MPT_STRUCT(message) msg;
 	MPT_STRUCT(value) val;
 	char buf[256];
 	ssize_t part = -1;
@@ -36,18 +35,9 @@ extern int mpt_output_control(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 	if (!out || !mptr) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* get command type */
+	/* get command argument */
 	msg = *mptr;
-	if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-		return MPT_ERROR(MissingData);
-	}
-	if (mt.cmd != MPT_ENUM(MessageCommand)) {
-		return MPT_ERROR(BadArgument);
-	}
-	/* first argument (consume command) */
-	if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
-	    || (mpt_message_read(&msg, part, 0) < (size_t) part)
-	    || ((part = mpt_message_argv(&msg, mt.arg)) <= 0)) {
+	if (((part = mpt_message_argv(&msg, sep)) <= 0)) {
 		mpt_output_log(out, __func__, MPT_FCNLOG(Warning), "%s", MPT_tr("missing control arguments"));
 		return MPT_ERROR(MissingData);
 	}
@@ -55,13 +45,12 @@ extern int mpt_output_control(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 		mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("unaligned command message"));
 		return MPT_ERROR(MissingBuffer);
 	}
-	tmp = msg;
 	mpt_message_read(&msg, part, buf);
 	buf[part] = 0;
 	
 	/* open new connection */
 	if (part >= 4 && !strncmp("open", buf, part)) {
-		if ((part = mpt_message_argv(&msg, mt.arg)) < 0) {
+		if ((part = mpt_message_argv(&msg, sep)) < 0) {
 			mpt_output_log(out, __func__, MPT_FCNLOG(Warning), "%s", MPT_tr("missing connect argument"));
 			return MPT_ERROR(MissingData);
 		}
@@ -94,7 +83,7 @@ extern int mpt_output_control(MPT_INTERFACE(output) *out, const MPT_STRUCT(messa
 		mpt_output_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("closed connection"));
 		return 0;
 	}
-	msg = tmp;
+	msg = *mptr;
 	/* send message data */
 	if (msg.used) {
 		out->_vptr->push(out, msg.used, msg.base);

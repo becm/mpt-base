@@ -6,6 +6,7 @@
 
 #include "array.h"
 #include "output.h"
+#include "message.h"
 
 #include "event.h"
 
@@ -17,9 +18,24 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 		return 0;
 	}
 	if (ev->msg) {
+		MPT_STRUCT(message) msg = *ev->msg;
+		MPT_STRUCT(msgtype) mt;
+		ssize_t part;
 		int err;
 		
-		if ((err = mpt_output_control(out, ev->msg)) >= 0) {
+		/* get command type */
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+		}
+		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+			return MPT_event_fail(ev, MPT_ERROR(BadArgument), MPT_tr("bad message type"));
+		}
+		/* consume command */
+		if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
+		    || (mpt_message_read(&msg, part, 0) < (size_t) part)) {
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing dispatch wrapper"));
+		}
+		if ((err = mpt_output_control(out, mt.arg, &msg)) >= 0) {
 			return MPT_event_good(ev, MPT_tr("graphic command processed"));
 		}
 		if (err == MPT_ERROR(MissingData)) {

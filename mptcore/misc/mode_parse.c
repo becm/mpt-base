@@ -208,6 +208,17 @@ static void lineSeparator(MPT_STRUCT(fdmode) *mode, const char **pos)
 	++(*pos);
 }
 
+/*!
+ * \ingroup mptCore
+ * \brief set file mode
+ * 
+ * Parse socket or local file mode description.
+ * 
+ * \param[out] smode  file mode information
+ * \param      mode   mode description
+ * 
+ * \return new metatype instance
+ */
 extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 {
 	MPT_STRUCT(fdmode) sm, def;

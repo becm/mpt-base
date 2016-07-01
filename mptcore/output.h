@@ -182,7 +182,7 @@ extern int mpt_conf_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 
 /* filter control message (open/close), push others */
-extern int mpt_output_control(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
+extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *);
 
 /* history operations */
 extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgvalfmt) *);
