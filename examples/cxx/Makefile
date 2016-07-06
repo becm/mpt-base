@@ -29,5 +29,4 @@ comp : LDLIBS+=-lmptio
 test_layout : ARGS=layout.lay
 
 # default to C++11 standard
-$(CXX11_TARGETS:%=%) : CPPFLAGS+=-std=c++11
 $(CXX11_TARGETS:%=%.o) : CPPFLAGS+=-std=c++11

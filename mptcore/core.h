@@ -347,31 +347,31 @@ class Transform;
 extern int convert(const void **, int , void *, int);
 
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier() { return T::Type; }
+inline __MPT_CONST_EXPR char typeIdentifier() { return static_cast<char>(T::Type); }
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const T &) { return typeIdentifier<T>(); }
+inline __MPT_CONST_EXPR char typeIdentifier(const T &) { return typeIdentifier<T>(); }
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()  { return 'f'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<double>() { return 'd'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<float>()  { return 'f'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<double>() { return 'd'; }
 /* integer values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<int8_t>()  { return 'b'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<int16_t>() { return 'n'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<int32_t>() { return 'i'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<int64_t>() { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<uint8_t>()  { return 'y'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<uint16_t>() { return 'q'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<uint32_t>() { return 'u'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<uint64_t>() { return 't'; }
 
 #if __SIZEOF_LONG__ != 8
 /* TODO: better detection when needed/conflicting */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<long>() { return TypeLong; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<unsigned long>() { return TypeULong; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<long>() { return TypeLong; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<unsigned long>() { return TypeULong; }
 #endif
 
-template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>()
+template<> inline __MPT_CONST_EXPR char typeIdentifier<long double>()
 {
 	return sizeof(long double) == 16 ? 'e'
 	: sizeof(long double) == 12 ? MPT_ENUM(TypeFloat80)
@@ -381,7 +381,7 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>()
 }
 
 template<typename T>
-inline __MPT_CONST_EXPR int vectorIdentifier() {
+inline __MPT_CONST_EXPR char vectorIdentifier() {
     return (typeIdentifier<T>() > _TypeFinal ||
             (typeIdentifier<T>() & ~TypeUser) < TypeScalBase)
               ? 0 : typeIdentifier<T>() - TypeScalBase + TypeVecBase;
@@ -525,15 +525,16 @@ public:
         if (!(_len -= (l * sizeof(T)))) _base = 0;
         return true;
     }
-    const char *fmt()
-    {
-        static const char fmt[] = { vectorIdentifier<T>(), 0 };
-        return fmt;
-    }
 protected:
     T *_base;
     size_t _len;
 };
+template <typename T>
+inline __MPT_CONST_EXPR char typeIdentifier(Slice<T>)
+{ return vectorIdentifier<T>(); }
+template <typename T>
+inline __MPT_CONST_EXPR char typeIdentifier(Slice<const T>)
+{ return vectorIdentifier<T>(); }
 #endif
 
 /* text identifier for entity */

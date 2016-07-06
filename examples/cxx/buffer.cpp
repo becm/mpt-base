@@ -60,6 +60,8 @@ extern int main(int , char * const [])
 	
 	d.insert(3, 4);
 	d.set(2, 1);
+	std::cout << mpt::typeIdentifier(d) << std::endl;
+	std::cout << mpt::typeIdentifier(d.slice()) << std::endl;
 	for (auto &it : d) {
 		std::cout << it << std::endl;
 	}

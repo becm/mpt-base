@@ -6,14 +6,14 @@
 
 static int writeOutStream(void *p, const char *str, size_t len)
 {
-    reinterpret_cast<std::basic_ostream<char> *>(p)->write(str, len);
+    static_cast<std::basic_ostream<char> *>(p)->write(str, len);
     return 0;
 }
 
 std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::value &v)
 {
     if (!v.fmt) {
-        if (v.ptr) o << reinterpret_cast<const char *>(v.ptr);
+        if (v.ptr) o << static_cast<const char *>(v.ptr);
         return o;
     }
     if (!*v.fmt) return o;

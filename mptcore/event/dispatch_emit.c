@@ -87,6 +87,13 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
 		if ((len = ans->_vptr->push(ans, len + 2, buf)) < 0) {
 			return len;
 		}
+		if (ans->_vptr->push(ans, 0, 0) < 0) {
+			if (ans->_vptr->push(ans, 1, 0) < 0) {
+				return -1;
+			} else {
+				return -2;
+			}
+		}
 		return 1;
 	}
 	
@@ -172,17 +179,15 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	/* fallback on dispatcher output */
 	if (!ev->reply.set && disp->_ctx._buf) {
 		MPT_STRUCT(reply_context) *ctx;
-		uintptr_t *id;
-		if (!(ctx = mpt_reply_reserve(&disp->_ctx, sizeof(*id)))) {
+		
+		if (!(ctx = mpt_reply_reserve(&disp->_ctx, sizeof(ev->id)))) {
 			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Critical), "%s",
 			               MPT_tr("unable to register dispatch context"));
 		} else {
 			ctx->ptr = disp;
-			ctx->len = sizeof(*id);
+			ctx->len = sizeof(ev->id);
 			ctx->used = 1;
-			
-			id = (uintptr_t *) ctx->_val;
-			*id = ev->id ? ev->id : (size_t) -1;
+			memcpy(ctx->_val, &ev->id, sizeof(ev->id));
 			
 			ev->reply.set = (int (*)()) printReply;
 			ev->reply.context = ctx;

@@ -12,8 +12,8 @@ include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 DEF += $(if ${VCS_TAG},'__VCS_TAG__="${VCS_TAG}"','__ISO_DATE__="${ISODATE}"')
 #
 # preprocessor flags
-CPPWARN ?= all error pedantic
-CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
+CPPWARN ?= all error pedantic extra format-security
+CPPFLAGS ?= $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
 # compiler flags
 CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
 CXXFLAGS ?= ${CFLAGS}

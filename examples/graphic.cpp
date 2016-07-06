@@ -17,4 +17,8 @@ int main()
     l = g.createLayout();
     
     l->set("name", "lay");
+    
+    g.registerUpdate(l, mpt::UpdateHint(0));
+    
+    g.removeLayout(l);
 }

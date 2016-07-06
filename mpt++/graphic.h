@@ -113,7 +113,7 @@ public:
                 if (!c[j].used || c[i].data != c[j].data) {
                     continue;
                 }
-                if (!c->hint.merge(c->hint, mask)) {
+                if (!c[i].hint.merge(c[j].hint, mask)) {
                     continue;
                 }
                 c[i].used += c[j].used;

@@ -67,7 +67,7 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 			fputs(mpt_ansi_reset(), stderr);
 		}
 		va_start(va, fmt);
-		fprintf(stderr, fmt, va);
+		vfprintf(stderr, fmt, va);
 		va_end(va);
 		fputc('\n', stderr);
 		

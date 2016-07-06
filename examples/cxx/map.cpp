@@ -38,7 +38,7 @@ extern int main(int , char * const [])
 		return 1;
 	}
 	
-	Array<Reference<Cycle> > r = p.values();
+	Array<Reference<Cycle>> r = p.values();
 	
 	for (auto &x : r) {
 		Cycle *m = x.pointer();

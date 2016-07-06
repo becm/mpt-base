@@ -335,10 +335,10 @@ public:
     { clear(); }
 
     inline iterator begin() const
-    { return (T *) _d.base(); }
+    { return static_cast<T *>(_d.base()); }
     
     inline iterator end() const
-    { return ((T *) _d.base())+length(); }
+    { return begin()+length(); }
     
     Array & operator=(const Array &a)
     {
@@ -349,7 +349,7 @@ public:
     bool set(size_t pos, T const &v)
     {
         if (pos >= length() || !detach()) return false;
-        T *b = (T *) _d.base();
+        T *b = begin();
         b[pos] = v;
         return true;
     }
@@ -357,7 +357,7 @@ public:
     {
         if (!_d.shared()) {
             size_t i = length();
-            T *b = (T *) _d.prepend(sizeof(*b), pos*sizeof(*b));
+            T *b = static_cast<T *>(_d.prepend(sizeof(*b), pos*sizeof(*b)));
             if (!b) return false;
             new (b) T(v);
             b = (T *) _d.base();
@@ -367,7 +367,7 @@ public:
         size_t end, pre = length();
         array a;
         T *to;
-        if (!(to = (T *) a.set(((pos < pre ? pre : pos) + 1) * sizeof(T)))) {
+        if (!(to = static_cast<T *>(a.set(((pos < pre ? pre : pos) + 1) * sizeof(T))))) {
             return false;
         }
         if ((end = pre) > pos) {
@@ -391,13 +391,13 @@ public:
     inline T *get(size_t pos) const
     {
         if (pos >= length()) return 0;
-        return ((T*) _d.base())+pos;
+        return begin()+pos;
     }
     inline size_t length() const
     { return _d.length()/sizeof(T); }
     
     inline Slice<const T> slice() const
-    { return Slice<const T>(get(0), length()); }
+    { return Slice<const T>(begin(), length()); }
     
     bool detach()
     {
@@ -405,8 +405,8 @@ public:
         size_t len = length();
         array a;
         T *to;
-        if (!(to = (T *) a.set(len * sizeof(T)))) return false;
-        T *old = (T *) _d.base();
+        if (!(to = static_cast<T *>(a.set(len * sizeof(T))))) return false;
+        T *old = begin();
         for (size_t i = 0; i < len; ++i) {
              new (to+i) T(old[i]);
         }
@@ -419,13 +419,19 @@ public:
             _d = array();
             return;
         }
-        T *b = (T *) _d.base();
+        T *b = begin();
         for (size_t i = 0, len = length(); i < len; ++i) b[i].~T();
         _d.set(0);
     }
 protected:
     struct array _d;
 };
+template <typename T>
+inline __MPT_CONST_EXPR char typeIdentifier(Array<T>)
+{ return MPT_value_toArray(typeIdentifier<T>()); }
+template <typename T>
+inline __MPT_CONST_EXPR char typeIdentifier(Array<const T>)
+{ return typeIdentifier<Array<T> >(); }
 
 
 /*! typed array with standard operations */
@@ -438,7 +444,7 @@ public:
     
     Item<T> *append(T *t, const char *id, int len = -1)
     {
-        Item<T> *it = (Item<T> *) Array<Item<T> >::_d.append(sizeof(*it));
+        Item<T> *it = static_cast<Item<T> *>(Array<Item<T> >::_d.append(sizeof(*it)));
         if (!it) return 0;
         new (it) Item<T>(t);
         if (it->setName(id, len)) {
@@ -531,38 +537,38 @@ public:
     }
 
     inline iterator begin() const
-    { return reinterpret_cast<Reference<T>*>(_d.base()); }
+    { return static_cast<Reference<T>*>(_d.base()); }
     
     inline iterator end() const
-    { return reinterpret_cast<Reference<T>*>(_d.base())+length(); }
+    { return static_cast<Reference<T>*>(_d.base())+length(); }
     
     bool set(size_t pos, T *ref) const
     {
         if (_d.shared() || pos >= length()) return false;
-        T **b = ((T **) _d.base()) + pos;
+        T **b = static_cast<T **>(_d.base()) + pos;
         if (*b) (*b)->unref();
         *b = ref;
         return true;
     }
     inline T *get(size_t pos) const
     {
-        return (T *) PointerArray::get(pos);
+        return static_cast<T *>(PointerArray::get(pos));
     }
     T **resize(size_t len)
     {
         if (_d.shared()) return 0;
         size_t s = length();
         if (len <= s) {
-            T **b = (T**) _d.base();
+            T **b = static_cast<T **>(_d.base());
             for (size_t i = len; i < s; ++i) {
                 if (b[i]) b[i]->unref();
             }
         }
-        return (T**) _d.set(len * sizeof(T*));
+        return static_cast<T **>(_d.set(len * sizeof(T*)));
     }
     size_t clear(const T *ref = 0) const
     {
-        T **pos = (T**) _d.base();
+        T **pos = static_cast<T **>(_d.base());
         size_t elem = 0, len = length();
         if (!ref) {
             for (size_t i = 0; i < len; ++i) {
@@ -584,7 +590,7 @@ public:
         return elem;
     }
     inline const Array<Reference<T> > &asArray() const
-    { return *((const Array<Reference<T> > *) this); }
+    { return *reinterpret_cast<const Array<Reference<T> >*>(this); }
 };
 
 class LogStore : public logger

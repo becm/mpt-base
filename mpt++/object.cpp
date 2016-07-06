@@ -206,7 +206,7 @@ struct objectSetContext
 
 static int objectPropertySet(void *addr, const property *pr)
 {
-    const objectSetContext *con = reinterpret_cast<objectSetContext *>(addr);
+    const objectSetContext *con = static_cast<objectSetContext *>(addr);
     int ret;
     if (!pr->name) {
         return con->check ? con->check(con->cdata, pr) : 1;
