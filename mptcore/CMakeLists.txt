@@ -1,7 +1,7 @@
 # create MPT core library
 cmake_minimum_required(VERSION 2.6)
 
-set(headers core.h)
+set(headers core.h meta.h object.h output.h)
 
 set(subdirs
   array
