@@ -66,9 +66,8 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
  * \retval 0  success
  * \retval <0 assignment error
  */
-extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name)
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name, MPT_INTERFACE(output) *out)
 {
-	MPT_INTERFACE(output) *out;
 	uintptr_t id;
 	
 	if (!dsp || !name) {
@@ -76,14 +75,10 @@ extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name)
 	}
 	id = mpt_hash(name, strlen(name));
 	
-	if (!(out = dsp->_out)) {
+	if (!out) {
 		return mpt_dispatch_set(dsp, id, 0, 0);
 	}
-	if (!out->_vptr->obj.addref((void *) out)) {
-		return MPT_ERROR(BadType);
-	}
 	if (mpt_dispatch_set(dsp, id, clientOutput, out) < 0) {
-		out->_vptr->obj.unref((void *) out);
 		return MPT_ERROR(BadOperation);
 	}
 	return 0;

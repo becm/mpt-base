@@ -2,6 +2,7 @@
  * init/fini notifier.
  */
 
+#include <inttypes.h>
 #include <unistd.h>
 
 #if defined(__linux__)
@@ -27,8 +28,8 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 	/* process reply notification */
 	if (ev->id) {
 		if (ev->msg) {
-			mpt_output_log(disp->_out, "mpt_dispatch_emit", MPT_FCNLOG(Error), "%s: 0x%zx",
-			               MPT_tr("unprocessed reply id"), ev->id);
+			mpt_log(0, "mpt_dispatch_emit", MPT_FCNLOG(Error), "%s: 0x"PRIxPTR,
+			        MPT_tr("unprocessed reply id"), ev->id);
 		}
 		return disp->_def ? MPT_ENUM(EventDefault) : 0;
 	}

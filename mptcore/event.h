@@ -6,11 +6,10 @@
 #ifndef _MPT_EVENT_H
 #define _MPT_EVENT_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#include "array.h"
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(array);
 MPT_STRUCT(message);
 
 MPT_INTERFACE(output);
@@ -53,13 +52,12 @@ MPT_STRUCT(reply_context)
 	{ return used; }
 	
 	void unref();
-# ifdef _MPT_ARRAY_H
+	
 	class array : public RefArray<reply_context>
 	{
 	public:
 		reply_context *reserve(size_t len = 2);
 	};
-# endif
 #endif
 	void *ptr;
 	uint8_t _max;
@@ -69,10 +67,9 @@ MPT_STRUCT(reply_context)
 };
 
 /* command dispatcher */
-#ifdef _MPT_ARRAY_H
-# ifdef __cplusplus
-MPT_STRUCT(dispatch) : public Reference<output>
+MPT_STRUCT(dispatch)
 {
+#ifdef __cplusplus
 public:
 	dispatch();
 	~dispatch();
@@ -80,26 +77,19 @@ public:
 	bool set(uintptr_t, EventHandler , void *);
 	bool setDefault(uintptr_t);
 	void setError(EventHandler , void *);
-	
-	reply_context::array array;
 protected:
-# else
-MPT_STRUCT(dispatch)
-{
-#  define MPT_DISPATCH_INIT { 0, MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0, { 0, 0 } }
-	MPT_INTERFACE(output) *_out;
-	MPT_STRUCT(array) _ctx;
-# endif
+#else
+# define MPT_DISPATCH_INIT { MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
+#endif
 	MPT_STRUCT(array) _cmd; /* available commands for event */
 	uintptr_t         _def; /* default command id */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;
 	} _err;                 /* handler for unknown ids */
+	
+	MPT_STRUCT(reply_context) *_ctx;
 };
-#else /* _MPT_ARRAY_H */
-MPT_STRUCT(dispatch);
-#endif
 
 #define MPT_event_good(ev,txt) \
 	(mpt_event_reply(ev, 0, "%s", txt), \
@@ -161,7 +151,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
 /* register dispatch output control operations */
-extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *);
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
 /* new/available context on array */
 extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size_t len);

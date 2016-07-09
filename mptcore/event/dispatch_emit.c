@@ -18,9 +18,8 @@
 static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
 {
 	MPT_STRUCT(reply_context) *ctx;
-	MPT_STRUCT(message) msg;
-	MPT_STRUCT(output) *ans;
-	const uint8_t *base;
+	MPT_STRUCT(dispatch) *ans;
+	MPT_STRUCT(event) ev;
 	
 	/* allow single message only */
 	if (!(ctx = ptr)) {
@@ -29,103 +28,27 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
 	/* context is not registered */
 	if (!ctx->used) {
 		mpt_log(0, "mpt::dispatch::reply", MPT_FCNLOG(Critical), "%s",
-		        "called with unregistered context");
+		        MPT_tr("called with unregistered context"));
 		return MPT_ERROR(MissingData);
 	}
+	--ctx->used;
 	/* connected dispatcher was deleted */
-	if (!ctx->ptr) {
+	if (!(ans = ctx->ptr)) {
+		mpt_log(0, "mpt::dispatch::reply", MPT_FCNLOG(Critical), "%s",
+		        MPT_tr("context for answer destroyed"));
 		free(ctx);
-		return MPT_ERROR(MissingData);
+		return MPT_ERROR(BadArgument);
 	}
-	ans = ((MPT_STRUCT(dispatch) *) ctx->ptr)->_out;
-	
-	/* mark context unused */
-	ctx->used = 0;
-	
 	/* no output target/source */
-	if (!ans || !mptr) {
+	if (!ans->_err.cmd) {
 		return 0;
 	}
-	msg = *mptr;
+	ev.id = 0;
+	ev.msg = mptr;
+	ev.reply.set = 0;
+	ev.reply.context = 0;
 	
-	while (!msg.used) {
-		if (!msg.clen--) {
-			ans->_vptr->push(ans, 0, 0);
-			return 0;
-		}
-		msg.base = msg.cont->iov_base;
-		msg.used = msg.cont->iov_len;
-		++msg.cont;
-	}
-	base = msg.base;
-	
-	/* catch non-print messages */
-	if ((base[0] != MPT_ENUM(MessageOutput))
-	    && (base[0] != MPT_ENUM(MessageAnswer))) {
-		const char *fmt;
-		char buf[256];
-		ssize_t len;
-		
-		msg.used = mpt_message_read(&msg, 4, buf + (sizeof(buf)-4));
-		
-		/* print data info */
-		switch (msg.used) {
-		  case 1:  fmt = "{ %02x }"; break;
-		  case 2:  fmt = "{ %02x, %02x }"; break;
-		  case 3:  fmt = "{ %02x, %02x, %02x }"; break;
-		  default: fmt = "{ %02x, %02x, ... }"; break;
-		}
-		len = snprintf(buf+2, sizeof(buf)-6, fmt,
-		               buf[sizeof(buf)-4],
-		               buf[sizeof(buf)-3],
-		               buf[sizeof(buf)-2],
-		               buf[sizeof(buf)-1]);
-		buf[0] = MPT_ENUM(MessageAnswer);
-		buf[1] = 0;
-		
-		/* output buffered/transformed message */
-		if ((len = ans->_vptr->push(ans, len + 2, buf)) < 0) {
-			return len;
-		}
-		if (ans->_vptr->push(ans, 0, 0) < 0) {
-			if (ans->_vptr->push(ans, 1, 0) < 0) {
-				return -1;
-			} else {
-				return -2;
-			}
-		}
-		return 1;
-	}
-	
-	while (1) {
-		ssize_t curr = ans->_vptr->push(ans, msg.used, base);
-		
-		if (curr < 0 || (size_t) curr > msg.used) {
-			if (ans->_vptr->push(ans, 1, 0) < 0) {
-				return -1;
-			} else {
-				return -2;
-			}
-		}
-		if ((msg.used -= curr)){
-			base += curr;
-			continue;
-		}
-		if (!msg.clen--) {
-			if (ans->_vptr->push(ans, 0, 0) >= 0) {
-				return 0;
-			}
-			if (ans->_vptr->push(ans, 1, 0) < 0) {
-				return -1;
-			} else {
-				return -2;
-			}
-		}
-		msg.base = base = msg.cont->iov_base;
-		msg.used = msg.cont->iov_len;
-		
-		++msg.cont;
-	}
+	return ans->_err.cmd(ans->_err.arg, &ev);
 }
 
 /*!
@@ -142,6 +65,7 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *mptr)
 extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(event) tmp;
+	MPT_STRUCT(reply_context) *ctx;
 	const MPT_STRUCT(command) *cmd;
 	int state;
 	
@@ -154,8 +78,8 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		/* bad default command */
 		if (!(cmd = mpt_command_get(&disp->_cmd, tmp.id))) {
 			disp->_def = 0;
-			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Critical), "%s (%"PRIxPTR")",
-			               MPT_tr("invalid default command id"), tmp.id);
+			mpt_log(0, __func__, MPT_FCNLOG(Critical), "%s (%"PRIxPTR")",
+			        MPT_tr("invalid default command id"), tmp.id);
 			return -2;
 		}
 		tmp.msg = 0;
@@ -177,21 +101,14 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		cmd = mpt_command_get(&disp->_cmd, ev->id = id);
 	}
 	/* fallback on dispatcher output */
-	if (!ev->reply.set && disp->_ctx._buf) {
-		MPT_STRUCT(reply_context) *ctx;
+	if (!ev->reply.set && (ctx = disp->_ctx)) {
+		ctx->ptr = disp;
+		ctx->len = sizeof(ev->id);
+		++ctx->used;
+		memcpy(ctx->_val, &ev->id, sizeof(ev->id));
 		
-		if (!(ctx = mpt_reply_reserve(&disp->_ctx, sizeof(ev->id)))) {
-			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Critical), "%s",
-			               MPT_tr("unable to register dispatch context"));
-		} else {
-			ctx->ptr = disp;
-			ctx->len = sizeof(ev->id);
-			ctx->used = 1;
-			memcpy(ctx->_val, &ev->id, sizeof(ev->id));
-			
-			ev->reply.set = (int (*)()) printReply;
-			ev->reply.context = ctx;
-		}
+		ev->reply.set = (int (*)()) printReply;
+		ev->reply.context = ctx;
 	}
 	/* execute resolved command */
 	if (cmd) {
@@ -202,16 +119,13 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state = disp->_err.cmd(disp->_err.arg, ev);
 	}
 	else {
-		mpt_event_reply(ev, MPT_ERROR(BadType), "unknown command");
-		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Warning), "%s (%"PRIxPTR")",
-		               MPT_tr("invalid command id"), ev->id);
+		mpt_event_reply(ev, MPT_ERROR(BadType), "%s: "PRIxPTR, MPT_tr("unknown command"), ev->id);
 		return -2;
 	}
 	/* bad execution of command */
 	if (state < 0) {
-		mpt_event_reply(ev, MPT_ERROR(BadArgument), "unknown command");
-		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Debug), "%s (%"PRIxPTR")",
-		               MPT_tr("command execution failed"), ev->id);
+		mpt_event_reply(ev, MPT_ERROR(BadArgument), "%s: "PRIxPTR,
+		                MPT_tr("command execution failed"), ev->id);
 		return state;
 	}
 	/* modify default command */

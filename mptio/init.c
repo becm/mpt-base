@@ -34,6 +34,7 @@
 extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 {
 	MPT_INTERFACE(metatype) *conf;
+	MPT_INTERFACE(output) *out;
 	MPT_STRUCT(notify) *no;
 	MPT_STRUCT(dispatch) *disp;
 	const char *ctl = 0, *src = 0, *cname = 0;
@@ -83,21 +84,22 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	mpt_notify_setdispatch(no, disp);
 	
 	/* set notification output */
-	if (disp->_out || (disp->_out = mpt_output_new(no))) {
+	if ((out = mpt_output_new(no))) {
+		disp->_err.arg = out;
 		/* set debug parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) disp->_out, "print", "s", cname);
+			mpt_object_set((void *) out, "print", "s", cname);
 		}
 		/* set debug parameter */
 		else if ((conf = mpt_config_get(0, "mpt.debug", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) disp->_out, "debug", "s", cname);
+			mpt_object_set((void *) out, "debug", "s", cname);
 		}
 		/* set answer parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.answer", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) disp->_out, "answer", "s", cname);
+			mpt_object_set((void *) out, "answer", "s", cname);
 		}
 	}
 	/* set default event if no input available */
@@ -127,7 +129,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		}
 		/* add command source */
 		else if (mpt_notify_connect(no, ctl) < 0) {
-			mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error),
+			mpt_output_log(out, __func__, MPT_FCNLOG(Error),
 			               "%s: %s", MPT_tr("unable to connect to control"), ctl);
 			
 			mpt_notify_fini(no);
@@ -137,7 +139,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	}
 	/* open socket with 2 listening slots */
 	if (src && mpt_notify_bind(no, src, 2) < 0) {
-		mpt_output_log(disp->_out, __func__, MPT_FCNLOG(Error),
+		mpt_output_log(out, __func__, MPT_FCNLOG(Error),
 		               "%s: %s", MPT_tr("unable to create source"), src);
 		
 		mpt_notify_fini(no);

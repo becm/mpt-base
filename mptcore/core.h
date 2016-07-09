@@ -319,7 +319,7 @@ MPT_STRUCT(property)
 	{ }
 	static int convertAssign(int v)
 	{ return (v * 0x10000) | Type; }
-#else 
+#else
 # define MPT_property_assign(v) (((v) * 0x10000) | MPT_ENUM(TypeProperty))
 #endif
 	const char *name;      /* property name */
