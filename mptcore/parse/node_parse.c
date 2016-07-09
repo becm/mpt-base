@@ -35,13 +35,14 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("no default filename"));
 			return MPT_ERROR(BadArgument);
 		}
+		len = 0;
 	}
 	else if (!val->fmt) {
 		if (!(fname = val->ptr)) {
 			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("bad file name argument"));
 			return MPT_ERROR(BadArgument);
 		}
-		len = 0;
+		len = 1;
 	}
 	else if (val->fmt[0] == MPT_ENUM(TypeFile)) {
 		FILE * const *ptr = val->ptr;

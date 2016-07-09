@@ -23,7 +23,7 @@
  */
 extern int mpt_outdata_send(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message) *src)
 {
-	ssize_t take;
+	int ret = 0;
 	
 	if (src) {
 		const uint8_t *base = src->base;
@@ -32,6 +32,7 @@ extern int mpt_outdata_send(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message) 
 		size_t clen = src->clen;
 		
 		while (1) {
+			ssize_t curr;
 			/* go to next non-empty part */
 			if (!used) {
 				if (!--clen) {
@@ -43,28 +44,28 @@ extern int mpt_outdata_send(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message) 
 				
 				continue;
 			}
-			take = mpt_outdata_push(out, used, base);
+			curr = mpt_outdata_push(out, used, base);
 			
-			if (take < 0 || (size_t) take > used) {
+			if (curr < 0 || (size_t) curr > used) {
 				if ((out->state & MPT_ENUM(OutputActive))
-				    && (take = mpt_outdata_push(out, 1, 0)) < 0) {
-					return take;
+				    && (curr = mpt_outdata_push(out, 1, 0)) < 0) {
+					return curr;
 				}
 				return -1;
 			}
 			/* advance part data */
 			out->state |= MPT_ENUM(OutputActive);
-			base += take;
-			used -= take;
+			base += curr;
+			used -= curr;
 		}
 	}
 	if (mpt_outdata_push(out, 0, 0) < 0) {
 		if ((out->state & MPT_ENUM(OutputActive))) {
 			(void) mpt_outdata_push(out, 1, 0);
 		}
-		take = -1;
+		ret = -1;
 	}
 	out->state &= ~(MPT_ENUM(OutputActive) | MPT_ENUM(OutputRemote));
 	
-	return take;
+	return ret;
 }
