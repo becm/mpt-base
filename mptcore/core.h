@@ -529,6 +529,7 @@ protected:
     T *_base;
     size_t _len;
 };
+
 template <typename T>
 inline __MPT_CONST_EXPR char typeIdentifier(Slice<T>)
 { return vectorIdentifier<T>(); }
@@ -730,8 +731,20 @@ __MPT_EXTDECL_END
 __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &, const mpt::value &);
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &, const mpt::property &);
+std::ostream &operator<<(std::ostream &, mpt::value);
+std::ostream &operator<<(std::ostream &, const mpt::property &);
+
+template <typename T>
+std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)
+{
+    typename mpt::Slice<T>::iterator begin = d.begin(), end = d.end();
+    if (begin == end) return o;
+    o << *(begin++);
+    while (begin != end) o << ' ' << *(begin++);
+    return o;
+}
+template <> std::ostream &operator<<(std::ostream &, mpt::Slice<char>);
+template <> std::ostream &operator<<(std::ostream &, mpt::Slice<const char>);
 #endif
 
 #endif /* _MPT_CORE_H */

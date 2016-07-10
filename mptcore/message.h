@@ -168,9 +168,9 @@ MPT_STRUCT(msgdest)
 	inline msgdest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
 		lay(l), grf(g), wld(w), dim(d)
 	{ }
-	inline bool operator==(const msgdest &ld) const
+	inline bool operator==(msgdest ld) const
 	{ return lay == ld.lay && grf == ld.grf && wld == ld.wld; }
-	inline bool same(const msgdest &ld) const
+	inline bool same(msgdest ld) const
 	{ return *this == ld && dim == ld.dim; }
 #else
 # define MPT_MSGDEST_INIT { 0, 0, 0, 0 }
@@ -253,7 +253,7 @@ extern int mpt_outbind_string(MPT_INTERFACE(output) *, const char *);
 /* push messages to output */
 extern int mpt_output_data(MPT_INTERFACE(output) *, int, int , int , const double *, int);
 extern int mpt_output_history(MPT_INTERFACE(output) *, int, const double *, int, const double *, int);
-extern int mpt_output_plot(MPT_INTERFACE(output) *, const MPT_STRUCT(msgdest) *, int, const double *, int);
+extern int mpt_output_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), int, const double *, int);
 
 /* parse character separated values */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);

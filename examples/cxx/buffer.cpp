@@ -38,8 +38,9 @@ void MyQueue::append(char c)
 const char *MyQueue::string()
 {
 	if (!prepare(1)) return 0;
-	char *base = (char *) data().base();
-	base[data().length()] = 0;
+	mpt::Slice<uint8_t> d = peek();
+	char *base = reinterpret_cast<char *>(d.base());
+	base[d.length()] = 0;
 	return base;
 }
 
@@ -61,14 +62,13 @@ extern int main(int , char * const [])
 	
 	d.insert(3, 4);
 	d.set(2, 1);
-	std::cout << mpt::typeIdentifier(d) << std::endl;
-	std::cout << mpt::typeIdentifier(d.slice()) << std::endl;
-	for (auto &it : d) {
-		std::cout << it << std::endl;
-	}
+	std::cout << mpt::typeIdentifier(d) << '>';
+	std::cout << mpt::typeIdentifier(d.slice()) << ": ";
+	std::cout << d.slice() << std::endl;
 	
 	cq.push('b');
 	cq.push(0);
+	std::cout << cq.data() << std::endl;
 	puts(cq.data().base());
 	
 	cqp.push(buf);

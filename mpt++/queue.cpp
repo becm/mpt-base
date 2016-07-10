@@ -136,6 +136,9 @@ Slice<uint8_t> Queue::peek(size_t len)
 {
     size_t low = 0;
     void *base = mpt_queue_data(&_d, &low);
+
+    if (!len) len = _d.len;
+
     if (len <= low) {
         len = low;
     }
@@ -144,6 +147,7 @@ Slice<uint8_t> Queue::peek(size_t len)
     }
     else {
         mpt_queue_align(&_d, 0);
+        base = _d.base;
         len = _d.len;
     }
     return Slice<uint8_t>(static_cast<uint8_t *>(base), len);

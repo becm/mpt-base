@@ -6,11 +6,11 @@
 
 static int writeOutStream(void *p, const char *str, size_t len)
 {
-    static_cast<std::basic_ostream<char> *>(p)->write(str, len);
+    static_cast<std::ostream *>(p)->write(str, len);
     return 0;
 }
 
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::value &v)
+std::ostream &operator<<(std::ostream &o, const mpt::value v)
 {
     if (!v.fmt) {
         if (v.ptr) o << static_cast<const char *>(v.ptr);
@@ -22,11 +22,21 @@ std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::val
     if (v.fmt[1]) o << '}';
     return o;
 }
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &o, const mpt::property &p)
+std::ostream &operator<<(std::ostream &o, const mpt::property &p)
 {
     if (!p.name) return o;
     o << p.name;
     o << " = ";
     o << p.val;
+    return o;
+}
+template <> std::ostream &operator<< <char>(std::ostream &o, mpt::Slice<char> p)
+{
+    writeOutStream(&o, p.base(), p.length());
+    return o;
+}
+template <> std::ostream &operator<< <const char>(std::ostream &o, mpt::Slice<const char> p)
+{
+    writeOutStream(&o, p.base(), p.length());
     return o;
 }

@@ -29,7 +29,7 @@ extern int main(int , char * const [])
 	p.push('\0');
 	p.unshift('h');
 	
-	std::cout << p.data().base() << std::endl;
+	std::cout << p.data() << std::endl;
 	
 	return 0;
 }
