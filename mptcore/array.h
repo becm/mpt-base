@@ -9,11 +9,10 @@
 #ifdef __cplusplus
 # include <new>
 # include <cstring>
-# include "object.h"
 struct iovec;
-#else
-# include "core.h"
 #endif
+
+#include "core.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -282,7 +281,7 @@ protected:
     array _d;
 };
 
-#ifdef _MPT_QUEUE_H
+#if defined(_MPT_QUEUE_H) && defined(_MPT_META_H)
 /* IO extension to buffer */
 class Buffer : public metatype, public IODevice, public EncodingArray
 {
@@ -708,21 +707,6 @@ public:
     }
 protected:
     Array<Element> _d;
-};
-
-/*! Group implementation using reference array */
-class Collection : public Group
-{
-public:
-    virtual ~Collection();
-    
-    const Item<metatype> *item(size_t) const;
-    Item<metatype> *append(metatype *);
-    size_t clear(const metatype * = 0);
-    bool bind(const Relation &, logger * = logger::defaultInstance());
-    
-protected:
-    ItemArray<metatype> _items;
 };
 
 #endif /* __cplusplus */

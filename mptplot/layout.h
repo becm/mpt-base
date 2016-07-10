@@ -9,6 +9,7 @@
 #ifdef __cplusplus
 # include "meta.h"
 # include "array.h"
+# include "object.h"
 # include <limits>
 #else
 # include "core.h"
@@ -654,6 +655,21 @@ public:
     metatype *clone() const;
 };
 
+/*! Group implementation using reference array */
+class Collection : public Group
+{
+public:
+    virtual ~Collection();
+    
+    const Item<metatype> *item(size_t) const;
+    Item<metatype> *append(metatype *);
+    size_t clear(const metatype * = 0);
+    bool bind(const Relation &, logger * = logger::defaultInstance());
+    
+protected:
+    ItemArray<metatype> _items;
+};
+
 class Graph : public Collection, public metatype, public Transform3, public graph
 {
 public:
@@ -662,8 +678,8 @@ public:
     public:
         Data(World *w = 0);
         
-        inline int unref()
-        { delete this; return 0; }
+        inline void unref()
+        { delete this; }
         
         Reference<Cycle> cycle;
     };

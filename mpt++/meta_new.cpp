@@ -2,7 +2,9 @@
  * MPT C++ metatype creator
  */
 
+#include "meta.h"
 #include "queue.h"
+
 #include "array.h"
 
 // metatype creator override

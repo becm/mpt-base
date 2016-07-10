@@ -7,6 +7,7 @@
 #define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
 #include "object.h"
+#include "event.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -71,7 +72,6 @@ MPT_INTERFACE(output)
 
 /* history information */
 MPT_STRUCT(histinfo)
-#ifdef _MPT_ARRAY_H
 {
 # ifdef __cplusplus
 public:
@@ -90,12 +90,9 @@ protected:
 	uint16_t           line; /* line lenth */
 	char               type; /* type information */
 	uint8_t            size; /* element size */
-}
-#endif
-;
+};
 
 MPT_STRUCT(outdata)
-#ifdef _MPT_ARRAY_H
 {
 # ifdef __cplusplus
 	outdata();
@@ -108,7 +105,7 @@ protected:
 # endif
 	MPT_STRUCT(socket) sock;  /* connected datagram socket */
 	void *_buf;               /* array buffer or stream pointer */
-#if defined(__cplusplus) && defined(_MPT_EVENT_H)
+#if defined(__cplusplus)
 	reply_context::array
 #else
 	MPT_STRUCT(array)
@@ -119,26 +116,23 @@ protected:
 	uint8_t  _socklen; /* socket address size */
 	uint8_t  _coding;  /* encoding identifier */
 	uint8_t  _idlen;   /* identifier length */
-}
-#endif
-;
+};
 
-#if defined(_MPT_ARRAY_H)
-# ifdef __cplusplus
+#ifdef __cplusplus
 MPT_STRUCT(connection) : public outdata
 {
 public:
 	connection();
 	~connection();
 protected:
-# else
+#else
 MPT_STRUCT(connection)
 {
-#  define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
-                                0, 0, \
-                                0, MPT_ARRAY_INIT, \
-                                { MPT_HISTINFO_INIT, 0 } }
-# endif
+# define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
+                               0, 0, \
+                               0, MPT_ARRAY_INIT, \
+                               { MPT_HISTINFO_INIT, 0 } }
+#endif
 	MPT_STRUCT(outdata)  out;   /* base output data */
 	uint8_t curr;               /* type of active message */
 	uint8_t level;              /* output level */
@@ -155,11 +149,7 @@ MPT_STRUCT(connection)
 #endif
 	      *file;
 	} hist;         /* history file parameters */
-	
 };
-#else
-MPT_STRUCT(connection);
-#endif
 
 MPT_STRUCT(output_values)
 {
@@ -228,9 +218,8 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void
 extern int mpt_connection_await(MPT_STRUCT(connection) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 /* handle connection input */
 extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
-#ifdef _MPT_EVENT_H
+/* dispatch event to handler */
 extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandler) cmd, void *arg);
-#endif
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *, va_list);
 

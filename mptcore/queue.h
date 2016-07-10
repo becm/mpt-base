@@ -6,11 +6,7 @@
 #ifndef _MPT_QUEUE_H
 #define _MPT_QUEUE_H  @INTERFACE_VERSION@
 
-#ifdef __cplusplus
-# include "meta.h"
-#else
-# include "core.h"
-#endif
+#include "core.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -176,7 +172,7 @@ protected:
     { }
 };
 
-class Queue : public metatype, public IODevice
+class Queue : public IODevice
 {
 public:
     Queue(size_t = 0);
@@ -184,12 +180,8 @@ public:
     
     enum { Type = IODevice::Type };
     
-    /* metatype interface */
-    void unref();
-    int assign(const value *);
-    int conv(int, void *);
-    
     /* IODevice interface */
+    void unref();
     ssize_t write(size_t , const void *, size_t);
     ssize_t read(size_t , void *, size_t);
     
@@ -228,7 +220,9 @@ public:
         *this = from.ref();
     }
     inline Pipe(Queue *q = 0) : Reference(q)
-    { }
+    {
+        ref();
+    }
     ~Pipe()
     { }
     const Reference<Queue> &ref()
@@ -237,46 +231,45 @@ public:
         return *this;
     }
     
-    T *push(const T & elem)
+    bool push(const T & elem)
     {
-        if (!_ref || !_ref->push(0, sizeof(T))) return 0;
-        Slice<uint8_t> d = _ref->data();
-        T *t = (T*) d.base();
-        size_t len = d.length() / sizeof(T);
-        if (t) new (t+=len-1) T(elem);
-        return t;
+        if (!_ref) return false;
+        uint8_t buf[sizeof(T)];
+        T *t = static_cast<T *>(static_cast<void *>(buf));
+        new (t) T(elem);
+        if (_ref->push(t, sizeof(T))) return true;
+        t->~T();
+        return false;
     }
     bool pop(T *data = 0) const
     {
         if (!_ref) return false;
-        Slice<uint8_t> d = _ref->data();
-        T *t = (T *) d.base();
-        size_t len = d.length() / sizeof(T);
-        if (!len) return false;
-        if (data) *data = t[len-1];
-        t[len-1].~T();
-        _ref->pop(0, sizeof(T));
+        uint8_t buf[sizeof(T)];
+        T *t = static_cast<T *>(static_cast<void *>(buf));
+        if (!_ref->pop(t, sizeof(T))) return false;
+        if (data) *data = *t;
+        else t->~T();
         return true;
     }
     
-    T *unshift(const T & elem)
+    bool unshift(const T & elem)
     {
-        if (!_ref || !_ref->unshift(0, sizeof(T))) return 0;
-        Slice<uint8_t> d = _ref->data();
-        T *t = (T*) d.base();
-        if (t) new (t) T(elem);
-        return t;
+        if (!_ref) return false;
+        uint8_t buf[sizeof(T)];
+        T *t = static_cast<T *>(static_cast<void *>(buf));
+        new (t) T(elem);
+        if (_ref->unshift(t, sizeof(T))) return true;
+        t->~T();
+        return false;
     }
     bool shift(T *data = 0) const
     {
         if (!_ref) return false;
-        Slice<uint8_t> d = _ref->data();
-        T *t = (T *) d.base();
-        size_t len = d.length() / sizeof(T);
-        if (!len) return false;
-        if (data) *data = t[0];
-        t[0].~T();
-        _ref->shift(0, sizeof(T));
+        uint8_t buf[sizeof(T)];
+        T *t = static_cast<T *>(static_cast<void *>(buf));
+        if (!_ref->shift(t, sizeof(T))) return false;
+        if (data) *data = *t;
+        else t->~T();
         return true;
     }
     

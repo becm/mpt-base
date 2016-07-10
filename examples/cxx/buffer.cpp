@@ -8,6 +8,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(queue.h)
 #include MPT_INCLUDE(array.h)
 
@@ -51,7 +52,7 @@ extern int main(int , char * const [])
 	mpt::Buffer buf;
 	mpt::Array<double> d;
 	
-	MyQueue  qu;
+	MyQueue qu;
 	mpt::Pipe<char> cq('a', 4);
 	mpt::Pipe<mpt::Buffer> cqp;
 	mpt::Queue *raw = &qu;

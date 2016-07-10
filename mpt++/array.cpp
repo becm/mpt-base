@@ -9,6 +9,7 @@
 #include "message.h"
 #include "convert.h"
 #include "queue.h"
+#include "meta.h"
 
 #include "array.h"
 

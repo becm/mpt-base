@@ -107,37 +107,6 @@ void Queue::unref()
 {
     delete this;
 }
-int Queue::assign(const value *val)
-{
-    if (!val) {
-        return mpt_queue_prepare(&_d, 0) ? 1 : 0;
-    }
-    if (!val->fmt) {
-        const char *d = (const char *) val->ptr;
-        return d ? write(1, d, strlen(d)) : 0;
-    }
-    return BadType;
-}
-int Queue::conv(int type, void *ptr)
-{
-    void **dest = (void **) ptr;
-
-    if (type & ValueConsume) {
-        return BadOperation;
-    }
-    if (!type) {
-        static const char types[] = { metatype::Type, IODevice::Type, 0 };
-        if (dest) *dest = (void *) types;
-        return IODevice::Type;
-    }
-    switch (type &= 0xff) {
-    case metatype::Type: ptr = static_cast<metatype *>(this); break;
-    case IODevice::Type: ptr = static_cast<IODevice *>(this); break;
-    default: return BadType;
-    }
-    if (dest) *dest = ptr;
-    return type;
-}
 
 bool Queue::prepare(size_t len = 1)
 { return (!len || mpt_queue_prepare(&_d, len)) ? true : false; }
