@@ -132,12 +132,21 @@ bool Queue::shift(void *data = 0, size_t len = 1)
     return mpt_queue_crop(&_d, 0, len) >= 0;
 }
 
-Slice<uint8_t> Queue::data()
+Slice<uint8_t> Queue::peek(size_t len)
 {
-    uint8_t *base = (uint8_t *) _d.base;
-    if (_d.fragmented()) mpt_queue_align(&_d, 0);
-    else base += _d.off;
-    return Slice<uint8_t>(base, _d.len);
+    size_t low = 0;
+    void *base = mpt_queue_data(&_d, &low);
+    if (len <= low) {
+        len = low;
+    }
+    else if (!_d.fragmented()) {
+        len = _d.len;
+    }
+    else {
+        mpt_queue_align(&_d, 0);
+        len = _d.len;
+    }
+    return Slice<uint8_t>(static_cast<uint8_t *>(base), len);
 }
 
 ssize_t Queue::write(size_t len, const void *d, size_t part)

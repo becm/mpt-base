@@ -27,12 +27,12 @@ extern void *mpt_qpop(MPT_STRUCT(queue) *queue, size_t len, void *data)
 	
 	/* aligned queue */
 	if (!high) {
-		if (len < low) {
+		if (len > low) {
 			errno = ERANGE;
 			return 0;
 		}
 		if (data) {
-			memcpy(data, base+low-len, len);
+			memcpy(data, base, len);
 		}
 	}
 	/* data in sparate parts */

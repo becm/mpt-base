@@ -185,7 +185,7 @@ public:
     ssize_t write(size_t , const void *, size_t);
     ssize_t read(size_t , void *, size_t);
     
-    Slice<uint8_t> data();
+    Slice<uint8_t> peek(size_t = 0);
     
     /* queue access */
     virtual bool prepare(size_t);
@@ -201,13 +201,12 @@ protected:
 };
 
 template <typename T>
-class Pipe : Reference<Queue>
+class Pipe
 {
 public:
     Pipe(const T &v, size_t len)
     {
-        ref();
-        if (len && _ref && _ref->prepare(len * sizeof(T))) {
+        if (len && ref().pointer()->prepare(len * sizeof(T))) {
             while (len--) push(v);
         }
     }
@@ -219,66 +218,70 @@ public:
     {
         *this = from.ref();
     }
-    inline Pipe(Queue *q = 0) : Reference(q)
+    inline Pipe(Queue *q = 0) : _d(q)
     {
         ref();
     }
     ~Pipe()
-    { }
+    {
+        while (pop());
+    }
     const Reference<Queue> &ref()
     {
-        if (!_ref) _ref = new Reference<Queue>::instance;
-        return *this;
+        if (!_d.pointer()) _d.setPointer(new Reference<Queue>::instance);
+        return _d;
     }
-    
     bool push(const T & elem)
     {
-        if (!_ref) return false;
+        Queue *d = ref().pointer();
         uint8_t buf[sizeof(T)];
         T *t = static_cast<T *>(static_cast<void *>(buf));
         new (t) T(elem);
-        if (_ref->push(t, sizeof(T))) return true;
+        if (d->push(t, sizeof(T))) return true;
         t->~T();
         return false;
     }
     bool pop(T *data = 0) const
     {
-        if (!_ref) return false;
+        Queue *d;
+        if (!(d = _d.pointer())) return false;
         uint8_t buf[sizeof(T)];
         T *t = static_cast<T *>(static_cast<void *>(buf));
-        if (!_ref->pop(t, sizeof(T))) return false;
+        if (!d->pop(t, sizeof(T))) return false;
         if (data) *data = *t;
         else t->~T();
         return true;
     }
-    
     bool unshift(const T & elem)
     {
-        if (!_ref) return false;
+        Queue *d = ref().pointer();
         uint8_t buf[sizeof(T)];
         T *t = static_cast<T *>(static_cast<void *>(buf));
         new (t) T(elem);
-        if (_ref->unshift(t, sizeof(T))) return true;
+        if (d->unshift(t, sizeof(T))) return true;
         t->~T();
         return false;
     }
     bool shift(T *data = 0) const
     {
-        if (!_ref) return false;
+        Queue *d;
+        if (!(d = _d.pointer())) return false;
         uint8_t buf[sizeof(T)];
         T *t = static_cast<T *>(static_cast<void *>(buf));
-        if (!_ref->shift(t, sizeof(T))) return false;
+        if (!d->shift(t, sizeof(T))) return false;
         if (data) *data = *t;
         else t->~T();
         return true;
     }
-    
     Slice<T> data()
     {
-        if (!_ref) return Slice<T>(0, 0);
-        Slice<uint8_t> r = _ref->data();
+        Queue *d;
+        if (!(d = _d.pointer())) return Slice<T>(0, 0);
+        Slice<uint8_t> r = d->peek();
         return Slice<T>((T *) r.base(), r.length() / sizeof(T));
     }
+protected:
+    Reference<Queue> _d;
 };
 
 #endif /* defined(__cplusplus) */
