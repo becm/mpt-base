@@ -58,9 +58,6 @@ extern int main(int argc, char *argv[])
 	dsp._err.cmd = printMessage;
 	dsp._err.arg = stdout;
 	
-	dsp._out = mpt_output_new(&no);
-	mpt_reply_reserve(&dsp._ctx, 0);
-	
 	for (arg = 1; arg < argc; arg++) {
 		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 		MPT_STRUCT(fdmode) mode;

@@ -36,12 +36,13 @@ extern ssize_t mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
 	}
 	/* get new data part */
 	if (!qu->_dec) {
-		pre = qu->_state.done;
+		pre = qu->_state.done + qu->_state.scratch;
 		
 		if (pre > len) {
 			return MPT_ERROR(BadEncoding);
 		}
 		len -= pre;
+		qu->_state.done = pre;
 		qu->_state.scratch = len;
 		
 		return len ? (ssize_t) len : MPT_ERROR(MissingData);
