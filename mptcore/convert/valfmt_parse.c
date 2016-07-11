@@ -29,5 +29,5 @@ extern int mpt_valfmt_parse(MPT_STRUCT(array) *arr, const char *base)
 		}
 		pos += curr;
 	}
-	return pos - base;
+	return curr ? curr : pos - base;
 }

@@ -81,23 +81,22 @@ MPT_STRUCT(encode_array)
 {
 #ifdef __cplusplus
 public:
-    encode_array(DataEncoder = 0);
-    ~encode_array();
-    
-    ssize_t push(size_t , const void *);
-    bool setData(const struct message *);
-    bool setEncoding(DataEncoder);
-    bool trim(size_t = 0);
-    
-    Slice<uint8_t> data() const;
-    
+	encode_array(DataEncoder = 0);
+	~encode_array();
+	
+	ssize_t push(size_t , const void *);
+	bool setData(const struct message *);
+	bool setEncoding(DataEncoder);
+	bool trim(size_t = 0);
+	
+	Slice<uint8_t> data() const;
 protected:
 #else
 # define MPT_ENCODE_ARRAY_INIT { 0, MPT_ENCODE_INIT, MPT_ARRAY_INIT }
 #endif
-    MPT_TYPE(DataEncoder)_enc;
-    MPT_STRUCT(encode_state) _state;
-    MPT_STRUCT(array) _d;
+	MPT_TYPE(DataEncoder)_enc;
+	MPT_STRUCT(encode_state) _state;
+	MPT_STRUCT(array) _d;
 };
 
 /*! reference to buffer segment */
