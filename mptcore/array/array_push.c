@@ -24,71 +24,66 @@
  * 
  * \return consumed data size
  */
-extern ssize_t mpt_array_push(MPT_STRUCT(array) *arr, MPT_STRUCT(codestate) *info, MPT_TYPE(DataEncoder) enc, const struct iovec *data)
+extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const void *data)
 {
 	MPT_STRUCT(buffer) *b;
-	struct iovec src;
-	size_t len, max;
-	
+	size_t max;
 	
 	/* fast path for raw data */
-	if (!enc) {
-		if (!data) {
+	if (!arr->_enc) {
+		if (!len) {
+			arr->_state.done += arr->_state.scratch;
+			arr->_state.scratch = 0;
 			return 0;
 		}
-		if (!(len = data->iov_len)) {
-			return -1;
+		if (!data) {
+			return MPT_ERROR(MissingData);
 		}
-		if (!data->iov_base) {
-			return -2;
+		if (!mpt_array_append(&arr->_d, len, data)) {
+			return MPT_ERROR(MissingBuffer);
 		}
-		if (!mpt_array_append(arr, data->iov_len, data->iov_base)) {
-			return -1;
-		}
-		if (info) {
-			info->scratch += len;
-		}
+		arr->_state.scratch += len;
+		
 		return len;
 	}
-	max = 0;
-	if (data) {
-		src = *data;
-		data = &src;
-		max = data->iov_len;
-	} else {
-		src.iov_len = 0;
-	}
 	/* current buffer data */
-	if (!(b = arr->_buf)) {
+	if (!(b = arr->_d._buf)) {
 		/* use initial data size */
-		if (!(b = _mpt_buffer_realloc(0, max > 64 ? max : 64))) {
+		if (!(b = _mpt_buffer_realloc(0, len > 64 ? len : 64))) {
 			return -1;
 		}
-		arr->_buf = b;
+		arr->_d._buf = b;
 	}
-	len = info->done + info->scratch;
+	max = 0;
 	
 	while (1) {
 		struct iovec dest;
 		ssize_t cont, off;
 		
-		if ((off = b->used - len) < 0) {
+		off = arr->_state.done + arr->_state.scratch;
+		
+		if ((off = b->used - off) < 0) {
 			errno = EINVAL;
 			return -1;
 		}
-		
 		dest.iov_base = ((uint8_t *) (b+1)) + off;
 		dest.iov_len  = b->size - off;
 		
 		/* next regular operation */
-		cont = enc(info, &dest, data);
-		len  = info->done + info->scratch;
-		off += len;
+		if (!len) {
+			cont = arr->_enc(&arr->_state, &dest, 0);
+		} else {
+			struct iovec src;
+			src.iov_base = (void *) data;
+			src.iov_len  = len;
+			cont = arr->_enc(&arr->_state, &dest, &src);
+		}
+		off += arr->_state.done + arr->_state.scratch;
 		
 		/* size update */
-		if (b->size < len) {
+		if (b->size < (size_t) off) {
 			MPT_ABORT("invalid encoder data size");
-			enc(info, 0, 0);
+			arr->_enc(&arr->_state, 0, 0);
 			return -1;
 		}
 		b->used = off;
@@ -101,29 +96,30 @@ extern ssize_t mpt_array_push(MPT_STRUCT(array) *arr, MPT_STRUCT(codestate) *inf
 			return cont;
 		}
 		/* positive no error except for incomplete write */
-		else if (!data || !src.iov_len || !src.iov_base) {
-			return max;
+		else if (!data || !len) {
+			return max + cont;
 		}
 		/* space error */
-		else if (src.iov_len < (size_t) cont) {
+		else if (len < (size_t) cont) {
 			MPT_ABORT("bad encoder return size");
-			enc(info, 0, 0);
+			arr->_enc(&arr->_state, 0, 0);
 			return -1;
 		}
 		/* all data processed */
-		else if (!(src.iov_len -= cont)) {
-			return max;
+		else if (!(len -= cont)) {
+			return max + cont;
 		}
 		/* advance source data offset */
 		else {
-			src.iov_base = ((uint8_t *) src.iov_base) + cont;
+			data = ((uint8_t *) data) + cont;
 		}
+		max += cont;
 		
 		/* get larger buffer */
 		if (!b->resize || !(b = b->resize(b, b->size + 64))) {
-			cont = max - src.iov_len;
+			cont = len - max;
 			return cont ? cont : -2;
 		}
-		arr->_buf = b;
+		arr->_d._buf = b;
 	}
 }

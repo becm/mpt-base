@@ -31,7 +31,7 @@
  * 
  * \return size of processed data
  */
-extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
+extern ssize_t mpt_encode_cobs(MPT_STRUCT(encode_state) *info, const struct iovec *cobs, const struct iovec *base)
 #endif
 {
 	const uint8_t *src;

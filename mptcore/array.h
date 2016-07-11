@@ -76,6 +76,29 @@ protected:
 #endif
 	MPT_STRUCT(buffer) *_buf;
 };
+/*! transforming appended data */
+MPT_STRUCT(encode_array)
+{
+#ifdef __cplusplus
+public:
+    encode_array(DataEncoder = 0);
+    ~encode_array();
+    
+    ssize_t push(size_t , const void *);
+    bool setData(const struct message *);
+    bool setEncoding(DataEncoder);
+    bool trim(size_t = 0);
+    
+    Slice<uint8_t> data() const;
+    
+protected:
+#else
+# define MPT_ENCODE_ARRAY_INIT { 0, MPT_ENCODE_INIT, MPT_ARRAY_INIT }
+#endif
+    MPT_TYPE(DataEncoder)_enc;
+    MPT_STRUCT(encode_state) _state;
+    MPT_STRUCT(array) _d;
+};
 
 /*! reference to buffer segment */
 #ifdef __cplusplus
@@ -215,7 +238,7 @@ extern int mpt_vprintf(MPT_STRUCT(array) *, const char *, va_list );
 extern char *mpt_array_string(MPT_STRUCT(array) *);
 
 /* add message to array */
-extern ssize_t mpt_array_push(MPT_STRUCT(array) *, MPT_STRUCT(codestate) *, MPT_TYPE(DataEncoder), const struct iovec *);
+extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *, size_t len, const void *data);
 
 /* pointer/metatype array */
 extern size_t mpt_array_compact(void **, size_t);
@@ -260,30 +283,9 @@ inline slice::~slice()
 inline Slice<uint8_t> slice::data() const
 { return Slice<uint8_t>(_len ? ((uint8_t *) (_buf+1))+_off : 0, _len); }
 
-
-/*! transtorming appended data */
-class EncodingArray
-{
-public:
-    EncodingArray(DataEncoder = 0);
-    ~EncodingArray();
-    
-    ssize_t push(size_t , const void *);
-    bool setData(const struct message *);
-    bool setEncoding(DataEncoder);
-    bool trim(size_t = 0);
-    
-    Slice<uint8_t> data() const;
-    
-protected:
-    DataEncoder _enc;
-    codestate _state;
-    array _d;
-};
-
 #if defined(_MPT_QUEUE_H) && defined(_MPT_META_H)
 /* IO extension to buffer */
-class Buffer : public metatype, public IODevice, public EncodingArray
+class Buffer : public metatype, public IODevice, public encode_array
 {
 public:
     enum { Type = TypeIODevice };

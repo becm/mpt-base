@@ -46,10 +46,10 @@ protected:
 #else
 MPT_STRUCT(decode_queue)
 {
-#define MPT_DECODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_CODESTATE_INIT, 0 }
+#define MPT_DECODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_DECODE_INIT, 0 }
 	MPT_STRUCT(queue) data;
 #endif
-	MPT_STRUCT(codestate) _state;
+	MPT_STRUCT(decode_state) _state;
 	MPT_TYPE(DataDecoder) _dec;
 };
 
@@ -74,10 +74,10 @@ protected:
 #else
 MPT_STRUCT(encode_queue)
 {
-#define MPT_ENCODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_CODESTATE_INIT, 0 }
+#define MPT_ENCODE_QUEUE_INIT { MPT_QUEUE_INIT, MPT_ENCODE_INIT, 0 }
 	MPT_STRUCT(queue) data;
 #endif
-	MPT_STRUCT(codestate) _state;
+	MPT_STRUCT(encode_state) _state;
 	MPT_TYPE(DataEncoder) _enc;
 };
 

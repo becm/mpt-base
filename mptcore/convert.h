@@ -133,22 +133,22 @@ extern int mpt_encoding_value(const char *, int __MPT_DEFPAR(-1));
 extern const char *mpt_encoding_type(int);
 
 /* standard COBS(/R) operations */
-extern ssize_t mpt_encode_cobs(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
-extern ssize_t mpt_encode_cobs_r(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
-extern ssize_t mpt_decode_cobs(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
-extern ssize_t mpt_decode_cobs_r(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
+extern ssize_t mpt_encode_cobs(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+extern ssize_t mpt_encode_cobs_r(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+extern ssize_t mpt_decode_cobs(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
+extern ssize_t mpt_decode_cobs_r(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 extern int mpt_cobs_dec(const void *, size_t *, void *, size_t *);
 /* COBS/ZPE(+R) operations */
-extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
-extern ssize_t mpt_encode_cobs_zpe_r(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
-extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
-extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
+extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+extern ssize_t mpt_encode_cobs_zpe_r(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
+extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 extern int mpt_cobs_dec_zpe(const void *, size_t *, void *, size_t *);
 
 /* filter non-zero inline data */
-extern ssize_t mpt_encode_string(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
+extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
 /* add command header to zero-terminated text */
-extern ssize_t mpt_decode_command(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
+extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
 
 /* print all properties */

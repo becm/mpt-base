@@ -30,7 +30,6 @@
 extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode)
 {
 	MPT_STRUCT(queue) *qu;
-	MPT_STRUCT(codestate) *state;
 	off_t add = 0;
 	int flags, file = -1;
 	
@@ -42,7 +41,8 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode
 			return MPT_ERROR(BadArgument);
 		}
 		qu = &stream->_rd.data;
-		state = &stream->_wd._state;
+		stream->_wd._state.done = 0;
+		stream->_wd._state.scratch = 0;
 		if (mode == SEEK_CUR && (flags & MPT_ENUM(StreamReadBuf))) {
 			pos -= qu->len;
 			add = qu->off;
@@ -54,12 +54,13 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode
 		if (stream->_wd._enc) {
 			return MPT_ERROR(BadArgument);
 		}
+		mpt_stream_flush(stream);
+		stream->_wd._state.done = 0;
+		stream->_wd._state.scratch = 0;
 		qu = &stream->_wd.data;
-		state = &stream->_wd._state;
 		if (mode == SEEK_CUR && (flags & MPT_ENUM(StreamWriteBuf))) {
 			pos += qu->len;
 		}
-		mpt_stream_flush(stream);
 		file = _mpt_stream_fread(&stream->_info);
 		break;
 	    default:
@@ -73,9 +74,6 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode
 	}
 	qu->len = 0;
 	qu->off = 0;
-	
-	state->done = 0;
-	state->scratch = 0;
 	
 	return pos + add;
 }

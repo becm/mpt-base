@@ -206,19 +206,21 @@ ssize_t slice::write(size_t nblk, const void *addr, size_t esze)
 
 
 // encoding array
-EncodingArray::EncodingArray(DataEncoder enc) : _enc(enc)
+encode_array::encode_array(DataEncoder enc) : _enc(enc)
 { }
-EncodingArray::~EncodingArray()
-{ }
+encode_array::~encode_array()
+{
+    if (_enc) _enc(&_state, 0, 0);
+}
 
-Slice<uint8_t> EncodingArray::data() const
+Slice<uint8_t> encode_array::data() const
 {
     uint8_t *base = (uint8_t *) _d.base();
-    size_t off = _d.length() - (_state.done - _state.scratch);
+    size_t off = _d.length() - _state.done - _state.scratch;
 
     return Slice<uint8_t>(base + off, _state.done);
 }
-bool EncodingArray::trim(size_t len)
+bool encode_array::trim(size_t len)
 {
     if (!len) {
         _state.done = 0;
@@ -230,59 +232,42 @@ bool EncodingArray::trim(size_t len)
     _state.done -= len;
     return true;
 }
-ssize_t EncodingArray::push(size_t len, const void *data)
+ssize_t encode_array::push(size_t len, const void *data)
 {
-    struct iovec vec;
-
-    vec.iov_base = (void *) data;
-    vec.iov_len  = len;
-
-    return mpt_array_push(&_d, &_state, _enc, len ? &vec : 0);
+    return mpt_array_push(this, len, data);
 }
 
-bool EncodingArray::setData(const message *msg)
+bool encode_array::setData(const message *msg)
 {
     if (!msg) {
-        if (mpt_array_push(&_d, &_state, _enc, 0) < 0) {
+        if (mpt_array_push(this, 0, 0) < 0) {
             return false;
         }
         return true;
     }
-
-    struct iovec *cont, vec;
-    size_t clen, total;
-
-    vec.iov_base = (void *) msg->base;
-    vec.iov_len  = msg->used;
-
-    cont = msg->cont;
-    clen = msg->clen;
-    total = 0;
+    message tmp = *msg;
+    size_t total = 0;
 
     while (1) {
-        if (!vec.iov_len) {
-            if (!clen--) {
+        if (!tmp.used) {
+            if (!tmp.clen--) {
                 break;
             }
-            vec = *(cont++);
+            ++tmp.cont;
             continue;
         }
-        ssize_t curr = mpt_array_push(&_d, &_state, _enc, &vec);
+        ssize_t curr = mpt_array_push(this, tmp.used, tmp.base);
 
-        if (curr < 0 || (size_t) curr > vec.iov_len) {
+        if (curr < 0 || (size_t) curr > tmp.used) {
             if (total) {
-                vec.iov_base = 0;
-                vec.iov_len  = 1;
-                (void) mpt_array_push(&_d, &_state, _enc, &vec);
+                (void) mpt_array_push(this, 1, 0);
             }
             return false;
         }
     }
-    if (mpt_array_push(&_d, &_state, _enc, 0) < 0) {
+    if (mpt_array_push(this, 0, 0) < 0) {
         if (total) {
-            vec.iov_base = 0;
-            vec.iov_len  = 1;
-            (void) mpt_array_push(&_d, &_state, _enc, &vec);
+            (void) mpt_array_push(this, 1, 0);
         }
         return false;
     }
@@ -495,11 +480,9 @@ bool Buffer::seek(int64_t pos)
 
     return true;
 }
-Slice<uint8_t> Buffer::peek(size_t see)
+Slice<uint8_t> Buffer::peek(size_t)
 {
-    Slice<uint8_t> d = EncodingArray::data();
-    size_t len = d.length();
-    return  Slice<uint8_t>(d.base(), see < len ? see : len);
+    return encode_array::data();
 }
 
 __MPT_NAMESPACE_END

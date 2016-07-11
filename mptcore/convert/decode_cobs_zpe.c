@@ -29,7 +29,7 @@
  * No data change is performed in this case.
  * 
  * Pass \sourcelen = 0 and \source = 0 to reset
- * \codestate data.
+ * \decode_state data.
  * 
  * \param info      start position of encoded data
  * \param source    encoded data
@@ -37,7 +37,7 @@
  * 
  * \return size of message
  */
-extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
 	return _decode(info, source, sourcelen);
 }
@@ -59,7 +59,7 @@ extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iov
  * No data change is performed in this case.
  * 
  * Pass \sourcelen = 0 and \source = 0 to reset
- * \codestate data.
+ * \decode_state data.
  * 
  * \param info      start position of encoded data
  * \param source    encoded data
@@ -67,7 +67,7 @@ extern ssize_t mpt_decode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iov
  * 
  * \return size of message
  */
-extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+extern ssize_t mpt_decode_cobs_zpe_r(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
 	return _decode_r(info, source, sourcelen);
 }

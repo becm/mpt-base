@@ -28,7 +28,7 @@ struct luaStream {
 
 static int bufferCobs(lua_State *L)
 {
-	MPT_STRUCT(codestate) s;
+	MPT_STRUCT(encode_state) s = MPT_ENCODE_INIT;
 	struct iovec from, to;
 	ssize_t take;
 	luaL_Buffer b;
@@ -49,7 +49,6 @@ static int bufferCobs(lua_State *L)
 		return 0;
 	}
 #endif
-	memset(&s, 0, sizeof(s));
 	if ((take = mpt_encode_cobs(&s, &to, &from)) < 0
 	    || mpt_encode_cobs(&s, &to, 0) < 0
 	    || take != (ssize_t) from.iov_len) {

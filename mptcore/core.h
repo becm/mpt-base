@@ -246,20 +246,33 @@ enum MPT_ENUM(TypeErrors) {
 	MPT_ERROR(MessageInProgress) = -0x21
 };
 
-MPT_STRUCT(codestate)
+MPT_STRUCT(encode_state)
 {
 #ifdef __cplusplus
-	inline codestate() : _ctx(0), done(0), scratch(0)
+	inline encode_state() : _ctx(0), done(0), scratch(0)
 	{ }
 #else
-# define MPT_CODESTATE_INIT { 0, 0, 0 }
+# define MPT_ENCODE_INIT { 0, 0, 0 }
 #endif
 	uintptr_t _ctx; /* state pointer */
 	size_t done;    /* data in finished format */
 	size_t scratch; /* unfinished data size */
 };
-typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(codestate) *, const struct iovec *, const struct iovec *);
-typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(codestate) *, const struct iovec *, size_t);
+
+MPT_STRUCT(decode_state)
+{
+#ifdef __cplusplus
+	inline decode_state() : _ctx(0), done(0), scratch(0)
+	{ }
+#else
+# define MPT_DECODE_INIT { 0, 0, 0 }
+#endif
+	uintptr_t _ctx; /* state pointer */
+	size_t done;    /* processed data size */
+	size_t scratch; /* working area */
+};
+typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
 
 __MPT_EXTDECL_BEGIN

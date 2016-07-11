@@ -49,7 +49,7 @@
  * No data change is performed in this case.
  * 
  * Pass \sourcelen = 0 and \source = 0 to reset
- * \codestate data.
+ * \decode_state data.
  * 
  * \param info      start position of encoded data
  * \param source    encoded data
@@ -62,7 +62,7 @@ extern ssize_t mpt_decode_cobs
 #else
 static ssize_t _decode
 #endif
-(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
 	MPT_STRUCT(message) tmp;
 	const struct iovec *dvec;
@@ -282,7 +282,7 @@ static ssize_t _decode
  * No data change is performed in this case.
  * 
  * Pass \sourcelen = 0 and \source = 0 to reset
- * \codestate data.
+ * \decode_state data.
  * 
  * \param info      start position of encoded data
  * \param source    encoded data
@@ -295,7 +295,7 @@ extern ssize_t mpt_decode_cobs_r
 #else
 static ssize_t _decode_r
 #endif
-(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
 	ssize_t ret = MPT_cobs_dec_regular(info, source, sourcelen);
 	uint8_t val;

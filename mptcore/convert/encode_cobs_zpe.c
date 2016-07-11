@@ -30,7 +30,7 @@
  * 
  * \return size of processed data
  */
-extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
+extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(encode_state) *info, const struct iovec *cobs, const struct iovec *base)
 #include "encode_cobs.c"
 
 #define MPT_encode_cobs_regular(i,c,d)  mpt_encode_cobs_zpe(i,c,d)
@@ -54,5 +54,5 @@ extern ssize_t mpt_encode_cobs_zpe(MPT_STRUCT(codestate) *info, const struct iov
  * 
  * \return length of processed data
  */
-extern ssize_t mpt_encode_cobs_zpe_r(MPT_STRUCT(codestate) *info, const struct iovec *cobs, const struct iovec *base)
+extern ssize_t mpt_encode_cobs_zpe_r(MPT_STRUCT(encode_state) *info, const struct iovec *cobs, const struct iovec *base)
 #include "encode_cobs_r.c"

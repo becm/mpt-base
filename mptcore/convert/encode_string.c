@@ -19,7 +19,7 @@
  * 
  * \return encoded data size
  */
-extern ssize_t mpt_encode_string(MPT_STRUCT(codestate) *info, const struct iovec *to, const struct iovec *from)
+extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct iovec *to, const struct iovec *from)
 {
 	uint8_t *base;
 	size_t sep, len, off, max;

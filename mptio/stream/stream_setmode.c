@@ -30,7 +30,7 @@ extern int mpt_stream_setmode(MPT_STRUCT(stream) *stream, int mode)
 	/* clear read queue */
 	else {
 		if (stream->_rd._dec) {
-			stream->_rd._dec(&stream->_wd._state, 0, 0);
+			stream->_rd._dec(&stream->_rd._state, 0, 0);
 		}
 		if (stream->_rd.data.max) {
 			if (flags & MPT_ENUM(StreamReadMap)) {

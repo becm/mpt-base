@@ -19,7 +19,7 @@
  * 
  * \return consumed data size
  */
-extern ssize_t mpt_decode_command(MPT_STRUCT(codestate) *info, const struct iovec *source, size_t sourcelen)
+extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
 	static MPT_STRUCT(msgtype) mt = { MPT_ENUM(MessageCommand), ' ' };
 	MPT_STRUCT(message) from;
