@@ -238,7 +238,7 @@ public:
     {
         Reference<T> ref = from;
         T *ptr = ref.pointer();
-        if (ptr && setObject(ptr)) ref.detach();
+        if (ptr && setPointer(ptr)) ref.detach();
         return *this;
     }
 

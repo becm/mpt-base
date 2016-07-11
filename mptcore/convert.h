@@ -102,7 +102,7 @@ extern int mpt_cint16(int16_t *, const char *, int , const int16_t [2]);
 extern int mpt_cint8 (int8_t  *, const char *, int , const int8_t  [2]);
 
 extern int mpt_cchar(char *, const char *, int , const char [2]);
-extern int mpt_cint(int  *, const char *, int , const int  [2]);
+extern int mpt_cint (int  *, const char *, int , const int  [2]);
 extern int mpt_clong(long *, const char *, int , const long [2]);
 
 extern int mpt_cuint64(uint64_t *, const char *, int , const uint64_t [2]);
@@ -157,7 +157,7 @@ extern int mpt_generic_print(int (*)(void *, MPT_STRUCT(property) *), void *, MP
 /* convert structured data to string */
 extern int mpt_data_print(char *, size_t , int , const void *);
 /* output data */
-extern int mpt_tostring(const MPT_STRUCT(value) *, int (*)(void *, const char *, size_t ), void *);
+extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
 
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);

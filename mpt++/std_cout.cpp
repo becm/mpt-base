@@ -4,10 +4,10 @@
 
 #include "convert.h"
 
-static int writeOutStream(void *p, const char *str, size_t len)
+static ssize_t writeOutStream(void *p, const char *str, size_t len)
 {
     static_cast<std::ostream *>(p)->write(str, len);
-    return 0;
+    return len;
 }
 
 std::ostream &operator<<(std::ostream &o, const mpt::value v)
@@ -17,9 +17,7 @@ std::ostream &operator<<(std::ostream &o, const mpt::value v)
         return o;
     }
     if (!*v.fmt) return o;
-    if (v.fmt[1]) o << '{';
     mpt_tostring(&v, writeOutStream, &o);
-    if (v.fmt[1]) o << '}';
     return o;
 }
 std::ostream &operator<<(std::ostream &o, const mpt::property &p)
