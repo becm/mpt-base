@@ -21,7 +21,7 @@ struct typeSource
 	size_t fmtlen;
 	char type;
 };
-static void histUnref(MPT_INTERFACE(metatype) *src)
+static void histUnref(MPT_INTERFACE(unrefable) *src)
 {
 	(void) src;
 }
@@ -75,7 +75,7 @@ static MPT_INTERFACE(metatype) *histClone(const MPT_INTERFACE(metatype) *src)
 	(void) src; return 0;
 }
 static const MPT_INTERFACE_VPTR(metatype) getCtl = {
-	histUnref,
+	{ histUnref },
 	histAssign,
 	histConv,
 	histClone

@@ -71,7 +71,9 @@ MPT_STRUCT(array)
 	array & operator=  (struct ::iovec const&);
 	array & operator+= (struct ::iovec const&);
 protected:
+# define _MPT_ARRAY_TYPE(x) x::array
 #else
+# define _MPT_ARRAY_TYPE(x) MPT_STRUCT(array)
 # define MPT_ARRAY_INIT { 0 }
 #endif
 	MPT_STRUCT(buffer) *_buf;
@@ -226,7 +228,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *, size_t , const void *, size_
 extern int mpt_slice_conv(MPT_STRUCT(slice) *, int , void *);
 
 /* clear references on array data */
-extern void mpt_array_callunref(const MPT_STRUCT(array) *);
+extern void mpt_array_callunref(const _MPT_ARRAY_TYPE(unrefable) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );
@@ -523,7 +525,7 @@ class RefArray : public PointerArray
 public:
     typedef Reference<T>* iterator;
     
-    RefArray(size_t len = 0) : PointerArray(len * sizeof(T*))
+    RefArray(size_t len = 0) : PointerArray(len)
     { }
     ~RefArray()
     {
@@ -593,6 +595,12 @@ public:
     { return *reinterpret_cast<const Array<Reference<T> >*>(this); }
 };
 
+class unrefable::array : public RefArray<unrefable>
+{
+public:
+    array(size_t len = 0);
+};
+
 class LogStore : public logger
 {
 public:
@@ -639,7 +647,7 @@ protected:
     uint8_t  _level;
 };
 /*! storage for log messages */
-class LogStore::Entry : array
+class LogStore::Entry : ::mpt::array
 {
 public:
     int type() const;

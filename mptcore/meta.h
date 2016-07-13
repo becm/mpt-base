@@ -11,8 +11,8 @@
 __MPT_NAMESPACE_BEGIN
 
 /*! generic metatype interface */
-MPT_INTERFACE(metatype)
 #ifdef __cplusplus
+MPT_INTERFACE(metatype) : public unrefable
 {
 protected:
 	inline ~metatype() {}
@@ -35,24 +35,25 @@ public:
 	
 	static metatype *create(size_t size);
 	
-	virtual void unref() = 0;
 	virtual int assign(const value *);
 	virtual int conv(int, void *);
 	virtual metatype *clone() const;
 	
 	inline int type()
 	{ return conv(0, 0); }
+};
 #else
-; MPT_INTERFACE_VPTR(metatype)
+MPT_INTERFACE(metatype);
+MPT_INTERFACE_VPTR(metatype)
 {
-	void (*unref)(MPT_INTERFACE(metatype) *);
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	int (*assign)(MPT_INTERFACE(metatype) *, const MPT_INTERFACE(value) *);
 	int (*conv)(MPT_INTERFACE(metatype) *, int, void *);
 	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
 	const MPT_INTERFACE_VPTR(metatype) *_vptr;
-#endif
 };
+#endif
 
 
 #ifdef __cplusplus

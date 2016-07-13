@@ -19,7 +19,7 @@ struct _iter_sdata
 	double curr;      /* current iterator value */
 };
 
-static void iterUnref(MPT_INTERFACE(metatype) *mt)
+static void iterUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	free(mt);
 }
@@ -95,7 +95,7 @@ static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 }
 
 static const MPT_INTERFACE_VPTR(metatype) iteratorValues = {
-	iterUnref,
+	{ iterUnref },
 	iterAssign,
 	iterConv,
 	iterClone

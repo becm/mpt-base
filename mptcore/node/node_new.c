@@ -20,7 +20,7 @@ struct _inline_meta
 	uint64_t info;
 };
 
-static void nodeUnref(MPT_INTERFACE(metatype) *meta)
+static void nodeUnref(MPT_INTERFACE(unrefable) *meta)
 {
 	(void) meta;
 }
@@ -60,7 +60,7 @@ static MPT_INTERFACE(metatype) *nodeClone(const MPT_INTERFACE(metatype) *meta)
 }
 
 static const MPT_INTERFACE_VPTR(metatype) _meta_control = {
-	nodeUnref,
+	{ nodeUnref },
 	nodeAssign,
 	nodeConv,
 	nodeClone
@@ -90,7 +90,7 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, size_t dlen)
 		}
 		if (!(node = malloc(sizeof(*node) - sizeof(node->ident) + ilen))) {
 			if (meta) {
-				meta->_vptr->unref(meta);
+				meta->_vptr->ref.unref((void *) meta);
 			}
 			return 0;
 		}

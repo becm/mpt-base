@@ -24,7 +24,7 @@ static void config_finish(void)
 	mpt_node_clear(&__mpt_config_root);
 	
 	if (__mpt_config_root._meta) {
-		__mpt_config_root._meta->_vptr->unref(__mpt_config_root._meta);
+		__mpt_config_root._meta->_vptr->ref.unref((void *) __mpt_config_root._meta);
 		__mpt_config_root._meta = 0;
 	}
 	mpt_identifier_set(&__mpt_config_root.ident, 0, 0);

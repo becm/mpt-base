@@ -59,29 +59,55 @@ MPT_STRUCT(reply_context)
 		reply_context *reserve(size_t len = 2);
 	};
 #endif
-	void *ptr;
-	uint8_t _max;
-	uint8_t len;
-	uint16_t used;
-	uint8_t _val[4];
+	void     *ptr;
+	uint16_t _max;
+	uint8_t   len;
+	uint8_t   used;
+	uint8_t  _val[4];
+};
+
+/* generic command registration */
+MPT_STRUCT(command)
+{
+#ifdef __cplusplus
+private:
+	command & operator =(const command &from); /* disable copy */
+public:
+	inline command() : id(0), cmd(0), arg(0)
+	{ }
+	inline ~command()
+	{ if (cmd) cmd(arg, 0); }
+	
+	class array : Array<command>
+	{
+	public:
+		bool set(uintptr_t, EventHandler , void *);
+		command *get(uintptr_t);
+		command *next(size_t);
+	};
+#endif
+	uintptr_t  id;  /* command id */
+	int      (*cmd)(void *, void *);
+	void      *arg; /* handler and user supplied data */
 };
 
 /* command dispatcher */
-MPT_STRUCT(dispatch)
-{
 #ifdef __cplusplus
+MPT_STRUCT(dispatch) : public command::array
+{
 public:
 	dispatch();
 	~dispatch();
 	
-	bool set(uintptr_t, EventHandler , void *);
 	bool setDefault(uintptr_t);
 	void setError(EventHandler , void *);
 protected:
 #else
+MPT_STRUCT(dispatch)
+{
 # define MPT_DISPATCH_INIT { MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
+	MPT_STRUCT(array) _d;   /* available commands for event */
 #endif
-	MPT_STRUCT(array) _cmd; /* available commands for event */
 	uintptr_t         _def; /* default command id */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
@@ -107,22 +133,6 @@ protected:
 	(mpt_event_reply(ev, (code) >= 0 ? MPT_ERROR(BadOperation) : (code), "%s", txt), \
 	 (ev)->id = 0, ((MPT_ENUM(EventFail) | MPT_ENUM(EventDefault))))
 
-/* generic command registration */
-MPT_STRUCT(command)
-{
-#ifdef __cplusplus
-private:
-	command & operator =(const command &from); /* disable copy */
-public:
-	inline command() : id(0), cmd(0), arg(0)
-	{ }
-	inline ~command()
-	{ if (cmd) cmd(arg, 0); }
-#endif
-	uintptr_t  id;  /* command id */
-	int      (*cmd)(void *, void *);
-	void      *arg; /* handler and user supplied data */
-};
 
 __MPT_EXTDECL_BEGIN
 
@@ -130,9 +140,12 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_event_reply(const MPT_STRUCT(event) *, int , const char *, ...);
 
 /* get/set event command */
-extern int mpt_command_set(MPT_STRUCT(array) *, const MPT_STRUCT(command) *);
-extern MPT_STRUCT(command) *mpt_command_get(const MPT_STRUCT(array) *, uintptr_t);
-extern void mpt_command_clear(const MPT_STRUCT(array) *);
+extern int mpt_command_set(_MPT_ARRAY_TYPE(command) *, const MPT_STRUCT(command) *);
+extern MPT_STRUCT(command) *mpt_command_get(const _MPT_ARRAY_TYPE(command) *, uintptr_t);
+extern void mpt_command_clear(const _MPT_ARRAY_TYPE(command) *);
+
+/* generate (next) id for message */
+extern MPT_STRUCT(command) *mpt_command_nextid(_MPT_ARRAY_TYPE(command) *, size_t);
 
 /* find command with specified id */
 extern MPT_STRUCT(command) *mpt_command_find(const MPT_STRUCT(command) *, size_t , uintptr_t);
@@ -154,7 +167,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
 /* new/available context on array */
-extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size_t len);
+extern MPT_STRUCT(reply_context) *mpt_reply_reserve(_MPT_ARRAY_TYPE(reply_context) *arr, size_t len);
 /* invalidate/delete context references */
 size_t mpt_reply_clear(MPT_STRUCT(reply_context) **, size_t);
 

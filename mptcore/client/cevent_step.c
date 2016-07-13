@@ -44,7 +44,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	if (src) src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &cmd);
 	/* try to execute next solver step */
 	state = cl->_vptr->step(cl, src);
-	if (src) src->_vptr->unref(src);
+	if (src) src->_vptr->ref.unref((void *) src);
 	
 	if (state < 0) {
 		return MPT_event_fail(ev, state, MPT_tr("step operation failed"));
@@ -54,7 +54,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		mpt_event_reply(ev, state, MPT_tr("step operation successfull"));
 		return MPT_ENUM(EventNone);
 	}
-	mpt_event_reply(ev, 1, MPT_tr("client run finished"));
+	mpt_event_reply(ev, state, MPT_tr("client run finished"));
 	
 	ev->id = 0;
 	

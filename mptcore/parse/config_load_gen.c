@@ -90,7 +90,7 @@ int loadDir(int cdir, const char *name, MPT_TYPE(PathHandler) save, void *ctx, M
 			if (res < 0) {
 				mpt_log(log, _func, MPT_FCNLOG(Error), "%s: %d (line %d): %s", MPT_tr("parse error"), res, line, buf);
 			} else {
-				mpt_log(log, _func, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), buf);
+				mpt_log(log, _func, MPT_FCNLOG(Debug3), "%s: %s", MPT_tr("processed file"), buf);
 			}
 		}
 		if (res < 0) {

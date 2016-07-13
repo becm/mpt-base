@@ -12,10 +12,10 @@ struct mptLogWrapper
 	MPT_INTERFACE(output) *out;
 };
 
-static void logWrapperUnref(MPT_INTERFACE(logger) *l)
+static void logWrapperUnref(MPT_INTERFACE(unrefable) *l)
 {
 	struct mptLogWrapper *w = (void *) l;
-	w->out->_vptr->obj.unref((void *) w->out);
+	w->out->_vptr->obj.ref.unref((void *) w->out);
 	free(w);
 }
 static int logWrapperLog(MPT_INTERFACE(logger) *l, const char *from, int type, const char *fmt, va_list arg)
@@ -24,7 +24,7 @@ static int logWrapperLog(MPT_INTERFACE(logger) *l, const char *from, int type, c
 	return w->out->_vptr->log(w->out, from, type, fmt, arg);
 }
 static MPT_INTERFACE_VPTR(logger) logWrapperCtl = {
-	logWrapperUnref,
+	{ logWrapperUnref },
 	logWrapperLog
 };
 

@@ -41,4 +41,3 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(par
 	
 	return ret;
 }
-

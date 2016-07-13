@@ -75,6 +75,9 @@ extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size
 	MPT_STRUCT(reply_context) *ctx, **base;
 	MPT_STRUCT(buffer) *buf;
 	
+	if (len > UINT16_MAX) {
+		return 0;
+	}
 	if ((buf = arr->_buf)) {
 		size_t clen = buf->used / sizeof(*base);
 		

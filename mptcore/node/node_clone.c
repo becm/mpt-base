@@ -24,7 +24,7 @@ extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *node)
 	}
 	if (!(copy = mpt_node_new(nlen = node->ident._len, 0))) {
 		if (meta) {
-			meta->_vptr->unref(meta);
+			meta->_vptr->ref.unref((void *) meta);
 		}
 		return 0;
 	}
@@ -34,7 +34,7 @@ extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *node)
 		return 0;
 	}
 	if ((tmp = copy->_meta)) {
-		tmp->_vptr->unref(tmp);
+		tmp->_vptr->ref.unref((void *) tmp);
 	}
 	copy->_meta = meta;
 	

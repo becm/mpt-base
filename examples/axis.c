@@ -21,7 +21,7 @@ static int getter(void *addr, struct mpt_property *pr)
 	return mpt_axis_get(addr, pr);
 }
 
-static void unref(MPT_INTERFACE(metatype) *src)
+static void unref(MPT_INTERFACE(unrefable) *src)
 {
 	(void) src;
 }
@@ -37,7 +37,7 @@ static MPT_INTERFACE(metatype) *clone(const MPT_INTERFACE(metatype) *src)
 {
 	(void) src; return 0;
 }
-static MPT_INTERFACE_VPTR(metatype) src_vptr = { unref, assign, convert, clone };
+static MPT_INTERFACE_VPTR(metatype) src_vptr = { { unref }, assign, convert, clone };
 
 int main(int argc, char *argv[])
 {

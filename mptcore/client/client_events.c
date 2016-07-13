@@ -44,7 +44,7 @@ static int clientConfig(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &cmd);
 		/* process config arguments */
 		err = mpt_config_args((void *) cl, args);
-		args->_vptr->unref(args);
+		args->_vptr->ref.unref((void *) args);
 		
 		if (err < 0) {
 			return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
@@ -62,7 +62,7 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	if (!ev) {
-		cl->_vptr->cfg.unref((void *) cl);
+		cl->_vptr->cfg.ref.unref((void *) cl);
 		return 0;
 	}
 	if (ev->msg) {
@@ -114,11 +114,11 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		    && next) {
 			cmd = next;
 		}
-		args->_vptr->unref(args);
+		args->_vptr->ref.unref((void *) args);
 	}
 	id = mpt_hash(cmd, strlen(cmd));
 	
-	if (!mpt_command_get(&d->_cmd, id)) {
+	if (!mpt_command_get(&d->_d, id)) {
 		char buf[128];
 		snprintf(buf, sizeof(buf), "%s (%"PRIxPTR")", MPT_tr("invalid default command id"), id);
 		return MPT_event_fail(ev, MPT_ERROR(BadValue), buf);

@@ -31,7 +31,7 @@ extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
 		if ((pr->logger = mpt_output_logger(out))) {
 			return 1;
 		}
-		out->_vptr->obj.unref((void *) out);
+		out->_vptr->obj.ref.unref((void *) out);
 		return MPT_ERROR(BadOperation);
 	}
 	if (!val->fmt) {
@@ -49,7 +49,7 @@ extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
 			}
 		}
 		if ((o = pr->_mt)) {
-			o->_vptr->unref(o);
+			o->_vptr->ref.unref((void *) o);
 		}
 		pr->_mt = m;
 		pr->hash = 0;
@@ -66,12 +66,12 @@ extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
 		}
 		if (!pr->logger && out->_vptr->obj.addref((void *) out)) {
 			if (!(pr->logger = mpt_output_logger(out))) {
-				out->_vptr->obj.unref((void *) out);
+				out->_vptr->obj.ref.unref((void *) out);
 			}
 		}
 	}
 	if (pr->output) {
-		pr->output->_vptr->obj.unref((void *) pr->output);
+		pr->output->_vptr->obj.ref.unref((void *) pr->output);
 	}
 	pr->output = out;
 	

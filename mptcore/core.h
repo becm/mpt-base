@@ -103,11 +103,12 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeGraph)     = 0xf,   /* SI */
 	
 	/* reference types */
-	MPT_ENUM(TypeMeta)      = 0x10,  /* CAN */
+	MPT_ENUM(TypeUnrefable) = 0x10,  /* DLE */
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
-	MPT_ENUM(TypeCycle)     = 0x14,  /* DC4 */
+	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
+	MPT_ENUM(TypeCycle)     = 0x15,  /* NAK */
 	
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
@@ -199,7 +200,7 @@ enum MPT_ENUM(LogType) {
 	MPT_ENUM(LogPrefix)    = 0x100, /* add type prefix */
 	MPT_ENUM(LogSelect)    = 0x200, /* use ANSI colouring */
 	MPT_ENUM(LogANSIMore)  = 0x400, /* no forced ANSI termination */
-	MPT_ENUM(LogPretty)    = 0x700,
+	MPT_ENUM(LogPretty)    = 0x300,
 	
 	MPT_ENUM(LogFunction)  = 0x800  /* auto-add function decorator */
 };
@@ -354,6 +355,28 @@ protected:
 	uintptr_t _val;
 };
 
+/* basic unref interface */
+#ifdef __cplusplus
+MPT_INTERFACE(unrefable)
+{
+public:
+	virtual void unref() = 0;
+	
+	class array;
+protected:
+	inline ~unrefable()
+	{ }
+};
+#else
+MPT_INTERFACE(unrefable);
+MPT_INTERFACE_VPTR(unrefable)
+{
+	void (*unref)(MPT_INTERFACE(unrefable) *);
+}; MPT_INTERFACE(unrefable) {
+	const MPT_INTERFACE_VPTR(unrefable) *_vptr;
+};
+#endif
+
 #ifdef __cplusplus
 class Transform;
 
@@ -465,8 +488,8 @@ protected:
 #endif
 
 /*! interface to send data */
-MPT_INTERFACE(logger)
 #ifdef __cplusplus
+MPT_INTERFACE(logger) : public unrefable
 {
 protected:
 	inline ~logger() {}
@@ -486,16 +509,17 @@ public:
 	
 	static logger *defaultInstance();
 	
-	virtual void unref() = 0;
 	virtual int log(const char *, int, const char *, va_list) = 0;
+};
 #else
-; MPT_INTERFACE_VPTR(logger) {
-	void (*unref)(MPT_INTERFACE(logger) *);
+MPT_INTERFACE(logger);
+MPT_INTERFACE_VPTR(logger) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	int (*log)  (MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
-#endif
 };
+#endif
 
 #ifdef __cplusplus
 int critical(const char *, const char *, ... );
@@ -723,8 +747,12 @@ extern MPT_INTERFACE(logger) *mpt_output_logger(MPT_INTERFACE(output) *);
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 /* get default logger instance */
 extern MPT_INTERFACE(logger) *mpt_log_default(void);
+
 /* set default logger options */
-extern int mpt_log_default_set(int);
+extern int mpt_log_default_format(int);
+extern int mpt_log_default_skip(int);
+extern int mpt_log_default_level(int);
+
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* start log message */
 extern const char *mpt_log_intro(FILE *, int, const char *);

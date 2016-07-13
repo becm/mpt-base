@@ -76,7 +76,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		ev->id = mpt_hash(buf, len);
 	}
 	/* execute matching command */
-	if ((cmd = mpt_command_get(&disp->_cmd, ev->id))) {
+	if ((cmd = mpt_command_get(&disp->_d, ev->id))) {
 		if ((len = cmd->cmd(cmd->arg, ev)) < 0) {
 			return MPT_event_fail(ev, len, MPT_tr("failed to execute command"));
 		}

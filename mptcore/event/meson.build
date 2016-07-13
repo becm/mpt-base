@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'command_get.c',
+  'command_nextid.c',
   'command_set.c',
   'dispatch_control.c',
   'dispatch_emit.c',

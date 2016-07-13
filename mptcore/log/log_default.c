@@ -17,7 +17,7 @@
 static int logSkip  = MPT_ENUM(LogDebug);
 static int logFlags = MPT_ENUM(LogPretty);
 
-static void loggerUnref(MPT_INTERFACE(logger) *out)
+static void loggerUnref(MPT_INTERFACE(unrefable) *out)
 {
 	(void) out;
 }
@@ -49,7 +49,7 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	return ret;
 }
 
-static MPT_INTERFACE_VPTR(logger) _defaultLoggerVptr = { loggerUnref, loggerLog};
+static MPT_INTERFACE_VPTR(logger) _defaultLoggerVptr = { { loggerUnref }, loggerLog};
 static MPT_INTERFACE(logger) defaultLogger = { &_defaultLoggerVptr };
 
 /*!
@@ -66,21 +66,60 @@ extern MPT_INTERFACE(logger) *mpt_log_default()
 }
 /*!
  * \ingroup mptLog
- * \brief default log instance
+ * \brief set log format
  * 
- * Get pointer to default log instance.
+ * Set flags for log colour and descriptor.
  * 
- * \return log operation result
+ * \return default log flags
  */
-extern int mpt_log_default_set(int val)
+extern int mpt_log_default_format(int val)
 {
 	if (val < 0) {
-		logSkip  = MPT_ENUM(LogDebug);
 		logFlags = MPT_ENUM(LogPretty);
+	} else {
+		logFlags = val & MPT_ENUM(LogPretty);
 	}
-	else {
-		logSkip  = val & 0xff;
-		logFlags = val & 0xff00;
+	return logSkip | logFlags;
+}
+/*!
+ * \ingroup mptLog
+ * \brief set skip limit
+ * 
+ * Set lowest log value to skip.
+ * 
+ * \return default log flags
+ */
+extern int mpt_log_default_skip(int val)
+{
+	if (val < 0) {
+		logSkip = MPT_ENUM(LogDebug);
+	}else {
+		logSkip = val & 0xff;
 	}
+	return logSkip | logFlags;
+}
+/*!
+ * \ingroup mptLog
+ * \brief set log level
+ * 
+ * Set log level to display.
+ * 
+ * \return default log flags
+ */
+extern int mpt_log_default_level(int val)
+{
+	switch (val) {
+	  case MPT_ENUM(LogLevelNone):     val = 0; break;
+	  case MPT_ENUM(LogLevelCritical): val = MPT_ENUM(LogError); break;
+	  case MPT_ENUM(LogLevelError):    val = MPT_ENUM(LogWarning); break;
+	  case MPT_ENUM(LogLevelWarning):  val = MPT_ENUM(LogInfo); break;
+	  case MPT_ENUM(LogLevelInfo):     val = MPT_ENUM(LogDebug); break;
+	  case MPT_ENUM(LogLevelDebug1):   val = MPT_ENUM(LogDebug2); break;
+	  case MPT_ENUM(LogLevelDebug2):   val = MPT_ENUM(LogDebug3); break;
+	  case MPT_ENUM(LogLevelDebug3):   val = MPT_ENUM(LogFile); break;
+	  default: val = MPT_ENUM(LogDebug);
+	}
+	logSkip  = val & 0xff;
+	
 	return logSkip | logFlags;
 }

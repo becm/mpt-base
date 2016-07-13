@@ -13,8 +13,8 @@ __MPT_NAMESPACE_BEGIN
 MPT_INTERFACE(metatype);
 
 /*! generic object interface */
-MPT_INTERFACE(object)
 #ifdef __cplusplus
+MPT_INTERFACE(object) : public unrefable
 {
 protected:
 	inline ~object() {}
@@ -38,20 +38,21 @@ public:
 	inline int type() const
 	{ return property(0); }
 	
-	virtual void unref() = 0;
 	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, metatype * = 0) = 0;
+};
 #else
-; MPT_INTERFACE_VPTR(object) {
-	void (*unref)(MPT_INTERFACE(object) *);
+MPT_INTERFACE(object);
+MPT_INTERFACE_VPTR(object) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	uintptr_t (*addref)(MPT_INTERFACE(object) *);
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
 	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
-}; MPT_INTERFACE(object) {
+};MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
-#endif
 };
+#endif
 
 __MPT_EXTDECL_BEGIN
 

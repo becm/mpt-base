@@ -155,7 +155,11 @@ extern ssize_t mpt_outdata_print(uint8_t *state, FILE *hist, size_t len, const v
 	/* mark answer message */
 	if (mt->cmd == MPT_ENUM(MessageAnswer)) {
 		fputc('@', hist);
-		fprintf(hist, "[%d]: ", mt->arg);
+		if (mt->arg) {
+			fprintf(hist, "[%d]: ", mt->arg);
+		} else {
+			fputs(": ", hist);
+		}
 	}
 	if (len > 2) {
 		outputWrite(hist, len-2, mt+1);

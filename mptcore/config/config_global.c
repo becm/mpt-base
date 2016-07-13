@@ -14,7 +14,7 @@ struct configRoot
 	MPT_STRUCT(path)      base;
 };
 
-static void configUnref(MPT_INTERFACE(config) *cfg)
+static void configUnref(MPT_INTERFACE(unrefable) *cfg)
 {
 	struct configRoot *c = (void *) cfg;
 	if (c->base.len) {
@@ -145,17 +145,17 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 		return MPT_ERROR(BadOperation);
 	}
 	if ((len = mt->_vptr->assign(mt, val)) < 0) {
-		mt->_vptr->unref(mt);
+		mt->_vptr->ref.unref((void *) mt);
 		return MPT_ERROR(BadValue);
 	}
 	if (n->_meta) {
-		n->_meta->_vptr->unref(mt);
+		n->_meta->_vptr->ref.unref((void *) n->_meta);
 	}
 	n->_meta = mt;
 	return len;
 }
 static const MPT_INTERFACE_VPTR(config) configGlobal = {
-	configUnref,
+	{ configUnref },
 	configQuery,
 	configAssign,
 	0

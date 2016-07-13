@@ -9,7 +9,6 @@ src = files(
   'message_argv.c',
   'message_get.c',
   'message_id.c',
-  'message_nextid.c',
   'message_print.c',
   'message_pset.c',
   'message_read.c',

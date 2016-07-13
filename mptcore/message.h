@@ -189,9 +189,6 @@ MPT_STRUCT(strdest)
 
 __MPT_EXTDECL_BEGIN
 
-/* generate (next) id for message */
-extern MPT_STRUCT(command) *mpt_message_nextid(MPT_STRUCT(array) *);
-
 /* push message data to output */
 extern int mpt_message_push(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
@@ -238,7 +235,7 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 
 
 /* convert message IDs */
-extern int mpt_message_id2buf(uint8_t *, size_t, uint64_t);
+extern int mpt_message_id2buf(uint64_t, uint8_t *, size_t);
 extern int mpt_message_buf2id(const uint8_t *, size_t, uint64_t *);
 
 /* send layout open command */

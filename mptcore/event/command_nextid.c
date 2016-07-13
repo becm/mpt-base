@@ -1,5 +1,6 @@
 /*!
- * get message reference queue of MPT stream.
+ * MPT core library
+ *   unique command creation
  */
 
 #include <stdio.h>
@@ -29,13 +30,28 @@ static int printReply(void *out, void *msg)
  * 
  * \return registered command
  */
-extern MPT_STRUCT(command) *mpt_message_nextid(MPT_STRUCT(array) *arr)
+extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t max)
 {
 	MPT_STRUCT(buffer) *msg;
 	MPT_STRUCT(command) *base, *cmd = 0;
 	size_t i, len, used = 0;
 	uintptr_t mid = 0;
 	
+	
+	switch (max) {
+	  case 0: return 0;
+	  case 1: max = INT8_MAX; break;
+	  case 2: max = INT16_MAX; break;
+	  case 3: max = INT32_MAX/0x100; break;
+	  case 4: max = INT32_MAX; break;
+	  case 5: max = INT64_MAX/0x1000000; break;
+	  case 6: max = INT64_MAX/0x10000; break;
+	  case 7: max = INT64_MAX/0x100; break;
+	  default: max = INT64_MAX;
+	}
+	if (max > INTPTR_MAX) {
+		max = INTPTR_MAX;
+	}
 	/* command data on buffer */
 	if ((msg = arr->_buf)) {
 		len  = msg->used / sizeof(*cmd);
@@ -81,15 +97,15 @@ extern MPT_STRUCT(command) *mpt_message_nextid(MPT_STRUCT(array) *arr)
 	msg->used = used * sizeof(*cmd);
 	
 	/* try to find low free id */
-	if (++mid > INT16_MAX) {
-		for (i = 1; i <= INT16_MAX; ++i) {
+	if (++mid > max) {
+		for (i = 1; i <= max; ++i) {
 			if (!mpt_command_find(base, used, i)) {
 				mid = i;
 				break;
 			}
 		}
 		/* no unique message id available */
-		if (i > INT16_MAX) {
+		if (i > max) {
 			return 0;
 		}
 	}

@@ -89,7 +89,7 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 			errno = EBADF;
 			return -2;
 		}
-		curr->_vptr->unref(curr);
+		curr->_vptr->ref.unref((void *) curr);
 		*base = 0;
 		if ((buf = no->_wait._buf)) {
 			size_t i, len = buf->used / sizeof(*base);

@@ -108,7 +108,7 @@ static int fromText(struct paramSource *par, int type, void *dest)
 }
 #endif
 
-static void propUnref(MPT_INTERFACE(metatype) *ctl)
+static void propUnref(MPT_INTERFACE(unrefable) *ctl)
 {
 	(void) ctl;
 }
@@ -194,7 +194,7 @@ static MPT_INTERFACE(metatype) *propClone(const MPT_INTERFACE(metatype) *ctl)
 	(void) ctl; return 0;
 }
 static const MPT_INTERFACE_VPTR(metatype) _prop_vptr = {
-	propUnref,
+	{ propUnref },
 	propAssign,
 	propConv,
 	propClone

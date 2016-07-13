@@ -11,7 +11,7 @@
 
 #include "meta.h"
 
-static void metaUnref(MPT_INTERFACE(metatype) *meta)
+static void metaUnref(MPT_INTERFACE(unrefable) *meta)
 {
 	free(meta);
 }
@@ -49,7 +49,7 @@ static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *meta)
 	return _mpt_geninfo_clone(info);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
-	metaUnref,
+	{ metaUnref },
 	metaAssign,
 	metaConv,
 	metaClone

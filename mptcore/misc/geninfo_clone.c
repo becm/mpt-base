@@ -38,6 +38,6 @@ extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *info)
 	if (meta->_vptr->assign(meta, &val) >= 0) {
 		return meta;
 	}
-	meta->_vptr->unref(meta);
+	meta->_vptr->ref.unref((void *) meta);
 	return 0;
 }

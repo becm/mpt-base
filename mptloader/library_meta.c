@@ -21,7 +21,7 @@ struct _mpt_metaProxy
 	char fmt[2];
 };
 
-static void mpUnref(MPT_INTERFACE(metatype) *m)
+static void mpUnref(MPT_INTERFACE(unrefable) *m)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
@@ -109,7 +109,7 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	return &n->_mt;
 }
 static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
-	mpUnref,
+	{ mpUnref },
 	mpAssign,
 	mpConv,
 	mpClone

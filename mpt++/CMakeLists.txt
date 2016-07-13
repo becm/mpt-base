@@ -2,12 +2,16 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(sources
-  array.cpp config.cpp client.cpp
+  array.cpp
+  config.cpp client.cpp
+  event.cpp
   logger.cpp
   message.cpp meta.cpp meta_new.cpp meta_buffer.cpp
   node_new.cpp
-  object.cpp parse.cpp proxy.cpp queue.cpp
-  reply.cpp reference_wrap.cpp
+  object.cpp
+  parse.cpp proxy.cpp
+  queue.cpp
+  reference_wrap.cpp
   std_cout.cpp
   value.cpp
 )

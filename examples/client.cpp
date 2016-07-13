@@ -31,7 +31,9 @@ public:
 };
 MyClient::MyClient()
 {
-    class mpt::output *o = mpt::mpt_output_new();
+    mpt::metatype *m = mpt::mpt_output_new();
+    mpt::output *o;
+    o = m->cast<mpt::output>();
     output.setPointer(o);
 
     o->set("history", "/dev/stdout", 0);

@@ -143,7 +143,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 			if (!flags) {
 				flags = MPT_ENUM(OutputPrintRestore);
 			}
-			con->out.state = (con->out.state & ~0xf) | (flags & 0xf);
+			con->out.state = (con->out.state & ~0x7) | (flags & 0x7);
 			
 			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
 		}
@@ -152,7 +152,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 	if (con->out._idlen) {
 		uint8_t buf[sizeof(uintptr_t)];
 		
-		if ((ret = mpt_message_id2buf(buf, con->out._idlen, con->cid)) < 0) {
+		if ((ret = mpt_message_id2buf(con->cid, buf, con->out._idlen)) < 0) {
 			return ret;
 		}
 		if ((ret = mpt_outdata_push(&con->out, con->out._idlen, buf)) < 0) {

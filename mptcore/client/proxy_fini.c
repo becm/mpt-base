@@ -24,15 +24,15 @@ extern void mpt_proxy_fini(MPT_STRUCT(proxy) *pr)
 	MPT_INTERFACE(logger) *l;
 	
 	if ((m = pr->_mt)) {
-		m->_vptr->unref(m);
+		m->_vptr->ref.unref((void *) m);
 		pr->_mt = 0;
 	}
 	if ((o = pr->output)) {
-		o->_vptr->obj.unref((void *) o);
+		o->_vptr->obj.ref.unref((void *) o);
 		pr->output = 0;
 	}
 	if ((l = pr->logger)) {
-		l->_vptr->unref(l);
+		l->_vptr->ref.unref((void *) l);
 		pr->logger = 0;
 	}
 	pr->hash = 0;

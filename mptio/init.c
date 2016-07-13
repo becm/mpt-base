@@ -35,14 +35,15 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 {
 	MPT_INTERFACE(metatype) *conf;
 	MPT_INTERFACE(output) *out;
-	MPT_STRUCT(notify) *no;
 	MPT_STRUCT(dispatch) *disp;
-	const char *ctl = 0, *src = 0, *cname = 0;
+	MPT_STRUCT(notify) *no;
+	const char *ctl = 0, *src = 0, *cname = 0, *log;
+	int lv = 0;
 	
 	while (argc) {
 		int c;
 		
-		switch (c = getopt(argc, argv, "+f:c:s:")) {
+		switch (c = getopt(argc, argv, "+f:c:s:v")) {
 		    case -1:
 			argc = 0;
 			if (cname) break;
@@ -54,14 +55,41 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 			if (ctl)   return 0; ctl = optarg;  continue;
 		    case 's':
 			if (src)   return 0; src = optarg;   continue;
+		    case 'v':
+			++lv; continue;
 		    default:
 			errno = EINVAL; return 0;
 		}
 	}
+	if (lv) {
+		lv += MPT_ENUM(LogLevelInfo);
+		if (lv > MPT_ENUM(LogLevelDebug3)) {
+			lv = MPT_ENUM(LogLevelDebug3);
+		}
+		mpt_log_default_level(lv);
+	}
+	else if ((log = getenv("MPT_DEBUG"))) {
+		lv = MPT_ENUM(LogDebug2);
+		if (mpt_cint(&lv, log, 0, 0) > 0) {
+			switch (lv) {
+			  case 0: lv = MPT_ENUM(LogLevelInfo); break;
+			  case 1: lv = MPT_ENUM(LogLevelDebug1); break;
+			  case 2: lv = MPT_ENUM(LogLevelDebug2); break;
+			  case 3: lv = MPT_ENUM(LogLevelDebug3); break;
+			  default: lv = MPT_ENUM(LogFile); break;
+			}
+			mpt_log_default_level(lv);
+		}
+	}
+	else if ((log = getenv("MPT_LOGLEVEL"))) {
+		lv = mpt_log_level(log);
+		mpt_log_default_level(lv);
+	}
 	
 	/* load mpt environment variables */
-	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
 	mpt_config_environ(0, "mpt_*", '_', 0);
+	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
+	
 	
 	/* set client filename */
 	if (cname) {
@@ -84,14 +112,20 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	mpt_notify_setdispatch(no, disp);
 	
 	/* set notification output */
-	if ((out = mpt_output_new(no))) {
+	if ((conf = mpt_output_new(no))
+	    && (conf->_vptr->conv(conf, MPT_ENUM(TypeOutput), &out) >= 0)
+	    && out) {
 		disp->_err.arg = out;
 		/* set debug parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			mpt_object_set((void *) out, "print", "s", cname);
 		}
-		/* set debug parameter */
+		/* use local debug parameter */
+		else if (lv > 0) {
+			mpt_object_set((void *) out, "debug", "i", lv);
+		}
+		/* use global debug parameter */
 		else if ((conf = mpt_config_get(0, "mpt.debug", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			mpt_object_set((void *) out, "debug", "s", cname);
@@ -100,6 +134,20 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		if ((conf = mpt_config_get(0, "mpt.output.answer", '.', 0))
 		    && (cname = mpt_meta_data(conf, 0))) {
 			mpt_object_set((void *) out, "answer", "s", cname);
+		}
+		/* use output for reply */
+		if (out->_vptr->obj.addref((void *) out)) {
+			MPT_STRUCT(reply_context) *ctx;
+			
+			if (!(ctx = malloc(sizeof(*ctx) + 32))) {
+				out->_vptr->obj.ref.unref((void *) out);
+			} else {
+				disp->_ctx = ctx;
+				ctx->ptr = out;
+				ctx->len = 0;
+				ctx->_max = sizeof(ctx->_val) + 32;
+				ctx->used = 0;
+			}
 		}
 	}
 	/* set default event if no input available */
@@ -120,7 +168,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 				close(sock._id);
 			}
 			else if (mpt_notify_add(no, POLLIN, in) < 0) {
-				in->_vptr->unref(in);
+				in->_vptr->ref.unref((void *) in);
 			}
 			/* detach regular input to avoid confusion */
 			else {

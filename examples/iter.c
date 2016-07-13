@@ -34,7 +34,7 @@ extern int main(int argc, char *argv[])
 			}
 			fprintf(stdout, "%g ", val);
 		}
-		mt->_vptr->unref(mt);
+		mt->_vptr->ref.unref((void *) mt);
 		fputc('\n', stdout);
 	}
 	

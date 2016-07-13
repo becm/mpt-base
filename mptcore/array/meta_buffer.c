@@ -18,7 +18,7 @@ MPT_STRUCT(metaBuffer) {
 	MPT_STRUCT(slice)        s;
 };
 
-static void bufferUnref(MPT_INTERFACE(metatype) *meta)
+static void bufferUnref(MPT_INTERFACE(unrefable) *meta)
 {
 	MPT_STRUCT(metaBuffer) *m = (void *) meta;
 	mpt_array_clone(&m->s._a, 0);
@@ -133,7 +133,7 @@ static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 }
 
 static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer = {
-	bufferUnref,
+	{ bufferUnref },
 	bufferAssign,
 	bufferConv,
 	bufferClone

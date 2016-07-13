@@ -3,15 +3,13 @@
 
 cxx_src = files(
   'array.cpp',
-  'client.cpp',
-  'config.cpp',
+  'client.cpp', 'config.cpp',
+  'event.cpp',
   'logger.cpp',
-  'message.cpp',
-  'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
+  'message.cpp', 'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
   'node_new.cpp',
   'object.cpp',
-  'proxy.cpp',
-  'parse.cpp',
+  'proxy.cpp', 'parse.cpp',
   'queue.cpp',
   'reference_wrap.cpp',
   'std_cout.cpp',
@@ -31,7 +29,6 @@ if with_plot
     'layout.cpp',
     'mapping.cpp',
     'polyline.cpp',
-    'reply.cpp',
     'reference_wrap.cpp',
     'transform.cpp'
   )

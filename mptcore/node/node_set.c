@@ -38,11 +38,11 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 		return -1;
 	}
 	if ((ret = replace->_vptr->assign(old, &val)) < 0) {
-		replace->_vptr->unref(replace);
+		replace->_vptr->ref.unref((void *) replace);
 		return -3;
 	}
 	if (old) {
-		old->_vptr->unref(old);
+		old->_vptr->ref.unref((void *) old);
 	}
 	node->_meta = replace;
 	

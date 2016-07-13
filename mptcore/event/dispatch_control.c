@@ -14,7 +14,7 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 {
 	MPT_INTERFACE(output) *out = ptr;
 	if (!ev) {
-		out->_vptr->obj.unref((void *) out);
+		out->_vptr->obj.ref.unref((void *) out);
 		return 0;
 	}
 	if (ev->msg) {

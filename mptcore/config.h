@@ -62,11 +62,10 @@ MPT_STRUCT(path)
 	            assign; /* assign separator */
 };
 
-MPT_INTERFACE(config)
 #if defined(__cplusplus)
+MPT_INTERFACE(config) : public unrefable
 {
 public:
-	virtual void unref() = 0;
 	virtual metatype *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
@@ -79,16 +78,18 @@ public:
 	static config *global(const path * = 0);
 protected:
 	inline ~config() { }
+};
 #else
-; MPT_INTERFACE_VPTR(config) {
-	void (*unref)(MPT_INTERFACE(config) *);
+MPT_INTERFACE(config);
+MPT_INTERFACE_VPTR(config) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
-#endif
 };
+#endif
 
 __MPT_EXTDECL_BEGIN
 

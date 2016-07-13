@@ -38,7 +38,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 	if (con->cid || (con->out.state & MPT_ENUM(OutputActive))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!(cmd = mpt_message_nextid(&con->_wait))) {
+	if (!(cmd = mpt_command_nextid(&con->_wait, con->out._idlen))) {
 		return MPT_ERROR(BadValue);
 	}
 	/* make next message non-local */

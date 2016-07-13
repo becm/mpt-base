@@ -19,7 +19,7 @@ struct _iter_ldata
 	int pos, max; /* curr = first + step * pos */
 };
 
-static void iterUnref(MPT_INTERFACE(metatype) *mt)
+static void iterUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	free(mt);
 }
@@ -138,7 +138,7 @@ static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 	return memcpy(c, mt, sizeof(*c));
 }
 static const MPT_INTERFACE_VPTR(metatype) iteratorLinear = {
-	iterUnref,
+	{ iterUnref },
 	iterAssign,
 	iterConv,
 	iterClone

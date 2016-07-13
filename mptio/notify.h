@@ -6,43 +6,39 @@
 #ifndef _MPT_NOTIFY_H
 #define _MPT_NOTIFY_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#include "array.h"
+#include "event.h"
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(dispatch);
-
-MPT_INTERFACE(input)
-#ifdef _MPT_EVENT_H
-# ifdef __cplusplus
+#ifdef __cplusplus
+MPT_INTERFACE(input) : public unrefable
 {
 public:
 	enum { Type = TypeInput };
 	
-	virtual void unref() = 0;
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
 	virtual int _file();
 protected:
 	inline ~input() { }
+};
 # else
-; MPT_INTERFACE_VPTR(input) {
-	void (*unref)(MPT_INTERFACE(input) *);
+MPT_INTERFACE(input);
+MPT_INTERFACE_VPTR(input) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	int (*next)(MPT_INTERFACE(input) *, int);
 	int (*dispatch)(MPT_INTERFACE(input) *, MPT_TYPE(EventHandler) , void *);
 	int (*_file)(MPT_INTERFACE(input) *);
 }; MPT_INTERFACE(input) {
 	const MPT_INTERFACE_VPTR(input) *_vptr;
-# endif
-}
+};
 #endif
-;
 
 /* notification compound */
 MPT_STRUCT(notify)
-#if defined(_MPT_ARRAY_H) && defined(_MPT_EVENT_H)
 {
-# ifdef __cplusplus
+#ifdef __cplusplus
 public:
 	notify();
 	~notify();
@@ -57,10 +53,10 @@ public:
 	
 protected:
 	RefArray<input>
-# else
+#else
 	MPT_STRUCT(array)
-#  define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
-# endif /* __cplusplus */
+# define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
+#endif /* __cplusplus */
 	             _slot,   /* compound part pointer array */
 	             _wait;   /* temporary data for poll info */
 	struct {
@@ -70,9 +66,7 @@ protected:
 	
 	int          _sysfd;  /* system poll descriptor */
 	unsigned int _fdused; /* number of used descriptors */
-}
-#endif /* _MPT_ARRAY_H */
-;
+};
 
 __MPT_EXTDECL_BEGIN
 

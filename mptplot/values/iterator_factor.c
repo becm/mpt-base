@@ -19,7 +19,7 @@ struct _iter_fdata
 	int    pos, max;   /* iterations left */
 };
 
-static void iterUnref(MPT_INTERFACE(metatype) *mt)
+static void iterUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	free(mt);
 }
@@ -146,7 +146,7 @@ static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 }
 
 static MPT_INTERFACE_VPTR(metatype) iteratorFactor = {
-	iterUnref,
+	{ iterUnref },
 	iterAssign,
 	iterConv,
 	iterClone

@@ -16,7 +16,7 @@
  * 
  * \return result of push operation
  */
-int mpt_message_id2buf(uint8_t *buf, size_t len, uint64_t id)
+int mpt_message_id2buf(uint64_t id, uint8_t *buf, size_t len)
 {
 	int used;
 	if (!len--) {
@@ -53,27 +53,24 @@ int mpt_message_buf2id(const uint8_t *buf, size_t len, uint64_t *iptr)
 {
 	uint64_t id;
 	size_t used;
-	int ret;
 	uint8_t val;
 	
 	if (!len) {
 		if (iptr) *iptr = 0;
 		return 0;
 	}
-	val = *buf++;
-	/* filter reply flag */
-	ret = val & 0x80 ? 1 : 0;
-	id  = val & 0x7f;
+	/* initial value setup */
+	id = *buf++;
+	used = id ? 1 : used;
 	
 	/* add higher order ID parts */
-	used = 1;
 	while (!--len) {
 		val = *buf++;
 		id *= 0x100;
-		if (val && ++used > sizeof(id)) {
+		if ((val || used) && ++used > sizeof(id)) {
 			return MPT_ERROR(BadValue);
 		}
 		id |= val;
 	}
-	return ret;
+	return used;
 }
