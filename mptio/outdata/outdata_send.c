@@ -65,7 +65,7 @@ extern int mpt_outdata_send(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message) 
 		}
 		ret = -1;
 	}
-	out->state &= ~(MPT_ENUM(OutputActive) | MPT_ENUM(OutputRemote));
+	out->state &= ~MPT_ENUM(OutputActive);
 	
 	return ret;
 }

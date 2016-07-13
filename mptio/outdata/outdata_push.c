@@ -32,6 +32,7 @@
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void *src)
 {
 	ssize_t ret;
+	MPT_STRUCT(buffer) *buf;
 	
 	/* use stream data */
 	if (!MPT_socket_active(&od->sock)) {
@@ -52,10 +53,22 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		}
 		return ret;
 	}
+	/* existing new data */
+	if (od->state & MPT_ENUM(OutputReceived)) {
+		return MPT_ERROR(MessageInput);
+	}
 	if (len) {
-		/* answer in progress */
-		if (od->state & MPT_ENUM(OutputRemote)) {
-			return MPT_ERROR(MessageInput);
+		if (!(od->state & MPT_ENUM(OutputActive))) {
+			if (!src) {
+				if (len != 1) {
+					return MPT_ERROR(BadOperation);
+				}
+				od->state &= ~MPT_ENUM(OutputActive);
+				return 0;
+			}
+			if ((buf = od->_buf)) {
+				buf->used = 0;
+			}
 		}
 		if (!mpt_array_append((MPT_STRUCT(array) *) &od->_buf, len, src)) {
 			return MPT_ERROR(BadOperation);
@@ -66,14 +79,12 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 	else {
 		struct msghdr mhdr;
 		struct iovec out;
-		MPT_STRUCT(buffer) *buf;
 		
 		if (!(buf = od->_buf)) {
 			len = 0;
 		} else {
 			len = buf->used;
 		}
-		
 		/* destination address */
 		mhdr.msg_name    = 0;
 		mhdr.msg_namelen = 0;
@@ -93,7 +104,6 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		if (ret >= 0) {
 			od->state &= ~MPT_ENUM(OutputActive);
 		}
-		
 		return ret;
 	}
 }

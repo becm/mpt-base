@@ -25,7 +25,8 @@ enum MPT_ENUM(OutputFlags) {
 	MPT_ENUM(OutputPrintColor)   = 0x8,   /* enable coloring */
 	
 	MPT_ENUM(OutputActive)       = 0x10,  /* message is active */
-	MPT_ENUM(OutputRemote)       = 0x20   /* skip internal filter */
+	MPT_ENUM(OutputReceived)     = 0x20,  /* data from remote */
+	MPT_ENUM(OutputRemote)       = 0x40  /* skip internal filter */
 };
 
 #ifdef __cplusplus

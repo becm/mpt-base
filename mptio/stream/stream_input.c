@@ -16,6 +16,7 @@
 #include "queue.h"
 #include "array.h"
 #include "event.h"
+#include "message.h"
 
 #include "notify.h"
 #include "stream.h"
@@ -27,7 +28,7 @@ struct streamInput {
 	size_t                idlen;
 };
 
-static void streamUnref(MPT_INTERFACE(input) *in)
+static void streamUnref(MPT_INTERFACE(unrefable) *in)
 {
 	struct streamInput *srm = (void *) in;
 	MPT_STRUCT(buffer) *buf;
@@ -45,10 +46,75 @@ static int streamNext(MPT_INTERFACE(input) *in, int what)
 	struct streamInput *srm = (void *) in;
 	return mpt_stream_poll(&srm->data, what, -1);
 }
+struct streamWrap
+{
+	struct streamInput *in;
+	MPT_TYPE(EventHandler) cmd;
+	void *arg;
+};
+static int streamReply(void *ptr, const MPT_STRUCT(message) *msg)
+{
+	MPT_STRUCT(reply_context) *rp = ptr;
+	struct streamInput *srm;
+	
+	if (!(srm = rp->ptr)) {
+		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
+		        MPT_tr("stream destructed"));
+		if (!--rp->used) {
+			free(rp);
+		}
+		return MPT_ERROR(BadArgument);
+	}
+	if (!rp->used) {
+		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
+		        MPT_tr("reply context unregistered"));
+		return MPT_ERROR(BadArgument);
+	}
+	if (!rp->len || rp->_val[0] & 0x80) {
+		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
+		        MPT_tr("reply context unregistered"));
+		return MPT_ERROR(BadArgument);
+	}
+	if (mpt_stream_flags(&srm->data._info) & MPT_ENUM(StreamMesgAct)) {
+		return MPT_ERROR(MessageInProgress);
+	}
+	rp->_val[0] |= 0x80;
+	
+	mpt_stream_push(&srm->data, rp->len, rp->_val);
+	mpt_stream_send(&srm->data, msg);
+	rp->len = 0;
+	--rp->used;
+	return 0;
+}
+static int streamEvent(void *ptr, MPT_STRUCT(event) *ev)
+{
+	MPT_STRUCT(reply_context) *rc;
+	struct streamWrap *sw = ptr;
+	struct streamInput *srm;
+	
+	srm = sw->in;
+	
+	/* dispatch reply */
+	if (!ev->reply.context) {
+		return sw->cmd(sw->arg, ev);
+	}
+	/* get new reply context */
+	if (!(rc = mpt_reply_reserve(&srm->ctx, srm->idlen))) {
+		return MPT_ERROR(BadOperation);
+	}
+	/* reply context setup */
+	rc->ptr = srm;
+	mpt_message_id2buf(ev->id, rc->_val, rc->len = srm->idlen);
+	
+	/* use new reply context */
+	ev->reply.set = streamReply;
+	ev->reply.context = rc;
+	
+	return sw->cmd(sw->arg, ev);
+}
 static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct streamInput *srm = (void *) in;
-	MPT_STRUCT(reply_context) *ctx = 0;
 	
 	if (srm->data._mlen < 0
 	    && (srm->data._mlen = mpt_queue_recv(&srm->data._rd)) < 0) {
@@ -58,16 +124,17 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 		return 0;
 	}
 	if (!cmd) {
+		srm->data._mlen = -1;
 		return 1;
 	}
-	if (srm->data._rd._dec) {
-		if (!(ctx = mpt_reply_reserve(&srm->ctx, srm->idlen))) {
-			return -3;
-		}
-		ctx->len = srm->idlen;
-		ctx->used = 1;
+	if (srm->idlen) {
+		struct streamWrap sw;
+		sw.in = srm;
+		sw.cmd = cmd;
+		sw.arg = arg;
+		return mpt_stream_dispatch(&srm->data, srm->idlen, streamEvent, &sw);
 	}
-	return mpt_stream_dispatch(&srm->data, ctx, cmd, arg);
+	return mpt_stream_dispatch(&srm->data, 0, cmd, arg);
 }
 static int streamFile(MPT_INTERFACE(input) *in)
 {
@@ -76,8 +143,7 @@ static int streamFile(MPT_INTERFACE(input) *in)
 }
 
 static const MPT_INTERFACE_VPTR(input) streamCtl = {
-	streamUnref,
-	
+	{ streamUnref },
 	streamNext,
 	streamDispatch,
 	streamFile

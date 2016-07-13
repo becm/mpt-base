@@ -49,27 +49,4 @@ input *notify::next() const
 int notify::wait(int what, int wait)
 { return mpt_notify_wait(this, what, wait); }
 
-
-// dispatcher
-dispatch::dispatch()
-{ mpt_dispatch_init(this); }
-dispatch::~dispatch()
-{ mpt_dispatch_fini(this); }
-bool dispatch::set(uintptr_t id, EventHandler cmd, void *arg)
-{ return mpt_dispatch_set(this, id, cmd, arg) >= 0; }
-bool dispatch::setDefault(uintptr_t id)
-{
-    if (!mpt_command_get(&_cmd, id)) return false;
-    _def = id;
-    return true;
-}
-void dispatch::setError(int (*cmd)(void *, event *), void *arg)
-{
-    if (_err.cmd) {
-        _err.cmd(_err.arg, 0);
-    }
-    _err.cmd = cmd;
-    _err.arg = arg;
-}
-
 __MPT_NAMESPACE_END

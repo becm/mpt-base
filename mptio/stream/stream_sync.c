@@ -46,37 +46,28 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 	/* count waiting ids */
 	count = pos = 0;
 	while (pos < len) {
-		int (*fcn)();
-		if (!(fcn = cmd[pos++].cmd)) continue;
-		++count;
+		if (cmd[pos++].cmd) ++count;
 	}
 	/* no input size -> return waiting */
 	if (!idlen) {
 		return count;
 	}
-	
 	/* get message from stream */
 	while (count) {
 		MPT_STRUCT(command) *mc;
-		uint8_t buf[128];
-		uintptr_t id;
-		
-		struct iovec vec;
 		MPT_STRUCT(message) msg;
-		size_t i;
+		struct iovec vec;
+		uint8_t buf[32];
+		uint64_t id;
 		int ret;
 		
-		if (idlen > sizeof(id)) {
-			errno = EINVAL;
-			return -1;
+		if (idlen > sizeof(buf)) {
+			return MPT_ERROR(BadArgument);
 		}
-		/* get handler for message */
-		if (mpt_queue_peek(&stream->_rd, sizeof(buf), buf) < 1) {
-			if (!timeout) {
-				return count;
-			}
+		/* get message data */
+		if (stream->_mlen < 0) {
 			if ((ret = mpt_stream_poll(stream, POLLIN, timeout)) < 0) {
-				return ret;
+				return MPT_ERROR(BadOperation);
 			}
 			if (!ret) {
 				return count;
@@ -84,16 +75,9 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 			if (timeout > 0) {
 				timeout = 0;
 			}
-			continue;
-		}
-		/* no return type message */
-		if (!(buf[0] & 0x80)) {
-			return count;
-		}
-		/* get message data */
-		if (stream->_mlen < 0
-		    && (stream->_mlen = mpt_queue_recv(&stream->_rd)) < 0) {
-			return count;
+			if ((stream->_mlen = mpt_queue_recv(&stream->_rd)) < 0) {
+				continue;
+			}
 		}
 		/* remove processed data */
 		mpt_queue_crop(&stream->_rd.data, 0, stream->_rd._state.done);
@@ -104,30 +88,34 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 		
 		/* consume/create message id */
 		mpt_message_read(&msg, idlen, buf);
-		id = buf[0] & 0x7f;
-		for (i = 1; i < idlen; ++i) {
-			id += (id * 0x100) + buf[i];
+		/* no return type message */
+		if (!(buf[0] & 0x80)) {
+			return MPT_ERROR(MessageInput);
 		}
-		/* find command */
-		if (!(mc = mpt_command_find(cmd, len, id))) {
-			if (!(mc = mpt_command_find(cmd, len, 0))) {
-				return -4;
-			}
-			ret = mc->cmd(mc->arg, &msg);
+		buf[0] &= 0x7f;
+		ret = mpt_message_buf2id(buf, idlen, &id);
+		
+		if (ret < 0 || ret > (int) sizeof(uintptr_t)) {
+			return MPT_ERROR(BadValue);
 		}
 		/* handle message (and deregister handler) */
-		else {
+		if ((mc = mpt_command_find(cmd, len, id))) {
 			ret = mc->cmd(mc->arg, &msg);
 			mc->cmd = 0;
-			if (ret > 0) {
-				--count;
-			}
+			--count;
+		}
+		/* find fallback command */
+		else if ((mc = mpt_command_find(cmd, len, 0))) {
+			ret = mc->cmd(mc->arg, &msg);
+		}
+		else {
+			continue;
 		}
 		if (ret < 0) {
 			break;
 		}
 	}
-	if (count < len/3) {
+	if (count > len/2) {
 		return count;
 	}
 	/* compress waiting return commands */

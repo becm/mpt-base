@@ -6,21 +6,20 @@
 #ifndef _MPT_STREAM_H
 #define _MPT_STREAM_H  @INTERFACE_VERSION@
 
+
+#include "array.h"
+#include "queue.h"
+
 #ifdef __cplusplus
-# include "array.h"
 # include "event.h"
 # include "notify.h"
-# include "queue.h"
 # include "output.h"
-#else
-# include "core.h"
 #endif
 
 struct sockaddr;
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(array);
 MPT_STRUCT(message);
 
 MPT_INTERFACE(metatype);
@@ -82,9 +81,7 @@ MPT_STRUCT(streaminfo)
 #define MPT_stream_newline_write(f) (((f) & 0xc000) >> 14)
 
 
-MPT_STRUCT(stream_context);
 MPT_STRUCT(stream)
-#ifdef _MPT_QUEUE_H
 {
 #ifdef __cplusplus
 	stream();
@@ -98,10 +95,9 @@ MPT_STRUCT(stream)
 	int errors() const;
 	void setError(int);
 	
-	typedef reply_context context;
-	
 	bool open(const char *, const char * = "r");
     protected:
+	friend class Stream;
 #else
 # define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_DECODE_QUEUE_INIT, MPT_ENCODE_QUEUE_INIT, -1 }
 #endif
@@ -109,9 +105,7 @@ MPT_STRUCT(stream)
 	MPT_STRUCT(decode_queue) _rd;    /* read data */
 	MPT_STRUCT(encode_queue) _wd;    /* write data */
 	ssize_t                  _mlen;  /* current message length */
-}
-#endif
-;
+};
 
 __MPT_EXTDECL_BEGIN
 
@@ -163,10 +157,10 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 /* push message and flush stream */
 extern int mpt_stream_send(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
-extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const MPT_STRUCT(array) *, int __MPT_DEFPAR(-1));
+extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_ARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
 /* dispatch next message */
 #ifdef _MPT_EVENT_H
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, MPT_STRUCT(reply_context) *, MPT_TYPE(EventHandler) , void *);
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, size_t, MPT_TYPE(EventHandler) , void *);
 #endif
 
 /* perform delayed write operations */
@@ -180,51 +174,51 @@ __MPT_EXTDECL_END
 struct msgtype;
 struct message;
 
-class Stream : public output, public input, public logger, public IODevice, stream
+class Stream : public metatype, public output, public input, public IODevice
 {
 public:
-    Stream(const streaminfo * = 0);
-    virtual ~Stream();
-    
-    enum { Type = IODevice::Type };
-    
-    void unref();
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
-    
-    ssize_t push(size_t , const void *);
-    int sync(int = -1);
-    int await(int (*)(void *, const struct message *) = 0, void * = 0);
-    
-    int log(const char *, int, const char *, va_list);
-    
-    int next(int);
-    int dispatch(EventHandler , void *);
-    int _file();
-    
-    ssize_t write(size_t , const void *, size_t part = 1);
-    ssize_t read(size_t , void *, size_t part = 1);
-    int64_t pos();
-    bool seek(int64_t);
-    int getchar();
-    
-    bool open(const char *, const char * = "r");
-    bool open(void *, size_t , int = StreamRead);
-    
-    inline void close()
-    { setProperty(0, 0); }
-    
+	Stream(const streaminfo * = 0);
+	virtual ~Stream();
+	
+	enum { Type = IODevice::Type };
+	
+	void unref();
+	int conv(int , void *);
+	int assign(const value *);
+	
+	int property(struct property *) const;
+	int setProperty(const char *, metatype *);
+	
+	ssize_t push(size_t , const void *);
+	int sync(int = -1);
+	int await(int (*)(void *, const struct message *) = 0, void * = 0);
+	int log(const char *, int, const char *, va_list);
+	
+	int next(int);
+	int dispatch(EventHandler , void *);
+	int _file();
+	
+	ssize_t write(size_t , const void *, size_t part = 1);
+	ssize_t read(size_t , void *, size_t part = 1);
+	int64_t pos();
+	bool seek(int64_t);
+	int getchar();
+	
+	bool open(const char *, const char * = "r");
+	bool open(void *, size_t , int = StreamRead);
+	
+	inline void close()
+	{ setProperty(0, 0); }
+	
+	class WrapDispatch;
+	
 protected:
-    array _msg;
-    reply_context::array _ctx;
-    struct {
-        output   *out;
-        input    *in;
-        logger   *log;
-        IODevice *dev;
-    } _conv;
-    int _inputFile;
-    uint8_t _idlen;
+	stream *_srm;
+	command::array _wait;
+	reply_context::array _ctx;
+	uintptr_t _cid;
+	int _inputFile;
+	uint8_t _idlen;
 };
 #endif /* C++ */
 

@@ -80,6 +80,11 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 	if (!src) {
 		return MPT_ERROR(BadOperation);
 	}
+	/* message in progress */
+	if (con->out.state & MPT_ENUM(OutputReceived)) {
+		return MPT_ERROR(MessageInProgress);
+	}
+	/* local filter for message */
 	if (!(con->out.state & MPT_ENUM(OutputRemote))) {
 		const MPT_STRUCT(msgtype) *mt = src;
 		int type, flags = -1;
@@ -159,7 +164,6 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 			return ret;
 		}
 	}
-	con->out.state &= ~MPT_ENUM(OutputRemote);
 	if ((ret = mpt_outdata_push(&con->out, len, src)) < 0) {
 		mpt_outdata_push(&con->out, 1, 0);
 	}

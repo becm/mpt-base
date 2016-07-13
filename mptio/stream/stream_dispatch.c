@@ -15,42 +15,6 @@
 
 #include "stream.h"
 
-static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
-{
-	MPT_STRUCT(reply_context) *ctx = ctxp;
-	MPT_STRUCT(stream) *srm;
-	
-	if (!(srm = ctx->ptr)) {
-		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Debug), "%s",
-		        "source stream deleted");
-		free(ctx);
-		return 0;
-	}
-	if (!ctx->used) {
-		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Critical), "%s",
-		        "called with unregistered context");
-		return MPT_ERROR(MissingData);
-	}
-	if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-		return MPT_ERROR(MissingBuffer);
-	}
-	if (ctx->len) {
-		mpt_stream_push(srm, ctx->len, ctx->_val);
-	}
-	/* detach context */
-	ctx->ptr = 0;
-	
-	/* send message or termination */
-	if (msg) {
-		mpt_stream_send(srm, msg);
-	} else {
-		mpt_stream_push(srm, 0, 0);
-	}
-	mpt_stream_flush(srm);
-	
-	return 0;
-}
-
 /*!
  * \ingroup mptStream
  * \brief dispatch next message
@@ -65,21 +29,26 @@ static int sendMessage(void *ctxp, const MPT_STRUCT(message) *msg)
  * 
  * \return created input
  */
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(reply_context) *ctx, MPT_TYPE(EventHandler) cmd, void *arg)
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, size_t idlen, MPT_TYPE(EventHandler) cmd, void *arg)
 {
 	struct iovec vec;
 	MPT_STRUCT(message) msg;
 	MPT_STRUCT(event) ev;
-	ssize_t len;
+	uint8_t id[32];
 	int ret;
 	
 	/* require message separation */
-	if (ctx && !srm->_rd._dec) {
-		return -1;
+	if (idlen) {
+		if (!srm->_rd._dec) {
+			return MPT_ERROR(BadArgument);
+		}
+		if (idlen > sizeof(id)) {
+			return MPT_ERROR(BadValue);
+		}
 	}
 	/* use existing or new message */
-	if ((len = srm->_mlen) < 0
-	    && (srm->_mlen = len = mpt_queue_recv(&srm->_rd)) < 0) {
+	if (srm->_mlen < 0
+	    && (srm->_mlen = mpt_queue_recv(&srm->_rd)) < 0) {
 		return -2;
 	}
 	/* remove message data from queue */
@@ -87,24 +56,39 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, MPT_STRUCT(reply_context
 	srm->_rd._state.done = 0;
 	
 	/* get message data */
-	mpt_message_get(&srm->_rd.data, 0, len, &msg, &vec);
+	mpt_message_get(&srm->_rd.data, 0, srm->_mlen, &msg, &vec);
 	
 	ev.id = 0;
 	ev.msg = &msg;
-	ev.reply.set = ctx ? sendMessage : 0;
-	ev.reply.context = ctx;
+	ev.reply.set = 0;
+	ev.reply.context = srm;
 	
-	/* error to get message ID for reply context */
-	if (ctx
-	    && (len = ctx->len)
-	    && (mpt_message_read(&msg, len, ctx->_val) < (size_t) len)) {
-		return MPT_ERROR(BadValue);
+	/* get message ID */
+	if (idlen) {
+		uint64_t evid;
+		if (mpt_message_read(&msg, idlen, id) < idlen) {
+			return MPT_ERROR(MissingData);
+		}
+		if (id[0] & 0x80) {
+			id[0] &= 0x7f;
+			ev.reply.context = 0;
+		}
+		if ((ret = mpt_message_buf2id(id, idlen, &evid)) < 0
+		    || ret > (int) sizeof(ev.id)) {
+			return MPT_ERROR(BadValue);
+		}
+		ev.id = evid;
 	}
 	/* consume message */
 	if (!cmd) {
-		/* reply to non-return message */
-		if (ctx && len && ctx->_val[0] & 0x80) {
-			sendMessage(ctx, 0);
+		/* reply to ignored message */
+		if (idlen && ev.reply.context) {
+			if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
+				return MPT_ERROR(MessageInProgress);
+			}
+			mpt_stream_push(srm, idlen, id);
+			mpt_stream_push(srm, 0, 0);
+			mpt_stream_flush(srm);
 		}
 		ret = 0;
 	}

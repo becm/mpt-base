@@ -235,8 +235,8 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 
 
 /* convert message IDs */
-extern int mpt_message_id2buf(uint64_t, uint8_t *, size_t);
-extern int mpt_message_buf2id(const uint8_t *, size_t, uint64_t *);
+extern int mpt_message_id2buf(uint64_t, void *, size_t);
+extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
 
 /* send layout open command */
 extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);

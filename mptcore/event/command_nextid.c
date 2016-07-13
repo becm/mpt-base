@@ -26,7 +26,7 @@ static int printReply(void *out, void *msg)
  * Add new command with unique identifier in message range.
  * Set control handler of returned element to activate.
  * 
- * \param arr	command control array
+ * \param arr  command control array
  * 
  * \return registered command
  */
@@ -57,7 +57,7 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 		len  = msg->used / sizeof(*cmd);
 		base = (void *) (msg+1);
 	} else {
-		if ((cmd = mpt_array_append(arr, sizeof(*cmd), 0))) {
+		if ((cmd = mpt_array_append(arr, sizeof(*cmd) * 8, 0))) {
 			cmd->id  = 1;
 			cmd->cmd = (int (*)()) mpt_message_print;
 			cmd->arg = stderr;

@@ -32,16 +32,36 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 	while (1) {
 		ssize_t post;
 		
-		/* terminate current message */
-		if (!len) {
-			if ((post = mpt_queue_push(&stream->_wd, 0, 0)) >= 0) {
-				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
-			}
-			return post;
-		}
 		/* error during data append */
-		post = mpt_queue_push(&stream->_wd, len, src);
-		
+		if (len) {
+			post = mpt_queue_push(&stream->_wd, len, src);
+		}
+		/* terminate current message */
+		else {
+			if (!stream->_wd._enc) {
+				const char *fmt;
+				size_t add, rem;
+				
+				rem = stream->_wd.data.max - stream->_wd.data.len;
+				
+				switch (MPT_stream_newline_write(flags)) {
+				  case MPT_ENUM(NewlineMac):  add = 1; fmt = "\r"; break;
+				  case MPT_ENUM(NewlineUnix): add = 1; fmt = "\r"; break;
+				  case MPT_ENUM(NewlineNet):  add = 2; fmt = "\r\n"; break;
+				  default: add = 1; fmt = "";
+				}
+				if (rem >= add) {
+					mpt_queue_push(&stream->_wd, add, fmt);
+					stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
+					return 0;
+				}
+				post = MPT_ERROR(MissingBuffer);
+			}
+			else if ((post = mpt_queue_push(&stream->_wd, 0, 0)) >= 0) {
+				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
+				return post;
+			}
+		}
 		/* pushed some data */
 		if (post >= 0) {
 			stream->_info._fd |= MPT_ENUM(StreamMesgAct);

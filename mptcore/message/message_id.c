@@ -16,8 +16,9 @@
  * 
  * \return result of push operation
  */
-int mpt_message_id2buf(uint64_t id, uint8_t *buf, size_t len)
+int mpt_message_id2buf(uint64_t id, void *ptr, size_t len)
 {
+	uint8_t *buf = ptr;
 	int used;
 	if (!len--) {
 		return id ? MPT_ERROR(MissingBuffer) : 0;
@@ -49,8 +50,9 @@ int mpt_message_id2buf(uint64_t id, uint8_t *buf, size_t len)
  * 
  * \return result of push operation
  */
-int mpt_message_buf2id(const uint8_t *buf, size_t len, uint64_t *iptr)
+int mpt_message_buf2id(const void *ptr, size_t len, uint64_t *iptr)
 {
+	const uint8_t *buf = ptr;
 	uint64_t id;
 	size_t used;
 	uint8_t val;
@@ -61,7 +63,7 @@ int mpt_message_buf2id(const uint8_t *buf, size_t len, uint64_t *iptr)
 	}
 	/* initial value setup */
 	id = *buf++;
-	used = id ? 1 : used;
+	used = id ? 1 : 0;
 	
 	/* add higher order ID parts */
 	while (!--len) {

@@ -15,7 +15,7 @@ src = files(
   'outdata_print.c',
   'outdata_property.c',
   'outdata_push.c',
+  'outdata_recv.c',
   'outdata_send.c',
-  'outdata_sync.c',
   'outdata_type.c',
 )

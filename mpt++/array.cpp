@@ -397,14 +397,14 @@ int Buffer::conv(int type, void *ptr)
         return BadOperation;
     }
     if (!type) {
-        static const char types[] = { 's', IODevice::Type, array::Type, 0 };
+        static const char types[] = { 's', IODevice::Type, mpt::array::Type, 0 };
         if (dest) *dest = (void *) types;
         return IODevice::Type;
     }
     switch (type &= 0xff) {
-    case metatype::Type: ptr = static_cast<metatype *>(this); break;
-    case IODevice::Type: ptr = static_cast<IODevice *>(this); break;
-    case array::Type:    ptr = static_cast<array *>(&_d); break;
+    case metatype::Type:   ptr = static_cast<metatype *>(this); break;
+    case IODevice::Type:   ptr = static_cast<IODevice *>(this); break;
+    case mpt::array::Type: ptr = static_cast<mpt::array *>(&_d); break;
     case 's': ptr = mpt_array_string(&_d); break;
     default: return BadType;
     }
