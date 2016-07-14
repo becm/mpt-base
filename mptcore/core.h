@@ -478,7 +478,6 @@ public:
 # define MPT_LOG(x) MptLog##x
 enum MPT_ENUM(LogType) {
 #endif
-#define MPT_FCNLOG(x) (MPT_LOG(x) | MPT_ENUM(LogFunction))
 	MPT_LOG(LevelNone)      = 0x0,  /* filter messages down to ... */
 	MPT_LOG(LevelCritical)  = 0x1,
 	MPT_LOG(LevelError)     = 0x2,

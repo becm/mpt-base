@@ -28,7 +28,7 @@ static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type
 	if (!fmt) {
 		int ret;
 		va_start(va, fmt);
-		ret = mpt_connection_log(con, from, type, fmt, va);
+		ret = mpt_connection_log(con, from, type | MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction), fmt, va);
 		va_end(va);
 		return ret;
 	}
@@ -45,13 +45,13 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	
 	/* bad context state */
 	if (!rc->used) {
-		mpt_log(0, _func, MPT_FCNLOG(Critical), "%s %s",
+		mpt_log(0, _func, MPT_LOG(Critical), "%s %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
 		return MPT_REPLY(BadContext);
 	}
 	
 	if (!(con = rc->ptr)) {
-		mpt_log(0, _func, MPT_FCNLOG(Error), "%s: %s",
+		mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
 		        MPT_tr("unable to reply"), MPT_tr("output destroyed"));
 		if (!--rc->used) {
 			free(rc);
@@ -60,7 +60,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	}
 	/* already answered */
 	if (!rc->len) {
-		connectionLog(con, _func, MPT_FCNLOG(Warning), "%s: %s",
+		connectionLog(con, _func, MPT_LOG(Warning), "%s: %s",
 		              MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
 		--rc->used;
 		return MPT_REPLY(BadState);
@@ -72,26 +72,26 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 		MPT_STRUCT(stream) *srm;
 		
 		if (!(srm = con->out._buf)) {
-			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
 		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
 		}
 		if ((ret = mpt_stream_push(srm, rc->len, rc->_val)) < 0) {
-			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
 			return ret;
 		}
 		if (src && mpt_stream_append(srm, src) < 0) {
-			connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Warning), "%s (%04"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
 		}
 		if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
-			connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Warning), "%s (%04"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
 			if (mpt_stream_push(srm, 1, 0) < 0) {
 				return ret;
@@ -107,7 +107,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			ret += mpt_message_read(&msg, sizeof(buf) - rc->len, buf + rc->len);
 			if (mpt_message_length(&msg)) {
 				ret = rc->len;
-				connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+				connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
 				              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			}
 		}
@@ -118,7 +118,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 		ret = sendto(con->out.sock._id, buf, ret, 0, sa, con->out._socklen);
 		
 		if (ret < 0) {
-			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			return MPT_ERROR(BadArgument);
 		}
@@ -147,14 +147,14 @@ int streamWrapper(void *ptr, MPT_STRUCT(event) *ev)
 	if (!ev->reply.context) {
 		MPT_STRUCT(command) *ans;
 		if (!(ans = mpt_command_get(&con->_wait, ev->id))) {
-			connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
 			              MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 			return MPT_ERROR(BadValue);
 		}
 		return ans->cmd(ans->arg, (void *) ev->msg);
 	}
 	if (!(rc = mpt_reply_reserve(&con->out._ctx, con->out._idlen))) {
-		connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
 		              MPT_tr("dispatch failed"), MPT_tr("no reply context available"));
 		return MPT_ERROR(BadArgument);
 	}
@@ -164,7 +164,7 @@ int streamWrapper(void *ptr, MPT_STRUCT(event) *ev)
 	mpt_message_id2buf(ev->id, rc->_val, rc->len);
 	
 	if (mpt_message_read(&msg, rc->len, rc->_val) < rc->len) {
-		connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
 		              MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 		return MPT_ERROR(BadArgument);
 	}
@@ -253,17 +253,17 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 			rc->_val[0] &= 0x7f;
 			ret = mpt_message_buf2id(rc->_val, rc->len, &ansid);
 			if (ret < 0 || ret > (int) sizeof(ev.id)) {
-				connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s (%d)",
+				connectionLog(con, __func__, MPT_LOG(Error), "%s: %s (%d)",
 				              MPT_tr("reply failed"), MPT_tr("bad id size"), ret);
 				return MPT_ERROR(MissingBuffer);
 			}
 			if (!(ans = mpt_command_get(&con->_wait, ansid))) {
-				connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s ("PRIx64")",
+				connectionLog(con, __func__, MPT_LOG(Error), "%s: %s ("PRIx64")",
 				              MPT_tr("reply failed"), MPT_tr("message not registered"), ansid);
 				return MPT_ERROR(MissingBuffer);
 			}
 			if (ans->cmd(ans->arg, &msg) < 0) {
-				connectionLog(con, __func__, MPT_FCNLOG(Error), "%s: %s",
+				connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
 				              MPT_tr("dispatch failed"), MPT_tr("no message available"));
 				return MPT_ERROR(MissingBuffer);
 			}

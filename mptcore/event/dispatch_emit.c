@@ -26,7 +26,7 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 		return 0;
 	}
 	if (!(ans = ctx->ptr)) {
-		mpt_log(0, _func, MPT_FCNLOG(Critical), "%s",
+		mpt_log(0, _func, MPT_LOG(Critical), "%s",
 		        MPT_tr("context for answer destroyed"));
 		if (!--ctx->used) {
 			free(ctx);
@@ -34,20 +34,20 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 		return MPT_ERROR(BadArgument);
 	}
 	if (!ctx->used) {
-		mpt_output_log(ans, _func, MPT_FCNLOG(Critical), "%s",
+		mpt_output_log(ans, _func, MPT_LOG(Critical), "%s",
 		               MPT_tr("called with unregistered context"));
 		return MPT_ERROR(MissingData);
 	}
 	--ctx->used;
 	if (!ctx->len) {
-		mpt_output_log(ans, _func, MPT_FCNLOG(Critical), "%s",
+		mpt_output_log(ans, _func, MPT_LOG(Critical), "%s",
 		               MPT_tr("reply committed"));
 		return MPT_ERROR(BadArgument);
 	}
 	if (!msg) {
 		uint64_t id = 0;
 		mpt_message_buf2id(ctx->_val, ctx->len, &id);
-		mpt_output_log(ans, _func, MPT_FCNLOG(Debug), "%s ("PRIx64")",
+		mpt_output_log(ans, _func, MPT_LOG(Debug), "%s ("PRIx64")",
 		               MPT_tr("empty reply"), id);
 		ctx->len = 0;
 		return 0;
@@ -88,7 +88,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		/* bad default command */
 		if (!(cmd = mpt_command_get(&disp->_d, tmp.id))) {
 			disp->_def = 0;
-			mpt_output_log(out, __func__, MPT_FCNLOG(Critical), "%s (%"PRIxPTR")",
+			mpt_output_log(out, __func__, MPT_LOG(Critical), "%s (%"PRIxPTR")",
 			               MPT_tr("invalid default command id"), tmp.id);
 			return -2;
 		}
@@ -143,19 +143,19 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		if (out) {
 			if (ev->id) {
 				if (disp->_def) {
-					mpt_output_log(out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR" > %"PRIxPTR")",
+					mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR" > %"PRIxPTR")",
 					               MPT_tr("replace default event"), disp->_def, ev->id);
 				} else {
-					mpt_output_log(out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR")",
+					mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
 					               MPT_tr("register default event"), ev->id);
 				}
 			}
 			else if (disp->_def) {
-				mpt_output_log(out, __func__, MPT_FCNLOG(Info), "%s (%"PRIxPTR")",
+				mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
 				               MPT_tr("clear default event"), disp->_def);
 			}
 			else {
-				mpt_output_log(out, __func__, MPT_FCNLOG(Info), "%s", MPT_tr("no default event"));
+				mpt_output_log(out, __func__, MPT_LOG(Info), "%s", MPT_tr("no default event"));
 			}
 		}
 		disp->_def = ev->id;

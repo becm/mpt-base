@@ -20,7 +20,7 @@ extern int mpt_output_print(MPT_INTERFACE(output) *out, const MPT_STRUCT(message
 	size_t len;
 	
 	if (!mptr) {
-		mpt_output_log(out, __func__, MPT_FCNLOG(Debug2), "%s",
+		mpt_output_log(out, __func__, MPT_LOG(Debug2), "%s",
 		               MPT_tr("no message"));
 		return 0;
 	}
@@ -28,7 +28,7 @@ extern int mpt_output_print(MPT_INTERFACE(output) *out, const MPT_STRUCT(message
 	len = mpt_message_read(&msg, 2, buf);
 	
 	if (len < 1) {
-		mpt_output_log(out, __func__, MPT_FCNLOG(Info), "%s",
+		mpt_output_log(out, __func__, MPT_LOG(Info), "%s",
 		               MPT_tr("empty message"));
 		return 0;
 	}

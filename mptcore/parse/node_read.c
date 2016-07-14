@@ -31,19 +31,19 @@ extern int mpt_node_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, cons
 	int err;
 	
 	if (!root) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+		(void) mpt_log(out, __func__, MPT_LOG(Error), "%s",
 		               MPT_tr("missing configuration node"));
 		return MPT_ERROR(BadArgument);
 	}
 	if (!fd) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s",
+		(void) mpt_log(out, __func__, MPT_LOG(Error), "%s",
 		               MPT_tr("missing input file"));
 		return MPT_ERROR(BadArgument);
 	}
 	err = mpt_parse_format(&pfmt, fmt);
 	
 	if (!(next = mpt_parse_next_fcn(err))) {
-		(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s: \"%s\"",
+		(void) mpt_log(out, __func__, MPT_LOG(Error), "%s: \"%s\"",
 		               MPT_tr("invalid parse format"),  fmt ? fmt : "");
 		return -2;
 	}
@@ -57,10 +57,10 @@ extern int mpt_node_read(MPT_STRUCT(node) *root, FILE *fd, const char *fmt, cons
 	if ((err = mpt_parse_node(next, &pfmt, &parse, root)) < 0) {
 		const char *fname;
 		if ((fname = mpt_node_data(root, 0))) {
-			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u: %s",
+			(void) mpt_log(out, __func__, MPT_LOG(Error), "%s (%x): %s %u: %s",
 			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line, fname);
 		} else {
-			(void) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s (%x): %s %u",
+			(void) mpt_log(out, __func__, MPT_LOG(Error), "%s (%x): %s %u",
 			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
 		}
 	}

@@ -17,6 +17,7 @@
 
 static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 {
+	static const char _func[] = "mpt::event::unknown";
 	MPT_INTERFACE(output) *out = arg;
 	
 	if (!ev) {
@@ -30,13 +31,13 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 		return MPT_ENUM(EventFail);
 	}
 	if (!out || ev->id) {
-		mpt_output_log(out, "mpt::event::unknown", MPT_FCNLOG(Error), "%s: 0x"PRIxPTR,
+		mpt_output_log(out, _func, MPT_LOG(Error), "%s: 0x"PRIxPTR,
 		               MPT_tr("invalid command"), ev->id);
 		ev->id = 0;
 		return MPT_ENUM(EventDefault);
 	}
 	if (!ev->msg) {
-		mpt_output_log(out, "mpt::event::unknown", MPT_FCNLOG(Info), "%s",
+		mpt_output_log(out, _func, MPT_LOG(Info), "%s",
 		               MPT_tr("empty message"));
 		return 0;
 	}

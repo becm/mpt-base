@@ -129,10 +129,10 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	ret = mpt_connection_set(&od->con, name, src);
 	if (ret < 0) {
 		if (!name || !*name) {
-			mpt_output_log(&od->_out, _fcn, MPT_FCNLOG(Debug), "%s",
+			mpt_output_log(&od->_out, _fcn, MPT_LOG(Debug), "%s",
 			               MPT_tr("unable to assign output"));
 		} else {
-			mpt_output_log(&od->_out, _fcn, MPT_FCNLOG(Debug), "%s: %s",
+			mpt_output_log(&od->_out, _fcn, MPT_LOG(Debug), "%s: %s",
 			               MPT_tr("unable to set property"), name);
 		}
 	}
@@ -150,14 +150,14 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	}
 	/* add local reference for event controller */
 	if (!outputRef((void *) &od->_out)) {
-		mpt_output_log(&od->_out, _fcn, MPT_FCNLOG(Error), "%s: %s "PRIxPTR,
+		mpt_output_log(&od->_out, _fcn, MPT_LOG(Error), "%s: %s "PRIxPTR,
 		               MPT_tr("failed"),
 		               MPT_tr("reference output"),
 		               od);
 	}
 	/* use first reference for notifier */
 	else if (mpt_notify_add(od->_no, POLLIN, &od->_in) < 0) {
-		mpt_output_log(&od->_out, _fcn, MPT_FCNLOG(Error), "%s: %s: fd%i",
+		mpt_output_log(&od->_out, _fcn, MPT_LOG(Error), "%s: %s: fd%i",
 		               MPT_tr("failed"),
 		               MPT_tr("register notifier"),
 		               newFd);
@@ -216,7 +216,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			}
 			timeout = 0;
 			if ((pos = mpt_outdata_recv(&od->con.out)) < 0) {
-				mpt_output_log(&od->_out, __func__, MPT_FCNLOG(Error), "%s: %s",
+				mpt_output_log(&od->_out, __func__, MPT_LOG(Error), "%s: %s",
 				               MPT_tr("receive failed"), MPT_tr("unable to get new data"));
 				return MPT_ERROR(BadOperation);
 			}
@@ -235,7 +235,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 		pos = mpt_message_buf2id(rc->_val, rc->len, &ansid);
 		
 		if (pos < 0 || pos > (int) sizeof(uintptr_t)) {
-			mpt_output_log(&od->_out, _func, MPT_FCNLOG(Error), "%s (%i)",
+			mpt_output_log(&od->_out, _func, MPT_LOG(Error), "%s (%i)",
 			               MPT_tr("bad message id"), pos);
 			return MPT_ERROR(BadValue);
 		}
@@ -253,7 +253,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			}
 			continue;
 		}
-		mpt_output_log(&od->_out, _func, MPT_FCNLOG(Error), "%s (%" PRIx64 ")",
+		mpt_output_log(&od->_out, _func, MPT_LOG(Error), "%s (%" PRIx64 ")",
 		               MPT_tr("bad reply id"), ansid);
 		return MPT_ERROR(BadValue);
 	}
@@ -301,7 +301,7 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 		}
 		/* get new datagram */
 		else if ((ret = mpt_outdata_recv(&od->con.out)) < 0) {
-			mpt_output_log(&od->_out, __func__, MPT_FCNLOG(Error), "%s: %s",
+			mpt_output_log(&od->_out, __func__, MPT_LOG(Error), "%s: %s",
 			               MPT_tr("receive failed"), MPT_tr("unable to get new data"));
 		}
 		/* save input parameters */

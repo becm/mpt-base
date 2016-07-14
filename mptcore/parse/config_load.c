@@ -40,7 +40,7 @@ static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 		return 0;
 	}
 	if (!(mpt_node_assign(&ctx->root->children, p))) {
-		if (ctx->log) mpt_log(ctx->log, _func, MPT_FCNLOG(Error), "%s", MPT_tr("failed to set global config element"));
+		if (ctx->log) mpt_log(ctx->log, _func, MPT_LOG(Error), "%s", MPT_tr("failed to set global config element"));
 		return MPT_ERROR(BadOperation);
 	}
 	return 0;
@@ -62,7 +62,7 @@ extern int mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, const M
 	struct loadCtx ctx;
 	
 	if (!(ctx.root = mpt_config_node(dest))) {
-		if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("require existing global config target"));
+		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("require existing global config target"));
 		return MPT_ERROR(BadArgument);
 	}
 	return _mpt_config_load(root, ctx.log = log, nodeSet, &ctx);

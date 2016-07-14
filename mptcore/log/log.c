@@ -25,7 +25,7 @@ extern int mpt_log(MPT_INTERFACE(logger) *out, const char *where, int type, cons
 	va_start(ap, fmt);
 	
 	if (!out) out = mpt_log_default();
-	err = out->_vptr->log(out, where, type, fmt, ap);
+	err = out->_vptr->log(out, where, type | MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction), fmt, ap);
 	va_end(ap);
 	
 	return err;

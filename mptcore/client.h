@@ -32,7 +32,7 @@ MPT_INTERFACE_VPTR(client)
 	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 };
-# define MPT_CLIENT_LOGLEVEL MPT_FCNLOG(Debug2)
+# define MPT_CLIENT_LOGLEVEL MPT_LOG(Debug2)
 MPT_INTERFACE(client)
 {
 	const MPT_INTERFACE_VPTR(client) *_vptr;

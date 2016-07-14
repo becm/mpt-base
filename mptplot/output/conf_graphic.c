@@ -71,11 +71,11 @@ extern int mpt_conf_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 		return 0;
 	}
 	if (err < 0) {
-		(void) mpt_output_log(out, __func__, MPT_FCNLOG(Warning), "%s",
+		(void) mpt_output_log(out, __func__, MPT_LOG(Warning), "%s",
 		                      MPT_tr("unable to apply graphic binding"));
 		return -2;
 	}
-	(void) mpt_output_log(out, __func__, MPT_FCNLOG(Error), "%s %i",
+	(void) mpt_output_log(out, __func__, MPT_LOG(Error), "%s %i",
 	                      MPT_tr("error processing graphic binding"), err);
 	return -3;
 }

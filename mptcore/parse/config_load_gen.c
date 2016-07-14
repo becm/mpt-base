@@ -88,9 +88,9 @@ int loadDir(int cdir, const char *name, MPT_TYPE(PathHandler) save, void *ctx, M
 		if (log) {
 			int line = src.src.line;
 			if (res < 0) {
-				mpt_log(log, _func, MPT_FCNLOG(Error), "%s: %d (line %d): %s", MPT_tr("parse error"), res, line, buf);
+				mpt_log(log, _func, MPT_LOG(Error), "%s: %d (line %d): %s", MPT_tr("parse error"), res, line, buf);
 			} else {
-				mpt_log(log, _func, MPT_FCNLOG(Debug3), "%s: %s", MPT_tr("processed file"), buf);
+				mpt_log(log, _func, MPT_LOG(Debug3), "%s: %s", MPT_tr("processed file"), buf);
 			}
 		}
 		if (res < 0) {
@@ -125,7 +125,7 @@ extern int _mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, MPT_TY
 	if (root) {
 		int sub;
 		if ((sub = open(root, O_RDONLY | O_DIRECTORY)) < 0) {
-			if (log) mpt_log(log, __func__, MPT_FCNLOG(Error), "%s: %s", MPT_tr("unable to open alternative root"), root);
+			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("unable to open alternative root"), root);
 			return MPT_ERROR(BadArgument);
 		}
 		if ((cfg = openat(sub, sol_cfile+1, O_RDONLY)) >= 0) {
@@ -147,10 +147,10 @@ extern int _mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, MPT_TY
 			
 			if (log) {
 				if (curr < 0) {
-					mpt_log(log, __func__, MPT_FCNLOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, buf);
+					mpt_log(log, __func__, MPT_LOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, buf);
 					return curr;
 				} else {
-					mpt_log(log, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), buf);
+					mpt_log(log, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("processed file"), buf);
 				}
 			}
 			else if (curr < 0) {
@@ -183,10 +183,10 @@ extern int _mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, MPT_TY
 		}
 		if (log) {
 			if (curr < 0) {
-				mpt_log(log, __func__, MPT_FCNLOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, sol_cfile);
+				mpt_log(log, __func__, MPT_LOG(Error), "%s [%d]: %s", MPT_tr("parse error"), curr, sol_cfile);
 				return curr;
 			} else {
-				mpt_log(log, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("processed file"), sol_cfile);
+				mpt_log(log, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("processed file"), sol_cfile);
 			}
 		}
 		else if (curr < 0) {

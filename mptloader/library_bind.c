@@ -31,18 +31,18 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 	int type;
 	
 	if (!conf) {
-		if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", MPT_tr("missing initializer target"));
+		if (out) mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
 		return 0;
 	}
 	if ((type = mpt_proxy_type(conf, &conf)) < 0) {
 		if (!def && out) {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
+			mpt_log(out, __func__, MPT_LOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
 		}
 		type = def;
 	}
 	if ((err = mpt_library_assign(&lh, conf, path))) {
 		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
-			if (out) mpt_log(out, __func__, MPT_FCNLOG(Error), "%s", err);
+			if (out) mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
 		}
 		return 0;
 	}
@@ -55,14 +55,14 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 	if (m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj) >= 0 && obj) {
 		const char *name;
 		if (!(name = mpt_object_typename(obj))) {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s", MPT_tr("created proxy object"));
+			mpt_log(out, __func__, MPT_LOG(Debug), "%s", MPT_tr("created proxy object"));
 		} else {
-			mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
+			mpt_log(out, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
 		}
 	}
 	/* generic instance */
 	else {
-		mpt_log(out, __func__, MPT_FCNLOG(Debug), "%s: %02x", MPT_tr("created proxy instance"), type);
+		mpt_log(out, __func__, MPT_LOG(Debug), "%s: %02x", MPT_tr("created proxy instance"), type);
 	}
 	return m;
 }
