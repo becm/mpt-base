@@ -10,9 +10,11 @@
 # include <new>
 # include <cstring>
 struct iovec;
+# include "meta.h"
+#else
+# include "core.h"
 #endif
 
-#include "core.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -88,10 +90,12 @@ public:
 	encode_array(DataEncoder = 0);
 	~encode_array();
 	
+	bool prepare(size_t);
 	ssize_t push(size_t , const void *);
-	bool setData(const struct message *);
 	bool setEncoding(DataEncoder);
 	bool trim(size_t = 0);
+	
+	bool push(const struct message &);
 	
 	Slice<uint8_t> data() const;
 protected:
@@ -283,29 +287,7 @@ inline slice::~slice()
 inline Slice<uint8_t> slice::data() const
 { return Slice<uint8_t>(_len ? ((uint8_t *) (_buf+1))+_off : 0, _len); }
 
-#if defined(_MPT_QUEUE_H) && defined(_MPT_META_H)
-/* IO extension to buffer */
-class Buffer : public metatype, public IODevice, public encode_array
-{
-public:
-    enum { Type = TypeIODevice };
-    Buffer(const Reference<buffer> & = Reference<buffer>(0));
-    ~Buffer();
-    
-    void unref();
-    int assign(const value *);
-    int conv(int , void *);
-    
-    ssize_t read(size_t , void *, size_t = 1);
-    ssize_t write(size_t , const void *, size_t = 1);
-    
-    Slice<uint8_t> peek(size_t);
-    bool seek(int64_t);
-    int64_t pos();
-};
-#endif
-
-size_t compact(void **, size_t);
+void compact(Slice<void *> &);
 
 template <typename T>
 void move(T *v, size_t from, size_t to)
@@ -616,8 +598,8 @@ public:
     
     class Entry;
     
-    void unref();
-    int log(const char *, int, const char *, va_list);
+    void unref() __MPT_OVERRIDE;
+    int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
     
     virtual const Entry *nextEntry();
     virtual void clearLog();
@@ -710,12 +692,13 @@ public:
 protected:
     Array<Element> _d;
 };
+
+#endif /* __cplusplus */
+
 __MPT_EXTDECL_BEGIN
 /* clear references on array data (requires template in C++ mode) */
 extern void mpt_array_callunref(_MPT_REF_ARRAY_TYPE(unrefable) *);
 __MPT_EXTDECL_END
-
-#endif /* __cplusplus */
 
 __MPT_NAMESPACE_END
 

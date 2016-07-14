@@ -25,6 +25,7 @@
 
 # if __cplusplus >= 201103L
 #  define __MPT_CONST_EXPR constexpr
+#  define __MPT_OVERRIDE override
 #  ifndef __MPT_REFERENCE_MOVE
 #   define __MPT_REFERENCE_MOVE 1
 #  endif
@@ -61,6 +62,10 @@
 # define __MPT_NAMESPACE_END
 # define __MPT_EXTDECL_BEGIN
 # define __MPT_EXTDECL_END
+#endif
+
+#ifndef __MPT_OVERRIDE
+# define __MPT_OVERRIDE
 #endif
 
 struct iovec;
@@ -512,7 +517,7 @@ public:
 MPT_INTERFACE(logger);
 MPT_INTERFACE_VPTR(logger) {
 	MPT_INTERFACE_VPTR(unrefable) ref;
-	int (*log)  (MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
+	int (*log)(MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;
 };
@@ -524,7 +529,7 @@ int error(const char *, const char *, ... );
 int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
-int log(const char *, ... );
+int print(const char *, ... );
 
 /*! reduced slice with type but no data reference */
 template <typename T>

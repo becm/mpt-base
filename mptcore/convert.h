@@ -6,7 +6,7 @@
 #ifndef _MPT_CONVERT_H
 #define _MPT_CONVERT_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#include "array.h"
 
 #if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
 # define _MPT_FLOAT_EXTENDED_H
@@ -14,7 +14,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(array);
 MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(EncodingType) {
@@ -161,8 +160,8 @@ extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const cha
 
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
-extern int mpt_valfmt_parse(MPT_STRUCT(array) *, const char *);
-extern int mpt_valfmt_set(MPT_STRUCT(array) *, MPT_INTERFACE(metatype) *);
+extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
+extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
 
 
 __MPT_EXTDECL_END

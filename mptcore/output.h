@@ -9,6 +9,10 @@
 #include "object.h"
 #include "event.h"
 
+#ifdef __cplusplus
+# include "convert.h"
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
@@ -53,7 +57,6 @@ class Output : public Object
 public:
 	inline Output(output *o) : Object(o)
 	{ }
-	
 };
 #else
 MPT_INTERFACE(output);
@@ -78,19 +81,19 @@ MPT_STRUCT(histinfo)
 public:
 	inline histinfo() : pos(0), part(0), line(0), type(0), size(0)
 	{ }
-	
 	bool setFormat(const char *fmt);
 	bool setup(size_t , const msgvalfmt *);
 protected:
 #else
 # define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT,  0, 0, 0,  0, 0 }
 #endif
-	MPT_STRUCT(array) _fmt;  /* output format */
-	uint16_t           pos;  /* position in line */
-	uint16_t           part; /* part of line to display */
-	uint16_t           line; /* line lenth */
-	char               type; /* type information */
-	uint8_t            size; /* element size */
+	_MPT_ARRAY_TYPE(valfmt) _fmt;  /* output format */
+	
+	uint16_t pos;  /* position in line */
+	uint16_t part; /* part of line to display */
+	uint16_t line; /* line lenth */
+	char     type; /* type information */
+	uint8_t  size; /* element size */
 };
 
 #ifdef __cplusplus

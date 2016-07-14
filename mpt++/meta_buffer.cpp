@@ -5,7 +5,7 @@
 #include "meta.h"
 #include "queue.h"
 
-#include "array.h"
+#include "stream.h"
 
 // buffer metatype override
 extern "C" mpt::metatype *mpt_meta_buffer(const mpt::array *a)

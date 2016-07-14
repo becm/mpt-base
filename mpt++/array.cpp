@@ -8,8 +8,8 @@
 
 #include "message.h"
 #include "convert.h"
-#include "queue.h"
-#include "meta.h"
+
+#include "../mptio/stream.h"
 
 #include "array.h"
 
@@ -35,9 +35,12 @@ template<> void copy<double, float>(int pts, const double *src, int lds, float *
 template<> void copy<float, double>(int pts, const float *src, int lds, double *dest, int ldd)
 { mpt_copy_fd(pts, src, lds, dest, ldd); }
 
-// pointer array compact redirection
-size_t compact(void **base, size_t len)
-{ return mpt_array_compact(base, len); }
+// pointer slice compact redirection
+void compact(Slice<void *> &s)
+{
+    size_t len = mpt_array_compact(s.base(), s.length());
+    s.trim(s.length() - len);
+}
 
 // buffer operations
 void buffer::unref()
@@ -213,6 +216,18 @@ encode_array::~encode_array()
     if (_enc) _enc(&_state, 0, 0);
 }
 
+bool encode_array::prepare(size_t len)
+{
+    if (_enc) {
+        return false;
+    }
+    size_t old = _d.length();
+    if (!_d.set(old + len)) {
+        return false;
+    }
+    _d.set(old);
+    return true;
+}
 Slice<uint8_t> encode_array::data() const
 {
     uint8_t *base = (uint8_t *) _d.base();
@@ -223,7 +238,14 @@ Slice<uint8_t> encode_array::data() const
 bool encode_array::trim(size_t len)
 {
     if (!len) {
-        _state.done = 0;
+        size_t len, max = _state.done + _state.scratch;
+        if ((len = _d.length() <= max)) {
+            return false;
+        }
+        uint8_t *d = reinterpret_cast<uint8_t *>(_d.base());
+        size_t shift = max - len;
+        memcpy(d, d+shift, len);
+        _d.set(len);
         return true;
     }
     if (len > _state.done) {
@@ -237,16 +259,9 @@ ssize_t encode_array::push(size_t len, const void *data)
     return mpt_array_push(this, len, data);
 }
 
-bool encode_array::setData(const message *msg)
+bool encode_array::push(const struct message &msg)
 {
-    if (!msg) {
-        if (mpt_array_push(this, 0, 0) < 0) {
-            return false;
-        }
-        return true;
-    }
-    message tmp = *msg;
-    size_t total = 0;
+    message tmp = msg;
 
     while (1) {
         if (!tmp.used) {
@@ -259,17 +274,8 @@ bool encode_array::setData(const message *msg)
         ssize_t curr = mpt_array_push(this, tmp.used, tmp.base);
 
         if (curr < 0 || (size_t) curr > tmp.used) {
-            if (total) {
-                (void) mpt_array_push(this, 1, 0);
-            }
             return false;
         }
-    }
-    if (mpt_array_push(this, 0, 0) < 0) {
-        if (total) {
-            (void) mpt_array_push(this, 1, 0);
-        }
-        return false;
     }
     return true;
 }
@@ -286,8 +292,9 @@ size_t PointerArray::unused() const
 }
 void PointerArray::compact()
 {
-    size_t len = ::mpt::compact(begin(), length());
-    _d.set(len * sizeof(void *));
+    Slice<void *> s(begin(), length());
+    ::mpt::compact(s);
+    _d.set(s.length() * sizeof(void *));
 }
 bool PointerArray::swap(size_t p1, size_t p2) const
 {
@@ -391,25 +398,29 @@ int Buffer::assign(const value *val)
 }
 int Buffer::conv(int type, void *ptr)
 {
-    void **dest = (void **) ptr;
-
-    if (type & MPT_ENUM(ValueConsume)) {
-        return BadOperation;
-    }
     if (!type) {
-        static const char types[] = { 's', IODevice::Type, mpt::array::Type, 0 };
-        if (dest) *dest = (void *) types;
-        return IODevice::Type;
+        static const char types[] = { metatype::Type, MPT_value_toVector('c'), 's', 0 };
+        if (ptr) *((const char **) ptr) = types;
+        return Type;
     }
-    switch (type &= 0xff) {
-    case metatype::Type:   ptr = static_cast<metatype *>(this); break;
-    case IODevice::Type:   ptr = static_cast<IODevice *>(this); break;
-    case mpt::array::Type: ptr = static_cast<mpt::array *>(&_d); break;
-    case 's': ptr = mpt_array_string(&_d); break;
-    default: return BadType;
+    if (type == metatype::Type) {
+        if (ptr) *((void **) ptr) = static_cast<metatype *>(this);
+        return type;
     }
-    if (dest) *dest = ptr;
-    return type;
+    int curr = type & 0xff;
+    if (curr == MPT_value_toVector('c')) {
+        Slice<uint8_t> d = data();
+        if (ptr) memcpy(ptr, &d, sizeof(d));
+        if ((type & ValueConsume) && d.length()) trim(d.length());
+        return type & (0xff | ValueConsume);
+    }
+    if (_state.scratch) return MessageInProgress;
+    size_t off = _d.length() - _state.done;
+    slice s(_d);
+    s.shift(off);
+    curr = mpt_slice_conv(&s, type, ptr);
+    s.shift(s.data().length() - _state.done);
+    return curr;
 }
 ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {

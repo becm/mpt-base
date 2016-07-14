@@ -174,6 +174,29 @@ __MPT_EXTDECL_END
 struct msgtype;
 struct message;
 
+
+/* metatype extension to encode array */
+class Buffer : public metatype, public IODevice, public encode_array
+{
+public:
+    enum { Type = array::Type };
+    
+    Buffer(const Reference<buffer> & = Reference<buffer>(0));
+    virtual ~Buffer();
+    
+    void unref() __MPT_OVERRIDE;
+    int assign(const value *) __MPT_OVERRIDE;
+    int conv(int , void *) __MPT_OVERRIDE;
+    
+    ssize_t write(size_t , const void *, size_t = 1) __MPT_OVERRIDE;
+    ssize_t read(size_t , void *, size_t = 1) __MPT_OVERRIDE;
+    
+    int64_t pos() __MPT_OVERRIDE;
+    bool seek(int64_t) __MPT_OVERRIDE;
+    Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
+    int getchar() __MPT_OVERRIDE;
+};
+
 class Stream : public metatype, public output, public input, public IODevice
 {
 public:
@@ -182,27 +205,27 @@ public:
 	
 	enum { Type = IODevice::Type };
 	
-	void unref();
-	int conv(int , void *);
-	int assign(const value *);
+	void unref() __MPT_OVERRIDE;
+	int conv(int , void *) __MPT_OVERRIDE;
+	int assign(const value *) __MPT_OVERRIDE;
 	
-	int property(struct property *) const;
-	int setProperty(const char *, metatype *);
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, metatype *) __MPT_OVERRIDE;
 	
-	ssize_t push(size_t , const void *);
-	int sync(int = -1);
-	int await(int (*)(void *, const struct message *) = 0, void * = 0);
-	int log(const char *, int, const char *, va_list);
+	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
+	int sync(int = -1) __MPT_OVERRIDE;
+	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
+	int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
 	
-	int next(int);
-	int dispatch(EventHandler , void *);
-	int _file();
+	int next(int) __MPT_OVERRIDE;
+	int dispatch(EventHandler , void *) __MPT_OVERRIDE;
+	int _file() __MPT_OVERRIDE;
 	
-	ssize_t write(size_t , const void *, size_t part = 1);
-	ssize_t read(size_t , void *, size_t part = 1);
-	int64_t pos();
-	bool seek(int64_t);
-	int getchar();
+	ssize_t write(size_t , const void *, size_t part = 1) __MPT_OVERRIDE;
+	ssize_t read(size_t , void *, size_t part = 1) __MPT_OVERRIDE;
+	int64_t pos() __MPT_OVERRIDE;
+	bool seek(int64_t) __MPT_OVERRIDE;
+	int getchar() __MPT_OVERRIDE;
 	
 	bool open(const char *, const char * = "r");
 	bool open(void *, size_t , int = StreamRead);
