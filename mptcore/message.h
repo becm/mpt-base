@@ -158,7 +158,7 @@ MPT_STRUCT(msgvalfmt)
 # define MPT_MSGVALFMT_INIT { 0, 0 } }
 #endif
 	uint8_t fmt,  /* data type */
-	        len;  /* value element */
+	        len;  /* value count */
 };
 
 /* layout destination */

@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'accept.c',
+  'stream_append.c',
   'stream_close.c',
   'stream_dispatch.c',
   'stream_dopen.c',
@@ -14,7 +15,6 @@ src = files(
   'stream_push.c',
   'stream_read.c',
   'stream_seek.c',
-  'stream_send.c',
   'stream_setmode.c',
   'stream_setter.c',
   'stream_sockflags.c',

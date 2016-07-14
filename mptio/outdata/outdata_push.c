@@ -39,9 +39,11 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		MPT_STRUCT(stream) *srm;
 		
 		ret = len;
-		if ((srm = od->_buf)
-		    && (ret = mpt_stream_push(srm, len, src))) {
+		if (!(srm = od->_buf)) {
 			return MPT_ERROR(BadArgument);
+		}
+		if ((ret = mpt_stream_push(srm, len, src)) < 0) {
+			return ret;
 		}
 		if (len) {
 			od->state |= MPT_ENUM(OutputActive);

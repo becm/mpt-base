@@ -21,17 +21,13 @@
  * 
  * \return zero on success
  */
-extern int mpt_stream_send(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m)
+extern int mpt_stream_append(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m)
 {
 	const struct iovec *cont;
 	const uint8_t *base;
-	size_t used, clen;
+	size_t used, clen, total;
 	
 	if (!m) {
-		if (mpt_stream_push(srm, 0, 0) < 0) {
-			return -1;
-		}
-		(void) mpt_stream_flush(srm);
 		return 0;
 	}
 	base = m->base;
@@ -39,30 +35,20 @@ extern int mpt_stream_send(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m
 	cont = m->cont;
 	clen = m->clen;
 	
+	total = 0;
 	while (1) {
 		ssize_t curr = mpt_stream_push(srm, used, base);
 		
-		if (curr < 0 || (size_t) curr > used) {
-			if (mpt_stream_push(srm, 1, 0) < 0) {
-				return -1;
-			} else {
-				return -2;
-			}
+		if (curr < 0) {
+			return MPT_ERROR(BadOperation);
 		}
+		total += curr;
 		if ((used -= curr)) {
 			base += curr;
 			continue;
 		}
 		if (!clen) {
-			if ((curr = mpt_stream_push(srm, 0, 0)) < 0) {
-				if (mpt_stream_push(srm, 1, 0) < 0) {
-					return -1;
-				} else {
-					return -2;
-				}
-			}
-			(void) mpt_stream_flush(srm);
-			return 0;
+			return total;
 		}
 		base = cont->iov_base;
 		used = cont->iov_len;

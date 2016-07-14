@@ -254,23 +254,40 @@ static int streamWrapReply(void *ptr, const message *msg)
     stream *srm = reinterpret_cast<stream *>(rc->ptr);
     uint64_t id = 0;
 
+    if (!rc->used) {
+        critical(_func, "%s: %s", MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
+        return 0;
+    }
     mpt_message_buf2id(rc->_val, rc->len, &id);
-    if (!srm) {
+    if (!(srm = reinterpret_cast<stream *>(rc->ptr))) {
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("reply target destroyed"), id);
+        if (!--rc->used) {
+            free(rc);
+        }
         return BadArgument;
     }
     if (!rc->len) {
-        error(_func, "%s (id = " PRIx64 ")", MPT_tr("reply processed"), id);
+        error(_func, "%s (id = " PRIx64 ")", MPT_tr("no id size specified"), id);
+        return MessageInProgress;
     }
     if (srm->flags() & StreamMesgAct) {
-        error(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
+        warning(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
+        return MessageInProgress;
     }
     rc->_val[0] |= 0x80;
     if (mpt_stream_push(srm, rc->len, rc->_val) < 0) {
-        return BadOperation;
+        error(_func, "%s (id = " PRIx64 ")", MPT_tr("unable to set reply id"), id);
+        return 0;
     }
     rc->len = 0;
-    mpt_stream_send(srm, msg);
+    --rc->used;
+    if (mpt_stream_send(srm, msg) < 0) {
+        if (msg && mpt_stream_push(srm, 0, 0) < 0) {
+            critical(_func, "%s: %s", MPT_tr("bad reply operation"), id, MPT_tr("not able to terminate reply"));
+        } else {
+            warning(_func, "%s: %s", MPT_tr("bad reply operation"), id, MPT_tr("not able append message"));
+        }
+    }
     return 0;
 }
 class Stream::WrapDispatch
@@ -326,7 +343,7 @@ int Stream::dispatch(EventHandler cmd, void *arg)
         if (!_srm->_rd.encoded()) {
             return BadOperation;
         }
-        struct WrapDispatch wd(*this, cmd, arg);
+        class WrapDispatch wd(*this, cmd, arg);
         return mpt_stream_dispatch(_srm, _idlen, streamWrapDispatch, &wd);
     }
     return mpt_stream_dispatch(_srm, 0, cmd, arg);

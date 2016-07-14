@@ -36,52 +36,67 @@ static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type
 }
 static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 {
+	static const char _func[] = "mpt::connection::reply";
+	
 	MPT_STRUCT(connection) *con;
 	MPT_STRUCT(reply_context) *rc = ptr;
 	uint64_t id = 0;
 	int ret;
 	
+	/* bad context state */
+	if (!rc->used) {
+		mpt_log(0, _func, MPT_FCNLOG(Critical), "%s %s",
+		        MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
+		return 0;
+	}
+	rc->_val[0] &= 0x7f;
 	mpt_message_buf2id(rc->_val, rc->len, &id);
+	rc->_val[0] |= 0x80;
 	
 	if (!(con = rc->ptr)) {
-		mpt_log(0, __func__, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+		mpt_log(0, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("context destroyed"));
 		if (!--rc->used) {
 			free(rc);
 		}
 		return MPT_ERROR(BadArgument);
 	}
-	/* bad context state */
-	if (!rc->used) {
-		connectionLog(con, __func__, MPT_FCNLOG(Critical), "%s (%04"PRIx64"): %s",
-		              MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
-		return MPT_ERROR(BadArgument);
-	}
 	/* already answered */
 	if (!rc->len) {
-		connectionLog(con, __func__, MPT_FCNLOG(Critical), "%s (%04"PRIx64"): %s",
-		              MPT_tr("unable to reply"), id, MPT_tr("processed reply detected"));
-		return MPT_ERROR(BadArgument);
+		connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
+		              MPT_tr("bad reply operation"), id, MPT_tr("reply already sent"));
+		--rc->used;
+		return 0;
 	}
-	/* mark as reply */
-	rc->_val[0] |= 0x80;
-	
 	if (!MPT_socket_active(&con->out.sock)) {
 		MPT_STRUCT(stream) *srm;
 		
 		if (!(srm = con->out._buf)) {
-			connectionLog(con, __func__, MPT_FCNLOG(Critical), "%s (%04"PRIx64"): %s",
-			              MPT_tr("unable to reply"), id, MPT_tr("processed reply detected"));
+			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			              MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
 		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-			connectionLog(con, __func__, MPT_FCNLOG(Critical), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
 		}
-		ret = mpt_stream_push(srm, rc->len, rc->_val);
-		mpt_stream_send(srm, src);
-		ret = 0;
+		if ((ret = mpt_stream_push(srm, rc->len, rc->_val)) < 0) {
+			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			              MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
+			return ret;
+		}
+		if (src && mpt_stream_send(srm, src) < 0) {
+			connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
+			              MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
+		}
+		if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
+			connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
+			              MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
+			if (mpt_stream_push(srm, 1, 0) < 0) {
+				return ret;
+			}
+		}
 	}
 	else {
 		uint8_t buf[0x10000];
@@ -92,7 +107,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			ret += mpt_message_read(&msg, sizeof(buf) - rc->len, buf + rc->len);
 			if (mpt_message_length(&msg)) {
 				ret = rc->len;
-				connectionLog(con, __func__, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+				connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
 				              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			}
 		}
@@ -101,14 +116,15 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			sa = (void *) (rc->_val + MPT_align(pos));
 		}
 		ret = sendto(con->out.sock._id, buf, ret, 0, sa, con->out._socklen);
+		
+		if (ret < 0) {
+			connectionLog(con, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
+			              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
+			return MPT_ERROR(BadArgument);
+		}
 	}
-	if (ret < 0) {
-		connectionLog(con, __func__, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
-		              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
-		return MPT_ERROR(BadArgument);
-	}
-	--rc->used;
 	rc->len = 0;
+	--rc->used;
 	
 	return ret;
 }
