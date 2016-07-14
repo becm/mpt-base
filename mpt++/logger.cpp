@@ -20,7 +20,7 @@ int debug(const char *from, const char *fmt, ... )
     if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Debug, fmt, va);
+    int ret = log->log(from, log->Debug | log->LogFunction, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -30,7 +30,7 @@ int warning(const char *from, const char *fmt, ... )
     if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Warning, fmt, va);
+    int ret = log->log(from, log->Warning | log->LogFunction, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -40,7 +40,7 @@ int error(const char *from, const char *fmt, ... )
     if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Error, fmt, va);
+    int ret = log->log(from, log->Error | log->LogFunction, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -50,17 +50,17 @@ int critical(const char *from, const char *fmt, ... )
     if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Critical, fmt, va);
+    int ret = log->log(from, log->Critical | log->LogFunction, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
-int log(const char *fmt, ... )
+int print(const char *fmt, ... )
 {
     logger *log = logger::defaultInstance();
     if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(0, LogMessage, fmt, va);
+    int ret = log->log(0, log->Message, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -184,7 +184,7 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     return length();
 }
 
-LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(FlowNormal), _ignore(LogDebug), _level(0)
+LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
 LogStore::~LogStore()
 { }
@@ -201,13 +201,13 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
         pass |= _flags & PassMessage;
     }
     else if (code >= _ignore) {
-        save = (type & LogFile) && (_flags & SaveLogAll);
+        save = (type & File) && (_flags & SaveLogAll);
         pass |= _flags & PassUnsaved;
     } else {
         save = 1;
         pass |= _flags & PassSaved;
     }
-    if (type & LogFile) {
+    if (type & File) {
         pass |= _flags & PassFile;
     }
     if (_next && pass) {
@@ -252,8 +252,8 @@ void LogStore::clearLog()
 
 bool LogStore::setIgnoreLevel(int val)
 {
-    if (val < 0) val = LogDebug;
-    else if (val >= LogFile) return false;
+    if (val < 0) val = Debug;
+    else if (val >= File) return false;
     _ignore = val;
     return true;
 }

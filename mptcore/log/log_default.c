@@ -14,7 +14,7 @@
 
 #include "message.h"
 
-static int logSkip  = MPT_ENUM(LogDebug);
+static int logSkip  = MPT_LOG(Debug);
 static int logFlags = MPT_ENUM(LogPretty);
 
 static void loggerUnref(MPT_INTERFACE(unrefable) *out)
@@ -92,7 +92,7 @@ extern int mpt_log_default_format(int val)
 extern int mpt_log_default_skip(int val)
 {
 	if (val < 0) {
-		logSkip = MPT_ENUM(LogDebug);
+		logSkip = MPT_LOG(Debug);
 	}else {
 		logSkip = val & 0xff;
 	}
@@ -109,15 +109,15 @@ extern int mpt_log_default_skip(int val)
 extern int mpt_log_default_level(int val)
 {
 	switch (val) {
-	  case MPT_ENUM(LogLevelNone):     val = 0; break;
-	  case MPT_ENUM(LogLevelCritical): val = MPT_ENUM(LogError); break;
-	  case MPT_ENUM(LogLevelError):    val = MPT_ENUM(LogWarning); break;
-	  case MPT_ENUM(LogLevelWarning):  val = MPT_ENUM(LogInfo); break;
-	  case MPT_ENUM(LogLevelInfo):     val = MPT_ENUM(LogDebug); break;
-	  case MPT_ENUM(LogLevelDebug1):   val = MPT_ENUM(LogDebug2); break;
-	  case MPT_ENUM(LogLevelDebug2):   val = MPT_ENUM(LogDebug3); break;
-	  case MPT_ENUM(LogLevelDebug3):   val = MPT_ENUM(LogFile); break;
-	  default: val = MPT_ENUM(LogDebug);
+	  case MPT_LOG(LevelNone):     val = 0; break;
+	  case MPT_LOG(LevelCritical): val = MPT_LOG(Error); break;
+	  case MPT_LOG(LevelError):    val = MPT_LOG(Warning); break;
+	  case MPT_LOG(LevelWarning):  val = MPT_LOG(Info); break;
+	  case MPT_LOG(LevelInfo):     val = MPT_LOG(Debug); break;
+	  case MPT_LOG(LevelDebug1):   val = MPT_LOG(Debug2); break;
+	  case MPT_LOG(LevelDebug2):   val = MPT_LOG(Debug3); break;
+	  case MPT_LOG(LevelDebug3):   val = MPT_LOG(File); break;
+	  default: val = MPT_LOG(Debug);
 	}
 	logSkip  = val & 0xff;
 	

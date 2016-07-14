@@ -62,21 +62,21 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		}
 	}
 	if (lv) {
-		lv += MPT_ENUM(LogLevelInfo);
-		if (lv > MPT_ENUM(LogLevelDebug3)) {
-			lv = MPT_ENUM(LogLevelDebug3);
+		lv += MPT_LOG(LevelInfo);
+		if (lv > MPT_LOG(LevelDebug3)) {
+			lv = MPT_LOG(LevelDebug3);
 		}
 		mpt_log_default_level(lv);
 	}
 	else if ((log = getenv("MPT_DEBUG"))) {
-		lv = MPT_ENUM(LogDebug2);
+		lv = MPT_LOG(Debug2);
 		if (mpt_cint(&lv, log, 0, 0) > 0) {
 			switch (lv) {
-			  case 0: lv = MPT_ENUM(LogLevelInfo); break;
-			  case 1: lv = MPT_ENUM(LogLevelDebug1); break;
-			  case 2: lv = MPT_ENUM(LogLevelDebug2); break;
-			  case 3: lv = MPT_ENUM(LogLevelDebug3); break;
-			  default: lv = MPT_ENUM(LogFile); break;
+			  case 0: lv = MPT_LOG(LevelInfo); break;
+			  case 1: lv = MPT_LOG(LevelDebug1); break;
+			  case 2: lv = MPT_LOG(LevelDebug2); break;
+			  case 3: lv = MPT_LOG(LevelDebug3); break;
+			  default: lv = MPT_LOG(File); break;
 			}
 			mpt_log_default_level(lv);
 		}

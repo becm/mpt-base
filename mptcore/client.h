@@ -40,7 +40,7 @@ MPT_INTERFACE(client)
 MPT_INTERFACE(client) : public config
 {
 public:
-	enum { LogLevel = MPT_FCNLOG(Debug2) };
+	enum { LogLevel = logger::Debug2 };
 	
 	metatype *query(const path *) const;
 	int assign(const path *, const value *);

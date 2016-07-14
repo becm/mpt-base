@@ -73,7 +73,7 @@ static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 		if ((type = mpt_log_level(arg)) < 0) {
 			return MPT_ERROR(BadValue);
 		}
-		if (arg && isupper(*arg)) type |= MPT_ENUM(LogLevelFile);
+		if (arg && isupper(*arg)) type |= MPT_LOG(LevelFile);
 		*level = type;
 		return ret;
 	}
@@ -117,7 +117,7 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 			return ret;
 		}
 		else if (!ret) {
-			con->level = (MPT_ENUM(LogLevelInfo) << 4) | MPT_ENUM(LogLevelWarning);
+			con->level = (MPT_LOG(LevelInfo) << 4) | MPT_LOG(LevelWarning);
 		}
 		else {
 			con->level = ((v & 0xf) << 4) | (v & 0xf);
@@ -125,7 +125,7 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 		return ret;
 	}
 	if (!strcasecmp(name, "debug")) {
-		uint8_t v = MPT_ENUM(LogLevelDebug3);
+		uint8_t v = MPT_LOG(LevelDebug3);
 		ret = 0;
 		if (src && (ret = src->_vptr->conv(src, 'y', &v)) < 0) {
 			return MPT_ERROR(BadType);

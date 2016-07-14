@@ -56,7 +56,7 @@ int main()
     mtrace();
     MyClient *c = new MyClient;
 
-    c->log(__func__, mpt::LogMessage | mpt::LogPretty, "%s = %i", "value", 5);
+    c->log(__func__, mpt::logger::Message | mpt::logger::LogPretty, "%s = %i", "value", 5);
 
     const mpt::object *o = c->output.pointer();
     for (auto p : *o) {

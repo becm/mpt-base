@@ -179,38 +179,6 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(ValueConsume)  = 0x100
 };
 
-enum MPT_ENUM(LogType) {
-	MPT_ENUM(LogLevelNone)      = 0x0,  /* filter messages down to ... */
-	MPT_ENUM(LogLevelCritical)  = 0x1,
-	MPT_ENUM(LogLevelError)     = 0x2,
-	MPT_ENUM(LogLevelWarning)   = 0x3,
-	MPT_ENUM(LogLevelInfo)      = 0x4,
-	MPT_ENUM(LogLevelDebug1)    = 0x5,
-	MPT_ENUM(LogLevelDebug2)    = 0x6,
-	MPT_ENUM(LogLevelDebug3)    = 0x7,
-	MPT_ENUM(LogLevelFile)      = 0x8,
-	
-	MPT_ENUM(LogMessage)   = 0x0,   /* user (terminal) messages */
-	MPT_ENUM(LogFatal)     = 0x1,
-	MPT_ENUM(LogCritical)  = 0x2,
-	MPT_ENUM(LogError)     = 0x10,
-	MPT_ENUM(LogWarning)   = 0x20,
-	MPT_ENUM(LogInfo)      = 0x30,
-	MPT_ENUM(LogDebug)     = 0x40,  /* debug level types */
-	MPT_ENUM(LogDebug2)    = 0x50,
-	MPT_ENUM(LogDebug3)    = 0x60,
-	MPT_ENUM(LogDebug4)    = 0x70,
-	MPT_ENUM(LogFile)      = 0x80,  /* use log target */
-	
-	MPT_ENUM(LogPrefix)    = 0x100, /* add type prefix */
-	MPT_ENUM(LogSelect)    = 0x200, /* use ANSI colouring */
-	MPT_ENUM(LogANSIMore)  = 0x400, /* no forced ANSI termination */
-	MPT_ENUM(LogPretty)    = 0x300,
-	
-	MPT_ENUM(LogFunction)  = 0x800  /* auto-add function decorator */
-};
-#define MPT_FCNLOG(x) (MPT_ENUM(Log##x) | MPT_ENUM(LogFunction))
-
 enum MPT_ENUM(SocketFlags) {
 	MPT_ENUM(SocketWrite)  = 0x1,
 	MPT_ENUM(SocketRead)   = 0x2,
@@ -498,20 +466,51 @@ protected:
 public:
 	enum { Type = TypeLogger };
 	
-	enum LogTypes {
-		Fatal    = MPT_FCNLOG(Fatal),
-		Critical = MPT_FCNLOG(Critical),
-		Error    = MPT_FCNLOG(Error),
-		Warning  = MPT_FCNLOG(Warning),
-		Info     = MPT_FCNLOG(Info),
-		Debug    = MPT_FCNLOG(Debug),
-		File     = MPT_FCNLOG(File)
-	};
 	int message(const char *, int , const char *, ...);
 	
 	static logger *defaultInstance();
 	
 	virtual int log(const char *, int, const char *, va_list) = 0;
+	
+	enum {
+# define MPT_LOG(x) x
+#else
+# define MPT_LOG(x) MptLog##x
+enum MPT_ENUM(LogType) {
+#endif
+#define MPT_FCNLOG(x) (MPT_LOG(x) | MPT_ENUM(LogFunction))
+	MPT_LOG(LevelNone)      = 0x0,  /* filter messages down to ... */
+	MPT_LOG(LevelCritical)  = 0x1,
+	MPT_LOG(LevelError)     = 0x2,
+	MPT_LOG(LevelWarning)   = 0x3,
+	MPT_LOG(LevelInfo)      = 0x4,
+	MPT_LOG(LevelDebug1)    = 0x5,
+	MPT_LOG(LevelDebug2)    = 0x6,
+	MPT_LOG(LevelDebug3)    = 0x7,
+	MPT_LOG(LevelFile)      = 0x8,
+	
+	MPT_LOG(Message)   = 0x0,   /* user (terminal) messages */
+	MPT_LOG(Fatal)     = 0x1,
+	MPT_LOG(Critical)  = 0x2,
+	MPT_LOG(Error)     = 0x10,
+	MPT_LOG(Warning)   = 0x20,
+	MPT_LOG(Info)      = 0x30,
+	MPT_LOG(Debug)     = 0x40,  /* debug level types */
+	MPT_LOG(Debug2)    = 0x50,
+	MPT_LOG(Debug3)    = 0x60,
+	MPT_LOG(Debug4)    = 0x70,
+	MPT_LOG(File)      = 0x80   /* use log target */
+};
+enum MPT_ENUM(LogFlags)
+{
+	MPT_ENUM(LogPrefix)   = 0x100, /* add type prefix */
+	MPT_ENUM(LogSelect)   = 0x200, /* use ANSI colouring */
+	MPT_ENUM(LogANSIMore) = 0x400, /* no forced ANSI termination */
+	MPT_ENUM(LogPretty)   = 0x300,
+	
+	MPT_ENUM(LogFunction) = 0x800  /* auto-add function decorator */
+};
+#ifdef __cplusplus
 };
 #else
 MPT_INTERFACE(logger);

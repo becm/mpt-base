@@ -19,24 +19,24 @@ extern int mpt_outdata_type(uint8_t arg, int min)
 {
 	int skip;
 	
-	if (arg & MPT_ENUM(LogFile)) {
+	if (arg & MPT_LOG(File)) {
 		if (arg & 0x7f) return MPT_ENUM(OutputPrintHistory) | MPT_ENUM(OutputPrintRestore);
 		return MPT_ENUM(OutputPrintHistory);
 	}
 	if (!arg) return MPT_ENUM(OutputPrintNormal);
 	
 	switch (min & 0x7) {
-	  case MPT_ENUM(LogLevelNone):     skip = MPT_ENUM(LogCritical); break;
-	  case MPT_ENUM(LogLevelCritical): skip = MPT_ENUM(LogError);    break;
-	  case MPT_ENUM(LogLevelError):    skip = MPT_ENUM(LogWarning);  break;
-	  case MPT_ENUM(LogLevelWarning):  skip = MPT_ENUM(LogInfo);     break;
-	  case MPT_ENUM(LogLevelInfo):     skip = MPT_ENUM(LogDebug);    break;
-	  case MPT_ENUM(LogLevelDebug1):   skip = MPT_ENUM(LogDebug2);   break;
-	  case MPT_ENUM(LogLevelDebug2):   skip = MPT_ENUM(LogDebug3);   break;
-	  default: skip = MPT_ENUM(LogFile);
+	  case MPT_LOG(LevelNone):     skip = MPT_LOG(Critical); break;
+	  case MPT_LOG(LevelCritical): skip = MPT_LOG(Error);    break;
+	  case MPT_LOG(LevelError):    skip = MPT_LOG(Warning);  break;
+	  case MPT_LOG(LevelWarning):  skip = MPT_LOG(Info);     break;
+	  case MPT_LOG(LevelInfo):     skip = MPT_LOG(Debug);    break;
+	  case MPT_LOG(LevelDebug1):   skip = MPT_LOG(Debug2);   break;
+	  case MPT_LOG(LevelDebug2):   skip = MPT_LOG(Debug3);   break;
+	  default: skip = MPT_LOG(File);
 	}
 	
-	if (min & MPT_ENUM(LogLevelFile)) {
+	if (min & MPT_LOG(LevelFile)) {
 		if ((arg & 0x7f) < skip) return MPT_ENUM(OutputPrintHistory) | MPT_ENUM(OutputPrintRestore) | MPT_ENUM(OutputPrintNormal);
 		return 0;
 	}

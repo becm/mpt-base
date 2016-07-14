@@ -48,14 +48,14 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	
 	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
 		if (arg < 0) {
-			arg = MPT_ENUM(LogError);
+			arg = MPT_LOG(Error);
 			if (!mpt_message_length(&msg)) {
 				msg.base = "Error processing message";
 				msg.used = strlen(msg.base);
 			}
 		}
 		else if (arg) {
-			arg = MPT_ENUM(LogDebug);
+			arg = MPT_LOG(Debug);
 		}
 	}
 	else if (mt.cmd != MPT_ENUM(MessageOutput)) {
@@ -76,7 +76,7 @@ extern ssize_t mpt_message_print(FILE *out, const MPT_STRUCT(message) *omsg)
 	}
 	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
 		fputc('@', out);
-		if (arg >= MPT_ENUM(LogDebug)) {
+		if (arg >= MPT_LOG(Debug)) {
 			fputs(mpt_ansi_reset(), out);
 			ansi = 0;
 		}

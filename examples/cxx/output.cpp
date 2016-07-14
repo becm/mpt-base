@@ -35,7 +35,7 @@ extern int main(int , char * const [])
 	out->open("/dev/stdout", "w");
 	
 	log->message(__func__, log->Error, "%s", "hallo");
-	mpt_output_log(out, 0, LogWarning, "%s", "hallo");
+	mpt_output_log(out, __FUNCTION__, logger::Warning, "%s", "hallo");
 	
 	out->sync();
 	

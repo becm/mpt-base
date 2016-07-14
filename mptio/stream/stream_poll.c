@@ -80,7 +80,7 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 		
 		if ((len = srm->_rd._state.done)) {
 			if ((mpt_queue_crop(&srm->_rd.data, 0, len) < 0)) {
-				(void) mpt_log(0, __func__, MPT_ENUM(LogFatal), "%s",
+				(void) mpt_log(0, __func__, MPT_LOG(Fatal), "%s",
 				               MPT_tr("inconsistent queue/decoder state"));
 			} else {
 				srm->_rd._state.done = 0;

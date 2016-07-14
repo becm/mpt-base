@@ -21,12 +21,12 @@
 static int answerType(int code)
 {
 	if (!code) {
-		return MPT_ENUM(LogDebug);
+		return MPT_LOG(Debug);
 	}
 	else if (code < 0) {
-		return MPT_ENUM(LogError);
+		return MPT_LOG(Error);
 	}
-	return MPT_ENUM(LogInfo);
+	return MPT_LOG(Info);
 }
 
 /*!

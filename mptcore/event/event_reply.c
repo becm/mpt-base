@@ -45,13 +45,13 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 			return 0;
 		}
 		if (!code) {
-			code = MPT_ENUM(LogDebug);
+			code = MPT_LOG(Debug);
 		}
 		else if (code > 0) {
-			code = MPT_ENUM(LogInfo);
+			code = MPT_LOG(Info);
 		}
 		else {
-			code = MPT_ENUM(LogError);
+			code = MPT_LOG(Error);
 		}
 		
 		if ((isatty(fileno(stderr)) > 0) && (ansi = mpt_ansi_code(code))) {

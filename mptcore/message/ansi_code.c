@@ -15,14 +15,14 @@
  */
 extern const char *mpt_ansi_code(uint8_t type)
 {
-	if (type & MPT_ENUM(LogFile)) {
+	if (type & MPT_LOG(File)) {
 		return 0;
 	}
 	if (!type) return "\033[1m";
-	if (type >= MPT_ENUM(LogDebug))    return "\033[32m";
-	if (type >= MPT_ENUM(LogInfo))     return "\033[34m";
-	if (type >= MPT_ENUM(LogWarning))  return "\033[33m";
-	if (type >= MPT_ENUM(LogError))    return "\033[35m";
+	if (type >= MPT_LOG(Debug))    return "\033[32m";
+	if (type >= MPT_LOG(Info))     return "\033[34m";
+	if (type >= MPT_LOG(Warning))  return "\033[33m";
+	if (type >= MPT_LOG(Error))    return "\033[35m";
 	return "\033[31m";
 }
 

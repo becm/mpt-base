@@ -386,7 +386,7 @@ extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) *no)
 	
 	od->con.out.state = MPT_ENUM(OutputPrintColor);
 	
-	od->con.level = (MPT_ENUM(LogLevelWarning) << 4) | MPT_ENUM(LogLevelWarning);
+	od->con.level = (MPT_LOG(LevelWarning) << 4) | MPT_LOG(LevelWarning);
 	
 	od->_no = no;
 	
