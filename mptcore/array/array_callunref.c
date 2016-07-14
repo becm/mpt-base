@@ -16,7 +16,7 @@
  * 
  * \param arr  array containing MPT references
  */
-extern void mpt_array_callunref(const MPT_STRUCT(array) *a)
+extern void mpt_array_callunref(MPT_STRUCT(array) *a)
 {
 	MPT_STRUCT(buffer) *b;
 	MPT_INTERFACE(unrefable) **m;

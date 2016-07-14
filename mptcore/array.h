@@ -71,9 +71,11 @@ MPT_STRUCT(array)
 	array & operator=  (struct ::iovec const&);
 	array & operator+= (struct ::iovec const&);
 protected:
-# define _MPT_ARRAY_TYPE(x) x::array
+# define _MPT_ARRAY_TYPE(x)     Array<x>
+# define _MPT_REF_ARRAY_TYPE(x) RefArray<x>
 #else
-# define _MPT_ARRAY_TYPE(x) MPT_STRUCT(array)
+# define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
+# define _MPT_REF_ARRAY_TYPE(x) MPT_STRUCT(array)
 # define MPT_ARRAY_INIT { 0 }
 #endif
 	MPT_STRUCT(buffer) *_buf;
@@ -226,9 +228,6 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *, size_t , const void *, size_
 
 /* get strings from slice */
 extern int mpt_slice_conv(MPT_STRUCT(slice) *, int , void *);
-
-/* clear references on array data */
-extern void mpt_array_callunref(const _MPT_ARRAY_TYPE(unrefable) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );
@@ -595,12 +594,6 @@ public:
     { return *reinterpret_cast<const Array<Reference<T> >*>(this); }
 };
 
-class unrefable::array : public RefArray<unrefable>
-{
-public:
-    array(size_t len = 0);
-};
-
 class LogStore : public logger
 {
 public:
@@ -717,6 +710,10 @@ public:
 protected:
     Array<Element> _d;
 };
+__MPT_EXTDECL_BEGIN
+/* clear references on array data (requires template in C++ mode) */
+extern void mpt_array_callunref(_MPT_REF_ARRAY_TYPE(unrefable) *);
+__MPT_EXTDECL_END
 
 #endif /* __cplusplus */
 

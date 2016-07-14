@@ -277,35 +277,34 @@ MPT_STRUCT(transform)
 };
 
 /* part of MPT world */
-MPT_INTERFACE(polyline)
 #ifdef __cplusplus
+MPT_INTERFACE(polyline) : public unrefable
 {
     public:
-	virtual void unref() = 0;
 	virtual void *raw(int dim, size_t len, size_t off = 0) = 0;
 	virtual ssize_t truncate(int dim = -1, ssize_t = -1) = 0;
 	virtual const char *format() const;
     protected:
 	inline ~polyline() { }
+};
 #else
-; MPT_INTERFACE_VPTR(polyline) {
-	void (*unref)(MPT_INTERFACE(polyline) *);
+MPT_INTERFACE(polyline);
+MPT_INTERFACE_VPTR(polyline) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	void *(*raw)(MPT_INTERFACE(polyline) *, int , size_t , size_t);
 	ssize_t (*truncate)(MPT_INTERFACE(polyline) *, int , ssize_t);
 	const char *(*format)(const MPT_INTERFACE(polyline) *);
 }; MPT_INTERFACE(polyline) {
 	const MPT_INTERFACE_VPTR(polyline) *_vptr;
-#endif
 };
+#endif
 
 /* part of MPT world */
-MPT_INTERFACE(cycle)
 #ifdef __cplusplus
+MPT_INTERFACE(cycle) : public unrefable
 {
     public:
 	enum { Type = TypeCycle };
-	
-	virtual void unref() = 0;
 	
 	virtual polyline *current() const = 0;
 	virtual polyline *advance() = 0;
@@ -315,9 +314,11 @@ MPT_INTERFACE(cycle)
 	virtual int size() const = 0;
     protected:
 	inline ~cycle() { }
+};
 #else
-; MPT_INTERFACE_VPTR(cycle) {
-	int (*unref)(MPT_INTERFACE(cycle) *);
+MPT_INTERFACE(cycle);
+MPT_INTERFACE_VPTR(cycle) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
 	
 	MPT_INTERFACE(polyline) *(*current)(const MPT_INTERFACE(cycle) *);
 	MPT_INTERFACE(polyline) *(*advance)(MPT_INTERFACE(cycle) *);
@@ -327,8 +328,8 @@ MPT_INTERFACE(cycle)
 	int (*size)(const MPT_INTERFACE(cycle) *);
 }; MPT_INTERFACE(cycle) {
 	const MPT_INTERFACE_VPTR(cycle) *_vptr;
-#endif
 };
+#endif
 
 /* binding to layout mapping */
 MPT_STRUCT(mapping)
@@ -501,8 +502,7 @@ public:
 #else
     using Point = point<double>;
 #endif
-    
-    class Parts : public array
+    class Parts : public ::mpt::array
     {
     public:
         inline Slice<const linepart> data() const
@@ -512,7 +512,7 @@ public:
         size_t userLength();
         size_t rawLength();
     };
-    class Points : public array
+    class Points : public ::mpt::array
     {
     public:
         Slice<const Point> data() const;

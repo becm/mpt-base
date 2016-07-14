@@ -16,18 +16,18 @@ struct Cycle
 	size_t act;
 };
 
-static int cycleUnref(MPT_INTERFACE(cycle) *wcyc)
+static void cycleUnref(MPT_INTERFACE(unrefable) *wcyc)
 {
 	struct Cycle *cyc = (void *) wcyc;
 	MPT_STRUCT(buffer) *buf;
 	
 	if ((buf = cyc->arr._buf)) {
-		MPT_INTERFACE(polyline) **part = (void *) (buf+1);
-		size_t	i, len = buf->used/sizeof(*part);
+		MPT_INTERFACE(unrefable) **part = (void *) (buf+1);
+		size_t i, len = buf->used/sizeof(*part);
 		
 		for (i = 0; i < len; ++i) {
-			MPT_INTERFACE(polyline) *curr = part[i];
-			if (curr) {
+			MPT_INTERFACE(unrefable) *curr;
+			if ((curr = part[i])) {
 				curr->_vptr->unref(curr);
 			}
 		}
@@ -39,7 +39,6 @@ static int cycleUnref(MPT_INTERFACE(cycle) *wcyc)
 	}
 	cyc->arr._buf = 0;
 	free(wcyc);
-	return 0;
 }
 static MPT_INTERFACE(polyline) *cycleCurrent(const MPT_INTERFACE(cycle) *wcyc)
 {
@@ -66,7 +65,7 @@ static MPT_INTERFACE(polyline) *cycleAppend(MPT_INTERFACE(cycle) *wcyc)
 		return pl;
 	}
 	/* delete non-added polyline */
-	pl->_vptr->unref(pl);
+	pl->_vptr->ref.unref((void *) pl);
 	
 	return 0;
 }
@@ -120,7 +119,7 @@ static int cycleSize(const MPT_INTERFACE(cycle) *wcyc)
 }
 
 static const MPT_INTERFACE_VPTR(cycle) _vptr = {
-	cycleUnref,
+	{ cycleUnref },
 	cycleCurrent, cycleAdvance, cycleAppend,
 	cyclePart,
 	cycleSize

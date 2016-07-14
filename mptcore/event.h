@@ -48,7 +48,7 @@ MPT_STRUCT(reply_context)
 #ifdef __cplusplus
 	reply_context() : ptr(0), _max(sizeof(_val)), len(0), used(0)
 	{ }
-	bool valid() const
+	bool active() const
 	{ return used; }
 	
 	void unref();
@@ -78,7 +78,7 @@ public:
 	inline ~command()
 	{ if (cmd) cmd(arg, 0); }
 	
-	class array : Array<command>
+	class array : public Array<command>
 	{
 	public:
 		bool set(uintptr_t, EventHandler , void *);
@@ -167,7 +167,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
 /* new/available context on array */
-extern MPT_STRUCT(reply_context) *mpt_reply_reserve(_MPT_ARRAY_TYPE(reply_context) *arr, size_t len);
+extern MPT_STRUCT(reply_context) *mpt_reply_reserve(_MPT_REF_ARRAY_TYPE(reply_context) *arr, size_t len);
 /* invalidate/delete context references */
 size_t mpt_reply_clear(MPT_STRUCT(reply_context) **, size_t);
 

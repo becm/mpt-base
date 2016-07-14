@@ -361,11 +361,8 @@ MPT_INTERFACE(unrefable)
 {
 public:
 	virtual void unref() = 0;
-	
-	class array;
 protected:
-	inline ~unrefable()
-	{ }
+	inline ~unrefable() { }
 };
 #else
 MPT_INTERFACE(unrefable);

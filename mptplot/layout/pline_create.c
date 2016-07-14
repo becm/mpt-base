@@ -15,7 +15,7 @@ struct pl3Data
 	MPT_STRUCT(array) x, y, z;
 };
 
-static void pl3_unref(MPT_INTERFACE(polyline) *part)
+static void pl3Unref(MPT_INTERFACE(unrefable) *part)
 {
 	struct pl3Data *pt = (void *) part;
 	
@@ -25,7 +25,7 @@ static void pl3_unref(MPT_INTERFACE(polyline) *part)
 	
 	free(pt);
 }
-static ssize_t pl3_truncate(MPT_INTERFACE(polyline) *part, int dim, ssize_t len)
+static ssize_t pl3Truncate(MPT_INTERFACE(polyline) *part, int dim, ssize_t len)
 {
 	struct pl3Data *pt = (void *) part;
 	MPT_STRUCT(array) *a;
@@ -50,12 +50,12 @@ static ssize_t pl3_truncate(MPT_INTERFACE(polyline) *part, int dim, ssize_t len)
 	
 	return len;
 }
-static void *pl3_raw(MPT_INTERFACE(polyline) *part, int dim, size_t need, size_t off)
+static void *pl3Raw(MPT_INTERFACE(polyline) *part, int dim, size_t need, size_t off)
 {
 	struct pl3Data *pt = (void *) part;
 	MPT_STRUCT(array) *arr;
-	double	*ptr;
-	size_t	len, total;
+	double *ptr;
+	size_t len, total;
 	
 	switch (dim) {
 	    case 0: arr = &pt->x; break;
@@ -67,12 +67,13 @@ static void *pl3_raw(MPT_INTERFACE(polyline) *part, int dim, size_t need, size_t
 	ptr = (double *) (arr->_buf+1);
 	
 	if (need && len < (total = need + off)) {
-		if (!(ptr = mpt_array_append(arr, (total-len)*sizeof(double), 0)))
+		if (!(ptr = mpt_array_append(arr, (total-len)*sizeof(double), 0))) {
 			return 0;
+		}
 	}
 	return ptr + off;
 }
-static const char *pl3_format(const MPT_INTERFACE(polyline) *part)
+static const char *pl3Format(const MPT_INTERFACE(polyline) *part)
 {
 	struct pl3Data *pt = (void *) part;
 	static const char fmt[4] = "ddd";
@@ -80,10 +81,10 @@ static const char *pl3_format(const MPT_INTERFACE(polyline) *part)
 }
 
 static MPT_INTERFACE_VPTR(polyline) wpctl = {
-	pl3_unref,
-	pl3_raw,
-	pl3_truncate,
-	pl3_format
+	{ pl3Unref },
+	pl3Raw,
+	pl3Truncate,
+	pl3Format
 };
 
 /*!
