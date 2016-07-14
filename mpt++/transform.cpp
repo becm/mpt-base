@@ -3,6 +3,7 @@
  */
 
 #include <math.h>
+#include <float.h>
 
 #include "array.h"
 
@@ -13,6 +14,9 @@ __MPT_NAMESPACE_BEGIN
 #ifndef _GNU_SOURCE
 # define exp10(x)  exp(M_LN10 * (x))
 #endif
+
+range::range() : min(DBL_MIN), max(DBL_MAX)
+{ }
 
 transform::transform(AxisFlag flg)
 { mpt_trans_init(this, flg); }
@@ -44,11 +48,11 @@ int transform::fromAxis(const axis &a, int type)
     // normalize range
     else if (min > max) {
         type |= TransformSwap;
-        this->min = max;
-        this->max = min;
+        this->limit.min = max;
+        this->limit.max = min;
     } else {
-        this->min = min;
-        this->max = max;
+        this->limit.min = min;
+        this->limit.max = max;
     }
     double fact = 1.0/(max - min);
 
@@ -77,44 +81,48 @@ int transform::fromAxis(const axis &a, int type)
 int Transform::dimensions() const
 { return 0; }
 
-dpoint Transform::zero() const
-{ return dpoint(); }
+point<double> Transform::zero() const
+{ return point<double>(); }
 
 linepart Transform::part(int , const double *from, int len) const
-{ linepart p; mpt_linepart_linear(&p, from, len, 0); return p; }
-bool Transform::apply(int , const linepart &, dpoint *, const double *) const
+{
+     linepart p;
+     mpt_linepart_linear(&p, from, len, 0);
+     return p;
+}
+bool Transform::apply(int , const linepart &, point<double> *, const double *) const
 { return false; }
 
 // implementation with 3 dimensions
-Transform3::Transform3() : tx(AxisStyleX), ty(AxisStyleY), tz(AxisStyleZ), fx(0), fy(0), fz(0), cut(0)
+Transform3::Transform3() : tx(AxisStyleX), ty(AxisStyleY), tz(AxisStyleZ), fx(0), fy(0), fz(0), cutoff(0xff)
 { }
 
 int Transform3::dimensions() const
 { return (tz.scale.x || tz.scale.y) ? 3 : 2; }
 
-dpoint Transform3::zero() const
+point<double> Transform3::zero() const
 {
     double x = tx.move.x + ty.move.x + tz.move.x;
     double y = tx.move.y + ty.move.y + tz.move.y;
 
-    return dpoint(x,y);
+    return point<double>(x,y);
 }
 linepart Transform3::part(int dim, const double *val, int len) const
 {
-    dpoint range;
+    struct range l;
     bool log = false;
 
     switch (dim) {
-    case 0: range.x = tx.min; range.y = tx.max; if (fx & AxisLg) log = true; break;
-    case 1: range.x = tx.min; range.y = tx.max; if (fy & AxisLg) log = true; break;
-    case 2: range.x = tx.min; range.y = tx.max; if (fz & AxisLg) log = true; break;
+    case 0: l = tx.limit; if (fx & AxisLg) log = true; break;
+    case 1: l = ty.limit; if (fy & AxisLg) log = true; break;
+    case 2: l = tz.limit; if (fz & AxisLg) log = true; break;
     }
     linepart lp;
     if (log) {
-        range.x = exp10(floor(range.x));
-        range.y = exp10(ceil(range.y));
+        l.min = exp10(floor(l.min));
+        l.max = exp10(ceil(l.max));
     }
-    mpt_linepart_linear(&lp, val, len, (cut & (1<<dim)) ? &range : 0);
+    mpt_linepart_linear(&lp, val, len, (cutoff & (1<<dim)) ? &l : 0);
 
     if (log) {
         double cut  = lp.cut();
@@ -129,34 +137,34 @@ linepart Transform3::part(int dim, const double *val, int len) const
     return lp;
 }
 
+template void apply<double>(point<double> *, const linepart &, const double *, const point<double> &, double (*)(double));
 
-template void apply<dpoint, double>(dpoint *, const linepart &, const double *, const dpoint &, double (*)(double));
-
-bool Transform3::apply(int dim, const linepart &pt, dpoint *dest, const double *from) const
+bool Transform3::apply(int dim, const linepart &pt, point<double> *dest, const double *from) const
 {
-    const dpoint *scale = 0;
+    const dpoint *scale;
     bool log = false;
     double zx = 0, zy;
 
+    if (!from) {
+        return false;
+    }
     // select transformation
     switch (dim) {
-    case 0: scale = &tx.scale; zx = tx.min; if (fx & AxisLg) log = true; break;
-    case 1: scale = &ty.scale; zx = ty.min; if (fy & AxisLg) log = true; break;
-    case 2: scale = &tz.scale; zx = tz.min; if (fz & AxisLg) log = true; break;
+    case 0: scale = &tx.scale; zx = tx.limit.min; if (fx & AxisLg) log = true; break;
+    case 1: scale = &ty.scale; zx = ty.limit.min; if (fy & AxisLg) log = true; break;
+    case 2: scale = &tz.scale; zx = tz.limit.min; if (fz & AxisLg) log = true; break;
+    default: return false;
     }
-    if (!from || !scale) return false;
-
     size_t len;
-
     if (!(len = pt.usr)) return true;
 
     // apply point data
     if (!log) {
-        //::mpt::apply<dpoint, double>(dest, pt, from, *scale, retSelf);
-        mpt_apply_linear(dest, &pt, from, scale);
+        dpoint d;
+        mpt_apply_linear(reinterpret_cast<dpoint *>(dest), &pt, from, &d);
     }
     else {
-        ::mpt::apply<dpoint, double>(dest, pt, from, *scale, log10);
+        ::mpt::apply<double>(dest, pt, from, point<double>(scale->x, scale->y), log10);
         if (zx) zx = log10(zx);
     }
     // remove difference to axis start

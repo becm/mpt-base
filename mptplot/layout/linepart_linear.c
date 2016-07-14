@@ -15,14 +15,14 @@
  * Advance source part.raw elements to get
  * start address for next part.
  * 
- * \param part	line part information to fill
- * \param from	reference values
- * \param len	number of available values
- * \param range	allowed value range
+ * \param part  line part information to fill
+ * \param from  reference values
+ * \param len   number of available values
+ * \param range allowed value range
  * 
  * \return encoded value
  */
-extern void mpt_linepart_linear(MPT_STRUCT(linepart) *part, const double *from, size_t len, const MPT_STRUCT(dpoint) *range)
+extern void mpt_linepart_linear(MPT_STRUCT(linepart) *part, const double *from, size_t len, const MPT_STRUCT(range) *range)
 {
 	double min, max;
 	
@@ -33,9 +33,8 @@ extern void mpt_linepart_linear(MPT_STRUCT(linepart) *part, const double *from, 
 		part->_cut = part->_trim = 0;
 		return;
 	}
-	
-	min = range->x;
-	max = range->y;
+	min = range->min;
+	max = range->max;
 	
 	part->raw = part->usr = part->_cut = part->_trim = 0;
 	

@@ -256,7 +256,7 @@ static int streamWrapReply(void *ptr, const message *msg)
 
     if (!rc->used) {
         critical(_func, "%s: %s", MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
-        return 0;
+        return rc->BadContext;
     }
     mpt_message_buf2id(rc->_val, rc->len, &id);
     if (!(srm = reinterpret_cast<stream *>(rc->ptr))) {
@@ -264,11 +264,11 @@ static int streamWrapReply(void *ptr, const message *msg)
         if (!--rc->used) {
             free(rc);
         }
-        return BadArgument;
+        return rc->BadDescriptor;
     }
     if (!rc->len) {
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("no id size specified"), id);
-        return MessageInProgress;
+        return rc->BadState;
     }
     if (srm->flags() & StreamMesgAct) {
         warning(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
@@ -277,11 +277,11 @@ static int streamWrapReply(void *ptr, const message *msg)
     rc->_val[0] |= 0x80;
     if (mpt_stream_push(srm, rc->len, rc->_val) < 0) {
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("unable to set reply id"), id);
-        return 0;
+        return rc->BadPush;
     }
     rc->len = 0;
     --rc->used;
-    if (mpt_stream_send(srm, msg) < 0) {
+    if (mpt_stream_append(srm, msg) < 0) {
         if (msg && mpt_stream_push(srm, 0, 0) < 0) {
             critical(_func, "%s: %s", MPT_tr("bad reply operation"), id, MPT_tr("not able to terminate reply"));
         } else {

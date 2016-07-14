@@ -30,11 +30,11 @@ const char *polyline::format() const
 { return 0; }
 
 
-bool Polyline::Parts::create(const Transform &tr, polyline &part)
+bool linepart::array::create(const Transform &tr, polyline &part)
 {
     int dim = tr.dimensions();
 
-    set(0);
+    clear();
 
     linepart *base = 0;
     size_t old = 0;
@@ -90,29 +90,27 @@ bool Polyline::Parts::create(const Transform &tr, polyline &part)
             }
             // save current part data
             if (next && base[old + next].join(pt)) continue;
-            append(sizeof(pt), &pt);
-            base = (linepart *) array::base();
+            _d.append(sizeof(pt), &pt);
+            base = begin();
             ++next;
         }
         // set new data active
         if (old) {
             len = next*sizeof(linepart);
             memmove(base, base+old, len);
-            set(len);
+            _d.set(len);
         }
         old = next;
     }
     return old ? true : false;
 }
-size_t Polyline::Parts::userLength()
+size_t linepart::array::userLength()
 {
-    Slice<const linepart> d = data();
-    return mpt_linepart_ulength(d.base(), d.length());
+    return mpt_linepart_ulength(begin(), length());
 }
-size_t Polyline::Parts::rawLength()
+size_t linepart::array::rawLength()
 {
-    Slice<const linepart> d = data();
-    return mpt_linepart_rlength(d.base(), d.length());
+    return mpt_linepart_rlength(begin(), length());
 }
 
 
@@ -197,28 +195,33 @@ void Polyline::unref()
     delete this;
 }
 
-Slice<Polyline::Point> Polyline::values(int part) const
+Slice<const Polyline::Point> Polyline::values(int part) const
 {
-    const array *arr;
+    const Point::array *arr;
     size_t len;
-    Slice<const linepart> pt = vis();
-
-    if (!(arr = userData()) || !(len = pt.length()) || part >= (int) len) {
-        return Slice<Point>(0, 0);
+    Slice<const linepart> pts = vis();
+    
+    if (!(arr = userData())) {
+        return Slice<const Point>(0, 0);
     }
+    if (part < 0) {
+        return arr->slice();
+    }
+    if (!(len = pts.length()) || part >= (int) len) {
+        return Slice<const Point>(0, 0);
+    }
+    Point *base = arr->begin();
+    size_t used = arr->length();
+    const linepart *pt = pts.base();
 
-    dpoint *base = (dpoint *) arr->base();
-    size_t used = arr->length() / sizeof(dpoint);
-
-    dpoint *pos = base;
+    Point *pos = base;
     for (int i = 0; i <= part; i++) {
-        size_t adv = pt.base()->usr;
+        used = pt->usr;
         base = pos;
-        used = adv;
-        pos += adv;
-        pt.skip(1);
+        pos += used;
+        ++pt;
     }
-    return Slice<Point>(base, used);
+    return Slice<const Point>(base, used);
 }
 
 Slice<const linepart> Polyline::vis() const
@@ -227,7 +230,7 @@ Slice<const linepart> Polyline::vis() const
     if (!(a = _d.get(0))) {
         return Slice<const linepart>(0, 0);
     }
-    return static_cast<Parts *>(a)->data();
+    return reinterpret_cast<linepart::array *>(a)->slice();
 }
 
 array *Polyline::rawData(int dim) const
@@ -236,10 +239,10 @@ array *Polyline::rawData(int dim) const
     return _d.get(2+dim);
 }
 
-Polyline::Points *Polyline::userData() const
+Polyline::Point::array *Polyline::userData() const
 {
     array *d = _d.get(1);
-    return d ? static_cast<Points*>(d) : 0;
+    return d ? reinterpret_cast<Point::array *>(d) : 0;
 }
 
 bool Polyline::setValues(int dim, size_t len, const double *val, int ld, size_t offset)
@@ -247,8 +250,8 @@ bool Polyline::setValues(int dim, size_t len, const double *val, int ld, size_t 
     void *dest;
     if (!(dest = raw(dim, len, offset))) return 0;
     switch (_rawType[dim]) {
-    case 'd': mpt::copy(len, val, ld, (double*) dest, 1); break;
-    case 'f': mpt::copy(len, val, ld, (float*)  dest, 1); break;
+    case 'd': copy(len, val, ld, (double*) dest, 1); break;
+    case 'f': copy(len, val, ld, (float*)  dest, 1); break;
     default: return false;
     }
     setModified(dim);
@@ -269,7 +272,7 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
         if (fmt[i] != 'd' || !(from = (double *) part.raw(i, len))) continue;
         ++proc;
 
-        dpoint *to = (dpoint *) dest;
+        point<double> *to = dest;
 
         if (lp) {
             for (int j = 0; j < plen; j++) {
@@ -298,35 +301,25 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
 void Polyline::transform(const Transform &tr)
 {
     // generate parts data
-    Parts *a;
-    if (!(a = static_cast<Parts *>(_d.get(0)))) return;
-    a->create(tr, *this);
+    linepart::array *lp;
+    if (!(lp = reinterpret_cast<linepart::array *>(_d.get(0)))) return;
+    lp->create(tr, *this);
 
     // prepare target data
-    size_t total = a->userLength();
-    Points *val;
+    size_t total = lp->userLength();
+    Point::array *val;
     if (!(val = userData())) return;
     Point *pts;
     if (!(pts = val->resize(total))) return;
 
     // set start values
-    dpoint z = tr.zero();
+    point<double> z = tr.zero();
     copy(total, &z, 0, pts, 1);
 
     // modify according to transformation
-    Slice<const linepart> lp = a->data();
-    applyLineData(pts, lp.base(), lp.length(), tr, *this);
+    applyLineData(pts, lp->begin(), lp->length(), tr, *this);
 
     _modified = 0;
-}
-
-Slice<const Polyline::Point> Polyline::Points::data() const
-{
-    return Slice<const Point>((dpoint *) base(), length());
-}
-Polyline::Point *Polyline::Points::resize(size_t len)
-{
-    return (Point *) set(len * sizeof(Point));
 }
 
 __MPT_NAMESPACE_END

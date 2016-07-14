@@ -30,6 +30,6 @@ extern void mpt_trans_init(MPT_STRUCT(transform) *tr, enum MPT_ENUM(AxisFlag) ty
 	  case MPT_ENUM(AxisStyleZ): tr->scale.x = tr->scale.y = M_SQRT1_2; break;
 	  default: tr->scale.x = tr->scale.y = 0;
 	}
-	tr->min = 0;
-	tr->max = 1;
+	tr->limit.min = 0;
+	tr->limit.max = 1;
 }

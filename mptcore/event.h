@@ -64,7 +64,22 @@ MPT_STRUCT(reply_context)
 	uint8_t   len;
 	uint8_t   used;
 	uint8_t  _val[4];
+#ifdef __cplusplus
+enum {
+# define MPT_REPLY(x) x
+#else
 };
+# define MPT_REPLY(x) MptReply##x
+enum MPT_REPLY(Flags) {
+#endif
+	MPT_REPLY(BadContext)    = 1,
+	MPT_REPLY(BadDescriptor) = 2,
+	MPT_REPLY(BadState)      = 3,
+	MPT_REPLY(BadPush)       = 4
+};
+#ifdef __cplusplus
+};
+#endif
 
 /* generic command registration */
 MPT_STRUCT(command)

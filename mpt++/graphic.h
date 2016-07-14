@@ -32,16 +32,16 @@ public:
 
     // save/load layout cycles
     bool saveCycles(int , const Layout &);
-    bool loadCycles(int , const Layout &) const;
+    int loadCycles(int , const Layout &) const;
     bool saveCycles(int , int , const Graph &);
-    bool loadCycles(int , int , const Graph &) const;
+    int loadCycles(int , int , const Graph &) const;
     void clearCycles(int = -1, int = -1, int = -1) const;
 
-    const Reference<Cycle> &getCycle(const msgdest &dest) const;
+    const Reference<Cycle> *getCycle(const msgdest &dest) const;
 
     void clear();
 protected:
-    array _bind;
+    Array<mapping> _bind;
 };
 
 class UpdateHint

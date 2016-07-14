@@ -50,9 +50,9 @@ enum MPT_ENUM(TextFlag) {
 template<typename T>
 struct point
 {
-    point(T _x = 0, T _y = 0) : x(_x), y(_y)
+    inline point(T _x = 0, T _y = 0) : x(_x), y(_y)
     { }
-    point(const point &from) : x(from.x), y(from.y)
+    inline point(const point &from) : x(from.x), y(from.y)
     { }
     inline bool operator ==(const point &p) const
     { return x == p.x && y == p.y; }
@@ -70,6 +70,17 @@ struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : poi
 MPT_STRUCT(dpoint) { double x, y; };
 MPT_STRUCT(fpoint) { float x, y; };
 #endif
+
+/* value range */
+MPT_STRUCT(range)
+{
+#ifdef __cplusplus
+	range();
+	inline range(double _min, double _max) : min(_min), max(_max)
+	{ }
+#endif
+	double min, max;
+};
 
 /* argb standard color */
 MPT_STRUCT(color)
@@ -239,30 +250,6 @@ MPT_STRUCT(text)
 	double              angle;   /* raw text rotation */
 };
 
-/* line part metadate */
-MPT_STRUCT(linepart)
-{
-#ifdef __cplusplus
-	linepart(int len = 0, int _raw = 0);
-	
-	linepart *join(const linepart &);
-	
-	float cut() const;
-	float trim() const;
-	
-	int cutRaw() const;
-	int trimRaw() const;
-	
-	bool setTrim(float );
-	bool setCut(float );
-	bool setRaw(int, int );
-#endif
-	uint16_t raw,   /* raw points in line part */
-	         usr,   /* transformed points in line part */
-	        _cut,
-	        _trim;  /* remove fraction from line start/end */
-};
-
 MPT_STRUCT(transform)
 {
 #ifdef __cplusplus
@@ -272,8 +259,7 @@ MPT_STRUCT(transform)
 #endif
 	MPT_STRUCT(dpoint) scale,  /* scale factor */
 	                   move;   /* move start position */
-	double             min,    /* minimal value */
-	                   max;    /* maximal value */
+	MPT_STRUCT(range)  limit;  /* value range */
 };
 
 /* part of MPT world */
@@ -298,6 +284,38 @@ MPT_INTERFACE_VPTR(polyline) {
 	const MPT_INTERFACE_VPTR(polyline) *_vptr;
 };
 #endif
+
+/* line part metadate */
+MPT_STRUCT(linepart)
+{
+#ifdef __cplusplus
+	linepart(int len = 0, int _raw = 0);
+	
+	linepart *join(const linepart &);
+	
+	float cut() const;
+	float trim() const;
+	
+	int cutRaw() const;
+	int trimRaw() const;
+	
+	bool setTrim(float );
+	bool setCut(float );
+	bool setRaw(int, int );
+	
+	class array : public Array<linepart>
+	{
+	public:
+		bool create(const Transform &, polyline &);
+		size_t userLength();
+		size_t rawLength();
+	};
+#endif
+	uint16_t raw,   /* raw points in line part */
+	         usr,   /* transformed points in line part */
+	        _cut,
+	        _trim;  /* remove fraction from line start/end */
+};
 
 /* part of MPT world */
 #ifdef __cplusplus
@@ -411,7 +429,7 @@ extern MPT_INTERFACE(cycle) *mpt_cycle_create(void);
 extern ssize_t mpt_pline_truncate(MPT_STRUCT(array) *, size_t , ssize_t __MPT_DEFPAR(-1));
 
 /* create linear part in range */
-extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(dpoint) *);
+extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(range) *);
 /* length of pline user points */
 extern size_t mpt_linepart_ulength(const MPT_STRUCT(linepart) *, size_t );
 extern size_t mpt_linepart_rlength(const MPT_STRUCT(linepart) *, size_t );
@@ -430,8 +448,8 @@ extern double mpt_tick_log10(int);
 
 #ifdef _MPT_MESSAGE_H
 /* data mapping operations */
-extern int mpt_mapping_add(MPT_STRUCT(array) *, const MPT_STRUCT(mapping) *);
-extern int mpt_mapping_del(const MPT_STRUCT(array) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(msgdest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
+extern int mpt_mapping_add(_MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(mapping) *);
+extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(msgdest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
 extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
 #endif
 
@@ -461,14 +479,14 @@ inline bool linepart::setRaw(int c, int t)
     return true;
 }
 
-class Transform
+class Transform : public unrefable
 {
 public:
     virtual int dimensions() const = 0;
     
     virtual linepart part(int dim, const double *val, int len) const;
-    virtual bool apply(int dim, const linepart &, dpoint *dest, const double *from) const;
-    virtual dpoint zero() const;
+    virtual bool apply(int dim, const linepart &, point<double> *dest, const double *from) const;
+    virtual point<double> zero() const;
 protected:
     inline ~Transform() { }
 };
@@ -482,53 +500,44 @@ public:
     
     inline virtual ~Transform3()
     { }
+    inline void unref() __MPT_OVERRIDE
+    { delete this; }
     
-    int dimensions() const;
+    int dimensions() const __MPT_OVERRIDE;
     
-    linepart part(int dim, const double *val, int len) const;
-    bool apply(int dim, const linepart &pt, dpoint *dest, const double *from) const;
-    dpoint zero() const;
+    linepart part(int dim, const double *val, int len) const __MPT_OVERRIDE;
+    bool apply(int dim, const linepart &pt, point<double> *dest, const double *from) const __MPT_OVERRIDE;
+    point<double> zero() const __MPT_OVERRIDE;
     
     transform tx, ty, tz; /* dimension transformations */
     uint8_t fx, fy, fz;   /* transformation options */
-    uint8_t cut;
+    uint8_t cutoff;       /* limit data to range */
 };
 
 class Polyline : public polyline
 {
 public:
-#if __cplusplus < 201103L
-    typedef dpoint Point;
-#else
-    using Point = point<double>;
-#endif
-    class Parts : public ::mpt::array
+    class Point : public point<double>
     {
     public:
-        inline Slice<const linepart> data() const
-        { return Slice<const linepart>((linepart *) base(), length()/sizeof(linepart)); }
-        
-        bool create(const Transform &, polyline &);
-        size_t userLength();
-        size_t rawLength();
-    };
-    class Points : public ::mpt::array
-    {
-    public:
-        Slice<const Point> data() const;
-        Point *resize(size_t);
-        inline size_t length() const
-        { return array::length() / sizeof(Point); }
+        inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
+        { }
+        class array : public Array<Point>
+        {
+        public:
+            inline Point *resize(size_t len)
+            { return reinterpret_cast<Point *>(_d.set(len * sizeof(Point))); }
+        };
     };
     Polyline(int dim = -1);
     virtual ~Polyline();
     
-    void unref();
-    void *raw(int dim, size_t len, size_t off = 0);
-    ssize_t truncate(int dim = -1, ssize_t pos = -1);
-    const char *format() const;
+    void unref() __MPT_OVERRIDE;
+    void *raw(int dim, size_t len, size_t off = 0) __MPT_OVERRIDE;
+    ssize_t truncate(int dim = -1, ssize_t pos = -1) __MPT_OVERRIDE;
+    const char *format() const __MPT_OVERRIDE;
     
-    virtual Slice<Point> values(int part = -1) const;
+    virtual Slice<const Point> values(int part = -1) const;
     virtual Slice<const linepart> vis() const;
     virtual void transform(const Transform &);
     
@@ -547,7 +556,7 @@ protected:
     uint8_t  _dataSize;
     
     array *rawData(int dim) const;
-    Points *userData() const;
+    Point::array *userData() const;
 };
 
 class Cycle : public cycle
@@ -558,25 +567,28 @@ public:
     enum Flags {
         AutoGrow = 0x1
     };
-    void unref();
+    virtual bool setSize(int cycles);
+    virtual bool updateTransform(const Transform &, bool = false);
+    
+    /* add for extensions */
     virtual uintptr_t addref();
     
+    /* basic cycle interface */
+    void unref() __MPT_OVERRIDE;
+    
+    Polyline *current() const __MPT_OVERRIDE;
+    Polyline *advance() __MPT_OVERRIDE;
+    Polyline *append() __MPT_OVERRIDE;
+    
+    Polyline *part(int pos) const __MPT_OVERRIDE;
+    int size() const __MPT_OVERRIDE;
+    
+    /* allow const access to polylines */
     inline const Reference<Polyline> *begin() const
     { return _part.begin(); }
     
     inline const Reference<Polyline> *end() const
     { return _part.end(); }
-    
-    Polyline *current() const;
-    Polyline *advance();
-    Polyline *append();
-    
-    Polyline *part(int pos) const;
-    int size() const;
-    
-    virtual bool setSize(int cycles);
-    virtual bool updateTransform(const Transform &, bool = false);
-    
 protected:
     virtual ~Cycle();
     RefArray<Polyline> _part;
@@ -740,8 +752,8 @@ public:
     virtual bool open(const char *);
     virtual void reset();
     
-    const Item<Graph> &graph(int pos) const;
-    inline int graphCount() const { return _graphs.length(); }
+    inline Slice<const Item<Graph> > graphs() const
+    { return _graphs.slice(); }
     
     virtual bool setAlias(const char *, int = -1);
     inline const char *alias() const
@@ -759,6 +771,7 @@ protected:
     char *_alias;
     char *_font;
 };
+
 
 template <typename T, typename S>
 void apply(T *d, const linepart &pt, const S *src, const T &scale, S fcn(S))
@@ -790,6 +803,11 @@ void apply(T *d, const linepart &pt, const S *src, const T &scale, S fcn(S))
         d[j].x += sx * fcn(src[j]);
         d[j].y += sy * fcn(src[j]);
     }
+}
+template <typename S>
+inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale, S fcn(S))
+{
+    return apply<point<S>, S>(d, pt, src, scale, fcn);
 }
 #endif
 

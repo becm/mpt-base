@@ -155,7 +155,7 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *, int64_t , int);
 /* finish or add data to current message */
 extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 /* push message and flush stream */
-extern int mpt_stream_send(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
+extern int mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
 extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_ARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
 /* dispatch next message */
@@ -194,7 +194,6 @@ public:
     int64_t pos() __MPT_OVERRIDE;
     bool seek(int64_t) __MPT_OVERRIDE;
     Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
-    int getchar() __MPT_OVERRIDE;
 };
 
 class Stream : public metatype, public output, public input, public IODevice

@@ -18,7 +18,8 @@ __MPT_NAMESPACE_BEGIN
 // add data mapping
 int Mapping::add(const msgbind &src, const msgdest &dst, int client)
 {
-    if (!getCycle(dst).pointer()) {
+    const Reference<Cycle> *r;
+    if (!(r = getCycle(dst))) {
         return -2;
     }
     mapping map(src, dst, client);
@@ -32,22 +33,20 @@ int Mapping::del(const msgbind *src, const msgdest *dest, int client) const
 // get data mapping
 Array<msgdest> Mapping::destinations(const msgbind &src, int client) const
 {
-    const mapping *map = (mapping *) _bind.base();
-    size_t len = _bind.length() / sizeof(*map);
     Array<msgdest> arr;
 
-    for (size_t i = 0; i < len; ++i) {
-        if (mpt_mapping_cmp(map, &src, client)) {
+    for (auto &map : _bind.slice()) {
+        if (mpt_mapping_cmp(&map, &src, client)) {
             continue;
         }
-        arr.set(arr.length(), map->dest);
+        arr.set(arr.length(), map.dest);
     }
     return arr;
 }
 // clear data mappings
 void Mapping::clear()
 {
-    mpt_array_clone(&_bind, 0);
+    _bind = Array<mapping>();
     _d = Array<Element>();
 }
 
@@ -69,11 +68,11 @@ bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
 }
 bool Mapping::saveCycles(int layId, const Layout &lay)
 {
-    for (size_t i = 0, max = lay.graphCount(); i < max; ++i) {
-        const Item<Graph> &gi = lay.graph(i);
+    int i = 0;
+    for (auto &it : lay.graphs()) {
         Graph *g;
-        if (!(g = gi.pointer())) continue;
-        if (!saveCycles(layId, i, *g)) {
+        if (!(g = it.pointer())) continue;
+        if (!saveCycles(layId, i++, *g)) {
             return false;
         }
     }
@@ -81,32 +80,37 @@ bool Mapping::saveCycles(int layId, const Layout &lay)
 }
 
 // load cycles references
-bool Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
+int Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
 {
     if (layId >= UINT8_MAX || layId < 0
         || graphID >= UINT8_MAX || layId < 0) {
-        return false;
+        return BadValue;
     }
+    int total = 0;
     for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
         Reference<Cycle> *cyc = Map::get(msgdest(layId+1, graphID+1, i+1));
         if (!cyc) continue;
         if (!graph.setCycle(i, *cyc)) {
-            return false;
+            return total ? BadOperation : BadArgument;
         }
+        ++total;
     }
-    return true;
+    return total;
 }
-bool Mapping::loadCycles(int layId, const Layout &lay) const
+int Mapping::loadCycles(int layId, const Layout &lay) const
 {
-    for (size_t i = 0, max = lay.graphCount(); i < max; ++i) {
-        const Item<Graph> &gi = lay.graph(i);
+    int i = -1, total = 0;
+    for (auto &it : lay.graphs()) {
         Graph *g;
-        if (!(g = gi.pointer())) continue;
-        if (!loadCycles(layId, i, *g)) {
-            return false;
+        int curr;
+        ++i;
+        if (!(g = it.pointer())) continue;
+        if ((curr = loadCycles(layId, i, *g)) < 0) {
+            return total ? BadOperation : BadArgument;
         }
+        total += curr;
     }
-    return true;
+    return total;
 }
 // deregister cycle references
 void Mapping::clearCycles(int lay, int grf, int wld) const
@@ -119,9 +123,8 @@ void Mapping::clearCycles(int lay, int grf, int wld) const
     }
 }
 // get cycle reference
-const Reference<Cycle> &Mapping::getCycle(const msgdest &dest) const
+const Reference<Cycle> *Mapping::getCycle(const msgdest &dest) const
 {
-    static const Reference<Cycle> def;
     // search matching destination
     for (auto &e : _d) {
         // match target cycle
@@ -131,18 +134,18 @@ const Reference<Cycle> &Mapping::getCycle(const msgdest &dest) const
         // cycle not active
         Cycle *c;
         if (!(c = e.value.pointer())) {
-            return def;
+            return 0;
         }
         // bad dimension
         Polyline *pl = c->part(0);
         if (pl && strlen(pl->format()) <= dest.dim) {
-            return def;
+            return 0;
         }
         // return cycle reference
-        return e.value;
+        return &e.value;
     }
     // no destination found
-    return def;
+    return 0;
 }
 
 __MPT_NAMESPACE_END

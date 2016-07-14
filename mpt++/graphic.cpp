@@ -231,25 +231,28 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
     }
     mpt_message_read(&tmp, part+1, buf);
 
+    Slice<const Item<Graph> > graphs = lay->graphs();
+    const Item<Graph> *it;
     if (part) {
         int g = strtol(buf, &end, 0);
         if (end > buf) {
             if (g <= 0 || g > UINT8_MAX) {
                 return -3;
             }
-            grf = lay->graph(g-1).pointer();
+            it = graphs.nth(g-1);
+            grf = it ? it->pointer() : 0;
             dst.grf = g;
         }
         else {
-            size_t max = lay->graphCount();
+            size_t max = graphs.length();
             if (max > UINT8_MAX) {
                 max = UINT8_MAX;
             }
             for (size_t i = 0; i < max; ++i) {
-                const Item<Graph> &g = lay->graph(i);
-                if (g.equal(buf, part)) {
+                it = graphs.nth(i);
+                if (it->equal(buf, part)) {
                     dst.grf = i+1;
-                    grf = g.pointer();
+                    grf = it->pointer();
                     break;
                 }
             }
@@ -257,7 +260,8 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
         mask |= 2;
     }
     else if (dst.grf) {
-        grf = lay->graph(dst.grf-1).pointer();
+        it = graphs.nth(dst.grf-1);
+        grf = it ? it->pointer() : 0;
     }
     if (!grf) {
         return -2;

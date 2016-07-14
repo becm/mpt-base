@@ -54,34 +54,38 @@ struct streamWrap
 };
 static int streamReply(void *ptr, const MPT_STRUCT(message) *msg)
 {
+	static const char _func[] = "mpt::stream::reply";
 	MPT_STRUCT(reply_context) *rp = ptr;
 	struct streamInput *srm;
 	
+	if (!rp->used) {
+		mpt_log(0, _func, MPT_FCNLOG(Critical), "%s",
+		        MPT_tr("reply context unregistered"));
+		return MPT_REPLY(BadContext);
+	}
 	if (!(srm = rp->ptr)) {
-		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
-		        MPT_tr("stream destructed"));
+		mpt_log(0, _func, MPT_FCNLOG(Error), "%s: %s",
+		        MPT_tr("unable to reply"), MPT_tr("output destroyed"));
 		if (!--rp->used) {
 			free(rp);
 		}
-		return MPT_ERROR(BadArgument);
+		return MPT_REPLY(BadDescriptor);
 	}
-	if (!rp->used) {
-		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
-		        MPT_tr("reply context unregistered"));
-		return MPT_ERROR(BadArgument);
-	}
-	if (!rp->len || rp->_val[0] & 0x80) {
-		mpt_log(0, "mpt::stream::reply", MPT_FCNLOG(Error), "%s",
-		        MPT_tr("reply context unregistered"));
-		return MPT_ERROR(BadArgument);
+	if (!rp->len) {
+		mpt_log(0, _func, MPT_FCNLOG(Warning), "%s: %s",
+		        MPT_tr("bad reply operation"), MPT_tr("reply alredy sent"));
+		return MPT_REPLY(BadState);
 	}
 	if (mpt_stream_flags(&srm->data._info) & MPT_ENUM(StreamMesgAct)) {
+		mpt_log(0, _func, MPT_FCNLOG(Warning), "%s: %s",
+		        MPT_tr("unable to reply"), MPT_tr("message creation in progress"));
 		return MPT_ERROR(MessageInProgress);
 	}
 	rp->_val[0] |= 0x80;
 	
 	mpt_stream_push(&srm->data, rp->len, rp->_val);
-	mpt_stream_send(&srm->data, msg);
+	mpt_stream_append(&srm->data, msg);
+	mpt_stream_push(&srm->data, 0, 0);
 	rp->len = 0;
 	--rp->used;
 	return 0;

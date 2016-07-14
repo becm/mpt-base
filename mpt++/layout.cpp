@@ -595,7 +595,7 @@ bool Graph::updateTransform(int dim)
     if (!it || !(a = it->pointer())) {
         return false;
     }
-    cut = clip;
+    cutoff = clip;
     switch (dim) {
     case 0:
         fx = tx.fromAxis(*a, AxisStyleX);
@@ -726,14 +726,6 @@ metatype *Layout::clone() const
     lay->setFont(_font);
 
     return lay;
-}
-
-const Item<Graph> &Layout::graph(int pos) const
-{
-    static const Item<Graph> def;
-    if (pos < 0 && (pos += _graphs.length()) < 0) return def;
-    Item<Graph> *g;
-    return (g = _graphs.get(pos)) ? *g : def;
 }
 
 bool Layout::update(metatype *m)

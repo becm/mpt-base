@@ -47,27 +47,27 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	if (!rc->used) {
 		mpt_log(0, _func, MPT_FCNLOG(Critical), "%s %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
-		return 0;
+		return MPT_REPLY(BadContext);
+	}
+	
+	if (!(con = rc->ptr)) {
+		mpt_log(0, _func, MPT_FCNLOG(Error), "%s: %s",
+		        MPT_tr("unable to reply"), MPT_tr("output destroyed"));
+		if (!--rc->used) {
+			free(rc);
+		}
+		return MPT_REPLY(BadDescriptor);
+	}
+	/* already answered */
+	if (!rc->len) {
+		connectionLog(con, _func, MPT_FCNLOG(Warning), "%s: %s",
+		              MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
+		--rc->used;
+		return MPT_REPLY(BadState);
 	}
 	rc->_val[0] &= 0x7f;
 	mpt_message_buf2id(rc->_val, rc->len, &id);
 	rc->_val[0] |= 0x80;
-	
-	if (!(con = rc->ptr)) {
-		mpt_log(0, _func, MPT_FCNLOG(Error), "%s (%04"PRIx64"): %s",
-		        MPT_tr("unable to reply"), id, MPT_tr("context destroyed"));
-		if (!--rc->used) {
-			free(rc);
-		}
-		return MPT_ERROR(BadArgument);
-	}
-	/* already answered */
-	if (!rc->len) {
-		connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
-		              MPT_tr("bad reply operation"), id, MPT_tr("reply already sent"));
-		--rc->used;
-		return 0;
-	}
 	if (!MPT_socket_active(&con->out.sock)) {
 		MPT_STRUCT(stream) *srm;
 		
@@ -86,7 +86,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
 			return ret;
 		}
-		if (src && mpt_stream_send(srm, src) < 0) {
+		if (src && mpt_stream_append(srm, src) < 0) {
 			connectionLog(con, _func, MPT_FCNLOG(Warning), "%s (%04"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
 		}

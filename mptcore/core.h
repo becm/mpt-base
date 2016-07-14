@@ -547,6 +547,12 @@ public:
     inline iterator end() const
     { return _base+length(); }
     
+    inline iterator nth(int i) const
+    {
+        if (i > (int) length()) return 0;
+        if (i < 0 && (i += length()) < 0) return 0;
+        return base() + i;
+    }
     inline size_t length() const
     { return _len / sizeof(T); }
     inline T *base() const
