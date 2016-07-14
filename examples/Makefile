@@ -3,7 +3,7 @@
 
 DIRS = core io cxx lua
 TESTS = client axis iter gen
-PROGS = readline ${TESTS}
+PROGS = readline graphic ${TESTS}
 
 client_static : CC=${CXX}
 
