@@ -180,7 +180,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 	if (!od->con.out._idlen) {
 		return 0;
 	}
-	if (!MPT_socket_active(&od->con.out.sock) < 0) {
+	if (!MPT_socket_active(&od->con.out.sock)) {
 		MPT_STRUCT(stream) *srm;
 		
 		if (!(srm = od->con.out._buf)) {
@@ -343,7 +343,7 @@ static int outputInputFile(MPT_INTERFACE(input) *in)
 	const MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
 	MPT_STRUCT(stream) *srm;
 	
-	if (!MPT_socket_active(&odata->con.out.sock) < 0 && (srm = odata->con.out._buf)) {
+	if (!MPT_socket_active(&odata->con.out.sock) && (srm = odata->con.out._buf)) {
 		return _mpt_stream_fread(&srm->_info);
 	}
 	return odata->con.out.sock._id;
