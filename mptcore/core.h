@@ -527,7 +527,7 @@ int error(const char *, const char *, ... );
 int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
-int print(const char *, ... );
+int printf(const char *, ... );
 
 /*! reduced slice with type but no data reference */
 template <typename T>

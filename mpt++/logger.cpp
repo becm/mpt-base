@@ -54,13 +54,17 @@ int critical(const char *from, const char *fmt, ... )
     if (fmt) va_end(va);
     return ret;
 }
-int print(const char *fmt, ... )
+int printf(const char *fmt, ... )
 {
-    logger *log = logger::defaultInstance();
-    if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(0, log->Message, fmt, va);
+    logger *log;
+    int ret;
+    if ((log = logger::defaultInstance())) {
+        ret = log->log(0, log->Message, fmt, va);
+    } else {
+        ret = std::vprintf(fmt, va);
+    }
     if (fmt) va_end(va);
     return ret;
 }
@@ -210,14 +214,17 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     if (type & File) {
         pass |= _flags & PassFile;
     }
+    if (!save) {
+        if (_next && pass) {
+            return _next->log(from, type, fmt, arg);
+        }
+        return 0;
+    }
     if (_next && pass) {
         va_list tmp;
         va_copy(tmp, arg);
         _next->log(from, type, fmt, tmp);
         va_end(tmp);
-    }
-    if (!save) {
-        return 0;
     }
     Entry m;
     int ret;
