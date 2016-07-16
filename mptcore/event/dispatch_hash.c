@@ -2,8 +2,7 @@
  * call event for convert string message argument hash.
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <inttypes.h>
 #include <errno.h>
 
 #include <stdio.h>
@@ -82,14 +81,12 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		}
 		return len;
 	}
-	if (mpt_config_get(0, "mpt.debug", '.', 0)) {
-		fprintf(stderr, "%s: %s: %s,%d\n", "hash not found", __func__, __FILE__, __LINE__);
-		raise(SIGSTOP);
-	}
 	/* execute fallback command */
 	if (disp->_err.cmd) {
 		return disp->_err.cmd(disp->_err.arg, ev);
+	} else {
+		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR, MPT_tr("hash not found"), ev->id);
 	}
-	return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("unable to find corresponding command"));
+	return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("unable to find command"));
 }
 

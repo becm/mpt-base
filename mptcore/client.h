@@ -112,8 +112,9 @@ extern char *mpt_readline(const char *);
 
 /* initialize/preprare solver, execute solver step */
 extern int mpt_cevent_init(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
-extern int mpt_cevent_prep(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
+/* clear config elements */
+extern int mpt_cevent_clear(MPT_INTERFACE(config) *, MPT_STRUCT(event) *);
 
 /* register events on notifier */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);

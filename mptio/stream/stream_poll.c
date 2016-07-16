@@ -86,11 +86,10 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 				srm->_rd._state.done = 0;
 			}
 		}
-		
-		/* avoid removal if input not queried */
+		/* avoid removal if input available */
 		if (!(fd[0].revents & POLLIN)) {
-			if (!(what & POLLIN) && srm->_rd.data.len) {
-				keep = 0;
+			if (srm->_mlen >= 0) {
+				keep = (what & POLLIN && srm->_rd._dec) ? POLLIN : 0;
 			}
 		}
 		/* prepare input buffer */
@@ -117,8 +116,9 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 			mpt_stream_seterror(&srm->_info, (fd[0].revents & POLLHUP) ? MPT_ENUM(ErrorEmpty) : MPT_ENUM(ErrorRead));
 		}
 		/* all available data reveived */
-		if (fd[0].revents & POLLHUP && srm->_rd.data.len) {
-			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorEmpty));
+		if (fd[0].revents & POLLHUP
+		    && !(fd[0].revents & POLLIN)) {
+			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorRead));
 		}
 	}
 	else if (srm->_rd.data.len) {

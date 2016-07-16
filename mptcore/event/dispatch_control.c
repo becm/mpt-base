@@ -33,10 +33,10 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 		/* consume command */
 		if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
 		    || (mpt_message_read(&msg, part, 0) < (size_t) part)) {
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing dispatch wrapper"));
+			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing filter element"));
 		}
 		if ((err = mpt_output_control(out, mt.arg, &msg)) >= 0) {
-			return MPT_event_good(ev, MPT_tr("graphic command processed"));
+			return MPT_event_good(ev, MPT_tr("output command processed"));
 		}
 		if (err == MPT_ERROR(MissingData)) {
 			return MPT_event_fail(ev, err, MPT_tr("missing message content"));
@@ -48,11 +48,11 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 			return MPT_event_fail(ev, err, MPT_tr("message buffer too small"));
 		}
 		if (err == MPT_ERROR(BadOperation)) {
-			return MPT_event_fail(ev, err, MPT_tr("grapgic operation failed"));
+			return MPT_event_fail(ev, err, MPT_tr("output operation failed"));
 		}
 		return MPT_event_fail(ev, err, MPT_tr("message processing error"));
 	}
-	return MPT_event_good(ev, MPT_tr("skip graphic binding"));
+	return MPT_event_good(ev, MPT_tr("no output operation"));
 }
 
 /*!

@@ -24,10 +24,11 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
 		arg = mpt_meta_message(ev->msg, 0);
 	}
 	else {
+		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		MPT_STRUCT(message) msg;
 		ssize_t part;
-		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 		
+		msg = *ev->msg;
 		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
 			mpt_event_reply(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 			return 0;

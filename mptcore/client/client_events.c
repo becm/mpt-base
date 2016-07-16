@@ -76,7 +76,6 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	}
 	return MPT_event_term(ev, MPT_tr("terminate event loop"));
 }
-
 static const struct
 {
 	const char *name;
@@ -84,9 +83,9 @@ static const struct
 }
 cmdsolv[] = {
 	{"set",     clientConfig    },
+	{"close",   clientClose     },
 	{"init",    mpt_cevent_init },
-	{"step",    mpt_cevent_step },
-	{"close",   clientClose     }
+	{"step",    mpt_cevent_step }
 };
 
 static int clientCont(void *ptr, MPT_STRUCT(event) *ev)

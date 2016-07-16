@@ -27,11 +27,11 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 		return 0;
 	}
 	if (ev->reply.set) {
-		mpt_event_reply(ev, -1, "%s: 0x"PRIxPTR, MPT_tr("invalid message command"), ev->id);
+		mpt_event_reply(ev, -1, "%s: %" PRIxPTR, MPT_tr("invalid message command"), ev->id);
 		return MPT_ENUM(EventFail);
 	}
 	if (!out || ev->id) {
-		mpt_output_log(out, _func, MPT_LOG(Error), "%s: 0x"PRIxPTR,
+		mpt_output_log(out, _func, MPT_LOG(Error), "%s: %" PRIxPTR,
 		               MPT_tr("invalid command"), ev->id);
 		ev->id = 0;
 		return MPT_ENUM(EventDefault);

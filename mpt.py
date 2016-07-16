@@ -401,6 +401,10 @@ class Shell(cmd.Cmd):
         """ send single step command to first user process """
         return self.send('step ' + args)
     
+    def do_set(self, args):
+        """ send prepare command to first user process """
+        return self.send('set ' + args)
+    
     def do_clear(self, args):
         """ send clear command to first user process """
         return self.send('clear ' + args)

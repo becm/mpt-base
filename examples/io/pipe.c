@@ -28,9 +28,10 @@ int main(int argc, char * const argv[])
 	}
 	mpt_stream_setmode(&srm, MPT_ENUM(StreamBuffer));
 	
-	while (mpt_stream_poll(&srm, POLLIN | POLLHUP, -1) >= 0) {
+	while (mpt_stream_poll(&srm, POLLIN | POLLHUP, -1) > 0) {
 		fprintf(stderr, "%d (%d)\n", (int) srm._rd.data.len, (int) srm._rd.data.max);
 	}
 	fwrite(srm._rd.data.base, srm._rd.data.len, 1, stdout);
+	mpt_stream_close(&srm);
 	return 0;
 }

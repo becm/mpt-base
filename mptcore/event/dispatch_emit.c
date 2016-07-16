@@ -47,7 +47,7 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 	if (!msg) {
 		uint64_t id = 0;
 		mpt_message_buf2id(ctx->_val, ctx->len, &id);
-		mpt_output_log(ans, _func, MPT_LOG(Debug), "%s ("PRIx64")",
+		mpt_output_log(ans, _func, MPT_LOG(Debug), "%s (%"PRIx64")",
 		               MPT_tr("empty reply"), id);
 		ctx->len = 0;
 		return 0;
@@ -154,8 +154,8 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 				mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
 				               MPT_tr("clear default event"), disp->_def);
 			}
-			else {
-				mpt_output_log(out, __func__, MPT_LOG(Info), "%s", MPT_tr("no default event"));
+			else if (!(state & MPT_ENUM(EventFail))) {
+				mpt_output_log(out, __func__, MPT_LOG(Debug2), "%s", MPT_tr("no default event to clear"));
 			}
 		}
 		disp->_def = ev->id;
