@@ -37,7 +37,9 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 	if (fmt) {
 		va_start(ap, fmt);
 	}
-	type |= MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction);
+	if (type & 0x7f && !(type & MPT_LOG(File))) {
+		type |= MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction);
+	}
 	if (out) {
 		err = out->_vptr->log(out, from, type, fmt, ap);
 	} else if (log) {

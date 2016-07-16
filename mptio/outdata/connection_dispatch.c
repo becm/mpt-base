@@ -25,7 +25,7 @@
 static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, ...)
 {
 	va_list va;
-	if (!fmt) {
+	if (fmt) {
 		int ret;
 		va_start(va, fmt);
 		ret = mpt_connection_log(con, from, type | MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction), fmt, va);

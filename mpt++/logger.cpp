@@ -54,15 +54,15 @@ int critical(const char *from, const char *fmt, ... )
     if (fmt) va_end(va);
     return ret;
 }
-int printf(const char *fmt, ... )
+int println(const char *fmt, ... )
 {
     va_list va;
     if (fmt) va_start(va, fmt);
     logger *log;
     int ret;
     if ((log = logger::defaultInstance())) {
-        ret = log->log(0, log->Message, fmt, va);
-    } else {
+        ret = log->log(0, log->Message | log->LogSelect, fmt, va);
+    } else if (fmt) {
         ret = std::vprintf(fmt, va);
     }
     if (fmt) va_end(va);
