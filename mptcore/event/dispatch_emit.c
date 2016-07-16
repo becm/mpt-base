@@ -25,6 +25,11 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 	if (!(ctx = ptr)) {
 		return 0;
 	}
+	if (!ctx->used) {
+		mpt_log(0, _func, MPT_LOG(Critical), "%s",
+		        MPT_tr("called with unregistered context"));
+		return MPT_ERROR(MissingData);
+	}
 	if (!(ans = ctx->ptr)) {
 		mpt_log(0, _func, MPT_LOG(Critical), "%s",
 		        MPT_tr("context for answer destroyed"));
@@ -32,11 +37,6 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 			free(ctx);
 		}
 		return MPT_ERROR(BadArgument);
-	}
-	if (!ctx->used) {
-		mpt_output_log(ans, _func, MPT_LOG(Critical), "%s",
-		               MPT_tr("called with unregistered context"));
-		return MPT_ERROR(MissingData);
 	}
 	--ctx->used;
 	if (!ctx->len) {
@@ -111,7 +111,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		cmd = mpt_command_get(&disp->_d, ev->id = id);
 	}
 	/* fallback on dispatcher output */
-	if (out && !ev->reply.set) {
+	if (out && !ev->reply.set && !ctx->used) {
 		ctx->len = sizeof(ev->id);
 		++ctx->used;
 		mpt_message_id2buf(ev->id, ctx->_val, ctx->len);

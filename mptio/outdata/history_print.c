@@ -121,9 +121,6 @@ static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
 	}
 	if (dest) memcpy(dest, ts->src.ptr, len);
 	
-	if (ts->part.pos || ts->elem.pos) {
-		fputc(' ', ts->fd);
-	}
 	if (!(type & MPT_ENUM(ValueConsume))) {
 		return ts->type;
 	}
@@ -276,23 +273,35 @@ extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t le
 	else {
 		int type;
 		uint8_t fmt;
+		/* part parameter setup */
 		ts.part.ptr = (void *) (buf+1);
 		ts.part.len = ts.size;
 		ts.part.pos = hist->pos.fmt;
 		if (ts.part.pos >= ts.part.len) {
 			return MPT_ERROR(BadArgument);
 		}
+		/* current element setup */
 		ts.elem.max = ts.part.ptr[ts.part.pos].len;
 		ts.elem.pos = hist->pos.elem;
 		if (ts.elem.pos > ts.elem.max) {
 			return MPT_ERROR(BadArgument);
 		}
+		/* current type parameters */
 		fmt = ts.part.ptr[ts.part.pos].fmt;
 		if ((type = mpt_msgvalfmt_type(fmt)) < 0) {
 			return type;
 		}
 		ts.type = type;
 		ts.size = mpt_msgvalfmt_size(fmt);
+		
+		/* size requirement not fulfilled */
+		if (len < ts.size) {
+			return len - ts.src.len;
+		}
+		/* element is continuation */
+		if (ts.part.pos || ts.elem.pos) {
+			fputc(' ', fd);
+		}
 	}
 	
 	while (1) {
