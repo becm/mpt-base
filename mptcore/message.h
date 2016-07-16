@@ -87,6 +87,7 @@ enum MPT_ENUM(CommandType) {
 	MPT_ENUM(BindingParse)    = 0x32,  /* binding in text format */
 	
 	MPT_ENUM(ValuesInteger)   = 0x0,   /* signed integer data */
+	MPT_ENUM(ValuesBig)       = 0x10,  /* size is 16<<(lower nibble) for float/int/uint */
 	MPT_ENUM(ValuesUnsigned)  = 0x20,  /* unsigned integer data */
 	MPT_ENUM(ValuesFloat)     = 0x40   /* floating point data */
 };
@@ -255,6 +256,9 @@ extern int mpt_output_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), int, co
 /* parse character separated values */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
 
+/* get size/type from message value format type */
+size_t mpt_msgvalfmt_size(uint8_t);
+int mpt_msgvalfmt_type(uint8_t);
 
 __MPT_EXTDECL_END
 

@@ -49,11 +49,18 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 	
 	if (len && plen) {
 		uint64_t dim;
+		uint8_t fmt;
 		/* send size info */
 		hdr.type.cmd = MPT_ENUM(MessageValFmt);
 		hdr.type.arg = 0;
 		
+		fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesInteger) | sizeof(dim);
+		
 		out->_vptr->push(out, sizeof(hdr.type), &hdr.type);
+		out->_vptr->push(out, sizeof(fmt), &fmt);
+		out->_vptr->push(out, sizeof(fmt), &fmt);
+		fmt = 0;
+		out->_vptr->push(out, sizeof(fmt), &fmt);
 		dim = len;  out->_vptr->push(out, sizeof(dim), &dim);
 		dim = plen; out->_vptr->push(out, sizeof(dim), &dim);
 		out->_vptr->push(out, 0, 0);

@@ -52,17 +52,8 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
 		}
 		/* history output triggered */
-		else if (con->hist.info.size) {
-			if (con->hist.info.type) {
-				ret = mpt_history_print(con->hist.file, &con->hist.info, len, src);
-			} else {
-				MPT_STRUCT(histinfo) info = MPT_HISTINFO_INIT;
-				info.type = 't';
-				info.pos = con->hist.info.pos;
-				info.size = sizeof(uint64_t);
-				ret = mpt_history_print(con->hist.file, &info, len, src);
-				con->hist.info.pos = info.pos;
-			}
+		else if (con->hist.info.lfmt) {
+			ret = mpt_history_print(con->hist.file, &con->hist.info, len, src);
 		}
 		else {
 			ret = mpt_outdata_push(&con->out, len, src);
@@ -73,7 +64,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 		if (!len) {
 			con->cid = 0;
 			con->out.state &= MPT_ENUM(OutputPrintColor);
-			con->hist.info.size = 0;
+			con->hist.info.lfmt = 0;
 		}
 		return ret;
 	}
@@ -91,44 +82,30 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 		
 		/* convert history to printable output */
 		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-			const MPT_STRUCT(msgvalfmt) *fmt = (void *) (mt+1);
-			size_t parts;
-			
 			/* reset history state */
-			mpt_history_set(&con->hist.info, 0);
+			mpt_history_reset(&con->hist.info);
+			con->hist.info.lfmt = -1;
 			
 			/* assume block termination */
 			if (len < 2) {
-				con->hist.info.size = sizeof(uint64_t);
-				con->hist.info.pos = 1;
+				con->hist.info.pos.elem = 1;
 				con->out.state |= MPT_ENUM(OutputActive);
 				return 1;
 			}
-			parts = mt->arg;
-			ret = sizeof(*mt) + parts * sizeof(*fmt);
-			if (len < (size_t) ret) {
-				return MPT_ERROR(MissingData);
-			}
+			con->hist.info.pos.fmt = mt->arg;
 			
-			if (!parts) {
-				con->hist.info.size = sizeof(uint64_t);
+			if (!con->hist.file) {
+				con->out.state |= MPT_ENUM(OutputActive);
+				return 0;
 			}
-			else while (parts--) {
-				if (mpt_history_set(&con->hist.info, fmt++) < 0) {
-					con->hist.info.line = 0;
-					con->hist.info.type = 0;
-				}
+			ret = 0;
+			if ((len -= 2)
+			    && (ret = mpt_history_print(con->hist.file, &con->hist.info, len, mt+1)) < 0) {
+				return ret;
 			}
 			con->out.state |= MPT_ENUM(OutputActive);
 			
-			/* consume data for bad setup */
-			if (!con->hist.info.size
-			    || ((parts = (len - ret))
-			        && (ret = mpt_history_print(con->hist.file, &con->hist.info, parts, src)) < 0)) {
-				con->out.state |= MPT_ENUM(OutputPrintRestore);
-				return 0;
-			}
-			return len;
+			return ret + 2;
 		}
 		if (len < 2) {
 			return MPT_ERROR(MissingData);

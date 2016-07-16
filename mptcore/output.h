@@ -11,6 +11,7 @@
 
 #ifdef __cplusplus
 # include "convert.h"
+# include "message.h"
 #endif
 
 __MPT_NAMESPACE_BEGIN
@@ -79,21 +80,27 @@ MPT_STRUCT(histinfo)
 {
 #ifdef __cplusplus
 public:
-	inline histinfo() : pos(0), part(0), line(0), type(0), size(0)
-	{ }
+	inline histinfo() : fpos(0), lfmt(0)
+	{
+		pos.fmt = 0;
+		pos.elem = 0;
+	}
 	bool setFormat(const char *fmt);
-	bool setup(size_t , const msgvalfmt *);
+	bool add(valfmt);
+	bool add(msgvalfmt);
 protected:
 #else
-# define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT,  0, 0, 0,  0, 0 }
+# define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, 0, 0 }
 #endif
-	_MPT_ARRAY_TYPE(valfmt) _fmt;  /* output format */
+	_MPT_ARRAY_TYPE(valfmt)    _fmt;  /* output format */
+	_MPT_ARRAY_TYPE(msgvalfmt) _dat;  /* data format */
 	
-	uint16_t pos;  /* position in line */
-	uint16_t part; /* part of line to display */
-	uint16_t line; /* line lenth */
-	char     type; /* type information */
-	uint8_t  size; /* element size */
+	struct {
+		uint8_t fmt;  /* format position */
+		uint8_t elem; /* element offset */
+	} pos;
+	uint8_t         fpos; /* format position */
+	uint8_t         lfmt; /* length type */
 };
 
 #ifdef __cplusplus
@@ -176,13 +183,15 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 /* filter control message (open/close), push others */
 extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *);
 
-/* history operations */
-extern int mpt_history_set(MPT_STRUCT(histinfo) *, const MPT_STRUCT(msgvalfmt) *);
+/* reset history output state */
+void mpt_history_reset(MPT_STRUCT(histinfo) *);
+
 #if defined(_STDIO_H) || defined(_STDIO_H_)
-extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
 /* outdata print setup and processing */
 extern ssize_t mpt_outdata_print(uint8_t *, FILE *, size_t , const void *);
 
+/* partial history output */
+extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
 /* printing values */
 extern int mpt_fprint_val(FILE *, MPT_INTERFACE(metatype) *);
 #endif

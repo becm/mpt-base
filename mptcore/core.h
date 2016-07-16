@@ -358,8 +358,9 @@ template<typename T>
 inline __MPT_CONST_EXPR char typeIdentifier(const T &) { return typeIdentifier<T>(); }
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR char typeIdentifier<float>()  { return 'f'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<double>() { return 'd'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<float>()       { return 'f'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<double>()      { return 'd'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<long double>() { return 'e'; }
 /* integer values */
 template<> inline __MPT_CONST_EXPR char typeIdentifier<int8_t>()  { return 'b'; }
 template<> inline __MPT_CONST_EXPR char typeIdentifier<int16_t>() { return 'n'; }
@@ -377,14 +378,6 @@ template<> inline __MPT_CONST_EXPR char typeIdentifier<long>() { return TypeLong
 template<> inline __MPT_CONST_EXPR char typeIdentifier<unsigned long>() { return TypeULong; }
 #endif
 
-template<> inline __MPT_CONST_EXPR char typeIdentifier<long double>()
-{
-	return sizeof(long double) == 16 ? 'e'
-	: sizeof(long double) == 12 ? MPT_ENUM(TypeFloat80)
-	: sizeof(long double) == 8 ? 'd'
-	: sizeof(long double) == 4 ? 'f'
-	: 0;
-}
 
 template<typename T>
 inline __MPT_CONST_EXPR char vectorIdentifier() {
