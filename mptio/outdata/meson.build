@@ -8,7 +8,7 @@ src = files(
   'connection_push.c',
   'fprint_val.c',
   'history_print.c',
-  'history_set.c',
+  'history_reset.c',
   'outdata_connect.c',
   'outdata_fini.c',
   'outdata_open.c',
