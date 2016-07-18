@@ -15,7 +15,7 @@
 
 MPT_STRUCT(metaBuffer) {
 	MPT_INTERFACE(metatype) _meta;
-	MPT_STRUCT(slice)        s;
+	MPT_STRUCT(slice) s;
 };
 
 static void bufferUnref(MPT_INTERFACE(unrefable) *meta)
@@ -61,7 +61,7 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 		const char *base;
 		size_t len;
 		
-		if (!(base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
+		if (!(base = mpt_data_tostring(&val.ptr, *val.fmt++, &len))) {
 			return MPT_ERROR(BadValue);
 		}
 		if (len && !mpt_array_append(&arr, len, base)) {
@@ -70,7 +70,6 @@ static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *
 		if (!mpt_array_append(&arr, 1, 0)) {
 			return MPT_ERROR(BadOperation);
 		}
-		++val.fmt;
 	}
 	mpt_array_clone(&m->s._a, &arr);
 	m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
@@ -110,7 +109,7 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 {
 	const MPT_STRUCT(metaBuffer) *old = (void *) meta;
-	MPT_STRUCT(metaBuffer) *m; 
+	MPT_STRUCT(metaBuffer) *m;
 	
 	if (!(m = malloc(sizeof(*m)))) {
 		return 0;

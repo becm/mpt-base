@@ -20,12 +20,6 @@ extern int main(int argc, char *argv[])
 	
 	mpt::Layout lay;
 	
-	long l;
-	unsigned long u;
-	mpt::println("long = '%c', '%c'", mpt::typeIdentifier(l), mpt::typeIdentifier(u));
-	long double ld;
-	mpt::println("long double = '%c'", mpt::typeIdentifier(ld));
-	
 	if (argc < 2) {
 		mpt::warning(__func__, "%s", "missing layout argument");
 		return 1;

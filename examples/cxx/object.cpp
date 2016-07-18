@@ -138,11 +138,6 @@ extern int main(int , char * const [])
 	opt = &op;
 	opt->setPointer(lo.pointer());
 	
-	double t = -.3e-5;
-	mpt::float80 v = t;
-	
-	std::cout << t << " " << v.value() << std::endl;
-	
 	return 0;
 }
 

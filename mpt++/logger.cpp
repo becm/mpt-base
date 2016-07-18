@@ -59,7 +59,7 @@ int println(const char *fmt, ... )
     va_list va;
     if (fmt) va_start(va, fmt);
     logger *log;
-    int ret;
+    int ret = 0;
     if ((log = logger::defaultInstance())) {
         ret = log->log(0, log->Message | log->LogSelect, fmt, va);
     } else if (fmt) {

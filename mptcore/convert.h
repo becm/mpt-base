@@ -33,22 +33,22 @@ MPT_STRUCT(float80)
 {
 #ifdef __cplusplus
 public:
-	enum { Type = TypeFloat80 };
+	inline float80() {}
+	inline float80(long double v) { *this = v; }
 	
-	inline float80()
-	{ for (size_t i = 0; i < sizeof(_d); i++) _d[i] = 0; }
-	inline float80(const float80 &v)
-	{ for (size_t i = 0; i < sizeof(_d); i++) _d[i] = v._d[i]; }
-	inline float80(const long double &v)
-	{ *this = v; }
-	
-	float80 &operator =(const long double &);
+	float80 &operator =(long double);
 	long double value() const;
-	float80 &swapOrder();
-private:
+protected:
 #endif
 	uint8_t _d[10];
 };
+#ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR char typeIdentifier<float80>()  { return TypeFloat80; }
+float swapOrder(float);
+double swapOrder(double);
+float80 swapOrder(float80);
+#endif
+
 /* value output format */
 MPT_STRUCT(valfmt)
 {
@@ -167,6 +167,11 @@ extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
 __MPT_EXTDECL_END
 
 __MPT_NAMESPACE_END
+
+#ifdef __cplusplus
+inline std::ostream &operator<<(std::ostream &o, const mpt::float80 &f)
+{ return o << static_cast<double>(f.value()); }
+#endif
 
 #endif /* _MPT_CONVERT_H */
 

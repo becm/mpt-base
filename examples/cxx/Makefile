@@ -1,12 +1,13 @@
 # Makefile: MPT C++ library example programs
 #
-CXX11_TARGETS = object buffer map
+CXX11_TARGETS = buffer map object
 TESTS = \
 	${CXX11_TARGETS} \
 	config \
-	queue \
+	layout \
 	output \
-	layout
+	queue \
+	types
 
 PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
@@ -24,6 +25,7 @@ output : LDLIBS+=-lmptcore
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt++ -lmpt
 %_static : CPPFLAGS+=-D_STATIC
+types : LDLIBS+=-lmptcore
 
 # special test arguments
 test_layout : ARGS=layout.lay

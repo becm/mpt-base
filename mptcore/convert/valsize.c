@@ -3,12 +3,12 @@
  * mpt type registry
  */
 
+#include "convert.h"
+#include "array.h"
+
 #include <stdlib.h>
 
 #include <sys/uio.h>
-
-#include "array.h"
-#include "convert.h"
 
 #include "../mptplot/layout.h"
 
@@ -56,13 +56,10 @@ static const struct {
 	{ 'o', 0 },  /* D-Bus object path */
 };
 
-static MPT_STRUCT(array) scalars = { 0 };
+static size_t scalars_size[0x80/4];
+static int scalars = 0;
 static int pointers = 0;
 
-static void ptypes_finish(void)
-{
-	mpt_array_clone(&scalars, 0);
-}
 /*!
  * \ingroup mptConvert
  * \brief get size of registered type
@@ -80,7 +77,7 @@ extern ssize_t mpt_valsize(int type)
 	    || type > MPT_ENUM(_TypeFinal)) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (type < MPT_ENUM(TypeUser)) {
+	if (type < MPT_ENUM(_TypeDynamic)) {
 		uint8_t i;
 		
 		/* generic/typed array */
@@ -99,28 +96,32 @@ extern ssize_t mpt_valsize(int type)
 		}
 		return MPT_ERROR(BadType);
 	}
+	type -= MPT_ENUM(_TypeDynamic);
 	/* user pointers */
 	if (pointers) {
-		if ((type - MPT_ENUM(TypeUser)) < pointers) {
+		if (type < pointers) {
 			return 0;
 		}
 	}
-	/* user types */
-	if (scalars._buf) {
-		ssize_t len = scalars._buf->used / sizeof(size_t);
+	/* user scalars */
+	if (scalars) {
 		int base;
-		type -= MPT_ENUM(TypeUser);
 		
+		if ((type - MPT_ENUM(TypeScalBase)) < scalars) {
+			return MPT_ERROR(BadType);
+		}
 		if ((base = MPT_value_fromArray(type)) >= 0) {
-			return (base < len) ? 0 : MPT_ERROR(BadValue);
+			type -= MPT_ENUM(TypeArrBase);
+			return (type < scalars) ? 0 : MPT_ERROR(BadValue);
 		}
 		if ((base = MPT_value_fromVector(type)) >= 0) {
-			return (base < len) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
+			type -= MPT_ENUM(TypeVecBase);
+			return (type < scalars) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
 		}
 		/* scalar type offset */
 		base = type - MPT_ENUM(TypeScalBase);
-		if (base < len) {
-			return ((size_t *) (scalars._buf+1))[type];
+		if (base < scalars) {
+			return scalars_size[base];
 		}
 	}
 	return MPT_ERROR(BadValue);
@@ -137,27 +138,19 @@ extern ssize_t mpt_valsize(int type)
  */
 extern int mpt_valtype_add(size_t csize)
 {
-	size_t *sizes, pos;
-	
 	if (csize > SIZE_MAX/4) return MPT_ERROR(BadValue);
 	
 	if (!csize) {
-		if (pointers >= 0x20) {
+		if (pointers >= MPT_ENUM(TypeVecBase)) {
 			return MPT_ERROR(BadArgument);
 		}
-		return MPT_ENUM(TypeUser) + pointers++;
+		return MPT_ENUM(_TypeDynamic) + pointers++;
 	}
-	pos = scalars._buf ? scalars._buf->used / sizeof(*sizes) : 0;
-	if (pos >= 0x20) {
+	if (scalars >= (int) MPT_arrsize(scalars_size)) {
 		return MPT_ERROR(BadArgument);
-	};
-	if (!(sizes = mpt_array_append(&scalars, sizeof(*sizes), 0))) {
-		return MPT_ERROR(BadOperation);
 	}
-	*sizes = csize;
+	scalars_size[scalars] = csize;
 	
-	if (!pos) atexit(ptypes_finish);
-	
-	return MPT_ENUM(TypeUser) + MPT_ENUM(TypeScalBase) + pos;
+	return MPT_ENUM(_TypeDynamic) + MPT_ENUM(TypeScalBase) + scalars++;
 }
 

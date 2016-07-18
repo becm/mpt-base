@@ -3,44 +3,98 @@
  *   type ID classification
  */
 
-#include "core.h"
+#include "convert.h"
 
 __MPT_NAMESPACE_BEGIN
 
-bool value::isScalar(int type)
+// byte order adaption
+float swapOrder(float v)
 {
+	mpt_bswap_32(1, reinterpret_cast<uint32_t *>(&v));
+	return v;
+}
+double swapOrder(double v)
+{
+	mpt_bswap_64(1, reinterpret_cast<uint64_t *>(&v));
+	return v;
+}
+float80 swapOrder(float80 v)
+{
+	mpt_bswap_80(1, reinterpret_cast<float80 *>(&v));
+	return v;
+}
+
+// transport value operations
+float80 &float80::operator= (long double val)
+{
+    mpt_float80_encode(1, &val, this);
+    return *this;
+}
+long double float80::value() const
+{
+    long double v = 0;
+    mpt_float80_decode(1, this, &v);
+    return v;
+}
+
+size_t value::scalar(int type)
+{
+    /* incompatible type */
+    if (!fmt || type < 0 || type > _TypeFinal) {
+        return 0;
+    }
+    /* exact scalar type */
+    if (type && *fmt != type) {
+        return 0;
+    }
     /* regular and user scalar type */
-    return (type &= 0x7f) >= 0x60;
+    ssize_t s;
+    if ((s = mpt_valsize(type)) <= 0) {
+        return 0;
+    }
+    return s;
 }
-bool value::isPointer(int type)
+void * const *value::pointer(int type)
 {
-    /* remove extra flags */
-    type &= 0xff;
-
-    /* builtin pointer types */
-    if (type >= 0x8 && type < TypeVecBase) return true;
-
-    /* no further pointers in base types */
-    if (type < MPT_ENUM(TypeUser)) return false;
-
-    /* user registered pointer */
-    return type < (MPT_ENUM(TypeUser) + TypeVecBase);
+    /* incompatible type */
+    if (!fmt || (type && type != *fmt)) {
+        return 0;
+    }
+    if (MPT_value_isArray(type & ~0x7f)
+        || mpt_valsize(type)) {
+        return 0;
+    }
+    return reinterpret_cast<void * const *>(ptr);
 }
-bool value::isVector(int type)
+const struct iovec *value::vector(int type)
 {
-    /* remove extra flags */
-    type &= 0x7f;
-
-    /* check vector type range */
-    return (type >= TypeVecBase && type < TypeArrBase);
+    /* type out of range */
+    if (type < 0 || type > _TypeFinal) {
+        return 0;
+    }
+    if (type && type != *fmt) {
+        return 0;
+    }
+    if (!MPT_value_isVector(type & ~_TypeDynamic)
+        || mpt_valsize(type) <= 0) {
+        return 0;
+    }
+    return reinterpret_cast<const struct iovec *>(ptr);
 }
-bool value::isArray(int type)
+const array *value::array(int type)
 {
-    /* remove extra flags */
-    type &= 0x7f;
-
-    /* check array type range */
-    return (type >= TypeArrBase && type < TypeScalBase);
+    /* type out of range */
+    if (type < 0 || type > _TypeFinal) {
+        return 0;
+    }
+    if (type && type != *fmt) {
+        return 0;
+    }
+    if (!MPT_value_isArray(type & ~_TypeDynamic)
+        || mpt_valsize(type)) {
+        return 0;
+    }
+    return reinterpret_cast<const struct array *>(ptr);
 }
 
 __MPT_NAMESPACE_END

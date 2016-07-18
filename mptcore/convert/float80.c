@@ -21,6 +21,7 @@ extern void mpt_float80_decode(size_t len, const MPT_STRUCT(float80) *src, long 
 		uint8_t *ptr = (uint8_t *) dst++;
 		size_t i;
 		for (i = 0; i < sizeof(src->_d); i++) ptr[i] = src->_d[i];
+		while (i < sizeof(long double)) ptr[i++] = 0;
 		++src;
 	}
 }

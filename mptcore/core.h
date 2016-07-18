@@ -114,28 +114,32 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
 	MPT_ENUM(TypeCycle)     = 0x15,  /* NAK */
+#define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
+                               && (v) < MPT_ENUM(TypeVecBase))
 	
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
 	MPT_ENUM(TypeSolver)    = 0x19,  /* EM */
 	MPT_ENUM(TypeGroup)     = 0x1a,  /* SUB */
 	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
-	
 #define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
                              && (v) < MPT_ENUM(TypeVecBase))
 	
 	/* vector types (0x20..0x3f) */
 	MPT_ENUM(TypeVecBase)   = ' ',   /* 0x20: generic vector */
-#define MPT_value_isVector(v) (((v) & 0x7f) >= MPT_ENUM(TypeVecBase) \
-                            && ((v) & 0x7f) <  MPT_ENUM(TypeArrBase))
+#define MPT_value_isVector(v) ((v) >= MPT_ENUM(TypeVecBase) \
+                            && (v) <  MPT_ENUM(TypeArrBase))
 	
 	/* array types ('@'..'Z'..0x5f) */
 	MPT_ENUM(TypeArrBase)   = '@',   /* 0x40: generic array */
-#define MPT_value_isArray(v)  (((v) & 0x7f) >= MPT_ENUM(TypeArrBase) \
-                            && ((v) & 0x7f) < MPT_ENUM(TypeScalBase))
+#define MPT_value_isArray(v)  ((v) >= MPT_ENUM(TypeArrBase) \
+                            && (v) < MPT_ENUM(TypeScalBase))
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar */
+#define MPT_value_isScalar(v) ((v) >= MPT_ENUM(TypeScalBase) \
+                            && (v) <= MPT_ENUM(_TypeFinal))
+	
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) \
                                : 0)
@@ -148,35 +152,29 @@ enum MPT_ENUM(Types)
 #define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
                                ? 0 \
                                : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
-	
-	/* reuse value for transfer-only 80bit float */
-	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),
-	
-	/* types with printable representation ('a'..'z') */
-#if __SIZEOF_LONG__ == 8
-	MPT_ENUM(TypeLong)      = 'x',
-	MPT_ENUM(TypeULong)     = 't',
-#elif __SIZEOF_LONG__ == 4
+#if __WORDSIZE == 32
 	MPT_ENUM(TypeLong)      = 'i',
-	MPT_ENUM(TypeULong)     = 'u',
-#else
-# error: bad sizeof(long)
+#elif __WORDSIZE == 64
+	MPT_ENUM(TypeLong)      = 'x',
 #endif
-#ifdef __SIZEOF_LONG_LONG__
- #if __SIZEOF_LONG_LONG__ == 8
-	MPT_ENUM(TypeLongLong)  = 'x',
-	MPT_ENUM(TypeULongLong) = 't',
-# elif __SIZEOF_LONG_LONG__ == 4
-	MPT_ENUM(TypeLongLong)  = 'i',
-	MPT_ENUM(TypeULongLong) = 'u',
-# else
-#  error: bad sizeof(long)
-# endif
-#endif
-	MPT_ENUM(TypeUser)      = 0x80,
+	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),   /* reuse for 80bit float value */
+	
+	/* range for type allocations */
+	MPT_ENUM(_TypeDynamic)  = 0x80,
 	MPT_ENUM(_TypeFinal)    = 0xff,
 	
-	MPT_ENUM(ValueConsume)  = 0x100
+	/* additional conversion options */
+	MPT_ENUM(AssignColon)   = 0x100,
+	MPT_ENUM(AssignEqual)   = 0x200,
+	MPT_ENUM(PropertyColon) = MPT_ENUM(AssignColon) | MPT_ENUM(TypeProperty),
+	MPT_ENUM(PropertyEqual) = MPT_ENUM(AssignEqual) | MPT_ENUM(TypeProperty),
+	MPT_ENUM(PropertyAssign) = MPT_ENUM(PropertyColon) | MPT_ENUM(PropertyEqual),
+	
+	/* input control options */
+	MPT_ENUM(ValueConsume)  = 0x1000,
+	
+	/* foreign type offset */
+	MPT_ENUM(TypeUser)      = 0x10000
 };
 
 enum MPT_ENUM(SocketFlags) {
@@ -269,6 +267,52 @@ extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 
+#ifdef __cplusplus
+/*! reduced slice with type but no data reference */
+template <typename T>
+class Slice
+{
+public:
+    typedef T* iterator;
+    
+    inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
+    { }
+
+    inline iterator begin() const
+    { return _base; }
+    
+    inline iterator end() const
+    { return _base+length(); }
+    
+    inline iterator nth(int i) const
+    {
+        if (i > (int) length()) return 0;
+        if (i < 0 && (i += length()) < 0) return 0;
+        return base() + i;
+    }
+    inline size_t length() const
+    { return _len / sizeof(T); }
+    inline T *base() const
+    { return _base; };
+    bool skip(size_t l)
+    {
+        if (l > length()) return false;
+        if (!(_len -= l * sizeof(T))) _base = 0;
+        else _base += l;
+        return true;
+    }
+    bool trim(size_t l)
+    {
+        if (l > length()) return false;
+        if (!(_len -= (l * sizeof(T)))) _base = 0;
+        return true;
+    }
+protected:
+    T *_base;
+    size_t _len;
+};
+#endif
+
 /*! generic struct reference */
 MPT_STRUCT(value)
 {
@@ -282,10 +326,10 @@ MPT_STRUCT(value)
 	inline void set(const struct value &v)
 	{ fmt = v.fmt; ptr = v.ptr; }
 	
-	bool isPointer(int = 0);
-	bool isScalar(int = 0);
-	bool isVector(int = 0);
-	bool isArray(int = 0);
+	void * const *pointer(int = 0);
+	size_t scalar(int = 0);
+	const struct iovec *vector(int = 0);
+	const struct array *array(int = 0);
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
@@ -304,10 +348,6 @@ MPT_STRUCT(property)
 	{ }
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
-	static int convertAssign(int v)
-	{ return (v * 0x10000) | Type; }
-#else
-# define MPT_property_assign(v) (((v) * 0x10000) | MPT_ENUM(TypeProperty))
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */
@@ -372,17 +412,16 @@ template<> inline __MPT_CONST_EXPR char typeIdentifier<uint16_t>() { return 'q';
 template<> inline __MPT_CONST_EXPR char typeIdentifier<uint32_t>() { return 'u'; }
 template<> inline __MPT_CONST_EXPR char typeIdentifier<uint64_t>() { return 't'; }
 
-#if __SIZEOF_LONG__ != 8
-/* TODO: better detection when needed/conflicting */
-template<> inline __MPT_CONST_EXPR char typeIdentifier<long>() { return TypeLong; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<unsigned long>() { return TypeULong; }
+#if __WORDSIZE == 32
+template<> inline __MPT_CONST_EXPR char typeIdentifier<long>() { return 'i'; }
+template<> inline __MPT_CONST_EXPR char typeIdentifier<unsigned long>() { return 'u'; }
 #endif
 
 
 template<typename T>
 inline __MPT_CONST_EXPR char vectorIdentifier() {
-    return (typeIdentifier<T>() > _TypeFinal ||
-            (typeIdentifier<T>() & ~TypeUser) < TypeScalBase)
+    return (typeIdentifier<T>() > _TypeDynamic ||
+            (typeIdentifier<T>() & ~_TypeDynamic) < TypeScalBase)
               ? 0 : typeIdentifier<T>() - TypeScalBase + TypeVecBase;
 }
 
@@ -521,50 +560,6 @@ int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
 int println(const char *, ... );
-
-/*! reduced slice with type but no data reference */
-template <typename T>
-class Slice
-{
-public:
-    typedef T* iterator;
-    
-    inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
-    { }
-
-    inline iterator begin() const
-    { return _base; }
-    
-    inline iterator end() const
-    { return _base+length(); }
-    
-    inline iterator nth(int i) const
-    {
-        if (i > (int) length()) return 0;
-        if (i < 0 && (i += length()) < 0) return 0;
-        return base() + i;
-    }
-    inline size_t length() const
-    { return _len / sizeof(T); }
-    inline T *base() const
-    { return _base; };
-    bool skip(size_t l)
-    {
-        if (l > length()) return false;
-        if (!(_len -= l * sizeof(T))) _base = 0;
-        else _base += l;
-        return true;
-    }
-    bool trim(size_t l)
-    {
-        if (l > length()) return false;
-        if (!(_len -= (l * sizeof(T)))) _base = 0;
-        return true;
-    }
-protected:
-    T *_base;
-    size_t _len;
-};
 
 template <typename T>
 inline __MPT_CONST_EXPR char typeIdentifier(Slice<T>)
