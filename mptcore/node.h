@@ -94,7 +94,7 @@ extern int mpt_node_insert(MPT_STRUCT(node) *, int , MPT_STRUCT(node) *);
 extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *);
 
 /* move non-existing nodes */
-size_t mpt_node_move(MPT_STRUCT(node) *, MPT_STRUCT(node) *);
+size_t mpt_node_move(MPT_STRUCT(node) **, MPT_STRUCT(node) *);
 
 /* clone list/children */
 extern MPT_STRUCT(node) *mpt_list_clone(const MPT_STRUCT(node) *);

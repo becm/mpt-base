@@ -72,9 +72,15 @@ extern int mpt_parse_node(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse
 		}
 		/* move non-present */
 		else if (conf.children) {
-			mpt_node_move(root->children, conf.children);
+			MPT_STRUCT(node) *curr;
+			mpt_node_move(&root->children, conf.children);
 			mpt_node_clear(root);
-			root->children = conf.children;
+			root->children = curr = conf.children;
+			/* set parent for moved nodes */
+			while (curr) {
+				curr->parent = root;
+				curr = curr->next;
+			}
 		}
 	}
 	return err;

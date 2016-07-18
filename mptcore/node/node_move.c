@@ -16,11 +16,14 @@
  * 
  * \return number of moved elemets
  */
-size_t mpt_node_move(MPT_STRUCT(node) *src, MPT_STRUCT(node) *dst)
+size_t mpt_node_move(MPT_STRUCT(node) **from, MPT_STRUCT(node) *dst)
 {
-	MPT_STRUCT(node) *last = dst;
+	MPT_STRUCT(node) *last = dst, *src = *from;
 	size_t move = 0;
 	
+	if (!dst) {
+		return 0;
+	}
 	/* move unchanged old configuration */
 	while (src) {
 		MPT_STRUCT(node) *curr;
@@ -38,13 +41,14 @@ size_t mpt_node_move(MPT_STRUCT(node) *src, MPT_STRUCT(node) *dst)
 			mpt_gnode_add(last, 0, curr);
 			last = curr;
 			++move;
+			*from = src;
 			continue;
 		}
 		/* move node children */
 		if (src->children) {
 			/* merge children */
 			if (curr->children) {
-				move += mpt_node_move(src->children, curr->children);
+				move += mpt_node_move(&src->children, curr->children);
 			}
 			/* reparent children to target */
 			else {
