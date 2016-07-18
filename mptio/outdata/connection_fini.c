@@ -26,6 +26,7 @@ extern void mpt_connection_fini(MPT_STRUCT(connection) *con)
 	mpt_outdata_fini(&con->out);
 	
 	mpt_array_clone(&con->hist.info._fmt, 0);
+	mpt_array_clone(&con->hist.info._dat, 0);
 	
 	if ((fd = con->hist.file)
 	    && (fd != stdin)
