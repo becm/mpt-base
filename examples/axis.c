@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	mpt_generic_print(getter, &obj, printm, stdout, 0);
+	mpt_generic_print(getter, &obj, printm, stdout, -1);
 	
 	return 0;
 }

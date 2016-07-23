@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
-#include <errno.h>
 
 #include "convert.h"
 
@@ -35,7 +34,7 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		return pos + 1 - src;
 	}
 	if (fmt == 'l') {
-		fmt = MPT_ENUM(TypeLong);
+		fmt = mpt_typeidentifier_long();
 	}
 	switch (fmt) {
 		case 'b': return mpt_cint8 (dest, src, 0, 0);
@@ -55,6 +54,6 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		case 'd': return mpt_cdouble(dest, src, 0);
 		case 'e': return mpt_cldouble(dest, src, 0);
 		
-		default: errno = EINVAL; return MPT_ERROR(BadType);
+		default: return MPT_ERROR(BadType);
 	}
 }

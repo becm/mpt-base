@@ -25,6 +25,8 @@ src = files(
   'hash.c',
   'hash_djb2.c',
   'hash_smdb.c',
+  'identifier_long.c',
+  'number_print.c',
   'offset.c',
   'position.c',
   'tostring.c',

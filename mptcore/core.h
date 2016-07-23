@@ -152,11 +152,6 @@ enum MPT_ENUM(Types)
 #define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
                                ? 0 \
                                : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
-#if __WORDSIZE == 32
-	MPT_ENUM(TypeLong)      = 'i',
-#elif __WORDSIZE == 64
-	MPT_ENUM(TypeLong)      = 'x',
-#endif
 	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),   /* reuse for 80bit float value */
 	
 	/* range for type allocations */
@@ -412,17 +407,9 @@ template<> inline __MPT_CONST_EXPR char typeIdentifier<uint16_t>() { return 'q';
 template<> inline __MPT_CONST_EXPR char typeIdentifier<uint32_t>() { return 'u'; }
 template<> inline __MPT_CONST_EXPR char typeIdentifier<uint64_t>() { return 't'; }
 
-#if __WORDSIZE == 32
-template<> inline __MPT_CONST_EXPR char typeIdentifier<long>() { return 'i'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<unsigned long>() { return 'u'; }
-#endif
-
-
 template<typename T>
 inline __MPT_CONST_EXPR char vectorIdentifier() {
-    return (typeIdentifier<T>() > _TypeDynamic ||
-            (typeIdentifier<T>() & ~_TypeDynamic) < TypeScalBase)
-              ? 0 : typeIdentifier<T>() - TypeScalBase + TypeVecBase;
+    return MPT_value_toVector(typeIdentifier<T>());
 }
 
 /*! container for reference type pointer */

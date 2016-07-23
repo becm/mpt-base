@@ -154,7 +154,7 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec
 extern int mpt_generic_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 /* convert structured data to string */
-extern int mpt_data_print(char *, size_t , int , const void *);
+extern int mpt_number_print(char *, size_t , int , const void *);
 /* output data */
 extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
 
@@ -163,6 +163,9 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
 extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
 extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
 
+/* type identifier for '(unsigned) long' data type */
+extern char mpt_typeidentifier_long(void);
+extern char mpt_typeidentifier_ulong(void);
 
 __MPT_EXTDECL_END
 

@@ -2,6 +2,9 @@
  * loop trough object/metatype properties
  */
 
+#include <string.h>
+#include <sys/uio.h>
+
 #include "convert.h"
 
 struct outData
@@ -10,12 +13,29 @@ struct outData
 	void *p;
 };
 
+static ssize_t saveString(void *ctx, const char *str, size_t len)
+{
+	struct iovec *vec = ctx;
+	char *to;
+	
+	if (len >= vec->iov_len) {
+		return MPT_ERROR(MissingData);
+	}
+	to = memcpy(vec->iov_base, str, len);
+	
+	vec->iov_base = to + len;
+	vec->iov_len -= len;
+	
+	return len;
+}
+
 static int mprint(void *data, const MPT_STRUCT(property) *prop)
 {
 	char buf[1024];
+	struct iovec vec;
 	struct outData *par = data;
 	MPT_STRUCT(property) pr = *prop;
-	int pos = 0, adv = 0;
+	int len;
 	
 	*buf = 0;
 	
@@ -26,20 +46,12 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
 	if (!pr.val.ptr) {
 		return *pr.val.fmt ? -1 : 0;
 	}
-	while (*pr.val.fmt && (adv = mpt_data_print(buf+pos, sizeof(buf)-pos, *pr.val.fmt, pr.val.ptr)) >= 0) {
-		int len;
-		if ((len = mpt_valsize(*pr.val.fmt)) < 0) {
-			return par->h(par->p, prop);
-		}
-		pos += adv;
-		pr.val.ptr = ((uint8_t *) pr.val.ptr) + len;
-		if (*(++pr.val.fmt) && pos < (int) (sizeof(buf)-2)) {
-			buf[pos++] = ' '; buf[pos] = 0;
-		}
-	}
-	if (adv < 0 || (pos + adv) >= (int) sizeof(buf)) {
+	vec.iov_base = buf;
+	vec.iov_len  = sizeof(buf);
+	if ((len = mpt_tostring(&pr.val, saveString, &vec))) {
 		return par->h(par->p, prop);
 	}
+	buf[sizeof(buf) - vec.iov_len] = 0;
 	pr.val.ptr = buf;
 	pr.val.fmt = 0;
 	

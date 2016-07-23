@@ -63,10 +63,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 		return dlen ? dlen : (int) sizeof(void *);
 	}
 	if (ftype == 'l') {
-		ftype = MPT_ENUM(TypeLong);
+		ftype = mpt_typeidentifier_long();
 	}
 	if (dtype == 'l') {
-		dtype = MPT_ENUM(TypeLong);
+		dtype = mpt_typeidentifier_long();
 	}
 	/* number processing */
 	switch (ftype) {

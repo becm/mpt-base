@@ -42,7 +42,8 @@ static const struct {
 	
 	{ 'x', sizeof(int64_t) },
 	{ 't', sizeof(uint64_t) },
-	{ 'l', sizeof(uint64_t) },
+	
+	{ 'l', sizeof(long) },
 	
 	{ 'f', sizeof(float) },
 	{ 'd', sizeof(double) },

@@ -28,7 +28,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	
 	/* simple pointer */
 	if ((type & 0xff) == 's') {
-		if (!(base = *from)) {
+		if (!(base = *(const char **) *from)) {
 			base = def;
 		}
 		if (len) {
@@ -40,7 +40,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return base;
 	}
 	/* data is text array */
-	if ((type & 0xff) == 'C') {
+	if ((type & 0xff) == MPT_value_toArray('c')) {
 		const MPT_STRUCT(array) *a = *from;
 		size_t size;
 		
@@ -68,7 +68,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return base;
 	}
 	/* data is text vector */
-	if ((type & 0xff) == ('c' - 0x40)) {
+	if ((type & 0xff) == MPT_value_toVector('c')) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;
