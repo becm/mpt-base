@@ -9,18 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/uio.h>
-#include <arpa/inet.h>
-
-#include "array.h"
-#include "queue.h"
-#include "event.h"
-
-#include "message.h"
-
-#include "stream.h"
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "output.h"
+
+#include "message.h"
+#include "stream.h"
 
 static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, ...)
 {
