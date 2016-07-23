@@ -141,6 +141,55 @@ int array::set(metatype &src)
 
     return len;
 }
+int array::set(value val)
+{
+    const char *fmt, *base;
+    size_t len;
+    if (!(fmt = val.fmt)) {
+        if (!(base = (const char *) val.ptr)) {
+            len = 0;
+        } else {
+            len = strlen(base);
+        }
+        if (!mpt_array_append(this, len, base)) {
+            return BadOperation;
+        }
+        return len;
+    }
+    while (*val.fmt) {
+        /* insert space element */
+        if (fmt != val.fmt) {
+            if (!mpt_array_append(this, 1, " ")) {
+                return val.fmt - fmt;
+            }
+        }
+        /* copy string value */
+        if ((base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
+            if (!mpt_array_append(this, len, base)) {
+                len = val.fmt - fmt;
+                return len ? (int) len : BadOperation;
+            }
+            ++val.fmt;
+            continue;
+        }
+        char buf[256];
+        int ret;
+        /* print number data */
+        if ((ret = mpt_number_print(buf, sizeof(buf), *val.fmt, val.ptr)) >= 0) {
+            if (!mpt_array_append(this, ret, buf)) {
+                len = val.fmt - fmt;
+                return len ? (int) len : BadOperation;
+            }
+            if ((ret = mpt_valsize(*val.fmt++)) < 0) {
+                return val.fmt - fmt;
+            }
+            val.ptr = ((uint8_t *) val.ptr) + ret;
+            continue;
+        }
+    }
+    len = val.fmt - fmt;
+    return len ? (int) len : BadValue;
+}
 void *array::append(size_t len, const void *data)
 {
     void *base = mpt_array_append(this, len);
@@ -343,58 +392,15 @@ void Buffer::unref()
 }
 int Buffer::assign(const value *val)
 {
+    if (_enc) {
+        return BadOperation;
+    }
     if (!val) {
-        mpt_array_clone(&_d, 0);
+        _state.scratch = 0;
+        _state.done = _d.length();
         return 0;
     }
-    const char *base;
-    size_t len;
-    if (!val->fmt) {
-        if (!(base = (const char *) val->ptr)) {
-            len = 0;
-        } else {
-            len = strlen(base);
-        }
-        if (!mpt_array_append(&_d, len, base)) {
-            return BadOperation;
-        }
-        return len;
-    }
-    value tmp = *val;
-
-    while (*tmp.fmt) {
-        /* insert space element */
-        if (tmp.fmt != val->fmt) {
-            if (!mpt_array_append(&_d, 1, " ")) {
-                return tmp.fmt - val->fmt;
-            }
-        }
-        /* copy string value */
-        if ((base = mpt_data_tostring(&tmp.ptr, *tmp.fmt, &len))) {
-            if (!mpt_array_append(&_d, len, base)) {
-                len = tmp.fmt - val->fmt;
-                return len ? (int) len : BadOperation;
-            }
-            ++tmp.fmt;
-            continue;
-        }
-        char buf[256];
-        int ret;
-        /* print binary data */
-        if ((ret = mpt_data_print(buf, sizeof(buf), *tmp.fmt, tmp.ptr)) >= 0) {
-            if (!mpt_array_append(&_d, ret, buf)) {
-                len = tmp.fmt - val->fmt;
-                return len ? (int) len : BadOperation;
-            }
-            if ((ret = mpt_valsize(*tmp.fmt++)) < 0) {
-                return tmp.fmt - val->fmt;
-            }
-            tmp.ptr = ((uint8_t *) tmp.ptr) + ret;
-            continue;
-        }
-    }
-    len = tmp.fmt - val->fmt;
-    return len ? (int) len : BadValue;
+    return _d.set(*val);
 }
 int Buffer::conv(int type, void *ptr)
 {

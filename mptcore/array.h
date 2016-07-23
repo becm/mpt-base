@@ -62,6 +62,7 @@ MPT_STRUCT(array)
 	void *prepend(size_t , size_t = 0);
 	void *set(size_t , const void * = 0);
 	
+	int set(value);
 	int set(metatype &);
 	int printf(const char *fmt, ... );
 	
