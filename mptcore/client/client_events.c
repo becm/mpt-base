@@ -122,9 +122,9 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		snprintf(buf, sizeof(buf), "%s (%"PRIxPTR")", MPT_tr("invalid default command id"), id);
 		return MPT_event_fail(ev, MPT_ERROR(BadValue), buf);
 	}
-	mpt_event_reply(ev, 1, "%s: %s (%"PRIxPTR")", MPT_tr("default event registered"), cmd, id);
+	mpt_event_reply(ev, 2, "%s: %s (%"PRIxPTR")", MPT_tr("register default event"), cmd, id);
 	
-	ev->id = d->_def = id;
+	ev->id = id;
 	
 	return MPT_ENUM(EventDefault);
 }
@@ -144,9 +144,14 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
 			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		}
 	}
-	d->_def = 0;
+	if (d->_def) {
+		mpt_event_reply(ev, 2, "%s (%"PRIxPTR")", MPT_tr("clear default event"), d->_def);
+	} else {
+		mpt_event_reply(ev, 0, "%s", MPT_tr("clear default event"));
+	}
+	ev->id = 0;
 	
-	return MPT_event_stop(ev, MPT_tr("suspend client run"));
+	return MPT_ENUM(EventDefault);
 }
 
 /*!

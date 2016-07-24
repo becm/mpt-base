@@ -142,17 +142,20 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state &= ~MPT_ENUM(EventDefault);
 		if (out) {
 			if (ev->id) {
-				if (disp->_def) {
+				if (disp->_def == ev->id) {
+					mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
+					               MPT_tr("keep default event"), disp->_def);
+				} else if (disp->_def) {
 					mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR" > %"PRIxPTR")",
-					               MPT_tr("replace default event"), disp->_def, ev->id);
+					               MPT_tr("default event replaced"), disp->_def, ev->id);
 				} else {
 					mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
-					               MPT_tr("register default event"), ev->id);
+					               MPT_tr("default event added"), ev->id);
 				}
 			}
 			else if (disp->_def) {
 				mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
-				               MPT_tr("clear default event"), disp->_def);
+				               MPT_tr("default event removed"), disp->_def);
 			}
 			else if (!(state & MPT_ENUM(EventFail))) {
 				mpt_output_log(out, __func__, MPT_LOG(Debug2), "%s", MPT_tr("no default event to clear"));

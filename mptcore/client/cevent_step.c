@@ -69,10 +69,6 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		mpt_event_reply(ev, state, MPT_tr("step operation successfull"));
 		return MPT_ENUM(EventNone);
 	}
-	mpt_event_reply(ev, state, MPT_tr("client run finished"));
-	
-	ev->id = 0;
-	
-	return MPT_ENUM(EventDefault);
+	return MPT_event_stop(ev, MPT_tr("client run finished"));
 }
 

@@ -136,7 +136,7 @@ MPT_STRUCT(dispatch)
 	(mpt_event_reply(ev, 0, "%s", txt), \
 	 MPT_ENUM(EventNone))
 #define MPT_event_stop(ev,txt) \
-	(mpt_event_reply(ev, 1, "%s", txt), \
+	(mpt_event_reply(ev, 2, "%s", txt), \
 	 (ev)->id = 0, MPT_ENUM(EventDefault))
 #define MPT_event_cont(ev,txt) \
 	(mpt_event_reply(ev, 2, "%s", txt), \
@@ -145,7 +145,7 @@ MPT_STRUCT(dispatch)
 	(mpt_event_reply(ev, 3, "%s", txt), \
 	 MPT_ENUM(EventTerminate))
 #define MPT_event_fail(ev,code,txt) \
-	(mpt_event_reply(ev, (code) >= 0 ? MPT_ERROR(BadOperation) : (code), "%s", txt), \
+	(mpt_event_reply(ev, (code), "%s", txt), \
 	 (ev)->id = 0, ((MPT_ENUM(EventFail) | MPT_ENUM(EventDefault))))
 
 
