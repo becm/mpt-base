@@ -42,7 +42,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		size_t len;
 		int adv, curr;
 		
-		if ((txt = mpt_data_tostring(&data, *fmt, &len))) {
+		if ((txt = mpt_data_tostring(&data, MPT_ENUM(ValueConsume) | *fmt, &len))) {
 			adv = len;
 		}
 		else if (*fmt == MPT_ENUM(TypeColor)) {

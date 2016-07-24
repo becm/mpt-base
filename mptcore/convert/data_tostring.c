@@ -4,8 +4,6 @@
 
 #include <sys/uio.h>
 
-#include "array.h"
-
 #include "convert.h"
 
 /*!
@@ -28,14 +26,15 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	
 	/* simple pointer */
 	if ((type & 0xff) == 's') {
-		if (!(base = *(const char **) *from)) {
+		const char * const *txt = *from;
+		if (!(base = *txt)) {
 			base = def;
 		}
 		if (len) {
 			*len = strlen(base);
 		}
 		if (type & MPT_ENUM(ValueConsume)) {
-			*from = ((uint8_t *) from) + sizeof(char *);
+			*from = txt + 1;
 		}
 		return base;
 	}
@@ -63,7 +62,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			return 0;
 		}
 		if (type & MPT_ENUM(ValueConsume)) {
-			*from = ((uint8_t *) from) + sizeof(*a);
+			*from = a + 1;
 		}
 		return base;
 	}
@@ -86,7 +85,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			return 0;
 		}
 		if (type & MPT_ENUM(ValueConsume)) {
-			*from = ((uint8_t *) from) + sizeof(*vec);
+			*from = vec + 1;
 		}
 		return base;
 	}
