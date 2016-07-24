@@ -34,7 +34,7 @@ extern int mpt_convert_number(const char *src, int fmt, void *dest)
 		return pos + 1 - src;
 	}
 	if (fmt == 'l') {
-		fmt = mpt_typeidentifier_long();
+		fmt = mpt_type_int(sizeof(long));
 	}
 	switch (fmt) {
 		case 'b': return mpt_cint8 (dest, src, 0, 0);

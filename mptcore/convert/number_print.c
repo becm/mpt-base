@@ -27,7 +27,7 @@ extern int mpt_number_print(char *dest, size_t left, int type, const void *arg)
 	int len;
 	
 	if (type == 'l') {
-		type = mpt_typeidentifier_long();
+		type = mpt_type_int(sizeof(long));
 	}
 	switch (type) {
 	/* single character */

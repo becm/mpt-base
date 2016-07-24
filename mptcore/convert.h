@@ -164,8 +164,8 @@ extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
 extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
 
 /* type identifier for '(unsigned) long' data type */
-extern char mpt_typeidentifier_long(void);
-extern char mpt_typeidentifier_ulong(void);
+extern char mpt_type_int(size_t);
+extern char mpt_type_uint(size_t);
 
 __MPT_EXTDECL_END
 

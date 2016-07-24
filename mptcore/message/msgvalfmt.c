@@ -4,6 +4,8 @@
 
 #include "message.h"
 
+#include "convert.h"
+
 /*!
  * \ingroup mptMessage
  * \brief size of format elements
@@ -54,24 +56,11 @@ extern int mpt_msgvalfmt_type(uint8_t fmt)
 		  default: return MPT_ERROR(BadType);
 		}
 	}
-	/* unsigned integers */
+	/* integer types */
 	if (fmt & MPT_ENUM(ValuesUnsigned)) {
-		switch (size) {
-		  case sizeof(int8_t):  return 'y';
-		  case sizeof(int16_t): return 'q';
-		  case sizeof(int32_t): return 'u';
-		  case sizeof(int64_t): return 't';
-		  default: return MPT_ERROR(BadType);
-		}
+		fmt = mpt_type_uint(size);
+	} else {
+		fmt = mpt_type_int(size);
 	}
-	/* signed integers */
-	else {
-		switch (size) {
-		  case sizeof(int8_t):  return 'b';
-		  case sizeof(int16_t): return 'n';
-		  case sizeof(int32_t): return 'i';
-		  case sizeof(int64_t): return 'x';
-		  default: return MPT_ERROR(BadType);
-		}
-	}
+	return fmt ? fmt : MPT_ERROR(BadType);
 }
