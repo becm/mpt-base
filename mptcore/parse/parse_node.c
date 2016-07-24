@@ -40,6 +40,7 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
  * Parse config file with specific format description.
  * 
  * \param next  function to get next element
+ * \param npar  context for 'next' function
  * \param parse parse context
  * \param node  configuration target
  * 

@@ -23,6 +23,7 @@
  */
 extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, MPT_INTERFACE(logger) *log)
 {
+	MPT_STRUCT(node) *old;
 	const char *fname, *format, *limit;
 	FILE *fd;
 	int res, len;
@@ -87,9 +88,22 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("failed to open file"), fname);
 		return MPT_ERROR(BadValue);
 	}
+	old = conf->children;
+	conf->children = 0;
 	res = mpt_node_read(conf, fd, format, limit, log);
 	if (fname) {
 		fclose(fd);
 	}
-	return res < 0 ? res : len;
+	/* restore old config state */
+	if (res < 0) {
+		conf->children = old;
+		return res;
+	}
+	/* delete old config nodes */
+	else {
+		MPT_STRUCT(node) root = MPT_NODE_INIT;
+		root.children = old;
+		mpt_node_clear(&root);
+		return len;
+	}
 }

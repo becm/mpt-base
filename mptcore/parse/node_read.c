@@ -16,10 +16,11 @@
  * 
  * Read config file with specific format description.
  * 
- * \param node contifguration node target
- * \param file file to parse
- * \param fmt  format of input file
- * \param out  error log descriptor
+ * \param node  contifguration node target
+ * \param file  file to parse
+ * \param fmt   format of input file
+ * \param limit element name restrictions
+ * \param out   error log descriptor
  * 
  * \return parse result
  */
