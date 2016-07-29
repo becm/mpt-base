@@ -1,4 +1,4 @@
-# mpt.conf.mk: global settings
+# mpt.config.mk: global settings
 ARCH_OS != uname -s | tr A-Z a-z
 ARCH_SYS != uname -m
 ARCH_LIBC ?= gnu
@@ -10,17 +10,3 @@ DIR_INC ?= ${DIR_TOP}/include
 DIR_LIB ?= ${DIR_TOP}/lib/${ARCH}
 DIR_BIN ?= ${DIR_TOP}/bin
 DIR_SHARE ?= ${DIR_TOP}/share
-# set template base directory
-DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
-#
-# version/time information
-define vcs_tag
-  $(if $(shell git status --porcelain),,$(shell printf '%s:%s' 'git' `git show -s --pretty=format:%h`))
-endef
-VCS_TAG ?= $(strip $(call vcs_tag))
-ISODATE ?= $(shell date +%F)
-#
-# install header files
-define install_files
-  $(if $(strip ${2}),@install -d '${1}' && install -C -m 644 ${2} '${1}' && printf 'install(%s): %s\n' '${1}' '${2}')
-endef

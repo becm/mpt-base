@@ -38,11 +38,11 @@ clean : sub_clean
 	${RM} ${CLEAN_FILES}
 distclean : sub_distclean
 	${RM} ${CLEAR_FILES} ${CLEAN_FILES}
-
+#
 # subdirectory template
 sub_% :
 	@for d in ${DIRS}; do if ! ${MAKE} -C "$${d}" $(@:sub_%=%); then exit 1; fi; done;
-
+#
 # static template
 static : ${STATIC} sub_static
 %_static : %.o

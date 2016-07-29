@@ -18,9 +18,14 @@ axis iter gen : LDLIBS=-lmptplot -lmptcore
 %_static : LDLIBS=-lmpt++ -lmpt
 readline_static : LDLIBS=-lmpt -ldl
 graphic : LDLIBS=-lmpt++
-
-client : CPPFLAGS+=-std=c++11
-
+#
+# object parameters
+client.o : CPPFLAGS+=-std=c++11
+#
+# use C++ linker
+client client_static : CC=${CXX}
+graphic graphic_static : CC=${CXX}
+#
 # special test arguments
 test_axis : ARGS=title='my axis' intervals=3 tpos=Up
 test_iter : ARGS='fact 2e-3 3 2 1' 'val= 1 2 3'
