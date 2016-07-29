@@ -16,6 +16,10 @@ OBJS = $(SRCS:%.c=%_lua${LUA}.o)
 # program name
 PROG = interp${LUA}
 #
+# generated files to remove
+CLEAR_FILES = ${PROG} ${PROG}_static
+CLEAN_FILES = ${CLEAR_FILES} ${OBJS}
+#
 # link flags and libraries
 LDFLAGS = -L'${MPT_PREFIX_LIB}' -Wl,-R,'${MPT_PREFIX_LIB}'
 LDLIBS = -llua${LUA} -llua${LUA}-mpt
@@ -28,7 +32,7 @@ ${PROG} : ${OBJS}
 	${CC} ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
 ${PROG}_static : ${SRCS}
-	${CC} -static -D_STATIC ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} ${SRCS} -llua${LUA} -ldl -lm
+	${CC} -static -D_STATIC ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} ${SRCS} ${LDLIBS} -lmpt -ldl -lm
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
@@ -43,7 +47,7 @@ test : ${PROG}
 static : ${PROG}_static
 
 clear :
-	${RM} ${PROG} ${PROG}_static
+	${RM} ${CLEAR_FILES}
 
-distclean clean : clear
-	${RM} ${OBJS}
+distclean clean :
+	${RM} ${CLEAN_FILES}

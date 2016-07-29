@@ -24,17 +24,17 @@ int main(int argc, char *argv[])
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	
-#ifndef _STATIC
-# if LUA_VERSION_NUM < 502
+#if LUA_VERSION_NUM < 502
+# ifndef _STATIC
 	if ((ret = luaL_dostring(L, "mpt = require('mpt')"))) {
 		fputs("mpt load error\n", stderr);
 	}
-# else
-	luaL_requiref(L, "mpt", luaopen_mpt, 1);
 # endif
+#else
+	luaL_requiref(L, "mpt", luaopen_mpt, 1);
 #endif
 	/*
-	if ((s = luaL_dostring(L, "print('# ', mpt)"))) {
+	if ((ret = luaL_dostring(L, "print('# ', mpt)"))) {
 		fputs("print error\n", stderr);
 	}
 	*/
@@ -50,9 +50,12 @@ int main(int argc, char *argv[])
 	}
 	if (!str && (str = getenv("MPT_PREFIX"))) {
 		char buf[256];
-		
+#if LUA_VERSION_NUM < 502
+		const char *version = LUA_VERSION;
+		snprintf(buf, sizeof(buf), "%s/%s/%s/%s", str, "share/lua", version+4, "mathbox.lua");
+#else
 		snprintf(buf, sizeof(buf), "%s/%s", str, "share/lua/"LUA_VERSION_MAJOR"."LUA_VERSION_MINOR"/mathbox.lua");
-		
+#endif	
 		if (luaL_dofile(L, buf)) {
 			if ((str = lua_tostring(L, -1))) {
 				fputs(str, stderr);

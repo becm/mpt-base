@@ -1,16 +1,10 @@
 
--- load mpt package
-
-local function loadmpt()
-  mpt = require('mpt')
-end
-
-if not pcall(loadmpt) then
-  print('unable to load mpt')
-end
-
 -- test mpt loading
 function testmpt()
+  if not mpt then
+    mpt = require('mpt')
+    print("loaded mpt module")
+  end
   local n = os.tmpname()
   local s = mpt.open(n, 'w')
   local t = n..n
