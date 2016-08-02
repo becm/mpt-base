@@ -2,6 +2,7 @@
 # build definitions for mpt
 
 project('mpt', 'c', default_options : [
+  'b_lundef=false', # needed to create lua module
   'cpp_std=c++11',
   'c_std=c11'
 ])
@@ -34,12 +35,16 @@ if not meson.is_subproject()
   if is_variable('git') and git.returncode() == 0 and git.stdout().strip() == ''
     git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h')
     if git.returncode() == 0
-      add_global_arguments('-D__VCS_TAG__="git:' + git.stdout().strip() + '"', language : 'c')
+      git = '__VCS_TAG__="git:' + git.stdout().strip() + '"'
+      add_global_arguments('-D' + git, language : 'c')
+      add_global_arguments('-D' + git, language : 'cpp')
     endif
   else
     iso = run_command('date', '+%F')
     if iso.returncode() == 0
-      add_global_arguments('-D__ISO_DATE__="' + iso.stdout().strip() + '"', language : 'c')
+      iso = '__ISO_DATE__="' + iso.stdout().strip() + '"'
+      add_global_arguments('-D' + iso, language : 'c')
+      add_global_arguments('-D' + iso, language : 'cpp')
     endif
   endif
 endif

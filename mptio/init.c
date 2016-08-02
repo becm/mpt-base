@@ -50,15 +50,31 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 			cname = argv[optind];
 			continue;
 		    case 'f':
-			if (cname) return 0; cname = optarg; continue;
+			if (cname) {
+				errno = EINVAL;
+				return 0;
+			}
+			cname = optarg;
+			continue;
 		    case 'c':
-			if (ctl)   return 0; ctl = optarg;  continue;
+			if (ctl) {
+				errno = EINVAL;
+				return 0;
+			}
+			ctl = optarg;
+			continue;
 		    case 's':
-			if (src)   return 0; src = optarg;   continue;
+			if (src) {
+				errno = EINVAL;
+				return 0;
+			}
+			src = optarg;
+			continue;
 		    case 'v':
 			++lv; continue;
 		    default:
-			errno = EINVAL; return 0;
+			errno = EINVAL;
+			return 0;
 		}
 	}
 	if (lv) {
