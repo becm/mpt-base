@@ -3,11 +3,16 @@
  * byte order swap operations
  */
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/endian.h>
 # define bswap_64(x) bswap64(x)
 # define bswap_32(x) bswap32(x)
 # define bswap_16(x) bswap16(x)
+#elif defined(__OpenBSD__) || defined(__Bitrig__)
+# include <sys/types.h>
+# define bswap_64(x) swap64(x)
+# define bswap_32(x) swap32(x)
+# define bswap_16(x) swap16(x)
 #else
 # include <byteswap.h>
 #endif
@@ -81,6 +86,6 @@ extern void mpt_bswap_16(size_t len, uint16_t *val)
 	size_t i;
 	
 	for (i = 0; i < len; ++i) {
-		val[i] = bswap_32(val[i]);
+		val[i] = bswap_16(val[i]);
 	}
 }
