@@ -181,9 +181,9 @@ public:
     enum { Type = IODevice::Type };
     
     /* IODevice interface */
-    void unref();
-    ssize_t write(size_t , const void *, size_t);
-    ssize_t read(size_t , void *, size_t);
+    void unref() __MPT_OVERRIDE;
+    ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
+    ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
     
     Slice<uint8_t> peek(size_t = 0);
     

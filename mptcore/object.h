@@ -251,7 +251,7 @@ public:
 
     /* object store identifier */
     inline const char *name() const
-    { return Item::name(); }
+    { return Item<object>::name(); }
     virtual bool setName(const char *, int = -1);
 
     /* get property by name/position */
@@ -286,8 +286,8 @@ class Group : public object
 public:
     enum { Type = TypeGroup };
     
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
     virtual const Item<metatype> *item(size_t pos) const;
     virtual Item<metatype> *append(metatype *);

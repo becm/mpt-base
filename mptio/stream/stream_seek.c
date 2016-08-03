@@ -2,10 +2,11 @@
  * seek operations on MPT stream.
  */
 
-#if defined(__FreeBSD__)
-# define lseek64(f,p,m)  lseek(f,p,m)
-#elif !defined(_LARGEFILE64_SOURCE)
-# define _LARGEFILE64_SOURCE
+#if defined(__linux__) && !defined(__x86_64__)
+# if !defined(_LARGEFILE64_SOURCE)
+#  define _LARGEFILE64_SOURCE
+# endif
+# define lseek(f,p,m) lseek64(f,p,m)
 #endif
 
 #include <stdio.h>
@@ -30,11 +31,15 @@
 extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode)
 {
 	MPT_STRUCT(queue) *qu;
-	off_t add = 0;
+	off_t add;
 	int flags, file = -1;
 	
 	flags = mpt_stream_flags(&stream->_info);
 	
+	if ((add = pos) < 0 && pos > 0) {
+		return MPT_ERROR(BadValue);
+	}
+	add = 0;
 	switch (flags & (MPT_ENUM(StreamWrite) | MPT_ENUM(StreamRdWr))) {
 	    case MPT_ENUM(StreamRead):
 		if (stream->_rd._dec) {
@@ -69,7 +74,7 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *stream, int64_t pos, int mode
 	if (file < 0) {
 		return add;
 	}
-	if ((pos = lseek64(file, pos, mode)) < 0) {
+	if ((pos = lseek(file, pos, mode)) < 0) {
 		return MPT_ERROR(BadOperation);
 	}
 	qu->len = 0;

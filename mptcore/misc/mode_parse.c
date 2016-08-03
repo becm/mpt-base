@@ -2,8 +2,6 @@
  * parse path to address type and data.
  */
 #include <stdlib.h>
-#include <errno.h>
-
 
 #include <string.h>
 #include <stdlib.h>
@@ -86,6 +84,7 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->param.sock.proto = IPPROTO_UDP;
 		mode->stream = 0;
 	}
+#ifdef IPPROTO_SCTP
 	/* name is ipv4 sctp address */
 	else if (!strncasecmp(path, "sctp4", len = 5)) {
 		mode->family = AF_INET;
@@ -93,7 +92,7 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->param.sock.proto = IPPROTO_SCTP;
 		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
-	
+#endif
 	/* name is ipv6 address */
 	else if (!strncasecmp(path, "ip6", len = 3) || !strncasecmp(path, "ipv6", len = 4)) {
 		mode->family = AF_INET6;
@@ -115,14 +114,15 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->param.sock.proto = IPPROTO_UDP;
 		mode->stream = 0;
 	}
-	/* name is ipv4 sctp address */
+#ifdef IPPROTO_SCTP
+	/* name is ipv6 sctp address */
 	else if (!strncasecmp(path, "sctp6", len = 5)) {
 		mode->family = AF_INET6;
 		mode->param.sock.type  = isupper(*path) ? SOCK_STREAM : SOCK_SEQPACKET;
 		mode->param.sock.proto = IPPROTO_SCTP;
 		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
-	
+#endif
 	/* name is unspecified ip address */
 	else if (!strncasecmp(path, "ip", len = 2)) {
 		mode->family = AF_UNSPEC;
@@ -144,6 +144,7 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->param.sock.proto = IPPROTO_UDP;
 		mode->stream = 0;
 	}
+#ifdef IPPROTO_SCTP
 	/* name is unspecified sctp address */
 	else if (!strncasecmp(path, "sctp", len = 4)) {
 		mode->family = AF_UNSPEC;
@@ -151,8 +152,9 @@ static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 		mode->param.sock.proto = IPPROTO_SCTP;
 		mode->stream = isupper(*path) ? MPT_ENUM(StreamBuffer) : 0;
 	}
+#endif
 	else {
-		return -2;
+		return MPT_ERROR(BadArgument);
 	}
 	mode->param.sock.port = 0;
 	mode->stream |= MPT_ENUM(StreamRdWr);
@@ -167,18 +169,15 @@ static long getPerm(const char **pos)
 	
 	if (pos && (end = *pos) && *end == ',') {
 		if (isspace(*(++end))) {
-			errno = EINVAL;
-			return -1;
+			return MPT_ERROR(BadArgument);
 		}
 		val = strtol(end, (char **) pos, 8);
 		
 		if (*pos == end) {
-			errno = EINVAL;
-			return -2;
+			return MPT_ERROR(BadType);
 		}
 		if (val < 0400 || val > 07777) {
-			errno = ERANGE;
-			return -2;
+			return MPT_ERROR(BadValue);
 		}
 	}
 	return val;

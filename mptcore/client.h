@@ -42,9 +42,9 @@ MPT_INTERFACE(client) : public config
 public:
 	enum { LogLevel = logger::Debug2 };
 	
-	metatype *query(const path *) const;
-	int assign(const path *, const value *);
-	int remove(const path *);
+	metatype *query(const path *) const __MPT_OVERRIDE;
+	int assign(const path *, const value *) __MPT_OVERRIDE;
+	int remove(const path *) __MPT_OVERRIDE;
 	
 	virtual int  init(MPT_INTERFACE(metatype) * = 0);
 	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
@@ -67,7 +67,7 @@ MPT_STRUCT(libhandle)
 };
 
 /* combined references to interface types */
-# ifdef __cplusplus
+#ifdef __cplusplus
 MPT_STRUCT(proxy) : public Reference<metatype>
 {
 	int log(const char *, int , const char *, ...) const;
@@ -77,7 +77,7 @@ MPT_STRUCT(proxy) : public Reference<metatype>
 		output = from;
 		return *this;
 	}
-#if __MPT_REFERENCE_MOVE
+#if __cplusplus >= 201103L
 	proxy &operator =(Reference<logger> &&from)
 	{
 		logger = std::move(from);
@@ -89,7 +89,7 @@ MPT_STRUCT(proxy) : public Reference<metatype>
 protected:
 	uintptr_t hash;
 };
-# else /* __cplusplus */
+#else /* __cplusplus */
 MPT_STRUCT(proxy)
 {
 # define MPT_PROXY_INIT { 0, 0, 0, 0 }

@@ -77,10 +77,10 @@ template <> inline Reference<metatype> & Reference<metatype>::operator= (Referen
 class Metatype : public metatype
 {
 public:
-    void unref();
-    int assign(const value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    void unref() __MPT_OVERRIDE;
+    int assign(const value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
 
     Slice<const char> data() const;
     class Small;
@@ -123,10 +123,10 @@ public:
     virtual ~Source()
     { }
 
-    void unref()
+    void unref() __MPT_OVERRIDE
     { delete this; }
 
-    int conv(int type, void *dest)
+    int conv(int type, void *dest) __MPT_OVERRIDE
     {
         if (!_d.len()) return -2;
         const T *val = _d.base();

@@ -26,14 +26,9 @@
 # if __cplusplus >= 201103L
 #  define __MPT_CONST_EXPR constexpr
 #  define __MPT_OVERRIDE override
-#  ifndef __MPT_REFERENCE_MOVE
-#   define __MPT_REFERENCE_MOVE 1
-#  endif
 # else
 #  define __MPT_CONST_EXPR
-#  ifndef __MPT_REFERENCE_MOVE
-#   define __MPT_REFERENCE_MOVE 0
-#  endif
+#  define __MPT_OVERRIDE
 # endif
 
 # define __MPT_NAMESPACE_BEGIN namespace mpt {
@@ -62,10 +57,6 @@
 # define __MPT_NAMESPACE_END
 # define __MPT_EXTDECL_BEGIN
 # define __MPT_EXTDECL_END
-#endif
-
-#ifndef __MPT_OVERRIDE
-# define __MPT_OVERRIDE
 #endif
 
 struct iovec;
@@ -460,7 +451,7 @@ public:
         _ref = r;
         return *this;
     }
-#if __MPT_REFERENCE_MOVE
+#if __cplusplus >= 201103L
     inline Reference & operator= (Reference &&ref)
     {
         T *r = ref._ref;
@@ -494,7 +485,7 @@ public:
 	enum {
 # define MPT_LOG(x) x
 #else
-# define MPT_LOG(x) MptLog##x
+# define MPT_LOG(x) MPT_Log##x
 enum MPT_ENUM(LogType) {
 #endif
 	MPT_LOG(LevelNone)      = 0x0,  /* filter messages down to ... */

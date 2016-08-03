@@ -605,13 +605,13 @@ public:
     Line(const line *from = 0);
     virtual ~Line();
     
-    void unref();
-    int property(struct property *) const;
-    int setProperty(const char *, metatype * = 0);
+    void unref() __MPT_OVERRIDE;
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype * = 0) __MPT_OVERRIDE;
     
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
 };
 
 class Text : public object, public metatype, public text
@@ -622,13 +622,13 @@ public:
     Text(const text *from = 0);
     virtual ~Text();
     
-    void unref();
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
+    void unref() __MPT_OVERRIDE;
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
 };
 
 class Axis : public object, public metatype, public axis
@@ -640,13 +640,13 @@ public:
     Axis(AxisFlag type);
     virtual ~Axis();
     
-    void unref();
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
+    void unref() __MPT_OVERRIDE;
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
 };
 
 class World : public object, public metatype, public world
@@ -658,13 +658,13 @@ public:
     World(const world *);
     virtual ~World();
     
-    void unref();
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
+    void unref() __MPT_OVERRIDE;
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
 };
 
 /*! Group implementation using reference array */
@@ -673,10 +673,10 @@ class Collection : public Group
 public:
     virtual ~Collection();
     
-    const Item<metatype> *item(size_t) const;
-    Item<metatype> *append(metatype *);
-    size_t clear(const metatype * = 0);
-    bool bind(const Relation &, logger * = logger::defaultInstance());
+    const Item<metatype> *item(size_t) const __MPT_OVERRIDE;
+    Item<metatype> *append(metatype *) __MPT_OVERRIDE;
+    size_t clear(const metatype * = 0) __MPT_OVERRIDE;
+    bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
 protected:
     ItemArray<metatype> _items;
@@ -700,15 +700,15 @@ public:
     Graph(const graph * = 0);
     virtual ~Graph();
     
-    void unref();
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    void unref() __MPT_OVERRIDE;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
     
-    int property(struct property *) const;
-    int setProperty(const char *, metatype *);
+    int property(struct property *) const __MPT_OVERRIDE;
+    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    bool bind(const Relation &from, logger * = logger::defaultInstance());
+    bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
     virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
     const Item<Axis> &axis(int pos) const;
@@ -737,15 +737,15 @@ public:
     Layout();
     virtual ~Layout();
     
-    void unref();
-    int assign(const struct value *);
-    int conv(int, void *);
-    metatype *clone() const;
+    void unref() __MPT_OVERRIDE;
+    int assign(const struct value *) __MPT_OVERRIDE;
+    int conv(int, void *) __MPT_OVERRIDE;
+    metatype *clone() const __MPT_OVERRIDE;
     
-    int property(struct property *pr) const;
-    int setProperty(const char *pr, metatype *src);
+    int property(struct property *pr) const __MPT_OVERRIDE;
+    int setProperty(const char *pr, metatype *src) __MPT_OVERRIDE;
     
-    bool bind(const Relation &, logger * = logger::defaultInstance());
+    bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
     virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());

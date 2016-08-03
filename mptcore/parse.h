@@ -196,9 +196,9 @@ public:
     LayoutParser();
     ~LayoutParser();
     
-    bool reset();
-    bool open(const char *);
-    bool setFormat(const char *);
+    bool reset() __MPT_OVERRIDE;
+    bool open(const char *) __MPT_OVERRIDE;
+    bool setFormat(const char *) __MPT_OVERRIDE;
     
     static const char *defaultFormat();
     

@@ -172,10 +172,10 @@ public:
     Config();
     virtual ~Config();
     
-    void unref();
-    metatype *query(const path *) const;
-    int assign(const path *, const value * = 0);
-    int remove(const path *);
+    void unref() __MPT_OVERRIDE;
+    metatype *query(const path *) const __MPT_OVERRIDE;
+    int assign(const path *, const value * = 0) __MPT_OVERRIDE;
+    int remove(const path *) __MPT_OVERRIDE;
     class Element;
     
 protected:
