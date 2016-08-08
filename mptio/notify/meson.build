@@ -6,5 +6,6 @@ src = files(
   'notify_connect.c',
   'notify_finit.c',
   'notify_next.c',
+  'notify_setdispatch.c',
   'notify_wait.c',
 )

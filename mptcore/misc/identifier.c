@@ -198,11 +198,10 @@ extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *na
 	if (!nlen) {
 		if (name) {
 			id->_flags |= MPT_IdentifierPrintable;
-			addr[0] = 0;
 		} else {
 			id->_flags &= ~MPT_IdentifierPrintable;
 		}
-		return memset(id->_val, 0, MPT_IDENT_BSZE);
+		return memset(addr, 0, MPT_IDENT_BSZE);
 	}
 	else if (nlen < 0) {
 		id->_flags &= ~MPT_IdentifierPrintable;

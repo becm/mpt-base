@@ -38,7 +38,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	MPT_STRUCT(dispatch) *disp;
 	MPT_STRUCT(notify) *no;
 	const char *ctl = 0, *src = 0, *cname = 0, *log;
-	int lv = 0;
+	int32_t lv = 0;
 	
 	while (argc) {
 		int c;
@@ -106,7 +106,6 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	mpt_config_environ(0, "mpt_*", '_', 0);
 	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
 	
-	
 	/* set client filename */
 	if (cname) {
 		mpt_config_set(0, "mpt.client", cname, '.', 0);
@@ -128,9 +127,16 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	mpt_notify_setdispatch(no, disp);
 	
 	/* set notification output */
-	if ((conf = mpt_output_new(no))
-	    && (conf->_vptr->conv(conf, MPT_ENUM(TypeOutput), &out) >= 0)
-	    && out) {
+	if (!(conf = mpt_output_new(no))) {
+		mpt_log(0, __func__, MPT_LOG(Error), "%s",
+		        MPT_tr("unable to create output"));
+	}
+	else if ((conf->_vptr->conv(conf, MPT_ENUM(TypeOutput), &out) < 0) || !out) {
+		mpt_log(0, __func__, MPT_LOG(Error), "%s",
+		        MPT_tr("incompatible output metatype"));
+		conf->_vptr->ref.unref((void *) conf);
+	}
+	else {
 		disp->_err.arg = out;
 		/* set debug parameter */
 		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
@@ -193,8 +199,8 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		}
 		/* add command source */
 		else if (mpt_notify_connect(no, ctl) < 0) {
-			mpt_output_log(out, __func__, MPT_LOG(Error),
-			               "%s: %s", MPT_tr("unable to connect to control"), ctl);
+			mpt_output_log(out, __func__, MPT_LOG(Error), "%s: %s",
+			               MPT_tr("unable to connect to control"), ctl);
 			
 			mpt_notify_fini(no);
 			free(no);
@@ -203,8 +209,8 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	}
 	/* open socket with 2 listening slots */
 	if (src && mpt_notify_bind(no, src, 2) < 0) {
-		mpt_output_log(out, __func__, MPT_LOG(Error),
-		               "%s: %s", MPT_tr("unable to create source"), src);
+		mpt_output_log(out, __func__, MPT_LOG(Error), "%s: %s",
+		               MPT_tr("unable to create source"), src);
 		
 		mpt_notify_fini(no);
 		free(no);
