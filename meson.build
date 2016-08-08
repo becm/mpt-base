@@ -2,7 +2,6 @@
 # build definitions for mpt
 
 project('mpt', 'c', default_options : [
-  'b_lundef=false', # needed to create lua module
   'cpp_std=c++11',
   'c_std=c11'
 ])

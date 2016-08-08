@@ -24,6 +24,7 @@ if with_shared and with_io
     c_args : lua_inc,
     include_directories : include_directories('../mptcore'),
     link_with : io_lib,
+    link_args : ['-Wl,--unresolved-symbols=ignore-in-object-files'],
     install : with_lua)
   
   lua = [
