@@ -3,9 +3,13 @@
 # lua version to build for
 LUA = 5.2
 #
+# import MPT config
+DIR_TOP ?= ${MPT_PREFIX}
+include ../../mpt.config.mk
+
 # include lua and MPT core header
 INC_LUA ?= /usr/include/lua${LUA}
-INC = ${INC_LUA} ${MPT_PREFIX}/include
+INC = ${INC_LUA} ${DIR_INC}
 CPPFLAGS = $(INC:%=-I'%')
 CFLAGS = -g
 #
@@ -21,11 +25,11 @@ CLEAR_FILES = ${PROG} ${PROG}_static
 CLEAN_FILES = ${CLEAR_FILES} ${OBJS}
 #
 # link flags and libraries
-LDFLAGS = -L'${MPT_PREFIX_LIB}' -Wl,-R,'${MPT_PREFIX_LIB}'
+LDFLAGS = -L'${DIR_LIB}' -Wl,-R,'${DIR_LIB}'
 LDLIBS = -llua${LUA} -llua${LUA}-mpt
 #
 # math environment setup
-MBOX = ${MPT_PREFIX}/share/lua/${LUA}/mathbox.lua
+MBOX = ${DIR_TOP}/share/lua/${LUA}/mathbox.lua
 #
 # file creation
 ${PROG} : ${OBJS}
@@ -40,7 +44,7 @@ ${PROG}_static : ${SRCS}
 # service targets
 .PHONY : clear clean test all
 test : ${PROG}
-	env MPT_MATHBOX='${MBOX}' LUA_PATH='?.lua;${MPT_PREFIX}/share/lua/${LUA}/?.lua' \
+	env MPT_MATHBOX='${MBOX}' LUA_PATH='?.lua;${DIR_TOP}/share/lua/${LUA}/?.lua' \
 		lua${LUA} -l test -e 'print(testmpt()); testmath([[user.lua]])'
 	./${PROG} 'user.lua'
 

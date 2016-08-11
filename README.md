@@ -10,6 +10,12 @@ and simple buffer/queue implementations.
 To maximize reusability and minimize dependencies, functionality
 is split into multiple (shared) libraries.
 
+A fast start on a Linux system with `Lua` development files
+can be achieved by setting environment variable `MPT_PREFIX` to a writable
+target directory and run `make install LUA=5.2`.
+The `examples` directory contains many small programs demonstrating
+usage of various interfaces and routines.
+
 ## Core
 Most interface definitions and in-memory operations.
 

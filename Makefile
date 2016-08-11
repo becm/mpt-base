@@ -3,7 +3,7 @@ MERGE = mptcore mptplot mptio mptloader
 MODULES = ${MERGE} mpt++
 SUB = ${MODULES} lua
 
-DIR_TOP=${MPT_PREFIX}
+DIR_TOP ?= ${MPT_PREFIX}
 include mpt.config.mk
 #
 # creation targets

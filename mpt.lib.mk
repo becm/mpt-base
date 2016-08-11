@@ -49,13 +49,11 @@ devel : ${LIB_FULLNAME}.so header
 static : ${LIB_FULLNAME}.a
 install : devel
 
-$(dir ${LIB_FULLNAME}) :
-	install -d '${@}'
-
 ${LIB_FULLNAME}.a : ${STATIC_OBJS} ${LIB_FULLNAME}.a(${STATIC_OBJS})
 	${AR} s '${@}'
 
 ${LIB_FULLNAME}.a(%.o) : %.o
+	install -d '${@D}'
 	${AR} S${ARFLAGS} '${@}' $?
 
 ${LIB_FULLNAME}.so : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
@@ -65,6 +63,7 @@ ${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MI
 	cd '${@D}'; ln -fs '${@F}.${SHLIB_MINOR}.${SHLIB_TEENY}' '${@F}'
 
 ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${SHLIB_OBJS}
+	install -d '${@D}'
 	${LINK} -o '${@}' ${SHLIB_OBJS} ${LINK_FLAGS}
 
 extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
