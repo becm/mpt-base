@@ -51,8 +51,6 @@ endif
 
 install_headers('graphic.h', subdir : 'mpt')
 
-cxx_inc = [ include_directories('.') ] + cxx_inc
-
 if with_shared
   cxx_lib = shared_library('mpt++', cxx_src, 'libinfo.c',
     include_directories : include_directories('..'),
@@ -64,7 +62,7 @@ endif
 
 if with_static
   cxx_lib_static = static_library('mpt++', cxx_src,
-    include_directories : static_inc,
+    include_directories : cxx_inc,
     install : with_cxx)
   if not with_shared
     cxx_lib = cxx_lib_static
@@ -73,7 +71,7 @@ endif
 
 cxx = declare_dependency(
   link_with : cxx_lib,
-  include_directories : cxx_inc
+  include_directories : [ include_directories('.') ] + cxx_inc
 )
 if with_cxx
   pkg.generate(

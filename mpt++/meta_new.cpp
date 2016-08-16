@@ -5,7 +5,7 @@
 #include "meta.h"
 #include "queue.h"
 
-#include "stream.h"
+#include "../mptio/stream.h"
 
 // metatype creator override
 extern "C" mpt::metatype *mpt_meta_new(size_t size)

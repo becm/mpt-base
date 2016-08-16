@@ -10,3 +10,12 @@ DIR_INC ?= ${DIR_TOP}/include
 DIR_LIB ?= ${DIR_TOP}/lib/${ARCH}
 DIR_BIN ?= ${DIR_TOP}/bin
 DIR_SHARE ?= ${DIR_TOP}/share
+#
+# warning flags for compiler
+CPPWARN ?= all error extra format-security
+# preprocessor flags
+CPPFLAGS ?= $(CPPWARN:%=-W%) -pedantic $(INC:%=-I%) $(DEF:%=-D%)
+# compiler flags
+CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
+CXXFLAGS ?= ${CFLAGS}
+# FFLAGS ?= -fpic -O5 -Wall

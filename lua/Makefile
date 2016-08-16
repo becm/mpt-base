@@ -37,6 +37,3 @@ install : $(SHARE:%=${LUA_SHARE}/%)
 
 ${LUA_SHARE}/% : %
 	$(call install_files,${@D},${@F})
-
-%${LUA}.o : %c
-	${CC} ${CPPFLAGS} ${CFLAGS} -o ${@} ${^}

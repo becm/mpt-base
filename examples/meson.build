@@ -9,11 +9,12 @@ endif
 
 if with_cxx
   subdir('cxx')
-  
-  test('client instance',
-    executable('client', 'client.cpp',
-      cpp_args: test_defines,
-      dependencies: cxx))
+  if with_io
+    test('client instance',
+      executable('client', 'client.cpp',
+        cpp_args: test_defines,
+        dependencies: cxx))
+  endif
 endif
 
 if with_plot

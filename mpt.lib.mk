@@ -6,19 +6,8 @@ ifeq (${LIB},)
 endif
 #
 # include global configuration
-include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.gnu.mk
-#
-# define VCS tag or ISO date
-DEF += $(if ${VCS_TAG},'__VCS_TAG__="${VCS_TAG}"','__ISO_DATE__="${ISODATE}"')
-#
-# preprocessor flags
-CPPWARN ?= all error extra format-security
-CPPFLAGS ?= $(CPPWARN:%=-W%) -pedantic $(INC:%=-I%) $(DEF:%=-D%)
-# compiler flags
-CFLAGS ?= -fPIE -fPIC -g -pg -fstack-protector
-CXXFLAGS ?= ${CFLAGS}
-# FFLAGS ?= -fpic -O5 -Wall
+include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # default object creation/removal
 OBJS ?= $(SRCS:%.c=%.o)
@@ -45,9 +34,9 @@ LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
 # general library rules
 .PHONY: shared devel static install
 shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
-devel : ${LIB_FULLNAME}.so header
+install : ${LIB_FULLNAME}.so
 static : ${LIB_FULLNAME}.a
-install : devel
+devel : install header
 
 ${LIB_FULLNAME}.a : ${STATIC_OBJS} ${LIB_FULLNAME}.a(${STATIC_OBJS})
 	${AR} s '${@}'

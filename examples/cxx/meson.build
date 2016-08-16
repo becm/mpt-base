@@ -1,11 +1,6 @@
 # mpt-base/examples/cxx/meson.build
 # tests for MPT C++ library
 
-test('buffer rotation',
-  executable('buffer', 'buffer.cpp',
-    cpp_args : test_defines,
-    dependencies: cxx))
-
 test('config data',
   executable('config', 'config.cpp',
     cpp_args: test_defines,
@@ -15,6 +10,14 @@ test('queue operations',
   executable('queue', 'queue.cpp',
     cpp_args: test_defines,
     dependencies: cxx))
+
+# require C++ I/O components
+if with_io
+  test('buffer rotation',
+    executable('buffer', 'buffer.cpp',
+      cpp_args : test_defines,
+      dependencies: cxx))
+endif
 
 # require C++ plot components
 if with_plot
