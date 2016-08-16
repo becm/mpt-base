@@ -136,10 +136,11 @@ MPT_STRUCT(slice)
 };
 
 #ifdef __cplusplus
-template<typename MPT_RANGE_T, typename MPT_ARRAY_T>
+template<typename MPT_RANGE_T>
+# define MPT_RANGE_FCN range
 #endif
-#if defined(__cplusplus) || (defined(range) && defined(MPT_RANGE_T) && defined(MPT_ARRAY_T))
-extern void range(MPT_RANGE_T *range, int len, const MPT_ARRAY_T *val, int ld)
+#if defined(MPT_RANGE_FCN) && (defined(__cplusplus) || defined(MPT_RANGE_T))
+extern void MPT_RANGE_FCN(MPT_RANGE_T range[2], int len, const MPT_RANGE_T *val, int ld)
 {
 	if (!len) {
 #ifdef __cplusplus
@@ -163,9 +164,10 @@ extern void range(MPT_RANGE_T *range, int len, const MPT_ARRAY_T *val, int ld)
 
 #ifdef __cplusplus
 template<typename MPT_COPY_ST, typename MPT_COPY_DT>
+# define MPT_COPY_FCN copy
 #endif
-#if defined(__cplusplus) || (defined(copy) && defined(MPT_COPY_ST) && defined(MPT_COPY_DT))
-extern void copy(int pts, const MPT_COPY_ST *src, int lds, MPT_COPY_DT *dest, int ldd)
+#if defined(MPT_COPY_FCN) && (defined(__cplusplus) || (defined(MPT_COPY_ST) && defined(MPT_COPY_DT)))
+extern void MPT_COPY_FCN(int pts, const MPT_COPY_ST *src, int lds, MPT_COPY_DT *dest, int ldd)
 {
 	intptr_t i, j;
 	

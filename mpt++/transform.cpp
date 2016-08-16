@@ -160,7 +160,7 @@ bool Transform3::apply(int dim, const linepart &pt, point<double> *dest, const d
 
     // apply point data
     if (!log) {
-        dpoint d;
+        dpoint d(scale->x, scale->y);
         mpt_apply_linear(reinterpret_cast<dpoint *>(dest), &pt, from, &d);
     }
     else {
