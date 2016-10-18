@@ -10,7 +10,6 @@
 # include "meta.h"
 # include "array.h"
 # include "object.h"
-# include <limits>
 #else
 # include "core.h"
 #endif
@@ -20,9 +19,10 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(array);
+MPT_STRUCT(typed_array);
 MPT_INTERFACE(metatype);
 
-enum MPT_ENUM(AxisFlag) {
+enum MPT_ENUM(AxisFlags) {
 	MPT_ENUM(AxisStyleGen)  = 0,
 	
 	MPT_ENUM(AxisStyleX)    = 0x1,
@@ -40,10 +40,13 @@ enum MPT_ENUM(GraphFlags) {
 	MPT_ENUM(AlignZero)  = 0x3
 };
 
-enum MPT_ENUM(TextFlag) {
+enum MPT_ENUM(TextFlags) {
 	MPT_ENUM(TextItalic)  = 0x1,
 	MPT_ENUM(TextBold)    = 0x2
 };
+
+/* forward declaration */
+MPT_STRUCT(rawdata);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
@@ -136,7 +139,7 @@ MPT_STRUCT(line)
 MPT_STRUCT(axis)
 {
 #ifdef __cplusplus
-	axis(AxisFlag type = AxisStyleGen);
+	axis(AxisFlags type = AxisStyleGen);
 	~axis();
 	
 	enum { Type = TypeAxis };
@@ -253,7 +256,7 @@ MPT_STRUCT(text)
 MPT_STRUCT(transform)
 {
 #ifdef __cplusplus
-	transform(enum AxisFlag = AxisStyleGen);
+	transform(enum AxisFlags = AxisStyleGen);
 	
 	int fromAxis(const axis &, int type = -1);
 #endif
@@ -262,51 +265,25 @@ MPT_STRUCT(transform)
 	MPT_STRUCT(range)  limit;  /* value range */
 };
 
-/* part of MPT world */
-#ifdef __cplusplus
-MPT_INTERFACE(polyline) : public unrefable
-{
-    public:
-	virtual void *raw(int dim, size_t len, size_t off = 0) = 0;
-	virtual ssize_t truncate(int dim = -1, ssize_t = -1) = 0;
-	virtual const char *format() const;
-    protected:
-	inline ~polyline() { }
-};
-#else
-MPT_INTERFACE(polyline);
-MPT_INTERFACE_VPTR(polyline) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
-	void *(*raw)(MPT_INTERFACE(polyline) *, int , size_t , size_t);
-	ssize_t (*truncate)(MPT_INTERFACE(polyline) *, int , ssize_t);
-	const char *(*format)(const MPT_INTERFACE(polyline) *);
-}; MPT_INTERFACE(polyline) {
-	const MPT_INTERFACE_VPTR(polyline) *_vptr;
-};
-#endif
-
 /* line part metadate */
 MPT_STRUCT(linepart)
 {
 #ifdef __cplusplus
-	linepart(int len = 0, int _raw = 0);
+	linepart(int = 0, int = -1);
 	
-	linepart *join(const linepart &);
+	linepart *join(linepart);
 	
 	float cut() const;
 	float trim() const;
 	
-	int cutRaw() const;
-	int trimRaw() const;
-	
-	bool setTrim(float );
-	bool setCut(float );
-	bool setRaw(int, int );
+	bool setTrim(float);
+	bool setCut(float);
 	
 	class array : public Array<linepart>
 	{
 	public:
-		bool create(const Transform &, polyline &);
+		bool apply(const Transform &, int , Slice<const double>);
+		bool set(size_t);
 		size_t userLength();
 		size_t rawLength();
 	};
@@ -317,35 +294,56 @@ MPT_STRUCT(linepart)
 	        _trim;  /* remove fraction from line start/end */
 };
 
+MPT_STRUCT(cycle)
+#ifdef _MPT_ARRAY_H
+{
+#ifdef __cplusplus
+    public:
+	int modify(unsigned , int , const void *, size_t , size_t);
+	int clearModified(int = -1);
+	
+	inline const typed_array *values(int dim) const
+	{ return dim < 0 ? 0 : _d.get(dim); }
+	inline Slice<const typed_array> values() const
+	{ return _d.slice(); }
+	inline int dimensions() const
+	{ return _d.length(); }
+    protected:
+#endif
+	_MPT_ARRAY_TYPE(typed_array) _d;
+}
+#endif
+;
+
 /* part of MPT world */
 #ifdef __cplusplus
-MPT_INTERFACE(cycle) : public unrefable
+MPT_INTERFACE(rawdata) : public unrefable
 {
     public:
-	enum { Type = TypeCycle };
+	enum { Type = TypeRawData };
 	
-	virtual polyline *current() const = 0;
-	virtual polyline *advance() = 0;
-	virtual polyline *append() = 0;
+	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
+	virtual int advance() = 0;
 	
-	virtual polyline *part(int pos = 0) const = 0;
-	virtual int size() const = 0;
+	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
+	virtual int dimensions(int = -1) const = 0;
+	virtual int cycles() const = 0;
     protected:
-	inline ~cycle() { }
+	inline ~rawdata() { }
 };
 #else
-MPT_INTERFACE(cycle);
-MPT_INTERFACE_VPTR(cycle) {
+MPT_INTERFACE(rawdata);
+MPT_INTERFACE_VPTR(rawdata) {
 	MPT_INTERFACE_VPTR(unrefable) ref;
 	
-	MPT_INTERFACE(polyline) *(*current)(const MPT_INTERFACE(cycle) *);
-	MPT_INTERFACE(polyline) *(*advance)(MPT_INTERFACE(cycle) *);
-	MPT_INTERFACE(polyline) *(*append)(MPT_INTERFACE(cycle) *);
+	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , size_t , int);
+	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
-	MPT_INTERFACE(polyline) *(*part)(const MPT_INTERFACE(cycle) *, int pos);
-	int (*size)(const MPT_INTERFACE(cycle) *);
-}; MPT_INTERFACE(cycle) {
-	const MPT_INTERFACE_VPTR(cycle) *_vptr;
+	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
+	int (*dimensions)(const MPT_INTERFACE(rawdata) *, int);
+	int (*cycles)(const MPT_INTERFACE(rawdata) *);
+}; MPT_INTERFACE(rawdata) {
+	const MPT_INTERFACE_VPTR(rawdata) *_vptr;
 };
 #endif
 
@@ -374,7 +372,7 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt);
 extern int mpt_color_html (MPT_STRUCT(color) *color, const char *txt);
 
-extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlag) __MPT_DEFPAR(AxisStyleGen));
+extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlags) __MPT_DEFPAR(AxisStyleGen));
 
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
@@ -416,28 +414,26 @@ extern int mpt_string_pset(char **, MPT_INTERFACE(metatype) *);
 extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
 
 /* set line/color attributes */
-extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int );
-extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int );
-extern int mpt_color_setalpha(MPT_STRUCT(color) *, int );
+extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int);
+extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
+extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
-/* basic double data cycle part creation/destruction */
-extern MPT_INTERFACE(polyline) *mpt_pline_create(void);
-/* create cycle interface with basic polylines */
-extern MPT_INTERFACE(cycle) *mpt_cycle_create(void);
+/* multi dimension data operations */
+extern MPT_STRUCT(typed_array) *mpt_cycle_data(MPT_STRUCT(cycle) *, unsigned , int __MPT_DEFPAR(-1));
+extern void mpt_cycle_fini(MPT_STRUCT(cycle) *);
+/* set dimensions to defined size */
+extern ssize_t mpt_cycle_truncate(MPT_STRUCT(cycle) *, size_t __MPT_DEFPAR(0));
 
-/* set all array data to same/maximum size */
-extern ssize_t mpt_pline_truncate(MPT_STRUCT(array) *, size_t , ssize_t __MPT_DEFPAR(-1));
+/* create cycle interface with default data parts */
+extern MPT_INTERFACE(rawdata) *mpt_rawdata_create(size_t);
 
 /* create linear part in range */
 extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(range) *);
-/* length of pline user points */
-extern size_t mpt_linepart_ulength(const MPT_STRUCT(linepart) *, size_t );
-extern size_t mpt_linepart_rlength(const MPT_STRUCT(linepart) *, size_t );
 /* encode/decode linepart trim and cut values */
 extern int mpt_linepart_code(double val);
 extern double mpt_linepart_real(int val);
 /* join parts if allowed by size and no userdata in second */
-extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *to, const MPT_STRUCT(linepart) *post);
+extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT_STRUCT(linepart));
 
 /* apply raw to user data using scale parameter and (transform function) */
 extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *, const double *, const MPT_STRUCT(dpoint) *);
@@ -460,38 +456,22 @@ class Parse;
 struct parseflg;
 struct path;
 
-inline linepart::linepart(int len, int raw) : raw(raw >= 0 ? raw : len), usr(len), _cut(0), _trim(0)
+inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
-inline int linepart::cutRaw() const
-{ return _cut; }
-inline int linepart::trimRaw() const
-{ return _trim; }
-
-inline bool linepart::setRaw(int c, int t)
-{
-    if (c > std::numeric_limits<__decltype(_cut)>::max()
-        || c < std::numeric_limits<__decltype(_cut)>::min()
-        || t > std::numeric_limits<__decltype(_trim)>::max()
-        || t < std::numeric_limits<__decltype(_trim)>::min()) {
-        return false;
-    }
-    _cut = c; _trim = t;
-    return true;
-}
 
 class Transform : public unrefable
 {
 public:
     virtual int dimensions() const = 0;
     
-    virtual linepart part(int dim, const double *val, int len) const;
-    virtual bool apply(int dim, const linepart &, point<double> *dest, const double *from) const;
+    virtual linepart part(unsigned dim, const double *val, int len) const;
+    virtual bool apply(unsigned dim, const linepart &, point<double> *dest, const double *from) const;
     virtual point<double> zero() const;
 protected:
     inline ~Transform() { }
 };
 
-extern int applyLineData(point<double> *dest, const linepart *lp, int plen, Transform &tr, polyline &part);
+extern int applyLineData(point<double> *dest, const linepart *lp, int plen, Transform &tr, const cycle &);
 
 class Transform3 : public Transform
 {
@@ -505,8 +485,8 @@ public:
     
     int dimensions() const __MPT_OVERRIDE;
     
-    linepart part(int dim, const double *val, int len) const __MPT_OVERRIDE;
-    bool apply(int dim, const linepart &pt, point<double> *dest, const double *from) const __MPT_OVERRIDE;
+    linepart part(unsigned dim, const double *val, int len) const __MPT_OVERRIDE;
+    bool apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const __MPT_OVERRIDE;
     point<double> zero() const __MPT_OVERRIDE;
     
     transform tx, ty, tz; /* dimension transformations */
@@ -514,7 +494,7 @@ public:
     uint8_t cutoff;       /* limit data to range */
 };
 
-class Polyline : public polyline
+class Polyline
 {
 public:
     class Point : public point<double>
@@ -529,72 +509,59 @@ public:
             { return reinterpret_cast<Point *>(_d.set(len * sizeof(Point))); }
         };
     };
-    Polyline(int dim = -1);
-    virtual ~Polyline();
-    
-    void unref() __MPT_OVERRIDE;
-    void *raw(int dim, size_t len, size_t off = 0) __MPT_OVERRIDE;
-    ssize_t truncate(int dim = -1, ssize_t pos = -1) __MPT_OVERRIDE;
-    const char *format() const __MPT_OVERRIDE;
-    
-    virtual Slice<const Point> values(int part = -1) const;
-    virtual Slice<const linepart> vis() const;
-    virtual void transform(const Transform &);
-    
-    bool setValues(int dim, size_t len, const double *val, int ld = 1, size_t offset = 0);
-    void setModified(int dim = -1);
-    bool modified(int dim = -1) const;
-    
+    class iterator
+    {
+    public:
+        inline iterator(Slice<const Point> pts, const linepart *pt = 0) : _points(pts), _parts(pt)
+        { }
+        iterator & operator++ ();
+        Slice<const Point> line() const;
+        Slice<const Point> points() const;
+    protected:
+        Slice<const Point> _points;
+        const linepart *_parts;
+    };
+    bool set(const Transform &, const rawdata &, int = -1);
+    bool set(const Transform &, const cycle &);
+
+    iterator begin() const;
+    iterator end() const;
+
 protected:
-    Array<array> _d;
-    
-    char *_rawType;
-    
-    uint32_t _modified;
-    uint16_t _rawDim;
-    uint8_t  _rawSize;
-    uint8_t  _dataSize;
-    
-    array *rawData(int dim) const;
-    Point::array *userData() const;
+    linepart::array _vis;
+    Point::array _values;
 };
 
-class Cycle : public cycle
+class Cycle : public rawdata
 {
 public:
-    Cycle(int dim = -1);
-    
-    enum Flags {
-        AutoGrow = 0x1
+    enum {
+        LimitCycles
     };
-    virtual bool setSize(int cycles);
-    virtual bool updateTransform(const Transform &, bool = false);
+    inline Cycle() : _flags(0)
+    { }
     
     /* add for extensions */
     virtual uintptr_t addref();
     
-    /* basic cycle interface */
+    /* basic raw data interface */
     void unref() __MPT_OVERRIDE;
     
-    Polyline *current() const __MPT_OVERRIDE;
-    Polyline *advance() __MPT_OVERRIDE;
-    Polyline *append() __MPT_OVERRIDE;
+    int modify(unsigned , int , const void *, size_t , size_t, int = -1) __MPT_OVERRIDE;
+    int advance() __MPT_OVERRIDE;
     
-    Polyline *part(int pos) const __MPT_OVERRIDE;
-    int size() const __MPT_OVERRIDE;
+    int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
+    int dimensions(int = -1) const __MPT_OVERRIDE;
+    int cycles() const __MPT_OVERRIDE;
     
-    /* allow const access to polylines */
-    inline const Reference<Polyline> *begin() const
-    { return _part.begin(); }
-    
-    inline const Reference<Polyline> *end() const
-    { return _part.end(); }
+    virtual void limitDimensions(uint8_t);
+    virtual bool limitCycles(size_t);
 protected:
     virtual ~Cycle();
-    RefArray<Polyline> _part;
+    Array<cycle> _cycles;
     uint16_t _act;
-    uint8_t  _dim;
-    uint8_t  _flags;
+    uint8_t _maxDimensions;
+    uint8_t _flags;
 };
 
 class Line : public object, public metatype, public line
@@ -637,7 +604,7 @@ public:
     enum { Type = axis::Type };
     
     Axis(const axis *from = 0);
-    Axis(AxisFlag type);
+    Axis(AxisFlags type);
     virtual ~Axis();
     
     void unref() __MPT_OVERRIDE;

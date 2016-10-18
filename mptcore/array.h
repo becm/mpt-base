@@ -107,9 +107,52 @@ protected:
 	MPT_STRUCT(encode_state) _state;
 	MPT_STRUCT(array) _d;
 };
+/*! information about containing data */
+MPT_STRUCT(typed_array)
+{
+#ifdef __cplusplus
+public:
+	enum Flags
+	{
+		Created  = ValueCreate,
+		Modified = ValueChange
+	};
+	inline typed_array() : _flags(0), _format(0), _esize(0)
+	{ }
+	bool setType(int);
+	void *reserve(size_t , size_t);
+	
+	inline int flags() const
+	{ return _flags; }
+	inline void setModified(bool mod = true)
+	{
+	    if (mod) _flags |= Modified;
+	    else _flags &= ~Modified;
+	}
+	inline size_t elementSize() const
+	{ return _esize; }
+	inline size_t elements() const
+	{ return _esize ? _d.length() / _esize : 0; }
+	inline const void *base() const
+	{ return _d.base(); }
+	
+	inline int type() const
+	{ return _format; }
+protected:
+#else
+# define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
+#endif
+	MPT_STRUCT(array) _d;
+	uint16_t _flags;
+	uint8_t _format;
+	uint8_t _esize;
+};
+
+
+#ifdef __cplusplus
+size_t maxsize(Slice<const typed_array>, int = -1);
 
 /*! reference to buffer segment */
-#ifdef __cplusplus
 struct slice : array
 {
 	slice(const array &);
@@ -282,6 +325,9 @@ inline array &array::operator+= (array const& from)
 { append(from.length(), from.base()); return *this; }
 inline array &array::operator+= (slice const& from)
 { Slice<uint8_t> d = from.data(); append(d.length(), d.base()); return *this; }
+
+inline void *typed_array::reserve(size_t off, size_t len)
+{ return mpt_array_slice(&_d, off, len); }
 
 inline slice::slice(array const& a) : array(a), _off(0)
 { _len = length(); }

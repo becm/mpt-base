@@ -25,7 +25,7 @@ DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
 # require C++11 for compilation
-item.o layout.o mapping.o : CPPFLAGS+=-std=c++11
+item.o layout.o mapping.o cycle.o polyline.o : CPPFLAGS+=-std=c++11
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h

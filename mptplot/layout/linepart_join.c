@@ -19,15 +19,15 @@
  * 
  * \return first line part on success
  */
-extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *to, const MPT_STRUCT(linepart) *post)
+extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *to, MPT_STRUCT(linepart) post)
 {
-	if ((UINT16_MAX - to->raw) < post->raw) return 0;
-	if ((UINT16_MAX - to->usr) < post->usr) return 0;
+	if ((UINT16_MAX - to->raw) < post.raw) return 0;
+	if ((UINT16_MAX - to->usr) < post.usr) return 0;
 	
-	if (to->_trim || post->_cut || to->usr != to->raw) return 0;
+	if (to->_trim || post._cut || to->usr != to->raw) return 0;
 	
-	to->raw += post->raw;
-	to->usr += post->usr;
+	to->raw += post.raw;
+	to->usr += post.usr;
 	
 	return to;
 }

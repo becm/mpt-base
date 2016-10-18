@@ -154,7 +154,7 @@ metatype *Text::clone() const
 }
 
 // axis data operations
-axis::axis(AxisFlag type)
+axis::axis(AxisFlags type)
 {
     mpt_axis_init(this);
     format = type & 0x3;
@@ -168,7 +168,7 @@ Axis::Axis(const axis *from)
     if (!from) return;
     axis *ax = this; *ax = *from;
 }
-Axis::Axis(AxisFlag type) : axis(type)
+Axis::Axis(AxisFlags type) : axis(type)
 { }
 Axis::~Axis()
 { }
@@ -565,7 +565,7 @@ const Reference<Cycle> &Graph::cycle(int pos) const
         d->cycle.setPointer(new Reference<Cycle>::instance);
         World *w;
         if ((w = d->pointer())) {
-            d->cycle.pointer()->setSize(w->cyc);
+            d->cycle.pointer()->limitCycles(w->cyc);
         }
     }
     return d->cycle;

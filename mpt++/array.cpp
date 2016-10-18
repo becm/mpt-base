@@ -211,6 +211,36 @@ int array::printf(const char *fmt, ... )
 char *array::string()
 { return mpt_array_string(this); }
 
+// typed information for array
+bool typed_array::setType(int t)
+{
+    int esize;
+    if ((esize = mpt_valsize(t)) <= 0) {
+        errno = EINVAL;
+        return false;
+    }
+    _format = t;
+    _esize = esize;
+    return true;
+}
+size_t maxsize(Slice<const typed_array> sl, int type)
+{
+    const typed_array *arr = sl.base();
+    size_t len = 0;
+    for (size_t i = 0, max = sl.length(); i < max; ++i) {
+        if (!arr->elementSize()) {
+            continue;
+        }
+        if (type >= 0 && type != arr->type()) {
+            continue;
+        }
+        size_t curr = arr->elements();
+        if (curr > len) len = curr;
+    }
+    return len;
+}
+
+// data segment from array
 slice::slice(slice const& from) : array(from), _off(0), _len(0)
 {
     if (!_buf) return;

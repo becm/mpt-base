@@ -42,7 +42,7 @@ extern int main(int , char * const [])
 	
 	for (auto &x : r) {
 		Cycle *m = x.pointer();
-		std::cout << m->size() << std::endl;
+		std::cout << m->cycles() << std::endl;
 	}
 	
 	r = p.values(msgdest(1,4,3));

@@ -104,7 +104,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
-	MPT_ENUM(TypeCycle)     = 0x15,  /* NAK */
+	MPT_ENUM(TypeRawData)   = 0x15,  /* NAK */
 #define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
                                && (v) < MPT_ENUM(TypeVecBase))
 	
@@ -158,9 +158,12 @@ enum MPT_ENUM(Types)
 	
 	/* input control options */
 	MPT_ENUM(ValueConsume)  = 0x1000,
+	MPT_ENUM(ValueCreate)   = 0x2000,
+	MPT_ENUM(ValueChange)   = 0x4000,
+	MPT_ENUM(ValueReset)    = 0x8000,
 	
-	/* foreign type offset */
-	MPT_ENUM(TypeUser)      = 0x10000
+	/* foreign flag offset */
+	MPT_ENUM(FlagUser)      = 0x10000
 };
 
 enum MPT_ENUM(SocketFlags) {
@@ -379,27 +382,27 @@ class Transform;
 extern int convert(const void **, int , void *, int);
 
 template<typename T>
-inline __MPT_CONST_EXPR char typeIdentifier() { return static_cast<char>(T::Type); }
+inline __MPT_CONST_EXPR int typeIdentifier() { return static_cast<int>(T::Type); }
 template<typename T>
-inline __MPT_CONST_EXPR char typeIdentifier(const T &) { return typeIdentifier<T>(); }
+inline __MPT_CONST_EXPR char typeIdentifier(const T &) { return static_cast<char>(typeIdentifier<T>()); }
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR char typeIdentifier<float>()       { return 'f'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<double>()      { return 'd'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<long double>() { return 'e'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<double>()      { return 'd'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>() { return 'e'; }
 /* integer values */
-template<> inline __MPT_CONST_EXPR char typeIdentifier<int8_t>()  { return 'b'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<int16_t>() { return 'n'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<int32_t>() { return 'i'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<int64_t>() { return 'x'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR char typeIdentifier<uint8_t>()  { return 'y'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<uint16_t>() { return 'q'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<uint32_t>() { return 'u'; }
-template<> inline __MPT_CONST_EXPR char typeIdentifier<uint64_t>() { return 't'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
 
 template<typename T>
-inline __MPT_CONST_EXPR char vectorIdentifier() {
+inline __MPT_CONST_EXPR unsigned char vectorIdentifier() {
     return MPT_value_toVector(typeIdentifier<T>());
 }
 
@@ -540,10 +543,10 @@ int debug(const char *, const char *, ... );
 int println(const char *, ... );
 
 template <typename T>
-inline __MPT_CONST_EXPR char typeIdentifier(Slice<T>)
+inline __MPT_CONST_EXPR unsigned char typeIdentifier(Slice<T>)
 { return vectorIdentifier<T>(); }
 template <typename T>
-inline __MPT_CONST_EXPR char typeIdentifier(Slice<const T>)
+inline __MPT_CONST_EXPR unsigned char typeIdentifier(Slice<const T>)
 { return vectorIdentifier<T>(); }
 #endif
 

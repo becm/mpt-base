@@ -3,6 +3,7 @@
  */
 
 #include <cstdlib>
+#include <limits>
 
 #include <sys/uio.h>
 
@@ -10,280 +11,191 @@
 
 #include "layout.h"
 
-// basic type overrride
-extern "C" mpt::polyline *mpt_pline_create()
-{
-    return new mpt::Polyline;
-}
-
 __MPT_NAMESPACE_BEGIN
 
-linepart *linepart::join(const linepart &lp)
-{ return mpt_linepart_join(this, &lp); }
+linepart *linepart::join(const linepart lp)
+{ return mpt_linepart_join(this, lp); }
 
 float linepart::cut() const
 { return mpt_linepart_real(_cut); }
 float linepart::trim() const
 { return mpt_linepart_real(_trim); }
 
-const char *polyline::format() const
-{ return 0; }
-
-
-bool linepart::array::create(const Transform &tr, polyline &part)
+// linepart set operation
+bool linepart::setTrim(float val)
 {
-    int dim = tr.dimensions();
-
-    clear();
-
-    linepart *base = 0;
-    size_t old = 0;
-
-    const char *fmt = part.format();
-    ssize_t total = part.truncate();
-
-    for (int i = 0; i < dim; i++) {
-        size_t len = total;
-        const double *val;
-
-        if (!fmt[i]) break;
-        if (fmt[i] != 'd' || !(val = (double *) part.raw(i, len))) continue;
-
-        int cut = 0;
-        size_t plen = len;
-
-        if (base && old) {
-            cut = base->cutRaw();
-            if (base->usr < len) plen = base->usr;
-        }
-        size_t pos = 0, next = 0;
-
-        while (len && plen) {
-            linepart pt = tr.part(i, val, plen);
-
-            // first part may be reduced
-            if (cut) {
-                int tc = pt.cutRaw();
-                if (cut > tc) pt.setRaw(cut, pt.trimRaw());
-                cut = 0;
-            }
-            val += pt.raw;
-            len -= pt.raw;
-
-            // existing parts
-            if (!(plen -= pt.raw) && pos < old) {
-                int trim = base[pos].trimRaw();
-                int tt = pt.trimRaw();
-                // correct end trim
-                if (trim < tt) trim = tt;
-                pt.setRaw(pt.cutRaw(), trim);
-                // correct raw offset
-                tt = base[pos].raw - base[pos].usr;
-                pt.raw += tt;
-                val += tt;
-                len -= tt;
-                // continue in next part
-                if (++pos < old) {
-                    plen = base[pos].usr;
-                    cut = base[pos].cutRaw();
-                }
-            }
-            // save current part data
-            if (next && base[old + next].join(pt)) continue;
-            _d.append(sizeof(pt), &pt);
-            base = begin();
-            ++next;
-        }
-        // set new data active
-        if (old) {
-            len = next*sizeof(linepart);
-            memmove(base, base+old, len);
-            _d.set(len);
-        }
-        old = next;
-    }
-    return old ? true : false;
+    int v = mpt_linepart_code(val);
+    if (v < 0) return false;
+    _trim = v;
+    return true;
 }
-size_t linepart::array::userLength()
+bool linepart::setCut(float val)
 {
-    return mpt_linepart_ulength(begin(), length());
-}
-size_t linepart::array::rawLength()
-{
-    return mpt_linepart_rlength(begin(), length());
-}
-
-
-Polyline::Polyline(int dim) : _rawSize(sizeof(double)), _dataSize(sizeof(dpoint))
-{
-    _rawType = (char* ) malloc(dim+1);
-
-    for (int i = 0; i < dim; i++) _rawType[i] = 'd';
-    _rawType[dim] = 0;
-
-    if (dim < 0) dim = 2;
-    _rawDim = dim;
-    _d.insert(dim + 1, array());
-}
-
-Polyline::~Polyline()
-{
-    free(_rawType);
-}
-
-void *Polyline::raw(int dim, size_t need, size_t offset)
-{
-    array *a = rawData(dim);
-    if (!a) return 0;
-    size_t old = a->length();
-    void *pos;
-    if (!(pos = mpt_array_slice(a, offset*_rawSize, need*_rawSize))) {
-        return 0;
-    }
-    if (old != a->length()) {
-        setModified(dim);
-    }
-    return pos;
-}
-
-ssize_t Polyline::truncate(int dim, ssize_t pos)
-{
-    array *raw;
-
-    if (dim < 0) {
-        // set to max used size
-        pos = mpt_pline_truncate(rawData(0), _rawDim, _rawSize * pos);
-        if (pos < 0) {
-            return pos;
-        }
-        setModified(dim);
-        return pos / _rawSize;
-    }
-    if (!(raw = rawData(dim))) return -1;
-    if (pos < 0) return raw->length() / _rawSize;
-
-    if (!raw->set(pos * _rawSize)) {
-        return -1;
-    }
-    setModified(dim);
-
-    return pos;
-}
-
-void Polyline::setModified(int dim)
-{
-    if (dim < 0) {
-        _modified = -1;
-    } else {
-        _modified |= 1<<dim;
-    }
-}
-
-bool Polyline::modified(int dim) const
-{
-    if (dim < 0) {
-        return _modified ? true : false;
-    }
-    return (_modified & (1<<dim)) ? true : false;
-}
-
-const char *Polyline::format() const
-{ return _rawType; }
-
-void Polyline::unref()
-{
-    delete this;
-}
-
-Slice<const Polyline::Point> Polyline::values(int part) const
-{
-    const Point::array *arr;
-    size_t len;
-    Slice<const linepart> pts = vis();
-    
-    if (!(arr = userData())) {
-        return Slice<const Point>(0, 0);
-    }
-    if (part < 0) {
-        return arr->slice();
-    }
-    if (!(len = pts.length()) || part >= (int) len) {
-        return Slice<const Point>(0, 0);
-    }
-    Point *base = arr->begin();
-    size_t used = arr->length();
-    const linepart *pt = pts.base();
-
-    Point *pos = base;
-    for (int i = 0; i <= part; i++) {
-        used = pt->usr;
-        base = pos;
-        pos += used;
-        ++pt;
-    }
-    return Slice<const Point>(base, used);
-}
-
-Slice<const linepart> Polyline::vis() const
-{
-    array *a;
-    if (!(a = _d.get(0))) {
-        return Slice<const linepart>(0, 0);
-    }
-    return reinterpret_cast<linepart::array *>(a)->slice();
-}
-
-array *Polyline::rawData(int dim) const
-{
-    if (dim < 0 || dim >= _rawDim) return 0;
-    return _d.get(2+dim);
-}
-
-Polyline::Point::array *Polyline::userData() const
-{
-    array *d = _d.get(1);
-    return d ? reinterpret_cast<Point::array *>(d) : 0;
-}
-
-bool Polyline::setValues(int dim, size_t len, const double *val, int ld, size_t offset)
-{
-    void *dest;
-    if (!(dest = raw(dim, len, offset))) return 0;
-    switch (_rawType[dim]) {
-    case 'd': copy(len, val, ld, (double*) dest, 1); break;
-    case 'f': copy(len, val, ld, (float*)  dest, 1); break;
-    default: return false;
-    }
-    setModified(dim);
+    int v = mpt_linepart_code(val);
+    if (v < 0) return false;
+    _cut = v;
     return true;
 }
 
-int applyLineData(point<double> *dest, const linepart *lp, int plen, const Transform &tr, polyline &part)
+bool linepart::array::set(size_t len)
 {
-    int dim = tr.dimensions(), proc = 0;
+    if (!len) {
+        clear();
+        return true;
+    }
+    linepart *lp;
+    size_t num, max = std::numeric_limits<__decltype(lp->usr)>::max();
 
-    const char *fmt = part.format();
-    ssize_t len = lp ? mpt_linepart_rlength(lp, plen) : part.truncate();
+    num = len / max;
+    if (len > num * max) ++num;
+    if (!(lp = static_cast<__decltype(lp)>(_d.set(num * sizeof(*lp))))) {
+         return false;
+    }
+    for (size_t i = 0; i < num; ++i) {
+        if (len < max) {
+            lp[i].usr = lp[i].raw = len;
+            break;
+        }
+        lp[i].usr = lp[i].raw = max;
+        len -= max;
+    }
+    return true;
+}
+bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> src)
+{
+    size_t len, oldlen = 0;
+    linepart pt;
+
+    if (dim < 0 || dim >= tr.dimensions()) {
+        return false;
+    }
+    if (!(len = src.length())) {
+        return false;
+    }
+    const double *val = src.begin();
+
+    if (!(oldlen = length())) {
+        size_t pos = 0;
+        while (pos < len) {
+            pt = tr.part(dim, val + pos, len - pos);
+            _d.append(sizeof(pt), &pt);
+            ++oldlen;
+            pos += pt.raw;
+        }
+        return true;
+    }
+    size_t pos = 0, next = 0;
+    linepart *base, old;
+
+    base = begin();
+    old = *base;
+
+    // process vissible points only
+    size_t vlen = len < old.usr ? len : old.usr;
+
+    while (len && pos < oldlen) {
+        pt = tr.part(dim, val, vlen);
+
+        // minimize leading line
+        if (old._cut > pt._cut) pt._cut = old._cut;
+        // same visible range
+        if ((vlen == pt.usr)) {
+            // minimize trailing line
+            if (old._trim > pt._trim) pt._trim = old._trim;
+            if (++pos < oldlen) {
+                old = base[pos];
+                vlen = old.usr;
+            } else {
+                len = 0;
+            }
+            pt.raw = old.raw;
+        }
+        // more data in old part
+        else if ((old.raw -= pt.raw)) {
+            old._cut = 0;
+            old.usr -= pt.raw;
+            vlen = old.usr;
+        }
+        // continue in next part
+        else if (++pos < oldlen) {
+            old = base[pos];
+            vlen = old.usr;
+        }
+        // continue in next part
+        else {
+            len = 0;
+        }
+        len -= pt.raw;
+        val += pt.raw;
+
+        // save current part data
+        if (next && base[oldlen+next].join(pt)) continue;
+        _d.append(sizeof(pt), &pt);
+        base = begin();
+        ++next;
+    }
+    // set new data active
+    len = next * sizeof(*base);
+    memmove(base, base+oldlen, len);
+    _d.set(len);
+    return true;
+}
+size_t linepart::array::userLength()
+{
+    size_t len = 0;
+    for (auto p : *this) {
+        len += p.usr;
+    }
+    return len;
+}
+size_t linepart::array::rawLength()
+{
+    size_t len = 0;
+    for (auto p : *this) {
+        len += p.raw;
+    }
+    return len;
+}
+
+int applyLineData(point<double> *dest, const linepart *lp, int plen, const Transform &tr, const cycle &cyc)
+{
+    int dim, proc = 0;
+
+    dim = tr.dimensions();
 
     for (int i = 0; i < dim; i++) {
-        double *from;
+        const typed_array *arr;
 
-        if (!fmt[i]) break;
-        if (fmt[i] != 'd' || !(from = (double *) part.raw(i, len))) continue;
-        ++proc;
-
+        if (!(arr = cyc.values(i))) {
+            continue;
+        }
+        const double *from;
+        int max;
+        if (arr->type() != typeIdentifier(*from)) {
+            continue;
+        };
+        from = static_cast<__decltype(from)>(arr->base());
+        if ((max = arr->elements()) <= 0) {
+            continue;
+        }
+        linepart tmp;
         point<double> *to = dest;
 
         if (lp) {
             for (int j = 0; j < plen; j++) {
+                if (max < lp[j].usr) {
+                     tmp = lp[j];
+                     tmp.usr = max;
+                     tr.apply(i, tmp, to, from);
+                     break;
+                }
                 tr.apply(i, lp[j], to, from);
                 to   += lp[j].usr;
                 from += lp[j].raw;
             }
         }
         else {
-            linepart tmp;
-
+	    if (max < plen) plen = max;
             while (plen > std::numeric_limits<__decltype(tmp.usr)>::max()) {
                 tmp.usr = tmp.raw = std::numeric_limits<__decltype(tmp.usr)>::max();
                 plen -= tmp.usr;
@@ -298,28 +210,37 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
     return proc;
 }
 
-void Polyline::transform(const Transform &tr)
+bool Polyline::set(const Transform &tr, const cycle &cyc)
 {
     // generate parts data
-    linepart::array *lp;
-    if (!(lp = reinterpret_cast<linepart::array *>(_d.get(0)))) return;
-    lp->create(tr, *this);
+    Slice<const typed_array> src = cyc.values();
+    size_t max = maxsize(src, typeIdentifier<double>());
+    if (!max || !_vis.set(max)) {
+        return false;
+    }
+    const typed_array *arr = src.base();
+    for (size_t i = 0, max = src.length(); i < max; ++i) {
+        if (arr->type() != typeIdentifier<double>()) {
+            continue;
+        }
+        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->elements()));
+    }
 
     // prepare target data
-    size_t total = lp->userLength();
-    Point::array *val;
-    if (!(val = userData())) return;
+    size_t total = _vis.userLength();
     Point *pts;
-    if (!(pts = val->resize(total))) return;
-
+    if (!(pts = _values.resize(total))) {
+        _values.clear();
+        return false;
+    }
     // set start values
     point<double> z = tr.zero();
     copy(total, &z, 0, pts, 1);
 
     // modify according to transformation
-    applyLineData(pts, lp->begin(), lp->length(), tr, *this);
+    applyLineData(pts, _vis.begin(), _vis.length(), tr, cyc);
 
-    _modified = 0;
+    return true;
 }
 
 __MPT_NAMESPACE_END

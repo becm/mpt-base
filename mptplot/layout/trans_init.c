@@ -20,7 +20,7 @@
  * \param tr   dimension transform data
  * \param type axis/dimension type
  */
-extern void mpt_trans_init(MPT_STRUCT(transform) *tr, enum MPT_ENUM(AxisFlag) type)
+extern void mpt_trans_init(MPT_STRUCT(transform) *tr, enum MPT_ENUM(AxisFlags) type)
 {
 	tr->move.x  = tr->move.y  = 0;
 	

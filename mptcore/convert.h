@@ -43,7 +43,7 @@ protected:
 	uint8_t _d[10];
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR char typeIdentifier<float80>()  { return TypeFloat80; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float80>()  { return TypeFloat80; }
 float swapOrder(float);
 double swapOrder(double);
 float80 swapOrder(float80);

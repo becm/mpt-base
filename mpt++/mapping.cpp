@@ -136,9 +136,8 @@ const Reference<Cycle> *Mapping::getCycle(const msgdest &dest) const
         if (!(c = e.value.pointer())) {
             return 0;
         }
-        // bad dimension
-        Polyline *pl = c->part(0);
-        if (pl && strlen(pl->format()) <= dest.dim) {
+        // not enough dimensions
+        if (c->modify(dest.dim, 0, 0, 0, 0, -1) < 0) {
             return 0;
         }
         // return cycle reference

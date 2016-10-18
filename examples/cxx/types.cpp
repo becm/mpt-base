@@ -20,6 +20,7 @@ extern int main(int, char *[])
 {
 	mtrace();
 	
+	
 	long l = -5;
 	std::cout << "long:  " << mpt::typeIdentifier(l) << " = " << mpt::value("l", &l) << std::endl;
 	
@@ -35,6 +36,10 @@ extern int main(int, char *[])
 	std::cout << mpt::typeIdentifier(r) << " = " << r << std::endl;
 	long double e = 5;
 	std::cout << mpt::typeIdentifier(e) << " = " << e << std::endl;
+	
+	mpt::Slice<double> t(&d, 1);
+	char dFmt[] = { static_cast<char>(mpt::typeIdentifier(t)), 0 };
+	std::cout << "Slice<d>:  " << dFmt[0] << " = " << mpt::value(dFmt, &l) << std::endl;
 	
 	
 }

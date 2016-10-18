@@ -18,7 +18,7 @@ __MPT_NAMESPACE_BEGIN
 range::range() : min(DBL_MIN), max(DBL_MAX)
 { }
 
-transform::transform(AxisFlag flg)
+transform::transform(AxisFlags flg)
 { mpt_trans_init(this, flg); }
 
 int transform::fromAxis(const axis &a, int type)
@@ -84,13 +84,13 @@ int Transform::dimensions() const
 point<double> Transform::zero() const
 { return point<double>(); }
 
-linepart Transform::part(int , const double *from, int len) const
+linepart Transform::part(unsigned , const double *from, int len) const
 {
      linepart p;
      mpt_linepart_linear(&p, from, len, 0);
      return p;
 }
-bool Transform::apply(int , const linepart &, point<double> *, const double *) const
+bool Transform::apply(unsigned , const linepart &, point<double> *, const double *) const
 { return false; }
 
 // implementation with 3 dimensions
@@ -107,7 +107,7 @@ point<double> Transform3::zero() const
 
     return point<double>(x,y);
 }
-linepart Transform3::part(int dim, const double *val, int len) const
+linepart Transform3::part(unsigned dim, const double *val, int len) const
 {
     struct range l;
     bool log = false;
@@ -139,7 +139,7 @@ linepart Transform3::part(int dim, const double *val, int len) const
 
 template void apply<double>(point<double> *, const linepart &, const double *, const point<double> &, double (*)(double));
 
-bool Transform3::apply(int dim, const linepart &pt, point<double> *dest, const double *from) const
+bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
 {
     const dpoint *scale;
     bool log = false;
