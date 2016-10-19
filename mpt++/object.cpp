@@ -30,6 +30,11 @@ bool object::iterator::select(uintptr_t pos)
     return true;
 }
 
+int object::type() const
+{
+    struct property pr("");
+    return property(&pr);
+}
 // object assignment
 bool object::set(const char *name, const value &val, logger *out)
 {

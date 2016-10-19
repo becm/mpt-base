@@ -35,8 +35,7 @@ public:
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
 	bool setProperties(const object &, logger * = logger::defaultInstance());
 	
-	inline int type() const
-	{ return property(0); }
+	int type() const;
 	
 	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
@@ -289,19 +288,19 @@ public:
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    virtual const Item<metatype> *item(size_t pos) const;
-    virtual Item<metatype> *append(metatype *);
-    virtual size_t clear(const metatype * = 0);
+    virtual const Item<object> *item(size_t pos) const;
+    virtual Item<object> *append(object *);
+    virtual size_t clear(const unrefable * = 0);
     virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
     
+    virtual void *toType(int);
     virtual const Transform &transform();
     
-    bool copy(const Group &from, logger * = 0);
     bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
     
 protected:
     inline ~Group() {}
-    virtual metatype *create(const char *, int = -1);
+    virtual object *create(const char *, int = -1);
 };
 /*! Relation implemetation using Group as current element */
 class GroupRelation : public Relation
@@ -311,7 +310,7 @@ public:
     { }
     virtual ~GroupRelation()
     { }
-    metatype *find(int type, const char *, int = -1) const;
+    object *find(int type, const char *, int = -1) const;
 protected:
     const Group &_curr;
     char _sep;

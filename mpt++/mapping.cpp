@@ -57,10 +57,13 @@ bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
         || graphID >= UINT8_MAX || layId < 0) {
         return false;
     }
-    for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
-        const Reference<Cycle> &d = graph.cycle(i);
-        if (!d.pointer()) continue;
-        if (!set(msgdest(layId+1, graphID+1, i+1), d)) {
+    auto it = graph.worlds();
+    for (size_t i = 0, max = it.length(); i < max; ++i) {
+        auto d = it.nth(i)->pointer();
+        if (!d) continue;
+        auto &c = d->cycle;
+        if (!c.pointer()) continue;
+        if (!set(msgdest(layId+1, graphID+1, i+1), c)) {
             return false;
         }
     }
@@ -68,10 +71,10 @@ bool Mapping::saveCycles(int layId, int graphID, const Graph &graph)
 }
 bool Mapping::saveCycles(int layId, const Layout &lay)
 {
-    int i = 0;
-    for (auto &it : lay.graphs()) {
-        Graph *g;
-        if (!(g = it.pointer())) continue;
+    auto it = lay.graphs();
+    for (size_t i = 0, max = it.length(); i < max; ++i) {
+        auto g = it.nth(i)->pointer();
+        if (!g) continue;
         if (!saveCycles(layId, i++, *g)) {
             return false;
         }
@@ -87,10 +90,11 @@ int Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
         return BadValue;
     }
     int total = 0;
-    for (size_t i = 0, max = graph.worldCount(); i < max; ++i) {
-        Reference<Cycle> *cyc = Map::get(msgdest(layId+1, graphID+1, i+1));
-        if (!cyc) continue;
-        if (!graph.setCycle(i, *cyc)) {
+    auto it = graph.worlds();
+    for (size_t i = 0, max = it.length(); i < max; ++i) {
+        auto c = Map::get(msgdest(layId+1, graphID+1, i+1));
+        if (!c) continue;
+        if (!graph.setCycle(i, *c)) {
             return total ? BadOperation : BadArgument;
         }
         ++total;
@@ -99,12 +103,12 @@ int Mapping::loadCycles(int layId, int graphID, const Graph &graph) const
 }
 int Mapping::loadCycles(int layId, const Layout &lay) const
 {
-    int i = -1, total = 0;
-    for (auto &it : lay.graphs()) {
-        Graph *g;
+    int total = 0;
+    auto it = lay.graphs();
+    for (size_t i = 0, max = it.length(); i < max; ++i) {
+        auto g = it.nth(i)->pointer();
+        if (!g) continue;
         int curr;
-        ++i;
-        if (!(g = it.pointer())) continue;
         if ((curr = loadCycles(layId, i, *g)) < 0) {
             return total ? BadOperation : BadArgument;
         }

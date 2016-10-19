@@ -209,7 +209,7 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 		pr->val.fmt = format;
 		pr->val.ptr = wld;
 		
-		return 0;
+		return MPT_ENUM(TypeWorld);
 	}
 	/* find property by name */
 	else if ((pos = mpt_property_match(pr->name, 3, elem, MPT_arrsize(elem))) < 0) {

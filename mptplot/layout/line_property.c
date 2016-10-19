@@ -168,7 +168,7 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 		pr->val.fmt = format;
 		pr->val.ptr = li;
 		
-		return 0;
+		return MPT_ENUM(TypeLine);
 	}
 	else if ((pos = mpt_property_match(pr->name, -1, elem, MPT_arrsize(elem))) < 0) {
 		return pos;

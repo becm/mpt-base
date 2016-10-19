@@ -614,7 +614,7 @@ class Relation
 public:
     inline Relation(const Relation *p = 0) : _parent(p)
     { }
-    virtual metatype *find(int , const char *, int = -1) const = 0;
+    virtual class object *find(int , const char *, int = -1) const;
 protected:
     virtual ~Relation() {}
     const Relation *_parent;

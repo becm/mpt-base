@@ -251,7 +251,7 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 		pr->val.fmt = format;
 		pr->val.ptr = tx;
 		
-		return 0;
+		return MPT_ENUM(TypeText);
 	}
 	/* set position independently */
 	else if (!pr->name[1]) {

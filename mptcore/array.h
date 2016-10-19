@@ -490,15 +490,15 @@ public:
         Item<T> *space = 0;
         size_t len = 0;
         for (Item<T> *pos = Array<Item<T> >::begin(), *to = Array<Item<T> >::end(); pos != to; ++pos) {
-            metatype *m = pos->pointer();
-            if (!m) {
+            T *c = pos->pointer();
+            if (!c) {
                 if (!space) space = pos;
                 continue;
             }
             ++len;
             if (!space) continue;
             memcpy(space, pos, sizeof(*space));
-            do { ++space; } while (!(m = space->pointer()) && space < pos);
+            do { ++space; } while ((c = space->pointer()) && space < pos);
         }
         if (!space) return false;
         Array<Item<T> >::_d.set(len * sizeof(*space));

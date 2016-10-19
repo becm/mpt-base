@@ -509,24 +509,40 @@ public:
             { return reinterpret_cast<Point *>(_d.set(len * sizeof(Point))); }
         };
     };
+    class Part
+    {
+    public:
+        Slice<const Point> line();
+        Slice<const Point> points();
+    protected:
+        linepart _part;
+        const Point *_pts;
+    };
     class iterator
     {
     public:
-        inline iterator(Slice<const Point> pts, const linepart *pt = 0) : _points(pts), _parts(pt)
-        { }
+        iterator(const Polyline *pts);
+        Part operator *() const;
         iterator & operator++ ();
-        Slice<const Point> line() const;
-        Slice<const Point> points() const;
+        
+        bool operator== (const iterator &it) const
+        { return _points == it._points; }
+        inline bool operator!= (const iterator &it) const
+        { return !iterator::operator!=(it); }
     protected:
-        Slice<const Point> _points;
-        const linepart *_parts;
+        Slice<const linepart> _parts;
+        const Point *_points;
     };
     bool set(const Transform &, const rawdata &, int = -1);
     bool set(const Transform &, const cycle &);
 
     iterator begin() const;
     iterator end() const;
-
+    
+    Slice<const linepart> parts() const
+    { return _vis.slice(); }
+    Slice<const Point> points() const
+    { return _values.slice(); }
 protected:
     linepart::array _vis;
     Point::array _values;
@@ -564,7 +580,7 @@ protected:
     uint8_t _flags;
 };
 
-class Line : public object, public metatype, public line
+class Line : public object, public line
 {
 public:
     enum { Type = line::Type };
@@ -576,12 +592,10 @@ public:
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype * = 0) __MPT_OVERRIDE;
     
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
+    virtual void *toType(int);
 };
 
-class Text : public object, public metatype, public text
+class Text : public object, public text
 {
 public:
     enum { Type = text::Type };
@@ -593,12 +607,10 @@ public:
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
+    virtual void *toType(int);
 };
 
-class Axis : public object, public metatype, public axis
+class Axis : public object, public axis
 {
 public:
     enum { Type = axis::Type };
@@ -611,12 +623,10 @@ public:
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
+    virtual void *toType(int);
 };
 
-class World : public object, public metatype, public world
+class World : public object, public world
 {
 public:
     enum { Type = world::Type };
@@ -629,9 +639,7 @@ public:
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
+    virtual void *toType(int);
 };
 
 /*! Group implementation using reference array */
@@ -640,19 +648,18 @@ class Collection : public Group
 public:
     virtual ~Collection();
     
-    const Item<metatype> *item(size_t) const __MPT_OVERRIDE;
-    Item<metatype> *append(metatype *) __MPT_OVERRIDE;
-    size_t clear(const metatype * = 0) __MPT_OVERRIDE;
+    const Item<object> *item(size_t) const __MPT_OVERRIDE;
+    Item<object> *append(object *) __MPT_OVERRIDE;
+    size_t clear(const unrefable * = 0) __MPT_OVERRIDE;
     bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
-    
 protected:
-    ItemArray<metatype> _items;
+    ItemArray<object> _items;
 };
 
-class Graph : public Collection, public metatype, public Transform3, public graph
+class Graph : public Collection, public Transform3, public graph
 {
 public:
-    class Data : public Item<World>
+    class Data : public Array<Polyline>
     {
     public:
         Data(World *w = 0);
@@ -660,6 +667,7 @@ public:
         inline void unref()
         { delete this; }
         
+        Reference<World> world;
         Reference<Cycle> cycle;
     };
     enum { Type = graph::Type };
@@ -668,35 +676,33 @@ public:
     virtual ~Graph();
     
     void unref() __MPT_OVERRIDE;
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
-    
     int property(struct property *) const __MPT_OVERRIDE;
     int setProperty(const char *, metatype *) __MPT_OVERRIDE;
     
     bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
-    virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
-    const Item<Axis> &axis(int pos) const;
-    inline int axisCount() const { return _axes.length(); }
+    void *toType(int) __MPT_OVERRIDE;
     
-    virtual Data *addWorld(World * = 0, const char * = 0, int = -1);
-    const Data &world(int pos) const;
-    inline int worldCount() const { return _worlds.length(); }
+    virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
+    inline Slice<const Item<Axis> > axes() const
+    { return _axes.slice(); }
+    
+    virtual Item<Data> *addWorld(World * = 0, const char * = 0, int = -1);
+    inline Slice<const Item<Data> > worlds() const
+    { return _worlds.slice(); }
     
     virtual bool setCycle(int pos, const Reference<Cycle> &) const;
-    virtual const Reference<Cycle> &cycle(int pos) const;
+    virtual const Reference<Cycle> *cycle(int pos) const;
     
     const Transform &transform();
     bool updateTransform(int dim = -1);
     
 protected:
     ItemArray<Axis> _axes;
-    RefArray<Data>  _worlds;
+    ItemArray<Data> _worlds;
 };
 
-class Layout : public Collection, public metatype
+class Layout : public Collection
 {
 public:
     enum { Type = Collection::Type };
@@ -705,16 +711,11 @@ public:
     virtual ~Layout();
     
     void unref() __MPT_OVERRIDE;
-    int assign(const struct value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
-    
     int property(struct property *pr) const __MPT_OVERRIDE;
     int setProperty(const char *pr, metatype *src) __MPT_OVERRIDE;
     
     bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
-    virtual bool update(metatype *);
     virtual bool load(logger * = logger::defaultInstance());
     virtual bool open(const char *);
     virtual void reset();

@@ -157,10 +157,10 @@ public:
 
     // mapping helpers
     int target(msgdest &, message &, size_t = 0) const;
-    metatype *item(message &, size_t = 0) const;
+    object *item(message &, size_t = 0) const;
 
     // untracked references to shedule update
-    virtual bool registerUpdate(const metatype *, const UpdateHint & = UpdateHint());
+    virtual bool registerUpdate(const object *, const UpdateHint & = UpdateHint());
 
 protected:
     virtual void dispatchUpdates();

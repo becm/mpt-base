@@ -162,6 +162,12 @@ static ssize_t nextPart(const message &msg, size_t len)
         return -2;
     }
 }
+static Graph::Data *graphData(Slice<const Item<Graph::Data> > gd, int pos)
+{
+    const Item<Graph::Data> *it = gd.nth(pos);
+    if (!it) return 0;
+    return it->pointer();
+}
 
 int Graphic::target(msgdest &addr, message &msg, size_t len) const
 {
@@ -309,25 +315,31 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
         }
         mask |= 8;
     }
+    Slice<const Item<Graph::Data> > gd = grf->worlds();
     if (part) {
         int w = strtol(buf, &end, 0);
         if (end > buf) {
             if (w <= 0 || w > UINT8_MAX) {
                 return -3;
             }
-            wld = grf->world(w-1).pointer();
+            const Graph::Data *d = graphData(gd, w-1);
+            wld = d ? d->world.pointer() : 0;
             dst.wld = w;
         }
         else {
-            size_t max = grf->worldCount();
-            if (max > UINT8_MAX) {
+            size_t max = grf->worlds().length();
+            if (max >= UINT8_MAX) {
                 max = UINT8_MAX;
             }
-            for (size_t i = 0; i < max; ++i) {
-                const Item<World> &it = grf->world(i);
-                if (it.equal(buf, part)) {
+            for (size_t i = 0, max = gd.length(); i < max; ++i) {
+                if (i >= UINT8_MAX) {
+                    break;
+                }
+                const Item<Graph::Data> *it = gd.nth(i);
+                Graph::Data *ptr;
+                if (it && (ptr = it->pointer()) && it->equal(buf, part)) {
                     dst.wld = i+1;
-                    wld = it.pointer();
+                    wld = ptr->world.pointer();
                     break;
                 }
             }
@@ -335,7 +347,8 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
         mask |= 4;
     }
     else if (dst.wld) {
-        wld = grf->world(dst.wld-1).pointer();
+        const Graph::Data *d = graphData(gd, dst.wld-1);
+        wld = d ? d->world.pointer() : 0;
     }
     if (!wld) {
         return -3;
@@ -345,7 +358,7 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
 
     return mask;
 }
-metatype *Graphic::item(message &msg, size_t len) const
+object *Graphic::item(message &msg, size_t len) const
 {
     message tmp = msg;
     ssize_t part;
@@ -387,7 +400,7 @@ metatype *Graphic::item(message &msg, size_t len) const
         }
 
         Group *g = l;
-        metatype *m = l;
+        object *o = l;
 
         while (!term) {
             /* get next part */
@@ -406,27 +419,30 @@ metatype *Graphic::item(message &msg, size_t len) const
                 len = 0;
                 term = true;
             }
-            // find item by name
-            if (!(m = GroupRelation(*g, 0).find(0, buf, part))) {
+            // find object by name
+            unrefable *u;
+            if (!(u = GroupRelation(*g, 0).find(object::Type, buf, part))) {
                 return 0;
             }
+            o = static_cast<object *>(u);
             // last name part
             if (term) {
                 break;
             }
             // need group for further path search
-            if (!(g = m->cast<Group>())) {
+            if (!(o->type() != Group::Type)) {
                 return 0;
             }
+            g = static_cast<Group *>(o);
         }
         msg = tmp;
-        return m;
+        return o;
     }
     return 0;
 }
 
 // collect references for update trigger
-bool Graphic::registerUpdate(const metatype *, const UpdateHint &)
+bool Graphic::registerUpdate(const object *, const UpdateHint &)
 { return true; }
 void Graphic::dispatchUpdates()
 { }
