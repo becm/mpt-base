@@ -606,19 +606,6 @@ public:
     inline T *pointer() const
     { return Reference<T>::pointer(); }
 };
-
-/*! interface to search metatypes in tree */
-MPT_INTERFACE(metatype);
-class Relation
-{
-public:
-    inline Relation(const Relation *p = 0) : _parent(p)
-    { }
-    virtual class object *find(int , const char *, int = -1) const;
-protected:
-    virtual ~Relation() {}
-    const Relation *_parent;
-};
 #endif /* C++ */
 
 MPT_STRUCT(fdmode)
@@ -640,6 +627,7 @@ MPT_STRUCT(fdmode)
 };
 
 /* collection solver runtime data */
+MPT_INTERFACE(metatype);
 MPT_STRUCT(socket)
 {
 #ifdef __cplusplus
@@ -679,6 +667,21 @@ public:
     
     virtual Reference<class Stream> accept();
 };
+
+/*! interface to search objects in tree */
+class object;
+class Relation
+{
+public:
+    inline Relation(const Relation *p = 0) : _parent(p)
+    { }
+    virtual object *find(int , const char *, int = -1) const;
+protected:
+    virtual ~Relation() {}
+    const Relation *_parent;
+};
+inline object *Relation::find(int type, const char *name, int nlen) const
+{ return _parent ? _parent->find(type, name, nlen) : 0; }
 #endif
 
 __MPT_EXTDECL_BEGIN

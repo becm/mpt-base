@@ -302,15 +302,16 @@ protected:
     inline ~Group() {}
     virtual object *create(const char *, int = -1);
 };
+
 /*! Relation implemetation using Group as current element */
 class GroupRelation : public Relation
 {
 public:
-    inline GroupRelation(const Group &g, const Relation *p = 0, char sep = ':') : Relation(p), _curr(g), _sep(sep)
+    inline GroupRelation(const Group &g, const Relation *p = 0, char sep = '.') : Relation(p), _curr(g), _sep(sep)
     { }
     virtual ~GroupRelation()
     { }
-    object *find(int type, const char *, int = -1) const;
+    object *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
 protected:
     const Group &_curr;
     char _sep;

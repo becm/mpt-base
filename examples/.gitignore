@@ -8,3 +8,6 @@ readline
 
 # exclude static binaries
 *_static
+
+# exclude profiling results
+gmon.out

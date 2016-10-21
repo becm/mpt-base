@@ -37,16 +37,25 @@ const Item<object> *Group::item(size_t) const
 bool Group::bind(const Relation &, logger *)
 { return true; }
 
+void *Group::toType(int type)
+{
+    static const char types[] = { object::Type, Group::Type, 0 };
+    switch (type) {
+      case 0: return (void *) types;
+      case object::Type: return static_cast<object *>(this);
+      case Group::Type: return static_cast<object *>(this);
+      default: return 0;
+    }
+}
 bool Group::addItems(node *head, const Relation *relation, logger *out)
 {
     const char _func[] = "mpt::Group::addItems";
 
     for (; head; head = head->next) {
-        metatype *from;
-        if (!(from = head->_meta)) continue;
+        metatype *from = head->_meta;
 
         object *obj;
-        if (from->conv(obj->Type, &obj) > 0 && obj) {
+        if (from && from->conv(obj->Type, &obj) > 0 && obj) {
             Reference<object> ro;
             if (!obj->addref()) {
                 if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("object"), obj, MPT_tr("failed to raise object reference"));
@@ -73,7 +82,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
 
         // set property
         value val;
-        if ((val.ptr = mpt_meta_data(from))) {
+        if (from && (val.ptr = mpt_meta_data(from))) {
             val.fmt = 0;
             set(name, val, out);
             continue;
@@ -280,10 +289,10 @@ object *GroupRelation::find(int type, const char *name, int nlen) const
         size_t plen = sep - name;
         for (int i = 0; (c = _curr.item(i)); ++i) {
             object *o = c->pointer();
-            if (!o || c->equal(name, plen)) continue;
+            if (!o || !c->equal(name, plen)) continue;
             const Group *g;
             if (o->property(0) != g->Type) continue;
-	    g = static_cast<Group *>(o);
+            g = static_cast<Group *>(o);
             if ((o = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
                 return o;
             }

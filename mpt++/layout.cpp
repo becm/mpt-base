@@ -48,16 +48,14 @@ int Line::setProperty(const char *name, metatype *src)
 }
 void *Line::toType(int type)
 {
-    if (!type) {
-        static const char types[] = { metatype::Type, object::Type, line::Type, color::Type, lineattr::Type, 0 };
-        return (void *) types;
-    }
-    switch (type &= 0xff) {
-    case object::Type: return static_cast<object *>(this);
-    case line::Type: return static_cast<line *>(this);
-    case color::Type: return &color;
-    case lineattr::Type: return &attr;
-    default: errno = EINVAL; return 0;
+    static const char types[] = { metatype::Type, object::Type, line::Type, color::Type, lineattr::Type, 0 };
+    switch (type) {
+      case 0: return const_cast<char *>(types);
+      case object::Type: return static_cast<object *>(this);
+      case line::Type: return static_cast<line *>(this);
+      case color::Type: return &color;
+      case lineattr::Type: return &attr;
+      default: return 0;
     }
 }
 // text data operations
@@ -102,15 +100,13 @@ int Text::setProperty(const char *prop, metatype *src)
 }
 void *Text::toType(int type)
 {
-    if (!type) {
-        static const char types[] = { metatype::Type, object::Type, text::Type, color::Type, 0 };
-        return (void *) types;
-    }
-    switch (type &= 0xff) {
-    case object::Type: return static_cast<object *>(this);
-    case text::Type: return static_cast<text *>(this);
-    case color::Type: return &color;
-    default: errno = EINVAL; return 0;
+    static const char types[] = { metatype::Type, object::Type, text::Type, color::Type, 0 };
+    switch (type) {
+      case 0: return const_cast<char *>(types);
+      case object::Type: return static_cast<object *>(this);
+      case text::Type: return static_cast<text *>(this);
+      case color::Type: return &color;
+      default: return 0;
     }
 }
 // axis data operations
@@ -149,14 +145,12 @@ int Axis::setProperty(const char *prop, metatype *src)
 }
 void *Axis::toType(int type)
 {
-    if (!type) {
-        static const char types[] = { metatype::Type, object::Type, axis::Type, 0 };
-        return (void *) types;
-    }
-    switch (type &= 0xff) {
-    case object::Type: return static_cast<object *>(this);
-    case axis::Type: return static_cast<axis *>(this);
-    default: errno = EINVAL; return 0;
+    static const char types[] = { metatype::Type, object::Type, axis::Type, 0 };
+    switch (type) {
+      case 0: return const_cast<char *>(types);
+      case object::Type: return static_cast<object *>(this);
+      case axis::Type: return static_cast<axis *>(this);
+      default: return 0;
     }
 }
 // world data operations
@@ -200,16 +194,14 @@ int World::setProperty(const char *prop, metatype *src)
 }
 void *World::toType(int type)
 {
-    if (!type) {
-        static const char types[] = { metatype::Type, object::Type, world::Type, color::Type, lineattr::Type, 0 };
-        return (void *) types;
-    }
-    switch (type &= 0xff) {
-    case object::Type: return static_cast<object *>(this);
-    case world::Type: return static_cast<world *>(this);
-    case color::Type: return &color;
-    case lineattr::Type: return &attr;
-    default: errno = EINVAL; return 0;
+    static const char types[] = { metatype::Type, object::Type, world::Type, color::Type, lineattr::Type, 0 };
+    switch (type) {
+      case 0: return const_cast<char *>(types);
+      case object::Type: return static_cast<object *>(this);
+      case world::Type: return static_cast<world *>(this);
+      case color::Type: return &color;
+      case lineattr::Type: return &attr;
+      default: return 0;
     }
 }
 // graph data operations
@@ -250,16 +242,14 @@ int Graph::setProperty(const char *prop, metatype *src)
 }
 void *Graph::toType(int type)
 {
-    if (!type) {
-        static const char types[] = { metatype::Type, object::Type, graph::Type, color::Type, 0 };
-        return (void *) types;
-    }
-    switch (type &= 0xff) {
-    case object::Type: return static_cast<object *>(this);
-    case Group::Type: return static_cast<Group *>(this);
-    case graph::Type: return static_cast<graph *>(this);
-    case color::Type: return &fg;
-    default: errno = EINVAL; return 0;
+    static const char types[] = { metatype::Type, object::Type, graph::Type, color::Type, 0 };
+    switch (type) {
+      case 0: return const_cast<char *>(types);
+      case object::Type: return static_cast<object *>(this);
+      case Group::Type: return static_cast<Group *>(this);
+      case graph::Type: return static_cast<graph *>(this);
+      case color::Type: return &fg;
+      default: return 0;
     }
 }
 // graph group interface
@@ -393,7 +383,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     for (auto &it : _items) {
         Group *g;
-        if (!(o = it.pointer()) || !(o->property(0) != g->Type)) continue;
+        if (!(o = it.pointer()) || o->property(0) != g->Type) continue;
         g = static_cast<Group *>(o);
         GroupRelation gr(*g, &rel);
         if (!g->bind(gr, out)) {
