@@ -13,7 +13,7 @@
 struct RawData
 {
 	MPT_INTERFACE(rawdata) gen;
-	_MPT_ARRAY_TYPE(cycle) cyc; /* array of arrays */
+	_MPT_ARRAY_TYPE(rawdata_stage) st;
 	size_t act, max;
 };
 
@@ -22,17 +22,14 @@ static void rdUnref(MPT_INTERFACE(unrefable) *ptr)
 	struct RawData *rd = (void *) ptr;
 	MPT_STRUCT(buffer) *buf;
 	
-	if ((buf = rd->cyc._buf)) {
-		MPT_STRUCT(cycle) *cyc = (void *) (buf+1);
-		size_t i, len = buf->used/sizeof(*cyc);
+	if ((buf = rd->st._buf)) {
+		MPT_STRUCT(rawdata_stage) *st = (void *) (buf+1);
+		size_t i, len = buf->used/sizeof(*st);
 		
 		for (i = 0; i < len; ++i) {
-			mpt_cycle_fini(cyc + i);
+			mpt_stage_fini(st + i);
 		}
-		if (buf->resize) {
-			buf->resize(buf, 0);
-		}
-		rd->cyc._buf = 0;
+		mpt_array_clone(&rd->st, 0);
 	}
 	rd->gen._vptr = 0;
 	free(rd);
@@ -40,31 +37,31 @@ static void rdUnref(MPT_INTERFACE(unrefable) *ptr)
 static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t pos, size_t len, int nc)
 {
 	struct RawData *rd = (void *) ptr;
-	MPT_STRUCT(typed_array) *arr;
 	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(cycle) *cyc;
+	MPT_STRUCT(rawdata_stage) *st;
+	MPT_STRUCT(typed_array) *arr;
 	
 	if (nc < 0) {
 		nc = rd->act;
 	}
-	if (!(buf = rd->cyc._buf)
-	    || nc >= (int) (buf->used / sizeof(*cyc))) {
+	if (!(buf = rd->st._buf)
+	    || nc >= (int) (buf->used / sizeof(*st))) {
 		if (!rd->max || nc >= (int) rd->max) {
 			return MPT_ERROR(BadValue);
 		}
 		if (!(fmt & MPT_ENUM(ValueCreate))) {
 			return MPT_ERROR(BadOperation);
 		}
-		if (!(cyc = mpt_array_slice(&rd->cyc, nc * sizeof(*cyc), sizeof(*cyc)))) {
+		if (!(st = mpt_array_slice(&rd->st, nc * sizeof(*st), sizeof(*st)))) {
 			return MPT_ERROR(BadOperation);
 		}
-		memset(cyc, 0, sizeof(*cyc));
+		memset(st, 0, sizeof(*st));
 	}
 	else {
-		cyc = (void *) (buf+1);
-		cyc += nc;
+		rd = (void *) (buf+1);
+		rd += nc;
 	}
-	if (!(arr = mpt_cycle_data(cyc, dim, fmt))) {
+	if (!(arr = mpt_stage_data(st, dim, fmt))) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (len) {
@@ -92,12 +89,12 @@ static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 		act = 0;
 	}
 	/* reuse existing cycle */
-	if ((buf = rd->cyc._buf)
-	    && act < buf->used / sizeof(MPT_STRUCT(cycle))) {
+	if ((buf = rd->st._buf)
+	    && act < buf->used / sizeof(MPT_STRUCT(rawdata_stage))) {
 		return act;
 	}
 	/* add cycle placeholder */
-	if (!mpt_array_append(&rd->cyc, sizeof(MPT_STRUCT(cycle)), 0)) {
+	if (!mpt_array_append(&rd->st, sizeof(MPT_STRUCT(rawdata_stage)), 0)) {
 		return 0;
 	}
 	rd->act = act;
@@ -108,23 +105,23 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 {
 	const struct RawData *rd = (void *) ptr;
 	const MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(cycle) *cyc;
+	MPT_STRUCT(rawdata_stage) *st;
 	const MPT_STRUCT(typed_array) *arr;
 	
 	/* query type of raw data */
-	if (!(buf = rd->cyc._buf)) {
+	if (!(buf = rd->st._buf)) {
 		return 0;
 	}
 	if (nc < 0) {
 		nc = rd->act;
 	}
 	/* cycle does not exist */
-	if (nc >= (int) (buf->used/sizeof(*cyc))) {
+	if (nc >= (int) (buf->used/sizeof(*st))) {
 		return MPT_ERROR(BadValue);
 	}
 	/* get existing cycle dimension data */
-	cyc = (void *) (buf+1);
-	if (!(arr = mpt_cycle_data(cyc + nc, dim, -1))) {
+	st = (void *) (buf+1);
+	if (!(arr = mpt_stage_data(st + nc, dim, -1))) {
 		return MPT_ERROR(BadValue);
 	}
 	if (!arr->_format) {
@@ -146,14 +143,14 @@ static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 {
 	const struct RawData *rd = (void *) ptr;
 	const MPT_STRUCT(buffer) *buf;
-	const MPT_STRUCT(cycle) *cyc;
+	const MPT_STRUCT(rawdata_stage) *st;
 	int max;
 	
-	if (!(buf = rd->cyc._buf)) {
+	if (!(buf = rd->st._buf)) {
 		return MPT_ERROR(BadOperation);
 	}
-	cyc = (void *) (buf + 1);
-	max = buf->used/sizeof(*cyc);
+	st = (void *) (buf + 1);
+	max = buf->used/sizeof(*st);
 	
 	if (part < 0) {
 		part = rd->act;
@@ -161,27 +158,27 @@ static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 	if (part >= max) {
 		return MPT_ERROR(BadValue);
 	}
-	if (!(buf = cyc[part]._d._buf)) {
+	if (!(buf = st[part]._d._buf)) {
 		return 0;
 	}
 	return buf->used/sizeof(MPT_STRUCT(typed_array));
 }
 
-static int rdCycles(const MPT_INTERFACE(rawdata) *ptr)
+static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 {
 	const struct RawData *rd = (void *) ptr;
 	const MPT_STRUCT(buffer) *buf;
 	
-	if (!(buf = rd->cyc._buf)) {
+	if (!(buf = rd->st._buf)) {
 		return 0;
 	}
-	return buf->used/sizeof(MPT_STRUCT(cycle));
+	return buf->used/sizeof(MPT_STRUCT(rawdata_stage));
 }
 
 static const MPT_INTERFACE_VPTR(rawdata) _vptr = {
 	{ rdUnref },
 	rdModify, rdAdvance,
-	rdValues, rdDimensions, rdCycles
+	rdValues, rdDimensions, rdStages
 };
 
 /*!
@@ -202,7 +199,7 @@ extern MPT_INTERFACE(rawdata) *mpt_cycle_create(size_t max)
 		return 0;
 	}
 	rd->gen._vptr = &_vptr;
-	rd->cyc._buf = 0;
+	rd->st._buf = 0;
 	rd->act = 0;
 	rd->max = max;
 	

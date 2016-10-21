@@ -14,12 +14,12 @@ __MPT_NAMESPACE_BEGIN
 template class Reference<Cycle>;
 template class RefArray<Cycle>;
 
-int cycle::modify(unsigned int dim, int type, const void *src, size_t off, size_t len)
+int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t off, size_t len)
 {
     typed_array *arr;
     int curr;
 
-    if (!(arr = mpt_cycle_data(this, dim, ValueCreate))) {
+    if (!(arr = mpt_stage_data(this, dim, type & 0xff00))) {
         return BadValue;
     }
     if (!(curr = arr->type())) {
@@ -61,11 +61,18 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t le
     if (nc < 0) {
         nc = _act;
     }
-    cycle *c;
-    if (!(c = _cycles.get(nc))) {
+    Stage *st;
+    if (!(st = _stages.get(nc))) {
         return BadValue;
     }
-    return c->modify(dim, type, src, off, len);
+    int code = st->modify(dim, type, src, off, len);
+    
+    if (code < 0) {
+        return code;
+    }
+    // invalidate view
+    st->invalidate();
+    return code;
 }
 int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
 {
@@ -75,70 +82,79 @@ int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
     if (nc < 0) {
         nc = _act;
     }
-    cycle *c;
-    if (!(c = _cycles.get(nc))) {
+    Stage *st;
+    if (!(st = _stages.get(nc))) {
         return BadValue;
     }
     const typed_array *arr;
-    if (!(arr = c->values(dim))) {
+    if (!(arr = st->rawdata_stage::values(dim))) {
         return BadValue;
     }
     if (vec) {
         if (arr->type()) {
-	    vec->iov_base = (void *) arr->base();
-	    vec->iov_len  = arr->elements() * arr->elementSize();
-	} else {
-	    vec->iov_base = 0;
-	    vec->iov_len  = 0;
-	}
+            vec->iov_base = (void *) arr->base();
+            vec->iov_len  = arr->elements() * arr->elementSize();
+        } else {
+            vec->iov_base = 0;
+            vec->iov_len  = 0;
+        }
     }
     return arr->type() + (arr->flags() & ~0xff);
 }
 int Cycle::advance()
 {
-    int nc = _act + 1;
-    cycle *c;
-    if ((c = _cycles.get(nc))) {
-        _act = nc;
-        return nc;
+    int n = _act + 1;
+    rawdata_stage *st;
+    if ((st = _stages.get(n))) {
+        _act = n;
+        return n;
     }
-    nc = _cycles.length();
-    if (!(_flags & LimitCycles)
-        || !_cycles.insert(nc, cycle())) {
+    if (_flags & LimitStages) {
+        _act = 0;
+        return _stages.length() ? 0 : BadValue;
+    }
+    n = _stages.length();
+    if (!(_flags & LimitStages)
+        || !_stages.insert(n, Stage())) {
         return BadOperation;
     }
-    return nc;
+    return n;
 }
-int Cycle::dimensions(int nc) const
+int Cycle::dimensions(int n) const
 {
-    if (nc < 0) {
-        nc = _act;
+    if (n < 0) {
+        n = _act;
     }
-    cycle *c = _cycles.get(nc);
-    return c ? c->dimensions() : BadArgument;
+    Stage *st = _stages.get(n);
+    return st ? st->dimensions() : BadArgument;
 }
-int Cycle::cycles() const
+int Cycle::stages() const
 {
-    return _cycles.length();
+    return _stages.length();
 }
-bool Cycle::limitCycles(size_t max)
+bool Cycle::limitStages(size_t max)
 {
     if (!max) {
-        _flags &= LimitCycles;
+        _flags &= LimitStages;
         return true;
     }
-    size_t curr = _cycles.length();
+    size_t curr = _stages.length();
     if (max < curr) {
         return false;
     }
-    if (curr < max && !_cycles.insert(max - 1, cycle())) {
+    if (curr < max && !_stages.insert(max - 1, Stage())) {
         return false;
     }
-    _flags |= LimitCycles;
+    _flags |= LimitStages;
     return true;
 }
 void Cycle::limitDimensions(uint8_t md)
 {
     _maxDimensions = md;
+}
+
+bool Cycle::Stage::transform(const Transform &tr)
+{
+    return _values.set(tr, rawdata_stage::values());
 }
 __MPT_NAMESPACE_END

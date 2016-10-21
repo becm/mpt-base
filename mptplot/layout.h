@@ -294,7 +294,7 @@ MPT_STRUCT(linepart)
 	        _trim;  /* remove fraction from line start/end */
 };
 
-MPT_STRUCT(cycle)
+MPT_STRUCT(rawdata_stage)
 #ifdef _MPT_ARRAY_H
 {
 #ifdef __cplusplus
@@ -327,7 +327,7 @@ MPT_INTERFACE(rawdata) : public unrefable
 	
 	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
 	virtual int dimensions(int = -1) const = 0;
-	virtual int cycles() const = 0;
+	virtual int stages() const = 0;
     protected:
 	inline ~rawdata() { }
 };
@@ -341,7 +341,7 @@ MPT_INTERFACE_VPTR(rawdata) {
 	
 	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
 	int (*dimensions)(const MPT_INTERFACE(rawdata) *, int);
-	int (*cycles)(const MPT_INTERFACE(rawdata) *);
+	int (*stages)(const MPT_INTERFACE(rawdata) *);
 }; MPT_INTERFACE(rawdata) {
 	const MPT_INTERFACE_VPTR(rawdata) *_vptr;
 };
@@ -419,10 +419,10 @@ extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
 extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
 /* multi dimension data operations */
-extern MPT_STRUCT(typed_array) *mpt_cycle_data(MPT_STRUCT(cycle) *, unsigned , int __MPT_DEFPAR(-1));
-extern void mpt_cycle_fini(MPT_STRUCT(cycle) *);
+extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned , int __MPT_DEFPAR(-1));
+extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
 /* set dimensions to defined size */
-extern ssize_t mpt_cycle_truncate(MPT_STRUCT(cycle) *, size_t __MPT_DEFPAR(0));
+extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
 
 /* create cycle interface with default data parts */
 extern MPT_INTERFACE(rawdata) *mpt_rawdata_create(size_t);
@@ -464,14 +464,14 @@ class Transform : public unrefable
 public:
     virtual int dimensions() const = 0;
     
-    virtual linepart part(unsigned dim, const double *val, int len) const;
-    virtual bool apply(unsigned dim, const linepart &, point<double> *dest, const double *from) const;
+    virtual linepart part(unsigned , const double *, int) const;
+    virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
     virtual point<double> zero() const;
 protected:
     inline ~Transform() { }
 };
 
-extern int applyLineData(point<double> *dest, const linepart *lp, int plen, Transform &tr, const cycle &);
+extern int applyLineData(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
 
 class Transform3 : public Transform
 {
@@ -485,8 +485,8 @@ public:
     
     int dimensions() const __MPT_OVERRIDE;
     
-    linepart part(unsigned dim, const double *val, int len) const __MPT_OVERRIDE;
-    bool apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const __MPT_OVERRIDE;
+    linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
+    bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
     point<double> zero() const __MPT_OVERRIDE;
     
     transform tx, ty, tz; /* dimension transformations */
@@ -512,8 +512,10 @@ public:
     class Part
     {
     public:
-        Slice<const Point> line();
-        Slice<const Point> points();
+        Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
+        { }
+        Slice<const Point> line() const;
+        Slice<const Point> points() const;
     protected:
         linepart _part;
         const Point *_pts;
@@ -521,23 +523,27 @@ public:
     class iterator
     {
     public:
-        iterator(const Polyline *pts);
+        iterator(Slice<const linepart> l, const Point *p) : _parts(l), _points(p)
+        { }
         Part operator *() const;
         iterator & operator++ ();
         
         bool operator== (const iterator &it) const
         { return _points == it._points; }
         inline bool operator!= (const iterator &it) const
-        { return !iterator::operator!=(it); }
+        { return !operator==(it); }
     protected:
         Slice<const linepart> _parts;
         const Point *_points;
     };
     bool set(const Transform &, const rawdata &, int = -1);
-    bool set(const Transform &, const cycle &);
+    bool set(const Transform &, Slice<const typed_array>);
 
     iterator begin() const;
     iterator end() const;
+    
+    inline void clear()
+    { _vis.set(0); _values.resize(0); }
     
     Slice<const linepart> parts() const
     { return _vis.slice(); }
@@ -551,12 +557,23 @@ protected:
 class Cycle : public rawdata
 {
 public:
-    enum {
-        LimitCycles
+    enum Flags {
+        LimitStages = 1
     };
     inline Cycle() : _flags(0)
     { }
     
+    class Stage : public rawdata_stage
+    {
+    public:
+        inline const Polyline &values() const
+        { return _values; }
+        inline void invalidate()
+        { _values.clear(); }
+        bool transform(const Transform &);
+    protected:
+        Polyline _values;
+    };
     /* add for extensions */
     virtual uintptr_t addref();
     
@@ -568,13 +585,21 @@ public:
     
     int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
     int dimensions(int = -1) const __MPT_OVERRIDE;
-    int cycles() const __MPT_OVERRIDE;
+    int stages() const __MPT_OVERRIDE;
     
     virtual void limitDimensions(uint8_t);
-    virtual bool limitCycles(size_t);
+    virtual bool limitStages(size_t);
+    
+    inline Stage *begin()
+    { return _stages.begin(); }
+    inline Stage *end()
+    { return _stages.end(); }
+    
+    Slice<const Stage> slice() const
+    { return _stages.slice(); }
 protected:
     virtual ~Cycle();
-    Array<cycle> _cycles;
+    Array<Stage> _stages;
     uint16_t _act;
     uint8_t _maxDimensions;
     uint8_t _flags;
@@ -659,10 +684,12 @@ protected:
 class Graph : public Collection, public Transform3, public graph
 {
 public:
-    class Data : public Array<Polyline>
+    class Data : public unrefable
     {
     public:
         Data(World *w = 0);
+        virtual ~Data()
+        { }
         
         inline void unref()
         { delete this; }

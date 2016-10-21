@@ -9,19 +9,19 @@
 
 /*!
  * \ingroup mptPlot
- * \brief get/create 
+ * \brief get/create stage dimension
  * 
- * Set flags and get target address for raw data slice.
+ * Set flags and get target array for raw data dimension.
  * 
- * \param cyc  raw data descriptor
+ * \param st   raw data stage data
  * \param dim  dimension to process
- * \param fmt  slice data type and flags
+ * \param fmt  array data flags
  * 
  * \return dimension data array
  */
-extern MPT_STRUCT(typed_array) *mpt_cycle_data(MPT_STRUCT(cycle) *cyc, unsigned dim, int flg)
+extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim, int flg)
 {
-	MPT_STRUCT(buffer) *buf = cyc->_d._buf;
+	MPT_STRUCT(buffer) *buf = st->_d._buf;
 	MPT_STRUCT(typed_array) *arr;
 	
 	/* reuse existing dimension */
@@ -47,10 +47,10 @@ extern MPT_STRUCT(typed_array) *mpt_cycle_data(MPT_STRUCT(cycle) *cyc, unsigned 
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(arr = mpt_array_insert(&cyc->_d, dim * sizeof(*arr), 0))) {
+	if (!(arr = mpt_array_insert(&st->_d, dim * sizeof(*arr), 0))) {
 		return arr;
 	}
-	arr->_flags  = flg;
+	arr->_flags  = flg & ~MPT_ENUM(ValueCreate);
 	arr->_esize  = 0;
 	arr->_format = 0;
 	

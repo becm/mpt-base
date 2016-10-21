@@ -442,7 +442,7 @@ const Reference<Cycle> *Graph::cycle(int pos) const
         World *w;
         if ((w = d->world.pointer())) {
             c->limitDimensions(3);
-            c->limitCycles(w->cyc);
+            c->limitStages(w->cyc);
         }
     }
     return &d->cycle;
