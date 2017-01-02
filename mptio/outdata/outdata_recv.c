@@ -18,13 +18,12 @@
 
 /*!
  * \ingroup mptOutput
- * \brief syncronize connection
+ * \brief get socket datagram
  * 
- * Wait for all sent messages to produce reply.
- * Interrupt (return -2) if non-reply message is received.
+ * Save datagram source and id to reply context and
+ * payload to data buffer.
  * 
- * \param out      output data descriptor
- * \param timeout  time to wait for return messages
+ * \param out  output data descriptor
  * 
  * \return state of operation
  */
@@ -100,7 +99,7 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 		if (ctx) {
 			ctx->used = 0;
 		}
-		return 0;
+		return MPT_ERROR(BadOperation);
 	}
 	if (curr < out->_idlen) {
 		if (ctx) {

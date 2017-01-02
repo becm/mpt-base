@@ -232,7 +232,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	con->out.state &= ~MPT_ENUM(OutputReceived);
 	
 	if (!(ret = con->_ctxpos)) {
-		if (!cmd) {
+		if (cmd) {
 			ret = cmd(arg, &ev);
 		}
 		return ret;
