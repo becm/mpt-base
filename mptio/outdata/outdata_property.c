@@ -5,6 +5,9 @@
 #include <string.h>
 #include <strings.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "queue.h"
 #include "stream.h"
 
@@ -16,83 +19,27 @@
 
 #include "output.h"
 
-static int outdataConnection(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
+static int outdataSocket(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
 {
-	char *where;
+	
+	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	int len;
 	
-	/* use default connection */
 	if (!src) {
-		where = "Ip:[::]:16565";
-		len = 0;
+		return MPT_ERROR(BadArgument);
 	}
 	if (out->state & MPT_ENUM(OutputActive)) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!src || (len = src->_vptr->conv(src, 's', &where)) >= 0) {
-		int ret;
-		if ((ret = mpt_outdata_open(out, where, 0)) < 0) {
-			return ret;
+	if (src && (len = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0) {
+		int val;
+		socklen_t valsz = sizeof(val);
+		if (getsockopt(sock._id, SOL_SOCKET, SO_TYPE, &val, &valsz) < 0) {
+			return MPT_ERROR(BadOperation);
 		}
-		return 1;
+		return MPT_ERROR(BadValue);
 	}
 	return MPT_ERROR(BadType);
-}
-
-static int outputEncoding(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
-{
-	MPT_TYPE(DataEncoder) enc;
-	MPT_TYPE(DataDecoder) dec;
-	MPT_STRUCT(stream) *srm;
-	char *where;
-	int32_t val;
-	int res;
-	uint8_t rtype;
-	
-	if (!src) {
-		rtype = out->_coding;
-	}
-	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {
-		val = mpt_encoding_value(where, -1);
-		if (val < 0 || val > UINT8_MAX) {
-			return -2;
-		}
-		rtype = val;
-	}
-	else if ((res = src->_vptr->conv(src, 'y', &rtype)) < 0) {
-		res = src->_vptr->conv(src, 'i', &val);
-		if (res < 0 || val < 0 || val > UINT8_MAX) {
-			return -3;
-		}
-		rtype = val;
-	}
-	if (!rtype) {
-		/* active stream needs encoding */
-		if (!MPT_socket_active(&out->sock) && out->_buf) {
-			return MPT_ERROR(BadValue);
-		}
-		enc = 0;
-		dec = 0;
-	}
-	else if (!(enc = mpt_message_encoder(rtype))
-	    || !(dec = mpt_message_decoder(rtype))) {
-		return -3;
-	}
-	if (MPT_socket_active(&out->sock) || !(srm = out->_buf)) {
-		out->_coding = rtype;
-		return res;
-	}
-	if (srm->_wd._enc) {
-		srm->_wd._enc(&srm->_wd._state, 0, 0);
-		srm->_wd._enc = enc;
-	}
-	if (srm->_rd._dec) {
-		srm->_rd._dec(&srm->_rd._state, 0, 0);
-		srm->_rd._dec = dec;
-	}
-	out->_coding = rtype;
-	
-	return res;
 }
 
 static int outdataColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
@@ -136,14 +83,11 @@ static int outdataColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
 extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	if (!name) {
-		return src ? outdataConnection(od, src) : MPT_ENUM(TypeSocket);
+		return src ? outdataSocket(od, src) : MPT_ENUM(TypeSocket);
 	}
 	/* cast operation */
 	if (!*name) {
-		return outdataConnection(od, src);
-	}
-	if (!strcasecmp(name, "encoding")) {
-		return outputEncoding(od, src);
+		return outdataSocket(od, src);
 	}
 	if (!strcasecmp(name, "color")) {
 		return outdataColor(&od->state, src);

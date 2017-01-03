@@ -16,48 +16,10 @@
 #include "convert.h"
 #include "meta.h"
 
+#include "stream.h"
+
 #include "output.h"
 
-static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
-{
-	const char *where = 0;
-	int len;
-	FILE *fd;
-	
-	if (!src) {
-		return *hist ? 1 : 0;
-	}
-	if ((len = src->_vptr->conv(src, 's', &where)) < 0) {
-		return len;
-	} else if (!where) {
-		fd = stdout;
-	} else if (!*where) {
-		fd = 0;
-	} else {
-		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
-		int mode;
-		
-		/* try to use argument as connect string */
-		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
-			if (!(mode & MPT_ENUM(SocketStream))
-			    || !(mode & MPT_ENUM(SocketWrite))
-			    || !(fd = fdopen(sock._id, "w"))) {
-				mpt_connect(&sock, 0, 0);
-				return -1;
-			}
-		}
-		/* regular file path */
-		else if (!(fd = fopen(where, "w"))) {
-			return -1;
-		}
-	}
-	if (*hist && (*hist != stdout) && (*hist != stderr)) {
-		fclose(*hist);
-	}
-	*hist = fd;
-	
-	return len;
-}
 /* set level limit */
 static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 {
@@ -78,6 +40,67 @@ static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
 		return ret;
 	}
 	return MPT_ERROR(BadType);
+}
+
+static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *src)
+{
+	MPT_TYPE(DataEncoder) enc;
+	MPT_TYPE(DataDecoder) dec;
+	MPT_STRUCT(stream) *srm;
+	char *where;
+	int32_t val;
+	int res;
+	uint8_t rtype;
+	
+	if (MPT_socket_active(&con->out.sock)) {
+		if (src) {
+			return MPT_ERROR(BadOperation);
+		}
+		return 0;
+	}
+	srm = (void *) con->out.buf._buf;
+	if (!src) {
+		if (!srm) {
+			return MPT_ERROR(BadOperation);
+		}
+		rtype = MPT_ENUM(EncodingCobs);
+	}
+	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {
+		val = mpt_encoding_value(where, -1);
+		if (val < 0 || val > UINT8_MAX) {
+			return -2;
+		}
+		rtype = val;
+	}
+	else if ((res = src->_vptr->conv(src, 'y', &rtype)) < 0) {
+		res = src->_vptr->conv(src, 'i', &val);
+		if (res < 0 || val < 0 || val > UINT8_MAX) {
+			return MPT_ERROR(BadValue);
+		}
+		rtype = val;
+	}
+	/* active stream needs valid coding */
+	if (!rtype
+	    || !(enc = mpt_message_encoder(rtype))
+	    || !(dec = mpt_message_decoder(rtype))) {
+		return MPT_ERROR(BadValue);
+	}
+	if (srm->_wd._enc && (enc != srm->_wd._enc)) {
+		if (srm->_wd.data.max) {
+			return MPT_ERROR(BadOperation);
+		}
+		srm->_wd._enc(&srm->_wd._state, 0, 0);
+	}
+	if (srm->_rd._dec && (dec != srm->_rd._dec)) {
+		if (srm->_rd.data.max) {
+			return MPT_ERROR(BadOperation);
+		}
+		srm->_rd._dec(&srm->_rd._state, 0, 0);
+	}
+	srm->_wd._enc = enc;
+	srm->_rd._dec = dec;
+	
+	return res;
 }
 /*!
  * \ingroup mptOutput
@@ -101,11 +124,8 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 		}
 		return ret;
 	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		return setHistfile(&con->hist.file, src);
-	}
-	else if (!strcasecmp(name, "histfmt")) {
-		return mpt_valfmt_set(&con->hist.info._fmt, src);
+	if (!strcasecmp(name, "encoding")) {
+		return connectionEncoding(con, src);
 	}
 	if (!strcasecmp(name, "level")) {
 		uint8_t v = con->level;
@@ -185,22 +205,6 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->val.ptr = &con->out.sock;
 		
 		return 0;
-	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		pr->name = "history";
-		pr->desc = MPT_tr("history data output file");
-		pr->val.fmt = "";
-		pr->val.ptr = con->hist.file;
-		return con->hist.file ? 1 : 0;
-	}
-	if (!strcasecmp(name, "histfmt")) {
-		MPT_STRUCT(buffer) *buf;
-		pr->name = "histfmt";
-		pr->desc = "history data output format";
-		pr->val.fmt = "@";
-		pr->val.ptr = &con->hist.info._fmt;
-		buf = con->hist.info._fmt._buf;
-		return buf ? buf->used : 0;
 	}
 	if (!strcmp(name, "level") || !strcmp(name, "debug") || !strcasecmp(name, "answer")) {
 		pr->name = "level";

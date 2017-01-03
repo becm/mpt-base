@@ -34,45 +34,28 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 	ssize_t ret;
 	MPT_STRUCT(buffer) *buf;
 	
-	/* use stream data */
-	if (!MPT_socket_active(&od->sock)) {
-		MPT_STRUCT(stream) *srm;
-		
-		ret = len;
-		if (!(srm = od->_buf)) {
-			return MPT_ERROR(BadArgument);
-		}
-		if ((ret = mpt_stream_push(srm, len, src)) < 0) {
-			return ret;
-		}
-		if (len) {
-			od->state |= MPT_ENUM(OutputActive);
-		} else {
-			if (srm) {
-				mpt_stream_flush(srm);
-			}
-			od->state &= ~MPT_ENUM(OutputActive);
-		}
-		return ret;
-	}
 	/* existing new data */
 	if (od->state & MPT_ENUM(OutputReceived)) {
 		return MPT_ERROR(MessageInput);
 	}
 	if (len) {
-		if (!(od->state & MPT_ENUM(OutputActive))) {
-			if (!src) {
-				if (len != 1) {
-					return MPT_ERROR(BadOperation);
-				}
-				od->state &= ~MPT_ENUM(OutputActive);
-				return 0;
+		/* reset outpu data */
+		if (!src) {
+			if (len != 1) {
+				return MPT_ERROR(BadOperation);
 			}
-			if ((buf = od->_buf)) {
+			if ((buf = od->buf._buf)) {
 				buf->used = 0;
 			}
+			od->state &= ~MPT_ENUM(OutputActive);
+			return 0;
 		}
-		if (!mpt_array_append((MPT_STRUCT(array) *) &od->_buf, len, src)) {
+		/* force atomic message id start */
+		if (od->_idlen && !(od->state & MPT_ENUM(OutputActive)) && len != od->_idlen) {
+			return MPT_ERROR(BadValue);
+		}
+		/* new data to push */
+		if (!mpt_array_append(&od->buf, len, src)) {
 			return MPT_ERROR(BadOperation);
 		}
 		od->state |= MPT_ENUM(OutputActive);
@@ -82,15 +65,24 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		struct msghdr mhdr;
 		struct iovec out;
 		
-		if (!(buf = od->_buf)) {
+		if (!(buf = od->buf._buf)) {
 			len = 0;
 		} else {
 			len = buf->used;
+			buf->used = 0;
+		}
+		
+		if (!MPT_socket_active(&od->sock)) {
+			return 0;
 		}
 		/* destination address */
-		mhdr.msg_name    = 0;
-		mhdr.msg_namelen = 0;
-		
+		if (src) {
+			mhdr.msg_name    = (void *) src;
+			mhdr.msg_namelen = od->_scurr;
+		} else {
+			mhdr.msg_name    = 0;
+			mhdr.msg_namelen = 0;
+		}
 		/* set output */
 		out.iov_base = buf+1;
 		out.iov_len  = len;

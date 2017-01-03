@@ -57,18 +57,19 @@ static ssize_t outputWrite(FILE *fd, size_t len, const void *src)
 
 /*!
  * \ingroup mptOutput
- * \brief print message processing
+ * \brief write text message parts
  * 
- * Check for type on initial data and set outdata
+ * Check for type on initial data and set
  * state for continous call.
  * 
- * \param od   output data
- * \param len  size of new data
- * \param src  data to add
+ * \param state  output state flags
+ * \param hist   history file
+ * \param len    size of new data
+ * \param src    data to add
  * 
  * \return output file descriptor
  */
-extern ssize_t mpt_outdata_print(uint8_t *state, FILE *hist, size_t len, const void *src)
+extern ssize_t mpt_file_print(uint8_t *state, FILE *hist, size_t len, const void *src)
 {
 	const MPT_STRUCT(msgtype) *mt;
 	const char *prefix;
@@ -119,10 +120,10 @@ extern ssize_t mpt_outdata_print(uint8_t *state, FILE *hist, size_t len, const v
 	
 	/* setup answer output */
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
-		type  = mt->arg;
+		type = mt->arg;
 	}
 	else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
-		type  = answerType(mt->arg);
+		type = answerType(mt->arg);
 	}
 	else {
 		return MPT_ERROR(BadType);

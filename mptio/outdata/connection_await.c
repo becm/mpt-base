@@ -22,8 +22,9 @@
  * 
  * The next new message will use the registered ID.
  * 
- * \param con      connection descriptor
- * \param timeout  time to wait for return messages
+ * \param con   connection descriptor
+ * \param ctl   function to call on answer
+ * \param udata user argument to callback function
  * 
  * \return state of property
  */
@@ -32,7 +33,8 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 	MPT_STRUCT(command) *cmd;
 	size_t max;
 	
-	if (!MPT_socket_active(&con->out.sock) || !(con->out._buf)) {
+	/* no socket or stream open */
+	if (!MPT_socket_active(&con->out.sock) && !(con->out.buf._buf)) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* message in progress */

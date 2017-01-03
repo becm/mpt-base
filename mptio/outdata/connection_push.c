@@ -2,38 +2,28 @@
  * finalize connection data
  */
 
-#include <stdio.h>
-
-#include <sys/uio.h>
-
-#include <arpa/inet.h>
-
 #include "event.h"
-#include "message.h"
-
 #include "array.h"
+#include "stream.h"
+
+#include "message.h"
 
 #include "output.h"
 
-#define AnswerFlags(a) ((a & 0xf0) >> 4)
-#define OutputFlags(a) (a & 0xf)
-
-static int answerType(int code)
+static void deregisterCommand(const _MPT_ARRAY_TYPE(command) *wait, uintptr_t id)
 {
-	if (!code) {
-		return MPT_LOG(Debug);
+	MPT_STRUCT(command) *ans;
+	
+	if ((ans = mpt_command_get(wait, id))) {
+		ans->cmd(ans->arg, 0);
 	}
-	else if (code < 0) {
-		return MPT_LOG(Error);
-	}
-	return MPT_LOG(Info);
 }
 
 /*!
  * \ingroup mptOutput
  * \brief push to connection
  * 
- * Get property for connection or included outdata.
+ * Handle data push operations and state transitions.
  * 
  * \param con  connection descriptor
  * \param len  length of new data
@@ -43,106 +33,78 @@ static int answerType(int code)
  */
 extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, const void *src)
 {
+	MPT_STRUCT(stream) *srm;
 	ssize_t ret;
 	
-	/* message in progress */
-	if (con->out.state & MPT_ENUM(OutputActive)) {
-		/* local print condition */
-		if (con->out.state & 0x7) {
-			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
-		}
-		/* history output triggered */
-		else if (con->hist.info.lfmt) {
-			ret = mpt_history_print(con->hist.file, &con->hist.info, len, src);
-		}
-		else {
-			ret = mpt_outdata_push(&con->out, len, src);
-		}
-		if (ret < 0) {
-			return ret;
-		}
-		if (!len) {
-			con->cid = 0;
-			con->out.state &= MPT_ENUM(OutputPrintColor);
-			con->hist.info.lfmt = 0;
-		}
-		return ret;
+	/* determine active backend */
+	if (MPT_socket_active(&con->out.sock)) {
+		srm = 0;
 	}
-	if (!src) {
-		return MPT_ERROR(BadOperation);
+	else if (!(srm = (void *) con->out.buf._buf)) {
+		return MPT_ERROR(BadArgument);
 	}
-	/* message in progress */
-	if (con->out.state & MPT_ENUM(OutputReceived)) {
-		return MPT_ERROR(MessageInProgress);
-	}
-	/* local filter for message */
-	if (!(con->out.state & MPT_ENUM(OutputRemote))) {
-		const MPT_STRUCT(msgtype) *mt = src;
-		int type, flags = -1;
+	/* new message start */
+	if (!(con->out.state & MPT_ENUM(OutputActive))
+	    && con->out._idlen) {
+		uint8_t buf[64];
 		
-		/* convert history to printable output */
-		if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-			/* reset history state */
-			mpt_history_reset(&con->hist.info);
-			con->hist.info.lfmt = -1;
-			
-			/* assume block termination */
-			if (len < 2) {
-				con->hist.info.pos.elem = 1;
-				con->out.state |= MPT_ENUM(OutputActive);
-				return 1;
-			}
-			con->hist.info.pos.fmt = mt->arg;
-			
-			if (!con->hist.file) {
-				con->out.state |= MPT_ENUM(OutputActive);
-				return 0;
-			}
-			ret = 0;
-			if ((len -= 2)
-			    && (ret = mpt_history_print(con->hist.file, &con->hist.info, len, mt+1)) < 0) {
-				return ret;
-			}
-			con->out.state |= MPT_ENUM(OutputActive);
-			
-			return ret + 2;
+		/* create normalized ID */
+		if (sizeof(buf) < con->out._idlen) {
+			return MPT_ERROR(BadValue);
 		}
-		if (len < 2) {
-			return MPT_ERROR(MissingData);
-		}
-		/* setup answer output */
-		if (mt->cmd == MPT_ENUM(MessageOutput)) {
-			type  = mt->arg;
-			flags = OutputFlags(con->level);
-		}
-		else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
-			type  = answerType(mt->arg);
-			flags = AnswerFlags(con->level);
-		}
-		if (flags >= 0) {
-			flags = mpt_outdata_type(type, flags);
-			
-			if (!flags) {
-				flags = MPT_ENUM(OutputPrintRestore);
-			}
-			con->out.state = (con->out.state & ~0x7) | (flags & 0x7);
-			
-			return mpt_outdata_print(&con->out.state, con->hist.file, len, src);
-		}
-	}
-	/* prepend message ID */
-	if (con->out._idlen) {
-		uint8_t buf[sizeof(uintptr_t)];
-		
 		if ((ret = mpt_message_id2buf(con->cid, buf, con->out._idlen)) < 0) {
 			return ret;
 		}
-		if ((ret = mpt_outdata_push(&con->out, con->out._idlen, buf)) < 0) {
+		/* use stream backend */
+		if (srm) {
+			ret = mpt_stream_push(srm, con->out._idlen, buf);
+			if (ret >= 0) {
+				/* force atomic id push */
+				if (ret < con->out._idlen) {
+					mpt_stream_push(srm, 1, 0);
+					if (con->cid) {
+						deregisterCommand(&con->_wait, con->cid);
+					}
+					return MPT_ERROR(MissingBuffer);
+				} else {
+					con->out.state |= MPT_ENUM(OutputActive);
+				}
+			}
+		}
+		/* use socket backend (has atomic guarantee for ID setup) */
+		else if ((ret = mpt_outdata_push(&con->out, con->out._idlen, buf)) < 0) {
+			if (con->cid) {
+				deregisterCommand(&con->_wait, con->cid);
+			}
 			return ret;
 		}
 	}
-	if ((ret = mpt_outdata_push(&con->out, len, src)) < 0) {
-		mpt_outdata_push(&con->out, 1, 0);
+	/* regular message payload */
+	if (srm) {
+		if ((ret = mpt_stream_push(srm, len, src)) < 0) {
+			/* push operation failed */
+			if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
+				mpt_stream_push(srm, 1, 0);
+			}
+			con->out.state &= ~MPT_ENUM(OutputActive);
+		}
+		/* message completed */
+		else if (!len) {
+			con->out.state &= ~MPT_ENUM(OutputActive);
+			mpt_stream_flush(srm);
+			con->cid = 0;
+		} else {
+			con->out.state |= MPT_ENUM(OutputActive);
+		}
+	}
+	else if ((ret = mpt_outdata_push(&con->out, len, src)) < 0) {
+		if (con->out.state & MPT_ENUM(OutputActive)) {
+			mpt_outdata_push(&con->out, 1, 0);
+		}
+	}
+	if (ret < 0 && con->cid) {
+		/* clear pending reply */
+		deregisterCommand(&con->_wait, con->cid);
 	}
 	return ret;
 }

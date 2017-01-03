@@ -17,8 +17,7 @@
 
 int main(int argc, char *argv[])
 {
-	struct mpt_outdata out = MPT_OUTDATA_INIT;
-	struct mpt_stream *srm;
+	struct mpt_connection con = MPT_CONNECTION_INIT;
 	int flg;
 	char txt[8];
 	
@@ -27,47 +26,40 @@ int main(int argc, char *argv[])
 		fputs(" <target>\n", stderr);
 		return 1;
 	}
-	if ((flg = mpt_outdata_connect(&out, argv[1], 0)) < 0) {
+	if ((flg = mpt_connection_open(&con, argv[1], 0)) < 0) {
 		perror("connect");
 		return 1;
 	}
-	if (flg & MPT_ENUM(SocketStream) && (srm = out._buf)) {
-		srm->_wd._enc = mpt_encode_cobs;
-	}
+	con.out._idlen = 2;
 	
 	while (fgets(txt, sizeof(txt), stdin)) {
 		const char *end;
 		size_t len = sizeof(txt);
 		
-		if ((end = memchr(txt, 0, len))) len = end - txt;
-		
+		/* line end in buffer */
+		if ((end = memchr(txt, 0, len))) {
+			len = end - txt;
+		}
 		if (!len) continue;
 		
-		/* add zero id for bidirectional */
-		if ((flg & MPT_ENUM(SocketRead)) && !(out.state & MPT_ENUM(OutputActive))) {
-			static const uint16_t mid = 0;
-			if (mpt_outdata_push(&out, sizeof(mid), &mid) < 0) {
-				break;
-			}
-		}
 		/* push text */
 		if (txt[len-1] != '\n') {
-			if (mpt_outdata_push(&out, len, txt) < 0) {
+			if (mpt_connection_push(&con, len, txt) < 0) {
 				perror("transmit part");
 				break;
 			}
 			continue;
 		}
-		if (mpt_outdata_push(&out, --len, txt) < 0) {
+		if (mpt_connection_push(&con, --len, txt) < 0) {
 			perror("transmit last");
 			break;
 		}
-		if (len && mpt_outdata_push(&out, 0, 0) < 0) {
+		if (len && mpt_connection_push(&con, 0, 0) < 0) {
 			perror("transmit separation");
 			break;
 		}
 	}
-	mpt_outdata_fini(&out);
+	mpt_connection_fini(&con);
 	return 0;
 }
 

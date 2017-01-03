@@ -129,11 +129,11 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	ret = mpt_connection_set(&od->con, name, src);
 	if (ret < 0) {
 		if (!name || !*name) {
-			mpt_output_log(&od->_out, _fcn, MPT_LOG(Debug), "%s",
-			               MPT_tr("unable to assign output"));
+			mpt_log(0, _fcn, MPT_LOG(Debug), "%s",
+			        MPT_tr("unable to assign output"));
 		} else {
-			mpt_output_log(&od->_out, _fcn, MPT_LOG(Debug), "%s: %s",
-			               MPT_tr("unable to set property"), name);
+			mpt_log(0, _fcn, MPT_LOG(Debug), "%s: %s",
+			        MPT_tr("unable to set property"), name);
 		}
 	}
 	newFd = in->_vptr->_file(in);
@@ -150,17 +150,17 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	}
 	/* add local reference for event controller */
 	if (!outputRef((void *) &od->_out)) {
-		mpt_output_log(&od->_out, _fcn, MPT_LOG(Error), "%s: %s "PRIxPTR,
-		               MPT_tr("failed"),
-		               MPT_tr("reference output"),
-		               od);
+		mpt_log(0, _fcn, MPT_LOG(Error), "%s: %s "PRIxPTR,
+		        MPT_tr("failed"),
+		        MPT_tr("reference output"),
+		        od);
 	}
 	/* use first reference for notifier */
 	else if (mpt_notify_add(od->_no, POLLIN, &od->_in) < 0) {
-		mpt_output_log(&od->_out, _fcn, MPT_LOG(Error), "%s: %s: fd%i",
-		               MPT_tr("failed"),
-		               MPT_tr("register notifier"),
-		               newFd);
+		mpt_log(0, _fcn, MPT_LOG(Error), "%s: %s: fd%i",
+		        MPT_tr("failed"),
+		        MPT_tr("register notifier"),
+		        newFd);
 		/* clear references */
 		outputUnref((void *) &od->_out);
 	}
@@ -176,6 +176,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 {
 	static const char _func[] = "mpt::output::sync";
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
+	int pos;
 	
 	if (!od->con.out._idlen) {
 		return 0;
@@ -183,26 +184,19 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 	if (!MPT_socket_active(&od->con.out.sock)) {
 		MPT_STRUCT(stream) *srm;
 		
-		if (!(srm = od->con.out._buf)) {
+		if (!(srm = (void *) od->con.out.buf._buf)) {
 			return MPT_ERROR(BadArgument);
 		}
 		return mpt_stream_sync(srm, od->con.out._idlen, &od->con._wait, timeout);
 	}
 	while (1) {
-		MPT_STRUCT(reply_context) *rc;
 		MPT_STRUCT(buffer) *buf;
 		MPT_STRUCT(command) *ans;
 		uint64_t ansid;
-		int pos;
+		uint8_t *data, idlen;
 		
 		/* use existing data */
-		if (od->con.out.state & MPT_ENUM(OutputReceived)) {
-			if (!(pos = od->con._ctxpos)) {
-				return 0;
-			}
-		}
-		/* get new datagram */
-		else {
+		if (!(od->con.out.state & MPT_ENUM(OutputReceived))) {
 			struct pollfd p;
 			
 			p.fd = od->con.out.sock._id;
@@ -214,37 +208,55 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			if (!pos) {
 				return 0;
 			}
-			timeout = 0;
 			if ((pos = mpt_outdata_recv(&od->con.out)) < 0) {
-				mpt_output_log(&od->_out, __func__, MPT_LOG(Error), "%s: %s",
-				               MPT_tr("receive failed"), MPT_tr("unable to get new data"));
+				mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+				        MPT_tr("receive failed"), MPT_tr("unable to get new data"));
 				return MPT_ERROR(BadOperation);
 			}
-			if (!(od->con._ctxpos = pos)) {
+			timeout = 0;
+		}
+		idlen = od->con.out._idlen;
+		buf = od->con.out.buf._buf;
+		data = (void *) (buf + 1);
+		
+		if (!buf || buf->used < idlen) {
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+			        MPT_tr("bad message size"), MPT_tr("unable to get new data"));
+			return MPT_ERROR(BadValue);
+		}
+		/* no reply message */
+		if (!(data[0] & 0x80)) {
+			size_t max, len;
+			
+			if (!(buf = od->con._wait._buf)) {
 				return 0;
 			}
-		}
-		/* no context or reply */
-		if (!(buf = od->con.out._ctx._buf)
-		    || !(rc = ((void **) (buf + 1))[pos-1])
-		    || !(rc->_val[0] & 0x80)) {
-			return 0;
+			ans = (void *) (buf + 1);
+			max = buf->used / sizeof(*ans);
+			len = 0;
+			
+			/* count waiting slots */
+			while (max--) {
+				if ((ans++)->cmd) {
+					++len;
+				}
+			}
+			return len;
 		}
 		od->con.out.state &= ~MPT_ENUM(OutputReceived);
-		rc->_val[0] &= 0x7f;
-		pos = mpt_message_buf2id(rc->_val, rc->len, &ansid);
+		data[0] &= 0x7f;
+		pos = mpt_message_buf2id(data, idlen, &ansid);
 		
 		if (pos < 0 || pos > (int) sizeof(uintptr_t)) {
-			mpt_output_log(&od->_out, _func, MPT_LOG(Error), "%s (%i)",
-			               MPT_tr("bad message id"), pos);
+			mpt_log(0, _func, MPT_LOG(Error), "%s (%i)",
+			        MPT_tr("bad message id"), pos);
 			return MPT_ERROR(BadValue);
 		}
 		if ((ans = mpt_command_get(&od->con._wait, ansid))) {
 			MPT_STRUCT(message) msg;
 			
-			buf = od->con.out._buf;
-			msg.base = buf + 1;
-			msg.used = buf->used;
+			msg.base = data + idlen;
+			msg.used = buf->used - idlen;
 			msg.cont = 0;
 			msg.clen = 0;
 			
@@ -253,8 +265,8 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			}
 			continue;
 		}
-		mpt_output_log(&od->_out, _func, MPT_LOG(Error), "%s (%" PRIx64 ")",
-		               MPT_tr("bad reply id"), ansid);
+		mpt_log(0, _func, MPT_LOG(Error), "%s (%" PRIx64 ")",
+		        MPT_tr("bad reply id"), ansid);
 		return MPT_ERROR(BadValue);
 	}
 }
@@ -283,15 +295,14 @@ static void outputInputUnref(MPT_INTERFACE(unrefable) *in)
 static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 {
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
-	MPT_STRUCT(stream) *srm;
 	MPT_STRUCT(buffer) *buf;
 	int keep = 0;
 	
 	if (!MPT_socket_active(&od->con.out.sock)) {
-		if (!(srm = od->con.out._buf)) {
+		if (!(buf = od->con.out.buf._buf)) {
 			return -3;
 		}
-		return mpt_stream_poll(srm, what, 0);
+		return mpt_stream_poll((void *) buf, what, 0);
 	}
 	if (what & POLLIN) {
 		int ret;
@@ -301,32 +312,42 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 		}
 		/* get new datagram */
 		else if ((ret = mpt_outdata_recv(&od->con.out)) < 0) {
-			mpt_output_log(&od->_out, __func__, MPT_LOG(Error), "%s: %s",
-			               MPT_tr("receive failed"), MPT_tr("unable to get new data"));
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+			        MPT_tr("receive failed"), MPT_tr("unable to get new data"));
+		}
+		/* message size invalid */
+		else if (ret < od->con.out._idlen) {
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s: %d < %d",
+			        MPT_tr("bad message size"), MPT_tr("messag smaller than id"),
+			        ret, od->con.out._idlen);
 		}
 		/* save input parameters */
 		else {
-			od->con._ctxpos = ret;
-			od->con.out.state |= MPT_ENUM(OutputReceived);
 			keep = POLLIN;
+			what &= ~POLLHUP;
 		}
 	}
 	if ((what & POLLOUT)
-	    && !od->con._ctxpos
 	    && !(od->con.out.state & (MPT_ENUM(OutputActive) | MPT_ENUM(OutputReceived)))
-	    && (buf = od->con.out._buf)
+	    && (buf = od->con.out.buf._buf)
 	    && buf->used) {
-		if (od->con.out._socklen) {
-			keep |= POLLOUT;
+		const struct sockaddr *addr = 0;
+		uint8_t *base = (void *) (buf + 1);
+		ssize_t len = od->con.out._scurr;
+		
+		if (len) {
+			addr = (const struct sockaddr *) (base + buf->used - len);
 		}
-		else if (send(od->con.out.sock._id, buf+1, buf->used, 0) >= 0) {
+		if (sendto(od->con.out.sock._id, base, buf->used, 0, addr, len) >= 0) {
 			buf->used = 0;
+			od->con.out._scurr = 0;
+			if (keep < 0) {
+				keep = 0;
+			}
 		}
 	}
 	if (what & POLLHUP) {
-		close(od->con.out.sock._id);
-		od->con.out.sock._id = -1;
-		
+		mpt_outdata_close(&od->con.out);
 		return -2;
 	}
 	/* dispatch dereference to notifier */
@@ -343,7 +364,7 @@ static int outputInputFile(MPT_INTERFACE(input) *in)
 	const MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
 	MPT_STRUCT(stream) *srm;
 	
-	if (!MPT_socket_active(&odata->con.out.sock) && (srm = odata->con.out._buf)) {
+	if (!MPT_socket_active(&odata->con.out.sock) && (srm = (void *) odata->con.out.buf._buf)) {
 		return _mpt_stream_fread(&srm->_info);
 	}
 	return odata->con.out.sock._id;

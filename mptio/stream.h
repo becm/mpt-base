@@ -168,6 +168,10 @@ extern int mpt_stream_flush(MPT_STRUCT(stream) *);
 /* close input (and file if valid -> invalidate to avoid) */
 extern int mpt_stream_close(MPT_STRUCT(stream) *);
 
+/* line end separator */
+extern const char *mpt_newline_string(int);
+extern int mpt_newline_native(void);
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus

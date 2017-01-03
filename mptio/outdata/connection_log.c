@@ -30,72 +30,47 @@
  */
 extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, va_list va)
 {
-	FILE *fd;
-	const char *ansi = 0;
+	MPT_STRUCT(msgtype) hdr;
+	ssize_t len;
 	
 	/* send log entry to contact */
-	if (!(con->out.state & MPT_ENUM(OutputActive))
-	    && (con->out.state & MPT_ENUM(OutputRemote))) {
-		MPT_STRUCT(msgtype) hdr;
-		
-		hdr.cmd = MPT_ENUM(MessageOutput);
-		hdr.arg = type & 0xff;
-		
-		mpt_connection_push(con, sizeof(hdr), &hdr);
-		
-		if (type && from) {
-			mpt_connection_push(con, strlen(from)+1, from);
-		}
-		if (fmt) {
-			char buf[1024];
-			int plen;
-			
-			plen = vsnprintf(buf, sizeof(buf), fmt, va);
-			
-			/* zero termination indicates truncation,
-			 * just ignore Microsoft's fucked up version without termination */
-			if (plen >= (int) sizeof(buf)) plen = sizeof(buf);
-			
-			if (plen > 0 && (plen = mpt_connection_push(con, plen, buf)) < 0) {
-				mpt_connection_push(con, 1, 0);
-				return plen;
-			}
-		}
-		mpt_connection_push(con, 0, 0);
-		
-		return 2;
+	if ((con->out.state & MPT_ENUM(OutputActive))) {
+		return MPT_ERROR(MessageInProgress);
 	}
-	/* local processing of log entry */
-	if (!(type & 0xff)) {
-		type &= ~MPT_ENUM(LogPretty);
-		fd = stdout;
-		fputc('#', fd);
-		fputc(' ', fd);
+	hdr.cmd = MPT_ENUM(MessageOutput);
+	hdr.arg = type & 0xff;
+	
+	len = mpt_connection_push(con, sizeof(hdr), &hdr);
+	if (len <= 0) {
+		return len;
 	}
-	else {
-		fd = stderr;
-		if ((type & MPT_LOG(File)) && con->hist.file) {
-			fd = con->hist.file;
-			type &= ~MPT_LOG(File);
-		}
-		else if (mpt_outdata_type(type & 0x7f, con->level & 0xf) <= 0) {
-			return 0;
-		}
-		/* use default log config */
-		if (!(type & MPT_ENUM(LogPretty))) {
-			type |= MPT_ENUM(LogPrefix);
-			if (con->out.state & MPT_ENUM(OutputPrintColor)) {
-				type |= MPT_ENUM(LogSelect);
-			}
-		}
+	if (len < 1) {
+		mpt_connection_push(con, 1, 0);
+		return MPT_ERROR(MissingBuffer);
 	}
-	ansi = mpt_log_intro(fd, type, from);
+	if (from) {
+		mpt_connection_push(con, strlen(from), from);
+	}
+	if (mpt_connection_push(con, 1, "") < 1) {
+		mpt_connection_push(con, 1, 0);
+		return MPT_ERROR(MissingBuffer);
+	}
 	if (fmt) {
-		vfprintf(fd, fmt, va);
+		char buf[1024];
+		int plen;
+		
+		plen = vsnprintf(buf, sizeof(buf), fmt, va);
+		
+		/* zero termination indicates truncation,
+		 * just ignore Microsoft's fucked up version without termination */
+		if (plen >= (int) sizeof(buf)) plen = sizeof(buf);
+		
+		if (plen > 0 && (len = mpt_connection_push(con, plen, buf)) < 0) {
+			mpt_connection_push(con, 1, 0);
+			return len;
+		}
 	}
-	if (ansi) fputs(ansi, fd);
-	fputc('\n', fd);
-	fflush(fd);
+	mpt_connection_push(con, 0, 0);
 	
 	return 1;
 }

@@ -17,27 +17,26 @@
 
 /*!
  * \ingroup mptOutput
- * \brief set outdata backend
+ * \brief set connection target
  * 
- * Open target stream/socket and assign to output data.
+ * Open target stream/socket and assign to connection.
  * 
- * \param out  output data descriptor
+ * \param out  connection descriptor
  * \param to   stream/socket target
  * \param mp   connection type description
  */
-extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, const MPT_STRUCT(fdmode) *mp)
+extern int mpt_connection_open(MPT_STRUCT(connection) *con, const char *to, const MPT_STRUCT(fdmode) *mp)
 {
 	MPT_STRUCT(fdmode) mode;
 	MPT_STRUCT(socket) tmp = MPT_SOCKET_INIT;
 	MPT_STRUCT(stream) *srm = 0;
 	int flg = 0, ret;
 	
-	if (out->state & MPT_ENUM(OutputActive)) {
+	if (con->out.state & MPT_ENUM(OutputActive)) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (!to) {
-		mpt_outdata_close(out);
-		return 0;
+		return MPT_ERROR(BadArgument);
 	}
 	/* get mode from target string */
 	if (!mp) {
@@ -52,13 +51,13 @@ extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, const M
 		return MPT_ERROR(BadValue);
 	}
 	if ((flg = mpt_stream_sockflags(ret)) >= 0) {
+		static const char encoding = MPT_ENUM(EncodingCobs);
 		MPT_STRUCT(stream) s = MPT_STREAM_INIT;
-		MPT_TYPE(DataEncoder) enc = 0;
-		MPT_TYPE(DataDecoder) dec = 0;
+		MPT_TYPE(DataEncoder) enc;
+		MPT_TYPE(DataDecoder) dec;
 		
-		if (out->_coding
-		    && (!(enc = mpt_message_encoder(out->_coding))
-		        || !(dec = mpt_message_decoder(out->_coding)))) {
+		if (!(enc = mpt_message_encoder(encoding))
+		    || !(dec = mpt_message_decoder(encoding))) {
 			return MPT_ERROR(BadEncoding);
 		}
 		if (mpt_stream_dopen(&s, &tmp, mp ? mp->stream : flg) < 0) {
@@ -74,14 +73,13 @@ extern int mpt_outdata_connect(MPT_STRUCT(outdata) *out, const char *to, const M
 		*srm = s;
 	}
 	/* close old connection */
-	mpt_outdata_close(out);
+	mpt_connection_close(con);
 	
 	/* set new connection parameters */
 	if (srm) {
-		out->_buf = srm;
-		out->sock._id = -1;
+		con->out.buf._buf = (void *) srm;
 	} else {
-		out->sock = tmp;
+		con->out.sock = tmp;
 	}
 	return ret;
 }

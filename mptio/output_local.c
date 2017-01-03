@@ -1,0 +1,216 @@
+/*!
+ * finalize connection data
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+
+#include "event.h"
+#include "message.h"
+#include "meta.h"
+#include "array.h"
+
+#include "stream.h"
+#include "convert.h"
+
+#include "output.h"
+
+#define AnswerFlags(a) ((a & 0xf0) >> 4)
+#define OutputFlags(a) (a & 0xf)
+
+MPT_STRUCT(local_output)
+{
+	MPT_INTERFACE(output) _out;
+	MPT_STRUCT(reference) ref;
+	
+	MPT_STRUCT(history) hist;
+};
+
+static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
+{
+	const char *where = 0;
+	int len;
+	FILE *fd;
+	
+	if (src && (len = src->_vptr->conv(src, 's', &where)) < 0) {
+		return len;
+	}
+	
+	if (!where) {
+		fd = stdout;
+	} else if (!*where) {
+		fd = 0;
+	} else {
+		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
+		int mode;
+		
+		/* try to use argument as connect string */
+		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
+			if (!(mode & MPT_ENUM(SocketStream))
+			    || !(mode & MPT_ENUM(SocketWrite))
+			    || !(fd = fdopen(sock._id, "w"))) {
+				mpt_connect(&sock, 0, 0);
+				return -1;
+			}
+		}
+		/* regular file path */
+		else if (!(fd = fopen(where, "w"))) {
+			return -1;
+		}
+	}
+	if (*hist && (*hist != stdout) && (*hist != stderr)) {
+		fclose(*hist);
+	}
+	*hist = fd;
+	
+	return len;
+}
+/* output operations */
+static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	return mpt_history_push(&lo->hist, len, src);
+}
+static int localAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	int ret;
+	if (!lo->hist.pass) {
+		return MPT_ERROR(BadOperation);
+	}
+	ret = lo->hist.pass->_vptr->await(lo->hist.pass, ctl, udata);
+	
+	if (ret >= 0) {
+		lo->hist.state |= MPT_ENUM(OutputRemote);
+	}
+	return ret;
+}
+static int localSync(MPT_INTERFACE(output) *out, int timeout)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	return lo->hist.pass ? lo->hist.pass->_vptr->sync(lo->hist.pass, timeout) : 0;
+}
+static int localLog(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list args)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	return mpt_history_log(&lo->hist, from, type, fmt, args);
+}
+/* object property handlers */
+static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(metatype) *src)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	
+	if (!name || !*name) {
+		return MPT_ERROR(BadOperation);
+	}
+	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+		return setHistfile(&lo->hist.file, src);
+	}
+	else if (!strcasecmp(name, "histfmt")) {
+		return mpt_valfmt_set(&lo->hist.info._fmt, src);
+	}
+	if (lo->hist.pass) {
+		return lo->hist.pass->_vptr->obj.setProperty((void *) lo->hist.pass, name, src);
+	}
+	return MPT_ERROR(BadArgument);
+}
+static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
+{
+	MPT_STRUCT(local_output) *lo = (void *) out;
+	const char *name;
+	
+	if (!pr) {
+		return MPT_ENUM(TypeOutput);
+	}
+	if ((name = pr->name)) {
+		if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+			static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
+			pr->name = "history";
+			pr->desc = MPT_tr("history data output file");
+			pr->val.fmt = fmt;
+			pr->val.ptr = &lo->hist.file;
+			return lo->hist.file ? 1 : 0;
+		}
+		if (!strcasecmp(name, "histfmt")) {
+			static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
+			MPT_STRUCT(buffer) *buf;
+			pr->name = "histfmt";
+			pr->desc = "history data output format";
+			pr->val.fmt = fmt;
+			pr->val.ptr = 0;
+			if (!(buf = lo->hist.info._fmt._buf)) {
+				return 0;
+			}
+			pr->val.ptr = buf + 1;
+			return buf->used / sizeof(MPT_STRUCT(valfmt));
+		}
+	}
+	if (lo->hist.pass) {
+		return lo->hist.pass->_vptr->obj.property((void *) lo->hist.pass, pr);
+	}
+	return MPT_ERROR(BadArgument);
+}
+/* reference operations */
+uintptr_t localRef(MPT_INTERFACE(object) *obj)
+{
+	MPT_STRUCT(local_output) *lo = (void *) obj;
+	return mpt_reference_raise(&lo->ref);
+}
+static void localUnref(MPT_INTERFACE(unrefable) *ref)
+{
+	MPT_STRUCT(local_output) *lo = (void *) ref;
+	
+	/* remove active reference */
+	if (mpt_reference_lower(&lo->ref)) {
+		return;
+	}
+	mpt_history_fini(&lo->hist);
+}
+
+static const MPT_INTERFACE_VPTR(output) localCtl = {
+	{ { localUnref }, localRef, localGet, localSet },
+	localPush,
+	localSync,
+	localAwait,
+	localLog
+};
+
+/*!
+ * \ingroup mptOutput
+ * \brief create output
+ * 
+ * New output descriptor.
+ * 
+ * If existing output descriptor is supplied
+ * incompatible or explicit remote messages
+ * are redirected.
+ * 
+ * Create output takes ownership of passed reference.
+ * 
+ * \param pass  chained output descriptor
+ * 
+ * \return output descriptor
+ */
+extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) *pass)
+{
+	static const MPT_STRUCT(local_output) defOut = {
+		{ &localCtl }, { 1 }, MPT_HISTORY_INIT
+	};
+	MPT_STRUCT(local_output) *od;
+	
+	if (!(od = malloc(sizeof(*od)))) {
+		return 0;
+	}
+	*od = defOut;
+	
+	setHistfile(&od->hist.file, 0);
+	
+	od->hist.pass = pass;
+	
+	od->hist.state = MPT_ENUM(OutputPrintColor);
+	od->hist.level = (MPT_LOG(LevelWarning) << 4) | MPT_LOG(LevelWarning);
+	
+	return &od->_out;
+}
+
