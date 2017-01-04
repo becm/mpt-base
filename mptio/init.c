@@ -167,7 +167,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 				disp->_ctx = ctx;
 				ctx->ptr = out;
 				ctx->len = 0;
-				ctx->_max = sizeof(ctx->_val) + 32;
+				ctx->_max = sizeof(ctx->val) + 32;
 				ctx->used = 0;
 			}
 		}

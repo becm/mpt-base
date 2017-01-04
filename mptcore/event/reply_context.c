@@ -43,10 +43,10 @@ MPT_STRUCT(reply_context) *makeContext(size_t len)
 {
 	MPT_STRUCT(reply_context) *ctx;
 	
-	if (len < sizeof(ctx->_val)) {
-		len = sizeof(ctx->_val);
+	if (len < sizeof(ctx->val)) {
+		len = sizeof(ctx->val);
 	}
-	if (!(ctx = malloc(sizeof(*ctx) - sizeof(ctx->_val) + len))) {
+	if (!(ctx = malloc(sizeof(*ctx) - sizeof(ctx->val) + len))) {
 		return 0;
 	}
 	ctx->ptr = 0;
@@ -54,7 +54,7 @@ MPT_STRUCT(reply_context) *makeContext(size_t len)
 	ctx->len = 0;
 	ctx->used = 0;
 	
-	memset(ctx->_val, 0, len);
+	memset(ctx->val, 0, len);
 	
 	return ctx;
 }
@@ -103,5 +103,6 @@ extern MPT_STRUCT(reply_context) *mpt_reply_reserve(MPT_STRUCT(array) *arr, size
 		*base = 0;
 		return 0;
 	}
+	*base = ctx;
 	return ctx;
 }

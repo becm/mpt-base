@@ -19,15 +19,24 @@
 
 static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, ...)
 {
+	MPT_INTERFACE(logger) *log;
 	va_list va;
+	
+	/* check log level */
+	if (mpt_outdata_type(type & 0x7f, con->level & 0xf) <= 0) {
+		return 0;
+	}
+	if (!(log = mpt_log_default())) {
+		return MPT_ERROR(BadOperation);
+	}
 	if (fmt) {
 		int ret;
 		va_start(va, fmt);
-		ret = mpt_connection_log(con, from, type | MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction), fmt, va);
+		ret = log->_vptr->log(log, from, type | MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction), fmt, va);
 		va_end(va);
 		return ret;
 	}
-	return mpt_connection_log(con, from, type, fmt, va);
+	return log->_vptr->log(log, from, type, fmt, va);
 }
 static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 {
@@ -60,33 +69,33 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 		--rc->used;
 		return MPT_REPLY(BadState);
 	}
-	rc->_val[0] &= 0x7f;
-	mpt_message_buf2id(rc->_val, rc->len, &id);
-	rc->_val[0] |= 0x80;
+	rc->val[0] &= 0x7f;
+	mpt_message_buf2id(rc->val, rc->len, &id);
+	rc->val[0] |= 0x80;
 	if (!MPT_socket_active(&con->out.sock)) {
 		MPT_STRUCT(stream) *srm;
 		
 		if (!(srm = (void *) con->out.buf._buf)) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
 		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
 		}
-		if ((ret = mpt_stream_push(srm, rc->len, rc->_val)) < 0) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
+		if ((ret = mpt_stream_push(srm, rc->len, rc->val)) < 0) {
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
 			return ret;
 		}
 		if (src && mpt_stream_append(srm, src) < 0) {
-			connectionLog(con, _func, MPT_LOG(Warning), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
 		}
 		if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
-			connectionLog(con, _func, MPT_LOG(Warning), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
 			              MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
 			if (mpt_stream_push(srm, 1, 0) < 0) {
 				return ret;
@@ -96,27 +105,27 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	else {
 		uint8_t buf[0x10000];
 		struct sockaddr *sa = 0;
-		int slen;
+		uint8_t slen;
 		
 		ret = con->out._idlen;
-		memcpy(buf, rc->_val, ret);
+		memcpy(buf, rc->val, ret);
 		if (src) {
 			MPT_STRUCT(message) msg = *src;
 			ret += mpt_message_read(&msg, sizeof(buf) - ret, buf + ret);
 			if (mpt_message_length(&msg)) {
 				ret = con->out._idlen;
-				connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
+				connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 				              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			}
 		}
 		slen = rc->len - con->out._idlen;
 		if (slen) {
-			sa = (void *) (rc->_val + con->out._idlen);
+			sa = (void *) (rc->val + con->out._idlen);
 		}
 		ret = sendto(con->out.sock._id, buf, ret, 0, sa, slen);
 		
 		if (ret < 0) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%04"PRIx64"): %s",
+			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 			              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			return MPT_ERROR(BadArgument);
 		}
@@ -132,44 +141,91 @@ struct _streamWrapper
 	MPT_TYPE(EventHandler) cmd;
 	void *arg;
 };
-int streamWrapper(void *ptr, MPT_STRUCT(event) *ev)
+int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 {
 	struct _streamWrapper *wd = ptr;
-	MPT_STRUCT(reply_context) *rc;
 	MPT_STRUCT(connection) *con;
-	MPT_STRUCT(message) msg;
+	MPT_STRUCT(event) ev;
+	uint8_t idlen;
 	
 	con = wd->con;
 	
-	/* reply message indicated */
-	if (!ev->reply.context) {
-		MPT_STRUCT(command) *ans;
-		if (!(ans = mpt_command_get(&con->_wait, ev->id))) {
-			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
+	ev.id = 0;
+	ev.msg = msg;
+	ev.reply.set = 0;
+	ev.reply.context = 0;
+	
+	/* default to one-way processing */
+	if (!(idlen = con->out._idlen)) {
+		return wd->cmd(wd->arg, &ev);
+	}
+	else {
+		static const char _func[] = "mpt::connection::dispatch";
+		MPT_STRUCT(message) tmp;
+		MPT_STRUCT(reply_context) *rc;
+		uint8_t id[UINT8_MAX], i;
+		int ret;
+		
+		/* consume message ID */
+		ev.msg = &tmp;
+		tmp = *msg;
+		if ((mpt_message_read(&tmp, idlen, id)) < idlen) {
+			connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
 			              MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 			return MPT_ERROR(BadValue);
 		}
-		return ans->cmd(ans->arg, (void *) ev->msg);
+		/* test reply indicator */
+		if (id[0] & 0x80) {
+			MPT_STRUCT(command) *ans;
+			uint64_t rid;
+			
+			id[0] &= 0x7f;
+			if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0
+			    || ret > (int) sizeof(ans->id)) {
+				connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
+				              MPT_tr("reply processing failed"), MPT_tr("message id invalid"));
+			}
+			/* find reply handler */
+			if (!(ans = mpt_command_get(&con->_wait, rid))) {
+				connectionLog(con, _func, MPT_LOG(Error), "%s: %s (%08"PRIx64")",
+				              MPT_tr("reply processing failed"), MPT_tr("unknown id"), rid);
+				return MPT_ERROR(BadValue);
+			}
+			return ans->cmd(ans->arg, &tmp);
+		}
+		for (i = 0; i < idlen; ++i) {
+			/* skip zero elements */
+			if (!id[i]) {
+				continue;
+			}
+			/* reply context required */
+			if (!(rc = mpt_reply_reserve(&con->_rctx, idlen))) {
+				connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
+				              MPT_tr("dispatch failed"), MPT_tr("no context available"));
+				return MPT_ERROR(BadOperation);
+			}
+			/* set reply context */
+			memcpy(rc->val, id, idlen);
+			rc->len = idlen;
+			ev.reply.set = replySet;
+			ev.reply.context = rc;
+			break;
+		}
+		ret = wd->cmd(wd->arg, &ev);
+		
+		/* generic reply to failed command */
+		if (rc && ret < 0 && rc->len) {
+			MPT_STRUCT(msgtype) hdr;
+			hdr.cmd = MPT_ENUM(MessageAnswer);
+			hdr.arg = ret;
+			tmp.base = &hdr;
+			tmp.used = sizeof(hdr);
+			tmp.cont = 0;
+			tmp.clen = 0;
+			replySet(rc, &tmp);
+		}
+		return ret;
 	}
-	if (!(rc = mpt_reply_reserve(&con->_rctx, con->out._idlen))) {
-		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
-		              MPT_tr("dispatch failed"), MPT_tr("no reply context available"));
-		return MPT_ERROR(BadArgument);
-	}
-	msg = *ev->msg;
-	if (mpt_message_read(&msg, rc->len, rc->_val) < rc->len) {
-		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
-		              MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
-		return MPT_ERROR(BadArgument);
-	}
-	rc->ptr = con;
-	rc->len = con->out._idlen;
-	
-	ev->id = 0;
-	ev->reply.set = replySet;
-	ev->reply.context = rc;
-	
-	return wd->cmd(wd->arg, ev);
 }
 /*!
  * \ingroup mptOutput
@@ -196,22 +252,12 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		return MPT_ENUM(EventRetry);
 	}
 	if (!MPT_socket_active(&con->out.sock)) {
-		MPT_STRUCT(stream) *srm;
+		struct _streamWrapper sw;
 		
 		if (!(buf = con->out.buf._buf)) {
 			return MPT_ERROR(BadArgument);
 		}
-		srm = (void *) buf;
-		if ((ilen = con->out._idlen)) {
-			struct _streamWrapper sw;
-			
-			sw.con = con;
-			sw.arg = arg;
-			sw.cmd = cmd;
-			
-			return mpt_stream_dispatch(srm, 0, streamWrapper, &sw);
-		}
-		return mpt_stream_dispatch(srm, ilen, cmd, arg);
+		return mpt_stream_dispatch((void *) buf, streamWrapper, &sw);
 	}
 	/* no new data present */
 	if (!(con->out.state & MPT_ENUM(OutputReceived))) {
@@ -292,9 +338,9 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		if (rc) {
 			rc->ptr = con;
 			rc->len = ilen;
-			memcpy(rc->_val, data, con->out._idlen);
+			memcpy(rc->val, data, con->out._idlen);
 			if (con->out._scurr) {
-				memcpy(rc->_val + con->out._idlen, sa, con->out._scurr);
+				memcpy(rc->val + con->out._idlen, sa, con->out._scurr);
 			}
 			ev.reply.set = replySet;
 			ev.reply.context = rc;

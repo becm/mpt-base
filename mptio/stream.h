@@ -159,9 +159,7 @@ extern int mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
 extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_ARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
 /* dispatch next message */
-#ifdef _MPT_EVENT_H
-extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, size_t, MPT_TYPE(EventHandler) , void *);
-#endif
+extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 
 /* perform delayed write operations */
 extern int mpt_stream_flush(MPT_STRUCT(stream) *);
@@ -236,7 +234,7 @@ public:
 	inline void close()
 	{ setProperty(0, 0); }
 	
-	class WrapDispatch;
+	class Dispatch;
 	
 protected:
 	stream *_srm;

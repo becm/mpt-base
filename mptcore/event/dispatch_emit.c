@@ -46,7 +46,7 @@ static int printReply(void *ptr, const MPT_STRUCT(message) *msg)
 	}
 	if (!msg) {
 		uint64_t id = 0;
-		mpt_message_buf2id(ctx->_val, ctx->len, &id);
+		mpt_message_buf2id(ctx->val, ctx->len, &id);
 		mpt_output_log(ans, _func, MPT_LOG(Debug), "%s (%"PRIx64")",
 		               MPT_tr("empty reply"), id);
 		ctx->len = 0;
@@ -114,7 +114,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	if (out && !ev->reply.set && !ctx->used) {
 		ctx->len = sizeof(ev->id);
 		++ctx->used;
-		mpt_message_id2buf(ev->id, ctx->_val, ctx->len);
+		mpt_message_id2buf(ev->id, ctx->val, ctx->len);
 		
 		ev->reply.set = (int (*)()) printReply;
 		ev->reply.context = ctx;

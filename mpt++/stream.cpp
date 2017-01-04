@@ -247,7 +247,7 @@ int Stream::next(int what)
     }
     return ret;
 }
-static int streamWrapReply(void *ptr, const message *msg)
+static int streamReply(void *ptr, const message *msg)
 {
     static const char _func[] = "mpt::stream::reply";
     reply_context *rc = reinterpret_cast<reply_context *>(ptr);
@@ -258,7 +258,7 @@ static int streamWrapReply(void *ptr, const message *msg)
         critical(_func, "%s: %s", MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
         return rc->BadContext;
     }
-    mpt_message_buf2id(rc->_val, rc->len, &id);
+    mpt_message_buf2id(rc->val, rc->len, &id);
     if (!(srm = reinterpret_cast<stream *>(rc->ptr))) {
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("reply target destroyed"), id);
         if (!--rc->used) {
@@ -274,8 +274,8 @@ static int streamWrapReply(void *ptr, const message *msg)
         warning(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
         return MessageInProgress;
     }
-    rc->_val[0] |= 0x80;
-    if (mpt_stream_push(srm, rc->len, rc->_val) < 0) {
+    rc->val[0] |= 0x80;
+    if (mpt_stream_push(srm, rc->len, rc->val) < 0) {
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("unable to set reply id"), id);
         return rc->BadPush;
     }
@@ -290,42 +290,74 @@ static int streamWrapReply(void *ptr, const message *msg)
     }
     return 0;
 }
-class Stream::WrapDispatch
+class Stream::Dispatch
 {
 public:
-    WrapDispatch(Stream &s, EventHandler c, void *a) : srm(s), cmd(c), arg(a)
+    Dispatch(Stream &s, EventHandler c, void *a) : srm(s), cmd(c), arg(a)
     { }
-    int dispatch(event *ev)
+    int dispatch(const struct message *msg)
     {
-        if (!ev->reply.context) {
+        static const char _func[] = "mpt::Stream::dispatch";
+        struct event ev;
+        uint8_t idlen;
+
+        if (!(idlen = srm._idlen)) {
+            return cmd(arg, &ev);
+        }
+        uint8_t id[__UINT8_MAX__];
+        int ret;
+
+        struct message tmp = *msg;
+        if (tmp.read(idlen, id) < idlen) {
+            error(_func, "%s", MPT_tr("message id incomplete"));
+        }
+        if (id[0] & 0x80) {
             command *ans;
-            if ((ans = srm._wait.get(ev->id))) {
-                return ans->cmd(ans->arg, const_cast<struct message *>(ev->msg));
-            } else {
+            uint64_t rid;
+            id[0] &= 0x7f;
+            if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0 || ret > (int) sizeof(ans->id)) {
+                error(_func, "%s", MPT_tr("bad reply id"));
                 return BadValue;
             }
+            if ((ans = srm._wait.get(rid))) {
+                return ans->cmd(ans->arg, &tmp);
+            }
+            error(_func, "%s (id = %08"PRIx64")", MPT_tr("unknown reply id"), rid);
+            return BadValue;
         }
-        reply_context *ctx;
-        if (!(ctx = srm._ctx.reserve(srm._idlen))) {
-            return BadOperation;
+        reply_context *rc = 0;
+        for (uint8_t i = 0; i < idlen; ++i) {
+            if (!id[i]) {
+                continue;
+            }
+            if (!(rc = srm._ctx.reserve(srm._idlen))) {
+                error(_func, "%s", MPT_tr("unable to create reply context"));
+                return BadOperation;
+            }
+            rc->ptr = srm._srm;
+            rc->len = idlen;
+            memcpy(rc->val, id, idlen);
+            ev.reply.set = streamReply;
+            ev.reply.context = rc;
+            break;
         }
-        ctx->ptr = srm._srm;
-        mpt_message_id2buf(ev->id, ctx->_val, ctx->len = srm._idlen);
-
-        ev->reply.set = streamWrapReply;
-        ev->reply.context = ctx;
-
-        return cmd(arg, ev);
+        ret = cmd(arg, &ev);
+        if (rc && ret < 0 && rc->len) {
+            struct msgtype mt(MessageAnswer, ret);
+            struct message msg(&mt, sizeof(mt));
+            streamReply(rc, &msg);
+        }
+        return ret;
     }
 protected:
     Stream &srm;
     EventHandler cmd;
     void *arg;
 };
-static int streamWrapDispatch(void *ptr, event *ev)
+static int streamDispatch(void *ptr, const struct message *msg)
 {
-    Stream::WrapDispatch *sw = reinterpret_cast<Stream::WrapDispatch *>(ptr);
-    return sw->dispatch(ev);
+    Stream::Dispatch *sd = reinterpret_cast<Stream::Dispatch *>(ptr);
+    return sd->dispatch(msg);
 }
 int Stream::dispatch(EventHandler cmd, void *arg)
 {
@@ -339,14 +371,8 @@ int Stream::dispatch(EventHandler cmd, void *arg)
         }
         return 0;
     }
-    if (_idlen) {
-        if (!_srm->_rd.encoded()) {
-            return BadOperation;
-        }
-        class WrapDispatch wd(*this, cmd, arg);
-        return mpt_stream_dispatch(_srm, _idlen, streamWrapDispatch, &wd);
-    }
-    return mpt_stream_dispatch(_srm, 0, cmd, arg);
+    class Dispatch sd(*this, cmd, arg);
+    return mpt_stream_dispatch(_srm, streamDispatch, &sd);
 }
 int Stream::_file()
 {
@@ -369,7 +395,7 @@ ssize_t Stream::push(size_t len, const void *src)
     }
     ssize_t curr;
     if (_idlen && !(_srm->flags() & MessageInProgress)) {
-        uint8_t id[255];
+        uint8_t id[__UINT8_MAX__];
         mpt_message_id2buf(_cid, id, _idlen);
         if (mpt_stream_push(_srm, _idlen, id) < _idlen) {
             push(1, 0);

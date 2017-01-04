@@ -46,7 +46,7 @@ typedef int (*MPT_TYPE(EventHandler))(void *, MPT_STRUCT(event) *);
 MPT_STRUCT(reply_context)
 {
 #ifdef __cplusplus
-	reply_context() : ptr(0), _max(sizeof(_val)), len(0), used(0)
+	reply_context() : ptr(0), _max(sizeof(val)), len(0), used(0)
 	{ }
 	bool active() const
 	{ return used; }
@@ -63,7 +63,7 @@ MPT_STRUCT(reply_context)
 	uint16_t _max;
 	uint8_t   len;
 	uint8_t   used;
-	uint8_t  _val[4];
+	uint8_t   val[4];
 #ifdef __cplusplus
 enum {
 # define MPT_REPLY(x) x
@@ -121,13 +121,13 @@ protected:
 MPT_STRUCT(dispatch)
 {
 # define MPT_DISPATCH_INIT { MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
-	MPT_STRUCT(array) _d;   /* available commands for event */
+	_MPT_ARRAY_TYPE(command) _d;  /* available commands for event */
 #endif
-	uintptr_t         _def; /* default command id */
+	uintptr_t _def; /* default command id */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;
-	} _err;                 /* handler for unknown ids */
+	} _err;         /* handler for unknown ids */
 	
 	MPT_STRUCT(reply_context) *_ctx;
 };

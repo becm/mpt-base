@@ -57,7 +57,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 		MPT_STRUCT(command) *mc;
 		MPT_STRUCT(message) msg;
 		struct iovec vec;
-		uint8_t buf[32];
+		uint8_t buf[UINT8_MAX];
 		uint64_t id;
 		int ret;
 		
