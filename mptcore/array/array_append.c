@@ -10,12 +10,12 @@
  * \ingroup mptArray
  * \brief append data to array
  * 
- * Append data to array, resize needed.
+ * Push data to array, resize if needed.
  * Use data null pointer to add zeroed data.
  * 
- * \param arr	array descriptor
- * \param len	length to append
- * \param base	data to append
+ * \param arr  array descriptor
+ * \param len  length to append
+ * \param base data to append
  * 
  * \return start address appended data
  */

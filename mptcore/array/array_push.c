@@ -11,14 +11,14 @@
 
 /*!
  * \ingroup mptArray
- * \brief append data to array
+ * \brief encode data
  * 
- * Add encoded data to array.
- * Encoder state is saved in "unused" part of buffer data.
- * Size of state data must be returned by encoding funtion.
+ * Encode and add data to array.
  * 
- * \param arr   array to append data
- * \param enc   encoder plugin function
+ * Finished data at begin of array indicated by 'done' size.
+ * New data is appended in 'scratch' space.
+ * 
+ * \param arr   array with encoding information
  * \param len   length of data to append
  * \param data  data to append
  * 
@@ -27,7 +27,7 @@
 extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const void *data)
 {
 	MPT_STRUCT(buffer) *b;
-	size_t max;
+	ssize_t max;
 	
 	/* fast path for raw data */
 	if (!arr->_enc) {
@@ -63,8 +63,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		off = arr->_state.done + arr->_state.scratch;
 		
 		if ((off = b->used - off) < 0) {
-			errno = EINVAL;
-			return -1;
+			return MPT_ERROR(BadArgument);
 		}
 		dest.iov_base = ((uint8_t *) (b+1)) + off;
 		dest.iov_len  = b->size - off;
@@ -103,7 +102,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		else if (len < (size_t) cont) {
 			MPT_ABORT("bad encoder return size");
 			arr->_enc(&arr->_state, 0, 0);
-			return -1;
+			return MPT_ERROR(BadOperation);
 		}
 		/* all data processed */
 		else if (!(len -= cont)) {
@@ -112,13 +111,11 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		/* advance source data offset */
 		else {
 			data = ((uint8_t *) data) + cont;
+			max += cont;
 		}
-		max += cont;
-		
 		/* get larger buffer */
 		if (!b->resize || !(b = b->resize(b, b->size + 64))) {
-			cont = len - max;
-			return cont ? cont : -2;
+			return max ? max : MPT_ERROR(MissingBuffer);
 		}
 		arr->_d._buf = b;
 	}

@@ -50,6 +50,10 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			od->state &= ~MPT_ENUM(OutputActive);
 			return 0;
 		}
+		/* require target address */
+		if (od->_smax && (!od->_scurr || !(buf = od->buf._buf) || buf->used < od->_smax)) {
+			return MPT_ERROR(BadValue);
+		}
 		/* force atomic message id start */
 		if (od->_idlen && !(od->state & MPT_ENUM(OutputActive)) && len != od->_idlen) {
 			return MPT_ERROR(BadValue);
@@ -71,21 +75,21 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			len = buf->used;
 			buf->used = 0;
 		}
-		
 		if (!MPT_socket_active(&od->sock)) {
+			od->state &= ~MPT_ENUM(OutputActive);
 			return 0;
 		}
-		/* destination address */
-		if (src) {
-			mhdr.msg_name    = (void *) src;
-			mhdr.msg_namelen = od->_scurr;
-		} else {
-			mhdr.msg_name    = 0;
-			mhdr.msg_namelen = 0;
-		}
-		/* set output */
 		out.iov_base = buf+1;
 		out.iov_len  = len;
+		
+		/* destination address */
+		if ((mhdr.msg_namelen = od->_scurr)) {
+			out.iov_base = ((uint8_t *) (buf+1)) + od->_smax;
+			mhdr.msg_name = (void *) (buf+1);
+		} else {
+			mhdr.msg_name = 0;
+		}
+		/* set output */
 		mhdr.msg_iov = &out;
 		mhdr.msg_iovlen = 1;
 		

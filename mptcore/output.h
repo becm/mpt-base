@@ -225,8 +225,6 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(me
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* process return messages */
 extern int mpt_outdata_recv(MPT_STRUCT(outdata) *);
-/* push message to connection */
-extern int mpt_outdata_send(MPT_STRUCT(outdata) *, const MPT_STRUCT(message) *);
 
 
 /* reset connection data */

@@ -231,6 +231,9 @@ extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct 
 extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
 #endif
 
+/* push message to connection */
+extern int mpt_message_append(MPT_STRUCT(array) *, const MPT_STRUCT(message) *);
+
 /* get message on queue */
 extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRUCT(message) *, struct iovec *);
 
