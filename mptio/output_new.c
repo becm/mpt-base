@@ -275,10 +275,13 @@ static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
 	return mpt_connection_await(&od->con, ctl, udata);
 }
-static int outputLog(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list va)
+static int outputLog(MPT_INTERFACE(output) *out, const char *from, int type, const MPT_STRUCT(value) *val)
 {
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
-	return mpt_connection_log(&od->con, from, type, fmt, va);
+	if (val && val->fmt) {
+		return MPT_ERROR(BadValue);
+	}
+	return mpt_connection_log(&od->con, from, type, val ? val->ptr : 0);
 }
 static const MPT_INTERFACE_VPTR(output) outCtl = {
 	{ { outputUnref }, outputRef, outputProperty, outputSetProperty },

@@ -216,7 +216,7 @@ public:
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;
 	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
-	int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
+	int log(const char *, int, const struct value *) __MPT_OVERRIDE;
 	
 	int next(int) __MPT_OVERRIDE;
 	int dispatch(EventHandler , void *) __MPT_OVERRIDE;

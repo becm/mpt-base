@@ -28,7 +28,7 @@
  * 
  * \return type of operation
  */
-extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, va_list va)
+extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int type, const char *msg)
 {
 	MPT_STRUCT(msgtype) hdr;
 	ssize_t len;
@@ -55,17 +55,16 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int
 		mpt_connection_push(con, 1, 0);
 		return MPT_ERROR(MissingBuffer);
 	}
-	if (fmt) {
-		char buf[1024];
-		int plen;
-		
-		plen = vsnprintf(buf, sizeof(buf), fmt, va);
-		
-		/* zero termination indicates truncation,
-		 * just ignore Microsoft's fucked up version without termination */
-		if (plen >= (int) sizeof(buf)) plen = sizeof(buf);
-		
-		if (plen > 0 && (len = mpt_connection_push(con, plen, buf)) < 0) {
+	if (msg && (len = strlen(msg))) {
+		if (len <= MPT_OUTPUT_LOGMSG_MAX) {
+			len = mpt_connection_push(con, len, msg);
+		}
+		/* indicate truncated message */
+		else if ((len = mpt_connection_push(con, MPT_OUTPUT_LOGMSG_MAX - 1, msg)) >= 0) {
+			len = mpt_connection_push(con, 1, "");
+		}
+		/* reset message state */
+		if (len < 0) {
 			mpt_connection_push(con, 1, 0);
 			return len;
 		}

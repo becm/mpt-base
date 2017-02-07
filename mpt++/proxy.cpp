@@ -2,6 +2,8 @@
  * MPT default client config operations
  */
 
+#include <stdio.h>
+
 #include "message.h"
 
 #include "client.h"
@@ -10,13 +12,15 @@ __MPT_NAMESPACE_BEGIN
 
 /*!
  * \ingroup mptClient
- * \brief log to client
+ * \brief log to proxy
  * 
- * Get global config element
+ * Select and use log target for message.
  * 
- * \param p  element location
+ * \param fcn  originating location
+ * \param type message type and flags
+ * \param fmt  log arguments format string
  * 
- * \return metatype at location
+ * \return lor operation result
  */
 int proxy::log(const char *fcn, int type, const char *fmt, ...) const
 {
@@ -30,7 +34,15 @@ int proxy::log(const char *fcn, int type, const char *fmt, ...) const
         ret = log->log(fcn, type, fmt, va);
     }
     else if ((out = output.pointer())) {
-        ret = out->log(fcn, type, fmt, va);
+        char buf[MPT_OUTPUT_LOGMSG_MAX];
+        value val;
+        if (fmt) {
+            ret = vsnprintf(buf, sizeof(buf), fmt, va);
+            if (ret > (int) sizeof(buf)) {
+                buf[sizeof(buf) - 1] = 0;
+            }
+        }
+        ret = out->log(fcn, type, &val);
     }
     if (fmt) va_end(va);
     return ret;

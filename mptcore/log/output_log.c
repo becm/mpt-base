@@ -41,7 +41,16 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 		type |= MPT_ENUM(LogPretty) | MPT_ENUM(LogFunction);
 	}
 	if (out) {
-		err = out->_vptr->log(out, from, type, fmt, ap);
+		MPT_STRUCT(value) val;
+		char buf[MPT_OUTPUT_LOGMSG_MAX];
+		int len;
+		len = vsnprintf(buf, sizeof(buf), fmt, ap);
+		if (len > (int) sizeof(buf)) {
+			buf[sizeof(buf) - 1] = 0; /* indicate truncation */
+		}
+		val.fmt = 0;
+		val.ptr = buf;
+		err = out->_vptr->log(out, from, type, &val);
 	} else if (log) {
 		err = log->_vptr->log(log, from, type, fmt, ap);
 	}

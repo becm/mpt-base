@@ -445,7 +445,11 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
     return 1;
 }
 
-int Stream::log(const char *from, int type, const char *fmt, va_list va)
+static ssize_t streamPush(void *ptr, const char *str, size_t len)
+{
+    return mpt_stream_push((struct stream *) ptr, len, str);
+}
+int Stream::log(const char *from, int type, const value *val)
 {
     if (!_srm) {
         return BadArgument;
@@ -478,19 +482,8 @@ int Stream::log(const char *from, int type, const char *fmt, va_list va)
             mpt_stream_push(_srm, 2, ": ");
         }
     }
-    if (fmt) {
-        char buf[1024];
-        int len = 0;
-        if ((len = vsnprintf(buf, sizeof(buf)-1, fmt, va)) < 0) {
-            *buf = 0;
-            len  = 1;
-        }
-        else if (len >= (int) sizeof(buf)) {
-            len = sizeof(buf);
-            buf[len-4] = buf[len-3] = buf[len-2] = '.';
-            buf[len-1] = 0;
-        }
-        mpt_stream_push(_srm, len, buf);
+    if (val) {
+        mpt_tostring(val, streamPush, _srm);
     }
     // terminate and flush message */
     mpt_stream_push(_srm, 0, 0);

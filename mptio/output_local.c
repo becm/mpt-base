@@ -91,10 +91,29 @@ static int localSync(MPT_INTERFACE(output) *out, int timeout)
 	MPT_STRUCT(local_output) *lo = (void *) out;
 	return lo->hist.pass ? lo->hist.pass->_vptr->sync(lo->hist.pass, timeout) : 0;
 }
-static int localLog(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list args)
+static int localLogHist(MPT_STRUCT(history) *hist, const char *from, int type, const char *fmt, ... )
+{
+	va_list ap;
+	int ret;
+	
+	va_start(ap, fmt);
+	ret = mpt_history_log(hist, from, type, 0, ap);
+	va_end(ap);
+	return ret;
+
+}
+static int localLog(MPT_INTERFACE(output) *out, const char *from, int type, const MPT_STRUCT(value) *val)
 {
 	MPT_STRUCT(local_output) *lo = (void *) out;
-	return mpt_history_log(&lo->hist, from, type, fmt, args);
+	
+	if (!val) {
+		return mpt_history_log(&lo->hist, from, type, 0, 0);
+	}
+	if (val->fmt) {
+		/* TODO: implement history data output */
+		return MPT_ERROR(BadValue);
+	}
+	return localLogHist(&lo->hist, from, type, val->ptr ? "%s" : 0, val->ptr);
 }
 /* object property handlers */
 static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(metatype) *src)

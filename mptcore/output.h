@@ -34,6 +34,7 @@ enum MPT_ENUM(OutputFlags) {
 	MPT_ENUM(OutputRemote)       = 0x40   /* skip internal filter */
 };
 
+#define MPT_OUTPUT_LOGMSG_MAX 256
 #ifdef __cplusplus
 MPT_INTERFACE(output) : public object
 {
@@ -45,7 +46,7 @@ public:
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
-	virtual int log(const char *, int , const char *, va_list) = 0;
+	virtual int log(const char *, int , const struct value *) = 0;
 	
 	int open(const char *);
 	int setHistory(const char *);
@@ -67,7 +68,7 @@ MPT_INTERFACE_VPTR(output)
 	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
 	int     (*sync)(MPT_INTERFACE(output) *, int);
 	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
-	int     (*log)(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
+	int     (*log)(MPT_INTERFACE(output) *, const char *, int , const MPT_STRUCT(value) *);
 };
 MPT_INTERFACE(output)
 {
@@ -246,7 +247,7 @@ extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
 /* dispatch event to handler */
 extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandler) cmd, void *arg);
 /* push log message to connection */
-extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *, va_list);
+extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
 
 /* push output/error message */
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
