@@ -127,7 +127,7 @@ static int localLogHist(MPT_STRUCT(history) *hist, const char *from, int type, c
 	int ret;
 	
 	va_start(ap, fmt);
-	ret = mpt_history_log(hist, from, type, 0, ap);
+	ret = mpt_history_log(hist, from, type, fmt, ap);
 	va_end(ap);
 	return ret;
 
@@ -160,13 +160,31 @@ static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(
 {
 	MPT_STRUCT(local_output) *lo = (void *) out;
 	
-	if (!name || !*name) {
-		return MPT_ERROR(BadOperation);
-	}
-	if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+	out = (void *) lo->pass;
+	
+	if (!name) {
 		return setHistfile(&lo->hist.file, src);
 	}
-	else if (!strcasecmp(name, "histfmt")) {
+	if (!*name) {
+		MPT_INTERFACE(output) *no;
+		int ret;
+		if (!src) {
+			return MPT_ERROR(BadValue);
+		}
+		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeOutput), &no)) < 0) {
+			return ret;
+		}
+		if (no && !no->_vptr->obj.addref((void *) no)) {
+			return MPT_ERROR(BadOperation);
+		}
+		if (out) out->_vptr->ref.unref((void *) out);
+		lo->pass = no;
+		return ret;
+	}
+	if (!strcasecmp(name, "file")) {
+		return setHistfile(&lo->hist.file, src);
+	}
+	if (!strcasecmp(name, "format") || !strcasecmp(name, "fmt")) {
 		return mpt_valfmt_set(&lo->hist.info._fmt, src);
 	}
 	if ((out = (void *) lo->pass)) {
@@ -178,35 +196,43 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 {
 	MPT_STRUCT(local_output) *lo = (void *) out;
 	const char *name;
+	intptr_t pos = -1, id;
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
 	}
-	if ((name = pr->name)) {
-		if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-			static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
-			pr->name = "history";
-			pr->desc = MPT_tr("history data output file");
-			pr->val.fmt = fmt;
-			pr->val.ptr = &lo->hist.file;
-			return lo->hist.file ? 1 : 0;
-		}
-		if (!strcasecmp(name, "histfmt")) {
-			static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
-			MPT_STRUCT(buffer) *buf;
-			pr->name = "histfmt";
-			pr->desc = "history data output format";
-			pr->val.fmt = fmt;
-			pr->val.ptr = 0;
-			if (!(buf = lo->hist.info._fmt._buf)) {
-				return 0;
-			}
-			pr->val.ptr = buf + 1;
-			return buf->used / sizeof(MPT_STRUCT(valfmt));
-		}
+	if (!(name = pr->name)) {
+		pos = (intptr_t) pr->desc;
 	}
-	if ((out = (void *) lo->pass)) {
-		return out->_vptr->property(out, pr);
+	id = -1;
+	if (name ? !*name : pos == ++id) {
+		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
+		pr->name = "output";
+		pr->desc = MPT_tr("chained output descriptor");
+		pr->val.fmt = fmt;
+		pr->val.ptr = &lo->pass;
+		return lo->pass ? 1 : 0;
+	}
+	if (name ? (!strcasecmp(name, "history") || !strcasecmp(name, "histfile") || !strcasecmp(name, "file")) : pos == ++id) {
+		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
+		pr->name = "file";
+		pr->desc = MPT_tr("history data output file");
+		pr->val.fmt = fmt;
+		pr->val.ptr = &lo->hist.file;
+		return lo->hist.file ? 1 : 0;
+	}
+	if (name ? (!strcasecmp(name, "histfmt") || !strcasecmp(name, "format") || !strcasecmp(name, "fmt")) :  pos == ++id) {
+		static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
+		MPT_STRUCT(buffer) *buf;
+		pr->name = "format";
+		pr->desc = MPT_tr("history data output format");
+		pr->val.fmt = fmt;
+		pr->val.ptr = 0;
+		if (!(buf = lo->hist.info._fmt._buf)) {
+			return 0;
+		}
+		pr->val.ptr = buf + 1;
+		return buf->used / sizeof(MPT_STRUCT(valfmt));
 	}
 	return MPT_ERROR(BadArgument);
 }
@@ -225,6 +251,11 @@ static void localUnref(MPT_INTERFACE(unrefable) *ref)
 		return;
 	}
 	mpt_history_fini(&lo->hist);
+	
+	if ((ref = (void *) lo->pass)) {
+		ref->_vptr->unref(ref);
+	}
+	free(lo);
 }
 
 static const MPT_INTERFACE_VPTR(output) localCtl = {

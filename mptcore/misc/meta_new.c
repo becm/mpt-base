@@ -9,6 +9,8 @@
 
 #include "array.h"
 
+#include "convert.h"
+
 #include "meta.h"
 
 static void metaUnref(MPT_INTERFACE(unrefable) *meta)

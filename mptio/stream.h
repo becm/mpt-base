@@ -11,6 +11,7 @@
 #include "queue.h"
 
 #ifdef __cplusplus
+# include "meta.h"
 # include "event.h"
 # include "notify.h"
 # include "output.h"

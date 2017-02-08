@@ -15,6 +15,7 @@
 
 #include "meta.h"
 #include "output.h"
+#include "convert.h"
 
 #include "client.h"
 

@@ -5,6 +5,7 @@
 #endif
 
 #include MPT_INCLUDE(meta.h)
+#include MPT_INCLUDE(convert.h)
 
 #include MPT_INCLUDE(values.h)
 
@@ -37,6 +38,5 @@ extern int main(int argc, char *argv[])
 		mt->_vptr->ref.unref((void *) mt);
 		fputc('\n', stdout);
 	}
-	
 	return 0;
 }

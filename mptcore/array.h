@@ -10,11 +10,9 @@
 # include <new>
 # include <cstring>
 struct iovec;
-# include "meta.h"
-#else
-# include "core.h"
 #endif
 
+#include "core.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -74,8 +72,8 @@ MPT_STRUCT(array)
 	array & operator=  (struct ::iovec const&);
 	array & operator+= (struct ::iovec const&);
 protected:
-# define _MPT_ARRAY_TYPE(x)     Array<x>
-# define _MPT_REF_ARRAY_TYPE(x) RefArray<x>
+# define _MPT_ARRAY_TYPE(x)     ::mpt::Array<x>
+# define _MPT_REF_ARRAY_TYPE(x) ::mpt::RefArray<x>
 #else
 # define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
 # define _MPT_REF_ARRAY_TYPE(x) MPT_STRUCT(array)
@@ -112,11 +110,6 @@ MPT_STRUCT(typed_array)
 {
 #ifdef __cplusplus
 public:
-	enum Flags
-	{
-		Created  = ValueCreate,
-		Modified = ValueChange
-	};
 	inline typed_array() : _flags(0), _format(0), _esize(0)
 	{ }
 	bool setType(int);
@@ -124,11 +117,8 @@ public:
 	
 	inline int flags() const
 	{ return _flags; }
-	inline void setModified(bool mod = true)
-	{
-	    if (mod) _flags |= Modified;
-	    else _flags &= ~Modified;
-	}
+	void setModified(bool mod = true);
+	
 	inline size_t elementSize() const
 	{ return _esize; }
 	inline size_t elements() const

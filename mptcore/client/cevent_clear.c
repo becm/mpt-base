@@ -9,6 +9,8 @@
 #include "message.h"
 #include "meta.h"
 
+#include "convert.h"
+
 #include "client.h"
 
 /*!

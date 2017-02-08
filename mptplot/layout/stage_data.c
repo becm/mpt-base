@@ -5,6 +5,9 @@
 #include <errno.h>
 
 #include "array.h"
+
+#include "convert.h"
+
 #include "layout.h"
 
 /*!

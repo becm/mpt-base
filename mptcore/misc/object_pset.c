@@ -120,13 +120,15 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 {
 	struct paramSource *src = (void *) ctl;
 	const char *txt;
+	uint8_t dtype;
 	int len;
 	
 	/* indicate consumed value */
 	if (!src->sep) {
 		return 0;
 	}
-	if ((type & 0xff) == MPT_ENUM(TypeValue)) {
+	dtype = type & 0xff;
+	if (dtype == MPT_ENUM(TypeValue)) {
 		if (type & MPT_ENUM(ValueConsume)) {
 			src->sep = 0;
 			return MPT_ENUM(TypeValue) | MPT_ENUM(ValueConsume);
@@ -135,16 +137,17 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 	}
 	if (src->val.fmt) {
 		const void *from = src->val.ptr;
+		uint8_t ftype = *src->val.fmt;
 		
-		if (!src->val.fmt[0]) {
+		if (!ftype) {
 			src->sep = 0;
 			return 0;
 		}
 #ifdef MPT_NO_CONVERT
-		if ((type & 0xff) != src->val.fmt[0]) {
+		if (dtype != ftype) {
 			return MPT_ERROR(BadValue);
 		}
-		if ((len = mpt_valsize(type & 0xff)) < 0) {
+		if ((len = mpt_valsize(dtype)) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (!len) len = sizeof(void *);
@@ -152,27 +155,27 @@ static int propConv(MPT_INTERFACE(metatype) *ctl, int type, void *dest)
 		if (dest) memcpy(dest, from, len);
 		from = ((uint8_t *) from) + len;
 #else
-		if ((len = mpt_data_convert(&from, *src->val.fmt, dest, type)) < 0) {
+		if ((len = mpt_data_convert(&from, *src->val.fmt, dest, type | MPT_ENUM(ValueMeta))) < 0) {
 			return fromText(src, type, dest);
 		}
 #endif
 		if (type & MPT_ENUM(ValueConsume)) {
 			src->val.ptr = from;
 			++src->val.fmt;
-			return (type & 0xff) | MPT_ENUM(ValueConsume);
+			return dtype | MPT_ENUM(ValueConsume);
 		}
-		return type & 0xff;
+		return dtype;
 	}
 	if (!(txt = src->val.ptr)) {
-		if ((type & 0xff) != 'k' && (type & 0xff) != 's') {
-			return -3;
+		if (dtype == 'k' || dtype == 's') {
+			if (dest) ((char **) dest)[0] = 0;
+			if (type & MPT_ENUM(ValueConsume)) {
+				src->sep = 0;
+				return 's' | MPT_ENUM(ValueConsume);
+			}
 		}
-		if (dest) ((char **) dest)[0] = 0;
-		if (type & MPT_ENUM(ValueConsume)) {
-			src->sep = 0;
-			return 's' | MPT_ENUM(ValueConsume);
-		}
-		return 's';
+		src->sep = 0;
+		return 0;
 	}
 	len = stringConvert(txt, src->sep, type | MPT_ENUM(ValueConsume), dest);
 	

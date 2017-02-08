@@ -6,6 +6,7 @@
 #include <sys/uio.h>
 
 #include "array.h"
+#include "meta.h"
 
 #include "convert.h"
 
@@ -36,30 +37,39 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 	if ((flen = mpt_valsize(ftype)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (!flen) flen = sizeof(void *);
-	
+	/* allow reference type downgrade */
+	if (dtype == MPT_ENUM(TypeUnrefable)
+	    && MPT_value_isUnrefable(ftype)) {
+		ftype = MPT_ENUM(TypeUnrefable);
+		flen = sizeof(void *);
+	}
 	/* allow object type downgrade */
 	if (dtype == MPT_ENUM(TypeObject)
-	    && ((ftype == MPT_ENUM(TypeOutput))
-	        || (ftype == MPT_ENUM(TypeGroup))
-	        || (ftype == MPT_ENUM(TypeSolver)))) {
+	    && MPT_value_isObject(ftype)) {
 		ftype = MPT_ENUM(TypeObject);
+		flen = sizeof(void *);
 	}
-	/* same type */
-	if (ftype == dtype) {
+	/* same primitive type */
+	if (flen && ftype == dtype) {
 		if (dest) {
 			memcpy(dest, from, flen);
 		}
-		*fptr = from + flen;
+		if (to & MPT_ENUM(ValueConsume)) {
+			*fptr = from + flen;
+		}
 		return flen;
 	}
+	if (!flen) flen = sizeof(void *);
+	
 	/* check output type size */
 	if ((dlen = mpt_valsize(dtype)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* advance source only */
 	if (!dest) {
-		*fptr = from + flen;
+		if (to & MPT_ENUM(ValueConsume)) {
+			*fptr = from + flen;
+		}
 		return dlen ? dlen : (int) sizeof(void *);
 	}
 	if (ftype == 'l') {
@@ -364,7 +374,25 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 		break;
 	  }
 #endif
-	  /* allow metatype downgrade */
+	  /* allow metatype cast */
+	  case MPT_ENUM(TypeMeta): {
+		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
+		int ret;
+		if (!mt) {
+			if (dtype != ftype) {
+				return MPT_ERROR(BadType);
+			}
+			if (dest) memcpy(dest, from, flen);
+			break;
+		}
+		if (!(to & MPT_ENUM(ValueMeta))) {
+			return MPT_ERROR(BadType);
+		}
+		if ((ret = mt->_vptr->conv(mt, dtype, dest)) < 0) {
+			return ret;
+		}
+		break;
+	  }
 	  default:
 		/* array conversion */
 		if (MPT_value_isArray(dtype)) {
@@ -375,7 +403,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 					return MPT_ERROR(BadType);
 				}
 			}
-			mpt_array_clone(dest, (MPT_STRUCT(array) *) from);
+			mpt_array_clone(dest, (const MPT_STRUCT(array) *) from);
 		}
 		/* vector conversion */
 		else if (MPT_value_isVector(dtype)) {

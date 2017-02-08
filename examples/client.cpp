@@ -31,9 +31,7 @@ public:
 };
 MyClient::MyClient()
 {
-    mpt::metatype *m = mpt::mpt_output_new();
-    mpt::output *o;
-    o = m->cast<mpt::output>();
+    mpt::output *o = mpt::mpt_output_local();
     output.setPointer(o);
 
     o->set("history", "/dev/stdout", 0);
@@ -43,6 +41,10 @@ MyClient::MyClient()
         mpt::Reference<class mpt::logger> r(mpt::mpt_output_logger(o));
         logger = std::move(r);
     }
+    mpt::metatype *m = mpt::mpt_output_new();
+    char fmt[] = { mpt::TypeMeta, 0 };
+    o->set("", mpt::value(fmt , &m));
+    m->unref();
 }
 
 int MyClient::step(mpt::metatype *)

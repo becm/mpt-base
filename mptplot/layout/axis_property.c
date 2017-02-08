@@ -10,8 +10,9 @@
 
 #include "meta.h"
 
-#include "layout.h"
+#include "convert.h"
 
+#include "layout.h"
 
 static const MPT_STRUCT(axis) def_axis = {
 	0,       /* _title */

@@ -73,14 +73,19 @@ static int pointers = 0;
  */
 extern ssize_t mpt_valsize(int type)
 {
-	/* builtin types */
+	/* bad type value */
 	if (type < 0
 	    || type > MPT_ENUM(_TypeFinal)) {
 		return MPT_ERROR(BadArgument);
 	}
+	/* builtin types */
 	if (type < MPT_ENUM(_TypeDynamic)) {
 		uint8_t i;
 		
+		/* generic interface type */
+		if (MPT_value_isUnrefable(type)) {
+			return 0;
+		}
 		/* generic/typed array */
 		if (MPT_value_isArray(type)) {
 			return 0;

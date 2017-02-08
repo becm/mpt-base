@@ -24,7 +24,7 @@ public:
 	template <typename T>
 	inline T *cast()
 	{
-	    int t = typeIdentifier<T>();
+	    static const int t = typeIdentifier<T>();
 	    if (!mpt_valsize(t)) return 0;
 	    T *ptr;
 	    if (conv(t, &ptr) < 0) return 0;

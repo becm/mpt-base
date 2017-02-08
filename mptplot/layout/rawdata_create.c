@@ -8,6 +8,9 @@
 #include <sys/uio.h>
 
 #include "array.h"
+
+#include "convert.h"
+
 #include "layout.h"
 
 struct RawData

@@ -5,6 +5,8 @@
 
 #include "meta.h"
 
+#include "convert.h"
+
 #include "layout.h"
 
 /*!

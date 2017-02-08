@@ -147,23 +147,7 @@ enum MPT_ENUM(Types)
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeDynamic)  = 0x80,
-	MPT_ENUM(_TypeFinal)    = 0xff,
-	
-	/* additional conversion options */
-	MPT_ENUM(AssignColon)   = 0x100,
-	MPT_ENUM(AssignEqual)   = 0x200,
-	MPT_ENUM(PropertyColon) = MPT_ENUM(AssignColon) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyEqual) = MPT_ENUM(AssignEqual) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyAssign) = MPT_ENUM(PropertyColon) | MPT_ENUM(PropertyEqual),
-	
-	/* input control options */
-	MPT_ENUM(ValueConsume)  = 0x1000,
-	MPT_ENUM(ValueCreate)   = 0x2000,
-	MPT_ENUM(ValueChange)   = 0x4000,
-	MPT_ENUM(ValueReset)    = 0x8000,
-	
-	/* foreign flag offset */
-	MPT_ENUM(FlagUser)      = 0x10000
+	MPT_ENUM(_TypeFinal)    = 0xff
 };
 
 enum MPT_ENUM(SocketFlags) {

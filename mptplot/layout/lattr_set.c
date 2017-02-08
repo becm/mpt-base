@@ -4,6 +4,8 @@
 
 #include "meta.h"
 
+#include "convert.h"
+
 #include "layout.h"
 
 #define MPT_LineStyleMax   5

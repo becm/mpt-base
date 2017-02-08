@@ -244,8 +244,10 @@ extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(output_va
 /* convert message to printable */
 extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
-/* create output instance */
+/* create remote output instance */
 extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) * __MPT_DEFPAR(0));
+/* create local output instance */
+extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) * __MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

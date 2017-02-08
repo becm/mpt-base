@@ -223,6 +223,11 @@ bool typed_array::setType(int t)
     _esize = esize;
     return true;
 }
+void typed_array::setModified(bool set)
+{
+    if (set) _flags |= ValueChange;
+    else _flags &= ~ValueChange;
+}
 size_t maxsize(Slice<const typed_array> sl, int type)
 {
     const typed_array *arr = sl.base();
