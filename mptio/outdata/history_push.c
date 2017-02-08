@@ -10,6 +10,8 @@
 #include "message.h"
 #include "array.h"
 
+#include "stream.h"
+
 #include "output.h"
 
 #define AnswerFlags(a) ((a & 0xf0) >> 4)
@@ -49,75 +51,58 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		if (hist->state & 0x7) {
 			return mpt_file_print(&hist->state, hist->file, len, src);
 		}
-		/* history output triggered */
-		else if (hist->info.lfmt) {
-			ret = mpt_history_print(hist->file, &hist->info, len, src);
-		}
-		/* pass data to chained output */
-		else {
-			ret = len;
-			if (hist->pass) {
-				ret = hist->pass->_vptr->push(hist->pass, len, src);
-			}
-		}
+		/* history data output */
+		ret = mpt_history_print(hist, len, src);
 		if (ret < 0) {
 			return ret;
 		}
 		if (!len) {
-			hist->state &= MPT_ENUM(OutputPrintColor);
-			hist->info.lfmt = 0;
+			hist->state &= ~MPT_ENUM(OutputActive);
 		}
 		return ret;
 	}
-	if (!src) {
-		if (hist->pass) {
-			return hist->pass->_vptr->push(hist->pass, len, src);
+	/* reset history state */
+	mpt_history_reset(&hist->info);
+	
+	if (!len) {
+		if (hist->file) {
+			fputs(mpt_newline_string(hist->lsep), hist->file);
 		}
-		return MPT_ERROR(BadOperation);
+		return 0;
 	}
 	mt = src;
-	
-	/* pass data to next output descriptot */
-	if (hist->state & MPT_ENUM(OutputRemote)) {
-		if (!hist->pass) {
-			mpt_log(0, __func__, MPT_LOG(Info), "%s", MPT_tr("missing remote output"));
-			return MPT_ERROR(BadArgument);
-		}
-		ret = hist->pass->_vptr->push(hist->pass, len, src);
-		if (ret >= 0) {
-			hist->state |= MPT_ENUM(OutputActive);
-		}
-		return ret;
-	}
-	/* convert history to printable output */
+	/* use inline or prefix format info */
 	if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-		/* reset history state */
-		mpt_history_reset(&hist->info);
-		hist->info.lfmt = -1;
-		
-		/* assume block termination */
-		if (len < 2) {
-			hist->info.pos.elem = 1;
-			hist->state |= MPT_ENUM(OutputActive);
-			return 1;
-		}
-		hist->info.pos.fmt = mt->arg;
-		
+		hist->state |= MPT_ENUM(OutputActive);
 		if (!hist->file) {
-			hist->state |= MPT_ENUM(OutputActive);
 			return 0;
 		}
 		ret = 0;
-		if ((len -= 2)
-		    && (ret = mpt_history_print(hist->file, &hist->info, len, mt+1)) < 0) {
+		if (--len
+		    && (ret = mpt_history_print(hist, len, &mt->arg)) < 0) {
 			return ret;
 		}
-		hist->state |= MPT_ENUM(OutputActive);
-		
-		return ret + 2;
+		return ret + 1;
 	}
 	if (len < 2) {
 		return MPT_ERROR(MissingData);
+	}
+	/* convert history to printable output */
+	if (mt->cmd == MPT_ENUM(MessageValRaw)) {
+		if (!(hist->info.all = mt->arg)) {
+			return MPT_ERROR(BadValue);
+		}
+		if (!hist->file) {
+			hist->state |= MPT_ENUM(OutputActive);
+			return len;
+		}
+		hist->info.fmt = hist->info.all;
+		ret = 0;
+		if ((len -= 2)
+		    && (ret = mpt_history_print(hist, len, mt + 1)) < 0) {
+			return ret;
+		}
+		return ret + 2;
 	}
 	/* setup text output */
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
@@ -134,16 +119,9 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		type  = answerType(mt->arg);
 		flags = AnswerFlags(hist->level);
 	}
-	else if (hist->pass) {
-		if ((ret = hist->pass->_vptr->push(hist->pass, len, src)) >= 0) {
-			hist->state |= MPT_ENUM(OutputActive);
-		}
-		return ret;
-	}
+	/* incompatible message type */
 	else {
-		mpt_log(0, __func__, MPT_LOG(Info), "%s: 0x%02d", MPT_tr("unsupported message type"), mt->cmd);
-		hist->state |= MPT_ENUM(OutputActive);
-		return len;
+		return MPT_ERROR(BadType);
 	}
 	flags = mpt_outdata_type(type, flags);
 	

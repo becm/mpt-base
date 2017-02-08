@@ -9,8 +9,6 @@
 
 #include "output.h"
 
-#define MPT_fmtHdrLen(m) (sizeof(m.type) + m.type.arg*sizeof(m.bnd[0]))
-
 /*!
  * \ingroup mptOutput
  * \~english
@@ -30,11 +28,9 @@
  */
 extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double *ref, int rlen, const double *val, int vlen)
 {
-	struct {
-		MPT_STRUCT(msgtype)   type;
-		MPT_STRUCT(msgvalfmt) bnd[2];
-	} hdr;
+	MPT_STRUCT(msgtype) hdr;
 	int plen, msgs, i, ldr, ldv;
+	uint8_t fmt;
 	
 	if (len < 0) return -1;
 	
@@ -46,37 +42,37 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 		val = ref + rlen;
 	}
 	plen = rlen + vlen;
+	msgs = 0;
 	
 	if (len && plen) {
 		uint64_t dim;
-		uint8_t fmt;
 		/* send size info */
-		hdr.type.cmd = MPT_ENUM(MessageValFmt);
-		hdr.type.arg = 0;
+		hdr.cmd = MPT_ENUM(MessageValFmt);
+		hdr.arg = 0;
 		
 		fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesInteger) | sizeof(dim);
 		
-		out->_vptr->push(out, sizeof(hdr.type), &hdr.type);
+		out->_vptr->push(out, sizeof(hdr), &hdr);
+		
+		dim = len;
 		out->_vptr->push(out, sizeof(fmt), &fmt);
+		out->_vptr->push(out, sizeof(dim), &dim);
+		dim = plen;
 		out->_vptr->push(out, sizeof(fmt), &fmt);
-		fmt = 0;
-		out->_vptr->push(out, sizeof(fmt), &fmt);
-		dim = len;  out->_vptr->push(out, sizeof(dim), &dim);
-		dim = plen; out->_vptr->push(out, sizeof(dim), &dim);
+		out->_vptr->push(out, sizeof(dim), &dim);
+		
 		out->_vptr->push(out, 0, 0);
+		++msgs;
 	}
 	/* header setup for data output */
-	hdr.type.cmd = MPT_ENUM(MessageValFmt);
-	hdr.type.arg = 2;
+	hdr.cmd = MPT_ENUM(MessageValFmt);
+	hdr.arg = plen;
+	fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(double);
 	
-	hdr.bnd[0].fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*ref);
-	hdr.bnd[0].len = ref ? rlen : 0;
-	hdr.bnd[1].fmt = hdr.bnd[0].fmt;
-	hdr.bnd[1].len = val ? vlen : 0;
-	
-	out->_vptr->push(out, MPT_fmtHdrLen(hdr), &hdr);
-	msgs = 1;
-	
+	out->_vptr->push(out, sizeof(hdr), &hdr);
+	for (i = 0; i < plen; i++) {
+		out->_vptr->push(out, sizeof(fmt), &fmt);
+	}
 	for (i = 0; i < len; i++) {
 		/* send reference data */
 		if (ref && rlen) {
@@ -89,23 +85,28 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 			val += ldv;
 		}
 		/* try to limit message size to 4k */
-		if ((4*1024) < ((i+1) * (MPT_fmtHdrLen(hdr) + rlen * sizeof(*ref) + vlen * sizeof(*val)))) {
+		if ((4*1024) < (sizeof(hdr) + plen + (i+1) * (rlen * sizeof(*ref) + vlen * sizeof(*val)))) {
 			/* update for next reference step output */
 			len -= i+1;
 			i = -1;
 			if (len) {
+				int j;
 				out->_vptr->push(out, 0, 0);
-				out->_vptr->push(out, MPT_fmtHdrLen(hdr), &hdr);
+				out->_vptr->push(out, sizeof(hdr), &hdr);
+				for (j = 0; j < plen; j++) {
+					out->_vptr->push(out, sizeof(fmt), &fmt);
+				}
 				++msgs;
 			}
 		}
 	}
 	/* finalize previous */
 	out->_vptr->push(out, 0, 0);
+	++msgs;
 	
 	/* terminate history block */
-	hdr.type.cmd = MPT_ENUM(MessageValFmt);
-	out->_vptr->push(out, sizeof(hdr.type.cmd), &hdr.type.cmd);
+	fmt = MPT_ENUM(MessageValFmt);
+	out->_vptr->push(out, sizeof(fmt), &fmt);
 	out->_vptr->push(out, 0, 0);
 	
 	return msgs;

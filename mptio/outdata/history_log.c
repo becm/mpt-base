@@ -16,22 +16,6 @@
 
 #include "output.h"
 
-static int logOutput(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list args)
-{
-	MPT_STRUCT(value) val;
-	char buf[MPT_OUTPUT_LOGMSG_MAX];
-	
-	val.fmt = 0;
-	val.ptr = 0;
-	if (fmt) {
-		int len = vsnprintf(buf, sizeof(buf), fmt, args);
-		if (len > (int) sizeof(buf)) {
-			buf[sizeof(buf) - 1] = 0; /* indicate truncation */
-		}
-		val.ptr = buf;
-	}
-	return out->_vptr->log(out, from, type, &val);
-}
 /*!
  * \ingroup mptOutput
  * \brief push to history
@@ -51,13 +35,6 @@ extern int mpt_history_log(MPT_STRUCT(history) *hist, const char *from, int type
 	const char *reset, *newline;
 	FILE *fd;
 	
-	if (hist->pass && (hist->state & MPT_ENUM(OutputRemote))) {
-		int ret = logOutput(hist->pass, from, type, fmt, args);
-		if (ret >= 0) {
-			hist->state &= ~MPT_ENUM(OutputRemote);
-		}
-		return ret;
-	}
 	if (hist->state & MPT_ENUM(OutputActive)) {
 		return MPT_ERROR(MessageInProgress);
 	}
@@ -72,10 +49,7 @@ extern int mpt_history_log(MPT_STRUCT(history) *hist, const char *from, int type
 	}
 	else if (type & MPT_LOG(File)) {
 		if ((fd = hist->file)) {
-			newline = mpt_newline_string(hist->endl);
-		}
-		else if (hist->pass) {
-			return logOutput(hist->pass, from, type, fmt, args);
+			newline = mpt_newline_string(hist->lsep);
 		}
 		else {
 			fd = (type & 0x7f) ? stderr : stdout;

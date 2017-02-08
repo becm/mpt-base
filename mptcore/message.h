@@ -149,18 +149,6 @@ MPT_STRUCT(msgbind)
 	uint8_t dim,   /* source dimension */
 	        type;  /* type of data */
 };
-/* source data type */
-MPT_STRUCT(msgvalfmt)
-{
-#ifdef __cplusplus
-	inline msgvalfmt(uint8_t f, unsigned l = 1) : fmt(f), len(l)
-	{ }
-#else
-# define MPT_MSGVALFMT_INIT { 0, 0 } }
-#endif
-	uint8_t fmt,  /* data type */
-	        len;  /* value count */
-};
 
 /* layout destination */
 MPT_STRUCT(msgdest)

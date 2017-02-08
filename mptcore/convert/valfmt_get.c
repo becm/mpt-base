@@ -22,44 +22,39 @@
  */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 {
-	static const MPT_STRUCT(valfmt) deffmt = MPT_VALFMT_INIT;
-	MPT_STRUCT(valfmt) fmt;
+	MPT_STRUCT(valfmt) fmt = MPT_VALFMT_INIT;
 	const char *pos;
 	char *next;
 	long val;
 	
 	if (!(pos = src)) {
-		*ptr = deffmt;
+		*ptr = fmt;
 		return 0;
 	}
 	while (isspace(*pos)) {
 		pos++;
 	}
-	fmt = deffmt;
-	
 	/* select format */
 	if (!*pos) {
 		*ptr = fmt;
 		return pos - src;
 	}
 	if (*pos == '+') {
-		fmt.flt = -fmt.flt;
+		fmt.fmt |= MPT_ENUM(PrintNumberSign);
 		++pos;
 	}
-	if (strchr("fgea", tolower(*pos))) {
-		char curr = *pos++;
-		fmt.flt = (fmt.flt < 0) ? -curr : curr;
-	}
-	else if (*pos == 'n') {
-		++pos;
-	}
-	else if (*pos == 'N') {
-		fmt.flt = toupper(fmt.flt);
-		++pos;
-	}
-	else if (!isdigit(*pos)) {
-		errno = EINVAL;
-		return MPT_ERROR(BadArgument);
+	
+	switch (tolower(*pos)) {
+	  case 'f': fmt.fmt |= 6;
+	  case 'g': ++pos; break;
+	  case 'a': fmt.fmt |= MPT_ENUM(PrintScientific);
+	  case 'x': fmt.fmt |= MPT_ENUM(PrintNumberHex); ++pos; break;
+	  case 'o': fmt.fmt |= MPT_ENUM(PrintIntOctal);
+	  case 'e': fmt.fmt |= MPT_ENUM(PrintScientific); ++pos; break;
+	  default:
+		if (!isdigit(*pos)) {
+			return MPT_ERROR(BadArgument);
+		}
 	}
 	/* get field with */
 	val = strtol(pos, &next, 0);
@@ -71,7 +66,7 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 	if (val < 0 || val > UINT8_MAX) {
 		return MPT_ERROR(BadValue);
 	}
-	fmt.width = val;
+	fmt.wdt = val;
 	if (!*pos || isspace(*pos)) {
 		*ptr = fmt;
 		return pos - src;
@@ -87,10 +82,10 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 		return MPT_ERROR(BadArgument);
 	}
 	pos = next;
-	if (val < 0 || val > INT8_MAX) {
+	if (val < 0 || val > MPT_VALFMT_DECMAX) {
 		return MPT_ERROR(BadValue);
 	}
-	fmt.dec = val;
+	fmt.fmt |= val;
 	
 	*ptr = fmt;
 	

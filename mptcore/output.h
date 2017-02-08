@@ -20,7 +20,6 @@ MPT_STRUCT(node);
 MPT_STRUCT(array);
 MPT_STRUCT(notify);
 MPT_STRUCT(message);
-MPT_STRUCT(msgvalfmt);
 
 enum MPT_ENUM(OutputFlags) {
 	MPT_ENUM(OutputPrintNormal)  = 0x1,
@@ -81,27 +80,19 @@ MPT_STRUCT(histinfo)
 {
 #ifdef __cplusplus
 public:
-	inline histinfo() : fpos(0), lfmt(0)
-	{
-		pos.fmt = 0;
-		pos.elem = 0;
-	}
 	bool setFormat(const char *fmt);
 	bool add(valfmt);
-	bool add(msgvalfmt);
+	bool add(char);
 protected:
 #else
-# define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, 0, 0 }
+# define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0,0,0 }
 #endif
-	_MPT_ARRAY_TYPE(valfmt)    _fmt;  /* output format */
-	_MPT_ARRAY_TYPE(msgvalfmt) _dat;  /* data format */
+	_MPT_ARRAY_TYPE(valfmt) _fmt;  /* output format */
+	_MPT_ARRAY_TYPE(char)   _dat;  /* data format */
 	
-	struct {
-		uint8_t fmt;  /* format position */
-		uint8_t elem; /* element offset */
-	} pos;
-	uint8_t         fpos; /* format position */
-	uint8_t         lfmt; /* length type */
+	uint16_t pos;  /* element position */
+	char     all;  /* default data format */
+	char     fmt;  /* data format */
 };
 
 MPT_STRUCT(history)
@@ -112,16 +103,15 @@ MPT_STRUCT(history)
 	~history();
 protected:
 # else
-#  define MPT_HISTORY_INIT { MPT_HISTINFO_INIT, 0,  0,  0,0,0 }
+#  define MPT_HISTORY_INIT { 0, MPT_HISTINFO_INIT, 0, 0,0 }
 # endif
-	MPT_STRUCT(histinfo) info;
 	FILE *file;
+	MPT_STRUCT(histinfo) info;
 	
-	MPT_INTERFACE(output) *pass;
+	uint8_t state; /* output state */
 	
-	uint8_t state;
-	uint8_t level;
-	uint8_t endl;
+	uint8_t level; /* log level settings */
+	uint8_t lsep;  /* line sepatator code */
 }
 #endif
 ;
@@ -206,9 +196,7 @@ extern int mpt_history_log(MPT_STRUCT(history) *, const char *, int , const char
 extern ssize_t mpt_file_print(uint8_t *, FILE *, size_t , const void *);
 
 /* partial history output */
-extern ssize_t mpt_history_print(FILE *, MPT_STRUCT(histinfo) *, size_t , const void *);
-/* printing values */
-extern int mpt_fprint_val(FILE *, MPT_INTERFACE(metatype) *);
+extern ssize_t mpt_history_print(MPT_STRUCT(history) *, size_t , const void *);
 #endif
 
 /* determine output print type */

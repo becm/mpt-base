@@ -23,10 +23,14 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCompress)     = 0x4    /* compress data */
 };
 enum MPT_ENUM(PrintFlags) {
-	MPT_ENUM(PrintNumberHex)       = 0x100, /* print hexadecimal */
-	MPT_ENUM(PrintScientific)      = 0x200, /* scientific float notation */
-	MPT_ENUM(PrintIntOctal)        = 0x400, /* print octal integer */
-	MPT_ENUM(PrintNumberSign)      = 0x800  /* print sign */
+	MPT_ENUM(PrintIntHex)          = 0x0100, /* print hexadecimal */
+	MPT_ENUM(PrintIntOctal)        = 0x0200, /* print octal integer */
+	MPT_ENUM(PrintFltHex)          = 0x0400, /* print hexadecimal */
+	MPT_ENUM(PrintNumberHex)       = MPT_ENUM(PrintIntHex) | MPT_ENUM(PrintFltHex),
+	MPT_ENUM(PrintScientific)      = 0x0800, /* scientific float notation */
+	
+	MPT_ENUM(PrintNumberSign)      = 0x1000, /* print sign */
+	MPT_ENUM(PrintNumberLeft)      = 0x2000  /* print left bounded */
 };
 
 MPT_STRUCT(float80)
@@ -54,14 +58,21 @@ MPT_STRUCT(valfmt)
 {
 #ifdef __cplusplus
 public:
-	inline valfmt() : width(0), dec(-1), flt('g')
+	inline valfmt() : fmt(6), wdt(0)
 	{ }
+	inline int width() const
+	{ return wdt; }
+	inline int flags() const
+	{ return fmt & 0xff00; }
+	inline int decimals() const
+	{ return fmt & 0x7f; }
+protected:
 #else
-# define MPT_VALFMT_INIT  { 0, -1, 'g' }
+# define MPT_VALFMT_INIT  { 0, 0 }
+# define MPT_VALFMT_DECMAX  0x7f
 #endif
-	uint8_t width; /* field width */
-	int8_t  dec;   /* number of decimals */
-	char    flt;   /* float format */
+	uint16_t fmt;  /* format flags and number of decimals */
+	uint8_t  wdt;  /* field width */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -154,7 +165,7 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec
 extern int mpt_generic_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 /* convert structured data to string */
-extern int mpt_number_print(char *, size_t , int , const void *);
+extern int mpt_number_print(char *, size_t , MPT_STRUCT(valfmt) , int , const void *);
 /* output data */
 extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
 

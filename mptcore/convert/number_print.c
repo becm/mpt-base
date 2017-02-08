@@ -22,111 +22,248 @@
  * 
  * \return consumed buffer size
  */
-extern int mpt_number_print(char *dest, size_t left, int type, const void *arg)
+extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int type, const void *arg)
 {
-	int len;
+	int flg, sgn, len, dec;
+	uint8_t wd;
 	
+	type |= fmt.fmt & 0xff00;
+	
+	flg = type & 0xf00;
+	sgn = type & MPT_ENUM(PrintNumberSign);
+	dec = fmt.fmt & MPT_VALFMT_DECMAX;
+	
+	wd = fmt.wdt;
+	if (type & MPT_ENUM(PrintNumberLeft)) {
+		wd = 0;
+	}
+	else if (wd > left) {
+		return MPT_ERROR(MissingBuffer);
+	}
+	type &= 0xff;
 	if (type == 'l') {
 		type = mpt_type_int(sizeof(long));
 	}
 	switch (type) {
 	/* single character */
 	    case 'c':
-		len = snprintf(dest, left, "%c", *((char*)arg));
+		len = snprintf(dest, left, "%*c", wd, *((char*)arg));
 		break;
 	/* 8bit formats */
 	    case 'b':
-		len = snprintf(dest, left, "%"PRIi8, *((int8_t*)arg));
-		break;
+		if (!flg) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*"PRIi8, wd, *((int8_t*)arg));
+			} else {
+				len = snprintf(dest, left, "%*"PRIi8, wd, *((int8_t*)arg));
+			}
+			break;
+		}
 	    case 'y':
-		len = snprintf(dest, left, "%"PRIu8, *((uint8_t*)arg));
-		break;
-	    case 'y' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%"PRIx8, *((uint8_t*)arg));
-		break;
-	    case 'y' | MPT_ENUM(PrintIntOctal):
-		len = snprintf(dest, left, "%"PRIo8, *((uint8_t*)arg));
-		break;
+		if (!flg) {
+			len = snprintf(dest, left, "%*"PRIu8, wd, *((uint8_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntHex)) {
+			len = snprintf(dest, left, "%*"PRIx8, wd, *((uint8_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntOctal)) {
+			len = snprintf(dest, left, "%*"PRIo8, wd, *((uint8_t*)arg));
+			break;
+		}
+		return MPT_ERROR(BadValue);
 	/* 16bit formats */
 	    case 'n':
-		len = snprintf(dest, left, "%"PRIi16, *((int16_t*)arg));
-		break;
+		if (!flg) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*"PRIi16, wd, *((int16_t*)arg));
+			} else {
+				len = snprintf(dest, left, "%*"PRIi16, wd, *((int16_t*)arg));
+			}
+			break;
+		}
 	    case 'q':
-		len = snprintf(dest, left, "%"PRIu16, *((uint16_t*)arg));
-		break;
-	    case 'q' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%"PRIx16, *((uint16_t*)arg));
-		break;
-	    case 'q' | MPT_ENUM(PrintIntOctal):
-		len = snprintf(dest, left, "%"PRIo16, *((uint16_t*)arg));
-		break;
+		if (!flg) {
+			len = snprintf(dest, left, "%*"PRIu16, wd, *((uint16_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntHex)) {
+			len = snprintf(dest, left, "%*"PRIx16, wd, *((uint16_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntOctal)) {
+			len = snprintf(dest, left, "%*"PRIo16, wd, *((uint16_t*)arg));
+			break;
+		}
+		return MPT_ERROR(BadValue);
 	/* 32bit formats */
 	    case 'i':
-		len = snprintf(dest, left, "%"PRIi32, *((int32_t*)arg));
-		break;
+		if (!flg) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*"PRIi32, wd, *((int32_t*)arg));
+			} else {
+				len = snprintf(dest, left, "%*"PRIi32, wd, *((int32_t*)arg));
+			}
+			break;
+		}
 	    case 'u':
-		len = snprintf(dest, left, "%"PRIu32, *((uint32_t*)arg));
-		break;
-	    case 'u' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%"PRIx32, *((uint32_t*)arg));
-		break;
-	    case 'u' | MPT_ENUM(PrintIntOctal):
-		len = snprintf(dest, left, "%"PRIo32, *((uint32_t*)arg));
-		break;
+		if (!flg) {
+			len = snprintf(dest, left, "%*"PRIu32, wd, *((uint32_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntHex)) {
+			len = snprintf(dest, left, "%*"PRIx32, wd, *((uint32_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntOctal)) {
+			len = snprintf(dest, left, "%*"PRIo32, wd, *((uint32_t*)arg));
+			break;
+		}
+		return MPT_ERROR(BadValue);
 	/* 64bit formats */
 	    case 'x':
-		len = snprintf(dest, left, "%"PRIi64, *((int64_t*)arg));
-		break;
+		if (!flg) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*"PRIi64, wd, *((int64_t*)arg));
+			} else {
+				len = snprintf(dest, left, "%*"PRIi64, wd, *((int64_t*)arg));
+			}
+			break;
+		}
 	    case 't':
-		len = snprintf(dest, left, "%"PRIu64, *((uint64_t*)arg));
-		break;
-	    case 't' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%"PRIx64, *((uint64_t*)arg));
-		break;
-	    case 't' | MPT_ENUM(PrintIntOctal):
-		len = snprintf(dest, left, "%"PRIo64, *((uint64_t*)arg));
-		break;
+		if (!flg) {
+			len = snprintf(dest, left, "%*"PRIu64, wd, *((uint64_t*)arg));
+		}
+		if (flg & MPT_ENUM(PrintIntHex)) {
+			len = snprintf(dest, left, "%*"PRIx64, wd, *((uint64_t*)arg));
+			break;
+		}
+		if (flg & MPT_ENUM(PrintIntOctal)) {
+			len = snprintf(dest, left, "%*"PRIo64, wd, *((uint64_t*)arg));
+			break;
+		}
+		return MPT_ERROR(BadValue);
 	/* floating point formats */
 	    case 'f':
-		len = snprintf(dest, left, "%g", *((float*)arg));
-		break;
-	    case 'f' | MPT_ENUM(PrintScientific):
-		len = snprintf(dest, left, "%e", *((float*)arg));
-		break;
+		if (!dec) {
+			if (!sgn) {
+				len = snprintf(dest, left, "%+*g", wd, *((float*)arg));
+			} else {
+				len = snprintf(dest, left, "%*g", wd, *((float*)arg));
+			}
+			break;
+		}
 #if __STDC_VERSION__ >= 199901L
-	    case 'f' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%a", *((float*)arg));
-		break;
+		if (flg & MPT_ENUM(PrintFltHex)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%*.*a", wd, dec, *((float*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*a", wd, dec, *((float*)arg));
+			}
+			break;
+		}
 #endif
+		if (flg & MPT_ENUM(PrintScientific)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*e", wd, dec, *((float*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*e", wd, dec, *((float*)arg));
+			}
+			break;
+		}
+		if (sgn) {
+			len = snprintf(dest, left, "%+*.*f", wd, dec, *((float*)arg));
+		} else {
+			len = snprintf(dest, left, "%*.*f", wd, dec, *((float*)arg));
+		}
+		break;
 	    case 'd':
-		len = snprintf(dest, left, "%g", *((double*)arg));
-		break;
-	    case 'd' | MPT_ENUM(PrintScientific):
-		len = snprintf(dest, left, "%e", *((double*)arg));
-		break;
+		if (!dec) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*g", wd, *((double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*g", wd, *((double*)arg));
+			}
+			break;
+		}
 #if __STDC_VERSION__ >= 199901L
-	    case 'd' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%a", *((double*)arg));
-		break;
+		if (flg & MPT_ENUM(PrintFltHex)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*a", wd, dec, *((double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*a", wd, dec, *((double*)arg));
+			}
+			break;
+		}
 #endif
+		if (flg & MPT_ENUM(PrintScientific)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*e", wd, dec, *((double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*e", wd, dec, *((double*)arg));
+			}
+			break;
+		}
+		if (sgn) {
+			len = snprintf(dest, left, "%+*.*f", wd, dec, *((double*)arg));
+		} else {
+			len = snprintf(dest, left, "%*.*f", wd, dec, *((double*)arg));
+		}
+		break;
 #ifdef _MPT_FLOAT_EXTENDED_H
 	    case 'e':
-		len = snprintf(dest, left, "%Lg", *((long double*)arg));
-		break;
-	    case 'e' | MPT_ENUM(PrintScientific):
-		len = snprintf(dest, left, "%Le", *((long double*)arg));
-		break;
+		if (!dec) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*Lg", wd, *((long double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*Lg", wd, *((long double*)arg));
+			}
+			break;
+		}
 # if __STDC_VERSION__ >= 199901L
-	    case 'e' | MPT_ENUM(PrintNumberHex):
-		len = snprintf(dest, left, "%LA", *((long double*)arg));
-		break;
+		if (flg & MPT_ENUM(PrintFltHex)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*LA", wd, dec, *((long double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*LA", wd, dec, *((long double*)arg));
+			}
+			break;
+		}
 # endif
+		if (flg & MPT_ENUM(PrintScientific)) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*Le", wd, dec, *((long double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*Le", wd, dec, *((long double*)arg));
+			}
+			break;
+		}
+		if (sgn) {
+			len = snprintf(dest, left, "%+*.*Lf", wd, dec, *((long double*)arg));
+		} else {
+			len = snprintf(dest, left, "%*.*Lf", wd, dec, *((long double*)arg));
+		}
+		break;
 #endif /* _MPT_FLOAT_EXTENDED_H */
 	    default:
 		return MPT_ERROR(BadType);
 	}
 	if (len < 0) return len;
 	if ((size_t) len >= left) return MPT_ERROR(MissingBuffer);
+	
+	if (flg & MPT_ENUM(PrintNumberLeft)) {
+		dest += len;
+		wd = fmt.fmt & 0xff;
+		if (left <= (size_t) wd) {
+			return MPT_ERROR(MissingBuffer);
+		}
+		wd -= len;
+		while (wd-- > 0) {
+			*(dest++) = ' ';
+		}
+		*(dest++) = 0;
+	}
 	return len;
 }
 

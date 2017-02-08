@@ -26,13 +26,4 @@ extern void mpt_history_fini(MPT_STRUCT(history) *hist)
 		fclose(hist->file);
 		hist->file = 0;
 	}
-	
-	if (hist->pass) {
-		/* restore downstream output */
-		if (hist->state & MPT_ENUM(OutputRemote)) {
-			hist->pass->_vptr->push(hist->pass, 1, 0);
-		}
-		hist->pass->_vptr->obj.ref.unref((void *) hist->pass);
-		hist->pass = 0;
-	}
 }

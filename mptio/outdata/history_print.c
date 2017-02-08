@@ -11,135 +11,9 @@
 #include "convert.h"
 #include "meta.h"
 
-#include "output.h"
+#include "stream.h"
 
-struct typeSource
-{
-	MPT_INTERFACE(metatype) ctl;
-	FILE *fd;
-	struct {
-		const uint8_t *ptr;
-		size_t len;
-	} src;
-	struct {
-		const MPT_STRUCT(valfmt) *ptr;
-		size_t len, pos;
-	} fmt;
-	struct {
-		const MPT_STRUCT(msgvalfmt) *ptr;
-		size_t len, pos;
-	} part;
-	size_t size;
-	struct {
-		uint8_t pos, max;
-	} elem;
-	char type;
-};
-static int advancePart(struct typeSource *ts)
-{
-	uint8_t pos;
-	
-	if (!ts->part.ptr) {
-		return ts->type;
-	}
-	ts->elem.pos = 0;
-	while ((pos = ++ts->part.pos) < ts->part.len) {
-		int type, fmt;
-		/* use part elements */
-		if (!(ts->elem.max = ts->part.ptr[pos].len)) {
-			continue;
-		}
-		fmt = ts->part.ptr[pos].fmt;
-		if ((type = mpt_msgvalfmt_type(fmt)) < 0) {
-			return type;
-		}
-		ts->type = type;
-		ts->size = mpt_msgvalfmt_size(fmt);
-		
-		return type;
-	}
-	/* all parts processed */
-	fputc('\n', ts->fd);
-	ts->fmt.pos = 0;
-	ts->part.pos = 0;
-	ts->elem.max = 0;
-	return 0;
-}
-static void histUnref(MPT_INTERFACE(unrefable) *src)
-{
-	(void) src;
-}
-static int histAssign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
-{
-	(void) src; (void) val; return MPT_ERROR(BadOperation);
-}
-static int histConv(MPT_INTERFACE(metatype) *src, int type, void *dest)
-{
-	struct typeSource *ts = (void *) src;
-	ssize_t left;
-	size_t len;
-	
-	left = ts->src.len;
-	
-	/* advance to next segment */
-	if (ts->elem.pos == ts->elem.max) {
-		int type;
-		
-		if ((type = advancePart(ts)) < 0) {
-			return type;
-		}
-		if (!type) {
-			return 0;
-		}
-	}
-	if (!left) {
-		return 0;
-	}
-	len = ts->size;
-	if ((left -= len) < 0) {
-		return MPT_ERROR(MissingData);
-	}
-	if ((type & 0xff) == MPT_ENUM(TypeValFmt)) {
-		if (!ts->fmt.ptr) {
-			return MPT_ERROR(BadValue);
-		}
-		if (dest) {
-			*((MPT_STRUCT(valfmt) *) dest) = ts->fmt.ptr[ts->fmt.pos];
-		}
-		/* no advance on last element */
-		if (!(type & MPT_ENUM(ValueConsume)) || !ts->fmt.len) {
-			return MPT_ENUM(TypeValFmt);
-		}
-		if (++ts->fmt.pos < ts->fmt.len) {
-			return MPT_ENUM(TypeValFmt) | MPT_ENUM(ValueConsume);
-		}
-		--ts->fmt.pos;
-		return MPT_ENUM(TypeValFmt);
-	}
-	if ((type & 0xff) != ts->type) {
-		return MPT_ERROR(BadType);
-	}
-	if (dest) memcpy(dest, ts->src.ptr, len);
-	
-	if (!(type & MPT_ENUM(ValueConsume))) {
-		return ts->type;
-	}
-	++ts->elem.pos;
-	ts->src.ptr += len;
-	ts->src.len  = left;
-	
-	return ts->type | MPT_ENUM(ValueConsume);
-}
-static MPT_INTERFACE(metatype) *histClone(const MPT_INTERFACE(metatype) *src)
-{
-	(void) src; return 0;
-}
-static const MPT_INTERFACE_VPTR(metatype) getCtl = {
-	{ histUnref },
-	histAssign,
-	histConv,
-	histClone
-};
+#include "output.h"
 
 /*!
  * \ingroup mptMessage
@@ -152,176 +26,153 @@ static const MPT_INTERFACE_VPTR(metatype) getCtl = {
  * \param len  length of data
  * \param src  start address of data
  */
-extern ssize_t mpt_history_print(FILE *fd, MPT_STRUCT(histinfo) *hist, size_t len, const void *src)
+extern ssize_t mpt_history_print(MPT_STRUCT(history) *hist, size_t len, const void *src)
 {
+	MPT_STRUCT(valfmt) *fmt;
 	MPT_STRUCT(buffer) *buf;
-	struct typeSource ts;
-	int err;
+	FILE *fd;
+	const char *endl, *dat;
+	size_t flen, dlen;
+	ssize_t done;
 	
-	if (!fd) {
-		return 0;
+	if (!(fd = hist->file)) {
+		if (len && !src) {
+			return MPT_ERROR(BadOperation);
+		}
+		return len;
 	}
+	endl = mpt_newline_string(hist->lsep);
+	
 	/* finish data block */
-	if (!(ts.src.len = len)) {
-		if (hist->pos.fmt || hist->pos.elem) {
-			fputc('\n', fd);
+	if (!len) {
+		if (hist->info.fmt || hist->info.pos) {
+			fputs(endl, fd);
 			return 1;
 		}
 		return 0;
 	}
-	if (!(ts.src.ptr = src)) {
+	if (!src) {
 		return MPT_ERROR(BadOperation);
 	}
+	done = 0;
+	
 	/* indicate setup state */
-	if (hist->lfmt & 0xf) {
-		MPT_STRUCT(msgvalfmt) *fmt;
-		/* invalid header format type */
-		if (hist->lfmt & MPT_ENUM(ValuesBig)
-		    && !hist->pos.fmt) {
-			MPT_STRUCT(buffer) *buf;
-			fmt = 0;
-			if ((buf = hist->_dat._buf) && buf->used) {
-				fmt = ((MPT_STRUCT(msgvalfmt) *)(buf+1)) + (buf->used/sizeof(*fmt)) - 1;
-			}
-			/* alternative format */
-			while (1) {
-				MPT_STRUCT(msgvalfmt) tmp;
-				/* setup finished */
-				if (!(tmp.fmt = *ts.src.ptr)) {
-					/* fallback to single value type */
-					if (!fmt) {
-						hist->pos.fmt = hist->lfmt;
-					}
-					hist->lfmt &= 0xf0;
-					if (!--ts.src.len) {
-						return len;
-					}
-					break;
-				}
-				tmp.len = 1;
-				if (fmt && (tmp.fmt == fmt->fmt) && fmt->len < UINT8_MAX) {
-					++fmt->len;
-				}
-				else if ((tmp.fmt & 0x7f) && !(fmt = mpt_array_append(&hist->_dat, sizeof(tmp), &tmp))) {
-					return MPT_ERROR(BadOperation);
-				}
-				if (!++hist->fpos) {
-					return MPT_ERROR(MissingBuffer);
-				}
-				if (!--ts.src.len) {
-					return len;
-				}
-				fmt = (void *) ++ts.src.ptr;
-			}
-		}
-		/* need format information */
-		else {
-			hist->lfmt &= ~MPT_ENUM(ValuesBig);
-			while (hist->pos.fmt) {
-				fmt = (void *) ts.src.ptr;
-				if (ts.src.len < sizeof(*fmt)) {
-					ssize_t total = len - ts.src.len;
-					return total ? total : MPT_ERROR(MissingData);
-				}
-				if (!mpt_array_append(&hist->_dat, sizeof(*fmt), fmt)) {
-					return MPT_ERROR(BadOperation);
-				}
-				--hist->pos.fmt;
-				if (!++hist->fpos) {
-					return MPT_ERROR(MissingBuffer);
-				}
-				ts.src.ptr  = (void *) ++fmt;
-				ts.src.len -= sizeof(*fmt);
-			}
-			if (!(buf = hist->_dat._buf) || !buf->used) {
-				hist->pos.fmt = hist->lfmt;
-			}
-			hist->lfmt &= 0xf0;
-		}
-		hist->fpos = 0;
-	}
-	
-	ts.ctl._vptr = &getCtl;
-	ts.fd = fd;
-	
-	if (!(buf = hist->_fmt._buf)
-	    || !(ts.fmt.len = buf->used / sizeof(*ts.fmt.ptr))
-	    || (hist->lfmt & MPT_ENUM(ValuesBig))) {
-		ts.fmt.ptr = 0;
-	} else {
-		ts.fmt.ptr = (void *) (buf+1);
-		ts.fmt.pos = hist->fpos;
-		if (ts.fmt.pos >= ts.fmt.len) {
-			return MPT_ERROR(BadArgument);
-		}
-	}
-	/* unified non-segmented data */
-	if (!(buf = hist->_dat._buf)
-	    || !(ts.size = buf->used / sizeof(*ts.part.ptr))) {
-		int type;
-		ts.part.ptr = 0;
-		ts.part.len = 0;
-		ts.part.pos = 0;
+	if (!hist->info.fmt) {
+		const int8_t *curr = src;
 		
-		if ((type = mpt_msgvalfmt_type(hist->pos.fmt)) < 0) {
-			return type;
+		if (*curr < 0) {
+			return MPT_ERROR(BadValue);
 		}
-		ts.type = type;
-		ts.size = mpt_msgvalfmt_size(hist->pos.fmt);
+		/* separate type for data */
+		if (!(hist->info.pos = *curr)) {
+			hist->info.fmt = (int8_t) MPT_ENUM(ByteOrderLittle);
+		}
+		src = curr + 1;
+		++done;
+		--len;
 	}
-	/* data part information */
-	else {
-		int type;
-		uint8_t fmt;
-		/* part parameter setup */
-		ts.part.ptr = (void *) (buf+1);
-		ts.part.len = ts.size;
-		ts.part.pos = hist->pos.fmt;
-		if (ts.part.pos >= ts.part.len) {
-			return MPT_ERROR(BadArgument);
+	dlen = 0;
+	if ((buf = hist->info._dat._buf)) {
+		dat = (void *) (buf + 1);
+		dlen = buf->used / sizeof(*dat);
+	}
+	/* require data format info */
+	if (!(hist->info.fmt & 0x7f)) {
+		while (dlen < hist->info.pos) {
+			const int8_t *curr = src;
+			
+			if (!len--) {
+				return done;
+			}
+			if (!(*curr & 0x7f)) {
+				return MPT_ERROR(BadType);
+			}
+			if (!mpt_array_append(&hist->info._dat, sizeof(*curr), curr)) {
+				return MPT_ERROR(BadOperation);
+			}
+			++dlen;
+			
+			src = curr + 1;
 		}
-		/* current element setup */
-		ts.elem.max = ts.part.ptr[ts.part.pos].len;
-		ts.elem.pos = hist->pos.elem;
-		if (ts.elem.pos > ts.elem.max) {
-			return MPT_ERROR(BadArgument);
+		/* update data type info */
+		if ((buf = hist->info._dat._buf)) {
+			dat = (void *) (buf + 1);
+			dlen = buf->used / sizeof(*dat);
 		}
-		/* current type parameters */
-		fmt = ts.part.ptr[ts.part.pos].fmt;
-		if ((type = mpt_msgvalfmt_type(fmt)) < 0) {
-			return type;
-		}
-		ts.type = type;
-		ts.size = mpt_msgvalfmt_size(fmt);
+		hist->info.fmt = hist->info.pos;
+		hist->info.pos = 0;
+	}
+	/* get otput format data */
+	if ((buf = hist->info._dat._buf)) {
+		fmt = (void *) (buf + 1);
+		flen = buf->used / sizeof(*fmt);
+	}
+	while (len) {
+		char buf[256];
+		MPT_STRUCT(valfmt) val;
+		size_t adv;
+		int curr;
+		char cfmt;
 		
-		/* size requirement not fulfilled */
-		if (len < ts.size) {
-			return len - ts.src.len;
+		val.fmt = 0;
+		val.wdt = 12;
+		
+		/* use prepared format data */
+		if (dlen) {
+			if (hist->info.pos >= dlen) {
+				fputs(endl, fd);
+				hist->info.pos = 0;
+			}
+			cfmt = dat[hist->info.pos];
 		}
-		/* element is continuation */
-		if (ts.part.pos || ts.elem.pos) {
+		/* need current format information */
+		else if (!(cfmt = hist->info.all) && !(cfmt = hist->info.fmt)) {
+			const int8_t *curr = src;
+			
+			if (!(cfmt = *curr)) {
+				return done ? done : MPT_ERROR(BadType);
+			}
+			hist->info.fmt = cfmt;
+			src = curr + 1;
+			++done;
+			
+			if (!(--len)) {
+				return done;
+			}
+			flen = 0;
+			val.wdt = 0;
+		}
+		if (!(adv = mpt_msgvalfmt_size(cfmt)) < 0) {
+			return MPT_ERROR(BadType);
+		}
+		if (len < adv) {
+			return done;
+		}
+		/* determine output format */
+		if (hist->info.pos < flen) {
+			val = fmt[hist->info.pos];
+		}
+		else if (flen) {
+			val = fmt[flen-1];
+		}
+		/* print number to buffer */
+		if ((curr = mpt_number_print(buf, sizeof(buf), val, cfmt, src)) < 0) {
+			return curr;
+		}
+		/* stretch field size */
+		if (curr < val.wdt) {
+			curr = val.wdt;
+		}
+		/* field separation */
+		if (hist->info.pos) {
 			fputc(' ', fd);
 		}
+		fwrite(buf, curr, 1, fd);
+		
+		done += adv;
+		len -= adv;
+		
+		src = ((uint8_t *) src) + adv;
 	}
-	
-	while (1) {
-		ssize_t total;
-		err = mpt_fprint_val(fd, &ts.ctl);
-		
-		hist->pos.fmt  = ts.part.pos;
-		hist->pos.elem = ts.elem.pos;
-		hist->fpos = ts.fmt.pos;
-		
-		total = len - ts.src.len;
-		if (err < 0) {
-			return total ? total : err;
-		}
-		if (!ts.src.len) {
-			return total;
-		}
-		
-		hist->pos.fmt = 0;
-		hist->pos.elem = 0;
-		hist->fpos = 0;
-	}
+	return done;
 }

@@ -29,8 +29,7 @@ extern void mpt_history_reset(MPT_STRUCT(histinfo) *hist)
 	if ((buf = hist->_dat._buf)) {
 		buf->used = 0;
 	}
-	hist->pos.fmt = 0;
-	hist->pos.elem = 0;
-	hist->fpos = 0;
-	hist->lfmt = 0;
+	hist->pos = 0;
+	hist->all = 0;
+	hist->fmt = 0;
 }

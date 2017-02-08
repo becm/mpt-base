@@ -37,6 +37,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		return MPT_ERROR(MissingData);
 	}
 	while (*fmt) {
+		static const MPT_STRUCT(valfmt) vfmt = MPT_VALFMT_INIT;
 		char buf[256];
 		const char *txt;
 		size_t len;
@@ -55,7 +56,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 			data = c + 1;
 			txt = buf;
 		}
-		else if ((adv = mpt_number_print(buf, sizeof(buf), *fmt, data)) < 0) {
+		else if ((adv = mpt_number_print(buf, sizeof(buf), vfmt, *fmt, data)) < 0) {
 			return cont ? cont : adv;
 		}
 		else {
