@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "meta.h"
+
 #include "convert.h"
 
 #include "../mptplot/layout.h"

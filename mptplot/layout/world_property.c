@@ -10,8 +10,6 @@
 
 #include "meta.h"
 
-#include "convert.h"
-
 #include "layout.h"
 
 static const MPT_STRUCT(world) def_world = {

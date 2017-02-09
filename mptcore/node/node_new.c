@@ -11,8 +11,6 @@
 
 #include "meta.h"
 
-#include "convert.h"
-
 #include "node.h"
 
 struct _inline_meta

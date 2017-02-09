@@ -2,6 +2,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "meta.h"
+
 #include "convert.h"
 
 /*!

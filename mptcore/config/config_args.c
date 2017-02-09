@@ -11,8 +11,6 @@
 #include "message.h"
 #include "meta.h"
 
-#include "convert.h"
-
 #include "config.h"
 
 /*!

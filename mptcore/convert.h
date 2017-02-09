@@ -32,26 +32,6 @@ enum MPT_ENUM(PrintFlags) {
 	MPT_ENUM(PrintNumberSign)      = 0x1000, /* print sign */
 	MPT_ENUM(PrintNumberLeft)      = 0x2000  /* print left bounded */
 };
-enum MPT_ENUM(ConversionFlags) {
-	/* additional conversion options */
-	MPT_ENUM(AssignColon)   = 0x100,
-	MPT_ENUM(AssignEqual)   = 0x200,
-	MPT_ENUM(PropertyColon) = MPT_ENUM(AssignColon) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyEqual) = MPT_ENUM(AssignEqual) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyAssign) = MPT_ENUM(PropertyColon) | MPT_ENUM(PropertyEqual),
-	
-	/* convert metatype to specific value */
-	MPT_ENUM(ValueMeta)     = 0x800,
-	
-	/* input control options */
-	MPT_ENUM(ValueConsume)  = 0x1000,
-	MPT_ENUM(ValueCreate)   = 0x2000,
-	MPT_ENUM(ValueChange)   = 0x4000,
-	MPT_ENUM(ValueReset)    = 0x8000,
-	
-	/* foreign flag offset */
-	MPT_ENUM(ConvertUser)   = 0x10000
-};
 enum MPT_ENUM(NewlineTypes) {
 	MPT_ENUM(NewlineMac)  = 0x1,       /* MacOS line separation */
 	MPT_ENUM(NewlineUnix) = 0x2,       /* UNIX line separation */

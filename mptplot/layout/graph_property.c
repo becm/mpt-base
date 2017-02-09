@@ -11,8 +11,6 @@
 
 #include "meta.h"
 
-#include "convert.h"
-
 #include "layout.h"
 
 static const MPT_STRUCT(graph) def_graph = {
