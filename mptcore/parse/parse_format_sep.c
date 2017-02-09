@@ -24,8 +24,8 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	int curr;
 	
 	/* last operation was section end */
-	if ((parse->prev & 0xf) == MPT_ENUM(ParseSectEnd)) {
-		parse->curr = MPT_ENUM(ParseSection);
+	if ((parse->prev & 0xf) == MPT_PARSEFLAG(SectEnd)) {
+		parse->curr = MPT_PARSEFLAG(Section);
 		curr = fmt->sstart;
 		/* find section name start */
 		if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(&parse->src, path)) < 0)) {
@@ -37,13 +37,13 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		if (curr == -2) {
 			return 0;
 		}
-		parse ->curr = MPT_ENUM(ParseName);
+		parse ->curr = MPT_PARSEFLAG(Name);
 		return MPT_ERROR(BadArgument);
 	}
 	/* section start missed */
 	else if (curr != fmt->sstart) {
 		if (curr != fmt->ostart) {
-			parse->curr = MPT_ENUM(ParseName);
+			parse->curr = MPT_PARSEFLAG(Name);
 			if (mpt_path_addchar(path, curr) < 0) {
 				return MPT_ERROR(BadOperation);
 			}
@@ -53,25 +53,25 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	}
 	/* reached path separator */
 	else if (path->len) {
-		parse->curr = MPT_ENUM(ParseSectEnd);
-		return MPT_ENUM(ParseSectEnd);
+		parse->curr = MPT_PARSEFLAG(SectEnd);
+		return MPT_PARSEFLAG(SectEnd);
 	}
 	/* get first name element */
 	else if ((fmt->send != fmt->sstart) && ((curr = mpt_parse_getchar(&parse->src, path)) < 0)) {
-		parse->curr = MPT_ENUM(ParseSection);
+		parse->curr = MPT_PARSEFLAG(Section);
 		return curr == -2 ? MPT_ERROR(MissingData) : MPT_ERROR(BadArgument);
 	}
 	/* find valid section separator */
 	while (1) {
 		if (curr == fmt->send) {
-			parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
+			parse->curr = MPT_PARSEFLAG(Section) | MPT_PARSEFLAG(Name);
 			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {
 				return MPT_ERROR(BadOperation);
 			}
-			return MPT_ENUM(ParseSection);
+			return MPT_PARSEFLAG(Section);
 		}
 		if (MPT_iscomment(fmt, curr)) {
 			break;
@@ -86,7 +86,7 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			break;
 		}
 	}
-	parse->curr = MPT_ENUM(ParseSection);
+	parse->curr = MPT_PARSEFLAG(Section);
 	return MPT_ERROR(BadValue);
 }
 

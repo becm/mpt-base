@@ -109,7 +109,7 @@ static int connectionColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
 	int32_t val = 0;
 	
 	if (!src) {
-		*flags &= ~MPT_ENUM(OutputPrintColor);
+		*flags &= ~MPT_OUTFLAG(PrintColor);
 		return 0;
 	}
 	if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
@@ -123,9 +123,9 @@ static int connectionColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
 		return MPT_ERROR(BadType);
 	}
 	if (val > 0) {
-		*flags |= MPT_ENUM(OutputPrintColor);
+		*flags |= MPT_OUTFLAG(PrintColor);
 	} else {
-		*flags &= ~MPT_ENUM(OutputPrintColor);
+		*flags &= ~MPT_OUTFLAG(PrintColor);
 	}
 	return len;
 }
@@ -235,7 +235,7 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->name = "color";
 		pr->desc = MPT_tr("colorized message output");
 		pr->val.fmt = 0;
-		if (con->out.state & MPT_ENUM(OutputPrintColor)) {
+		if (con->out.state & MPT_OUTFLAG(PrintColor)) {
 			pr->val.ptr = "true";
 			return 1;
 		} else {

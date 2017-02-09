@@ -49,8 +49,8 @@ static int setHistfile(FILE **hist, MPT_INTERFACE(metatype) *src)
 		
 		/* try to use argument as connect string */
 		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
-			if (!(mode & MPT_ENUM(SocketStream))
-			    || !(mode & MPT_ENUM(SocketWrite))
+			if (!(mode & MPT_SOCKETFLAG(Stream))
+			    || !(mode & MPT_SOCKETFLAG(Write))
 			    || !(fd = fdopen(sock._id, "w"))) {
 				mpt_connect(&sock, 0, 0);
 				return -1;
@@ -77,13 +77,13 @@ static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src
 	out = lo->pass;
 	
 	/* remote output active */
-	if (lo->hist.info.state & MPT_ENUM(OutputRemote)) {
+	if (lo->hist.info.state & MPT_OUTFLAG(Remote)) {
 		if (!out) {
 			return MPT_ERROR(BadArgument);
 		}
 		ret = out->_vptr->push(out, len, src);
 		if (ret >= 0 && !len) {
-			lo->hist.info.state &= ~MPT_ENUM(OutputRemote);
+			lo->hist.info.state &= ~MPT_OUTFLAG(Remote);
 		}
 		return ret;
 	}
@@ -91,12 +91,12 @@ static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src
 	ret = mpt_history_push(&lo->hist, len, src);
 	
 	/* invalid local output operation */
-	if (ret < 0 && !(lo->hist.info.state & MPT_ENUM(OutputActive))) {
+	if (ret < 0 && !(lo->hist.info.state & MPT_OUTFLAG(Active))) {
 		if (!out || (ret = out->_vptr->push(out, len, src)) < 0) {
 			return ret;
 		}
 		if (len && src) {
-			lo->hist.info.state |= MPT_ENUM(OutputRemote);
+			lo->hist.info.state |= MPT_OUTFLAG(Remote);
 		}
 	}
 	return ret;
@@ -111,7 +111,7 @@ static int localAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_S
 	ret = out->_vptr->await(out, ctl, udata);
 	
 	if (ret >= 0) {
-		lo->hist.info.state |= MPT_ENUM(OutputRemote);
+		lo->hist.info.state |= MPT_OUTFLAG(Remote);
 	}
 	return ret;
 }
@@ -263,7 +263,7 @@ extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) *pass)
 	
 	od->pass = pass;
 	
-	od->hist.info.state  = MPT_ENUM(OutputPrintColor);
+	od->hist.info.state  = MPT_OUTFLAG(PrintColor);
 	od->hist.info.ignore = MPT_LOG(Info);
 	
 	return &od->_out;

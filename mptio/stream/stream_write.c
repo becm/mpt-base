@@ -90,8 +90,8 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 	/* reserve data on queue */
 	if (!part) {
 		if (count > (part = stream->_wd.data.max - stream->_wd.data.len)) {
-			if (!(flags & MPT_ENUM(StreamWriteBuf))
-			    || (flags & MPT_ENUM(StreamWriteMap))
+			if (!(flags & MPT_STREAMFLAG(WriteBuf))
+			    || (flags & MPT_STREAMFLAG(WriteMap))
 			    || !mpt_queue_prepare(&stream->_wd.data, count)) {
 				return 0;
 			}
@@ -150,7 +150,7 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 		
 		left = stream->_wd.data.max - stream->_wd.data.len;
 		
-		if (!(flags & MPT_ENUM(StreamWriteBuf))) {
+		if (!(flags & MPT_STREAMFLAG(WriteBuf))) {
 			ssize_t len;
 			if (!data || part != 1 || stream->_wd.data.len) {
 				if (!tchunk) {
@@ -164,7 +164,7 @@ extern size_t mpt_stream_write(MPT_STRUCT(stream) *stream, size_t count, const v
 			return len;
 		}
 		if (left < part) {
-			if (flags & MPT_ENUM(StreamWriteMap)) {
+			if (flags & MPT_STREAMFLAG(WriteMap)) {
 				if (!tchunk) errno = EBADF;
 				break;
 			}

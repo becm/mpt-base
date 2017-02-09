@@ -187,7 +187,7 @@ extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *path)
 		return 0;
 	}
 	p = *path;
-	p.flags &= ~MPT_ENUM(PathHasArray);
+	p.flags &= ~MPT_PATHFLAG(HasArray);
 	
 	n = mpt_config_node(0);
 	if (!(n = mpt_node_query(n, &p, 0))) {

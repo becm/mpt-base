@@ -23,7 +23,7 @@ extern int mpt_path_last(MPT_STRUCT(path) *path)
 	if (!(pos = path->len) || !(data = path->base)) {
 		errno = EINVAL; return -2;
 	}
-	if (path->flags & MPT_ENUM(PathSepBinary)) {
+	if (path->flags & MPT_PATHFLAG(SepBinary)) {
 		if (pos < 2 || pos < (len = data[pos-2])) {
 			errno = EINVAL; return -2;
 		}

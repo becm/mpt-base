@@ -25,28 +25,6 @@ MPT_STRUCT(message);
 
 MPT_INTERFACE(metatype);
 
-enum MPT_ENUM(StreamFlags) {
-	/* state flags */
-	MPT_ENUM(StreamRead)     = 0x0,    /* stream is only readable */
-	MPT_ENUM(StreamWrite)    = 0x1,    /* stream is only writable */
-	MPT_ENUM(StreamRdWr)     = 0x2,    /* stream is read-/writeable */
-	
-	/* transaction flags */
-	MPT_ENUM(StreamMesgAct)   = 0x4,   /* message in progress */
-	MPT_ENUM(StreamFlushLine) = 0x8,   /* flush buffer after newline */
-	
-	/* buffer mode */
-	MPT_ENUM(StreamReadBuf)  = 0x10,   /* buffered reading */
-	MPT_ENUM(StreamWriteBuf) = 0x20,   /* buffered writing */
-	MPT_ENUM(StreamBuffer)   = 0x30,
-	MPT_ENUM(StreamReadMap)  = 0x40,   /* read from mapped file */
-	MPT_ENUM(StreamWriteMap) = 0x80,   /* write to mapped file */
-	
-	/* file mode stream flags */
-	MPT_ENUM(StreamForceMap)  = 0x100, /* force data mapping */
-	MPT_ENUM(StreamFmtDetect) = 0x200  /* detect stream encoding */
-};
-
 enum MPT_ENUM(ErrorTypes) {
 	MPT_ENUM(ErrorEmpty) = 0x1,        /* input is empty */
 	MPT_ENUM(ErrorFull)  = 0x2,        /* output is full */
@@ -66,7 +44,7 @@ MPT_STRUCT(streaminfo)
     private:
 #else
 # define MPT_STREAMINFO_INIT { 0 }
-# define MPT_stream_flush(f) (((f) & MPT_ENUM(StreamFlushLine)) ? MPT_stream_newline_write(f) : -1)
+# define MPT_stream_flush(f) (((f) & MPT_STREAMFLAG(FlushLine)) ? MPT_stream_newline_write(f) : -1)
 #endif
 	uintptr_t _fd;  /* file metadata */
 };
@@ -76,14 +54,40 @@ MPT_STRUCT(streaminfo)
 #define MPT_stream_newline_write(f) (((f) & 0xc000) >> 14)
 
 
+#ifdef __cplusplus
 MPT_STRUCT(stream)
 {
+# define MPT_STREAMFLAG(x) x
+#else
+# define MPT_STREAMFLAG(x) MPT_ENUM(Stream##x)
+#endif
+enum MPT_STREAMFLAG(Flags) {
+	/* state flags */
+	MPT_STREAMFLAG(Read)     = 0x0,    /* stream is only readable */
+	MPT_STREAMFLAG(Write)    = 0x1,    /* stream is only writable */
+	MPT_STREAMFLAG(RdWr)     = 0x2,    /* stream is read-/writeable */
+	
+	/* transaction flags */
+	MPT_STREAMFLAG(MesgActive) = 0x4,  /* message in progress */
+	MPT_STREAMFLAG(FlushLine)  = 0x8,  /* flush buffer after newline */
+	
+	/* buffer mode */
+	MPT_STREAMFLAG(ReadBuf)  = 0x10,   /* buffered reading */
+	MPT_STREAMFLAG(WriteBuf) = 0x20,   /* buffered writing */
+	MPT_STREAMFLAG(Buffer)   = 0x30,
+	MPT_STREAMFLAG(ReadMap)  = 0x40,   /* read from mapped file */
+	MPT_STREAMFLAG(WriteMap) = 0x80,   /* write to mapped file */
+	
+	/* file mode stream flags */
+	MPT_STREAMFLAG(ForceMap)  = 0x100, /* force data mapping */
+	MPT_STREAMFLAG(FmtDetect) = 0x200  /* detect stream encoding */
+};
 #ifdef __cplusplus
 	stream();
 	~stream();
 	
 	bool endline();
-	void setNewline(int , int = StreamRdWr);
+	void setNewline(int , int = RdWr);
 	
 	int flags() const;
 	
@@ -94,6 +98,8 @@ MPT_STRUCT(stream)
     protected:
 	friend class Stream;
 #else
+MPT_STRUCT(stream)
+{
 # define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_DECODE_QUEUE_INIT, MPT_ENCODE_QUEUE_INIT, -1 }
 #endif
 	MPT_STRUCT(streaminfo)   _info;  /* stream state */
@@ -219,7 +225,7 @@ public:
 	int getchar() __MPT_OVERRIDE;
 	
 	bool open(const char *, const char * = "r");
-	bool open(void *, size_t , int = StreamRead);
+	bool open(void *, size_t , int = stream::Read);
 	
 	inline void close()
 	{ setProperty(0, 0); }

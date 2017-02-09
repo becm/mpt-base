@@ -69,7 +69,7 @@ extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *path)
 		return 0;
 	}
 	p = *path;
-	p.flags &= ~MPT_ENUM(PathHasArray);
+	p.flags &= ~MPT_PATHFLAG(HasArray);
 	
 	base = p.base;
 	curr = base + path->off;

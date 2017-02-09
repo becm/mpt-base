@@ -44,7 +44,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 		return MPT_ERROR(BadArgument);
 	}
 	/* new message start */
-	if (!(con->out.state & MPT_ENUM(OutputActive))
+	if (!(con->out.state & MPT_OUTFLAG(Active))
 	    && con->out._idlen) {
 		uint8_t buf[64];
 		
@@ -67,7 +67,7 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 					}
 					return MPT_ERROR(MissingBuffer);
 				} else {
-					con->out.state |= MPT_ENUM(OutputActive);
+					con->out.state |= MPT_OUTFLAG(Active);
 				}
 			}
 		}
@@ -83,22 +83,22 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *con, size_t len, cons
 	if (srm) {
 		if ((ret = mpt_stream_push(srm, len, src)) < 0) {
 			/* push operation failed */
-			if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
+			if (mpt_stream_flags(&srm->_info) & MPT_STREAMFLAG(MesgActive)) {
 				mpt_stream_push(srm, 1, 0);
 			}
-			con->out.state &= ~MPT_ENUM(OutputActive);
+			con->out.state &= ~MPT_OUTFLAG(Active);
 		}
 		/* message completed */
 		else if (!len) {
-			con->out.state &= ~MPT_ENUM(OutputActive);
+			con->out.state &= ~MPT_OUTFLAG(Active);
 			mpt_stream_flush(srm);
 			con->cid = 0;
 		} else {
-			con->out.state |= MPT_ENUM(OutputActive);
+			con->out.state |= MPT_OUTFLAG(Active);
 		}
 	}
 	else if ((ret = mpt_outdata_push(&con->out, len, src)) < 0) {
-		if (con->out.state & MPT_ENUM(OutputActive)) {
+		if (con->out.state & MPT_OUTFLAG(Active)) {
 			mpt_outdata_push(&con->out, 1, 0);
 		}
 	}

@@ -16,14 +16,19 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
 
-enum MPT_ENUM(ConfigFlags) {
-	MPT_ENUM(PathHasArray)  = 0x40,
-	MPT_ENUM(PathSepBinary) = 0x80
-};
 
 /*! (un)structured element path */
+#if defined(__cplusplus)
 MPT_STRUCT(path)
 {
+# define MPT_PATHFLAG(x) x
+#else
+# define MPT_PATHFLAG(x) MPT_ENUM(Path_##x)
+#endif
+enum MPT_PATHFLAG(Flags) {
+	MPT_PATHFLAG(HasArray)  = 0x40,
+	MPT_PATHFLAG(SepBinary) = 0x80
+};
 #if defined(__cplusplus)
 	path(int sep = '.', int assign = '=', const char *path = 0);
 	path(path const &);
@@ -48,6 +53,8 @@ MPT_STRUCT(path)
 	
     protected:
 #else
+MPT_STRUCT(path)
+{
 # define MPT_PATH_INIT  { 0,  0, 0, 0,  0, 0,  '.', '=' }
 #endif
 	const char *base;   /* path data */

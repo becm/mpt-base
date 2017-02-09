@@ -21,18 +21,6 @@ MPT_STRUCT(array);
 MPT_STRUCT(notify);
 MPT_STRUCT(message);
 
-enum MPT_ENUM(OutputFlags) {
-	MPT_ENUM(OutputPrintNormal)  = 0x1,
-	MPT_ENUM(OutputPrintError)   = 0x2,
-	MPT_ENUM(OutputPrintHistory) = 0x3,
-	MPT_ENUM(OutputPrintRestore) = 0x4,
-	MPT_ENUM(OutputPrintColor)   = 0x8,   /* enable coloring */
-	
-	MPT_ENUM(OutputActive)       = 0x10,  /* message is active */
-	MPT_ENUM(OutputReceived)     = 0x20,  /* data from remote */
-	MPT_ENUM(OutputRemote)       = 0x40   /* skip internal filter */
-};
-
 #define MPT_OUTPUT_LOGMSG_MAX 256
 #ifdef __cplusplus
 MPT_INTERFACE(output) : public object
@@ -51,6 +39,22 @@ public:
 	int setHistFormat(const char *);
 	
 	int message(const char *, int, const char *, ... );
+# define MPT_OUTFLAG(x) x
+#else
+# define MPT_OUTFLAG(x) MPT_ENUM(Output##x)
+#endif
+enum MPT_OUTFLAG(Flags) {
+	MPT_OUTFLAG(PrintNormal)  = 0x1,
+	MPT_OUTFLAG(PrintError)   = 0x2,
+	MPT_OUTFLAG(PrintHistory) = 0x3,
+	MPT_OUTFLAG(PrintRestore) = 0x4,
+	MPT_OUTFLAG(PrintColor)   = 0x8,   /* enable coloring */
+	
+	MPT_OUTFLAG(Active)       = 0x10,  /* message is active */
+	MPT_OUTFLAG(Received)     = 0x20,  /* data from remote */
+	MPT_OUTFLAG(Remote)       = 0x40   /* skip internal filter */
+};
+#ifdef __cplusplus
 };
 class Output : public Object
 {

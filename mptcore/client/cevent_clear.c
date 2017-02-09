@@ -40,7 +40,7 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 		
 		if (!(src = mpt_event_command(ev))) {
 			ev->id = 0;
-			return MPT_ENUM(EventFail) | MPT_ENUM(EventDefault);
+			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
 		if ((ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), 0)) <= 0
 		    || (ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &arg)) < 0) {

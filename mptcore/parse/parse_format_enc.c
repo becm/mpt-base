@@ -22,7 +22,7 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	
 	/* same-character section start/end */
 	if (fmt->sstart == fmt->send) {
-		if (parse->prev == MPT_ENUM(ParseSectEnd)) {
+		if (parse->prev == MPT_PARSEFLAG(SectEnd)) {
 			curr = fmt->sstart;
 		}
 		/* no further data and no section end */
@@ -32,12 +32,12 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		}
 		/* section start == end detected */
 		else if (path->len && curr == fmt->sstart) {
-			return parse->curr = MPT_ENUM(ParseSectEnd);
+			return parse->curr = MPT_PARSEFLAG(SectEnd);
 		}
 	}
 	/* get next visible character */
 	else if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
-		parse->curr = MPT_ENUM(ParseName);
+		parse->curr = MPT_PARSEFLAG(Name);
 		if (!path->len && curr == -2) {
 			return curr;
 		}
@@ -46,12 +46,12 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	/* section start missed */
 	if (curr != fmt->sstart) {
 		if (mpt_path_addchar(path, curr) < 0) {
-			parse->curr = MPT_ENUM(ParseOption);
+			parse->curr = MPT_PARSEFLAG(Option);
 			return MPT_ERROR(MissingBuffer);
 		}
 		if (fmt->ostart) {
 			if (curr != fmt->ostart) {
-				parse->curr = MPT_ENUM(ParseOption);
+				parse->curr = MPT_PARSEFLAG(Option);
 				return MPT_ERROR(BadValue);
 			}
 		}
@@ -60,12 +60,12 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		}
 		return mpt_parse_option(fmt, parse, path);
 	}
-	parse->curr = MPT_ENUM(ParseSection);
+	parse->curr = MPT_PARSEFLAG(Section);
 	/* first character of section name */
 	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) <= 0) {
 		return MPT_ERROR(MissingData);
 	}
-	parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
+	parse->curr = MPT_PARSEFLAG(Section) | MPT_PARSEFLAG(Name);
 	
 	if (mpt_path_addchar(path, curr) < 0) {
 		return MPT_ERROR(MissingBuffer);
@@ -93,6 +93,6 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	if (mpt_path_add(path) < 0) {
 		return MPT_ERROR(BadOperation);
 	}
-	return MPT_ENUM(ParseSection);
+	return MPT_PARSEFLAG(Section);
 }
 

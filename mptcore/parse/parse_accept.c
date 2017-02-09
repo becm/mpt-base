@@ -28,7 +28,7 @@ extern int mpt_parse_accept(MPT_STRUCT(parseflg) *flg, const char *name)
 		return 0;
 	}
 	if (!*end) {
-		flg->sect = flg->opt = MPT_ENUM(NameNumCont);
+		flg->sect = flg->opt = MPT_NAMEFLAG(NumCont);
 		return 0;
 	}
 	while (*end) {
@@ -38,14 +38,14 @@ extern int mpt_parse_accept(MPT_STRUCT(parseflg) *flg, const char *name)
 			break;
 		}
 		switch (type = tolower(*end)) {
-		  case 'f': type = MPT_ENUM(NameNumStart); break;
-		  case 'c': type = MPT_ENUM(NameNumCont); break;
-		  case 'n': type = MPT_ENUM(NameNumeral); break;
-		  case 's': type = MPT_ENUM(NameSpecial); break;
-		  case 'w': type = MPT_ENUM(NameSpace); break;
+		  case 'f': type = MPT_NAMEFLAG(NumStart); break;
+		  case 'c': type = MPT_NAMEFLAG(NumCont); break;
+		  case 'n': type = MPT_NAMEFLAG(Numeral); break;
+		  case 's': type = MPT_NAMEFLAG(Special); break;
+		  case 'w': type = MPT_NAMEFLAG(Space); break;
 		  
-		  case 'e': type = MPT_ENUM(NameEmpty); break;
-		  case 'b': type = MPT_ENUM(NameBinary); break;
+		  case 'e': type = MPT_NAMEFLAG(Empty); break;
+		  case 'b': type = MPT_NAMEFLAG(Binary); break;
 		  default: return -2;
 		}
 		if (isupper(*end)) {

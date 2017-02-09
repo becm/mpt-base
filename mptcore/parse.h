@@ -18,23 +18,6 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(node);
 MPT_STRUCT(path);
 
-enum MPT_ENUM(ParseFlags) {
-	MPT_ENUM(ParseSection)  = 0x1,
-	MPT_ENUM(ParseSectEnd)  = 0x2,
-	MPT_ENUM(ParseOption)   = 0x3,
-	MPT_ENUM(ParseData)     = 0x4,
-	MPT_ENUM(ParseName)     = 0x8,
-	
-	MPT_ENUM(NameNumStart)  = 0x1,  /* allow numeric initial character */
-	MPT_ENUM(NameNumCont)   = 0x2,  /* allow numeric continous character */
-	MPT_ENUM(NameNumeral)   = 0x3,
-	MPT_ENUM(NameSpecial)   = 0x4,  /* allow special character */
-	MPT_ENUM(NameSpace)     = 0x8,  /* allow space characters */
-	
-	MPT_ENUM(NameEmpty)     = 0x10, /* allow empty name */
-	MPT_ENUM(NameBinary)    = 0x20  /* allow binary character */
-};
-
 /* simple format description */
 MPT_STRUCT(parsefmt)
 {
@@ -59,12 +42,29 @@ MPT_STRUCT(parsefmt)
 	        com[4];  /* comment characters */
 };
 /* parser name flags */
+#ifdef __cplusplus
 MPT_STRUCT(parseflg)
 {
+# define MPT_NAMEFLAG(x) x
+#else
+# define MPT_NAMEFLAG(x) MPT_ENUM(Name##x)
+#endif
+enum MPT_NAMEFLAG(Flags) {
+	MPT_NAMEFLAG(NumStart)  = 0x1,  /* allow numeric initial character */
+	MPT_NAMEFLAG(NumCont)   = 0x2,  /* allow numeric continous character */
+	MPT_NAMEFLAG(Numeral)   = 0x3,
+	MPT_NAMEFLAG(Special)   = 0x4,  /* allow special character */
+	MPT_NAMEFLAG(Space)     = 0x8,  /* allow space characters */
+	
+	MPT_NAMEFLAG(Empty)     = 0x10, /* allow empty name */
+	MPT_NAMEFLAG(Binary)    = 0x20  /* allow binary character */
+};
 #ifdef __cplusplus
 	inline parseflg() : sect(0xff), opt(0xff)
 	{ }
 #else
+MPT_STRUCT(parseflg)
+{
 # define MPT_PARSEFLG_INIT { 0xff, 0xff }
 #endif
 	uint8_t sect,    /* section name format */
@@ -85,12 +85,26 @@ MPT_STRUCT(parseinput)
 	size_t line;         /* current line */
 };
 /* parser context */
+#ifdef __cplusplus
 MPT_STRUCT(parse)
 {
+# define MPT_PARSEFLAG(x) x
+#else
+# define MPT_PARSEFLAG(x) MPT_ENUM(Parse##x)
+#endif
+enum MPT_PARSEFLAG(Flags) {
+	MPT_PARSEFLAG(Section)  = 0x1,
+	MPT_PARSEFLAG(SectEnd)  = 0x2,
+	MPT_PARSEFLAG(Option)   = 0x3,
+	MPT_PARSEFLAG(Data)     = 0x4,
+	MPT_PARSEFLAG(Name)     = 0x8
+};
 #ifdef __cplusplus
 	inline parse() : prev(0), curr(0)
 	{ }
 #else
+MPT_STRUCT(parse)
+{
 # define MPT_PARSE_INIT  { MPT_PARSEINPUT_INIT, 0, 0, MPT_PARSEFLG_INIT }
 #endif
 	MPT_STRUCT(parseinput) src;  /* character source */

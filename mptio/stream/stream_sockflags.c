@@ -28,16 +28,16 @@
  */
 extern int mpt_stream_sockflags(int flg)
 {
-	if (!(flg & MPT_ENUM(SocketStream))) {
+	if (!(flg & MPT_SOCKETFLAG(Stream))) {
 		return -1;
 	}
-	switch (flg & MPT_ENUM(SocketRdWr)) {
-	  case MPT_ENUM(SocketRead):
-		return MPT_ENUM(StreamRead)  | MPT_ENUM(StreamBuffer);
-	  case MPT_ENUM(SocketWrite):
-		return MPT_ENUM(StreamWrite) | MPT_ENUM(StreamWriteBuf);
-	  case MPT_ENUM(SocketRdWr):
-		return MPT_ENUM(StreamRdWr)  | MPT_ENUM(StreamReadBuf);
+	switch (flg & MPT_SOCKETFLAG(RdWr)) {
+	  case MPT_SOCKETFLAG(Read):
+		return MPT_STREAMFLAG(Read)  | MPT_STREAMFLAG(Buffer);
+	  case MPT_SOCKETFLAG(Write):
+		return MPT_STREAMFLAG(Write) | MPT_STREAMFLAG(WriteBuf);
+	  case MPT_SOCKETFLAG(RdWr):
+		return MPT_STREAMFLAG(RdWr)  | MPT_STREAMFLAG(ReadBuf);
 	  default:
 		return 0;
 	}

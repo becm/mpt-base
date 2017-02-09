@@ -27,13 +27,13 @@ extern size_t mpt_stream_read(MPT_STRUCT(stream) *stream, size_t count, void *da
 	/* peek available data */
 	if (!part) {
 		if ((part = queue->len) < count) {
-			if (!(flags & MPT_ENUM(StreamReadBuf))) {
+			if (!(flags & MPT_STREAMFLAG(ReadBuf))) {
 				return 0;
 			}
 			if ((file = _mpt_stream_fread(&stream->_info)) < 0) {
 				return 0;
 			}
-			if (flags & MPT_ENUM(StreamReadMap)) {
+			if (flags & MPT_STREAMFLAG(ReadMap)) {
 				return 0;
 			}
 			if (!mpt_queue_prepare(queue, count - part)) {
@@ -76,7 +76,7 @@ extern size_t mpt_stream_read(MPT_STRUCT(stream) *stream, size_t count, void *da
 			data = ((char *) data) + curr;
 			continue;
 		}
-		if (flags & MPT_ENUM(StreamReadMap)) {
+		if (flags & MPT_STREAMFLAG(ReadMap)) {
 			break;
 		}
 		if (file < 0 && (file = _mpt_stream_fread(&stream->_info)) < 0) {

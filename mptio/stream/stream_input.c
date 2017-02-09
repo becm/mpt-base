@@ -72,7 +72,7 @@ static int streamReply(void *ptr, const MPT_STRUCT(message) *msg)
 		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
 		return MPT_REPLY(BadState);
 	}
-	if (mpt_stream_flags(&srm->data._info) & MPT_ENUM(StreamMesgAct)) {
+	if (mpt_stream_flags(&srm->data._info) & MPT_STREAMFLAG(MesgActive)) {
 		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
 		        MPT_tr("unable to reply"), MPT_tr("message creation in progress"));
 		return MPT_ERROR(MessageInProgress);
@@ -142,7 +142,7 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 			return sw->cmd(sw->arg, &ev);
 		}
 		/* unable to reply to message */
-		if (!(mpt_stream_flags(&srm->data._info) & MPT_ENUM(StreamWrite))) {
+		if (!(mpt_stream_flags(&srm->data._info) & MPT_STREAMFLAG(Write))) {
 			return sw->cmd(sw->arg, &ev);
 		}
 		for (i = 0; i < idlen; ++i) {
@@ -240,8 +240,8 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		return 0;
 	}
 	/* bidirectional mode for reply */
-	if (mode & MPT_ENUM(StreamWrite)) {
-		if (!(mode & MPT_ENUM(StreamRdWr))) {
+	if (mode & MPT_STREAMFLAG(Write)) {
+		if (!(mode & MPT_STREAMFLAG(RdWr))) {
 			errno = EINVAL;
 			return 0;
 		}

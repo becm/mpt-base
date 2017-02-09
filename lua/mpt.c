@@ -104,7 +104,7 @@ static int streamRead(lua_State *L)
 	flg = mpt_stream_flags(&s->srm._info);
 	
 	if (MPT_stream_writable(flg)
-	    && !(flg & MPT_ENUM(StreamRdWr))) {
+	    && !(flg & MPT_STREAMFLAG(RdWr))) {
 		return 0;
 	}
 	
@@ -185,10 +185,10 @@ static int streamPush(lua_State *L)
 	flg = mpt_stream_flags(&s->srm._info);
 	
 	i = 2;
-	if (!(flg & MPT_ENUM(StreamMesgAct))) {
+	if (!(flg & MPT_STREAMFLAG(MesgActive))) {
 		s->mt.cmd = 0;
 		s->mt.arg = 0;
-		if (flg & MPT_ENUM(StreamRdWr)) {
+		if (flg & MPT_STREAMFLAG(RdWr)) {
 			uint16_t mid = 0;
 			
 			if (mpt_stream_push(&s->srm, sizeof(mid), &mid) < 0) {
@@ -477,7 +477,7 @@ static int streamPipe(lua_State *L)
 		return 0;
 	}
 	free(args);
-	mpt_stream_setmode(&s->srm, MPT_ENUM(StreamBuffer));
+	mpt_stream_setmode(&s->srm, MPT_STREAMFLAG(Buffer));
 	return 1;
 }
 static const luaL_Reg mptInterface[] =

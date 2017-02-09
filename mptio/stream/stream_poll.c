@@ -31,10 +31,10 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 	
 	flags = mpt_stream_flags(&srm->_info);
 	
-	if (!(flags & MPT_ENUM(StreamReadBuf))) {
+	if (!(flags & MPT_STREAMFLAG(ReadBuf))) {
 		what &= ~POLLIN;
 	}
-	if (!(flags & MPT_ENUM(StreamWriteBuf))) {
+	if (!(flags & MPT_STREAMFLAG(WriteBuf))) {
 		what &= ~POLLOUT;
 	}
 	/* fast path for available input */
@@ -94,7 +94,7 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 		}
 		/* prepare input buffer */
 		else if ((srm->_rd.data.len == srm->_rd.data.max)
-		         && ((flags & MPT_ENUM(StreamWriteMap)) || !mpt_queue_prepare(&srm->_rd.data, 64))) {
+		         && ((flags & MPT_STREAMFLAG(WriteMap)) || !mpt_queue_prepare(&srm->_rd.data, 64))) {
 			mpt_stream_seterror(&srm->_info, MPT_ENUM(ErrorRead));
 		}
 		/* read further input data */

@@ -25,7 +25,7 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
 	(void) last;
 	
 	/* no data operation */
-	if (curr == MPT_ENUM(ParseSectEnd)) {
+	if (curr == MPT_PARSEFLAG(SectEnd)) {
 		return 0;
 	}
 	if (!(next = mpt_node_assign(base, p))) {
@@ -53,7 +53,7 @@ extern int mpt_parse_node(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse
 	/* create new nodes */
 	if (!(root->children)) {
 		MPT_STRUCT(node) *curr = root;
-		parse->prev = MPT_ENUM(ParseSection);
+		parse->prev = MPT_PARSEFLAG(Section);
 		err = mpt_parse_config(next, npar, parse, saveAppend, &curr);
 		
 		/* clear created nodes on error */

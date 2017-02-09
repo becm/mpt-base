@@ -25,7 +25,7 @@ extern const char *mpt_path_data(const MPT_STRUCT(path) *path)
 	}
 	len  = path->off + path->len;
 	
-	if (path->flags & MPT_ENUM(PathHasArray)) {
+	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		MPT_STRUCT(buffer) *buf = (void *) data;
 		size_t	end = len + path->valid;
 		if (buf[-1].used > end) ((char *) data)[end] = 0;

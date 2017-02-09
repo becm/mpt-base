@@ -38,7 +38,7 @@ static int clientConfig(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		
 		if (!(args = mpt_event_command(ev))) {
 			ev->id = 0;
-			return MPT_ENUM(EventFail) | MPT_ENUM(EventDefault);
+			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
 		/* consume command */
 		args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &cmd);
@@ -104,7 +104,7 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		
 		if (!(args = mpt_event_command(ev))) {
 			ev->id = 0;
-			return MPT_ENUM(EventFail) | MPT_ENUM(EventDefault);
+			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
 		/* use second command element */
 		if ((ret = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &next)) > 0
@@ -126,7 +126,7 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 	
 	ev->id = id;
 	
-	return MPT_ENUM(EventDefault);
+	return MPT_EVENTFLAG(Default);
 }
 
 static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
@@ -151,7 +151,7 @@ static int clientStop(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	ev->id = 0;
 	
-	return MPT_ENUM(EventDefault);
+	return MPT_EVENTFLAG(Default);
 }
 
 /*!

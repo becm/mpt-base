@@ -39,18 +39,18 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	const char *prefix;
 	int type, flags;
 	
-	if (hist->state & MPT_ENUM(OutputActive)) {
+	if (hist->state & MPT_OUTFLAG(Active)) {
 		const char *pos, *end;
 		size_t part;
 		if (!(hist->state & 0x7)) {
 			return MPT_ERROR(BadArgument);
 		}
 		switch (hist->state & 0x3) {
-		  case MPT_ENUM(OutputPrintNormal):
+		  case MPT_OUTFLAG(PrintNormal):
 		    fd = stdout; break;
-		  case MPT_ENUM(OutputPrintError):
+		  case MPT_OUTFLAG(PrintError):
 		    fd = stderr; break;
-		  case MPT_ENUM(OutputPrintHistory):
+		  case MPT_OUTFLAG(PrintHistory):
 		    if (!(fd = hist->file)) fd = stderr;
 		    break;
 		  default: fd = 0;
@@ -62,14 +62,14 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 					static const char dots[] = "…";
 					fputs(dots, fd);
 				}
-				if ((hist->state & MPT_ENUM(OutputPrintRestore))
+				if ((hist->state & MPT_OUTFLAG(PrintRestore))
 				    && isatty(fileno(fd))) {
 					fputs(mpt_ansi_reset(), fd);
-					hist->state &= ~MPT_ENUM(OutputPrintRestore);
+					hist->state &= ~MPT_OUTFLAG(PrintRestore);
 				}
 				fputs(mpt_newline_string(hist->lsep), fd);
 			}
-			hist->state &= ~(0x7 | MPT_ENUM(OutputActive));
+			hist->state &= ~(0x7 | MPT_OUTFLAG(Active));
 			return 0;
 		}
 		if (!(pos = src)) {
@@ -103,10 +103,10 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 					fputc(':', fd);
 					fputc(' ', fd);
 				}
-				if ((hist->state & MPT_ENUM(OutputPrintRestore))
+				if ((hist->state & MPT_OUTFLAG(PrintRestore))
 				    && isatty(fileno(fd))) {
 					fputs(mpt_ansi_reset(), fd);
-					hist->state &= ~MPT_ENUM(OutputPrintRestore);
+					hist->state &= ~MPT_OUTFLAG(PrintRestore);
 				}
 				hist->mode = curr;
 				continue;
@@ -150,30 +150,30 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	}
 	flags = mpt_outdata_type(type, hist->ignore);
 	
-	hist->state |= MPT_ENUM(OutputActive);
+	hist->state |= MPT_OUTFLAG(Active);
 	switch (flags & 0x3) {
 	  case 0:
-		hist->state |= MPT_ENUM(OutputPrintRestore);
+		hist->state |= MPT_OUTFLAG(PrintRestore);
 		return len;
-	  case MPT_ENUM(OutputPrintNormal):
+	  case MPT_OUTFLAG(PrintNormal):
 		fd = stdout;
 		break;
-	  case MPT_ENUM(OutputPrintError):
+	  case MPT_OUTFLAG(PrintError):
 		fd = stderr;
 		break;
-	  case MPT_ENUM(OutputPrintHistory):
+	  case MPT_OUTFLAG(PrintHistory):
 		if ((fd = hist->file)) {
-			flags = MPT_ENUM(OutputPrintHistory);
+			flags = MPT_OUTFLAG(PrintHistory);
 		} else {
-			flags = MPT_ENUM(OutputPrintError);
+			flags = MPT_OUTFLAG(PrintError);
 			fd = stderr;
 		}
 		break;
 	}
 	if ((isatty(fileno(fd)) > 0)
-	    && hist->state & MPT_ENUM(OutputPrintColor)
+	    && hist->state & MPT_OUTFLAG(PrintColor)
 	    && (prefix = mpt_ansi_code(type))) {
-		flags |= MPT_ENUM(OutputPrintRestore);
+		flags |= MPT_OUTFLAG(PrintRestore);
 		fputs(prefix, fd);
 	}
 	/* mark answer message */

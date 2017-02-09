@@ -1,5 +1,4 @@
 
-#include <errno.h>
 #include <string.h>
 
 #include "config.h"
@@ -20,14 +19,14 @@ extern int mpt_path_next(MPT_STRUCT(path) *path)
 	size_t len, skip;
 	
 	if (!(len = path->len)) {
-		errno = EINVAL; return -2;
+		return MPT_ERROR(MissingData);
 	}
 	if (!(data = path->base)) {
-		errno = EFAULT; return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	data += path->off;
 	
-	if (path->flags & MPT_ENUM(PathSepBinary)) {
+	if (path->flags & MPT_PATHFLAG(SepBinary)) {
 		skip = (len = path->first) + 2;
 		path->first = data[len + 1];
 	}

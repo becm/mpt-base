@@ -35,7 +35,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 	MPT_STRUCT(buffer) *buf;
 	
 	/* existing new data */
-	if (od->state & MPT_ENUM(OutputReceived)) {
+	if (od->state & MPT_OUTFLAG(Received)) {
 		return MPT_ERROR(MessageInput);
 	}
 	if (len) {
@@ -47,7 +47,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			if ((buf = od->buf._buf)) {
 				buf->used = 0;
 			}
-			od->state &= ~MPT_ENUM(OutputActive);
+			od->state &= ~MPT_OUTFLAG(Active);
 			return 0;
 		}
 		/* require target address */
@@ -55,14 +55,14 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			return MPT_ERROR(BadValue);
 		}
 		/* force atomic message id start */
-		if (od->_idlen && !(od->state & MPT_ENUM(OutputActive)) && len != od->_idlen) {
+		if (od->_idlen && !(od->state & MPT_OUTFLAG(Active)) && len != od->_idlen) {
 			return MPT_ERROR(BadValue);
 		}
 		/* new data to push */
 		if (!mpt_array_append(&od->buf, len, src)) {
 			return MPT_ERROR(BadOperation);
 		}
-		od->state |= MPT_ENUM(OutputActive);
+		od->state |= MPT_OUTFLAG(Active);
 		return len;
 	}
 	else {
@@ -76,7 +76,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 			buf->used = 0;
 		}
 		if (!MPT_socket_active(&od->sock)) {
-			od->state &= ~MPT_ENUM(OutputActive);
+			od->state &= ~MPT_OUTFLAG(Active);
 			return 0;
 		}
 		out.iov_base = buf+1;
@@ -100,7 +100,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		ret = sendmsg(od->sock._id, &mhdr, 0);
 		
 		if (ret >= 0) {
-			od->state &= ~MPT_ENUM(OutputActive);
+			od->state &= ~MPT_OUTFLAG(Active);
 		}
 		return ret;
 	}

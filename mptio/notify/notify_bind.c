@@ -32,7 +32,7 @@ static void socketUnref(MPT_INTERFACE(unrefable) *in)
 }
 static int socketNext(MPT_INTERFACE(input) *in, int what)
 {
-	static int flags = MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamBuffer);
+	static int flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
 	MPT_STRUCT(socket) sock;
 	struct socketInput *sd = (void *) in;
 	MPT_INTERFACE(input) *srm;

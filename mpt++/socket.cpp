@@ -86,9 +86,9 @@ Reference<Stream> Socket::accept()
     if (_mpt_stream_setfile(&info, sock, sock) < 0) {
         return 0;
     }
-    info.setFlags(StreamBuffer);
+    info.setFlags(stream::Buffer);
 
-    Stream *s = new Stream(&info);
+    class Stream *s = new class Stream(&info);
 
     return s;
 }

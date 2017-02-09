@@ -18,10 +18,10 @@ extern void mpt_path_fini(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(buffer) *buf;
 	
-	if (!(path->flags & MPT_ENUM(PathHasArray))) {
+	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
 		return;
 	}
-	path->flags &= ~MPT_ENUM(PathHasArray);
+	path->flags &= ~MPT_PATHFLAG(HasArray);
 	path->off = path->len = path->valid = 0;
 	
 	if (!(buf = (void *) path->base)) {

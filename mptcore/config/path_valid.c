@@ -23,7 +23,7 @@ extern int mpt_path_valid(MPT_STRUCT(path) *path)
 	if (!(buf = (void *) path->base)) {
 		return -1;
 	}
-	if (!(path->flags & MPT_ENUM(PathHasArray))) {
+	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
 		return 0;
 	}
 	post  = buf[-1].used;

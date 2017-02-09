@@ -30,7 +30,7 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(par
 			break;
 		}
 		/* remove last path element */
-		if (ret & MPT_ENUM(ParseSectEnd)) {
+		if (ret & MPT_PARSEFLAG(SectEnd)) {
 			mpt_path_del(&path);
 		}
 		mpt_path_invalidate(&path);

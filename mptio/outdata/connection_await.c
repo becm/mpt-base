@@ -38,7 +38,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 		return MPT_ERROR(BadArgument);
 	}
 	/* message in progress */
-	if (con->cid || (con->out.state & MPT_ENUM(OutputActive))) {
+	if (con->cid || (con->out.state & MPT_OUTFLAG(Active))) {
 		return MPT_ERROR(BadOperation);
 	}
 	if ((max = con->out._idlen) > sizeof(con->cid)) {
@@ -48,7 +48,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 		return MPT_ERROR(BadValue);
 	}
 	/* make next message non-local */
-	con->out.state |= MPT_ENUM(OutputRemote);
+	con->out.state |= MPT_OUTFLAG(Remote);
 	con->cid = cmd->id;
 	
 	if (ctl) {

@@ -15,22 +15,52 @@ MPT_STRUCT(message);
 MPT_INTERFACE(output);
 MPT_INTERFACE(metatype);
 
-enum MPT_ENUM(EventFlags) {
-	MPT_ENUM(EventNone)       = 0x0,     /* no special operation */
-	MPT_ENUM(EventDefault)    = 0x1,     /* set default event */
-	MPT_ENUM(EventFail)       = 0x2,     /* event processing failed */
-	MPT_ENUM(EventTerminate)  = 0x4,     /* terminate event loop */
-	MPT_ENUM(EventFlags)      = 0xffff,
-	MPT_ENUM(EventRetry)      = 0x10000, /* remaining data on input */
-	MPT_ENUM(EventCtlError)   = 0x20000  /* error in control handler */
-};
 
 /* single event */
+#ifdef _cplusplus
 MPT_STRUCT(event)
 {
+# define MPT_EVENTFLAG(x) x
+#else
+# define MPT_EVENTFLAG(x) MPT_ENUM(Event##x)
+#endif
+enum MPT_EVENTFLAG(Flags) {
+	MPT_EVENTFLAG(None)       = 0x0,     /* no special operation */
+	MPT_EVENTFLAG(Default)    = 0x1,     /* set default event */
+	MPT_EVENTFLAG(Fail)       = 0x2,     /* event processing failed */
+	MPT_EVENTFLAG(Terminate)  = 0x4,     /* terminate event loop */
+	MPT_EVENTFLAG(Flags)      = 0xffff,
+	MPT_EVENTFLAG(Retry)      = 0x10000, /* remaining data on input */
+	MPT_EVENTFLAG(CtlError)   = 0x20000  /* error in control handler */
+};
 #ifdef _cplusplus
 	event();
+	
+	int good(const char *);
+	int stop(const char *);
+	int cont(const char *);
+	int term(const char *);
+	int fail(const char *, int = -1);
 #else
+
+#define MPT_event_good(ev,txt) \
+	(mpt_event_reply(ev, 0, "%s", txt), \
+	 MPT_EVENTFLAG(None))
+#define MPT_event_stop(ev,txt) \
+	(mpt_event_reply(ev, 2, "%s", txt), \
+	 (ev)->id = 0, MPT_EVENTFLAG(Default))
+#define MPT_event_cont(ev,txt) \
+	(mpt_event_reply(ev, 2, "%s", txt), \
+	 MPT_EVENTFLAG(Default))
+#define MPT_event_term(ev,txt) \
+	(mpt_event_reply(ev, 3, "%s", txt), \
+	 MPT_EVENTFLAG(Terminate))
+#define MPT_event_fail(ev,code,txt) \
+	(mpt_event_reply(ev, (code), "%s", txt), \
+	 (ev)->id = 0, (MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default)))
+
+MPT_STRUCT(event)
+{
 # define MPT_EVENT_INIT  { 0, 0, { 0, 0 } }
 #endif
 	uintptr_t                  id;  /* command to process */
@@ -131,22 +161,6 @@ MPT_STRUCT(dispatch)
 	
 	MPT_STRUCT(reply_context) *_ctx;
 };
-
-#define MPT_event_good(ev,txt) \
-	(mpt_event_reply(ev, 0, "%s", txt), \
-	 MPT_ENUM(EventNone))
-#define MPT_event_stop(ev,txt) \
-	(mpt_event_reply(ev, 2, "%s", txt), \
-	 (ev)->id = 0, MPT_ENUM(EventDefault))
-#define MPT_event_cont(ev,txt) \
-	(mpt_event_reply(ev, 2, "%s", txt), \
-	 MPT_ENUM(EventDefault))
-#define MPT_event_term(ev,txt) \
-	(mpt_event_reply(ev, 3, "%s", txt), \
-	 MPT_ENUM(EventTerminate))
-#define MPT_event_fail(ev,code,txt) \
-	(mpt_event_reply(ev, (code), "%s", txt), \
-	 (ev)->id = 0, ((MPT_ENUM(EventFail) | MPT_ENUM(EventDefault))))
 
 
 __MPT_EXTDECL_BEGIN

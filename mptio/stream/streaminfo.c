@@ -31,8 +31,8 @@ extern void mpt_stream_clearerror(MPT_STRUCT(streaminfo) *info, int err)
 extern void mpt_stream_setnewline(MPT_STRUCT(streaminfo) *info, int nl, int what)
 {
 	switch (what & 0x3) {
-	  case MPT_ENUM(StreamRead):  what = 0x1; break;
-	  case MPT_ENUM(StreamWrite): what = 0x2; break;
+	  case MPT_STREAMFLAG(Read):  what = 0x1; break;
+	  case MPT_STREAMFLAG(Write): what = 0x2; break;
 	  default:                    what = 0x3;
 	}
 	nl &= 0x3;
@@ -48,13 +48,13 @@ extern int _mpt_stream_fwrite(const MPT_STRUCT(streaminfo) *info)
 {
 	int flags = mpt_stream_flags(info);
 	
-	if (flags & MPT_ENUM(StreamRdWr)) {
-		if (flags & MPT_ENUM(StreamWrite))
+	if (flags & MPT_STREAMFLAG(RdWr)) {
+		if (flags & MPT_STREAMFLAG(Write))
 			return (info->_fd >> (16 + _MPT_FD_BITS/2)) & ((1<<_MPT_FD_BITS/2) - 1);
 		flags = info->_fd >> 16;
 	}
 	/* set to zero if NOT writable */
-	else flags = (flags & MPT_ENUM(StreamWrite)) ? info->_fd >> 16 : 0;
+	else flags = (flags & MPT_STREAMFLAG(Write)) ? info->_fd >> 16 : 0;
 	
 	if (!flags) errno = EBADF;
 	
@@ -65,13 +65,13 @@ extern int _mpt_stream_fread(const MPT_STRUCT(streaminfo) *info)
 {
 	int flags = mpt_stream_flags(info);
 	
-	if (flags & MPT_ENUM(StreamRdWr)) {
-		if (flags & MPT_ENUM(StreamWrite))
+	if (flags & MPT_STREAMFLAG(RdWr)) {
+		if (flags & MPT_STREAMFLAG(Write))
 			return (info->_fd >> 16) & ((1<<_MPT_FD_BITS/2) - 1);
 		flags = info->_fd >> 16;
 	}
 	/* set to zero if ONLY writable */
-	else flags = (flags & MPT_ENUM(StreamWrite)) ? 0 : info->_fd >> 16;
+	else flags = (flags & MPT_STREAMFLAG(Write)) ? 0 : info->_fd >> 16;
 	
 	if (!flags) errno = EBADF;
 	
@@ -102,7 +102,7 @@ extern int _mpt_stream_setfile(MPT_STRUCT(streaminfo) *info, int nrfd, int nwfd)
 			if (nwfd == orfd) orfd = -1;
 			if (nwfd == owfd) owfd = -1;
 			info->_fd &= flagmask;
-			info->_fd |= MPT_ENUM(StreamWrite);
+			info->_fd |= MPT_STREAMFLAG(Write);
 			info->_fd |= (nwfd+1) << 16;
 		}
 	}
@@ -115,7 +115,7 @@ extern int _mpt_stream_setfile(MPT_STRUCT(streaminfo) *info, int nrfd, int nwfd)
 		if (nrfd == orfd) orfd = -1;
 		if (nrfd == owfd) owfd = -1;
 		info->_fd &= flagmask;
-		info->_fd |= MPT_ENUM(StreamRead);
+		info->_fd |= MPT_STREAMFLAG(Read);
 		info->_fd |= (nrfd+1) << 16;
 	}
 	/* read/write descriptor */
@@ -127,7 +127,7 @@ extern int _mpt_stream_setfile(MPT_STRUCT(streaminfo) *info, int nrfd, int nwfd)
 		if (nrfd == orfd) orfd = -1;
 		if (nrfd == owfd) owfd = -1;
 		info->_fd &= flagmask;
-		info->_fd |= MPT_ENUM(StreamRdWr);
+		info->_fd |= MPT_STREAMFLAG(RdWr);
 		info->_fd |= (nrfd + 1) << 16;
 	}
 	/* read and write descriptors */
@@ -141,7 +141,7 @@ extern int _mpt_stream_setfile(MPT_STRUCT(streaminfo) *info, int nrfd, int nwfd)
 		if (nwfd == orfd) orfd = -1;
 		if (nwfd == owfd) owfd = -1;
 		info->_fd &= flagmask;
-		info->_fd |= MPT_ENUM(StreamWrite) | MPT_ENUM(StreamRdWr);
+		info->_fd |= MPT_STREAMFLAG(Write) | MPT_STREAMFLAG(RdWr);
 		info->_fd |= ((uintptr_t) nrfd) << 16;
 		info->_fd |= ((uintptr_t) nwfd) << (_MPT_FD_BITS/2+16);
 	}

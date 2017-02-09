@@ -21,7 +21,7 @@
  */
 extern MPT_INTERFACE(input) *mpt_accept(const MPT_STRUCT(socket) *socket)
 {
-	static int flags = MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamBuffer);
+	static int flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	MPT_INTERFACE(input) *in;
 	int sockfd;

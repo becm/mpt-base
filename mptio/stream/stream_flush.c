@@ -37,8 +37,8 @@ extern int mpt_stream_flush(MPT_STRUCT(stream) *stream)
 	file = mpt_stream_flags(&stream->_info);
 	
 	/* update memory mapped file */
-	if ((file & MPT_ENUM(StreamWriteMap))
-	    && !(file & MPT_ENUM(StreamReadBuf))) {
+	if ((file & MPT_STREAMFLAG(WriteMap))
+	    && !(file & MPT_STREAMFLAG(ReadBuf))) {
 		uint8_t *base = stream->_wd.data.base;
 		size_t off, low;
 		

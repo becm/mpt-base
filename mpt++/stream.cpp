@@ -83,8 +83,8 @@ Stream::Stream(const streaminfo *from) : _inputFile(-1)
     _mpt_stream_setfile(&_srm->_info, _mpt_stream_fread(from), _mpt_stream_fwrite(from));
     int flags = mpt_stream_flags(from);
     mpt_stream_setmode(_srm, flags & 0xff);
-    _srm->setNewline(MPT_stream_newline_read(flags),  StreamRead);
-    _srm->setNewline(MPT_stream_newline_write(flags), StreamWrite);
+    _srm->setNewline(MPT_stream_newline_read(flags),  _srm->Read);
+    _srm->setNewline(MPT_stream_newline_write(flags), _srm->Write);
 }
 Stream::~Stream()
 { }
@@ -197,8 +197,8 @@ bool Stream::open(void *base, size_t len, int mode)
     int ret;
     if (!_srm) _srm = new stream;
     switch (mode) {
-    case StreamRead:  ret = mpt_stream_memory(_srm, &data, 0); break;
-    case StreamWrite: ret = mpt_stream_memory(_srm, 0, &data); break;
+      case stream::Read:  ret = mpt_stream_memory(_srm, &data, 0); break;
+      case stream::Write: ret = mpt_stream_memory(_srm, 0, &data); break;
     default: return false;
     }
     if (ret < 0) {
@@ -270,7 +270,7 @@ static int streamReply(void *ptr, const message *msg)
         error(_func, "%s (id = " PRIx64 ")", MPT_tr("no id size specified"), id);
         return rc->BadState;
     }
-    if (srm->flags() & StreamMesgAct) {
+    if (srm->flags() & srm->MesgActive) {
         warning(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
         return MessageInProgress;
     }
@@ -430,7 +430,7 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
     }
     struct command *cmd;
 
-    if (mpt_stream_flags(&_srm->_info) & StreamMesgAct) {
+    if (mpt_stream_flags(&_srm->_info) & _srm->MesgActive) {
         return MessageInProgress;
     }
     if (!rctl) {

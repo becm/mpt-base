@@ -37,19 +37,19 @@ extern int mpt_stream_memory(MPT_STRUCT(stream) *stream, const struct iovec *in,
 		stream->_wd.data.base = out->iov_base;
 		stream->_wd.data.max  = out->iov_len;
 		if (!in) {
-			return MPT_ENUM(StreamWrite);
+			return MPT_STREAMFLAG(Write);
 		}
 		if (in == out
 		    || ((in->iov_base == out->iov_base) && (in->iov_len == out->iov_len))) {
-			stream->_info._fd |= MPT_ENUM(StreamRdWr);
-			return MPT_ENUM(StreamRdWr);
+			stream->_info._fd |= MPT_STREAMFLAG(RdWr);
+			return MPT_STREAMFLAG(RdWr);
 		}
-		mode |= MPT_ENUM(StreamWrite);
+		mode |= MPT_STREAMFLAG(Write);
 	}
 	if (in) {
 		stream->_rd.data.base = in->iov_base;
 		stream->_rd.data.max  = stream->_rd.data.len = in->iov_len;
-		mode |= MPT_ENUM(StreamRead);
+		mode |= MPT_STREAMFLAG(Read);
 	}
 	return mode;
 }

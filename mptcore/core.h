@@ -150,13 +150,6 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeFinal)    = 0xff
 };
 
-enum MPT_ENUM(SocketFlags) {
-	MPT_ENUM(SocketWrite)  = 0x1,
-	MPT_ENUM(SocketRead)   = 0x2,
-	MPT_ENUM(SocketRdWr)   = 0x3,
-	MPT_ENUM(SocketStream) = 0x4
-};
-
 /* tree and list operation flags */
 enum MPT_ENUM(TraverseFlags) {
 	/* node traverse operations */
@@ -601,10 +594,21 @@ MPT_STRUCT(fdmode)
 
 /* collection solver runtime data */
 MPT_INTERFACE(metatype);
+#ifdef __cplusplus
 MPT_STRUCT(socket)
 {
-#ifdef __cplusplus
 public:
+# define MPT_SOCKETFLAG(x) x
+#else
+# define MPT_SOCKETFLAG(x) MPT_ENUM(Socket##x)
+#endif
+enum MPT_ENUM(SocketFlags) {
+	MPT_SOCKETFLAG(Write)  = 0x1,
+	MPT_SOCKETFLAG(Read)   = 0x2,
+	MPT_SOCKETFLAG(RdWr)   = 0x3,
+	MPT_SOCKETFLAG(Stream) = 0x4
+};
+#ifdef __cplusplus
 	enum { Type = TypeSocket };
 	
 	inline socket(int fd = -1) : _id(fd)
@@ -621,6 +625,8 @@ public:
 	bool set(const value *);
 protected:
 #else
+MPT_STRUCT(socket)
+{
 # define MPT_SOCKET_INIT       { -1 }
 # define MPT_socket_active(s)  ((s)->_id >= 0)
 #endif

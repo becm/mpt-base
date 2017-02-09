@@ -32,7 +32,7 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *con, const char *to, cons
 	MPT_STRUCT(stream) *srm = 0;
 	int flg = 0, ret;
 	
-	if (con->out.state & MPT_ENUM(OutputActive)) {
+	if (con->out.state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (!to) {

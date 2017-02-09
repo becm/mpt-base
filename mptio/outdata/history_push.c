@@ -32,7 +32,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 	ssize_t ret;
 	
 	/* message in progress */
-	if (hist->info.state & MPT_ENUM(OutputActive)) {
+	if (hist->info.state & MPT_OUTFLAG(Active)) {
 		/* local print condition */
 		if (hist->info.state & 0x7) {
 			return mpt_history_print(&hist->info, len, src);
@@ -43,7 +43,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 			return ret;
 		}
 		if (!len) {
-			hist->info.state &= ~MPT_ENUM(OutputActive);
+			hist->info.state &= ~MPT_OUTFLAG(Active);
 		}
 		return ret;
 	}
@@ -60,7 +60,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 	mt = src;
 	/* use inline or prefix format info */
 	if (mt->cmd == MPT_ENUM(MessageValFmt)) {
-		hist->info.state |= MPT_ENUM(OutputActive);
+		hist->info.state |= MPT_OUTFLAG(Active);
 		if (!hist->info.file) {
 			return 0;
 		}
@@ -80,7 +80,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 			return MPT_ERROR(BadValue);
 		}
 		if (!hist->info.file) {
-			hist->info.state |= MPT_ENUM(OutputActive);
+			hist->info.state |= MPT_OUTFLAG(Active);
 			return len;
 		}
 		hist->fmt.fmt = hist->fmt.all;

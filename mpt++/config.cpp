@@ -31,7 +31,7 @@ path::~path()
 path &path::operator =(const path &from)
 {
     memcpy(this, &from, sizeof(*this));
-    if (from.flags & PathHasArray) {
+    if (from.flags & HasArray) {
         buffer *buf = (buffer *) from.base;
         buf[-1].addref();
     }

@@ -87,8 +87,8 @@ int Parse::read(struct node &to, logger *out)
 
 LayoutParser::LayoutParser() : _fn(0)
 {
-    _d.name.sect = NameNumCont | NameSpace | NameSpecial;
-    _d.name.opt  = NameNumCont;
+    _d.name.sect = _d.name.NumCont | _d.name.Space | _d.name.Special;
+    _d.name.opt  = _d.name.NumCont;
 
     _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, defaultFormat()));
     _nextCtx = &_fmt;

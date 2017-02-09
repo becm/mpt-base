@@ -47,7 +47,7 @@ extern int mpt_notify_connect(MPT_STRUCT(notify) *no, const char *dest)
 		return flags;
 	}
 	/* require input stream */
-	if (!(flags & MPT_ENUM(SocketStream)) || !(flags & MPT_ENUM(SocketRead))) {
+	if (!(flags & MPT_SOCKETFLAG(Stream)) || !(flags & MPT_SOCKETFLAG(Read))) {
 		(void) close(sock._id);
 		errno = EINVAL;
 		return -1;
@@ -55,12 +55,12 @@ extern int mpt_notify_connect(MPT_STRUCT(notify) *no, const char *dest)
 	if (mode.family >= 0) {
 		/* 2byte ID for bidirectional only */
 		len   = sizeof(uint16_t);
-		flags = MPT_ENUM(StreamRdWr) | MPT_ENUM(StreamBuffer);
+		flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
 	}
 	else {
 		if (!len) enc = MPT_ENUM(EncodingCommand);
 		len   = 0;
-		flags = MPT_ENUM(StreamRead) | MPT_ENUM(StreamReadBuf);
+		flags = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(ReadBuf);
 	}
 	if (!(in = mpt_stream_input(&sock, flags, enc, len))) {
 		close(sock._id);

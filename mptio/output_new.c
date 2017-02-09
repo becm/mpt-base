@@ -196,7 +196,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 		uint8_t *data, idlen;
 		
 		/* use existing data */
-		if (!(od->con.out.state & MPT_ENUM(OutputReceived))) {
+		if (!(od->con.out.state & MPT_OUTFLAG(Received))) {
 			struct pollfd p;
 			
 			p.fd = od->con.out.sock._id;
@@ -243,7 +243,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			}
 			return len;
 		}
-		od->con.out.state &= ~MPT_ENUM(OutputReceived);
+		od->con.out.state &= ~MPT_OUTFLAG(Received);
 		data[0] &= 0x7f;
 		pos = mpt_message_buf2id(data, idlen, &ansid);
 		
@@ -301,7 +301,7 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 	if (what & POLLIN) {
 		int ret;
 		/* existing input data */
-		if ((od->con.out.state & MPT_ENUM(OutputReceived))) {
+		if ((od->con.out.state & MPT_OUTFLAG(Received))) {
 			keep = POLLIN;
 		}
 		/* get new datagram */
@@ -322,7 +322,7 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 		}
 	}
 	if ((what & POLLOUT)
-	    && !(od->con.out.state & (MPT_ENUM(OutputActive) | MPT_ENUM(OutputReceived)))
+	    && !(od->con.out.state & (MPT_OUTFLAG(Active) | MPT_OUTFLAG(Received)))
 	    && (buf = od->con.out.buf._buf)
 	    && buf->used) {
 		const struct sockaddr *addr = 0;
@@ -399,7 +399,7 @@ extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) *no)
 	}
 	*od = defOut;
 	
-	od->con.out.state = MPT_ENUM(OutputPrintColor);
+	od->con.out.state = MPT_OUTFLAG(PrintColor);
 	
 	od->con.pass = 0;
 	od->con.show = 0;

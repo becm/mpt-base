@@ -13,7 +13,7 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 	
 	/* name required */
 	if (!len) {
-		if (!(take & MPT_ENUM(NameEmpty))) {
+		if (!(take & MPT_NAMEFLAG(Empty))) {
 			errno = ERANGE;
 			return -2;
 		}
@@ -26,7 +26,7 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 	for (i = 0; i < len; i++) {
 		/* deny whitepace */
 		if (isspace(name[i])) {
-			if (!(take & MPT_ENUM(NameSpace))) {
+			if (!(take & MPT_NAMEFLAG(Space))) {
 				errno = EINVAL;
 				return -3;
 			}
@@ -34,7 +34,7 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 		}
 		/* deny numerals */
 		if (isdigit(name[i])) {
-			if (!(take & (i ? MPT_ENUM(NameNumCont) : MPT_ENUM(NameNumStart)))) {
+			if (!(take & (i ? MPT_NAMEFLAG(NumCont) : MPT_NAMEFLAG(NumStart)))) {
 				errno = EINVAL;
 				return -3;
 			}
@@ -42,7 +42,7 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 		}
 		/* deny binary characters */
 		if (!isprint(name[i])) {
-			if (!(take & MPT_ENUM(NameBinary))) {
+			if (!(take & MPT_NAMEFLAG(Binary))) {
 				errno = EINVAL;
 				return -3;
 			}
@@ -50,7 +50,7 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 		}
 		/* deny special characters */
 		if (!isalnum(name[i])) {
-			if (!(take & MPT_ENUM(NameSpecial))) {
+			if (!(take & MPT_NAMEFLAG(Special))) {
 				errno = EINVAL;
 				return -3;
 			}

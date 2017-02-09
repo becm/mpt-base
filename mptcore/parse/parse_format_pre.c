@@ -28,16 +28,16 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		return MPT_ERROR(MissingData);
 	}
 	if (curr == fmt->sstart) {
-		parse->curr = MPT_ENUM(ParseSection);
+		parse->curr = MPT_PARSEFLAG(Section);
 		if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (mpt_path_add(path) < 0) {
 			return MPT_ERROR(BadOperation);
 		}
-		return MPT_ENUM(ParseSection);
+		return MPT_PARSEFLAG(Section);
 	}
-	parse->curr = MPT_ENUM(ParseName);
+	parse->curr = MPT_PARSEFLAG(Name);
 	if (mpt_path_addchar(path, curr) < 0) {
 		return MPT_ERROR(MissingBuffer);
 	}
@@ -47,7 +47,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		}
 		/* found section end */
 		if (curr == fmt->send) {
-			return parse->curr = MPT_ENUM(ParseSectEnd);
+			return parse->curr = MPT_PARSEFLAG(SectEnd);
 		}
 		/* found section start */
 		if (curr == fmt->sstart) {
@@ -59,7 +59,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 		}
 		/* parse option data */
 		if (curr == fmt->assign) {
-			parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
+			parse->curr = MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Name);
 			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.opt) < 0) {
 				return MPT_ERROR(BadType);
 			}
@@ -73,9 +73,9 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 				return curr;
 			}
 			if (!curr) {
-				return MPT_ENUM(ParseOption);
+				return MPT_PARSEFLAG(Option);
 			}
-			return MPT_ENUM(ParseOption) | MPT_ENUM(ParseData);
+			return MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Data);
 		}
 		/* data end found */
 		if (curr == fmt->oend) {
@@ -86,7 +86,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
-		parse->curr = MPT_ENUM(ParseName);
+		parse->curr = MPT_PARSEFLAG(Name);
 		
 		/* validate current length character */
 		if (!isspace(curr)) {
@@ -104,26 +104,26 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	
 	/* last chance to get section start */
 	if (fmt->sstart && curr == fmt->sstart) {
-		parse->curr = MPT_ENUM(ParseSection) | MPT_ENUM(ParseName);
+		parse->curr = MPT_PARSEFLAG(Section) | MPT_PARSEFLAG(Name);
 		if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (mpt_path_add(path) < 0) {
 			return MPT_ERROR(BadOperation);
 		}
-		return MPT_ENUM(ParseSection);
+		return MPT_PARSEFLAG(Section);
 	}
 	/* try to pass as data */
 	if (fmt->oend && curr == fmt->oend) {
-		parse->curr = MPT_ENUM(ParseData);
+		parse->curr = MPT_PARSEFLAG(Data);
 		/* set zero length option name */
 		if (mpt_parse_ncheck(path->base + path->off + path->len, 0, parse->name.opt) < 0) {
 			path->valid = curr;
 			return MPT_ERROR(BadType);
 		}
-		return MPT_ENUM(ParseData);
+		return MPT_PARSEFLAG(Data);
 	}
-	parse->curr = MPT_ENUM(ParseName);
+	parse->curr = MPT_PARSEFLAG(Name);
 	return MPT_ERROR(BadValue);
 }
 

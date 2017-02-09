@@ -48,10 +48,10 @@ static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operatio
 			(void) close(sock);
 			return -1;
 		}
-		mode->stream = MPT_ENUM(SocketRead) | MPT_ENUM(SocketWrite);
+		mode->stream = MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write);
 		
 		if (mode->param.sock.type == SOCK_STREAM) {
-			mode->stream |= MPT_ENUM(SocketStream);
+			mode->stream |= MPT_SOCKETFLAG(Stream);
 		}
 	}
 	/* ip socket */
@@ -114,10 +114,10 @@ static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operatio
 		if (res) {
 			freeaddrinfo(res);
 		}
-		mode->stream = MPT_ENUM(SocketRead) | MPT_ENUM(SocketWrite);
+		mode->stream = MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write);
 		
 		if (mode->param.sock.type == SOCK_STREAM) {
-			mode->stream |= MPT_ENUM(SocketStream);
+			mode->stream |= MPT_SOCKETFLAG(Stream);
 		}
 	}
 	else {
@@ -184,13 +184,13 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 			}
 			return sock;
 		}
-		info.stream = MPT_ENUM(SocketRead) | MPT_ENUM(SocketStream);
+		info.stream = MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Stream);
 	}
 	else if ((sock = socketSet(where, &info, bind)) < 0) {
 		return sock;
 	}
 	/* identify as listening socket */
-	else if (info.stream == (MPT_ENUM(SocketRead) | MPT_ENUM(SocketWrite) | MPT_ENUM(SocketStream))) {
+	else if (info.stream == (MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write) | MPT_SOCKETFLAG(Stream))) {
 		if (backlog >= 0 && listen(sock, backlog) < 0) {
 			(void) close(sock);
 			return -1;
@@ -247,8 +247,8 @@ extern int mpt_connect(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRU
 		if ((sock = open(where, info.param.file.open, info.param.file.perm)) < 0) {
 			return sock;
 		}
-		info.stream  = (info.param.file.open & O_WRONLY) ? MPT_ENUM(SocketWrite) : MPT_ENUM(SocketRead);
-		info.stream |= MPT_ENUM(SocketStream);
+		info.stream  = (info.param.file.open & O_WRONLY) ? MPT_SOCKETFLAG(Write) : MPT_SOCKETFLAG(Read);
+		info.stream |= MPT_SOCKETFLAG(Stream);
 	}
 	else if ((sock = socketSet(where, &info, connect)) < 0) {
 		return sock;

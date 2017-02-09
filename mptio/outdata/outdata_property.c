@@ -28,7 +28,7 @@ static int outdataSocket(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
 	if (!src) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (out->state & MPT_ENUM(OutputActive)) {
+	if (out->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (src && (len = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0) {

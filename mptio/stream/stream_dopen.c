@@ -42,19 +42,19 @@ extern int mpt_stream_dopen(MPT_STRUCT(stream) *stream, const MPT_STRUCT(socket)
 	if ((fdflags = fcntl(fread, F_GETFL)) < 0) {
 		return -1;
 	}
-	if (mode & MPT_ENUM(StreamRdWr)) {
+	if (mode & MPT_STREAMFLAG(RdWr)) {
 		if (!(fdflags & O_RDWR)) {
 			errno = EBADF;
 			return -1;
 		}
 	}
 	/* set file parameter for writeable */
-	else if (mode & MPT_ENUM(StreamWrite)) {
+	else if (mode & MPT_STREAMFLAG(Write)) {
 		if (!(fdflags & (O_WRONLY | O_RDWR))) {
 			errno = EBADF;
 			return -1;
 		}
-		mode &= ~MPT_ENUM(StreamReadBuf);
+		mode &= ~MPT_STREAMFLAG(ReadBuf);
 		fread = -1;
 	}
 	/* invalid file flags for "read only" */
@@ -64,7 +64,7 @@ extern int mpt_stream_dopen(MPT_STRUCT(stream) *stream, const MPT_STRUCT(socket)
 	}
 	/* set file parameter for readable */
 	else {
-		mode  &= ~MPT_ENUM(StreamWriteBuf);
+		mode  &= ~MPT_STREAMFLAG(WriteBuf);
 		fwrite = -1;
 	}
 	

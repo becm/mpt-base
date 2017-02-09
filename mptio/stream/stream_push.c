@@ -27,8 +27,8 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 	ssize_t total = 0;
 	int flags = mpt_stream_flags(&stream->_info);
 	
-	if (flags & MPT_ENUM(StreamWriteMap)) {
-		flags &= ~MPT_ENUM(StreamWriteBuf);
+	if (flags & MPT_STREAMFLAG(WriteMap)) {
+		flags &= ~MPT_STREAMFLAG(WriteBuf);
 	}
 	
 	while (1) {
@@ -49,19 +49,19 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 				add = fmt ? strlen(fmt) : 0;
 				if (rem >= add) {
 					mpt_queue_push(&stream->_wd, add, fmt);
-					stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
+					stream->_info._fd &= ~MPT_STREAMFLAG(MesgActive);
 					return 0;
 				}
 				post = MPT_ERROR(MissingBuffer);
 			}
 			else if ((post = mpt_queue_push(&stream->_wd, 0, 0)) >= 0) {
-				stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);
+				stream->_info._fd &= ~MPT_STREAMFLAG(MesgActive);
 				return post;
 			}
 		}
 		/* pushed some data */
 		if (post >= 0) {
-			stream->_info._fd |= MPT_ENUM(StreamMesgAct);
+			stream->_info._fd |= MPT_STREAMFLAG(MesgActive);
 			total += post;
 			/* push operation finished */
 			if (!(len -= post)) {
@@ -75,8 +75,8 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 			return total ? total : post;
 		}
 		/* queue not resizable */
-		if (!(flags & MPT_ENUM(StreamWriteBuf))
-		    || (flags & MPT_ENUM(StreamWriteMap))) {
+		if (!(flags & MPT_STREAMFLAG(WriteBuf))
+		    || (flags & MPT_STREAMFLAG(WriteMap))) {
 			return total ? total : MPT_ERROR(BadArgument);
 		}
 		/* append queue data */

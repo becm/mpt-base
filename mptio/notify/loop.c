@@ -38,12 +38,12 @@ extern int mpt_loop(MPT_STRUCT(notify) *n)
 			if ((state = in->_vptr->dispatch(in, n->_disp.cmd, n->_disp.arg)) < 0) {
 				continue;
 			}
-			def = (state & MPT_ENUM(EventDefault)) ? 1 : 0;
+			def = (state & MPT_EVENTFLAG(Default)) ? 1 : 0;
 			
-			if (state & MPT_ENUM(EventTerminate)) {
+			if (state & MPT_EVENTFLAG(Terminate)) {
 				return state;
 			}
-			if (!(state & MPT_ENUM(EventRetry))) {
+			if (!(state & MPT_EVENTFLAG(Retry))) {
 				continue;
 			}
 			if ((s = n->_wait._buf) && s->used) {
@@ -63,9 +63,9 @@ extern int mpt_loop(MPT_STRUCT(notify) *n)
 			if ((state = n->_disp.cmd(n->_disp.arg, &ev)) < 0) {
 				continue;
 			}
-			def = (state & MPT_ENUM(EventDefault)) ? 1 : 0;
+			def = (state & MPT_EVENTFLAG(Default)) ? 1 : 0;
 			
-			if (state & MPT_ENUM(EventTerminate)) {
+			if (state & MPT_EVENTFLAG(Terminate)) {
 				return state;
 			}
 			continue;

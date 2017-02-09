@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	parse.src.getc = (int (*)(void *)) mpt_getchar_stdio;
 	parse.src.arg  = stdin;
 	
-	path.flags = MPT_ENUM(PathSepBinary);
+	path.flags = MPT_PATHFLAG(SepBinary);
 	
 	while ((type = next(&fmt, &parse, &path)) > 0) {
 		/* skip section end events */

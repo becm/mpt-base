@@ -27,7 +27,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	pos = path->off + path->len + path->valid;
 	
 	/* need new storage */
-	if (!(arr._buf = (void *) path->base) || !(path->flags & MPT_ENUM(PathHasArray))) {
+	if (!(arr._buf = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
 		arr._buf = 0;
 		if (!(dest = mpt_array_insert(&arr, 0, pos+1))) {
 			return -1;
@@ -35,7 +35,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 		/* 'nonnull' false positive: pos!=0 -> path->base!=null */
 		path->base = pos ? memcpy(dest, path->base, pos) : dest;
 		dest[pos]  = val & 0xff;
-		path->flags |= MPT_ENUM(PathHasArray);
+		path->flags |= MPT_PATHFLAG(HasArray);
 		return 3;
 	}
 	/* next character position */
@@ -88,7 +88,7 @@ extern int mpt_path_delchar(MPT_STRUCT(path) *path)
 	len = path->off + path->len + path->valid;
 	
 	/* remove post data */
-	if (path->flags & MPT_ENUM(PathHasArray)) {
+	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		/* intersects with used data */
 		if (buf[-1].used <= len) {
 			if (!path->valid) return -2;

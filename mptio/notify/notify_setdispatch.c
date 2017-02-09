@@ -19,7 +19,7 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 			mpt_log(0, "mpt_dispatch_emit", MPT_LOG(Error), "%s: 0x"PRIxPTR,
 			        MPT_tr("unprocessed reply id"), ev->id);
 		}
-		return disp->_def ? MPT_ENUM(EventDefault) : 0;
+		return disp->_def ? MPT_EVENTFLAG(Default) : 0;
 	}
 	/* trigger default event */
 	if (!ev->msg) {

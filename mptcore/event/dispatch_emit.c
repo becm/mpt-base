@@ -138,8 +138,8 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		return state;
 	}
 	/* modify default command */
-	if (state & MPT_ENUM(EventDefault)) {
-		state &= ~MPT_ENUM(EventDefault);
+	if (state & MPT_EVENTFLAG(Default)) {
+		state &= ~MPT_EVENTFLAG(Default);
 		if (out) {
 			if (ev->id) {
 				if (disp->_def == ev->id) {
@@ -157,7 +157,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 				mpt_output_log(out, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
 				               MPT_tr("default event removed"), disp->_def);
 			}
-			else if (!(state & MPT_ENUM(EventFail))) {
+			else if (!(state & MPT_EVENTFLAG(Fail))) {
 				mpt_output_log(out, __func__, MPT_LOG(Debug2), "%s", MPT_tr("no default event to clear"));
 			}
 		}
@@ -165,7 +165,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	}
 	/* propagate default call availability */
 	if (disp->_def) {
-		state |= MPT_ENUM(EventDefault);
+		state |= MPT_EVENTFLAG(Default);
 	}
 	return state;
 }

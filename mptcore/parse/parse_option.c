@@ -22,27 +22,27 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 	
 	/* get next visible character, no save */
 	if ((curr = mpt_parse_nextvis(&parse->src, fmt->com, sizeof(fmt->com))) < 0) {
-		parse->curr = path->valid ? (MPT_ENUM(ParseOption) | MPT_ENUM(ParseName)) : MPT_ENUM(ParseOption);
+		parse->curr = path->valid ? (MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Name)) : MPT_PARSEFLAG(Option);
 		if (curr != -2) {
 			return MPT_ERROR(BadArgument);
 		}
 		return path->len ? MPT_ERROR(MissingData) : 0;
 	}
 	if (fmt->ostart && curr != fmt->ostart && path->valid){
-		parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
+		parse->curr = MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Name);
 		return MPT_ERROR(BadValue);
 	}
 	if (mpt_path_addchar(path, curr) < 0) {
-		parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
+		parse->curr = MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Name);
 		return MPT_ERROR(MissingBuffer);
 	}
-	parse->curr = MPT_ENUM(ParseOption) | MPT_ENUM(ParseName);
+	parse->curr = MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Name);
 	
 	while (1) {
 		/* option assign condition */
 		if (isspace(curr)) {
 			if (!fmt->assign) {
-				if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_ENUM(ParseOption)) < 0) {
+				if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_PARSEFLAG(Option)) < 0) {
 					return MPT_ERROR(BadType);
 				}
 				if (mpt_path_add(path) < 0) {
@@ -55,9 +55,9 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 					return curr;
 				}
 				if (!curr) {
-					return MPT_ENUM(ParseOption);
+					return MPT_PARSEFLAG(Option);
 				}
-				return MPT_ENUM(ParseOption) | MPT_ENUM(ParseData);
+				return MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Data);
 			}
 			if (curr == '\n') {
 				if (fmt->oend && curr != fmt->oend) {
@@ -67,7 +67,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 			}
 		}
 		else if (curr == fmt->assign) {
-			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_ENUM(ParseOption)) < 0) {
+			if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_PARSEFLAG(Option)) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path) < 0) {
@@ -80,9 +80,9 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 				return curr;
 			}
 			if (!curr) {
-				return MPT_ENUM(ParseOption);
+				return MPT_PARSEFLAG(Option);
 			}
-			return MPT_ENUM(ParseOption) | MPT_ENUM(ParseData);
+			return MPT_PARSEFLAG(Option) | MPT_PARSEFLAG(Data);
 		}
 		/* option end detected */
 		else if (curr == fmt->oend) {
@@ -103,10 +103,10 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 			return (curr == -2) ? MPT_ERROR(MissingData) : MPT_ERROR(BadArgument);
 		}
 	}
-	parse->curr = MPT_ENUM(ParseData);
+	parse->curr = MPT_PARSEFLAG(Data);
 	/* set zero length option name */
-	if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_ENUM(ParseData)) < 0) {
+	if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, MPT_PARSEFLAG(Data)) < 0) {
 		return MPT_ERROR(BadType);
 	}
-	return MPT_ENUM(ParseData);
+	return MPT_PARSEFLAG(Data);
 }

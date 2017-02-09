@@ -58,7 +58,7 @@ extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *pa
 	}
 	
 	if (fmt->oend && curr != fmt->oend) {
-		parse->curr = MPT_ENUM(ParseData);
+		parse->curr = MPT_PARSEFLAG(Data);
 		return MPT_ERROR(BadValue);
 	}
 	return path->valid;

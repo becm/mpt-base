@@ -36,7 +36,7 @@ static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 	
 	(void) last;
 	
-	if ((curr & 0x3) != MPT_ENUM(ParseOption)) {
+	if ((curr & 0x3) != MPT_PARSEFLAG(Option)) {
 		return 0;
 	}
 	if (!(mpt_node_assign(&ctx->root->children, p))) {

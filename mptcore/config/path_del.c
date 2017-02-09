@@ -1,5 +1,4 @@
 
-#include <errno.h>
 #include <string.h>
 
 #include "array.h"
@@ -21,26 +20,23 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 	size_t len, pos, part;
 	
 	if (!(len = path->len)) {
-		errno = EINVAL;
-		return -2;
+		return MPT_ERROR(MissingData);
 	}
 	data = (uint8_t *) path->base;
 	pos  = len + path->off;
 	
 	/* binary linked size separation format */
-	if (path->flags & MPT_ENUM(PathSepBinary)) {
+	if (path->flags & MPT_PATHFLAG(SepBinary)) {
 		/* total length error */
 		if (len < 2 || len <= (part = data[pos-2])) {
-			errno = EINVAL;
-			return -2;
+			return MPT_ERROR(BadValue);
 		}
 		len -= part + 2;
 		pos  = len + path->off;
 		
 		/* forward/backward inconsistency */
 		if (part != (pos ? data[pos-1] : path->first)) {
-			errno = EINVAL;
-			return -1;
+			return MPT_ERROR(BadOperation);
 		}
 	}
 	else {
@@ -53,13 +49,12 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 			++part; --data;
 		}
 	}
-	if (path->flags & MPT_ENUM(PathHasArray)) {
+	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		MPT_STRUCT(array) arr;
 		arr._buf = (void *) path->base;
 		pos = (--arr._buf)->used;
 		if (len > pos) {
-			errno = EINVAL;
-			return -1;
+			return MPT_ERROR(BadValue);
 		}
 		pos = len + path->off;
 		if (arr._buf->shared) {
@@ -100,7 +95,7 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 	if (!(arr._buf = (void *) path->base)) {
 		return len ? -2 : 0;
 	}
-	if (!(path->flags & MPT_ENUM(PathHasArray))) {
+	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
 		return 0;
 	}
 	used = (--arr._buf)->used;

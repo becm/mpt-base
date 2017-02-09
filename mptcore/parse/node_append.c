@@ -30,15 +30,15 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 		return old;
 	}
 	/* one level up */
-	if (currop == MPT_ENUM(ParseSectEnd)) {
+	if (currop == MPT_PARSEFLAG(SectEnd)) {
 		/* last operation was non-empty section */
-		if (old && (prevop & MPT_ENUM(ParseSectEnd))) {
+		if (old && (prevop & MPT_PARSEFLAG(SectEnd))) {
 			return old->parent;
 		}
 		return old;
 	}
 	/* new node has identifier */
-	if (currop & MPT_ENUM(ParseSection)) {
+	if (currop & MPT_PARSEFLAG(Section)) {
 		if (mpt_path_last(&path) < 0) {
 			return 0;
 		}
@@ -57,7 +57,7 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 		return 0;
 	}
 	/* previous element was section -> insert */
-	if (prevop && !(prevop & MPT_ENUM(ParseSectEnd))) {
+	if (prevop && !(prevop & MPT_PARSEFLAG(SectEnd))) {
 		mpt_gnode_insert(old, 0, conf);
 	}
 	/* no previous or previous element was option -> append */

@@ -80,7 +80,7 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			         MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
-		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
+		if (mpt_stream_flags(&srm->_info) & MPT_STREAMFLAG(MesgActive)) {
 			replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
 			         MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
@@ -248,8 +248,8 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	int ret;
 	
 	/* message transfer in progress */
-	if (con->out.state & MPT_ENUM(OutputActive)) {
-		return MPT_ENUM(EventRetry);
+	if (con->out.state & MPT_OUTFLAG(Active)) {
+		return MPT_EVENTFLAG(Retry);
 	}
 	if (!MPT_socket_active(&con->out.sock)) {
 		struct _streamWrapper sw;
@@ -260,10 +260,10 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		return mpt_stream_dispatch((void *) buf, streamWrapper, &sw);
 	}
 	/* no new data present */
-	if (!(con->out.state & MPT_ENUM(OutputReceived))) {
-		return MPT_ENUM(EventRetry);
+	if (!(con->out.state & MPT_OUTFLAG(Received))) {
+		return MPT_EVENTFLAG(Retry);
 	}
-	con->out.state &= ~MPT_ENUM(OutputReceived);
+	con->out.state &= ~MPT_OUTFLAG(Received);
 	
 	/* initialize message and event data */
 	msg.base = 0;
@@ -349,7 +349,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 				return ret;
 			}
 			else {
-				ret = MPT_ENUM(EventFail);
+				ret = MPT_EVENTFLAG(Fail);
 			}
 		}
 	}

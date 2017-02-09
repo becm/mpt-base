@@ -47,15 +47,15 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, int (*cmd)(void *, const
 	}
 	/* dispatch data to command */
 	else if ((ret = cmd(arg, &msg)) < 0) {
-		ret = MPT_ENUM(EventCtlError);
+		ret = MPT_EVENTFLAG(CtlError);
 	}
 	/* command handler succeded */
 	else {
-		ret &= MPT_ENUM(EventFlags);
+		ret &= MPT_EVENTFLAG(Flags);
 	}
 	/* further message on queue */
 	if ((srm->_mlen = mpt_queue_recv(&srm->_rd)) >= 0) {
-		ret |= MPT_ENUM(EventRetry);
+		ret |= MPT_EVENTFLAG(Retry);
 	}
 	return ret;
 }

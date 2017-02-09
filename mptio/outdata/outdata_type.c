@@ -18,17 +18,17 @@
 extern int mpt_outdata_type(uint8_t arg, int min)
 {
 	if (!arg) {
-		return MPT_ENUM(OutputPrintNormal);
+		return MPT_OUTFLAG(PrintNormal);
 	}
 	if (arg & MPT_LOG(File)) {
 		arg &= ~MPT_LOG(File);
 		if (arg < MPT_LOG(File) || arg > MPT_LOG(Debug)) {
-			return MPT_ENUM(OutputPrintHistory) | MPT_ENUM(OutputPrintRestore);
+			return MPT_OUTFLAG(PrintHistory) | MPT_OUTFLAG(PrintRestore);
 		}
-		return MPT_ENUM(OutputPrintHistory);
+		return MPT_OUTFLAG(PrintHistory);
 	}
 	if (arg < min) {
 		return 0;
 	}
-	return MPT_ENUM(OutputPrintError);
+	return MPT_OUTFLAG(PrintError);
 }

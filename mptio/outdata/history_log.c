@@ -35,7 +35,7 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 	const char *reset, *newline;
 	FILE *fd;
 	
-	if (hist->state & MPT_ENUM(OutputActive)) {
+	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
 	}
 	/* local processing of log entry */
@@ -66,7 +66,7 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 		/* use default log config */
 		if (!(type & MPT_ENUM(LogPretty))) {
 			type |= MPT_ENUM(LogPrefix);
-			if (hist->state & MPT_ENUM(OutputPrintColor)) {
+			if (hist->state & MPT_OUTFLAG(PrintColor)) {
 				type |= MPT_ENUM(LogSelect);
 			}
 		}

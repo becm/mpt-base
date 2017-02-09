@@ -38,10 +38,10 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 	if (!MPT_socket_active(&out->sock)) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (out->state & MPT_ENUM(OutputActive)) {
+	if (out->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
 	}
-	out->state &= ~MPT_ENUM(OutputReceived);
+	out->state &= ~MPT_OUTFLAG(Received);
 	
 	/* UDP maxsize buffer */
 #define MPT_MAX_UDP_SIZE 0x10000
@@ -79,7 +79,7 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 		return MPT_ERROR(MissingData);
 	}
 	buf->used = len;
-	out->state |= MPT_ENUM(OutputReceived);
+	out->state |= MPT_OUTFLAG(Received);
 	
 	if ((out->_scurr = mh.msg_namelen)) {
 		memmove(addr + len, addr + MPT_MAX_UDP_SIZE, mh.msg_namelen);

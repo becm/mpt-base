@@ -48,9 +48,9 @@ extern int mpt_stream_open(MPT_STRUCT(stream) *srm, const char *path, const char
 		return file;
 	}
 	fout = fin = file;
-	switch (mode.stream & (MPT_ENUM(StreamWrite) | (MPT_ENUM(StreamRdWr)))) {
-	  case MPT_ENUM(StreamRead):  fout = -1; break;
-	  case MPT_ENUM(StreamWrite): fin  = -1; break;
+	switch (mode.stream & (MPT_STREAMFLAG(Write) | (MPT_STREAMFLAG(RdWr)))) {
+	  case MPT_STREAMFLAG(Read):  fout = -1; break;
+	  case MPT_STREAMFLAG(Write): fin  = -1; break;
 	  default:;
 	}
 	if (_mpt_stream_setfile(&tmp._info, fin, fout) < 0) {
@@ -61,8 +61,8 @@ extern int mpt_stream_open(MPT_STRUCT(stream) *srm, const char *path, const char
 	if ((file = mpt_stream_setmode(&tmp, mode.stream & ~0xf)) < 0) {
 		return file;
 	}
-	tmp._info._fd |= mode.stream & MPT_ENUM(StreamFlushLine);
-	mpt_stream_setnewline(&tmp._info, mode.lsep, MPT_ENUM(StreamRdWr));
+	tmp._info._fd |= mode.stream & MPT_STREAMFLAG(FlushLine);
+	mpt_stream_setnewline(&tmp._info, mode.lsep, MPT_STREAMFLAG(RdWr));
 	
 	mpt_stream_close(srm);
 	*srm = tmp;

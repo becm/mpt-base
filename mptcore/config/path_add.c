@@ -25,7 +25,7 @@ extern int mpt_path_add(MPT_STRUCT(path) *path)
 	if (!(data = (char *) path->base)) return -1;
 	len = path->off + path->len;
 	
-	if (path->flags & MPT_ENUM(PathHasArray)) {
+	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		arr._buf = (void *) data;
 		--arr._buf;
 		pre  = 0;
@@ -36,7 +36,7 @@ extern int mpt_path_add(MPT_STRUCT(path) *path)
 		post = 0;
 	}
 	/* binary linked size separation format */
-	if (path->flags & MPT_ENUM(PathSepBinary)) {
+	if (path->flags & MPT_PATHFLAG(SepBinary)) {
 		if (path->valid > UINT8_MAX) {
 			errno = ERANGE; return -2;
 		}

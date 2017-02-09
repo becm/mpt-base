@@ -174,7 +174,7 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 	if (ctl) {
 		/* use stdin as command source */
 		if (ctl[0] == '-' && !ctl[1]) {
-			static const int mode = MPT_ENUM(StreamRead) | MPT_ENUM(StreamBuffer);
+			static const int mode = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(Buffer);
 			MPT_INTERFACE(input) *in;
 			MPT_STRUCT(socket) sock;
 			/* detach stdin */
