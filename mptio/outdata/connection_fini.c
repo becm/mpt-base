@@ -24,9 +24,7 @@
 extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 {
 	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(reply_context) **rc;
-	size_t len;
-	
+	MPT_INTERFACE(reply_context) *rc;
 	
 	if (MPT_socket_active(&con->out.sock)) {
 		mpt_outdata_close(&con->out);
@@ -37,12 +35,9 @@ extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 	con->cid = 0;
 	mpt_command_clear(&con->_wait);
 	
-	if (!(buf = con->_rctx._buf)) {
-		return;
-	}
-	rc = (void *) (buf + 1);
-	if ((len = buf->used / sizeof(*rc))) {
-		mpt_reply_clear(rc, len);
+	if ((rc = con->_rctx)) {
+		rc->_vptr->ref.unref((void *) rc);
+		con->_rctx = 0;
 	}
 }
 
@@ -58,5 +53,4 @@ extern void mpt_connection_fini(MPT_STRUCT(connection) *con)
 {
 	mpt_connection_close(con);
 	mpt_array_clone(&con->_wait, 0);
-	mpt_array_clone(&con->_rctx, 0);
 }

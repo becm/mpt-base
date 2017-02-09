@@ -55,7 +55,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         metatype *from = head->_meta;
 
         object *obj;
-        if (from && from->conv(obj->Type, &obj) > 0 && obj) {
+        if (from && from->conv(object::Type, &obj) > 0 && obj) {
             Reference<object> ro;
             if (!obj->addref()) {
                 if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("object"), obj, MPT_tr("failed to raise object reference"));
@@ -265,7 +265,7 @@ bool Collection::bind(const Relation &from, logger *out)
     for (auto &it : _items) {
         object *o;
         Group *g;
-        if (!(o = it.pointer()) || o->property(0) != g->Type) {
+        if (!(o = it.pointer()) || o->property(0) != Group::Type) {
             continue;
         }
         g = static_cast<Group *>(o);
@@ -291,7 +291,7 @@ object *GroupRelation::find(int type, const char *name, int nlen) const
             object *o = c->pointer();
             if (!o || !c->equal(name, plen)) continue;
             const Group *g;
-            if (o->property(0) != g->Type) continue;
+            if (o->property(0) != Group::Type) continue;
             g = static_cast<Group *>(o);
             if ((o = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
                 return o;

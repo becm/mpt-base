@@ -383,7 +383,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     for (auto &it : _items) {
         Group *g;
-        if (!(o = it.pointer()) || o->property(0) != g->Type) continue;
+        if (!(o = it.pointer()) || o->property(0) != Group::Type) continue;
         g = static_cast<Group *>(o);
         GroupRelation gr(*g, &rel);
         if (!g->bind(gr, out)) {

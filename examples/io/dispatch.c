@@ -38,8 +38,8 @@ static int printMessage(void *fd, MPT_STRUCT(event) *ev)
 			++msg.cont;
 		}
 	}
-	if (ev->reply.set) {
-		ev->reply.set(ev->reply.context, ev->msg);
+	if (ev->reply) {
+		ev->reply->_vptr->set(ev->reply, ev->msg);
 	}
 	return 0;
 }

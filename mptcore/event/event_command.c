@@ -30,17 +30,17 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
 		
 		msg = *ev->msg;
 		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			mpt_event_reply(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
+			mpt_context_reply(ev->reply, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 			return 0;
 		}
 		else if (mt.cmd != MPT_ENUM(MessageCommand)) {
-			mpt_event_reply(ev, MPT_ERROR(BadType), MPT_tr("bad message type"));
+			mpt_context_reply(ev->reply, MPT_ERROR(BadType), MPT_tr("bad message type"));
 			return 0;
 		}
 		arg = mpt_meta_message(&msg, mt.arg);
 	}
 	if (!arg) {
-		mpt_event_reply(ev, MPT_ERROR(BadArgument), MPT_tr("no command content"));
+		mpt_context_reply(ev->reply, MPT_ERROR(BadArgument), MPT_tr("no command content"));
 	}
 	return arg;
 }

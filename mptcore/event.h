@@ -15,14 +15,77 @@ MPT_STRUCT(message);
 MPT_INTERFACE(output);
 MPT_INTERFACE(metatype);
 
+MPT_STRUCT(reply_data)
+{
+#ifdef __cplusplus
+	inline reply_data(void *addr = 0) : ptr(addr), _max(4), len(0)
+	{ }
+	inline bool active() const
+	{ return len; }
+	bool setData(size_t , const void *);
+protected:
+#endif
+	void     *ptr;
+	uint16_t _max;
+	uint16_t  len;
+	uint8_t   val[4];
+};
+/* message reply dispatcher */
+#ifdef __cplusplus
+class reply_context : public unrefable
+{
+public:
+	virtual int set(const struct message) = 0;
+	virtual reply_context *defer();
+	
+	class data;
+};
+#else
+MPT_INTERFACE(reply_context);
+MPT_INTERFACE_VPTR(reply_context) {
+	MPT_INTERFACE_VPTR(unrefable) ref;
+	int (*set)(MPT_INTERFACE(reply_context) *, const MPT_STRUCT(message) *);
+	MPT_INTERFACE(reply_context) *(*defer)(MPT_INTERFACE(reply_context) *);
+};
+MPT_INTERFACE(reply_context)
+{
+	const MPT_INTERFACE_VPTR(reply_context) *_vptr;
+};
+#endif
 
 /* single event */
-#ifdef _cplusplus
+#ifdef __cplusplus
+class reply_context::data : public reply_context, public reply_data
+{ };
+
 MPT_STRUCT(event)
 {
+	inline event() : reply(0), msg(0), id(0)
+	{ }
+	int good(const char *);
+	int stop(const char *);
+	int cont(const char *);
+	int term(const char *);
+	int fail(const char *, int = -1);
 # define MPT_EVENTFLAG(x) x
 #else
 # define MPT_EVENTFLAG(x) MPT_ENUM(Event##x)
+
+#define MPT_event_good(ev,txt) \
+	(mpt_context_reply(ev->reply, 0, "%s", txt), \
+	 MPT_EVENTFLAG(None))
+#define MPT_event_stop(ev,txt) \
+	(mpt_context_reply(ev->reply, 2, "%s", txt), \
+	 (ev)->id = 0, MPT_EVENTFLAG(Default))
+#define MPT_event_cont(ev,txt) \
+	(mpt_context_reply(ev->reply, 2, "%s", txt), \
+	 MPT_EVENTFLAG(Default))
+#define MPT_event_term(ev,txt) \
+	(mpt_context_reply(ev->reply, 3, "%s", txt), \
+	 MPT_EVENTFLAG(Terminate))
+#define MPT_event_fail(ev,code,txt) \
+	(mpt_context_reply(ev->reply, (code), "%s", txt), \
+	 (ev)->id = 0, (MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default)))
 #endif
 enum MPT_EVENTFLAG(Flags) {
 	MPT_EVENTFLAG(None)       = 0x0,     /* no special operation */
@@ -33,83 +96,16 @@ enum MPT_EVENTFLAG(Flags) {
 	MPT_EVENTFLAG(Retry)      = 0x10000, /* remaining data on input */
 	MPT_EVENTFLAG(CtlError)   = 0x20000  /* error in control handler */
 };
-#ifdef _cplusplus
-	event();
-	
-	int good(const char *);
-	int stop(const char *);
-	int cont(const char *);
-	int term(const char *);
-	int fail(const char *, int = -1);
-#else
-
-#define MPT_event_good(ev,txt) \
-	(mpt_event_reply(ev, 0, "%s", txt), \
-	 MPT_EVENTFLAG(None))
-#define MPT_event_stop(ev,txt) \
-	(mpt_event_reply(ev, 2, "%s", txt), \
-	 (ev)->id = 0, MPT_EVENTFLAG(Default))
-#define MPT_event_cont(ev,txt) \
-	(mpt_event_reply(ev, 2, "%s", txt), \
-	 MPT_EVENTFLAG(Default))
-#define MPT_event_term(ev,txt) \
-	(mpt_event_reply(ev, 3, "%s", txt), \
-	 MPT_EVENTFLAG(Terminate))
-#define MPT_event_fail(ev,code,txt) \
-	(mpt_event_reply(ev, (code), "%s", txt), \
-	 (ev)->id = 0, (MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default)))
-
+#ifndef __cplusplus
 MPT_STRUCT(event)
 {
-# define MPT_EVENT_INIT  { 0, 0, { 0, 0 } }
+# define MPT_EVENT_INIT  { 0, 0, 0 }
 #endif
-	uintptr_t                  id;  /* command to process */
+	MPT_INTERFACE(reply_context) *reply;  /* reply context */
 	const MPT_STRUCT(message) *msg; /* event data */
-	struct {
-		int (*set)(void *, const MPT_STRUCT(message) *);
-		void *context;
-	} reply; /* reply context */
+	uintptr_t id;  /* command to process */
 };
 typedef int (*MPT_TYPE(EventHandler))(void *, MPT_STRUCT(event) *);
-
-/* event reply dispatcher */
-MPT_STRUCT(reply_context)
-{
-#ifdef __cplusplus
-	reply_context() : ptr(0), _max(sizeof(val)), len(0), used(0)
-	{ }
-	bool active() const
-	{ return used; }
-	
-	void unref();
-	
-	class array : public RefArray<reply_context>
-	{
-	public:
-		reply_context *reserve(size_t len = 2);
-	};
-#endif
-	void     *ptr;
-	uint16_t _max;
-	uint8_t   len;
-	uint8_t   used;
-	uint8_t   val[4];
-#ifdef __cplusplus
-enum {
-# define MPT_REPLY(x) x
-#else
-};
-# define MPT_REPLY(x) MptReply##x
-enum MPT_REPLY(Flags) {
-#endif
-	MPT_REPLY(BadContext)    = 1,
-	MPT_REPLY(BadDescriptor) = 2,
-	MPT_REPLY(BadState)      = 3,
-	MPT_REPLY(BadPush)       = 4
-};
-#ifdef __cplusplus
-};
-#endif
 
 /* generic command registration */
 MPT_STRUCT(command)
@@ -159,14 +155,14 @@ MPT_STRUCT(dispatch)
 		void *arg;
 	} _err;         /* handler for unknown ids */
 	
-	MPT_STRUCT(reply_context) *_ctx;
+	MPT_INTERFACE(reply_context) *_ctx;  /* fallback reply context */
 };
 
 
 __MPT_EXTDECL_BEGIN
 
 /* reply with message */
-extern int mpt_event_reply(const MPT_STRUCT(event) *, int , const char *, ...);
+extern int mpt_context_reply(MPT_INTERFACE(reply_context) *, int , const char *, ...);
 
 /* get/set event command */
 extern int mpt_command_set(_MPT_ARRAY_TYPE(command) *, const MPT_STRUCT(command) *);
@@ -195,10 +191,10 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* register dispatch output control operations */
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
-/* new/available context on array */
-extern MPT_STRUCT(reply_context) *mpt_reply_reserve(_MPT_REF_ARRAY_TYPE(reply_context) *arr, size_t len);
-/* invalidate/delete context references */
-size_t mpt_reply_clear(MPT_STRUCT(reply_context) **, size_t);
+/* create deferrable reply context */
+extern MPT_INTERFACE(reply_context) *mpt_reply_deferable(size_t, int (*)(void *, const MPT_STRUCT(message) *), void *);
+/* set reply data */
+extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 
 /* command message content */
 extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
@@ -206,6 +202,11 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+inline bool reply_data::setData(size_t len, const void *data)
+{
+    if (len && active()) return false;
+    return (mpt_reply_set(this, len, data) < 0) ? false : true;
+}
 class MessageSource
 {
 public:

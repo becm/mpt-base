@@ -10,7 +10,6 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include <sys/uio.h>
 
@@ -29,16 +28,14 @@
  * 
  * \return result of send operation
  */
-extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fmt, ...)
+extern int mpt_context_reply(MPT_INTERFACE(reply_context) *rc, int code, const char *fmt, ...)
 {
 	va_list va;
 	
 	if (code < CHAR_MIN || code > CHAR_MAX) {
-		errno = ERANGE;
-		return -2;
+		return MPT_ERROR(BadArgument);
 	}
-	
-	if (!ev || !ev->reply.set) {
+	if (!rc) {
 		const char *ansi = 0;
 		
 		if (!fmt) {
@@ -95,9 +92,7 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 			if (len > 0) {
 				if (len > (int) sizeof(buf)) {
 					len = sizeof(buf);
-					buf[len-1] = '.';
-					buf[len-2] = '.';
-					buf[len-3] = '.';
+					buf[len-1] = 0;
 				}
 				cont.iov_base = buf;
 				cont.iov_len  = len;
@@ -105,7 +100,7 @@ extern int mpt_event_reply(const MPT_STRUCT(event) *ev, int code, const char *fm
 				msg.clen = 1;
 			}
 		}
-		if ((ret = ev->reply.set(ev->reply.context, &msg)) < 0) {
+		if ((ret = rc->_vptr->set(rc, &msg)) < 0) {
 			return ret;
 		}
 		return 0;

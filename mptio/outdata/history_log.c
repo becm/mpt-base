@@ -55,6 +55,7 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 			fd = (type & 0x7f) ? stderr : stdout;
 			newline = mpt_newline_string(0);
 		}
+		reset = 0;
 	}
 	else {
 		if (mpt_outdata_type(type & 0x7f, hist->ignore) <= 0) {

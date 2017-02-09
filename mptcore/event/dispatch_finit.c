@@ -26,8 +26,8 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 		}
 		return 0;
 	}
-	if (ev->reply.set) {
-		mpt_event_reply(ev, -1, "%s: %" PRIxPTR, MPT_tr("invalid message command"), ev->id);
+	if (ev->reply) {
+		mpt_context_reply(ev->reply, -1, "%s: %" PRIxPTR, MPT_tr("invalid message command"), ev->id);
 		return MPT_EVENTFLAG(Fail);
 	}
 	if (!out || ev->id) {
@@ -87,15 +87,7 @@ extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 		disp->_err.arg = 0;
 	}
 	if ((ctx = disp->_ctx)) {
-		MPT_INTERFACE(output) *out;
-		if ((out = ctx->ptr)) {
-			out->_vptr->obj.ref.unref((void *) out);
-		}
-		if (!ctx->used) {
-			free(ctx);
-		} else {
-			ctx->ptr = 0;
-		}
+		ctx->_vptr->ref.unref((void *) ctx);
 		disp->_ctx = 0;
 	}
 }

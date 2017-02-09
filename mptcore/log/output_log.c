@@ -117,7 +117,7 @@ extern int mpt_output_log(MPT_INTERFACE(output) *out, const char *from, int type
 	if (out) {
 		ret = mpt_output_vlog(out, from, type, fmt, ap);
 	} else {
-		log->_vptr->log(log, from, type, fmt, ap);
+		ret = log->_vptr->log(log, from, type, fmt, ap);
 	}
 	if (fmt) va_end(ap);
 	

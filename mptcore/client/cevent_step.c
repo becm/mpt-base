@@ -66,7 +66,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	}
 	/* remaining solver steps */
 	else if (state) {
-		mpt_event_reply(ev, state, MPT_tr("step operation successfull"));
+		mpt_context_reply(ev->reply, state, MPT_tr("step operation successfull"));
 		return MPT_EVENTFLAG(None);
 	}
 	return MPT_event_stop(ev, MPT_tr("client run finished"));

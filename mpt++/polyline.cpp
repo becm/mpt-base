@@ -99,7 +99,7 @@ bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> sr
         // minimize leading line
         if (old._cut > pt._cut) pt._cut = old._cut;
         // same visible range
-        if ((vlen == pt.usr)) {
+        if (vlen == pt.usr) {
             // minimize trailing line
             if (old._trim > pt._trim) pt._trim = old._trim;
             if (++pos < oldlen) {
@@ -169,7 +169,7 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
         if (!(arr = st.nth(i))) {
             break;
         }
-        const double *from;
+        const double *from = 0;
         int max;
         if (arr->type() != typeIdentifier(*from)) {
             continue;

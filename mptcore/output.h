@@ -155,26 +155,27 @@ protected:
 	uint8_t _scurr;  /* socket address used */
 };
 
-#ifdef __cplusplus
 MPT_STRUCT(connection)
 {
+#ifdef __cplusplus
 	connection();
 	~connection();
 protected:
-#else
-MPT_STRUCT(connection)
-{
-# define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
-                               0, MPT_ARRAY_INIT, \
-                               MPT_ARRAY_INIT, \
-                               0,0 }
-	MPT_STRUCT(outdata) out;  /* output data backend */
 #endif
+	MPT_STRUCT(outdata)       out;   /* output data backend */
 	uintptr_t                 cid;   /* active message id */
 	_MPT_ARRAY_TYPE(command) _wait;  /* pending message reply actions */
 	
-	_MPT_ARRAY_TYPE(reply_context) _rctx; /* reply context buffer and active element */
-	
+	/* reply context */
+#ifdef __cplusplus
+	Reference<reply_context> _rctx;
+#else
+	MPT_INTERFACE(reply_context) *_rctx;
+# define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
+                               0, MPT_ARRAY_INIT, \
+                               0, \
+                               0,0 }
+#endif
 	uint8_t  pass;   /* limit transfered messages */
 	uint8_t  show;   /* print replies to messages */
 };
@@ -235,6 +236,8 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(me
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* process return messages */
 extern int mpt_outdata_recv(MPT_STRUCT(outdata) *);
+/* send reply message */
+extern int mpt_outdata_reply(MPT_STRUCT(outdata) *, const MPT_STRUCT(message) *, size_t, const void *);
 
 
 /* reset connection data */
@@ -246,6 +249,8 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *, const char *, const MPT
 /* get/set outdata property */
 extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
 extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, MPT_INTERFACE(metatype) *);
+/* send reply message */
+extern int mpt_connection_reply(MPT_STRUCT(connection) *, const MPT_STRUCT(message) *);
 
 /* push data to connection */
 extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void *);

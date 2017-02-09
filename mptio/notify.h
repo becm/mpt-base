@@ -50,15 +50,12 @@ public:
 	
 	input *next() const;
 	size_t used() const { return _fdused; }
-	
 protected:
-	RefArray<input>
 #else
-	MPT_STRUCT(array)
 # define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
-#endif /* __cplusplus */
-	             _slot,   /* compound part pointer array */
-	             _wait;   /* temporary data for poll info */
+#endif
+	_MPT_REF_ARRAY_TYPE(input) _slot;  /* compound part pointer array */
+	MPT_STRUCT(array)          _wait;  /* temporary data for poll info */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;

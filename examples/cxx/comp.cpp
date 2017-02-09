@@ -39,7 +39,7 @@ static int printMessage(mpt::input *in, mpt::event *ev)
 		buf[sizeof(buf)-1] = 0;
 		if (strstr(buf, "exit")) {
 			puts("\nexiting");
-			return mpt::EventTerminate;
+			return mpt::event::Terminate;
 		}
 		fputs(buf, stdout);
 	}
@@ -65,10 +65,10 @@ extern int main(int argc, char *argv[])
 		mpt::input *in;
 		while ((in = no.next())) {
 			while ((arg = in->dispatch((mpt::EventHandler) printMessage, in)) > 0) {
-				if (arg & mpt::EventTerminate) {
+				if (arg & mpt::event::Terminate) {
 					return 0;
 				}
-				if (!(arg & mpt::EventRetry)) {
+				if (!(arg & mpt::event::Retry)) {
 					break;
 				}
 			}

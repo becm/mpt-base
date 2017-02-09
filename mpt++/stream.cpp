@@ -247,49 +247,6 @@ int Stream::next(int what)
     }
     return ret;
 }
-static int streamReply(void *ptr, const message *msg)
-{
-    static const char _func[] = "mpt::stream::reply";
-    reply_context *rc = reinterpret_cast<reply_context *>(ptr);
-    stream *srm = reinterpret_cast<stream *>(rc->ptr);
-    uint64_t id = 0;
-
-    if (!rc->used) {
-        critical(_func, "%s: %s", MPT_tr("unable to reply"), id, MPT_tr("reply context not registered"));
-        return rc->BadContext;
-    }
-    mpt_message_buf2id(rc->val, rc->len, &id);
-    if (!(srm = reinterpret_cast<stream *>(rc->ptr))) {
-        error(_func, "%s (id = " PRIx64 ")", MPT_tr("reply target destroyed"), id);
-        if (!--rc->used) {
-            free(rc);
-        }
-        return rc->BadDescriptor;
-    }
-    if (!rc->len) {
-        error(_func, "%s (id = " PRIx64 ")", MPT_tr("no id size specified"), id);
-        return rc->BadState;
-    }
-    if (srm->flags() & srm->MesgActive) {
-        warning(_func, "%s (id = " PRIx64 ")", MPT_tr("message in progress"), id);
-        return MessageInProgress;
-    }
-    rc->val[0] |= 0x80;
-    if (mpt_stream_push(srm, rc->len, rc->val) < 0) {
-        error(_func, "%s (id = " PRIx64 ")", MPT_tr("unable to set reply id"), id);
-        return rc->BadPush;
-    }
-    rc->len = 0;
-    --rc->used;
-    if (mpt_stream_append(srm, msg) < 0) {
-        if (msg && mpt_stream_push(srm, 0, 0) < 0) {
-            critical(_func, "%s: %s", MPT_tr("bad reply operation"), id, MPT_tr("not able to terminate reply"));
-        } else {
-            warning(_func, "%s: %s", MPT_tr("bad reply operation"), id, MPT_tr("not able append message"));
-        }
-    }
-    return 0;
-}
 class Stream::Dispatch
 {
 public:
@@ -301,7 +258,7 @@ public:
         struct event ev;
         uint8_t idlen;
 
-        if (!(idlen = srm._idlen)) {
+        if (!msg || !(idlen = srm._idlen)) {
             return cmd(arg, &ev);
         }
         uint8_t id[__UINT8_MAX__];
@@ -325,27 +282,28 @@ public:
             error(_func, "%s (id = %08"PRIx64")", MPT_tr("unknown reply id"), rid);
             return BadValue;
         }
-        reply_context *rc = 0;
+        reply_context::data *rc = 0;
         for (uint8_t i = 0; i < idlen; ++i) {
             if (!id[i]) {
                 continue;
             }
-            if (!(rc = srm._ctx.reserve(srm._idlen))) {
-                error(_func, "%s", MPT_tr("unable to create reply context"));
+            if (!(rc = srm._ctx.pointer())) {
+                warning(_func, "%s", MPT_tr("no reply context"));
+                break;
+            }
+            if (!rc->setData(idlen, id)) {
+                error(_func, "%s", MPT_tr("reply context in use"));
                 return BadOperation;
             }
-            rc->ptr = srm._srm;
-            rc->len = idlen;
-            memcpy(rc->val, id, idlen);
-            ev.reply.set = streamReply;
-            ev.reply.context = rc;
             break;
         }
+        ev.reply = rc;
         ret = cmd(arg, &ev);
-        if (rc && ret < 0 && rc->len) {
+        if (rc && rc->active()) {
             struct msgtype mt(MessageAnswer, ret);
             struct message msg(&mt, sizeof(mt));
-            streamReply(rc, &msg);
+            id[0] |= 0x80;
+            mpt_stream_reply(srm._srm, &msg, idlen, id);
         }
         return ret;
     }

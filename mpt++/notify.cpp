@@ -25,12 +25,6 @@ int input::dispatch(EventHandler cmd, void *arg)
 {
     if (!cmd) return -1;
     event ev;
-
-    ev.id  = 0;
-    ev.msg = 0;
-    ev.reply.set = 0;
-    ev.reply.context = 0;
-
     return cmd(arg, &ev);
 }
 int input::_file()

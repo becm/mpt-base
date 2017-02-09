@@ -61,8 +61,8 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		memset(st, 0, sizeof(*st));
 	}
 	else {
-		rd = (void *) (buf+1);
-		rd += nc;
+		st = (void *) (buf+1);
+		st += nc;
 	}
 	if (!(arr = mpt_stage_data(st, dim, fmt))) {
 		return MPT_ERROR(BadOperation);

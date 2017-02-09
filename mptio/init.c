@@ -151,20 +151,6 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 		    && (cname = mpt_meta_data(conf, 0))) {
 			mpt_object_set((void *) out, "answer", "s", cname);
 		}
-		/* use output for reply */
-		if (out->_vptr->obj.addref((void *) out)) {
-			MPT_STRUCT(reply_context) *ctx;
-			
-			if (!(ctx = malloc(sizeof(*ctx) + 32))) {
-				out->_vptr->obj.ref.unref((void *) out);
-			} else {
-				disp->_ctx = ctx;
-				ctx->ptr = out;
-				ctx->len = 0;
-				ctx->_max = sizeof(ctx->val) + 32;
-				ctx->used = 0;
-			}
-		}
 	}
 	/* set default event if no input available */
 	if (!src && !ctl) {

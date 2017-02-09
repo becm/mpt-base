@@ -159,6 +159,8 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 extern int mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
 extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_ARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
+/* push message id and content to stream */
+extern int mpt_stream_reply(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *, size_t , const void *);
 /* dispatch next message */
 extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 
@@ -231,11 +233,10 @@ public:
 	{ setProperty(0, 0); }
 	
 	class Dispatch;
-	
 protected:
 	stream *_srm;
 	command::array _wait;
-	reply_context::array _ctx;
+	Reference<reply_context::data> _ctx;
 	uintptr_t _cid;
 	int _inputFile;
 	uint8_t _idlen;

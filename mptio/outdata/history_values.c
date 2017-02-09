@@ -110,8 +110,7 @@ extern ssize_t mpt_history_values(const MPT_STRUCT(histinfo) *hist, MPT_STRUCT(h
 	while (len) {
 		char buf[256];
 		MPT_STRUCT(valfmt) val;
-		size_t adv;
-		int curr;
+		int adv, curr;
 		char cfmt;
 		
 		val.fmt = 0;
@@ -142,10 +141,10 @@ extern ssize_t mpt_history_values(const MPT_STRUCT(histinfo) *hist, MPT_STRUCT(h
 			flen = 0;
 			val.wdt = 0;
 		}
-		if (!(adv = mpt_msgvalfmt_size(cfmt)) < 0) {
+		if ((adv = mpt_msgvalfmt_size(cfmt)) < 0) {
 			return MPT_ERROR(BadType);
 		}
-		if (len < adv) {
+		if (len < (size_t) adv) {
 			return done;
 		}
 		/* determine output format */

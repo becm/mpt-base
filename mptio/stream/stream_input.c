@@ -20,20 +20,51 @@
 struct streamInput {
 	MPT_INTERFACE(input) _in;
 	MPT_STRUCT(stream) data;
-	MPT_STRUCT(array) ctx;
-	uint8_t idlen;
+	struct {
+		MPT_INTERFACE(reply_context) _ctx;
+		MPT_STRUCT(reply_data) data;
+	} ctx;
+};
+
+static MPT_INTERFACE(reply_context) *streamDefer(MPT_INTERFACE(reply_context) *ctx)
+{
+	(void) ctx; return 0;
+}
+static int streamReply(MPT_INTERFACE(reply_context) *rc, const MPT_STRUCT(message) *msg)
+{
+	static const char _func[] = "mpt::stream::reply";
+	MPT_STRUCT(reply_data) *rd = (void *) (rc + 1);
+	struct streamInput *srm;
+	uint64_t id = 0;
+	int ret;
+	
+	if (!rd->len) {
+		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
+		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
+		return MPT_ERROR(BadArgument);
+	}
+	mpt_message_buf2id(rd->val, rd->len, &id);
+	if (!(srm = rd->ptr)) {
+		mpt_log(0, _func, MPT_LOG(Error), "%s (%08" PRIx64 ": %s",
+		        MPT_tr("unable to reply"), id, MPT_tr("output destroyed"));
+		return MPT_ERROR(BadArgument);
+	}
+	ret = mpt_stream_reply(&srm->data, msg, rd->len, rd->val);
+	
+	if (ret >= 0) {
+		rd->len = 0;
+	}
+	return ret;
+}
+static const MPT_INTERFACE_VPTR(reply_context) _mpt_stream_reply_context = {
+	{ 0 },
+	streamReply,
+	streamDefer
 };
 
 static void streamUnref(MPT_INTERFACE(unrefable) *in)
 {
 	struct streamInput *srm = (void *) in;
-	MPT_STRUCT(buffer) *buf;
-	
-	if ((buf = srm->ctx._buf)) {
-		MPT_STRUCT(reply_context) **ctx = (void *) (buf+1);
-		mpt_reply_clear(ctx, buf->used / sizeof(*ctx));
-		mpt_array_clone(&srm->ctx, 0);
-	}
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
 }
@@ -48,64 +79,23 @@ struct streamWrap
 	MPT_TYPE(EventHandler) cmd;
 	void *arg;
 };
-static int streamReply(void *ptr, const MPT_STRUCT(message) *msg)
-{
-	static const char _func[] = "mpt::stream::reply";
-	MPT_STRUCT(reply_context) *rp = ptr;
-	struct streamInput *srm;
-	
-	if (!rp->used) {
-		mpt_log(0, _func, MPT_LOG(Critical), "%s",
-		        MPT_tr("reply context unregistered"));
-		return MPT_REPLY(BadContext);
-	}
-	if (!(srm = rp->ptr)) {
-		mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("unable to reply"), MPT_tr("output destroyed"));
-		if (!--rp->used) {
-			free(rp);
-		}
-		return MPT_REPLY(BadDescriptor);
-	}
-	if (!rp->len) {
-		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
-		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
-		return MPT_REPLY(BadState);
-	}
-	if (mpt_stream_flags(&srm->data._info) & MPT_STREAMFLAG(MesgActive)) {
-		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
-		        MPT_tr("unable to reply"), MPT_tr("message creation in progress"));
-		return MPT_ERROR(MessageInProgress);
-	}
-	rp->val[0] |= 0x80;
-	
-	mpt_stream_push(&srm->data, rp->len, rp->val);
-	mpt_stream_append(&srm->data, msg);
-	mpt_stream_push(&srm->data, 0, 0);
-	rp->len = 0;
-	--rp->used;
-	return 0;
-}
 static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 {
 	struct streamWrap *sw = ptr;
 	struct streamInput *srm;
-	MPT_STRUCT(event) ev;
+	MPT_STRUCT(event) ev = MPT_EVENT_INIT;
 	int idlen;
 	
 	srm = sw->in;
 	
-	ev.id = 0;
 	ev.msg = msg;
-	ev.reply.set = 0;
-	ev.reply.context = 0;
 	
-	if (!(idlen = srm->idlen)) {
+	if (!(idlen = srm->ctx.data._max)) {
 		return sw->cmd(sw->arg, &ev);
 	}
 	else {
 		static const char _func[] = "mpt::stream::dispatch";
-		MPT_STRUCT(reply_context) *rc;
+		MPT_STRUCT(reply_context) *rc = 0;
 		MPT_STRUCT(message) tmp;
 		uint8_t id[UINT8_MAX];
 		int i, ret;
@@ -150,26 +140,16 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 			if (!id[i]) {
 				continue;
 			}
-			/* reply context required */
-			if (!(rc = mpt_reply_reserve(&srm->ctx, idlen))) {
-				mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
-				        MPT_tr("dispatch failed"), MPT_tr("no reply context available"));
-				return MPT_ERROR(BadOperation);
-			}
-			/* set reply context */
-			memcpy(rc->val, id, idlen);
-			rc->len = idlen;
-			ev.reply.set = streamReply;
-			ev.reply.context = rc;
+			rc = &srm->ctx._ctx;
 			break;
 		}
 		ret = sw->cmd(sw->arg, &ev);
 		
 		/* generic reply to failed command */
-		if (rc && ret < 0 && rc->len) {
+		if (rc && srm->ctx.data.len) {
 			MPT_STRUCT(msgtype) hdr;
 			hdr.cmd = MPT_ENUM(MessageAnswer);
-			hdr.arg = ret;
+			hdr.arg = ret < 0 ? ret : 0;
 			tmp.base = &hdr;
 			tmp.used = sizeof(hdr);
 			tmp.cont = 0;
@@ -258,13 +238,17 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(srm = malloc(sizeof(*srm)))) {
+	if (!(srm = malloc(sizeof(*srm) + idlen))) {
 		mpt_stream_close(&tmp);
 		return 0;
 	}
 	srm->_in._vptr = &streamCtl;
 	srm->data = tmp;
-	srm->idlen = idlen;
+	
+	srm->ctx._ctx._vptr = &_mpt_stream_reply_context;
+	srm->ctx.data.ptr = srm;
+	srm->ctx.data._max = idlen;
+	srm->ctx.data.len = 0;
 	
 	return &srm->_in;
 }

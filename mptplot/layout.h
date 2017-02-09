@@ -46,7 +46,7 @@ enum MPT_ENUM(TextFlags) {
 };
 
 /* forward declaration */
-MPT_STRUCT(rawdata);
+MPT_INTERFACE(rawdata);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
