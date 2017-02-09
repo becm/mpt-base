@@ -20,28 +20,6 @@
 
 #include "output.h"
 
-/* set level limit */
-static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
-{
-	const char *arg;
-	int ret;
-	
-	if (!src) {
-		*level = 0;
-		return 0;
-	}
-	if ((ret = src->_vptr->conv(src, 'k', &arg)) >= 0) {
-		int type;
-		if ((type = mpt_log_level(arg)) < 0) {
-			return MPT_ERROR(BadValue);
-		}
-		if (arg && isupper(*arg)) type |= MPT_LOG(LevelFile);
-		*level = type;
-		return ret;
-	}
-	return MPT_ERROR(BadType);
-}
-
 static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *src)
 {
 	MPT_TYPE(DataEncoder) enc;
@@ -68,7 +46,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatyp
 	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {
 		val = mpt_encoding_value(where, -1);
 		if (val < 0 || val > UINT8_MAX) {
-			return -2;
+			return MPT_ERROR(BadValue);
 		}
 		rtype = val;
 	}
@@ -102,6 +80,55 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatyp
 	
 	return res;
 }
+
+/* set level limit */
+static int connectionLevel(uint8_t *level, MPT_INTERFACE(metatype) *src)
+{
+	const char *arg;
+	int ret;
+	
+	if (!src) {
+		*level = 0;
+		return 0;
+	}
+	if ((ret = src->_vptr->conv(src, 'k', &arg)) >= 0) {
+		int type;
+		if ((type = mpt_log_level(arg)) < 0) {
+			return MPT_ERROR(BadValue);
+		}
+		*level = type;
+		return ret;
+	}
+	return MPT_ERROR(BadType);
+}
+/* modify output color flag */
+static int connectionColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
+{
+	char *where;
+	int len;
+	int32_t val = 0;
+	
+	if (!src) {
+		*flags &= ~MPT_ENUM(OutputPrintColor);
+		return 0;
+	}
+	if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
+		if (!where || *where || !strcasecmp(where, "false")) {
+			val = 1;
+		} else {
+			val = 0;
+		}
+	}
+	else if ((len = src->_vptr->conv(src, 'i', &val)) < 0) {
+		return MPT_ERROR(BadType);
+	}
+	if (val > 0) {
+		*flags |= MPT_ENUM(OutputPrintColor);
+	} else {
+		*flags &= ~MPT_ENUM(OutputPrintColor);
+	}
+	return len;
+}
 /*!
  * \ingroup mptOutput
  * \brief set connection property
@@ -127,46 +154,23 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 	if (!strcasecmp(name, "encoding")) {
 		return connectionEncoding(con, src);
 	}
-	if (!strcasecmp(name, "level")) {
-		uint8_t v = con->level;
-		
-		if (src && (ret = src->_vptr->conv(src, 'y', &v)) > 0) {
-			con->level = v;
-		}
-		else if ((ret = connectionLevel(&v, src)) < 0) {
-			return ret;
-		}
-		else if (!ret) {
-			con->level = (MPT_LOG(LevelInfo) << 4) | MPT_LOG(LevelWarning);
-		}
-		else {
-			con->level = ((v & 0xf) << 4) | (v & 0xf);
-		}
-		return ret;
+	if (!strcasecmp(name, "color")) {
+		return connectionColor(&con->out.state, src);
 	}
-	if (!strcasecmp(name, "debug")) {
-		uint8_t v = MPT_LOG(LevelDebug3);
-		ret = 0;
-		if (src && (ret = src->_vptr->conv(src, 'y', &v)) < 0) {
-			return MPT_ERROR(BadType);
-		}
-		con->level = (con->level & 0xf0) | (v & 0xf);
-		return ret;
-	}
-	if (!strcasecmp(name, "print")) {
-		uint8_t v = con->level & 0xf;
+	if (!strcasecmp(name, "pass")) {
+		uint8_t v = 0;
 		if ((ret = connectionLevel(&v, src)) < 0) {
 			return ret;
 		}
-		con->level = (con->level & 0xf0) | (v & 0xf);
+		con->pass = v;
 		return ret;
 	}
-	if (!strcasecmp(name, "answer")) {
-		uint8_t v = (con->level & 0xf0) >> 4;
+	if (!strcasecmp(name, "show")) {
+		uint8_t v = 0;
 		if ((ret = connectionLevel(&v, src)) < 0) {
 			return ret;
 		}
-		con->level = (con->level & 0xf) | ((v & 0xf) << 4);
+		con->show = v;
 		return ret;
 	}
 	return mpt_outdata_set(&con->out, name, src);
@@ -186,32 +190,58 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT
 extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(property) *pr)
 {
 	const char *name;
+	intptr_t pos = -1, id;
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
 	}
 	if (!(name = pr->name)) {
-		if ((uintptr_t) pr->desc != 1) {
-			return mpt_outdata_get(&con->out, pr);
-		}
-		name = "level";
+		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
-		
 		pr->name = "connection";
 		pr->desc = "interface to output data";
-		pr->val.fmt = fmt;
-		pr->val.ptr = &con->out.sock;
-		
+		/* socket is active */
+		if (MPT_socket_active(&con->out.sock)) {
+			static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
+			pr->val.fmt = fmt;
+			pr->val.ptr = &con->out.sock;
+			return 1;
+		}
+		if (con->out.buf._buf) {
+			pr->val.fmt = "";
+			pr->val.ptr = con->out.buf._buf;
+			return 1;
+		}
 		return 0;
 	}
-	if (!strcmp(name, "level") || !strcmp(name, "debug") || !strcasecmp(name, "answer")) {
-		pr->name = "level";
-		pr->desc = MPT_tr("output level");
+	id = 0;
+	
+	if (name ? (!strcasecmp(name, "pass") || !strcasecmp(name, "limit")) : pos == id++) {
+		pr->name = "pass";
+		pr->desc = MPT_tr("message type transfer limit");
 		pr->val.fmt = "y";
-		pr->val.ptr = &con->level;
-		return con->level;
+		pr->val.ptr = &con->pass;
+		return 1;
+	}
+	if (name ? (!strcasecmp(name, "show") || !strcasecmp(name, "debug")) : pos == id++) {
+		pr->name = "show";
+		pr->desc = MPT_tr("reply output level");
+		pr->val.fmt = "y";
+		pr->val.ptr = &con->show;
+		return con->show ? 1 : 0;
+	}
+	if (name ? !strcmp(name, "color") : pos == id++) {
+		pr->name = "color";
+		pr->desc = MPT_tr("colorized message output");
+		pr->val.fmt = 0;
+		if (con->out.state & MPT_ENUM(OutputPrintColor)) {
+			pr->val.ptr = "true";
+			return 1;
+		} else {
+			pr->val.ptr = "false";
+			return 0;
+		}
 	}
 	return mpt_outdata_get(&con->out, pr);
 }

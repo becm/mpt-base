@@ -42,34 +42,6 @@ static int outdataSocket(MPT_STRUCT(outdata) *out, MPT_INTERFACE(metatype) *src)
 	return MPT_ERROR(BadType);
 }
 
-static int outdataColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
-{
-	char *where;
-	int len;
-	int32_t val = 0;
-	
-	if (!src) {
-		*flags &= ~MPT_ENUM(OutputPrintColor);
-		return 0;
-	}
-	if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
-		if (!where || *where || !strcasecmp(where, "false")) {
-			val = 1;
-		} else {
-			val = 0;
-		}
-	}
-	else if ((len = src->_vptr->conv(src, 'i', &val)) < 0) {
-		return MPT_ERROR(BadType);
-	}
-	if (val > 0) {
-		*flags |= MPT_ENUM(OutputPrintColor);
-	} else {
-		*flags &= ~MPT_ENUM(OutputPrintColor);
-	}
-	return len;
-}
-
 /*!
  * \ingroup mptOutput
  * \brief query outdata properties
@@ -89,9 +61,6 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERF
 	if (!*name) {
 		return outdataSocket(od, src);
 	}
-	if (!strcasecmp(name, "color")) {
-		return outdataColor(&od->state, src);
-	}
 	return MPT_ERROR(BadArgument);
 }
 
@@ -107,16 +76,11 @@ extern int mpt_outdata_set(MPT_STRUCT(outdata) *od, const char *name, MPT_INTERF
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *pr)
 {
 	const char *name;
-	intptr_t pos = -1, id;
 	
 	if (!pr) {
 		return MPT_ENUM(TypeSocket);
 	}
-	/* find by position */
-	if (!(name = pr->name)) {
-		pos = (intptr_t) pr->desc;
-	}
-	else if (!*name) {
+	if (!(name = pr->name) && !*name) {
 		static const char fmt[2] = { MPT_ENUM(TypeSocket), 0 };
 		
 		pr->name = "outdata";
@@ -125,19 +89,6 @@ extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *
 		pr->val.ptr = &od->sock;
 		
 		return MPT_socket_active(&od->sock) ? 1 : 0;
-	}
-	id = 0;
-	if (name ? !strcmp(name, "color") : pos == id++) {
-		pr->name = "color";
-		pr->desc = MPT_tr("colorized message output");
-		pr->val.fmt = 0;
-		if (od->state & MPT_ENUM(OutputPrintColor)) {
-			pr->val.ptr = "true";
-			return MPT_ENUM(OutputPrintColor);
-		} else {
-			pr->val.ptr = "false";
-			return 0;
-		}
 	}
 	return MPT_ERROR(BadArgument);
 }

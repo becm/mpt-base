@@ -17,13 +17,13 @@
 #include "message.h"
 #include "stream.h"
 
-static int connectionLog(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, ...)
+static int replyLog(MPT_STRUCT(connection) *con, const char *from, int type, const char *fmt, ...)
 {
 	MPT_INTERFACE(logger) *log;
 	va_list va;
 	
 	/* check log level */
-	if (mpt_outdata_type(type & 0x7f, con->level & 0xf) <= 0) {
+	if (mpt_outdata_type(type & 0x7f, con->show) <= 0) {
 		return 0;
 	}
 	if (!(log = mpt_log_default())) {
@@ -64,8 +64,8 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 	}
 	/* already answered */
 	if (!rc->len) {
-		connectionLog(con, _func, MPT_LOG(Warning), "%s: %s",
-		              MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
+		replyLog(con, _func, MPT_LOG(Warning), "%s: %s",
+		         MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
 		--rc->used;
 		return MPT_REPLY(BadState);
 	}
@@ -76,27 +76,27 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 		MPT_STRUCT(stream) *srm;
 		
 		if (!(srm = (void *) con->out.buf._buf)) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
-			              MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
+			replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			         MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
 		if (mpt_stream_flags(&srm->_info) & MPT_ENUM(StreamMesgAct)) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
-			              MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
+			replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			         MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
 		}
 		if ((ret = mpt_stream_push(srm, rc->len, rc->val)) < 0) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
-			              MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
+			replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			         MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
 			return ret;
 		}
 		if (src && mpt_stream_append(srm, src) < 0) {
-			connectionLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
-			              MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
+			replyLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
+			         MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
 		}
 		if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
-			connectionLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
-			              MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
+			replyLog(con, _func, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
+			         MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
 			if (mpt_stream_push(srm, 1, 0) < 0) {
 				return ret;
 			}
@@ -114,8 +114,8 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 			ret += mpt_message_read(&msg, sizeof(buf) - ret, buf + ret);
 			if (mpt_message_length(&msg)) {
 				ret = con->out._idlen;
-				connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
-				              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
+				replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+				         MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			}
 		}
 		slen = rc->len - con->out._idlen;
@@ -125,8 +125,8 @@ static int replySet(void *ptr, const MPT_STRUCT(message) *src)
 		ret = sendto(con->out.sock._id, buf, ret, 0, sa, slen);
 		
 		if (ret < 0) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
-			              MPT_tr("unable to reply"), id, MPT_tr("send failed"));
+			replyLog(con, _func, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			         MPT_tr("unable to reply"), id, MPT_tr("send failed"));
 			return MPT_ERROR(BadArgument);
 		}
 	}
@@ -170,8 +170,8 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 		ev.msg = &tmp;
 		tmp = *msg;
 		if ((mpt_message_read(&tmp, idlen, id)) < idlen) {
-			connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
-			              MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
+			mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
+			        MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 			return MPT_ERROR(BadValue);
 		}
 		/* test reply indicator */
@@ -182,13 +182,13 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 			id[0] &= 0x7f;
 			if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0
 			    || ret > (int) sizeof(ans->id)) {
-				connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
-				              MPT_tr("reply processing failed"), MPT_tr("message id invalid"));
+				mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
+				        MPT_tr("reply processing failed"), MPT_tr("message id invalid"));
 			}
 			/* find reply handler */
 			if (!(ans = mpt_command_get(&con->_wait, rid))) {
-				connectionLog(con, _func, MPT_LOG(Error), "%s: %s (%08"PRIx64")",
-				              MPT_tr("reply processing failed"), MPT_tr("unknown id"), rid);
+				mpt_log(0, _func, MPT_LOG(Error), "%s: %s (%08"PRIx64")",
+				        MPT_tr("reply processing failed"), MPT_tr("unknown id"), rid);
 				return MPT_ERROR(BadValue);
 			}
 			return ans->cmd(ans->arg, &tmp);
@@ -200,8 +200,8 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 			}
 			/* reply context required */
 			if (!(rc = mpt_reply_reserve(&con->_rctx, idlen))) {
-				connectionLog(con, _func, MPT_LOG(Error), "%s: %s",
-				              MPT_tr("dispatch failed"), MPT_tr("no context available"));
+				mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
+				        MPT_tr("dispatch failed"), MPT_tr("no context available"));
 				return MPT_ERROR(BadOperation);
 			}
 			/* set reply context */
@@ -287,8 +287,8 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	/* trailing socket address */
 	if ((slen = con->out._scurr)) {
 		if (msg.used < slen) {
-			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s (%d)",
-			              MPT_tr("bad state"), MPT_tr("invalid socket data size"), slen);
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s (%d)",
+			        MPT_tr("bad state"), MPT_tr("invalid socket data size"), slen);
 			return MPT_ERROR(MissingBuffer);
 		}
 		msg.used -= slen;
@@ -301,8 +301,8 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		return cmd(arg, &ev);
 	}
 	if ((ret = mpt_message_read(&msg, ilen, 0)) < ilen) {
-		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s (%d < %d)",
-		              MPT_tr("bad message"), MPT_tr("missing message id"), ret, ilen);
+		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s (%d < %d)",
+		        MPT_tr("bad message"), MPT_tr("missing message id"), ret, ilen);
 		return MPT_ERROR(MissingData);
 	}
 	/* match message reply flag */
@@ -313,18 +313,18 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		data[0] &= 0x7f;
 		ret = mpt_message_buf2id(data, ilen, &ansid);
 		if (ret < 0 || ret > (int) sizeof(ans->id)) {
-			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s (%d)",
-			              MPT_tr("reply failed"), MPT_tr("bad id size"), ret);
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s (%d)",
+			        MPT_tr("reply failed"), MPT_tr("bad id size"), ret);
 			return MPT_ERROR(MissingBuffer);
 		}
 		if (!(ans = mpt_command_get(&con->_wait, ansid))) {
-			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s ("PRIx64")",
-			              MPT_tr("reply failed"), MPT_tr("message not registered"), ansid);
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s ("PRIx64")",
+			        MPT_tr("reply failed"), MPT_tr("message not registered"), ansid);
 			return MPT_ERROR(MissingBuffer);
 		}
 		if (ans->cmd(ans->arg, &msg) < 0) {
-			connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
-			              MPT_tr("dispatch failed"), MPT_tr("no message available"));
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+			        MPT_tr("dispatch failed"), MPT_tr("no message available"));
 			return MPT_ERROR(MissingBuffer);
 		}
 		return 0;
@@ -355,8 +355,8 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	}
 	data[0] |= 0x80;
 	if (sendto(con->out.sock._id, data, con->out._idlen, 0, sa, slen)) {
-		connectionLog(con, __func__, MPT_LOG(Error), "%s: %s",
-		              MPT_tr("reply failed"), MPT_tr("send operation"));
+		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("reply failed"), MPT_tr("send operation"));
 	}
 	return ret;
 }

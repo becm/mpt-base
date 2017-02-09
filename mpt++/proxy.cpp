@@ -29,20 +29,14 @@ int proxy::log(const char *fcn, int type, const char *fmt, ...) const
     if (fmt) va_start(va, fmt);
     class logger *log;
     class output *out;
-    
+
+    type |= logger::LogFunction;
+
     if ((log = logger.pointer())) {
         ret = log->log(fcn, type, fmt, va);
     }
     else if ((out = output.pointer())) {
-        char buf[MPT_OUTPUT_LOGMSG_MAX];
-        value val;
-        if (fmt) {
-            ret = vsnprintf(buf, sizeof(buf), fmt, va);
-            if (ret > (int) sizeof(buf)) {
-                buf[sizeof(buf) - 1] = 0;
-            }
-        }
-        ret = out->log(fcn, type, &val);
+        ret = mpt_output_log(out, fcn, type, fmt, va);
     }
     if (fmt) va_end(va);
     return ret;

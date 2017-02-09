@@ -22,14 +22,14 @@
  * 
  * \return zero on success
  */
-extern void mpt_history_reset(MPT_STRUCT(histinfo) *hist)
+extern void mpt_histfmt_reset(MPT_STRUCT(histfmt) *fmt)
 {
 	MPT_STRUCT(buffer) *buf;
 	
-	if ((buf = hist->_dat._buf)) {
+	if ((buf = fmt->_dat._buf)) {
 		buf->used = 0;
 	}
-	hist->pos = 0;
-	hist->all = 0;
-	hist->fmt = 0;
+	fmt->pos = 0;
+	fmt->all = 0;
+	fmt->fmt = 0;
 }

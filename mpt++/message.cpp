@@ -27,20 +27,12 @@ int MessageSource::reply(const message *)
 // send text message to output
 int output::message(const char *from, int type, const char *fmt, ... )
 {
-    char buf[MPT_OUTPUT_LOGMSG_MAX];
-    value val;
+    va_list ap;
 
-    if (fmt) {
-        va_list ap;
-        va_start(ap, fmt);
-        int len = vsnprintf(buf, sizeof(buf), fmt, ap);
-        va_end(ap);
-        if (len > (int) sizeof(buf)) {
-            buf[sizeof(buf) - 1] = 0; // indicate truncation
-        }
-        val.ptr = buf;
-    }
-    return log(from, type, &val);
+    if (fmt) va_start(ap, fmt);
+    int ret = mpt_output_vlog(this, from, type, fmt, ap);
+    if (fmt) va_end(ap);
+    return ret;
 }
 
 __MPT_NAMESPACE_END

@@ -5,6 +5,8 @@
 
 #include <arpa/inet.h>
 
+#include "convert.h"
+
 #include "queue.h"
 #include "stream.h"
 
@@ -43,13 +45,8 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 				size_t add, rem;
 				
 				rem = stream->_wd.data.max - stream->_wd.data.len;
-				
-				switch (MPT_stream_newline_write(flags)) {
-				  case MPT_ENUM(NewlineMac):  add = 1; fmt = "\r"; break;
-				  case MPT_ENUM(NewlineUnix): add = 1; fmt = "\r"; break;
-				  case MPT_ENUM(NewlineNet):  add = 2; fmt = "\r\n"; break;
-				  default: add = 1; fmt = "";
-				}
+				fmt = mpt_newline_string(MPT_stream_newline_write(flags));
+				add = fmt ? strlen(fmt) : 0;
 				if (rem >= add) {
 					mpt_queue_push(&stream->_wd, add, fmt);
 					stream->_info._fd &= ~MPT_ENUM(StreamMesgAct);

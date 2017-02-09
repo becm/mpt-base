@@ -275,20 +275,11 @@ static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
 	return mpt_connection_await(&od->con, ctl, udata);
 }
-static int outputLog(MPT_INTERFACE(output) *out, const char *from, int type, const MPT_STRUCT(value) *val)
-{
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
-	if (val && val->fmt) {
-		return MPT_ERROR(BadValue);
-	}
-	return mpt_connection_log(&od->con, from, type, val ? val->ptr : 0);
-}
 static const MPT_INTERFACE_VPTR(output) outCtl = {
 	{ { outputUnref }, outputRef, outputProperty, outputSetProperty },
 	outputPush,
 	outputSync,
-	outputAwait,
-	outputLog
+	outputAwait
 };
 /* input interface */
 static void outputInputUnref(MPT_INTERFACE(unrefable) *in)
@@ -410,7 +401,8 @@ extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) *no)
 	
 	od->con.out.state = MPT_ENUM(OutputPrintColor);
 	
-	od->con.level = (MPT_LOG(LevelWarning) << 4) | MPT_LOG(LevelWarning);
+	od->con.pass = 0;
+	od->con.show = 0;
 	
 	od->_no = no;
 	

@@ -77,13 +77,13 @@ static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src
 	out = lo->pass;
 	
 	/* remote output active */
-	if (lo->hist.state & MPT_ENUM(OutputRemote)) {
+	if (lo->hist.info.state & MPT_ENUM(OutputRemote)) {
 		if (!out) {
 			return MPT_ERROR(BadArgument);
 		}
 		ret = out->_vptr->push(out, len, src);
 		if (ret >= 0 && !len) {
-			lo->hist.state &= ~MPT_ENUM(OutputRemote);
+			lo->hist.info.state &= ~MPT_ENUM(OutputRemote);
 		}
 		return ret;
 	}
@@ -91,12 +91,12 @@ static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src
 	ret = mpt_history_push(&lo->hist, len, src);
 	
 	/* invalid local output operation */
-	if (ret < 0 && !(lo->hist.state & MPT_ENUM(OutputActive))) {
+	if (ret < 0 && !(lo->hist.info.state & MPT_ENUM(OutputActive))) {
 		if (!out || (ret = out->_vptr->push(out, len, src)) < 0) {
 			return ret;
 		}
 		if (len && src) {
-			lo->hist.state |= MPT_ENUM(OutputRemote);
+			lo->hist.info.state |= MPT_ENUM(OutputRemote);
 		}
 	}
 	return ret;
@@ -111,7 +111,7 @@ static int localAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_S
 	ret = out->_vptr->await(out, ctl, udata);
 	
 	if (ret >= 0) {
-		lo->hist.state |= MPT_ENUM(OutputRemote);
+		lo->hist.info.state |= MPT_ENUM(OutputRemote);
 	}
 	return ret;
 }
@@ -121,40 +121,6 @@ static int localSync(MPT_INTERFACE(output) *out, int timeout)
 	out = lo->pass;
 	return out ? out->_vptr->sync(out, timeout) : 0;
 }
-static int localLogHist(MPT_STRUCT(history) *hist, const char *from, int type, const char *fmt, ... )
-{
-	va_list ap;
-	int ret;
-	
-	va_start(ap, fmt);
-	ret = mpt_history_log(hist, from, type, fmt, ap);
-	va_end(ap);
-	return ret;
-
-}
-static int localLog(MPT_INTERFACE(output) *out, const char *from, int type, const MPT_STRUCT(value) *val)
-{
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	
-	out = lo->pass;
-	
-	/* force remote output */
-	if (lo->hist.state & MPT_ENUM(OutputRemote)) {
-		return out ? out->_vptr->log(out, from, type, val) : MPT_ERROR(BadArgument);
-	}
-	/* fallback to remote if no local file */
-	if (out && (type & MPT_ENUM(LogFile)) && !lo->hist.file) {
-		return out->_vptr->log(out, from, type, val);
-	}
-	if (!val) {
-		return mpt_history_log(&lo->hist, from, type, 0, 0);
-	}
-	if (val->fmt) {
-		/* TODO: implement history data output */
-		return MPT_ERROR(BadValue);
-	}
-	return localLogHist(&lo->hist, from, type, val->ptr ? "%s" : 0, val->ptr);
-}
 /* object property handlers */
 static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(metatype) *src)
 {
@@ -163,7 +129,7 @@ static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(
 	out = (void *) lo->pass;
 	
 	if (!name) {
-		return setHistfile(&lo->hist.file, src);
+		return setHistfile(&lo->hist.info.file, src);
 	}
 	if (!*name) {
 		MPT_INTERFACE(output) *no;
@@ -182,10 +148,10 @@ static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(
 		return ret;
 	}
 	if (!strcasecmp(name, "file")) {
-		return setHistfile(&lo->hist.file, src);
+		return setHistfile(&lo->hist.info.file, src);
 	}
 	if (!strcasecmp(name, "format") || !strcasecmp(name, "fmt")) {
-		return mpt_valfmt_set(&lo->hist.info._fmt, src);
+		return mpt_valfmt_set(&lo->hist.fmt._fmt, src);
 	}
 	if ((out = (void *) lo->pass)) {
 		return out->_vptr->setProperty(out, name, src);
@@ -218,8 +184,8 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 		pr->name = "file";
 		pr->desc = MPT_tr("history data output file");
 		pr->val.fmt = fmt;
-		pr->val.ptr = &lo->hist.file;
-		return lo->hist.file ? 1 : 0;
+		pr->val.ptr = &lo->hist.info.file;
+		return lo->hist.info.file ? 1 : 0;
 	}
 	if (name ? (!strcasecmp(name, "histfmt") || !strcasecmp(name, "format") || !strcasecmp(name, "fmt")) :  pos == ++id) {
 		static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
@@ -228,7 +194,7 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 		pr->desc = MPT_tr("history data output format");
 		pr->val.fmt = fmt;
 		pr->val.ptr = 0;
-		if (!(buf = lo->hist.info._fmt._buf)) {
+		if (!(buf = lo->hist.fmt._fmt._buf)) {
 			return 0;
 		}
 		pr->val.ptr = buf + 1;
@@ -262,8 +228,7 @@ static const MPT_INTERFACE_VPTR(output) localCtl = {
 	{ { localUnref }, localRef, localGet, localSet },
 	localPush,
 	localSync,
-	localAwait,
-	localLog
+	localAwait
 };
 
 /*!
@@ -294,12 +259,12 @@ extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) *pass)
 	}
 	*od = defOut;
 	
-	setHistfile(&od->hist.file, 0);
+	setHistfile(&od->hist.info.file, 0);
 	
 	od->pass = pass;
 	
-	od->hist.state = MPT_ENUM(OutputPrintColor);
-	od->hist.level = (MPT_LOG(LevelWarning) << 4) | MPT_LOG(LevelWarning);
+	od->hist.info.state  = MPT_ENUM(OutputPrintColor);
+	od->hist.info.ignore = MPT_LOG(Info);
 	
 	return &od->_out;
 }

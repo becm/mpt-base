@@ -17,19 +17,9 @@
 #include <limits.h>
 #include <sys/stat.h>
 
-#include "core.h"
+#include "convert.h"
 
 #include "../mptio/stream.h"
-
-#if defined(_WIN32)
-# define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineNet)
-#elif defined(__APPLE__)
-# define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineMac)
-#elif defined(__linux__) || defined(__unix__)
-# define MPT_NEWLINE_DEFAULT  MPT_ENUM(NewlineUnix)
-#else
-# error: missing default line separator for platform
-#endif
 
 static int socketMode(MPT_STRUCT(fdmode) *mode, const char *path)
 {
@@ -224,7 +214,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 	const char *end;
 	long val;
 	sm.family = -1;
-	sm.lsep = MPT_NEWLINE_DEFAULT;
+	sm.lsep = mpt_newline_native();
 	sm.param.file.open = 0;
 	sm.param.file.perm = 0;
 	sm.stream = 0;

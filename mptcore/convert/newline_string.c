@@ -4,10 +4,10 @@
 
 #include <stddef.h>
 
-#include "stream.h"
+#include "convert.h"
 
 /*!
- * \ingroup mptString
+ * \ingroup mptCore
  * \brief newline code
  * 
  * Get line separator for build platform.
@@ -28,13 +28,12 @@ extern int mpt_newline_native(void)
 }
 
 /*!
- * \ingroup mptString
+ * \ingroup mptCore
  * \brief newline string
  * 
  * Get correct line separator for platform.
  * 
- * \param type   stream descriptor
- * args
+ * \param type  line separator identifier
  * 
  * \return line separator
  */

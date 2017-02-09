@@ -7,6 +7,8 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "convert.h"
+
 #include "queue.h"
 #include "stream.h"
 

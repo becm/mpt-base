@@ -45,7 +45,6 @@ public:
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
-	virtual int log(const char *, int , const struct value *) = 0;
 	
 	int open(const char *);
 	int setHistory(const char *);
@@ -67,7 +66,6 @@ MPT_INTERFACE_VPTR(output)
 	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
 	int     (*sync)(MPT_INTERFACE(output) *, int);
 	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
-	int     (*log)(MPT_INTERFACE(output) *, const char *, int , const MPT_STRUCT(value) *);
 };
 MPT_INTERFACE(output)
 {
@@ -75,8 +73,8 @@ MPT_INTERFACE(output)
 };
 #endif /* __cplusplus */
 
-/* history information */
-MPT_STRUCT(histinfo)
+/* history format information */
+MPT_STRUCT(histfmt)
 {
 #ifdef __cplusplus
 public:
@@ -85,7 +83,7 @@ public:
 	bool add(char);
 protected:
 #else
-# define MPT_HISTINFO_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0,0,0 }
+# define MPT_HISTFMT_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0,0,0 }
 #endif
 	_MPT_ARRAY_TYPE(valfmt) _fmt;  /* output format */
 	_MPT_ARRAY_TYPE(char)   _dat;  /* data format */
@@ -95,26 +93,44 @@ protected:
 	char     fmt;  /* data format */
 };
 
-MPT_STRUCT(history)
+MPT_STRUCT(histinfo);
+MPT_STRUCT(history);
+
 #if defined(_STDIO_H) || defined(_STDIO_H_)
+/* history format information */
+MPT_STRUCT(histinfo)
 {
 # ifdef __cplusplus
-	history();
-	~history();
+	histinfo();
+	~histinfo();
 protected:
 # else
-#  define MPT_HISTORY_INIT { 0, MPT_HISTINFO_INIT, 0, 0,0 }
+#  define MPT_HISTINFO_INIT { 0, 0,0, 0,0 }
 # endif
 	FILE *file;
+	
+	uint8_t state;  /* output state */
+	uint8_t mode;   /* output mode */
+	
+	uint8_t ignore; /* log level settings */
+	uint8_t lsep;   /* line sepatator code */
+};
+
+# ifdef __cplusplus
+struct history : public histinfo
+{
+	history();
+	~history();
+# else
+MPT_STRUCT(history)
+{
+#  define MPT_HISTORY_INIT { MPT_HISTINFO_INIT, MPT_HISTFMT_INIT }
 	MPT_STRUCT(histinfo) info;
-	
-	uint8_t state; /* output state */
-	
-	uint8_t level; /* log level settings */
-	uint8_t lsep;  /* line sepatator code */
-}
+# endif
+	MPT_STRUCT(histfmt)  fmt;
+};
 #endif
-;
+
 
 MPT_STRUCT(outdata)
 {
@@ -147,7 +163,7 @@ MPT_STRUCT(connection)
 # define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
                                0, MPT_ARRAY_INIT, \
                                MPT_ARRAY_INIT, \
-                               0 }
+                               0,0 }
 	MPT_STRUCT(outdata) out;  /* output data backend */
 #endif
 	uintptr_t                 cid;   /* active message id */
@@ -155,7 +171,8 @@ MPT_STRUCT(connection)
 	
 	_MPT_ARRAY_TYPE(reply_context) _rctx; /* reply context buffer and active element */
 	
-	uint8_t  level;   /* output level */
+	uint8_t  pass;   /* limit transfered messages */
+	uint8_t  show;   /* print replies to messages */
 };
 
 MPT_STRUCT(output_values)
@@ -182,21 +199,21 @@ extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *);
 
 /* reset history output state */
-void mpt_history_reset(MPT_STRUCT(histinfo) *);
+void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
 
 /* clear history resources */
 extern void mpt_history_fini(MPT_STRUCT(history) *);
 /* push data to history */
 extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);
 /* log message to history */
-extern int mpt_history_log(MPT_STRUCT(history) *, const char *, int , const char *, va_list);
+extern int mpt_history_log(MPT_STRUCT(histinfo) *, const char *, int , const char *, va_list);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* outdata print setup and processing */
-extern ssize_t mpt_file_print(uint8_t *, FILE *, size_t , const void *);
+extern ssize_t mpt_history_values(const MPT_STRUCT(histinfo) *, MPT_STRUCT(histfmt) *, size_t , const void *);
 
 /* partial history output */
-extern ssize_t mpt_history_print(MPT_STRUCT(history) *, size_t , const void *);
+extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *, size_t , const void *);
 #endif
 
 /* determine output print type */
@@ -238,6 +255,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandl
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
 
 /* push output/error message */
+extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
 /* push value data to putput */
 extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(output_values) *, size_t);

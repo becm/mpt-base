@@ -55,12 +55,6 @@ enum MPT_ENUM(ErrorTypes) {
 	MPT_ENUM(ErrorWrite) = 0x8         /* unable to write */
 };
 
-enum MPT_ENUM(NewlineTypes) {
-	MPT_ENUM(NewlineMac)  = 0x1,       /* MacOS line separation */
-	MPT_ENUM(NewlineUnix) = 0x2,       /* UNIX line separation */
-	MPT_ENUM(NewlineNet)  = 0x3        /* network/Windows line separation */
-};
-
 MPT_STRUCT(streaminfo)
 {
 #ifdef __cplusplus
@@ -167,10 +161,6 @@ extern int mpt_stream_flush(MPT_STRUCT(stream) *);
 /* close input (and file if valid -> invalidate to avoid) */
 extern int mpt_stream_close(MPT_STRUCT(stream) *);
 
-/* line end separator */
-extern const char *mpt_newline_string(int);
-extern int mpt_newline_native(void);
-
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
@@ -217,7 +207,6 @@ public:
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;
 	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
-	int log(const char *, int, const struct value *) __MPT_OVERRIDE;
 	
 	int next(int) __MPT_OVERRIDE;
 	int dispatch(EventHandler , void *) __MPT_OVERRIDE;

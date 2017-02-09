@@ -23,19 +23,7 @@ static void logWrapperUnref(MPT_INTERFACE(unrefable) *l)
 static int logWrapperLog(MPT_INTERFACE(logger) *l, const char *from, int type, const char *fmt, va_list arg)
 {
 	struct mptLogWrapper *w = (void *) l;
-	MPT_STRUCT(value) val;
-	char buf[MPT_OUTPUT_LOGMSG_MAX];
-	
-	val.fmt = 0;
-	val.ptr = 0;
-	if (fmt) {
-		int len = vsnprintf(buf, sizeof(buf), fmt, arg);
-		if (len > (int) sizeof(buf)) {
-			buf[sizeof(buf) - 1] = 0; /* indicate truncation */
-		}
-		val.ptr = buf;
-	}
-	return w->out->_vptr->log(w->out, from, type, &val);
+	return mpt_output_vlog(w->out, from, type, fmt, arg);
 }
 static MPT_INTERFACE_VPTR(logger) logWrapperCtl = {
 	{ logWrapperUnref },

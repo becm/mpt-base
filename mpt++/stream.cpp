@@ -445,52 +445,6 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
     return 1;
 }
 
-static ssize_t streamPush(void *ptr, const char *str, size_t len)
-{
-    return mpt_stream_push((struct stream *) ptr, len, str);
-}
-int Stream::log(const char *from, int type, const value *val)
-{
-    if (!_srm) {
-        return BadArgument;
-    }
-    // check no active message is composed
-    if (mpt_stream_flags(&_srm->_info) & StreamMesgAct) {
-        return MPT_ERROR(MessageInProgress);
-    }
-    // message header for encoded data
-    if (_srm->_wd.encoded()) {
-        static const msgtype mt(MessageOutput, (uint8_t) type);
-        uint8_t len = _idlen;
-
-        while (len) {
-            static const uint8_t id[8] = { 0 };
-            if (len <= sizeof(id)) {
-                mpt_stream_push(_srm, len, id);
-                break;
-            }
-            len -= sizeof(id);
-            mpt_stream_push(_srm, sizeof(id), id);
-        }
-        mpt_stream_push(_srm, 2, &mt);
-    }
-    if (from) {
-        mpt_stream_push(_srm, strlen(from), from);
-        if (_srm->_wd.encoded()) {
-            mpt_stream_push(_srm, 1, "");
-        } else {
-            mpt_stream_push(_srm, 2, ": ");
-        }
-    }
-    if (val) {
-        mpt_tostring(val, streamPush, _srm);
-    }
-    // terminate and flush message */
-    mpt_stream_push(_srm, 0, 0);
-    mpt_stream_flush(_srm);
-    return 1;
-}
-
 int Stream::getchar()
 {
     if (!_srm || _srm->_rd.encoded()) {

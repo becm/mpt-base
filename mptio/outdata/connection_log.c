@@ -30,46 +30,56 @@
  */
 extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int type, const char *msg)
 {
-	MPT_STRUCT(msgtype) hdr;
-	ssize_t len;
+	int8_t hdr[4];
+	int flen, mlen, len;
+	ssize_t ret;
 	
 	/* send log entry to contact */
 	if ((con->out.state & MPT_ENUM(OutputActive))) {
 		return MPT_ERROR(MessageInProgress);
 	}
-	hdr.cmd = MPT_ENUM(MessageOutput);
-	hdr.arg = type & 0xff;
+	hdr[0] = MPT_ENUM(MessageOutput);
+	hdr[1] = type & 0x7f;
 	
-	len = mpt_connection_push(con, sizeof(hdr), &hdr);
-	if (len <= 0) {
-		return len;
-	}
-	if (len < 1) {
-		mpt_connection_push(con, 1, 0);
-		return MPT_ERROR(MissingBuffer);
-	}
+	len = 2;
+	mlen = flen = 0;
 	if (from) {
-		mpt_connection_push(con, strlen(from), from);
+		flen = strlen(from);
+		if (type & MPT_ENUM(LogFunction)) {
+			hdr[len++] = 0x1; /* SOH */
+		}
 	}
-	if (mpt_connection_push(con, 1, "") < 1) {
-		mpt_connection_push(con, 1, 0);
+	ret = MPT_OUTPUT_LOGMSG_MAX;
+	if (msg) {
+		mlen = strlen(msg);
+		ret -= 2;
+	}
+	if (flen >= (ret - len)) {
 		return MPT_ERROR(MissingBuffer);
 	}
-	if (msg && (len = strlen(msg))) {
-		if (len <= MPT_OUTPUT_LOGMSG_MAX) {
-			len = mpt_connection_push(con, len, msg);
-		}
-		/* indicate truncated message */
-		else if ((len = mpt_connection_push(con, MPT_OUTPUT_LOGMSG_MAX - 1, msg)) >= 0) {
-			len = mpt_connection_push(con, 1, "");
-		}
-		/* reset message state */
-		if (len < 0) {
-			mpt_connection_push(con, 1, 0);
-			return len;
+	if ((ret = mpt_connection_push(con, len, hdr)) < 0) {
+		return ret;
+	}
+	len = MPT_OUTPUT_LOGMSG_MAX - len;
+	if (from) {
+		mpt_connection_push(con, flen, from);
+		len -= flen;
+	}
+	if (msg) {
+		*hdr = 0x2; /* STX */
+		mpt_connection_push(con, 1, hdr);
+		--len;
+		
+		if (len > mlen) {
+			mpt_connection_push(con, mlen, msg);
+			*hdr = 0x3; /* ETX */
+			mpt_connection_push(con, 1, hdr);
+		} else {
+			mpt_connection_push(con, len, msg);
+			len = 0;
 		}
 	}
 	mpt_connection_push(con, 0, 0);
 	
-	return 1;
+	return len ? 2 : 1;
 }

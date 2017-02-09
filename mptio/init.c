@@ -71,37 +71,31 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 			src = optarg;
 			continue;
 		    case 'v':
-			++lv; continue;
+			lv += MPT_LOG(Debug); continue;
 		    default:
 			errno = EINVAL;
 			return 0;
 		}
 	}
 	if (lv) {
-		lv += MPT_LOG(LevelInfo);
-		if (lv > MPT_LOG(LevelDebug3)) {
-			lv = MPT_LOG(LevelDebug3);
+		if (lv > MPT_LOG(Debug3)) {
+			lv = MPT_LOG(Debug3);
 		}
-		mpt_log_default_level(lv);
+		mpt_log_default_skip(lv + MPT_LOG(Debug));
 	}
 	else if ((log = getenv("MPT_DEBUG"))) {
 		lv = MPT_LOG(Debug2);
 		if (mpt_cint(&lv, log, 0, 0) > 0) {
 			switch (lv) {
-			  case 0: lv = MPT_LOG(LevelInfo); break;
-			  case 1: lv = MPT_LOG(LevelDebug1); break;
-			  case 2: lv = MPT_LOG(LevelDebug2); break;
-			  case 3: lv = MPT_LOG(LevelDebug3); break;
-			  default: lv = MPT_LOG(File); break;
+			  case 0: lv = MPT_LOG(Info); break;
+			  case 1: lv = MPT_LOG(Debug)  + 0x10; break;
+			  case 2: lv = MPT_LOG(Debug2) + 0x10; break;
+			  case 3: lv = MPT_LOG(Debug3) + 0x10; break;
+			  default: lv = 0x80; break;
 			}
-			mpt_log_default_level(lv);
+			mpt_log_default_skip(lv);
 		}
 	}
-	else if ((log = getenv("MPT_LOGLEVEL"))) {
-		lv = mpt_log_level(log);
-		mpt_log_default_level(lv);
-	}
-	
 	/* load mpt environment variables */
 	mpt_config_environ(0, "mpt_*", '_', 0);
 	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);

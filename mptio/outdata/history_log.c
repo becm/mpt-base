@@ -30,7 +30,7 @@
  * 
  * \return error or written lines
  */
-extern int mpt_history_log(MPT_STRUCT(history) *hist, const char *from, int type, const char *fmt, va_list args)
+extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int type, const char *fmt, va_list args)
 {
 	const char *reset, *newline;
 	FILE *fd;
@@ -57,7 +57,7 @@ extern int mpt_history_log(MPT_STRUCT(history) *hist, const char *from, int type
 		}
 	}
 	else {
-		if (mpt_outdata_type(type & 0x7f, hist->level & 0xf) <= 0) {
+		if (mpt_outdata_type(type & 0x7f, hist->ignore) <= 0) {
 			return 0;
 		}
 		fd = (type & 0x7f) ? stderr : stdout;

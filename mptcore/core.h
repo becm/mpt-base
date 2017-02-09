@@ -475,36 +475,25 @@ public:
 # define MPT_LOG(x) MPT_Log##x
 enum MPT_ENUM(LogType) {
 #endif
-	MPT_LOG(LevelNone)      = 0x0,  /* filter messages down to ... */
-	MPT_LOG(LevelCritical)  = 0x1,
-	MPT_LOG(LevelError)     = 0x2,
-	MPT_LOG(LevelWarning)   = 0x3,
-	MPT_LOG(LevelInfo)      = 0x4,
-	MPT_LOG(LevelDebug1)    = 0x5,
-	MPT_LOG(LevelDebug2)    = 0x6,
-	MPT_LOG(LevelDebug3)    = 0x7,
-	MPT_LOG(LevelFile)      = 0x8,
-	
 	MPT_LOG(Message)   = 0x0,   /* user (terminal) messages */
 	MPT_LOG(Fatal)     = 0x1,
 	MPT_LOG(Critical)  = 0x2,
-	MPT_LOG(Error)     = 0x10,
-	MPT_LOG(Warning)   = 0x20,
-	MPT_LOG(Info)      = 0x30,
-	MPT_LOG(Debug)     = 0x40,  /* debug level types */
-	MPT_LOG(Debug2)    = 0x50,
-	MPT_LOG(Debug3)    = 0x60,
-	MPT_LOG(Debug4)    = 0x70,
-	MPT_LOG(File)      = 0x80   /* use log target */
+	MPT_LOG(Error)     = 0x3,
+	MPT_LOG(Warning)   = 0x4,
+	MPT_LOG(Info)      = 0x6,
+	MPT_LOG(File)      = 0x8,   /* use log target */
+	MPT_LOG(Debug)     = 0x10,  /* debug level types */
+	MPT_LOG(Debug2)    = 0x20,
+	MPT_LOG(Debug3)    = 0x30
 };
 enum MPT_ENUM(LogFlags)
 {
 	MPT_ENUM(LogPrefix)   = 0x100, /* add type prefix */
 	MPT_ENUM(LogSelect)   = 0x200, /* use ANSI colouring */
+	MPT_ENUM(LogPretty)   = MPT_ENUM(LogPrefix) | MPT_ENUM(LogSelect),
 	MPT_ENUM(LogANSIMore) = 0x400, /* no forced ANSI termination */
-	MPT_ENUM(LogPretty)   = 0x300,
 	
-	MPT_ENUM(LogFunction) = 0x800  /* auto-add function decorator */
+	MPT_ENUM(LogFunction) = 0x800  /* indicate source as function name */
 };
 #ifdef __cplusplus
 };
@@ -713,7 +702,6 @@ extern MPT_INTERFACE(logger) *mpt_log_default(void);
 /* set default logger options */
 extern int mpt_log_default_format(int);
 extern int mpt_log_default_skip(int);
-extern int mpt_log_default_level(int);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* start log message */

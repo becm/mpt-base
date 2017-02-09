@@ -52,6 +52,11 @@ enum MPT_ENUM(ConversionFlags) {
 	/* foreign flag offset */
 	MPT_ENUM(ConvertUser)   = 0x10000
 };
+enum MPT_ENUM(NewlineTypes) {
+	MPT_ENUM(NewlineMac)  = 0x1,       /* MacOS line separation */
+	MPT_ENUM(NewlineUnix) = 0x2,       /* UNIX line separation */
+	MPT_ENUM(NewlineNet)  = 0x3        /* network/Windows line separation */
+};
 
 MPT_STRUCT(float80)
 {
@@ -197,6 +202,10 @@ extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
 /* type identifier for '(unsigned) long' data type */
 extern char mpt_type_int(size_t);
 extern char mpt_type_uint(size_t);
+
+/* line end separator */
+extern const char *mpt_newline_string(int);
+extern int mpt_newline_native(void);
 
 __MPT_EXTDECL_END
 

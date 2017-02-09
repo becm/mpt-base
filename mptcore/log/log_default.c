@@ -12,6 +12,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "convert.h"
+
 #include "message.h"
 
 static int logSkip  = MPT_LOG(Debug);
@@ -44,7 +46,7 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	ansi = mpt_log_intro(fd, type | logFlags, where);
 	ret = fmt ? vfprintf(fd, fmt, ap) : 0;
 	if (ansi) fputs(ansi, fd);
-	fputc('\n', fd);
+	fputs(mpt_newline_string(0), fd);
 	
 	return ret;
 }
@@ -96,30 +98,5 @@ extern int mpt_log_default_skip(int val)
 	}else {
 		logSkip = val & 0xff;
 	}
-	return logSkip | logFlags;
-}
-/*!
- * \ingroup mptLog
- * \brief set log level
- * 
- * Set log level to display.
- * 
- * \return default log flags
- */
-extern int mpt_log_default_level(int val)
-{
-	switch (val) {
-	  case MPT_LOG(LevelNone):     val = 0; break;
-	  case MPT_LOG(LevelCritical): val = MPT_LOG(Error); break;
-	  case MPT_LOG(LevelError):    val = MPT_LOG(Warning); break;
-	  case MPT_LOG(LevelWarning):  val = MPT_LOG(Info); break;
-	  case MPT_LOG(LevelInfo):     val = MPT_LOG(Debug); break;
-	  case MPT_LOG(LevelDebug1):   val = MPT_LOG(Debug2); break;
-	  case MPT_LOG(LevelDebug2):   val = MPT_LOG(Debug3); break;
-	  case MPT_LOG(LevelDebug3):   val = MPT_LOG(File); break;
-	  default: val = MPT_LOG(Debug);
-	}
-	logSkip  = val & 0xff;
-	
 	return logSkip | logFlags;
 }
