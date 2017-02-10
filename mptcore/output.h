@@ -213,20 +213,15 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);
 /* log message to history */
 extern int mpt_history_log(MPT_STRUCT(histinfo) *, const char *, int , const char *, va_list);
 
-#if defined(_STDIO_H) || defined(_STDIO_H_)
-/* outdata print setup and processing */
+/* data print setup and processing */
 extern ssize_t mpt_history_values(const MPT_STRUCT(histinfo) *, MPT_STRUCT(histfmt) *, size_t , const void *);
-
-/* partial history output */
+/* print to history channel */
 extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *, size_t , const void *);
-#endif
 
 /* determine output print type */
-extern int mpt_outdata_type(uint8_t arg, int min);
+extern int mpt_output_type(uint8_t arg, int min);
 
-/* clear outdata */
-extern void mpt_outdata_fini(MPT_STRUCT(outdata) *);
-/* clear outdata connection */
+/* close outdata connection and buffer */
 extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
 /* get/set outdata property */
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);

@@ -15,14 +15,13 @@
  * 
  * \return outdata print state
  */
-extern int mpt_outdata_type(uint8_t arg, int min)
+extern int mpt_output_type(uint8_t arg, int min)
 {
 	if (!arg) {
 		return MPT_OUTFLAG(PrintNormal);
 	}
 	if (arg & MPT_LOG(File)) {
-		arg &= ~MPT_LOG(File);
-		if (arg < MPT_LOG(File) || arg > MPT_LOG(Debug)) {
+		if (arg & ~MPT_LOG(File)) {
 			return MPT_OUTFLAG(PrintHistory) | MPT_OUTFLAG(PrintRestore);
 		}
 		return MPT_OUTFLAG(PrintHistory);

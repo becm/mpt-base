@@ -76,7 +76,7 @@ int logger::message(const char *from, int err, const char *fmt, ...)
 {
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log(from, err, fmt, va);
+    int ret = log(from, err | LogFunction, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -188,7 +188,7 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     return length();
 }
 
-LogStore::LogStore(logger *next) : _next(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
+LogStore::LogStore(logger *next) : Reference<logger>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
 LogStore::~LogStore()
 { }
@@ -214,16 +214,17 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     if (type & File) {
         pass |= _flags & PassFile;
     }
+    logger *l = pointer();
     if (!save) {
-        if (_next && pass) {
-            return _next->log(from, type, fmt, arg);
+        if (l && pass) {
+            return l->log(from, type, fmt, arg);
         }
         return 0;
     }
-    if (_next && pass) {
+    if (l && pass) {
         va_list tmp;
         va_copy(tmp, arg);
-        _next->log(from, type, fmt, tmp);
+        l->log(from, type, fmt, tmp);
         va_end(tmp);
     }
     Entry m;

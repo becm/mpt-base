@@ -711,7 +711,7 @@ extern int mpt_log_default_skip(int);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* start log message */
-extern const char *mpt_log_intro(FILE *, int, const char *);
+extern const char *mpt_log_intro(FILE *, int);
 #endif
 
 /* message type description */

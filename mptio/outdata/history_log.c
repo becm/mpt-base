@@ -35,44 +35,38 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 	const char *reset, *newline;
 	FILE *fd;
 	
+	/* message being composed */
 	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
 	}
-	/* local processing of log entry */
-	if (!type) {
-		fd = stdout;
-		newline = mpt_newline_string(0);
-		
-		fputc('#', fd);
-		fputc(' ', fd);
-		reset = 0;
+	/* use log file */
+	if ((type & MPT_LOG(File)) && (fd = hist->file)) {
+		newline = mpt_newline_string(hist->lsep);
 	}
-	else if (type & MPT_LOG(File)) {
-		if ((fd = hist->file)) {
-			newline = mpt_newline_string(hist->lsep);
-		}
-		else {
-			fd = (type & 0x7f) ? stderr : stdout;
-			newline = mpt_newline_string(0);
-		}
-		reset = 0;
-	}
+	/* select target file */
 	else {
-		if (mpt_outdata_type(type & 0x7f, hist->ignore) <= 0) {
-			return 0;
-		}
-		fd = (type & 0x7f) ? stderr : stdout;
+		fd = (type & ~MPT_LOG(File)) ? stderr : stdout;
 		newline = mpt_newline_string(0);
-		
-		/* use default log config */
-		if (!(type & MPT_ENUM(LogPretty))) {
-			type |= MPT_ENUM(LogPrefix);
-			if (hist->state & MPT_OUTFLAG(PrintColor)) {
-				type |= MPT_ENUM(LogSelect);
-			}
-		}
-		reset = mpt_log_intro(fd, type, from);
 	}
+	/* write intro */
+	reset = mpt_log_intro(fd, type);
+	
+	/* write source info */
+	if (from) {
+		fputs(from, fd);
+		if ((type & MPT_ENUM(LogFunction))) {
+			fputc('(', fd);
+			fputc(')', fd);
+		}
+		fputc(':', fd);
+		fputc(' ', fd);
+		/* no further coloring */
+		if (reset && !(type & MPT_ENUM(LogANSIMore))) {
+			fputs(from, fd);
+			reset = 0;
+		}
+	}
+	/* print message content */
 	if (fmt) {
 		vfprintf(fd, fmt, args);
 	}

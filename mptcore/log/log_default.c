@@ -32,18 +32,27 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	
 	(void) out;
 	
-	if (!(type & 0xff)) {
-		fd = stdout;
-	} else if ((type &0x7f) >= logSkip) {
+	if ((type & 0x7f) >= logSkip) {
 		return 0;
 	}
-	else {
-		if (!(type & MPT_ENUM(LogPretty))) {
-			type |= MPT_ENUM(LogPrefix) | MPT_ENUM(LogSelect);
+	type |= logFlags;
+	/* select target file descriptor */
+	fd = (type & 0xff) ? stderr : stdout;
+	
+	ansi = mpt_log_intro(fd, type);
+	if (where) {
+		fputs(where, fd);
+		if (type & MPT_ENUM(LogFunction)) {
+			fputc('(', fd);
+			fputc(')', fd);
 		}
-		fd = stderr;
+		fputc(':', fd);
+		fputc(' ', fd);
+		if (ansi) {
+			fputs(ansi, fd);
+			ansi = 0;
+		}
 	}
-	ansi = mpt_log_intro(fd, type | logFlags, where);
 	ret = fmt ? vfprintf(fd, fmt, ap) : 0;
 	if (ansi) fputs(ansi, fd);
 	fputs(mpt_newline_string(0), fd);
@@ -79,7 +88,7 @@ extern int mpt_log_default_format(int val)
 	if (val < 0) {
 		logFlags = MPT_ENUM(LogPretty);
 	} else {
-		logFlags = val & MPT_ENUM(LogPretty);
+		logFlags = val & (MPT_ENUM(LogPretty) | MPT_LOG(File));
 	}
 	return logSkip | logFlags;
 }

@@ -615,7 +615,7 @@ public:
     { return *reinterpret_cast<const Array<Reference<T> >*>(this); }
 };
 
-class LogStore : public logger
+class LogStore : public logger, public Reference<logger>
 {
 public:
     enum {
@@ -654,7 +654,6 @@ public:
     
 protected:
     Array<Entry> _msg;
-    logger  *_next;
     uint32_t _act;
     uint8_t  _flags;
     uint8_t  _ignore;
@@ -735,7 +734,7 @@ protected:
 #endif /* __cplusplus */
 
 __MPT_EXTDECL_BEGIN
-/* clear references on array data (requires template in C++ mode) */
+/* clear references on array data */
 extern void mpt_array_callunref(_MPT_REF_ARRAY_TYPE(unrefable) *);
 __MPT_EXTDECL_END
 
