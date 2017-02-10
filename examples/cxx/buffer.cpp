@@ -73,7 +73,7 @@ extern int main(int , char * const [])
 	cqp.shift();
 	
 	
-	buf.peek(2);
+	buf.trim(2);
 	mpt::Slice<uint8_t> data = buf.data();
 	
 	fwrite(data.base(), data.length(), 1, stdout);

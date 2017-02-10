@@ -487,21 +487,22 @@ ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
 {
     if (!nblk) {
-        return 0;
+        return push(0, 0);
     }
     if ((SIZE_MAX / nblk) < esze) {
         errno = ERANGE;
         return -2;
     }
     if (!esze) {
-        return push(0, 0);
+        return 0;
     }
     size_t left = nblk;
     while (nblk) {
+        bool wait = _state.scratch;
         if (!push(esze, from)) {
-            return esze - nblk;
             break;
         }
+        if (!wait && !_enc) push(0, 0);
         from = ((uint8_t *) from) + esze;
         --nblk;
     }
