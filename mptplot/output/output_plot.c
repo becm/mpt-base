@@ -33,7 +33,7 @@ extern int mpt_output_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(msgdest) dest,
 	type = (void *) (hdr);
 	
 	type->cmd = MPT_ENUM(MessageDest);
-	type->arg = (int8_t) (MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*val));
+	type->arg = (int8_t) MPT_message_value(Float, *val);
 	memcpy(hdr+sizeof(*type), &dest, sizeof(dest));
 	wld->cycle  = 0;
 	wld->offset = 0;

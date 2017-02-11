@@ -40,17 +40,17 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 		return pos - src;
 	}
 	if (*pos == '+') {
-		fmt.fmt |= MPT_ENUM(PrintNumberSign);
+		fmt.fmt |= MPT_VALFMT(Sign);
 		++pos;
 	}
 	
 	switch (tolower(*pos)) {
 	  case 'f': fmt.fmt |= 6;
 	  case 'g': ++pos; break;
-	  case 'a': fmt.fmt |= MPT_ENUM(PrintScientific);
-	  case 'x': fmt.fmt |= MPT_ENUM(PrintNumberHex); ++pos; break;
-	  case 'o': fmt.fmt |= MPT_ENUM(PrintIntOctal);
-	  case 'e': fmt.fmt |= MPT_ENUM(PrintScientific); ++pos; break;
+	  case 'a': fmt.fmt |= MPT_VALFMT(Scientific);
+	  case 'x': fmt.fmt |= MPT_VALFMT(NumberHex); ++pos; break;
+	  case 'o': fmt.fmt |= MPT_VALFMT(IntOctal);
+	  case 'e': fmt.fmt |= MPT_VALFMT(Scientific); ++pos; break;
 	  default:
 		if (!isdigit(*pos)) {
 			return MPT_ERROR(BadArgument);
@@ -85,7 +85,7 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *ptr, const char *src)
 	if (val < 0 || val > MPT_VALFMT_DECMAX) {
 		return MPT_ERROR(BadValue);
 	}
-	fmt.fmt |= val;
+	fmt.fmt = (fmt.fmt & 0xff00) + val;
 	
 	*ptr = fmt;
 	

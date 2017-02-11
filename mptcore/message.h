@@ -84,12 +84,7 @@ enum MPT_ENUM(CommandType) {
 	
 	MPT_ENUM(BindingAdd)      = 0x30,  /* add binding */
 	MPT_ENUM(BindingClear)    = 0x31,  /* clear binding */
-	MPT_ENUM(BindingParse)    = 0x32,  /* binding in text format */
-	
-	MPT_ENUM(ValuesInteger)   = 0x0,   /* signed integer data */
-	MPT_ENUM(ValuesBig)       = 0x10,  /* size is 16<<(lower nibble) for float/int/uint */
-	MPT_ENUM(ValuesUnsigned)  = 0x20,  /* unsigned integer data */
-	MPT_ENUM(ValuesFloat)     = 0x40   /* floating point data */
+	MPT_ENUM(BindingParse)    = 0x32   /* binding in text format */
 };
 
 enum MPT_ENUM(DataStates) {
@@ -101,14 +96,30 @@ enum MPT_ENUM(DataStates) {
 };
 
 /* message data */
+#ifdef __cplusplus
 MPT_STRUCT(message)
 {
-#ifdef __cplusplus
 	inline message(const void *b = 0, size_t u = 0) : used(u), base(b), cont(0), clen(0)
 	{ }
 	size_t read(size_t len, void * = 0);
 	size_t length() const;
+# define MPT_MSGVAL(x) x
 #else
+# define MPT_MSGVAL(x) MPT_ENUM(Value##x)
+# define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MSGVAL(f) | MPT_ENUM(ByteOrderNative))
+#endif
+enum MPT_MSGVAL(Types) {
+	
+	MPT_MSGVAL(Integer)   = 0x20,  /* signed integer data */
+	MPT_MSGVAL(Float)     = 0x40,  /* floating point data */
+	MPT_MSGVAL(Unsigned)  = 0x60,  /* unsigned integer data */
+	MPT_MSGVAL(Normal)    = 0x60,  /* size = (val&0x1f)+1, unset for big numbers */
+	
+	MPT_MSGVAL(BigAtom)   = 0x40   /* size = ((val&0x1f)+1) * ValuesBigAtom */
+};
+#ifndef __cplusplus
+MPT_STRUCT(message)
+{
 # define MPT_MESSAGE_INIT { 0, 0, 0, 0 }
 #endif
 	size_t        used;  /* (verified) message length */

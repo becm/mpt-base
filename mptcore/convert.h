@@ -22,16 +22,6 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCobsInline)   = 0x3,   /* cobs with tail inline */
 	MPT_ENUM(EncodingCompress)     = 0x4    /* compress data */
 };
-enum MPT_ENUM(PrintFlags) {
-	MPT_ENUM(PrintIntHex)          = 0x0100, /* print hexadecimal */
-	MPT_ENUM(PrintIntOctal)        = 0x0200, /* print octal integer */
-	MPT_ENUM(PrintFltHex)          = 0x0400, /* print hexadecimal */
-	MPT_ENUM(PrintNumberHex)       = MPT_ENUM(PrintIntHex) | MPT_ENUM(PrintFltHex),
-	MPT_ENUM(PrintScientific)      = 0x0800, /* scientific float notation */
-	
-	MPT_ENUM(PrintNumberSign)      = 0x1000, /* print sign */
-	MPT_ENUM(PrintNumberLeft)      = 0x2000  /* print left bounded */
-};
 enum MPT_ENUM(NewlineTypes) {
 	MPT_ENUM(NewlineMac)  = 0x1,       /* MacOS line separation */
 	MPT_ENUM(NewlineUnix) = 0x2,       /* UNIX line separation */
@@ -59,9 +49,9 @@ float80 swapOrder(float80);
 #endif
 
 /* value output format */
+#ifdef __cplusplus
 MPT_STRUCT(valfmt)
 {
-#ifdef __cplusplus
 public:
 	inline valfmt() : fmt(6), wdt(0)
 	{ }
@@ -71,8 +61,25 @@ public:
 	{ return fmt & 0xff00; }
 	inline int decimals() const
 	{ return fmt & 0x7f; }
+# define MPT_VALFMT(x)  x
+#else
+# define MPT_VALFMT(x)  MPT_ENUM(Format##x)
+#endif
+enum MPT_VALFMT(Flags) {
+	MPT_VALFMT(IntHex)      = 0x0100, /* print hexadecimal */
+	MPT_VALFMT(IntOctal)    = 0x0200, /* print octal integer */
+	MPT_VALFMT(FltHex)      = 0x0400, /* print hexadecimal */
+	MPT_VALFMT(NumberHex)   = MPT_VALFMT(IntHex) | MPT_VALFMT(FltHex),
+	MPT_VALFMT(Scientific)  = 0x0800, /* scientific float notation */
+	
+	MPT_VALFMT(Sign)        = 0x1000, /* print sign */
+	MPT_VALFMT(Left)        = 0x2000  /* print left bounded */
+};
+#ifdef __cplusplus
 protected:
 #else
+MPT_STRUCT(valfmt)
+{
 # define MPT_VALFMT_INIT  { 0, 0 }
 # define MPT_VALFMT_DECMAX  0x7f
 #endif

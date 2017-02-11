@@ -30,6 +30,5 @@ extern void mpt_histfmt_reset(MPT_STRUCT(histfmt) *fmt)
 		buf->used = 0;
 	}
 	fmt->pos = 0;
-	fmt->all = 0;
 	fmt->fmt = 0;
 }

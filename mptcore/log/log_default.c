@@ -16,7 +16,7 @@
 
 #include "message.h"
 
-static int logSkip  = MPT_LOG(Debug);
+static int logSkip  = MPT_LOG(Info);
 static int logFlags = MPT_ENUM(LogPretty);
 
 static void loggerUnref(MPT_INTERFACE(unrefable) *out)
@@ -32,7 +32,7 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	
 	(void) out;
 	
-	if ((type & 0x7f) >= logSkip) {
+	if ((type & (0x7f & ~MPT_LOG(File))) >= logSkip) {
 		return 0;
 	}
 	type |= logFlags;

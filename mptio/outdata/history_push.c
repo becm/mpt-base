@@ -38,7 +38,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 			return mpt_history_print(&hist->info, len, src);
 		}
 		/* history data output */
-		ret = mpt_history_values(&hist->info, &hist->fmt, len, src);
+		ret = mpt_history_values(hist, len, src);
 		if (ret < 0) {
 			return ret;
 		}
@@ -66,30 +66,33 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		}
 		ret = 0;
 		if (--len
-		    && (ret = mpt_history_values(&hist->info, &hist->fmt, len, &mt->arg)) < 0) {
+		    && (ret = mpt_history_values(hist, len, &mt->arg)) < 0) {
 			return ret;
 		}
 		return ret + 1;
 	}
-	if (len < 2) {
-		return MPT_ERROR(MissingData);
-	}
 	/* convert history to printable output */
 	if (mt->cmd == MPT_ENUM(MessageValRaw)) {
-		if (!(hist->fmt.all = mt->arg)) {
+		const MPT_STRUCT(msgbind) *mb = (const void *) (mt + 1);
+		static const size_t min = sizeof(*mt) + sizeof(*mb);
+		
+		/* require message type and binding */
+		if (len < min) {
+			return MPT_ERROR(MissingData);
+		}
+		if (!(hist->fmt.fmt = mb->type)) {
 			return MPT_ERROR(BadValue);
 		}
 		if (!hist->info.file) {
 			hist->info.state |= MPT_OUTFLAG(Active);
 			return len;
 		}
-		hist->fmt.fmt = hist->fmt.all;
 		ret = 0;
-		if ((len -= 2)
-		    && (ret = mpt_history_values(&hist->info, &hist->fmt, len, mt + 1)) < 0) {
+		if ((len -= min)
+		    && (ret = mpt_history_values(hist, len, mt + 1)) < 0) {
 			return ret;
 		}
-		return ret + 2;
+		return ret + min;
 	}
 	return mpt_history_print(&hist->info, len, src);
 }

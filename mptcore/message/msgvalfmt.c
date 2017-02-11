@@ -19,11 +19,10 @@
 extern size_t mpt_msgvalfmt_size(uint8_t fmt)
 {
 	fmt &= ~MPT_ENUM(ByteOrderLittle);
-	if (fmt >= MPT_ENUM(TypeScalBase)) {
-		ssize_t nat = mpt_valsize(fmt);
-		return nat < 0 ? 0 : nat;
+	if (fmt & MPT_MSGVAL(Normal)) {
+		return (fmt & 0x1f) + 1;
 	}
-	return (fmt & MPT_ENUM(ValuesBig)) ? (0x10 << (fmt & 0xf)) : (fmt & 0xf);
+	return ((fmt & 0x1f) + 1) * MPT_MSGVAL(BigAtom);
 }
 /*!
  * \ingroup mptMessage
@@ -33,21 +32,25 @@ extern size_t mpt_msgvalfmt_size(uint8_t fmt)
  * 
  * \param fmt  message value format
  * 
- * \return total element size
+ * \return local type representation
  */
 extern int mpt_msgvalfmt_type(uint8_t fmt)
 {
 	ssize_t size;
-	
-	if (!(size = mpt_msgvalfmt_size(fmt))) {
-		return MPT_ERROR(BadArgument);
+	/* value in wrong byte order */
+	if ((fmt & MPT_ENUM(ByteOrderLittle)) != MPT_ENUM(ByteOrderNative)) {
+		return MPT_ERROR(BadValue);
 	}
-	/* float types */
-	if (fmt & MPT_ENUM(ValuesFloat)) {
-		/* combination for native types */
-		if (fmt & MPT_ENUM(ValuesUnsigned)) {
-			return fmt & ~0x7f;
-		}
+	size = mpt_msgvalfmt_size(fmt);
+	
+	switch (fmt & MPT_MSGVAL(Normal)) {
+	  /* no representation for big numbers */
+	  case 0:
+		return MPT_ERROR(BadType);
+	  case MPT_MSGVAL(Integer):
+		fmt = mpt_type_int(size);
+		break;
+	  case MPT_MSGVAL(Float):
 		switch (size) {
 		  case  4: return 'f';
 		  case  8: return 'd';
@@ -55,12 +58,9 @@ extern int mpt_msgvalfmt_type(uint8_t fmt)
 		  case sizeof(long double): return 'e';
 		  default: return MPT_ERROR(BadType);
 		}
-	}
-	/* integer types */
-	if (fmt & MPT_ENUM(ValuesUnsigned)) {
+	  case MPT_MSGVAL(Unsigned):
 		fmt = mpt_type_uint(size);
-	} else {
-		fmt = mpt_type_int(size);
+		break;
 	}
 	return fmt ? fmt : MPT_ERROR(BadType);
 }

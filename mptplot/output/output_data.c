@@ -36,7 +36,7 @@ extern int mpt_output_data(MPT_INTERFACE(output) *out, int mask, int dim, int le
 	hdr.mt.arg = mask & 0xff;
 	
 	hdr.bnd.dim  = dim;
-	hdr.bnd.type = (int8_t) (MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(*val));
+	hdr.bnd.type = MPT_message_value(Float, *val);
 	
 	/* send header */
 	if ((ret = out->_vptr->push(out, sizeof(hdr), &hdr)) < 0) return ret;

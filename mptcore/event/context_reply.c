@@ -36,7 +36,7 @@ extern int mpt_context_reply(MPT_INTERFACE(reply_context) *rc, int code, const c
 		return MPT_ERROR(BadArgument);
 	}
 	if (!rc) {
-		const char *ansi = 0;
+		const char *ansi = 0, *desc;
 		
 		if (!fmt) {
 			return 0;
@@ -50,13 +50,14 @@ extern int mpt_context_reply(MPT_INTERFACE(reply_context) *rc, int code, const c
 		else {
 			code = MPT_LOG(Error);
 		}
-		
 		if ((isatty(fileno(stderr)) > 0) && (ansi = mpt_ansi_code(code))) {
 			fputs(ansi, stderr);
 		}
 		fputc('[', stderr);
+		if (!ansi && (desc = mpt_log_identifier(code))) {
+			fputs(desc, stderr);
+		}
 		fputc('>', stderr);
-		fputs(mpt_log_identifier(code), stderr);
 		fputc(']', stderr);
 		fputc(' ', stderr);
 		

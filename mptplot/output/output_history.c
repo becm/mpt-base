@@ -50,7 +50,7 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 		hdr.cmd = MPT_ENUM(MessageValFmt);
 		hdr.arg = 0;
 		
-		fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesInteger) | sizeof(dim);
+		fmt = MPT_message_value(Unsigned, dim);
 		
 		out->_vptr->push(out, sizeof(hdr), &hdr);
 		
@@ -67,7 +67,7 @@ extern int mpt_output_history(MPT_INTERFACE(output) *out, int len, const double 
 	/* header setup for data output */
 	hdr.cmd = MPT_ENUM(MessageValFmt);
 	hdr.arg = plen;
-	fmt = MPT_ENUM(ByteOrderNative) | MPT_ENUM(ValuesFloat) | sizeof(double);
+	fmt = MPT_message_value(Float, *ref);
 	
 	out->_vptr->push(out, sizeof(hdr), &hdr);
 	for (i = 0; i < plen; i++) {

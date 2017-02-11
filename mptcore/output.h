@@ -87,14 +87,13 @@ public:
 	bool add(char);
 protected:
 #else
-# define MPT_HISTFMT_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0,0,0 }
+# define MPT_HISTFMT_INIT  { MPT_ARRAY_INIT, MPT_ARRAY_INIT, 0,0 }
 #endif
 	_MPT_ARRAY_TYPE(valfmt) _fmt;  /* output format */
 	_MPT_ARRAY_TYPE(char)   _dat;  /* data format */
 	
-	uint16_t pos;  /* element position */
-	char     all;  /* default data format */
-	char     fmt;  /* data format */
+	uint8_t pos;  /* element position */
+	char    fmt;  /* data format */
 };
 
 MPT_STRUCT(histinfo);
@@ -214,7 +213,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);
 extern int mpt_history_log(MPT_STRUCT(histinfo) *, const char *, int , const char *, va_list);
 
 /* data print setup and processing */
-extern ssize_t mpt_history_values(const MPT_STRUCT(histinfo) *, MPT_STRUCT(histfmt) *, size_t , const void *);
+extern ssize_t mpt_history_values(MPT_STRUCT(history) *, size_t , const void *);
 /* print to history channel */
 extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *, size_t , const void *);
 
