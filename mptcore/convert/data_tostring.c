@@ -5,6 +5,7 @@
 #include <sys/uio.h>
 
 #include "meta.h"
+#include "array.h"
 
 #include "convert.h"
 

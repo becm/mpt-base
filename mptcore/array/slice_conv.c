@@ -6,6 +6,8 @@
 
 #include <sys/uio.h>
 
+#include "array.h"
+
 #include "meta.h"
 
 #include "convert.h"
@@ -22,7 +24,7 @@
  * 
  * \return hint to event controller (int)
  */
-extern int mpt_slice_conv(MPT_INTERFACE(slice) *s, int type, void *data)
+extern int mpt_slice_conv(MPT_STRUCT(slice) *s, int type, void *data)
 {
 	char *base, *end;
 	size_t len;

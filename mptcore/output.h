@@ -207,6 +207,10 @@ void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
 
 /* clear history resources */
 extern void mpt_history_fini(MPT_STRUCT(history) *);
+/* get/set history properties */
+extern int mpt_history_get(const MPT_STRUCT(history) *, MPT_STRUCT(property) *);
+extern int mpt_history_set(MPT_STRUCT(history) *, const char *, MPT_INTERFACE(metatype) *);
+
 /* push data to history */
 extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);
 /* log message to history */

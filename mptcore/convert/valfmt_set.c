@@ -2,12 +2,8 @@
  * set history state
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-
 #include "meta.h"
+#include "array.h"
 
 #include "convert.h"
 

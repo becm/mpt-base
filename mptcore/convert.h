@@ -6,7 +6,7 @@
 #ifndef _MPT_CONVERT_H
 #define _MPT_CONVERT_H  @INTERFACE_VERSION@
 
-#include "array.h"
+#include "core.h"
 
 #if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
 # define _MPT_FLOAT_EXTENDED_H
@@ -183,8 +183,10 @@ extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const cha
 
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
+#ifdef _MPT_ARRAY_H
 extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
 extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
+#endif
 
 /* type identifier for '(unsigned) long' data type */
 extern char mpt_type_int(size_t);
