@@ -35,14 +35,29 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	size_t flen, dlen;
 	ssize_t done;
 	
-	if (!(fd = hist->info.file)) {
-		if (len && !src) {
-			return MPT_ERROR(BadOperation);
+	switch (hist->info.state & 0x3) {
+	  case MPT_OUTFLAG(PrintNormal):
+		fd = stdout;
+		endl = mpt_newline_string(0);
+		break;
+	  case MPT_OUTFLAG(PrintError):
+		fd = stderr;
+		endl = mpt_newline_string(0);
+		break;
+	  case MPT_OUTFLAG(PrintHistory):
+		if ((fd = hist->info.file)) {
+			endl = mpt_newline_string(hist->info.lsep);
+		} else {
+			endl = mpt_newline_string(0);
+			fd = stdout;
 		}
-		return len;
+		break;
+	  default:
+		if (!(fd = hist->info.file)) {
+			return len;
+		}
+		endl = mpt_newline_string(hist->info.lsep);
 	}
-	endl = mpt_newline_string(hist->info.lsep);
-	
 	/* finish data block */
 	if (!len) {
 		if (hist->fmt.pos) {
@@ -65,11 +80,10 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			return MPT_ERROR(BadValue);
 		}
 		/* separate type for data */
-		if (!(hist->info.mode = *curr)) {
+		if (!(hist->fmt.pos = *curr)) {
 			hist->info.mode = 0x80;
-		} else {
-			hist->fmt.pos = hist->info.mode;
 		}
+		hist->info.mode |= MPT_ENUM(MessageValFmt);
 		src = curr + 1;
 		++done;
 		if (!--len) {
@@ -83,7 +97,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	}
 	/* require leading format identifiers */
 	if (!(hist->info.mode & 0x80)
-	    && !(hist->fmt.fmt & 0x7f)) {
+	    && !hist->fmt.fmt) {
 		const int8_t *curr = src;
 		
 		while (dlen < hist->fmt.pos) {
@@ -118,7 +132,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 		const char *curr = src;
 		MPT_STRUCT(valfmt) val = MPT_VALFMT_INIT;
 		int adv, conv;
-		char cfmt;
+		char cfmt = hist->fmt.fmt;
 		
 		/* use prepared format data */
 		if (dlen) {
@@ -129,7 +143,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			cfmt = dat[hist->fmt.pos];
 		}
 		/* need current format information */
-		else if (!(cfmt = hist->fmt.fmt)) {
+		else if ((hist->info.mode & 0x80) && !cfmt) {
 			if (!(cfmt = *curr)) {
 				return done ? done : MPT_ERROR(BadType);
 			}
@@ -170,6 +184,10 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 		/* print number to buffer */
 		if ((conv = mpt_number_print(buf, sizeof(buf), val, cfmt, curr)) < 0) {
 			return done ? done : conv;
+		}
+		/* consume format information */
+		if (hist->info.mode & 0x80) {
+			hist->fmt.fmt = 0;
 		}
 		/* stretch field size */
 		if (conv < val.wdt) {

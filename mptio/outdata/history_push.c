@@ -83,8 +83,9 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		if (!(hist->fmt.fmt = mb->type)) {
 			return MPT_ERROR(BadValue);
 		}
+		hist->info.state |= MPT_OUTFLAG(Active);
+		hist->info.mode = MPT_ENUM(MessageValRaw);
 		if (!hist->info.file) {
-			hist->info.state |= MPT_OUTFLAG(Active);
 			return len;
 		}
 		ret = 0;
