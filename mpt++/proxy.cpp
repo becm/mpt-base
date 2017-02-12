@@ -14,7 +14,7 @@ __MPT_NAMESPACE_BEGIN
  * \ingroup mptClient
  * \brief log to proxy
  * 
- * Select and use log target for message.
+ * Select and use log interface for message.
  * 
  * \param fcn  originating location
  * \param type message type and flags
@@ -25,21 +25,9 @@ __MPT_NAMESPACE_BEGIN
 int proxy::log(const char *fcn, int type, const char *fmt, ...) const
 {
     va_list va;
-    int ret = 0;
-    if (fmt) va_start(va, fmt);
-    class logger *log;
-    class output *out;
-
-    type |= logger::LogFunction;
-
-    if ((log = logger.pointer())) {
-        ret = log->log(fcn, type, fmt, va);
-    }
-    else if ((out = output.pointer())) {
-        ret = mpt_output_log(out, fcn, type, fmt, va);
-    }
-    if (fmt) va_end(va);
+    va_start(va, fmt);
+    int ret = mpt_proxy_vlog(this, fcn, type | logger::LogFunction, fmt, va);
+    va_end(va);
     return ret;
 }
-
 __MPT_NAMESPACE_END

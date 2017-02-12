@@ -70,35 +70,18 @@ MPT_STRUCT(libhandle)
 #ifdef __cplusplus
 MPT_STRUCT(proxy) : public Reference<metatype>
 {
+	inline proxy() : _hash(0)
+	{ }
 	int log(const char *, int , const char *, ...) const;
-	
-	proxy &operator =(const Reference<output> &from)
-	{
-		output = from;
-		return *this;
-	}
-#if __cplusplus >= 201103L
-	proxy &operator =(Reference<logger> &&from)
-	{
-		logger = std::move(from);
-		return *this;
-	}
-#endif
-	Reference<class output> output;
-	Reference<class logger> logger;
 protected:
-	uintptr_t hash;
-};
 #else /* __cplusplus */
 MPT_STRUCT(proxy)
 {
-# define MPT_PROXY_INIT { 0, 0, 0, 0 }
-	MPT_INTERFACE(metatype) *_mt;
-	MPT_INTERFACE(output) *output;
-	MPT_INTERFACE(logger) *logger;
-	uintptr_t hash;
-};
+	MPT_INTERFACE(metatype) *_ref;
+# define MPT_PROXY_INIT { 0, 0 }
 #endif /* __cplusplus */
+	uintptr_t _hash;
+};
 
 __MPT_EXTDECL_BEGIN
 
@@ -142,7 +125,10 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t , const char *, const c
 /* clear proxy references */
 extern void mpt_proxy_fini(MPT_STRUCT(proxy) *);
 /* set matching proxy reference */
-extern int mpt_proxy_assign(MPT_STRUCT(proxy) *, const MPT_STRUCT(value) *);
+extern int mpt_proxy_assign(MPT_STRUCT(proxy) *, const char *, MPT_INTERFACE(metatype) *);
+/* try to log to proxy metatype */
+extern int mpt_proxy_vlog(const MPT_STRUCT(proxy) *, const char *, int , const char *, va_list);
+extern int mpt_proxy_log(const MPT_STRUCT(proxy) *, const char *, int , const char *, ... );
 
 __MPT_EXTDECL_END
 

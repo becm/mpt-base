@@ -20,20 +20,10 @@
 extern void mpt_proxy_fini(MPT_STRUCT(proxy) *pr)
 {
 	MPT_INTERFACE(metatype) *m;
-	MPT_INTERFACE(output) *o;
-	MPT_INTERFACE(logger) *l;
 	
-	if ((m = pr->_mt)) {
+	if ((m = pr->_ref)) {
 		m->_vptr->ref.unref((void *) m);
-		pr->_mt = 0;
+		pr->_ref = 0;
 	}
-	if ((o = pr->output)) {
-		o->_vptr->obj.ref.unref((void *) o);
-		pr->output = 0;
-	}
-	if ((l = pr->logger)) {
-		l->_vptr->ref.unref((void *) l);
-		pr->logger = 0;
-	}
-	pr->hash = 0;
+	pr->_hash = 0;
 }

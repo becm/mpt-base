@@ -2,8 +2,12 @@
  * solver client data operations
  */
 
-#include "output.h"
+#include <string.h>
+
+#include "object.h"
 #include "meta.h"
+
+#include "convert.h"
 
 #include "client.h"
 
@@ -18,62 +22,48 @@
  * 
  * \return copy/reference result
  */
-extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const MPT_STRUCT(value) *val)
+extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const char *name, MPT_INTERFACE(metatype) *src)
 {
 	MPT_INTERFACE(metatype) *m;
-	MPT_INTERFACE(output) *out;
+	MPT_INTERFACE(object) *o;
+	int ret;
 	
-	if (!val) {
-		out = pr->output;
-		if (!out || pr->logger || !out->_vptr->obj.addref((void *) out)) {
-			return 0;
-		}
-		if ((pr->logger = mpt_output_logger(out))) {
-			return 1;
-		}
-		out->_vptr->obj.ref.unref((void *) out);
-		return MPT_ERROR(BadOperation);
+	if (!(m = pr->_ref)) {
+		return MPT_ERROR(BadArgument);
 	}
-	if (!val->fmt) {
-		if ((m = pr->_mt)) {
-			return m->_vptr->assign(m, val);
+	if (!name) {
+		MPT_STRUCT(value) val;
+		const char *txt;
+		size_t len;
+		
+		if (!src) {
+			return m->_vptr->assign(m, 0);
 		}
+		if ((ret = src->_vptr->conv(m, 's', &txt)) > 0) {
+			val.ptr = txt;
+			len = txt ? strlen(txt) : 0;
+		}
+		else if ((ret = src->_vptr->conv(m, MPT_ENUM(TypeValue), &val)) < 0) {
+			return ret;
+		}
+		else if (!val.fmt) {
+			txt = val.ptr;
+			len = txt ? strlen(val.ptr) : 0;
+		}
+		else if (!(txt = mpt_data_tostring(&val.ptr, *val.fmt, &len)) < 0) {
+			return MPT_ERROR(BadType);
+		}
+		ret = m->_vptr->assign(m, &val);
+		if (ret >= 0) {
+			pr->_hash = len ? mpt_hash(txt, len) : 0;
+		}
+		return ret;
+	}
+	if ((ret = m->_vptr->conv(m, MPT_ENUM(TypeObject), &o)) <= 0) {
+		return ret;
+	}
+	if (!o) {
 		return 0;
 	}
-	if (val->fmt[0] == MPT_ENUM(TypeMeta)) {
-		MPT_INTERFACE(metatype) *m, *o;
-		m = 0;
-		if (val->ptr && (m = *((void **) val->ptr))) {
-			if (!(m = m->_vptr->clone(m))) {
-				return MPT_ERROR(BadOperation);
-			}
-		}
-		if ((o = pr->_mt)) {
-			o->_vptr->ref.unref((void *) o);
-		}
-		pr->_mt = m;
-		pr->hash = 0;
-		
-		return 1;
-	}
-	if (val->fmt[0] != MPT_ENUM(TypeOutput)) {
-		return MPT_ERROR(BadType);
-	}
-	out = 0;
-	if (val->ptr && (out = *((void **) val->ptr))) {
-		if (!out->_vptr->obj.addref((void *) out)) {
-			return MPT_ERROR(BadOperation);
-		}
-		if (!pr->logger && out->_vptr->obj.addref((void *) out)) {
-			if (!(pr->logger = mpt_output_logger(out))) {
-				out->_vptr->obj.ref.unref((void *) out);
-			}
-		}
-	}
-	if (pr->output) {
-		pr->output->_vptr->obj.ref.unref((void *) pr->output);
-	}
-	pr->output = out;
-	
-	return 1;
+	return o->_vptr->setProperty(o, name, src);
 }
