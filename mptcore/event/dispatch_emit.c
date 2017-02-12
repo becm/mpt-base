@@ -74,7 +74,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state = disp->_err.cmd(disp->_err.arg, ev);
 	}
 	else {
-		mpt_context_reply(ev->reply, MPT_ERROR(BadType), "%s: %"PRIxPTR, MPT_tr("unknown command"), ev->id);
+		mpt_context_reply(ev->reply, MPT_ERROR(BadType), "%s: %" PRIxPTR, MPT_tr("unknown command"), ev->id);
 		return MPT_ERROR(BadArgument);
 	}
 	/* bad execution of command */
@@ -88,22 +88,22 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state &= ~MPT_EVENTFLAG(Default);
 		if (ev->id) {
 			if (disp->_def == ev->id) {
-				mpt_log(0, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
 				        MPT_tr("keep default event"), disp->_def);
 			} else if (disp->_def) {
-				mpt_log(0, __func__, MPT_LOG(Info), "%s (%"PRIxPTR" > %"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR" > %"PRIxPTR")",
 				        MPT_tr("default event replaced"), disp->_def, ev->id);
 			} else {
-				mpt_log(0, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
 				        MPT_tr("default event added"), ev->id);
 			}
 		}
 		else if (disp->_def) {
-			mpt_log(0, __func__, MPT_LOG(Info), "%s (%"PRIxPTR")",
+			mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
 			        MPT_tr("default event removed"), disp->_def);
 		}
 		else if (!(state & MPT_EVENTFLAG(Fail))) {
-			mpt_log(0, __func__, MPT_LOG(Debug2), "%s", MPT_tr("no default event to clear"));
+			mpt_log(0, __func__, MPT_DISPATCH_LOG_STATUS, "%s", MPT_tr("no default event to clear"));
 		}
 		disp->_def = ev->id;
 	}

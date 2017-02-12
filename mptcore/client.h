@@ -32,7 +32,7 @@ MPT_INTERFACE_VPTR(client)
 	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
 };
-# define MPT_CLIENT_LOGLEVEL MPT_LOG(Debug2)
+# define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)
 MPT_INTERFACE(client)
 {
 	const MPT_INTERFACE_VPTR(client) *_vptr;
@@ -40,7 +40,7 @@ MPT_INTERFACE(client)
 MPT_INTERFACE(client) : public config
 {
 public:
-	enum { LogLevel = logger::Debug2 };
+	enum { LogStatus = logger::Debug2 };
 	
 	metatype *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value *) __MPT_OVERRIDE;

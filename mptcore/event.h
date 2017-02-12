@@ -142,10 +142,17 @@ public:
 	
 	bool setDefault(uintptr_t);
 	void setError(EventHandler , void *);
+	
+	enum {
+		LogStatus = logger::Debug2,
+		LogAction = logger::Info
+	};
 protected:
 #else
 MPT_STRUCT(dispatch)
 {
+# define MPT_DISPATCH_LOG_STATUS MPT_LOG(Debug2)
+# define MPT_DISPATCH_LOG_ACTION MPT_LOG(Info)
 # define MPT_DISPATCH_INIT { MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
 	_MPT_ARRAY_TYPE(command) _d;  /* available commands for event */
 #endif

@@ -32,7 +32,7 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	
 	(void) out;
 	
-	if ((type & (0x7f & ~MPT_LOG(File))) >= logSkip) {
+	if ((type & 0x3f) >= logSkip) {
 		return 0;
 	}
 	type |= logFlags;
@@ -103,7 +103,7 @@ extern int mpt_log_default_format(int val)
 extern int mpt_log_default_skip(int val)
 {
 	if (val < 0) {
-		logSkip = MPT_LOG(Debug);
+		logSkip = MPT_LOG(Info);
 	}else {
 		logSkip = val & 0xff;
 	}

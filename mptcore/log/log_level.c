@@ -38,13 +38,13 @@ extern int mpt_log_level(const char *arg)
 		return MPT_LOG(Debug) - 1;
 	}
 	if (!strcasecmp(arg, "debug") || !strcasecmp(arg, "debug1")) {
-		return MPT_LOG(Debug) + 0xf;
+		return MPT_LOG(Debug2);
 	}
 	if (!strcasecmp(arg, "debug2")) {
-		return MPT_LOG(Debug2) + 0xf;
+		return MPT_LOG(Debug3);
 	}
 	if (!strcasecmp(arg, "debug3")) {
-		return MPT_LOG(Debug3) + 0xf;
+		return MPT_LOG(File);
 	}
 	return -2;
 }

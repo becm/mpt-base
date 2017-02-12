@@ -465,7 +465,7 @@ public:
 	enum {
 # define MPT_LOG(x) x
 #else
-# define MPT_LOG(x) MPT_Log##x
+# define MPT_LOG(x) MPT_ENUM(Log##x)
 enum MPT_ENUM(LogType) {
 #endif
 	MPT_LOG(Message)   = 0x0,   /* user (terminal) messages */
@@ -473,11 +473,11 @@ enum MPT_ENUM(LogType) {
 	MPT_LOG(Critical)  = 0x2,
 	MPT_LOG(Error)     = 0x3,
 	MPT_LOG(Warning)   = 0x4,
-	MPT_LOG(Info)      = 0x6,
-	MPT_LOG(File)      = 0x8,   /* use log target */
+	MPT_LOG(Info)      = 0x8,
 	MPT_LOG(Debug)     = 0x10,  /* debug level types */
-	MPT_LOG(Debug2)    = 0x20,
-	MPT_LOG(Debug3)    = 0x30
+	MPT_LOG(Debug2)    = 0x14,
+	MPT_LOG(Debug3)    = 0x18,
+	MPT_LOG(File)      = 0x20   /* use log target */
 };
 enum MPT_ENUM(LogFlags)
 {
