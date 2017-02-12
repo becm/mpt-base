@@ -11,11 +11,11 @@
  * specified severity and limit.
  * 
  * \param arg  type of message
- * \param min  output limit for messages
+ * \param max  output limit for messages
  * 
  * \return outdata print state
  */
-extern int mpt_output_type(uint8_t arg, int min)
+extern int mpt_output_type(uint8_t arg, int max)
 {
 	if (!arg) {
 		return MPT_OUTFLAG(PrintNormal);
@@ -26,7 +26,7 @@ extern int mpt_output_type(uint8_t arg, int min)
 		}
 		return MPT_OUTFLAG(PrintHistory);
 	}
-	if (arg < min) {
+	if (arg >= max) {
 		return 0;
 	}
 	return MPT_OUTFLAG(PrintError);
