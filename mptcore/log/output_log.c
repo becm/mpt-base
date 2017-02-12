@@ -29,23 +29,23 @@
 extern int mpt_output_vlog(MPT_INTERFACE(output) *out, const char *from, int type, const char *fmt, va_list ap)
 {
 	int8_t hdr[4];
-	int len, flen;
-	ssize_t ret;
+	int ret, len, flen;
 	
 	hdr[0] = MPT_ENUM(MessageOutput);
 	hdr[1] = type & 0x7f;
-	
 	len = 2;
-	flen = 0;
+	ret = MPT_OUTPUT_LOGMSG_MAX;
 	
+	flen = 0;
 	if (from) {
+		/* enable rich output content */
+		hdr[1] |= 0x80;
+		
 		flen = strlen(from);
 		if (type & MPT_ENUM(LogFunction)) {
-			hdr[len++] = 0x1; /* SOH */
+			hdr[len++] = 0x1; /* SOH, has function header */
 		}
-	}
-	ret = MPT_OUTPUT_LOGMSG_MAX;
-	if (fmt) {
+		/* space for type identifiers (header end or text start */
 		ret -= 2;
 	}
 	if (flen >= (ret - len)) {
@@ -54,31 +54,39 @@ extern int mpt_output_vlog(MPT_INTERFACE(output) *out, const char *from, int typ
 	if ((ret = out->_vptr->push(out, len, hdr)) < 0) {
 		return ret;
 	}
-	if (from) {
+	if (flen) {
 		out->_vptr->push(out, flen, from);
 		len += flen;
 	}
 	if (!fmt) {
-		hdr[0] = 0x4; /* EOT */
-		out->_vptr->push(out, 1, hdr);
+		if (from) {
+			hdr[0] = 0x4; /* EOT, transmission complete */
+			out->_vptr->push(out, 1, hdr);
+		}
 	}
 	else {
 		char buf[MPT_OUTPUT_LOGMSG_MAX];
 		int rem;
-		buf[0] = 0x2; /* STX */
-		++len;
+		
+		if (from) {
+			buf[0] = 0x2; /* STX, message start */
+			out->_vptr->push(out, 1, buf);
+			++len;
+		}
 		rem = sizeof(buf) - len;
-		len = vsnprintf(buf+1, rem, fmt, ap);
+		len = vsnprintf(buf, rem, fmt, ap);
 		
 		if (len < 0) {
-			return MPT_ERROR(BadOperation);
+			out->_vptr->push(out, 0, 0);
+			return 0;
 		}
-		if (len < rem) {
-			buf[++len] = 0x3; /* ETX */
-		} else {
-			len = rem;
+		if (len >= rem) {
+			len = rem; /* chop trailing data */
 		}
-		out->_vptr->push(out, len+1, buf);
+		else if (from) {
+			buf[len++] = 0x3; /* ETX, message complete */
+		}
+		out->_vptr->push(out, len, buf);
 	}
 	out->_vptr->push(out, 0, 0);
 	

@@ -26,7 +26,7 @@ extern int mpt_output_type(uint8_t arg, int max)
 		}
 		return MPT_OUTFLAG(PrintHistory);
 	}
-	if (arg >= max) {
+	if (max && (arg >= max)) {
 		return 0;
 	}
 	return MPT_OUTFLAG(PrintError);

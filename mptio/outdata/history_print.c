@@ -56,12 +56,12 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		if (!len) {
 			if (fd) {
 				/* incomplete message */
-				if (hist->mode & 0x7) {
+				if ((hist->mode & 0x80)
+				    && (hist->mode & 0xf)) {
 					static const char dots[] = "…";
 					fputs(dots, fd);
 				}
-				if ((hist->state & MPT_OUTFLAG(PrintRestore))
-				    && isatty(fileno(fd))) {
+				if (hist->state & MPT_OUTFLAG(PrintRestore)) {
 					fputs(mpt_ansi_reset(), fd);
 					hist->state &= ~MPT_OUTFLAG(PrintRestore);
 				}
@@ -84,15 +84,13 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		while (len--) {
 			char val = *curr++;
 			
+			prefix = 0;
 			switch (val) {
 			  case 0x1: /* start of header */
-				if ((hist->state & MPT_OUTFLAG(PrintColor))
-				    && (prefix = mpt_ansi_code(0))
-				    && (isatty(fileno(fd)) > 0)) {
-					fputs(prefix, fd);
-					hist->state |= MPT_OUTFLAG(PrintRestore);
+				if ((hist->state & MPT_OUTFLAG(PrintColor))) {
+					prefix = mpt_ansi_code(0);
 				}
-				val = hist->mode & ~0x80;
+				val = hist->mode;
 				/* previous segment and function */
 				hist->mode = 0x80 | 0x40 | 0x20 | 0x1;
 				break;
@@ -118,17 +116,20 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 				fputc('(', fd);
 				fputc(')', fd);
 			}
+			/* segment end restore */
+			if ((val & 0x80)
+			    && (hist->state & MPT_OUTFLAG(PrintRestore))) {
+				fputs(mpt_ansi_reset(), fd);
+				hist->state &= ~MPT_OUTFLAG(PrintRestore);
+			}
 			/* has previous segment */
 			if (val & 0x40) {
 				fputc(':', fd);
 				fputc(' ', fd);
 			}
-			/* segment end restore */
-			if ((val & 0x80)
-			    && (hist->state & MPT_OUTFLAG(PrintRestore))
-			    && (prefix = mpt_ansi_reset())) {
+			if (prefix &&(isatty(fileno(fd)) > 0)) {
 				fputs(prefix, fd);
-				hist->state &= ~MPT_OUTFLAG(PrintRestore);
+				hist->state |= MPT_OUTFLAG(PrintRestore);
 			}
 		}
 		return curr - (const char *) src;
@@ -144,8 +145,8 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	hist->mode = 0;
 	
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
-		type = mt->arg;
-		hist->mode = 0x80;
+		hist->mode = type = mt->arg;
+		type &= 0x7f;
 	}
 	/* setup answer output */
 	else if (mt->cmd == MPT_ENUM(MessageAnswer)) {

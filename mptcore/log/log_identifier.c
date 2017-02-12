@@ -19,7 +19,7 @@ extern const char *mpt_log_identifier(int type)
 		return 0;
 	}
 	if (type & MPT_LOG(File)) {
-		type &= 0x7f;
+		type &= 0x1f;
 		if (type >= MPT_LOG(Debug))    return "DEBUG";
 		if (type >= MPT_LOG(Info))     return "INFO";
 		if (type >= MPT_LOG(Warning))  return "WARNING";
@@ -27,7 +27,7 @@ extern const char *mpt_log_identifier(int type)
 		if (type >= MPT_LOG(Critical)) return "CRITICAL";
 		if (type >= MPT_LOG(Fatal))    return "FATAL";
 	} else {
-		type &= 0x7f;
+		type &= 0x1f;
 		if (type >= MPT_LOG(Debug))    return "debug";
 		if (type >= MPT_LOG(Info))     return "info";
 		if (type >= MPT_LOG(Warning))  return "warning";
