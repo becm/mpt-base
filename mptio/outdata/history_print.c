@@ -36,12 +36,10 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 {
 	const MPT_STRUCT(msgtype) *mt;
 	FILE *fd;
-	const char *prefix;
+	const char *prefix, *curr;
 	int type, flags;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
-		const char *pos, *end;
-		size_t part;
 		if (!(hist->state & 0x7)) {
 			return MPT_ERROR(BadArgument);
 		}
@@ -58,7 +56,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		if (!len) {
 			if (fd) {
 				/* incomplete message */
-				if (hist->mode) {
+				if (hist->mode & 0x7) {
 					static const char dots[] = "…";
 					fputs(dots, fd);
 				}
@@ -72,56 +70,68 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			hist->state &= ~(0x7 | MPT_OUTFLAG(Active));
 			return 0;
 		}
-		if (!(pos = src)) {
+		if (!(curr = src)) {
 			return MPT_ERROR(MissingData);
 		}
 		if (!fd) {
 			return len;
 		}
-		end = pos + len;
-		part = 0;
-		while ((pos + part) < end) {
-			char curr = pos[part];
-			/* detect delimiters */
-			if (curr == 0x1) {
-				if (part) fwrite(pos, part, 1, fd);
-				pos += part + 1;
-				part = 0;
-				hist->mode = curr;
-				continue;
-			}
-			if (curr == 0x2) {
-				if (part) fwrite(pos, part, 1, fd);
-				pos += part + 1;
-				part = 0;
-				/* end of function name */
-				if (hist->mode == 0x1) {
-					fputc('(', fd);
-					fputc(')', fd);
-				}
-				if (hist->mode) {
-					fputc(':', fd);
-					fputc(' ', fd);
-				}
-				if ((hist->state & MPT_OUTFLAG(PrintRestore))
-				    && isatty(fileno(fd))) {
-					fputs(mpt_ansi_reset(), fd);
-					hist->state &= ~MPT_OUTFLAG(PrintRestore);
-				}
-				hist->mode = curr;
-				continue;
-			}
-			if (curr == 0x3) {
-				if (part) fwrite(pos, part, 1, fd);
-				pos += part + 1;
-				part = 0;
-				hist->mode = 0;
-				continue;
-			}
-			++part;
+		/* direct data write */
+		if (!(hist->mode & 0x80)) {
+			return fwrite(src, len, 1, fd);
 		}
-		if (part) fwrite(pos, part, 1, fd);
-		return pos - (char *) src;
+		/* detect delimiters */
+		while (len--) {
+			char val = *curr++;
+			
+			switch (val) {
+			  case 0x1: /* start of header */
+				if ((hist->state & MPT_OUTFLAG(PrintColor))
+				    && (prefix = mpt_ansi_code(0))
+				    && (isatty(fileno(fd)) > 0)) {
+					fputs(prefix, fd);
+					hist->state |= MPT_OUTFLAG(PrintRestore);
+				}
+				val = hist->mode & ~0x80;
+				/* previous segment and function */
+				hist->mode = 0x80 | 0x40 | 0x20 | 0x1;
+				break;
+			  case 0x2:/* start of normal text */
+				val = hist->mode;
+				/* previous segment and text */
+				hist->mode = 0x80 | 0x40 | 0x2;
+				break;
+			  case 0x3:/* end of normal text */
+			  case 0x4:/* end of segment */
+				val = hist->mode & 0x8f;
+				/* previous segment */
+				hist->mode = 0x80 | 0x40;
+				break;
+			  default:
+				/* mark as processed */
+				hist->mode |= 0x80 | 0x40;
+				fputc(val, fd);
+				continue;
+			}
+			/* end of function name */
+			if (val & 0x20) {
+				fputc('(', fd);
+				fputc(')', fd);
+			}
+			/* has previous segment */
+			if (val & 0x40) {
+				fputc(':', fd);
+				fputc(' ', fd);
+			}
+			/* segment end restore */
+			if ((val & 0x80)
+			    && (hist->state & MPT_OUTFLAG(PrintRestore))
+			    && (prefix = mpt_ansi_reset())) {
+				fputs(prefix, fd);
+				hist->state &= ~MPT_OUTFLAG(PrintRestore);
+			}
+		}
+		return curr - (const char *) src;
 	}
 	if (!(mt = src)) {
 		return MPT_ERROR(BadArgument);
@@ -135,7 +145,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
 		type = mt->arg;
-		hist->mode = ' ';
+		hist->mode = 0x80;
 	}
 	/* setup answer output */
 	else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
@@ -170,14 +180,22 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		}
 		break;
 	}
-	if ((isatty(fileno(fd)) > 0)
-	    && (hist->state & MPT_OUTFLAG(PrintColor))
-	    && (prefix = mpt_ansi_code(type))) {
-		flags |= MPT_OUTFLAG(PrintRestore);
-		fputs(prefix, fd);
+	/* discern log from regular output */
+	if (!hist->file || fd == hist->file) {
+		fputc('#', fd);
+		fputc(' ', fd);
+	}
+	/* set prefix string */
+	if ((hist->state & MPT_OUTFLAG(PrintColor))
+	    && (prefix = mpt_ansi_code(type))
+	    && (isatty(fileno(fd)) <= 0)) {
+		prefix = 0;
 	}
 	/* mark answer message */
 	if (mt->cmd == MPT_ENUM(MessageAnswer)) {
+		if (prefix) {
+			fputs(prefix, fd);
+		}
 		fputc('@', fd);
 		if (mt->arg) {
 			fprintf(fd, "[%d]: ", mt->arg);
@@ -186,11 +204,21 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			fputc(' ', fd);
 		}
 	}
-	else if (!prefix && (prefix = mpt_log_identifier(type))) {
+	/* print (colorized) message type */
+	else if ((curr = mpt_log_identifier(type))) {
+		if (prefix) {
+			fputs(prefix, fd);
+		}
 		fputc('[', fd);
-		fputs(prefix, fd);
+		fputs(curr, fd);
 		fputc(']', fd);
 		fputc(' ', fd);
+	} else {
+		prefix = 0;
+	}
+	/* restore normal printing if needed */
+	if (prefix && (prefix = mpt_ansi_reset())) {
+		fputs(prefix, fd);
 	}
 	hist->state |= flags & 0x7;
 	if (len > 2) {
