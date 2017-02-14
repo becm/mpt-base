@@ -62,8 +62,9 @@ static int metaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
 	switch (type) {
 	  case 0: ptr = (void *) fmt; type = MPT_ENUM(TypeOutput); break;
 	  case MPT_ENUM(TypeMeta): ptr = &od->_mt; break;
-	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
 	  case MPT_ENUM(TypeInput): ptr = &od->_in; break;
+	  case MPT_ENUM(TypeObject): ptr = &od->_out; break;
+	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
 	  default: return MPT_ERROR(BadType);
 	}
 	if (addr) {

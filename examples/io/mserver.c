@@ -45,28 +45,21 @@ static int wrap_io(void *fd, struct mpt_event *ev)
 
 int main(int argc, char *argv[])
 {
-	struct mpt_notify no;
-	uint32_t mincon;
+	struct mpt_notify no = MPT_NOTIFY_INIT;
+	int port;
 	
 	mtrace();
 	
 	if (argc < 2) {
 		fputs("need connection argument\n", stderr);
 		return 1;
-	}
-	mpt_notify_init(&no);
-	
-	/* create socket on notification descriptor */
-	if (mpt_notify_bind(&no, argv[1], 2) >= 0) {
-		mincon = 1;
-	}
-	else if (mpt_notify_connect(&no, argv[1]) >= 0) {
-		mincon = 0;
-	}
-	else {
+	}	
+	/* open listening socket */
+	if ((port = mpt_notify_bind(&no, argv[1], 1)) < 0) {
 		perror("psocket");
 		return 2;
 	}
+	fprintf(stderr, "%s: %i\n", "reserved port", port);
 	do {
 		struct mpt_input *in;
 		int evcnt;
@@ -86,7 +79,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	/* exit with last connection */
-	} while (no._fdused > mincon);
+	} while (no._fdused > 1);
 	
 	mpt_notify_fini(&no);
 	

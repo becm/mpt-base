@@ -27,6 +27,16 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 	}
 	return mpt_dispatch_emit(disp, ev);
 }
+
+static int ignoreEvent(void *arg, MPT_STRUCT(event) *ev)
+{
+	(void) arg;
+	if (!ev || !ev->reply) {
+		return 0;
+	}
+	mpt_context_reply(ev->reply, 0, "%s", MPT_tr("event ignored"));
+	return MPT_EVENTFLAG(None);
+}
 /*!
  * \ingroup mptNotify
  * \brief set notify dispatcher
@@ -45,5 +55,7 @@ extern void mpt_notify_setdispatch(MPT_STRUCT(notify) *no, MPT_STRUCT(dispatch) 
 	}
 	if ((no->_disp.arg = disp)) {
 		no->_disp.cmd = dispatchEvent;
+	} else {
+		no->_disp.cmd = ignoreEvent;
 	}
 }

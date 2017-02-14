@@ -22,6 +22,7 @@ struct socketInput {
 	MPT_INTERFACE(input) _in;
 	MPT_STRUCT(socket)    sock;
 	MPT_STRUCT(notify)   *no;
+	int nl;
 };
 
 static void socketUnref(MPT_INTERFACE(unrefable) *in)
@@ -46,10 +47,13 @@ static int socketNext(MPT_INTERFACE(input) *in, int what)
 		(void) close(sock._id);
 		return -1;
 	}
-	
 	if (mpt_notify_add(sd->no, POLLIN, srm) < 0) {
 		srm->_vptr->ref.unref((void *) srm);
 		return -1;
+	}
+	/* single connection mode */
+	if (sd->nl < 0) {
+		return -2;
 	}
 	return 0;
 }
@@ -82,27 +86,37 @@ static const MPT_INTERFACE_VPTR(input) socketInput = {
  * \param dest  bind address
  * \param nl    listening queue length
  * 
- * \return socket descriptor
+ * \return socket port
  */
 extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 {
 	MPT_STRUCT(fdmode) mode;
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	struct socketInput *in;
-	int type;
+	int type, port;
 	
 	if (!no || !dest) {
 		errno = EFAULT;
 		return -1;
 	}
 	/* insist on tcp listening socket */
-	if ((type = mpt_mode_parse(&mode, dest)) <= 0
-	    || mode.family < 0
-	    || mode.param.sock.type != SOCK_STREAM) {
+	if ((type = mpt_mode_parse(&mode, dest)) < 0) {
 		errno = EINVAL;
 		return -1;
 	}
-	if ((type = mpt_bind(&sock, dest+type, &mode, nl)) < 0) {
+	/* default to stream socket */
+	if (!type) {
+		if ((port = mpt_bind(&sock, dest, 0, nl)) < 0) {
+			return -1;
+		}
+	}
+	/* no file or packet modes allowed */
+	else if ((mode.family < 0) || (mode.param.sock.type != SOCK_STREAM)) {
+		errno = EINVAL;
+		return -1;
+	}
+	/* create listening socket */
+	else if ((port = mpt_bind(&sock, dest+type, &mode, nl < 0 ? 0 : nl)) < 0) {
 		return -1;
 	}
 	if (!(in = malloc(sizeof(*in)))) {
@@ -112,9 +126,10 @@ extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 	in->_in._vptr = &socketInput;
 	in->sock = sock;
 	in->no = no;
+	in->nl = nl;
 	
 	if (mpt_notify_add(no, POLLIN, &in->_in) >= 0) {
-		return sock._id;
+		return port;
 	}
 	close(sock._id);
 	free(in);

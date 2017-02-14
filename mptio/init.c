@@ -6,86 +6,37 @@
 # define _POSIX_C_SOURCE 200809L
 #endif
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 
 #include <unistd.h>
 #include <poll.h>
 
-#include "meta.h"
-#include "config.h"
-
-#include "array.h"
 #include "convert.h"
-#include "event.h"
 #include "parse.h"
 
 #include "stream.h"
 #include "notify.h"
 
-#include "output.h"
-
 #include "client.h"
 
-#include <signal.h>
-
-extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
+/*!
+ * \ingroup mptNotify
+ * \brief initialize MPT environment
+ * 
+ * Set notification inputs and config file.
+ * 
+ * \param no   notification descriptor
+ * \param argc argument count
+ * \param argv command line arguments
+ */
+extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 {
-	MPT_INTERFACE(metatype) *conf;
-	MPT_INTERFACE(output) *out;
-	MPT_STRUCT(dispatch) *disp;
-	MPT_STRUCT(notify) *no;
-	const char *ctl = 0, *src = 0, *cname = 0, *log;
-	int32_t lv = 0;
+	const char *ctl = 0, *src = 0, *cname = 0, *debug, *flags;
+	int32_t lv = 0, env = 0;
 	
-	while (argc) {
-		int c;
-		
-		switch (c = getopt(argc, argv, "+f:c:s:v")) {
-		    case -1:
-			argc = 0;
-			if (cname) break;
-			cname = argv[optind];
-			continue;
-		    case 'f':
-			if (cname) {
-				errno = EINVAL;
-				return 0;
-			}
-			cname = optarg;
-			continue;
-		    case 'c':
-			if (ctl) {
-				errno = EINVAL;
-				return 0;
-			}
-			ctl = optarg;
-			continue;
-		    case 's':
-			if (src) {
-				errno = EINVAL;
-				return 0;
-			}
-			src = optarg;
-			continue;
-		    case 'v':
-			lv += MPT_LOG(Debug); continue;
-		    default:
-			errno = EINVAL;
-			return 0;
-		}
-	}
-	if (lv) {
-		if (lv > MPT_LOG(Debug3)) {
-			lv = MPT_LOG(Debug3);
-		}
-		mpt_log_default_skip(lv + MPT_LOG(Debug));
-	}
-	else if ((log = getenv("MPT_DEBUG"))) {
+	if ((debug = getenv("MPT_DEBUG"))) {
 		lv = MPT_LOG(Debug2);
-		if (mpt_cint(&lv, log, 0, 0) > 0) {
+		if (mpt_cint(&lv, debug, 0, 0) > 0) {
 			switch (lv) {
 			  case 0: lv = MPT_LOG(Info); break;
 			  case 1: lv = MPT_LOG(Debug)  + 0x10; break;
@@ -96,107 +47,124 @@ extern MPT_STRUCT(notify) *mpt_init(int argc, char *argv[])
 			mpt_log_default_skip(lv);
 		}
 	}
+	if ((flags = getenv("MPT_FLAGS"))) {
+		char curr;
+		while ((curr = *flags++)) {
+			switch (curr) {
+			  case 'v': ++lv; break;
+			  case 'e': ++env; break;
+			  default:
+				mpt_log(0, __func__, MPT_LOG(Debug), "%s, %c",
+				        MPT_tr("unknown operation flag"), curr);
+			}
+		}
+	}
+	while (argc) {
+		int c;
+		
+		switch (c = getopt(argc, argv, "+f:c:l:ve")) {
+		    case -1:
+			argc = 0;
+			if (cname) break;
+			cname = argv[optind];
+			continue;
+		    case 'f':
+			if (cname) {
+				return MPT_ERROR(BadArgument);
+			}
+			cname = optarg;
+			continue;
+		    case 'c':
+			if (ctl) {
+				return MPT_ERROR(BadArgument);
+			}
+			if (!no) {
+				return MPT_ERROR(BadOperation);
+			}
+			ctl = optarg;
+			continue;
+		    case 'l':
+			if (src) {
+				return MPT_ERROR(BadArgument);
+			}
+			if (!no) {
+				return MPT_ERROR(BadOperation);
+			}
+			src = optarg;
+			continue;
+		    case 'v':
+			++lv; continue;
+		    case 'e':
+			++env; continue;
+		    default:
+			return MPT_ERROR(BadArgument);
+		}
+	}
+	/* overwrite environment settings */
+	if (lv) {
+		lv = MPT_LOG(Debug) + (lv-1) * (MPT_LOG(Debug) - MPT_LOG(Debug2));
+		if (lv > MPT_LOG(File)) {
+			lv = MPT_LOG(File);
+		}
+		mpt_log_default_skip(lv);
+	}
 	/* load mpt environment variables */
 	mpt_config_environ(0, "mpt_*", '_', 0);
 	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
 	
+	/* set executable name */
+	mpt_config_set(0, "mpt", argv[0], 0, 0);
+	
 	/* set client filename */
 	if (cname) {
-		mpt_config_set(0, "mpt.client", cname, '.', 0);
+		mpt_config_set(0, "mpt.config", cname, '.', 0);
 	}
-	/* listen on specified address */
-	if (!src && (conf = mpt_config_get(0, "mpt.client.listen", '.', 0))) {
-		src = mpt_meta_data(conf, 0);
-	}
-	/* connect to specified address */
-	if (!ctl && (conf = mpt_config_get(0, "mpt.client.connect", '.', 0))) {
-		ctl = mpt_meta_data(conf, 0);
-	}
-	if (!(no = malloc(sizeof(*no) + sizeof(*disp)))) {
-		return 0;
-	}
-	disp = (void *) (no + 1);
-	mpt_dispatch_init(disp);
-	mpt_notify_init(no);
-	mpt_notify_setdispatch(no, disp);
-	
-	/* set notification output */
-	if (!(conf = mpt_output_new(no))) {
-		mpt_log(0, __func__, MPT_LOG(Error), "%s",
-		        MPT_tr("unable to create output"));
-	}
-	else if ((conf->_vptr->conv(conf, MPT_ENUM(TypeOutput), &out) < 0) || !out) {
-		mpt_log(0, __func__, MPT_LOG(Error), "%s",
-		        MPT_tr("incompatible output metatype"));
-		conf->_vptr->ref.unref((void *) conf);
-	}
-	else {
-		disp->_err.arg = out;
-		/* set debug parameter */
-		if ((conf = mpt_config_get(0, "mpt.output.print", '.', 0))
-		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) out, "print", "s", cname);
-		}
-		/* use local debug parameter */
-		else if (lv > 0) {
-			mpt_object_set((void *) out, "debug", "i", lv);
-		}
-		/* use global debug parameter */
-		else if ((conf = mpt_config_get(0, "mpt.debug", '.', 0))
-		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) out, "debug", "s", cname);
-		}
-		/* set answer parameter */
-		if ((conf = mpt_config_get(0, "mpt.output.answer", '.', 0))
-		    && (cname = mpt_meta_data(conf, 0))) {
-			mpt_object_set((void *) out, "answer", "s", cname);
-		}
+	/* get arguments from environment */
+	if (env) {
+		if (!src) src = getenv("MPT_LISTEN");
+		if (!ctl) ctl = getenv("MPT_CONNECT");
 	}
 	/* set default event if no input available */
 	if (!src && !ctl) {
-		disp->_def = mpt_hash("start", 5);
-		return no;
-	}
-	if (ctl) {
-		/* use stdin as command source */
-		if (ctl[0] == '-' && !ctl[1]) {
-			static const int mode = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(Buffer);
-			MPT_INTERFACE(input) *in;
-			MPT_STRUCT(socket) sock;
-			/* detach stdin */
-			sock._id  = dup(STDIN_FILENO);
-			
-			if (!(in = mpt_stream_input(&sock, mode, MPT_ENUM(EncodingCommand), 0))) {
-				close(sock._id);
-			}
-			else if (mpt_notify_add(no, POLLIN, in) < 0) {
-				in->_vptr->ref.unref((void *) in);
-			}
-			/* detach regular input to avoid confusion */
-			else {
-				close(STDIN_FILENO);
-			}
-		}
-		/* add command source */
-		else if (mpt_notify_connect(no, ctl) < 0) {
-			mpt_output_log(out, __func__, MPT_LOG(Error), "%s: %s",
-			               MPT_tr("unable to connect to control"), ctl);
-			
-			mpt_notify_fini(no);
-			free(no);
-			return 0;
-		}
-	}
-	/* open socket with 2 listening slots */
-	if (src && mpt_notify_bind(no, src, 2) < 0) {
-		mpt_output_log(out, __func__, MPT_LOG(Error), "%s: %s",
-		               MPT_tr("unable to create source"), src);
-		
-		mpt_notify_fini(no);
-		free(no);
 		return 0;
 	}
-	
-	return no;
+	/* wait for connection to activate input */
+	if (src && mpt_notify_bind(no, src, 0) < 0) {
+		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("unable to create source"), src);
+		return 0;
+	}
+	/* no control channel */
+	if (!ctl) {
+		return src ? 1 : 0;
+	}
+	/* use stdin as command source */
+	if (ctl[0] == '-' && !ctl[1]) {
+		static const int mode = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(Buffer);
+		MPT_INTERFACE(input) *in;
+		MPT_STRUCT(socket) sock;
+		/* detach stdin */
+		sock._id  = dup(STDIN_FILENO);
+		
+		if (!(in = mpt_stream_input(&sock, mode, MPT_ENUM(EncodingCommand), 0))) {
+			close(sock._id);
+		}
+		else if (mpt_notify_add(no, POLLIN, in) < 0) {
+			in->_vptr->ref.unref((void *) in);
+		}
+		/* detach regular input to avoid confusion */
+		else {
+			close(STDIN_FILENO);
+		}
+	}
+	/* add command source */
+	else if (mpt_notify_connect(no, ctl) < 0) {
+		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("unable to connect to control"), ctl);
+		
+		mpt_notify_fini(no);
+		return 0;
+	}
+	return src ? 2 : 1;
 }
 

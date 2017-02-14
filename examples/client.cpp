@@ -14,6 +14,8 @@
 
 #include MPT_INCLUDE(client.h)
 
+#include MPT_INCLUDE(notify.h)
+
 #ifdef __GLIBC__
 # include <mcheck.h>
 #else
@@ -27,43 +29,54 @@ public:
     virtual ~MyClient() { }
     
     void unref();
+    int init(mpt::metatype * = 0);
     int step(mpt::metatype *);
 };
 MyClient::MyClient()
 {
-    mpt::output *o = mpt::mpt_output_local();
-    output.setPointer(o);
-
-    o->set("history", "/dev/stdout", 0);
-    o->set("level", "info", 0);
-
-    if (o->addref()) {
-        mpt::Reference<class mpt::logger> r(mpt::mpt_output_logger(o));
-        logger = std::move(r);
-    }
-    mpt::metatype *m = mpt::mpt_output_new();
-    char fmt[] = { mpt::TypeMeta, 0 };
-    o->set("", mpt::value(fmt , &m));
-    m->unref();
+    _ref = mpt::mpt_output_new();
 }
 
+int MyClient::init(mpt::metatype *)
+{
+
+    mpt::object *o;
+    if ((o = cast<mpt::object>())) {
+        o->set("history", "/dev/stdout");
+        o->set("level", "info");
+        return 1;
+    }
+    return 0;
+}
 int MyClient::step(mpt::metatype *)
 { return 0; }
 
 void MyClient::unref()
 { delete this; }
 
-int main()
+int main(int argc, char * const argv[])
 {
     mtrace();
+
+    mpt::notify n;
+    if (n.init(argc, argv) < 0) {
+        perror("mpt init");
+        return 1;
+    }
+    n.setDispatch(0);
+
     MyClient *c = new MyClient;
+    c->init();
 
     c->log(__func__, mpt::logger::Message | mpt::logger::LogPretty, "%s = %i", "value", 5);
 
-    const mpt::object *o = c->output.pointer();
-    for (auto p : *o) {
-        std::cout << p << std::endl;
+    mpt::object *o;
+    if ((o = c->cast<mpt::object>())) {
+        for (auto p : *o) {
+            std::cout << p << std::endl;
+        }
     }
-    c->init();
+    n.loop();
+
     c->unref();
 }

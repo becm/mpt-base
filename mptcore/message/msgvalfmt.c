@@ -8,11 +8,12 @@
 
 /*!
  * \ingroup mptMessage
- * \brief size of format elements
+ * \brief element size
  * 
  * Calculate total element bytes
+ * for transport format code.
  * 
- * \param fmt  message value format
+ * \param fmt  message content format code
  * 
  * \return total element size
  */
@@ -28,7 +29,9 @@ extern size_t mpt_msgvalfmt_size(uint8_t fmt)
  * \ingroup mptMessage
  * \brief native type
  * 
- * get native type for transport
+ * Native type for transport format code.
+ * Fail when byte orders diverge or
+ * no local representation exists.
  * 
  * \param fmt  message value format
  * 
@@ -52,9 +55,9 @@ extern int mpt_msgvalfmt_type(uint8_t fmt)
 		break;
 	  case MPT_MSGVAL(Float):
 		switch (size) {
-		  case  4: return 'f';
-		  case  8: return 'd';
-		  case 10: return MPT_ENUM(TypeFloat80);
+		  case sizeof(float): return 'f';
+		  case sizeof(double): return 'd';
+		  case sizeof(MPT_STRUCT(float80)): return MPT_ENUM(TypeFloat80);
 		  case sizeof(long double): return 'e';
 		  default: return MPT_ERROR(BadType);
 		}

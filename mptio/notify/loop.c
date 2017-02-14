@@ -31,9 +31,6 @@ extern int mpt_loop(MPT_STRUCT(notify) *n)
 		if ((in = mpt_notify_next(n))) {
 			MPT_STRUCT(buffer) *s;
 			
-			if (!n->_disp.cmd) {
-				continue;
-			}
 			/* command needs further processing */
 			if ((state = in->_vptr->dispatch(in, n->_disp.cmd, n->_disp.arg)) < 0) {
 				continue;
@@ -60,7 +57,8 @@ extern int mpt_loop(MPT_STRUCT(notify) *n)
 			if ((state = mpt_notify_wait(n, POLLIN, 0)) > 0) {
 				continue;
 			}
-			if ((state = n->_disp.cmd(n->_disp.arg, &ev)) < 0) {
+			if (n->_disp.cmd
+			    && (state = n->_disp.cmd(n->_disp.arg, &ev)) < 0) {
 				continue;
 			}
 			def = (state & MPT_EVENTFLAG(Default)) ? 1 : 0;

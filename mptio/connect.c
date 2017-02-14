@@ -158,13 +158,20 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 	if (mode) {
 		info = *mode;
 	}
-	else if ((sock = mpt_mode_parse(&info, where)) <= 0) {
+	else if ((sock = mpt_mode_parse(&info, where)) < 0) {
 		errno = EINVAL;
 		return -1;
-	} else {
-		where += sock;
 	}
-	if (info.family < 0) {
+	else if (!sock) {
+		info.family = AF_UNSPEC;
+		info.param.sock.type = SOCK_STREAM;
+		info.param.sock.proto = 0;
+		info.param.sock.port = 0;
+		if ((sock = socketSet(where, &info, bind)) < 0) {
+			return sock;
+		}
+	}
+	else if (info.family < 0) {
 		int res = -1;
 		if (info.param.file.open & O_WRONLY) {
 			errno = EINVAL;
@@ -184,25 +191,25 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 			}
 			return sock;
 		}
-		info.stream = MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Stream);
+		info.stream = 0;
+		info.param.sock.port = 0;
 	}
-	else if ((sock = socketSet(where, &info, bind)) < 0) {
+	else if ((sock = socketSet(where + sock, &info, bind)) < 0) {
 		return sock;
 	}
-	/* identify as listening socket */
-	else if (info.stream == (MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write) | MPT_SOCKETFLAG(Stream))) {
-		if (backlog >= 0 && listen(sock, backlog) < 0) {
-			(void) close(sock);
-			return -1;
-		}
-		info.stream = 0;
+	/* require listening state */
+	if ((info.stream == (MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write) | MPT_SOCKETFLAG(Stream)))
+	    && (backlog >= 0)
+	    && listen(sock, backlog) < 0) {
+		(void) close(sock);
+		return -1;
 	}
 	if (sd->_id >= 0) {
 		(void) close(sd->_id);
 	}
 	sd->_id = sock;
 	
-	return info.stream;
+	return info.param.sock.port;
 }
 
 /*!
@@ -231,12 +238,20 @@ extern int mpt_connect(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRU
 	}
 	if (mode) {
 		info = *mode;
+		type = 0;
 	}
-	else if ((type = mpt_mode_parse(&info, where)) <= 0) {
+	else if ((type = mpt_mode_parse(&info, where)) < 0) {
 		errno = EINVAL;
 		return -1;
-	} else {
-		where += type;
+	}
+	else if (!type) {
+		info.family = AF_UNSPEC;
+		info.param.sock.type = SOCK_STREAM;
+		info.param.sock.proto = 0;
+		info.param.sock.port = 0;
+		if ((sock = socketSet(where, &info, bind)) < 0) {
+			return sock;
+		}
 	}
 	/* one-way type connection */
 	if (info.family < 0) {
@@ -244,7 +259,7 @@ extern int mpt_connect(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRU
 			errno = EINVAL;
 			return -1;
 		}
-		if ((sock = open(where, info.param.file.open, info.param.file.perm)) < 0) {
+		if ((sock = open(where + type, info.param.file.open, info.param.file.perm)) < 0) {
 			return sock;
 		}
 		info.stream  = (info.param.file.open & O_WRONLY) ? MPT_SOCKETFLAG(Write) : MPT_SOCKETFLAG(Read);

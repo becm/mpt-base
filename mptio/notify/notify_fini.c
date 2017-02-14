@@ -8,25 +8,6 @@
 
 /*!
  * \ingroup mptNotify
- * \brief initialize notification descriptor
- * 
- * Set initial values and reserve system resources.
- * 
- * \param no  notification descriptor
- */
-extern void mpt_notify_init(MPT_STRUCT(notify) *no)
-{
-	no->_disp.cmd = 0;
-	no->_disp.arg = 0;
-	
-	no->_slot._buf = no->_wait._buf = 0;
-	
-	no->_sysfd = -1;
-	no->_fdused = 0;
-}
-
-/*!
- * \ingroup mptNotify
  * \brief close notification descriptor
  * 
  * Clear bound references and system resources.

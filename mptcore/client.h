@@ -73,6 +73,12 @@ MPT_STRUCT(proxy) : public Reference<metatype>
 	inline proxy() : _hash(0)
 	{ }
 	int log(const char *, int , const char *, ...) const;
+	
+	template <typename T>
+	inline T *cast()
+	{
+		return _ref ? _ref->cast<T>() : 0;
+	}
 protected:
 #else /* __cplusplus */
 MPT_STRUCT(proxy)
@@ -85,13 +91,8 @@ MPT_STRUCT(proxy)
 
 __MPT_EXTDECL_BEGIN
 
-
-/* open connections to controller or standalone run */
-extern MPT_STRUCT(notify) *mpt_init(int , char **);
-
 /* get input from user */
 extern char *mpt_readline(const char *);
-
 
 /* initialize/preprare solver, execute solver step */
 extern int mpt_cevent_init(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);

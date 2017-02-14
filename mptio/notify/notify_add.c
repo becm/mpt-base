@@ -99,7 +99,7 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 				}
 			}
 		}
-		file = --no->_fdused;
+		--no->_fdused;
 	}
 #if defined(__linux)
 	if (no->_sysfd >= 0) {
@@ -108,8 +108,10 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 		ev.data.fd = file;
 		ev.events  = 0;
 		
-		file = epoll_ctl(no->_sysfd, EPOLL_CTL_DEL, file, &ev);
+		if ((file = epoll_ctl(no->_sysfd, EPOLL_CTL_DEL, file, &ev)) < 0) {
+			return file;
+		}
 	}
 #endif
-	return file;
+	return no->_fdused;
 }

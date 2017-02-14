@@ -43,13 +43,16 @@ public:
 	notify();
 	~notify();
 	
-	int wait(int what = -1, int wait = -1);
+	bool init(int , char * const []);
 	bool add(input *);
+	size_t used() const { return _fdused; }
 	
 	void setDispatch(dispatch *);
 	
+	int wait(int what = -1, int wait = -1);
 	input *next() const;
-	size_t used() const { return _fdused; }
+	
+	bool loop();
 protected:
 #else
 # define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
@@ -67,8 +70,10 @@ protected:
 
 __MPT_EXTDECL_BEGIN
 
+/* open connections to controller or standalone run */
+extern int mpt_init(MPT_STRUCT(notify) *, int , char * const []);
+
 /* initialize/clear poll compound data */
-extern void mpt_notify_init(MPT_STRUCT(notify) *);
 extern void mpt_notify_fini(MPT_STRUCT(notify) *);
 
 /* poll files in compound */

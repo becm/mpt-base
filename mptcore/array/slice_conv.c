@@ -14,15 +14,15 @@
 
 /*!
  * \ingroup mptArray
- * \brief get strings from slice
+ * \brief get values from slice
  * 
  * Convert zero-deliminated data on slice to text elements.
  * 
- * \param src  data slice descriptor
- * \param sep  argument separator
- * \param msg  message data
+ * \param s     data slice descriptor
+ * \param type  target type code
+ * \param data  value address
  * 
- * \return hint to event controller (int)
+ * \return source type and applied flags
  */
 extern int mpt_slice_conv(MPT_STRUCT(slice) *s, int type, void *data)
 {
