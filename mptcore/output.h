@@ -272,7 +272,7 @@ extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *
 /* create remote output instance */
 extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) * __MPT_DEFPAR(0));
 /* create local output instance */
-extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) * __MPT_DEFPAR(0));
+extern MPT_INTERFACE(output) *mpt_output_local(void);
 
 __MPT_EXTDECL_END
 

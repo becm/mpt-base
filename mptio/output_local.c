@@ -114,7 +114,7 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 	if ((name = pr->name) && !*name) {
 		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
 		pr->name = "history";
-		pr->desc = MPT_tr("local output with remote fallback");
+		pr->desc = MPT_tr("local output filter");
 		pr->val.fmt = fmt;
 		pr->val.ptr = &lo->pass;
 		return lo->pass ? 1 : 0;
@@ -166,7 +166,7 @@ static const MPT_INTERFACE_VPTR(output) localCtl = {
  * 
  * \return output descriptor
  */
-extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) *pass)
+extern MPT_INTERFACE(output) *mpt_output_local(void)
 {
 	static const MPT_STRUCT(local_output) defOut = {
 		{ &localCtl }, { 1 }, 0, MPT_HISTORY_INIT
@@ -177,8 +177,6 @@ extern MPT_INTERFACE(output) *mpt_output_local(MPT_INTERFACE(output) *pass)
 		return 0;
 	}
 	*od = defOut;
-	
-	od->pass = pass;
 	
 	od->hist.info.file = stdout;
 	od->hist.info.state  = MPT_OUTFLAG(PrintColor);

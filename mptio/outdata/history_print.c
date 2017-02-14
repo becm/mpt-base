@@ -145,7 +145,8 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	hist->mode = 0;
 	
 	if (mt->cmd == MPT_ENUM(MessageOutput)) {
-		hist->mode = type = mt->arg;
+		type = mt->arg;
+		hist->mode = type & ~0x60; /* no continuation and function flags */
 		type &= 0x7f;
 	}
 	/* setup answer output */
@@ -188,7 +189,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	}
 	/* set prefix string */
 	if ((hist->state & MPT_OUTFLAG(PrintColor))
-	    && (prefix = mpt_ansi_code(type))
+	    && (prefix = mpt_ansi_code(type & ~MPT_LOG(File)))
 	    && (isatty(fileno(fd)) <= 0)) {
 		prefix = 0;
 	}

@@ -12,7 +12,7 @@ include ../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
 # library config
-client : LDLIBS=-lmpt++ -lmptio -lmptcore
+client : LDLIBS=-lmpt++ -lmptio -lmptloader -lmptcore
 readline : LDLIBS=-lmptloader
 axis iter gen : LDLIBS=-lmptplot -lmptcore
 %_static : LDLIBS=-lmpt++ -lmpt

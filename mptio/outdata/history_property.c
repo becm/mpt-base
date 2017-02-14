@@ -68,6 +68,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(metatype) *src)
  */
 extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTERFACE(metatype) *src)
 {
+	int ret;
 	if (!name) {
 		return setHistfile(&hist->info, src);
 	}
@@ -79,6 +80,30 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTE
 	}
 	if (!strcasecmp(name, "format") || !strcasecmp(name, "fmt")) {
 		return mpt_valfmt_set(&hist->fmt._fmt, src);
+	}
+	if (!strcasecmp(name, "ignore")) {
+		uint8_t val;
+		if (!src) {
+			hist->info.ignore = MPT_LOG(Info);
+		}
+		if ((ret = src->_vptr->conv(src, 'y', &val)) >= 0) {
+			hist->info.ignore = val;
+		}
+		return MPT_ERROR(BadValue);
+	}
+	if (!strcasecmp(name, "level")) {
+		const char *ign = 0;
+		if (!src) {
+			hist->info.ignore = MPT_LOG(Info);
+		}
+		if ((ret = src->_vptr->conv(src, 's', &ign)) >= 0) {
+			int lv = mpt_log_level(ign);
+			if (lv < 0) {
+				return lv;
+			}
+			hist->info.ignore = lv + 1;
+		}
+		return ret;
 	}
 	return MPT_ERROR(BadArgument);
 }

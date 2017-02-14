@@ -39,11 +39,12 @@ MyClient::MyClient()
 
 int MyClient::init(mpt::metatype *)
 {
+    _ref = mpt::mpt_library_bind(0, "output:mpt_output_local", 0, 0);
 
     mpt::object *o;
     if ((o = cast<mpt::object>())) {
-        o->set("history", "/dev/stdout");
-        o->set("level", "info");
+        o->set("file", "/dev/stdout");
+        o->set("level", "debug");
         return 1;
     }
     return 0;
@@ -68,7 +69,7 @@ int main(int argc, char * const argv[])
     MyClient *c = new MyClient;
     c->init();
 
-    c->log(__func__, mpt::logger::Message | mpt::logger::LogPretty, "%s = %i", "value", 5);
+    c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     mpt::object *o;
     if ((o = c->cast<mpt::object>())) {
