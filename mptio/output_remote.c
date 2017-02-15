@@ -9,15 +9,14 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <unistd.h>
 #include <poll.h>
 
 #include "meta.h"
 #include "message.h"
+
 #include "output.h"
 
 #include "stream.h"
@@ -29,13 +28,23 @@ MPT_STRUCT(out_data) {
 	MPT_INTERFACE(input)    _in;
 	
 	MPT_STRUCT(reference) _ref;
-	MPT_STRUCT(notify)   *_no;
 	
 	MPT_STRUCT(connection) con;
 };
 
+static int outputInfile(const MPT_STRUCT(out_data) *od)
+{
+	MPT_STRUCT(stream) *srm;
+	if (MPT_socket_active(&od->con.out.sock)) {
+		return od->con.out.sock._id;
+	}
+	if (!(srm = (void *) od->con.out.buf._buf)) {
+		return -1;
+	}
+	return _mpt_stream_fread(&srm->_info);
+}
 /* metatype interface */
-static void metaUnref(MPT_INTERFACE(unrefable) *mt)
+static void outputMetaUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	MPT_STRUCT(out_data) *od = (void *) mt;
 	uintptr_t c;
@@ -45,7 +54,7 @@ static void metaUnref(MPT_INTERFACE(unrefable) *mt)
 	mpt_connection_fini(&od->con);
 	free(od);
 }
-static int metaAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
+static int outputMetaAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 {
 	MPT_STRUCT(out_data) *od = (void *) mt;
 	if (!val) {
@@ -54,11 +63,19 @@ static int metaAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 		return mpt_object_pset((void *) &od->_out, 0, val, 0);
 	}
 }
-static int metaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
+static int outputMetaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
 {
 	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
 	MPT_STRUCT(out_data) *od = (void *) mt;
 	void *ptr;
+	
+	if (type == MPT_ENUM(TypeSocket)) {
+		int fd = outputInfile(od);
+		if (addr) {
+			*((int *) addr) = fd;
+		}
+		return type;
+	}
 	switch (type) {
 	  case 0: ptr = (void *) fmt; type = MPT_ENUM(TypeOutput); break;
 	  case MPT_ENUM(TypeMeta): ptr = &od->_mt; break;
@@ -72,16 +89,16 @@ static int metaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
 	}
 	return type;
 }
-static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *from)
+static MPT_INTERFACE(metatype) *outputMetaClone(const MPT_INTERFACE(metatype) *from)
 {
 	(void) from;
 	return 0;
 }
 static const MPT_INTERFACE_VPTR(metatype) metaCtl = {
-	{ metaUnref },
-	metaAssign,
-	metaConv,
-	metaClone
+	{ outputMetaUnref },
+	outputMetaAssign,
+	outputMetaConv,
+	outputMetaClone
 };
 /* object interface */
 static void outputUnref(MPT_INTERFACE(unrefable) *obj)
@@ -122,10 +139,7 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 	static const char _fcn[] = "mpt::output::setProperty";
 	
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
-	MPT_INTERFACE(input) *in = &od->_in;
-	int ret, oldFd, newFd;
-	
-	oldFd = in->_vptr->_file(in);
+	int ret;
 	
 	ret = mpt_connection_set(&od->con, name, src);
 	if (ret < 0) {
@@ -136,34 +150,6 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_I
 			mpt_log(0, _fcn, MPT_LOG(Debug), "%s: %s",
 			        MPT_tr("unable to set property"), name);
 		}
-	}
-	newFd = in->_vptr->_file(in);
-	
-	if (!od->_no || oldFd == newFd) {
-		return ret;
-	}
-	/* remove old registration */
-	if (oldFd > 2) {
-		mpt_notify_clear(od->_no, oldFd);
-	}
-	if (ret < 0 || newFd < 0) {
-		return ret;
-	}
-	/* add local reference for event controller */
-	if (!outputRef((void *) &od->_out)) {
-		mpt_log(0, _fcn, MPT_LOG(Error), "%s: %s "PRIxPTR,
-		        MPT_tr("failed"),
-		        MPT_tr("reference output"),
-		        od);
-	}
-	/* use first reference for notifier */
-	else if (mpt_notify_add(od->_no, POLLIN, &od->_in) < 0) {
-		mpt_log(0, _fcn, MPT_LOG(Error), "%s: %s: fd%i",
-		        MPT_tr("failed"),
-		        MPT_tr("register notifier"),
-		        newFd);
-		/* clear references */
-		outputUnref((void *) &od->_out);
 	}
 	return ret;
 }
@@ -194,7 +180,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 		MPT_STRUCT(buffer) *buf;
 		MPT_STRUCT(command) *ans;
 		uint64_t ansid;
-		uint8_t *data, idlen;
+		uint8_t *data, idlen, smax;
 		
 		/* use existing data */
 		if (!(od->con.out.state & MPT_OUTFLAG(Received))) {
@@ -217,14 +203,16 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			timeout = 0;
 		}
 		idlen = od->con.out._idlen;
+		smax = od->con.out._smax;
 		buf = od->con.out.buf._buf;
 		data = (void *) (buf + 1);
 		
-		if (!buf || buf->used < idlen) {
+		if (!buf || buf->used < (idlen + smax)) {
 			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
 			        MPT_tr("bad message size"), MPT_tr("unable to get new data"));
 			return MPT_ERROR(BadValue);
 		}
+		data += smax;
 		/* no reply message */
 		if (!(data[0] & 0x80)) {
 			size_t max, len;
@@ -356,13 +344,8 @@ static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) 
 }
 static int outputInputFile(MPT_INTERFACE(input) *in)
 {
-	const MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
-	MPT_STRUCT(stream) *srm;
-	
-	if (!MPT_socket_active(&odata->con.out.sock) && (srm = (void *) odata->con.out.buf._buf)) {
-		return _mpt_stream_fread(&srm->_info);
-	}
-	return odata->con.out.sock._id;
+	const MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
+	return outputInfile(od);
 }
 const MPT_INTERFACE_VPTR(input) inputCtl = {
 	{ outputInputUnref },
@@ -375,22 +358,17 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
  * \ingroup mptOutput
  * \brief create output
  * 
- * New output descriptor.
+ * Create new output metatype to be connected to
+ * remote or local socket types.
+ * Can also write to and read from coded local files.
  * 
- * If notification descriptor is passed
- * input on notifier is updated on connection change.
- * 
- * Passed notifier must be available for output livetime.
- * 
- * \param no notification descriptor
- * 
- * \return output descriptor
+ * \return remote output metatype
  */
-extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) *no)
+extern MPT_INTERFACE(metatype) *mpt_output_remote()
 {
 	static const MPT_STRUCT(out_data) defOut = {
 		{ &metaCtl }, { &outCtl }, { &inputCtl },
-		{ 1 }, 0,
+		{ 1 },
 		MPT_CONNECTION_INIT
 	};
 	MPT_STRUCT(out_data) *od;
@@ -401,11 +379,6 @@ extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) *no)
 	*od = defOut;
 	
 	od->con.out.state = MPT_OUTFLAG(PrintColor);
-	
-	od->con.pass = 0;
-	od->con.show = 0;
-	
-	od->_no = no;
 	
 	return &od->_mt;
 }

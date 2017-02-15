@@ -2,12 +2,7 @@
  * finalize connection data
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-
-#include "array.h"
-#include "queue.h"
-#include "event.h"
 
 #include "stream.h"
 
@@ -29,7 +24,7 @@ extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 	if (MPT_socket_active(&con->out.sock)) {
 		mpt_outdata_close(&con->out);
 	}
-	if ((buf = con->out.buf._buf)) {
+	else if ((buf = con->out.buf._buf)) {
 		mpt_stream_close((void *) buf);
 	}
 	con->cid = 0;
@@ -51,6 +46,12 @@ extern void mpt_connection_close(MPT_STRUCT(connection) *con)
  */
 extern void mpt_connection_fini(MPT_STRUCT(connection) *con)
 {
+	MPT_STRUCT(buffer) *buf;
+	
 	mpt_connection_close(con);
+	if (!MPT_socket_active(&con->out.sock)
+	    && (buf = con->out.buf._buf)) {
+		free(buf);
+	}
 	mpt_array_clone(&con->_wait, 0);
 }

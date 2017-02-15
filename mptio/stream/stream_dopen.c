@@ -13,7 +13,6 @@
 #include <sys/mman.h>
 
 #include "queue.h"
-#include "convert.h"
 
 #include "stream.h"
 

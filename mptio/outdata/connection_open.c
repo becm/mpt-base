@@ -41,10 +41,10 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *con, const char *to, cons
 	/* get mode from target string */
 	if (!mp) {
 		if ((flg = mpt_mode_parse(&mode, to)) < 0) {
-			flg = 0;
-		} else {
-			mp = &mode;
+			return flg;
 		}
+		mode.stream |= MPT_STREAMFLAG(Buffer);
+		mp = &mode;
 	}
 	/* create new connection */
 	if ((ret = mpt_connect(&tmp, to+flg, mp)) < 0) {
@@ -60,7 +60,7 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *con, const char *to, cons
 		    || !(dec = mpt_message_decoder(encoding))) {
 			return MPT_ERROR(BadEncoding);
 		}
-		if (mpt_stream_dopen(&s, &tmp, mp ? mp->stream : flg) < 0) {
+		if (mpt_stream_dopen(&s, &tmp, mp->stream) < 0) {
 			(void) close(tmp._id);
 			return MPT_ERROR(BadOperation);
 		}

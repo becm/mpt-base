@@ -2,16 +2,13 @@
  * new stream bound to notifier.
  */
 
-#include <string.h>
-#include <errno.h>
-
 #include <unistd.h>
 #include <poll.h>
 
 #include "convert.h"
-#include "event.h"
 
 #include "stream.h"
+
 #include "notify.h"
 
 /*!
@@ -37,8 +34,7 @@ extern int mpt_notify_connect(MPT_STRUCT(notify) *no, const char *dest)
 	int len, flags, enc = MPT_ENUM(EncodingCobs);
 	
 	if (!no || !dest) {
-		errno = EFAULT;
-		return 0;
+		return MPT_ERROR(BadArgument);
 	}
 	if ((len = mpt_mode_parse(&mode, dest)) < 0) {
 		len = mpt_mode_parse(&mode, 0);
@@ -49,23 +45,23 @@ extern int mpt_notify_connect(MPT_STRUCT(notify) *no, const char *dest)
 	/* require input stream */
 	if (!(flags & MPT_SOCKETFLAG(Stream)) || !(flags & MPT_SOCKETFLAG(Read))) {
 		(void) close(sock._id);
-		errno = EINVAL;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	if (mode.family >= 0) {
-		/* 2byte ID for bidirectional only */
+		/* 2byte ID for bidirectional connection */
 		len   = sizeof(uint16_t);
 		flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
 	}
 	else {
-		if (!len) enc = MPT_ENUM(EncodingCommand);
+		if (!len) {
+			enc = MPT_ENUM(EncodingCommand);
+		}
 		len   = 0;
 		flags = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(ReadBuf);
 	}
 	if (!(in = mpt_stream_input(&sock, flags, enc, len))) {
 		close(sock._id);
-		errno = EINVAL;
-		return -1;
+		return MPT_ERROR(BadOperation);
 	}
 	if (mpt_notify_add(no, POLLIN, in) < 0) {
 		in->_vptr->ref.unref((void *) in);

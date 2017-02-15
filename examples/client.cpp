@@ -25,26 +25,27 @@
 class MyClient : public mpt::client, public mpt::proxy
 {
 public:
-    MyClient();
+    MyClient(const char *);
     virtual ~MyClient() { }
     
     void unref();
     int init(mpt::metatype * = 0);
     int step(mpt::metatype *);
+    
+    const char *enc;
 };
-MyClient::MyClient()
-{
-    _ref = mpt::mpt_output_new();
-}
+MyClient::MyClient(const char *e) : enc(e)
+{ }
 
 int MyClient::init(mpt::metatype *)
 {
-    _ref = mpt::mpt_library_bind(0, "output:mpt_output_local", 0, 0);
+//     _ref = mpt::mpt_library_bind(0, "output:mpt_output_local", 0, 0);
+    _ref = mpt::mpt_output_remote();
 
     mpt::object *o;
     if ((o = cast<mpt::object>())) {
-        o->set("file", "/dev/stdout");
-        o->set("level", "debug");
+        o->set(0, "w:client.out");
+        if (enc) o->set("encoding", enc);
         return 1;
     }
     return 0;
@@ -66,7 +67,7 @@ int main(int argc, char * const argv[])
     }
     n.setDispatch(0);
 
-    MyClient *c = new MyClient;
+    MyClient *c = new MyClient(argv[1]);
     c->init();
 
     c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);

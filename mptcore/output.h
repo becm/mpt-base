@@ -162,7 +162,7 @@ MPT_STRUCT(connection)
 protected:
 #endif
 	MPT_STRUCT(outdata)       out;   /* output data backend */
-	uintptr_t                 cid;   /* active message id */
+	uint32_t                  cid;   /* active message id */
 	_MPT_ARRAY_TYPE(command) _wait;  /* pending message reply actions */
 	
 	/* reply context */
@@ -172,11 +172,9 @@ protected:
 	MPT_INTERFACE(reply_context) *_rctx;
 # define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
                                0, MPT_ARRAY_INIT, \
-                               0, \
-                               0,0 }
+                               0 }
+
 #endif
-	uint8_t  pass;   /* limit transfered messages */
-	uint8_t  show;   /* print replies to messages */
 };
 
 MPT_STRUCT(output_values)
@@ -226,9 +224,10 @@ extern int mpt_output_type(uint8_t arg, int min);
 
 /* close outdata connection and buffer */
 extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
-/* get/set outdata property */
+/* set outdata property */
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
-extern int mpt_outdata_set(MPT_STRUCT(outdata) *, const char *, MPT_INTERFACE(metatype) *);
+/* assing outdata socket */
+extern int mpt_outdata_assign(MPT_STRUCT(outdata) *, const MPT_STRUCT(socket) *);
 
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
@@ -243,6 +242,7 @@ extern void mpt_connection_fini(MPT_STRUCT(connection) *);
 /* clear connection data */
 extern void mpt_connection_close(MPT_STRUCT(connection) *);
 /* set new connection target */
+extern int mpt_connection_assign(MPT_STRUCT(connection) *, const MPT_STRUCT(socket) *);
 extern int mpt_connection_open(MPT_STRUCT(connection) *, const char *, const MPT_STRUCT(fdmode) *);
 /* get/set outdata property */
 extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
@@ -270,7 +270,7 @@ extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(output_va
 extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* create remote output instance */
-extern MPT_INTERFACE(metatype) *mpt_output_new(MPT_STRUCT(notify) * __MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_output_remote(void);
 /* create local output instance */
 extern MPT_INTERFACE(output) *mpt_output_local(void);
 

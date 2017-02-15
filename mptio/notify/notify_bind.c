@@ -13,9 +13,9 @@
 #include <sys/socket.h>
 
 #include "convert.h"
-#include "event.h"
 
 #include "stream.h"
+
 #include "notify.h"
 
 struct socketInput {
@@ -96,42 +96,39 @@ extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 	int type, port;
 	
 	if (!no || !dest) {
-		errno = EFAULT;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	/* insist on tcp listening socket */
 	if ((type = mpt_mode_parse(&mode, dest)) < 0) {
-		errno = EINVAL;
-		return -1;
+		return type;
 	}
 	/* default to stream socket */
 	if (!type) {
 		if ((port = mpt_bind(&sock, dest, 0, nl)) < 0) {
-			return -1;
+			return port;
 		}
 	}
 	/* no file or packet modes allowed */
 	else if ((mode.family < 0) || (mode.param.sock.type != SOCK_STREAM)) {
-		errno = EINVAL;
-		return -1;
+		return MPT_ERROR(BadType);
 	}
 	/* create listening socket */
 	else if ((port = mpt_bind(&sock, dest+type, &mode, nl < 0 ? 0 : nl)) < 0) {
-		return -1;
+		return port;
 	}
 	if (!(in = malloc(sizeof(*in)))) {
 		close(sock._id);
-		return -1;
+		return MPT_ERROR(BadOperation);
 	}
 	in->_in._vptr = &socketInput;
 	in->sock = sock;
 	in->no = no;
 	in->nl = nl;
 	
-	if (mpt_notify_add(no, POLLIN, &in->_in) >= 0) {
+	if ((type = mpt_notify_add(no, POLLIN, &in->_in)) >= 0) {
 		return port;
 	}
 	close(sock._id);
 	free(in);
-	return -2;
+	return type;
 }

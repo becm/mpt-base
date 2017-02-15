@@ -47,12 +47,33 @@ bool object::set(const char *name, const value &val, logger *out)
     pr.val.fmt = val.fmt;
     if (!(pr.val.ptr = val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
 
+    const char *err;
     if (ret == BadArgument) {
-        out->message(_fname, out->Error, "%s: %s.%s", MPT_tr("bad property"), pr.name, name);
-    } else if (ret == BadValue) {
-        out->message(_fname, out->Error, "%s: %s.%s = \"%s\"", MPT_tr("bad property value"), pr.name, name, pr.val.ptr);
-    } else if (ret == BadType) {
-        out->message(_fname, out->Error, "%s: %s.%s = <%s>", MPT_tr("bad property type"), pr.name, name, pr.val.fmt);
+        err = MPT_tr("bad property");
+        if (name) {
+            out->message(_fname, out->Error, "%s: %s.%s", err, pr.name, name);
+        } else {
+            out->message(_fname, out->Error, "%s: %s", err, pr.name);
+        }
+        return false;
+    }
+    if (ret == BadValue) {
+        err = MPT_tr("bad property value");
+        if (name) {
+            out->message(_fname, out->Error, "%s: %s.%s = \"%s\"", err, pr.name, name, pr.val.ptr);
+        } else {
+            out->message(_fname, out->Error, "%s: %s = \"%s\"", err, pr.name, pr.val.ptr);
+        }
+        return false;
+    }
+    if (ret == BadType) {
+        err = MPT_tr("bad property type");
+        if (name) {
+            out->message(_fname, out->Error, "%s: %s.%s = <%s>", err, pr.name, name, pr.val.fmt);
+        } else {
+            out->message(_fname, out->Error, "%s: %s = <%s>", err, pr.name, pr.val.fmt);
+        }
+        return false;
     }
     return false;
 }

@@ -8,7 +8,6 @@
 #include <errno.h>
 
 #include "array.h"
-#include "event.h"
 
 #include "notify.h"
 
@@ -57,8 +56,9 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 		struct epoll_event ev;
 		ev.data.fd = file;
 		ev.events  = mode;
-		if ((mode = epoll_ctl(no->_sysfd, EPOLL_CTL_ADD, file, &ev)) < 0)
+		if ((mode = epoll_ctl(no->_sysfd, EPOLL_CTL_ADD, file, &ev)) < 0) {
 			return mode;
+		}
 	}
 #endif
 	*base = in;

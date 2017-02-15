@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include "convert.h"
 #include "message.h"
 
 static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operation)())

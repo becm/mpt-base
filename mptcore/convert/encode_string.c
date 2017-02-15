@@ -1,6 +1,5 @@
 
 #include <string.h>
-#include <errno.h>
 #include <sys/uio.h>
 
 #include "message.h"
@@ -45,12 +44,12 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct io
 		
 		if (!sep) {
 			if (!max) {
-				return -2;
+				return MPT_ERROR(MissingBuffer);
 			}
 			base[off++] = info->_ctx;
 		}
 		else if (max < sep) {
-			return -2;
+			return MPT_ERROR(MissingBuffer);
 		}
 		else {
 			base += off;
@@ -64,18 +63,13 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct io
 	}
 	/* start priority data */
 	if (!(len = from->iov_len)) {
-		errno = ENOTSUP;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	/* delete buffered data */
 	if (!from->iov_base) {
 		/* no data available */
 		if (!off) {
-			return -2;
-		}
-		if (len) {
-			errno = ENOTSUP;
-			return -1;
+			return MPT_ERROR(MissingData);
 		}
 		/* no active message, remove endbyte */
 		if (!(base)[off-1]) {
@@ -93,15 +87,16 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct io
 				off = pos;
 				continue;
 			}
-			return -2;
+			return MPT_ERROR(MissingData);
 		}
 		info->done -= off;
 		
 		return off;
 	}
+	if (!(max -= off)) {
+		return MPT_ERROR(MissingBuffer);
+	}
 	base += off;
-	max  -= off;
-	
 	if (len < max) {
 		max = from->iov_len;
 	}
@@ -109,8 +104,7 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct io
 	if (len) {
 		if (!sep) {
 			if (max && memchr(from->iov_base, info->_ctx, max)) {
-				errno = EINVAL;
-				return -4;
+				return MPT_ERROR(BadEncoding);
 			}
 		}
 		/* check longer separator pattern */
@@ -144,8 +138,7 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *info, const struct io
 		}
 	}
 	else if (memchr(from->iov_base, info->_ctx, max)) {
-		errno = EINVAL;
-		return -3;
+		return MPT_ERROR(BadEncoding);
 	}
 	/* copy source data */
 	memcpy(base-sep, from->iov_base, max);
