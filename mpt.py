@@ -636,8 +636,8 @@ def client(args):
     except KeyboardInterrupt:
         error("Keyboard Interrupt")
     
-    except FileNotFoundError:
-        error("Bad executable name")
+    except OSError:
+        error("File not accessable")
     
     error("Hit Enter to continue")
     sys.stdin.readline()
