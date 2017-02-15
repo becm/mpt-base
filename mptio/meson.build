@@ -5,9 +5,8 @@
 io_src = files(
   'connect.c',
   'init.c',
-  'newline_string.c',
   'output_local.c',
-  'output_new.c'
+  'output_remote.c'
 )
 foreach d : [ 'notify', 'outdata', 'stream' ]
   subdir(d)

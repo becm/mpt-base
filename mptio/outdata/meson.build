@@ -1,5 +1,6 @@
 # meson.build.gen: *.c
 src = files(
+  'connection_assign.c',
   'connection_await.c',
   'connection_dispatch.c',
   'connection_fini.c',
@@ -16,7 +17,7 @@ src = files(
   'history_push.c',
   'history_values.c',
   'outdata_close.c',
-  'outdata_property.c',
+  'outdata_get.c',
   'outdata_push.c',
   'outdata_recv.c',
   'outdata_reply.c',
