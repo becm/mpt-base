@@ -39,6 +39,9 @@ public:
 	virtual reply_context *defer();
 	
 	class data;
+protected:
+	inline ~reply_context()
+	{ }
 };
 #else
 MPT_INTERFACE(reply_context);
@@ -56,7 +59,11 @@ MPT_INTERFACE(reply_context)
 /* single event */
 #ifdef __cplusplus
 class reply_context::data : public reply_context, public reply_data
-{ };
+{
+protected:
+	inline ~data()
+	{ }
+};
 
 MPT_STRUCT(event)
 {

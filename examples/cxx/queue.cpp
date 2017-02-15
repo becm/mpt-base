@@ -26,7 +26,6 @@ extern int main(int , char * const [])
 	p.push('l');
 	p.push('l');
 	p.push('o');
-	p.push('\0');
 	p.unshift('h');
 	
 	std::cout << p.data() << std::endl;

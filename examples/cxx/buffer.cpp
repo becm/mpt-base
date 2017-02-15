@@ -65,7 +65,6 @@ extern int main(int , char * const [])
 	std::cout << d.slice() << std::endl;
 	
 	cq.push('b');
-	cq.push(0);
 	std::cout << cq.data() << std::endl;
 	puts(cq.data().base());
 	
