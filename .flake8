@@ -1,0 +1,4 @@
+[flake8]
+ignore = 
+    # W293: empty line indent: keep for better orientation in python files
+    W293
