@@ -53,23 +53,23 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 	    case 'b':
 		if (!flg) {
 			if (sgn) {
-				len = snprintf(dest, left, "%+*"PRIi8, wd, *((int8_t*)arg));
+				len = snprintf(dest, left, "%+*" PRIi8, wd, *((int8_t*)arg));
 			} else {
-				len = snprintf(dest, left, "%*"PRIi8, wd, *((int8_t*)arg));
+				len = snprintf(dest, left, "%*" PRIi8, wd, *((int8_t*)arg));
 			}
 			break;
 		}
 	    case 'y':
 		if (!flg) {
-			len = snprintf(dest, left, "%*"PRIu8, wd, *((uint8_t*)arg));
+			len = snprintf(dest, left, "%*" PRIu8, wd, *((uint8_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntHex)) {
-			len = snprintf(dest, left, "%*"PRIx8, wd, *((uint8_t*)arg));
+			len = snprintf(dest, left, "%*" PRIx8, wd, *((uint8_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntOctal)) {
-			len = snprintf(dest, left, "%*"PRIo8, wd, *((uint8_t*)arg));
+			len = snprintf(dest, left, "%*" PRIo8, wd, *((uint8_t*)arg));
 			break;
 		}
 		return MPT_ERROR(BadValue);
@@ -77,23 +77,23 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 	    case 'n':
 		if (!flg) {
 			if (sgn) {
-				len = snprintf(dest, left, "%+*"PRIi16, wd, *((int16_t*)arg));
+				len = snprintf(dest, left, "%+*" PRIi16, wd, *((int16_t*)arg));
 			} else {
-				len = snprintf(dest, left, "%*"PRIi16, wd, *((int16_t*)arg));
+				len = snprintf(dest, left, "%*" PRIi16, wd, *((int16_t*)arg));
 			}
 			break;
 		}
 	    case 'q':
 		if (!flg) {
-			len = snprintf(dest, left, "%*"PRIu16, wd, *((uint16_t*)arg));
+			len = snprintf(dest, left, "%*" PRIu16, wd, *((uint16_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntHex)) {
-			len = snprintf(dest, left, "%*"PRIx16, wd, *((uint16_t*)arg));
+			len = snprintf(dest, left, "%*" PRIx16, wd, *((uint16_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntOctal)) {
-			len = snprintf(dest, left, "%*"PRIo16, wd, *((uint16_t*)arg));
+			len = snprintf(dest, left, "%*" PRIo16, wd, *((uint16_t*)arg));
 			break;
 		}
 		return MPT_ERROR(BadValue);
@@ -101,23 +101,23 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 	    case 'i':
 		if (!flg) {
 			if (sgn) {
-				len = snprintf(dest, left, "%+*"PRIi32, wd, *((int32_t*)arg));
+				len = snprintf(dest, left, "%+*" PRIi32, wd, *((int32_t*)arg));
 			} else {
-				len = snprintf(dest, left, "%*"PRIi32, wd, *((int32_t*)arg));
+				len = snprintf(dest, left, "%*" PRIi32, wd, *((int32_t*)arg));
 			}
 			break;
 		}
 	    case 'u':
 		if (!flg) {
-			len = snprintf(dest, left, "%*"PRIu32, wd, *((uint32_t*)arg));
+			len = snprintf(dest, left, "%*" PRIu32, wd, *((uint32_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntHex)) {
-			len = snprintf(dest, left, "%*"PRIx32, wd, *((uint32_t*)arg));
+			len = snprintf(dest, left, "%*" PRIx32, wd, *((uint32_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntOctal)) {
-			len = snprintf(dest, left, "%*"PRIo32, wd, *((uint32_t*)arg));
+			len = snprintf(dest, left, "%*" PRIo32, wd, *((uint32_t*)arg));
 			break;
 		}
 		return MPT_ERROR(BadValue);
@@ -125,23 +125,23 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 	    case 'x':
 		if (!flg) {
 			if (sgn) {
-				len = snprintf(dest, left, "%+*"PRIi64, wd, *((int64_t*)arg));
+				len = snprintf(dest, left, "%+*" PRIi64, wd, *((int64_t*)arg));
 			} else {
-				len = snprintf(dest, left, "%*"PRIi64, wd, *((int64_t*)arg));
+				len = snprintf(dest, left, "%*" PRIi64, wd, *((int64_t*)arg));
 			}
 			break;
 		}
 	    case 't':
 		if (!flg) {
-			len = snprintf(dest, left, "%*"PRIu64, wd, *((uint64_t*)arg));
+			len = snprintf(dest, left, "%*" PRIu64, wd, *((uint64_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntHex)) {
-			len = snprintf(dest, left, "%*"PRIx64, wd, *((uint64_t*)arg));
+			len = snprintf(dest, left, "%*" PRIx64, wd, *((uint64_t*)arg));
 			break;
 		}
 		if (flg & MPT_VALFMT(IntOctal)) {
-			len = snprintf(dest, left, "%*"PRIo64, wd, *((uint64_t*)arg));
+			len = snprintf(dest, left, "%*" PRIo64, wd, *((uint64_t*)arg));
 			break;
 		}
 		return MPT_ERROR(BadValue);

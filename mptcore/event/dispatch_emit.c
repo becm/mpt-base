@@ -41,7 +41,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		/* bad default command */
 		if (!(cmd = mpt_command_get(&disp->_d, tmp.id))) {
 			disp->_def = 0;
-			mpt_log(0, __func__, MPT_LOG(Critical), "%s (%"PRIxPTR")",
+			mpt_log(0, __func__, MPT_LOG(Critical), "%s (%" PRIxPTR ")",
 			        MPT_tr("invalid default command id"), tmp.id);
 			return MPT_ERROR(BadValue);
 		}
@@ -79,7 +79,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	}
 	/* bad execution of command */
 	if (state < 0) {
-		mpt_context_reply(ev->reply, state, "%s: %"PRIxPTR,
+		mpt_context_reply(ev->reply, state, "%s: %" PRIxPTR,
 		                  MPT_tr("command execution failed"), ev->id);
 		return state;
 	}
@@ -88,18 +88,18 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		state &= ~MPT_EVENTFLAG(Default);
 		if (ev->id) {
 			if (disp->_def == ev->id) {
-				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%" PRIxPTR ")",
 				        MPT_tr("keep default event"), disp->_def);
 			} else if (disp->_def) {
-				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR" > %"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%" PRIxPTR " > %" PRIxPTR ")",
 				        MPT_tr("default event replaced"), disp->_def, ev->id);
 			} else {
-				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
+				mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%" PRIxPTR ")",
 				        MPT_tr("default event added"), ev->id);
 			}
 		}
 		else if (disp->_def) {
-			mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%"PRIxPTR")",
+			mpt_log(0, __func__, MPT_DISPATCH_LOG_ACTION, "%s (%" PRIxPTR ")",
 			        MPT_tr("default event removed"), disp->_def);
 		}
 		else if (!(state & MPT_EVENTFLAG(Fail))) {

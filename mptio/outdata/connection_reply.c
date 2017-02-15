@@ -43,29 +43,29 @@ extern int mpt_connection_reply(MPT_STRUCT(connection) *con, const MPT_STRUCT(me
 		mpt_message_buf2id(rd->val, rd->len, &id);
 		
 		if (!(srm = (void *) con->out.buf._buf)) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("unable to reply"), id, MPT_tr("no target descriptor"));
 			return MPT_ERROR(BadArgument);
 		}
 		ret = mpt_stream_reply(srm, msg, rd->len, rd->val);
 		
 		if (mpt_stream_flags(&srm->_info) & MPT_STREAMFLAG(MesgActive)) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("unable to reply"), id, MPT_tr("message creation in progress"));
 			return MPT_ERROR(BadArgument);
 		}
 		if ((ret = mpt_stream_push(srm, rd->len, rd->val)) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("bad reply operation"), id, MPT_tr("unable to start reply"));
 			return ret;
 		}
 		rd->len = 0;
 		if (msg && mpt_stream_append(srm, msg) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Warning), "%s (%08"PRIx64"): %s",
+			mpt_log(0, __func__, MPT_LOG(Warning), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("bad reply operation"), id, MPT_tr("unable to append message"));
 		}
 		if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08"PRIx64"): %s",
+			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("bad reply operation"), id, MPT_tr("unable to terminate reply"));
 			if (mpt_stream_push(srm, 1, 0) < 0) {
 				return ret;

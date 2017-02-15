@@ -2,8 +2,11 @@
  * finalize connection data
  */
 
+#define _POSIX_C_SOURCE 1 /* for fdopen() */
+
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
+#include <strings.h> /* for strcasecmp() */
 
 #include "meta.h"
 #include "array.h"

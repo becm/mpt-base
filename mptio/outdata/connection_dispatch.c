@@ -65,7 +65,7 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 			}
 			/* find reply handler */
 			if (!(ans = mpt_command_get(&con->_wait, rid))) {
-				mpt_log(0, _func, MPT_LOG(Error), "%s: %s (%08"PRIx64")",
+				mpt_log(0, _func, MPT_LOG(Error), "%s: %s (%08" PRIx64 ")",
 				        MPT_tr("reply processing failed"), MPT_tr("unknown id"), rid);
 				return MPT_ERROR(BadValue);
 			}
@@ -184,7 +184,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 			return MPT_ERROR(BadValue);
 		}
 		if (!(ans = mpt_command_get(&con->_wait, id))) {
-			mpt_log(0, _func, MPT_LOG(Error), "%s: %s ("PRIx64")",
+			mpt_log(0, _func, MPT_LOG(Error), "%s: %s (" PRIx64 ")",
 			        MPT_tr("reply processing failed"), MPT_tr("message not registered"), id);
 			return MPT_ERROR(MissingBuffer);
 		}

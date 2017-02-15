@@ -279,7 +279,7 @@ public:
             if ((ans = srm._wait.get(rid))) {
                 return ans->cmd(ans->arg, &tmp);
             }
-            error(_func, "%s (id = %08"PRIx64")", MPT_tr("unknown reply id"), rid);
+            error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
             return BadValue;
         }
         reply_context::data *rc = 0;
