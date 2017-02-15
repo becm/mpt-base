@@ -6,6 +6,7 @@ src = files(
   'memfcn.c',
   'memstr.c',
   'memtok.c',
+  'message_append.c',
   'message_argv.c',
   'message_get.c',
   'message_id.c',

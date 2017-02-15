@@ -14,6 +14,7 @@ src = files(
   'stream_poll.c',
   'stream_push.c',
   'stream_read.c',
+  'stream_reply.c',
   'stream_seek.c',
   'stream_setmode.c',
   'stream_setter.c',
