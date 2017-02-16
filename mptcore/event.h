@@ -23,6 +23,8 @@ MPT_STRUCT(reply_data)
 	inline bool active() const
 	{ return len; }
 	bool setData(size_t , const void *);
+	
+	class context;
 protected:
 #endif
 	void     *ptr;
@@ -35,10 +37,8 @@ protected:
 class reply_context : public unrefable
 {
 public:
-	virtual int set(const struct message) = 0;
+	virtual int reply(const struct message) = 0;
 	virtual reply_context *defer();
-	
-	class data;
 protected:
 	inline ~reply_context()
 	{ }
@@ -47,7 +47,7 @@ protected:
 MPT_INTERFACE(reply_context);
 MPT_INTERFACE_VPTR(reply_context) {
 	MPT_INTERFACE_VPTR(unrefable) ref;
-	int (*set)(MPT_INTERFACE(reply_context) *, const MPT_STRUCT(message) *);
+	int (*reply)(MPT_INTERFACE(reply_context) *, const MPT_STRUCT(message) *);
 	MPT_INTERFACE(reply_context) *(*defer)(MPT_INTERFACE(reply_context) *);
 };
 MPT_INTERFACE(reply_context)
@@ -58,13 +58,6 @@ MPT_INTERFACE(reply_context)
 
 /* single event */
 #ifdef __cplusplus
-class reply_context::data : public reply_context, public reply_data
-{
-protected:
-	inline ~data()
-	{ }
-};
-
 MPT_STRUCT(event)
 {
 	inline event() : reply(0), msg(0), id(0)
@@ -216,12 +209,13 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-inline bool reply_data::setData(size_t len, const void *data)
+class reply_data::context : public reply_context, public reply_data
 {
-    if (len && active()) return false;
-    return (mpt_reply_set(this, len, data) < 0) ? false : true;
-}
-class MessageSource
+protected:
+	inline ~context()
+	{ }
+};
+class MessageSource : public reply_context
 {
 public:
     virtual ~MessageSource()
@@ -229,7 +223,7 @@ public:
 
     virtual const struct message *currentMessage(bool align = false) = 0;
     virtual size_t pendingMessages(int wait = 0) = 0;
-    virtual int reply(const struct message * = 0);
+    virtual int reply(const struct message * = 0) __MPT_OVERRIDE;
 };
 #endif
 

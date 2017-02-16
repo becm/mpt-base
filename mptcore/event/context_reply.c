@@ -101,7 +101,7 @@ extern int mpt_context_reply(MPT_INTERFACE(reply_context) *rc, int code, const c
 				msg.clen = 1;
 			}
 		}
-		if ((ret = rc->_vptr->set(rc, &msg)) < 0) {
+		if ((ret = rc->_vptr->reply(rc, &msg)) < 0) {
 			return ret;
 		}
 		return 0;

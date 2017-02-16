@@ -236,7 +236,7 @@ public:
 protected:
 	stream *_srm;
 	command::array _wait;
-	Reference<reply_context::data> _ctx;
+	Reference<reply_data::context> _ctx;
 	uintptr_t _cid;
 	int _inputFile;
 	uint8_t _idlen;

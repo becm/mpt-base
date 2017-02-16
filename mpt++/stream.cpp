@@ -282,7 +282,7 @@ public:
             error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
             return BadValue;
         }
-        reply_context::data *rc = 0;
+        reply_data::context *rc = 0;
         for (uint8_t i = 0; i < idlen; ++i) {
             if (!id[i]) {
                 continue;
@@ -292,7 +292,7 @@ public:
                 break;
             }
             if (!rc->setData(idlen, id)) {
-                error(_func, "%s", MPT_tr("reply context in use"));
+                error(_func, "%s", MPT_tr("reply context unusable"));
                 return BadOperation;
             }
             break;

@@ -101,7 +101,7 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 			tmp.used = sizeof(hdr);
 			tmp.cont = 0;
 			tmp.clen = 0;
-			rc->_vptr->set(rc, &tmp);
+			rc->_vptr->reply(rc, &tmp);
 		}
 		return ret;
 	}
@@ -238,7 +238,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 			msg.base = &hdr;
 			msg.used = sizeof(hdr);
 			msg.cont = 0;
-			rc->_vptr->set(rc, &msg);
+			rc->_vptr->reply(rc, &msg);
 		}
 		return ret;
 	}

@@ -18,12 +18,6 @@ size_t message::read(size_t len, void *base)
 size_t message::length() const
 { return mpt_message_length(this); }
 
-// message source interface
-int MessageSource::reply(const message *)
-{
-    return -1;
-}
-
 // send text message to output
 int output::message(const char *from, int type, const char *fmt, ... )
 {

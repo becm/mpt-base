@@ -16,9 +16,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+// event reply andling
 reply_context *reply_context::defer()
 {
     return 0;
+}
+inline bool reply_data::setData(size_t len, const void *data)
+{
+    if (len && active()) return false;
+    return (mpt_reply_set(this, len, data) < 0) ? false : true;
 }
 
 // command array
@@ -53,6 +59,12 @@ void dispatch::setError(int (*cmd)(void *, event *), void *arg)
     }
     _err.cmd = cmd;
     _err.arg = arg;
+}
+
+// message source interface
+int MessageSource::reply(const message *)
+{
+    return 0;
 }
 
 __MPT_NAMESPACE_END
