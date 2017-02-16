@@ -42,20 +42,30 @@ static int ignoreEvent(void *arg, MPT_STRUCT(event) *ev)
  * \brief set notify dispatcher
  * 
  * Assign dispatcher to notification descriptor.
- * Finalize dispatcher on controller change and notify finalize.
+ * Dispatcher is finalized on controller change.
  * 
  * \param no   notification descriptor
  * \param disp event dispatch bindings
  */
 extern void mpt_notify_setdispatch(MPT_STRUCT(notify) *no, MPT_STRUCT(dispatch) *disp)
 {
+	size_t id;
 	if (no->_disp.cmd) {
 		no->_disp.cmd(no->_disp.arg, 0);
 		no->_disp.cmd = 0;
 	}
-	if ((no->_disp.arg = disp)) {
-		no->_disp.cmd = dispatchEvent;
-	} else {
+	
+	if (!(no->_disp.arg = disp)) {
 		no->_disp.cmd = ignoreEvent;
+		return;
+	}
+	no->_disp.cmd = dispatchEvent;
+	if (disp->_def || no->_fdused) {
+		return;
+	}
+	/* use start event in dispatcher */
+	id = mpt_hash("start", 5);
+	if (mpt_command_get(&disp->_d, id)) {
+		disp->_def = id;
 	}
 }
