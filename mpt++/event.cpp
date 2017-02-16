@@ -21,7 +21,7 @@ reply_context *reply_context::defer()
 {
     return 0;
 }
-inline bool reply_data::setData(size_t len, const void *data)
+bool reply_data::setData(size_t len, const void *data)
 {
     if (len && active()) return false;
     return (mpt_reply_set(this, len, data) < 0) ? false : true;
