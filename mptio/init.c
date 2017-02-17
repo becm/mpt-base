@@ -32,19 +32,15 @@
 extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 {
 	const char *ctl = 0, *src = 0, *cname = 0, *debug, *flags;
-	int32_t lv = 0, env = 0;
+	int32_t lv = 0, env = 0, dbg = 0;
 	
 	if ((debug = getenv("MPT_DEBUG"))) {
-		lv = MPT_LOG(Debug2);
-		if (mpt_cint(&lv, debug, 0, 0) > 0) {
-			switch (lv) {
-			  case 0: lv = MPT_LOG(Info); break;
-			  case 1: lv = MPT_LOG(Debug)  + 0x10; break;
-			  case 2: lv = MPT_LOG(Debug2) + 0x10; break;
-			  case 3: lv = MPT_LOG(Debug3) + 0x10; break;
-			  default: lv = 0x80; break;
-			}
-			mpt_log_default_skip(lv);
+		if (mpt_cint(&dbg, debug, 0, 0) < 0
+		    || dbg < 0) {
+			dbg = 2;
+		}
+		else if (dbg > 0xf) {
+			dbg = 0xf;
 		}
 	}
 	if ((flags = getenv("MPT_FLAGS"))) {
@@ -100,9 +96,13 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 			return MPT_ERROR(BadArgument);
 		}
 	}
-	/* overwrite environment settings */
+	/* maximize log level */
+	if (lv < dbg) {
+		lv = dbg;
+	}
+	/* maximize log level */
 	if (lv) {
-		lv = MPT_LOG(Debug) + (lv-1) * (MPT_LOG(Debug) - MPT_LOG(Debug2));
+		lv = MPT_LOG(Debug) + lv * (MPT_LOG(Debug2) - MPT_LOG(Debug));
 		if (lv > MPT_LOG(File)) {
 			lv = MPT_LOG(File);
 		}
@@ -136,7 +136,7 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 	}
 	/* no control channel */
 	if (!ctl) {
-		return src ? 1 : 0;
+		return 1;
 	}
 	/* use stdin as command source */
 	if (ctl[0] == '-' && !ctl[1]) {
@@ -165,6 +165,6 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		mpt_notify_fini(no);
 		return 0;
 	}
-	return src ? 2 : 1;
+	return 1;
 }
 

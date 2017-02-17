@@ -37,7 +37,7 @@ protected:
 class reply_context : public unrefable
 {
 public:
-	virtual int reply(const struct message) = 0;
+	virtual int reply(const struct message *) = 0;
 	virtual reply_context *defer();
 protected:
 	inline ~reply_context()

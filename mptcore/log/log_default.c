@@ -46,12 +46,12 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 			fputc('(', fd);
 			fputc(')', fd);
 		}
-		fputc(':', fd);
-		fputc(' ', fd);
 		if (ansi) {
 			fputs(ansi, fd);
 			ansi = 0;
 		}
+		fputc(':', fd);
+		fputc(' ', fd);
 	}
 	ret = fmt ? vfprintf(fd, fmt, ap) : 0;
 	if (ansi) fputs(ansi, fd);
