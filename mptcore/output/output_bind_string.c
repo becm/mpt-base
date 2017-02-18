@@ -8,13 +8,12 @@
 #include <sys/uio.h>
 
 #include "message.h"
-#include "meta.h"
 
 #include "output.h"
 
 /*!
  * \ingroup mptOutput
- * \brief assign data bindings
+ * \brief push bindings
  * 
  * Send data bindings in text data to output.
  * 
@@ -23,7 +22,7 @@
  * 
  * \return number of bindings
  */
-extern int mpt_outbind_string(MPT_INTERFACE(output) *out, const char *descr)
+extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 {
 	MPT_STRUCT(strdest) str;
 	MPT_STRUCT(msgtype) mt;
@@ -37,8 +36,8 @@ extern int mpt_outbind_string(MPT_INTERFACE(output) *out, const char *descr)
 		return MPT_ERROR(BadArgument);
 	}
 	
-	bnd.src.type = MPT_ENUM(DataStateAll);
-	bnd.src.dim  = 0;
+	bnd.src.dim = 0;
+	bnd.src.state = MPT_ENUM(DataStateAll);
 	
 	bnd.dst.lay = bnd.dst.grf = bnd.dst.wld = 1;
 	bnd.dst.dim = 0;

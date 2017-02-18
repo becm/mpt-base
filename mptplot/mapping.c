@@ -48,8 +48,8 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
 		if (map[i].src.dim != add->src.dim) {
 			return -3;
 		}
-		/* add modes */
-		map[i].src.type |= add->src.type;
+		/* add mapping states */
+		map[i].src.state |= add->src.state;
 		return i+1;
 	}
 	if (!(map = mpt_array_append(arr, sizeof(*map), 0))) {
@@ -94,13 +94,13 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 			continue;
 		}
 		if (!src) {
-			map[i].src.type = 0;
+			map[i].src.state = 0;
 		}
 		else if (map[i].src.dim != src->dim) {
 			continue;
 		}
 		else {
-			map[i].src.type &= ~src->type;
+			map[i].src.state &= ~src->state;
 		}
 		++del;
 	}
@@ -109,7 +109,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 		size_t used;
 		
 		for (i = 0, used = 0, empty = 0; i < len; ++i) {
-			if (!map[i].src.type) {
+			if (!map[i].src.state) {
 				if (!empty) {
 					empty = map+i;
 				}
@@ -123,11 +123,11 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 			
 			/* move command entry */
 			*empty = map[i];
-			map[i].src.type = 0;
+			map[i].src.state = 0;
 			
 			/* find smallest free position */
 			while (++empty < (map+i)) {
-				if (!empty->src.type) {
+				if (!empty->src.state) {
 					break;
 				}
 			}
@@ -154,7 +154,7 @@ int mpt_mapping_cmp(const MPT_STRUCT(mapping) *map, const MPT_STRUCT(msgbind) *s
 	if (map->src.dim != src->dim) {
 		return -2;
 	}
-	if (map->src.type & src->type) {
+	if (map->src.state & src->state) {
 		return 0;
 	}
 	return 1;

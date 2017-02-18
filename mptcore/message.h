@@ -152,13 +152,13 @@ MPT_STRUCT(msgworld)
 MPT_STRUCT(msgbind)
 {
 #ifdef __cplusplus
-	inline msgbind(int d, int m = DataStateInit | DataStateStep) : dim(d), type(m)
+	inline msgbind(int d, int s = DataStateInit | DataStateStep) : dim(d), state(s)
 	{ }
 #else
 # define MPT_MSGBIND_INIT { 0, (MPT_ENUM(OutputStateInit) | MPT_ENUM(OutputStateStep)) }
 #endif
-	uint8_t dim,   /* source dimension */
-	        type;  /* type of data */
+	uint8_t dim,    /* source dimension */
+	        state;  /* context of data */
 };
 
 /* layout destination */
@@ -241,19 +241,30 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 extern int mpt_message_id2buf(uint64_t, void *, size_t);
 extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
 
-/* send layout open command */
-extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 
 /* parse graphic binding */
-extern int mpt_outbind_set(MPT_STRUCT(msgbind) *, const char *);
-/* set output bindings */
-extern int mpt_outbind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-extern int mpt_outbind_string(MPT_INTERFACE(output) *, const char *);
+extern int mpt_msgbind_set(MPT_STRUCT(msgbind) *, const char *);
+/* push bindings to output */
+extern int mpt_output_bind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
+extern int mpt_output_bind_string(MPT_INTERFACE(output) *, const char *);
 
-/* push messages to output */
-extern int mpt_output_data(MPT_INTERFACE(output) *, int, int , int , const double *, int);
-extern int mpt_output_history(MPT_INTERFACE(output) *, int, const double *, int, const double *, int);
-extern int mpt_output_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), int, const double *, int);
+
+/* push output/error message */
+extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
+extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
+/* push value data to putput */
+extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
+/* convert message to printable */
+extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
+
+/* push raw value header to output */
+extern int mpt_output_init_raw(MPT_INTERFACE(output) *, char , int , int);
+/* push message value type and destination header to output */
+extern int mpt_output_init_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), uint8_t , int, int);
+/* push double values to output */
+extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
+/* send layout open command */
+extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 
 /* parse character separated values */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);

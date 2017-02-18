@@ -59,13 +59,13 @@ extern int mpt_conf_graphic(MPT_INTERFACE(output) *out, const MPT_STRUCT(node) *
 		return 0;
 	}
 	if (tmp->children) {
-		err = mpt_outbind_list(out, tmp->children);
+		err = mpt_output_bind_list(out, tmp->children);
 	}
 	else if (!(data = mpt_node_data(tmp, 0))) {
 		return 0;
 	}
 	else {
-		err = mpt_outbind_string(out, data);
+		err = mpt_output_bind_string(out, data);
 	}
 	if (!err) {
 		return 0;

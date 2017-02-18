@@ -8,40 +8,26 @@
 #include "output.h"
 
 /*!
- * \ingroup mptOutput
- * \brief send raw data
+ * \ingroup mptMessage
+ * \brief send double data
  * 
- * Send single dimension data via output descriptor.
+ * Push double values to output.
  * 
  * \param out  output descriptor
- * \param mask data targets
- * \param dim  source dimension
  * \param len  number of elements
  * \param val  data address
  * \param ld   element advance
  * 
  * \return number of sent elements
  */
-extern int mpt_output_data(MPT_INTERFACE(output) *out, int mask, int dim, int len, const double *val, int ld)
+extern int mpt_output_values(MPT_INTERFACE(output) *out, int len, const double *val, int ld)
 {
-	struct {
-		MPT_STRUCT(msgtype) mt;
-		MPT_STRUCT(msgbind) bnd;
-	} hdr;
-	ssize_t ret;
+	int ret;
 	
-	if (len < 0) return -1;
-	
-	hdr.mt.cmd = MPT_ENUM(MessageValRaw);
-	hdr.mt.arg = mask & 0xff;
-	
-	hdr.bnd.dim  = dim;
-	hdr.bnd.type = MPT_message_value(Float, *val);
-	
-	/* send header */
-	if ((ret = out->_vptr->push(out, sizeof(hdr), &hdr)) < 0) return ret;
-	
-	/* copy data */
+	if (len < 0) {
+		return MPT_ERROR(BadArgument);
+	}
+	/* special advance condition */
 	if (ld != 1) {
 		uint8_t buf[1024];
 		do {
@@ -49,7 +35,9 @@ extern int mpt_output_data(MPT_INTERFACE(output) *out, int mask, int dim, int le
 			if (curr > len) curr = len;
 			/* make (partial) aligned data */
 			mpt_copy64(curr, val, ld, buf, 1);
-			if ((ret = out->_vptr->push(out, curr*sizeof(*val), buf)) < 0) break;
+			if ((ret = out->_vptr->push(out, curr*sizeof(*val), buf)) < 0) {
+				break;
+			}
 			len -= curr;
 			val += curr * ld;
 		} while (len);

@@ -35,7 +35,7 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 		    || (mpt_message_read(&msg, part, 0) < (size_t) part)) {
 			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing filter element"));
 		}
-		if ((err = mpt_output_control(out, mt.arg, &msg)) >= 0) {
+		if ((err = mpt_output_control(out, mt.arg, &msg, mpt_log_default())) >= 0) {
 			return MPT_event_good(ev, MPT_tr("output command processed"));
 		}
 		if (err == MPT_ERROR(MissingData)) {

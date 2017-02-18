@@ -14,6 +14,7 @@ foreach d : [
   'message',
   'misc',
   'node',
+  'output',
   'parse',
   'queue'
 ]

@@ -8,6 +8,8 @@
 
 #include "output.h"
 
+#include "message.h"
+
 struct mptLogWrapper
 {
 	MPT_INTERFACE(logger) _log;
@@ -32,11 +34,12 @@ static MPT_INTERFACE_VPTR(logger) logWrapperCtl = {
 
 /*!
  * \ingroup mptCore
- * \brief log instance of object
+ * \brief log instance for output
  * 
- * Search log interface in object properties.
+ * Create log interface for output reference.
+ * Returned logger instance takes ownership of passed reference.
  * 
- * \param obj  object descriptor
+ * \param out  output descriptor
  * 
  * \return logging descriptor
  */

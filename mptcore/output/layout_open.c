@@ -15,7 +15,9 @@ static int setLayout(void *ln, const MPT_STRUCT(message) *cmsg)
 	} info;
 	size_t mlen = sizeof(info.mt) + sizeof(info.d.lay);
 	
-	if (!cmsg) return 0;
+	if (!cmsg) {
+		return 0;
+	}
 	msg = *cmsg;
 	
 	if (mpt_message_read(&msg, sizeof(info), &info) < mlen) {
@@ -90,7 +92,7 @@ extern int mpt_layout_open(MPT_INTERFACE(output) *out, const char *desc, const c
 	/* wait for answers to queries */
 	out->_vptr->sync(out, -1);
 	
-	/* deregister layout setter */
+	/* answer not arrived within call */
 	if (lid < 0) {
 		return 0;
 	}

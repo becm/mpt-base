@@ -2,7 +2,7 @@
 # build definition for mptcore library
 
 # collect source files
-plot_src = []
+plot_src = [ files('mapping.c') ]
 foreach d : [ 'layout', 'output', 'values' ]
   subdir(d)
   plot_src += src

@@ -2,10 +2,11 @@
  * MPT default client config operations
  */
 
-#include <stdio.h>
+#include <stdarg.h>
 
 #include "meta.h"
 
+#include "message.h"
 #include "output.h"
 
 #include "client.h"

@@ -356,7 +356,7 @@ MPT_STRUCT(mapping)
 		src(m), client(c), dest(d)
 	{ }
 	inline bool valid() const
-	{ return src.type != 0; }
+	{ return src.state != 0; }
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
 #endif

@@ -39,7 +39,7 @@ static int printMessage(void *fd, MPT_STRUCT(event) *ev)
 		}
 	}
 	if (ev->reply) {
-		ev->reply->_vptr->set(ev->reply, ev->msg);
+		ev->reply->_vptr->reply(ev->reply, ev->msg);
 	}
 	return 0;
 }

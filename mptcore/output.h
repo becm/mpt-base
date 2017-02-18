@@ -177,28 +177,12 @@ protected:
 #endif
 };
 
-MPT_STRUCT(output_values)
-{
-#ifdef __cplusplus
-	output_values(uint count, const double *from, int ld = 1);
-#else
-# define MPT_MSGVAL_INIT { 0, 0, 0, 0 }
-#endif
-	const void    *base;  /* data base address */
-	void         (*copy)(int , const void *, int , void *, int);
-	unsigned int   elem;  /* remaining elements */
-	int            ld;    /* leading dimension */
-};
-
 __MPT_EXTDECL_BEGIN
 
 /* configure graphic output and bindings */
 extern int mpt_conf_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
 /* configure history output and format */
 extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-
-/* filter control message (open/close), push others */
-extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *);
 
 /* reset history output state */
 void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
@@ -228,14 +212,12 @@ extern void mpt_outdata_close(MPT_STRUCT(outdata) *);
 extern int mpt_outdata_get(const MPT_STRUCT(outdata) *, MPT_STRUCT(property) *);
 /* assing outdata socket */
 extern int mpt_outdata_assign(MPT_STRUCT(outdata) *, const MPT_STRUCT(socket) *);
-
 /* push to outdata */
 extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* process return messages */
 extern int mpt_outdata_recv(MPT_STRUCT(outdata) *);
 /* send reply message */
 extern int mpt_outdata_reply(MPT_STRUCT(outdata) *, const MPT_STRUCT(message) *, size_t, const void *);
-
 
 /* reset connection data */
 extern void mpt_connection_fini(MPT_STRUCT(connection) *);
@@ -261,13 +243,10 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandl
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
 
-/* push output/error message */
-extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
-extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
-/* push value data to putput */
-extern int mpt_output_values(MPT_INTERFACE(output) *, const MPT_STRUCT(output_values) *, size_t);
-/* convert message to printable */
-extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
+
+/* apply command argument to output */
+extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
+
 
 /* create remote output instance */
 extern MPT_INTERFACE(metatype) *mpt_output_remote(void);

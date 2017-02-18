@@ -12,7 +12,6 @@ src = files(
   'object_pset.c',
   'object_set.c',
   'object_typename.c',
-  'output_control.c',
   'property_match.c',
   'reference.c',
 )

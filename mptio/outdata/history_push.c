@@ -80,7 +80,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		if (len < min) {
 			return MPT_ERROR(MissingData);
 		}
-		if (!(hist->fmt.fmt = mb->type)) {
+		if (!(hist->fmt.fmt = mb->state)) {
 			return MPT_ERROR(BadValue);
 		}
 		hist->info.state |= MPT_OUTFLAG(Active);

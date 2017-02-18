@@ -5,7 +5,5 @@ src = files(
   'log_identifier.c',
   'log_intro.c',
   'log_level.c',
-  'output_log.c',
   'output_logger.c',
-  'output_print.c',
 )

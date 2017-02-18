@@ -13,6 +13,7 @@ src = files(
   'message_print.c',
   'message_pset.c',
   'message_read.c',
+  'msgbind_set.c',
   'msgvalfmt.c',
   'string_dest.c',
 )
