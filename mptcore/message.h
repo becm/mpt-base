@@ -258,9 +258,9 @@ extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int)
 extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* push raw value header to output */
-extern int mpt_output_init_raw(MPT_INTERFACE(output) *, char , int , int);
+extern int mpt_output_init_raw(MPT_INTERFACE(output) *, uint8_t);
 /* push message value type and destination header to output */
-extern int mpt_output_init_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), uint8_t , int, int);
+extern int mpt_output_init_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), uint8_t , const MPT_STRUCT(msgworld) * __MPT_DEFPAR(0));
 /* push double values to output */
 extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
 /* send layout open command */
