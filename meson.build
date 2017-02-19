@@ -70,10 +70,15 @@ if with_io
   static_inc += io_inc
 endif
 
-lua = dependency('lua' + get_option('lua'), required : false)
-if lua.found()
-  with_lua = true
-  subdir('lua')
+lua = get_option('lua')
+if lua != '' and lua != 'false'
+  lua = dependency('lua' + lua)
+  with_lua = lua.found()
+  if with_lua
+    subdir('lua')
+  endif
+else
+  with_lua = false
 endif
 
 if with_static

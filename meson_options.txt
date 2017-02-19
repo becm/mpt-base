@@ -11,5 +11,5 @@ option('with_plot', type : 'boolean', value : true,
        description : 'build plotting library/components')
 option('with_tests', type : 'boolean', value : true,
        description : 'create test binaries')
-option('lua', type : 'string', value : '5.3',
+option('lua', type : 'string', value : '',
        description : 'lua target version')
