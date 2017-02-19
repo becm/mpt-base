@@ -38,6 +38,12 @@ if with_plot
 endif
 
 if with_io
+  if with_loader
+    test('loader',
+      executable('libassign', 'libassign.c',
+        c_args: test_defines,
+        dependencies: load))
+  endif
   test('I/O pipe',
     executable('pipe', 'io/pipe.c',
       c_args: test_defines,

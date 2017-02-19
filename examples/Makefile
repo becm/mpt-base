@@ -2,14 +2,19 @@
 #
 
 DIRS = core io cxx lua
-TESTS = client axis iter gen
+TESTS = client axis iter gen libassign
 PROGS = readline graphic ${TESTS}
+STATIC = libassign_static
 
 client_static : CC=${CXX}
 
 DIR_TOP = ${MPT_PREFIX}
 include ../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
+
+libassign : libassign.o
+libassign : LDLIBS=-lmptloader -lmptcore
+libassign_static : LDLIBS=-lmpt -ldl
 
 # library config
 client : LDLIBS=-lmpt++ -lmptio -lmptloader -lmptcore

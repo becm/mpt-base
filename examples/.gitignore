@@ -4,6 +4,7 @@ client
 gen
 graphic
 iter
+libassign
 readline
 
 # exclude static binaries
