@@ -50,7 +50,7 @@ extern int mpt_proxy_assign(MPT_STRUCT(proxy) *pr, const char *name, MPT_INTERFA
 			txt = val.ptr;
 			len = txt ? strlen(val.ptr) : 0;
 		}
-		else if (!(txt = mpt_data_tostring(&val.ptr, *val.fmt, &len)) < 0) {
+		else if (!(txt = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
 			return MPT_ERROR(BadType);
 		}
 		ret = m->_vptr->assign(m, &val);

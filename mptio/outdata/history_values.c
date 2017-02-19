@@ -132,6 +132,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 		const char *curr = src;
 		MPT_STRUCT(valfmt) val = MPT_VALFMT_INIT;
 		int adv, conv;
+		uint16_t pos;
 		char cfmt = hist->fmt.fmt;
 		
 		/* use prepared format data */
@@ -194,11 +195,14 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			conv = val.wdt;
 		}
 		/* field separation */
-		if (hist->fmt.pos++) {
+		if ((pos = hist->fmt.pos++)) {
 			fputc(' ', fd);
 		}
 		fwrite(buf, conv, 1, fd);
-		
+		/* additional space on position overflow */
+		if (!++pos) {
+			fputc(' ', fd);
+		}
 		done += adv;
 		len -= adv;
 		
