@@ -69,11 +69,23 @@ extern ssize_t mpt_encode_cobs(MPT_STRUCT(encode_state) *info, const struct iove
 		if (code >= left) {
 			return MPT_ERROR(MissingBuffer);
 		}
+		/* special case: empty message */
+		if (!code) {
+			if (left < 2) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			/* '\x00\x00' not allowed in cobs data stream.
+			 * Decoder consumes single encoded zero. */
+			dst[0] = 1;
+			dst[1] = 0;
+			len = 2;
+		}
 		/* cobs message termination */
-		*dst = code;
-		dst[code++] = 0;
-		len += code;
-		
+		else {
+			*dst = code;
+			dst[code++] = 0;
+			len += code;
+		}
 		info->_ctx = 0;
 		info->done = len;
 		info->scratch = 0;
