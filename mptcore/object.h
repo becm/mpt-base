@@ -219,6 +219,7 @@ private:
     Property & operator= (const Property &);
 };
 
+struct node;
 class Object : protected Item<object>
 {
 public:

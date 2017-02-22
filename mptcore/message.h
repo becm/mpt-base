@@ -40,6 +40,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(queue);
 MPT_STRUCT(array);
+MPT_STRUCT(node);
 
 enum MPT_ENUM(MessageType) {
 	/* data interaction */

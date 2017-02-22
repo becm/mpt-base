@@ -63,8 +63,7 @@ struct iovec;
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(node);
-
+MPT_INTERFACE(metatype);
 MPT_INTERFACE(output);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
@@ -593,7 +592,6 @@ MPT_STRUCT(fdmode)
 };
 
 /* collection solver runtime data */
-MPT_INTERFACE(metatype);
 #ifdef __cplusplus
 MPT_STRUCT(socket)
 {
