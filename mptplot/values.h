@@ -6,17 +6,9 @@
 #ifndef _MPT_VALUES_H
 #define _MPT_VALUES_H  @INTERFACE_VERSION@
 
-#include "core.h"
-
-#ifdef __cplusplus
-# include "array.h"
-#endif
+#include "array.h"
 
 __MPT_NAMESPACE_BEGIN
-
-MPT_STRUCT(node);
-MPT_STRUCT(array);
-
 
 enum MPT_ENUM(ValueDescription)
 {
@@ -36,7 +28,7 @@ extern int mpt_values_string(const char *, int , double *, int);
 extern int mpt_values_poly  (const char *, int , double *, int , const double *);
 
 /* prepare values on buffer offset */
-extern double *mpt_values_prepare(MPT_STRUCT(array) *, int);
+extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *, int);
 
 /* select/set solver profile type */
 extern int mpt_valtype_select(const char **);
@@ -52,23 +44,14 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(const char *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */
-extern int mpt_conf_file(FILE *, int , int , double *);
+extern int mpt_values_file(FILE *, int , int , double *);
 #endif
 
 /* set matrix columns from stream according to mapping */
-extern int mpt_conf_stream(MPT_STRUCT(array) * , void *, int , int);
-
-/* create profile data */
-extern int mpt_conf_profiles(int , double *, int , const MPT_STRUCT(node) *, const double *, MPT_INTERFACE(logger) *);
-extern int mpt_conf_profile (int , double *, int , const MPT_STRUCT(node) *, const double *);
-
-/* append user data */
-extern int mpt_conf_param(MPT_STRUCT(array) *, const MPT_STRUCT(node) *, int);
-/* set grid data */
-extern int mpt_conf_grid(MPT_STRUCT(array) *, const MPT_STRUCT(node) *);
+extern int mpt_values_stream(_MPT_ARRAY_TYPE(double) * , void *, int , int);
 
 /* append values described by string */
-extern double *mpt_conf_values(MPT_STRUCT(array) *, int , const char *);
+extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *, int , const char *);
 
 __MPT_EXTDECL_END
 

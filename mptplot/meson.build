@@ -3,7 +3,7 @@
 
 # collect source files
 plot_src = [ files('mapping.c') ]
-foreach d : [ 'layout', 'output', 'values' ]
+foreach d : [ 'layout', 'values' ]
   subdir(d)
   plot_src += src
 endforeach

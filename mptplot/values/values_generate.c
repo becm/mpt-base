@@ -1,9 +1,6 @@
-
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#include "array.h"
+/*!
+ * generate values.
+ */
 
 #include "values.h"
 
@@ -19,7 +16,7 @@
  * 
  * \return appended data
  */
-extern double *mpt_conf_values(MPT_STRUCT(array) *arr, int len, const char *descr)
+extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *arr, int len, const char *descr)
 {
 	double *data;
 	int type;

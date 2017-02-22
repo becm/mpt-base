@@ -179,11 +179,6 @@ protected:
 
 __MPT_EXTDECL_BEGIN
 
-/* configure graphic output and bindings */
-extern int mpt_conf_graphic(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-/* configure history output and format */
-extern int mpt_conf_history(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-
 /* reset history output state */
 void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
 

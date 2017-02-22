@@ -23,7 +23,7 @@
  * 
  * \return zero on success
  */
-extern int mpt_conf_file(FILE *fd, int len, int ld, double *data)
+extern int mpt_values_file(FILE *fd, int len, int ld, double *data)
 {
 	double val;
 	int i, j;
@@ -33,7 +33,9 @@ extern int mpt_conf_file(FILE *fd, int len, int ld, double *data)
 		len = -len;
 		for (i = 0; i < len; i++) {
 			for (j = 0; j < ld; j++) {
-				if (fscanf(fd, "%lf", data ? &data[len*j] : &val) != 1) return -(j+i*ld);
+				if (fscanf(fd, "%lf", data ? &data[len*j] : &val) != 1) {
+					return -(j+i*ld);
+				}
 			}
 			if ((fscanf(fd, "%*[^\n]") < 0) && (i+1 < len)) {
 				return -((i+1)*ld);
@@ -45,7 +47,9 @@ extern int mpt_conf_file(FILE *fd, int len, int ld, double *data)
 	else {
 		for (i = 0; i < len; i++) {
 			for (j = 0; j < ld; j++) {
-				if (fscanf(fd, "%lf", data ? &data[j] : &val) != 1) return -(j+i*ld);
+				if (fscanf(fd, "%lf", data ? &data[j] : &val) != 1) {
+					return -(j+i*ld);
+				}
 			}
 			if ((fscanf(fd, "%*[^\n]") < 0) && (i+1 < len)) {
 				return -((i+1)*ld);

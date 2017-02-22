@@ -1,8 +1,9 @@
+/*!
+ * generate values.
+ */
 
 #include <string.h>
 #include <errno.h>
-
-#include "array.h"
 
 #include "values.h"
 
@@ -18,20 +19,24 @@
  * 
  * \return zeroed/copied start address
  */
-extern double *mpt_values_prepare(MPT_STRUCT(array) *arr, int len)
+extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, int len)
 {
-	double	*data;
-	size_t	used, add;
+	double *data;
+	size_t used, add;
 	
-	if (!len) return 0;
-	
-	if (len > 0) return mpt_array_append(arr, len*sizeof(*data), 0);
-	
+	if (!len) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (len > 0) {
+		return mpt_array_append(arr, len*sizeof(*data), 0);
+	}
 	add = sizeof(*data) * (-len);
 	
 	/* not enough data available */
 	if (!arr->_buf || ((used = arr->_buf->used) < add)) {
-		errno = ERANGE; return 0;
+		errno = ERANGE;
+		return 0;
 	}
 	/* data area at end for old and new data */
 	if (!(data = mpt_array_insert(arr, used, add))) {
