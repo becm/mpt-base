@@ -76,7 +76,7 @@ bool stream::open(const char *fn, const char *mode)
 }
 
 // stream class
-Stream::Stream(const streaminfo *from) : _inputFile(-1)
+Stream::Stream(const streaminfo *from) : _srm(0), _cid(0), _inputFile(-1), _idlen(0)
 {
     if (!from) return;
     _srm = new stream;
