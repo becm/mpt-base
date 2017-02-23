@@ -10,9 +10,9 @@ load_src = files(
 )
 # need explicit dynamic loader library
 if host_machine.system() == 'linux'
-  load_dep = [ core, meson.get_compiler('c').find_library('dl') ]
+  load = [ core, meson.get_compiler('c').find_library('dl') ]
 else
-  load_dep = core
+  load = core
 endif
 
 if with_shared
@@ -20,7 +20,7 @@ if with_shared
     version : '1.0.0', soversion : '1',
     include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
-    dependencies : load_dep,
+    dependencies : load,
     install : with_loader)
 
   if with_loader
@@ -34,6 +34,5 @@ if with_shared
 
   load = declare_dependency(
     link_with : load_lib,
-    include_directories : core_inc
-  )
+    dependencies : load)
 endif

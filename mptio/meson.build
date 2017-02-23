@@ -13,17 +13,18 @@ foreach d : [ 'notify', 'outdata', 'stream' ]
   io_src += src
 endforeach
 
-install_headers('notify.h', 'stream.h',
-  subdir : 'mpt')
+if not meson.is_subproject()
+  install_headers('notify.h', 'stream.h', subdir : 'mpt')
+endif
 
-io_inc = include_directories('.')
+io = include_directories('.')
 
 if with_shared
   io_lib = shared_library('mptio', io_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
-    include_directories : include_directories('../mptplot', '..'),
+    include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
-    dependencies : [ core ],
+    dependencies : core,
     install : with_io)
 
   if with_io
@@ -37,6 +38,8 @@ if with_shared
 
   io = declare_dependency(
     link_with : io_lib,
-    include_directories : [ io_inc, core_inc ]
-  )
+    dependencies : core,
+    include_directories : io)
+else
+  io = declare_dependency(include_directories : io, dependencies : core)
 endif

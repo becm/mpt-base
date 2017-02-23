@@ -35,7 +35,7 @@ if with_plot
     executable('layout', 'layout.cpp',
       cpp_args: test_defines,
       dependencies: cxx),
-    args: [ meson.current_source_dir() + '/layout.lay' ])
+    args: [ join_paths(meson.current_source_dir(), 'layout.lay') ])
   
   # require C++ plot and I/O components
   if with_io

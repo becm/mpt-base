@@ -16,10 +16,7 @@ cxx_src = files(
   'value.cpp',
 )
 
-cxx_inc = [ core_inc ]
-if with_shared
-  cxx = [ core ]
-endif
+cxx = [ core ]
 
 if with_plot
   cxx_src += files(
@@ -32,10 +29,7 @@ if with_plot
     'reference_wrap.cpp',
     'transform.cpp'
   )
-  if with_shared
-    cxx = [ plot ] + cxx
-    cxx_inc = [ plot_inc ] + cxx_inc
-  endif
+  cxx += plot
 endif
 
 if with_io
@@ -43,13 +37,12 @@ if with_io
     'notify.cpp',
     'stream.cpp'
   )
-  if with_shared
-    cxx = [ io ] + cxx
-    cxx_inc = [ io_inc ] + cxx_inc
-  endif
+  cxx += io
 endif
 
-install_headers('graphic.h', subdir : 'mpt')
+if not meson.is_subproject()
+  install_headers('graphic.h', subdir : 'mpt')
+endif
 
 if with_shared
   cxx_lib = shared_library('mpt++', cxx_src, 'libinfo.c',
@@ -62,7 +55,7 @@ endif
 
 if with_static
   cxx_lib_static = static_library('mpt++', cxx_src,
-    include_directories : cxx_inc,
+    dependencies : cxx,
     install : with_cxx)
   if not with_shared
     cxx_lib = cxx_lib_static
@@ -71,8 +64,9 @@ endif
 
 cxx = declare_dependency(
   link_with : cxx_lib,
-  include_directories : [ include_directories('.') ] + cxx_inc
-)
+  dependencies : cxx,
+  include_directories : [ include_directories('.') ])
+
 if with_cxx
   pkg.generate(
     description : 'mpt C++ library',
@@ -81,5 +75,3 @@ if with_cxx
     version : '1.0.0',
     name : 'mpt++')
 endif
-
-cxx_inc = [ include_directories('.') ]

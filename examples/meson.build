@@ -38,14 +38,15 @@ if with_plot
 endif
 
 if with_io
-  if with_loader
+  if with_shared and with_loader
     test('loader',
       executable('libassign', 'libassign.c',
         c_args: test_defines,
-        dependencies: load))
+        dependencies: load),
+      env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptio') ])
   endif
   test('I/O pipe',
-    executable('pipe', 'io/pipe.c',
+    executable('pipe', join_paths('io', 'pipe.c'),
       c_args: test_defines,
       dependencies: io),
     args: [ '/bin/ls', '..' ])
@@ -53,7 +54,7 @@ endif
 
 if with_lua
   test('lua interpreter',
-    executable('interp', 'lua/main.c', dependencies: lua),
-    env: [ 'MPT_MATHBOX=' + meson.source_root() + '/lua/mathbox.lua' ],
-    args: [ meson.current_source_dir() + '/lua/user.lua'])
+    executable('interp', join_paths('lua', 'main.c'), dependencies: lua),
+    env: [ 'MPT_MATHBOX=' + join_paths(meson.source_root(), 'lua', 'mathbox.lua') ],
+    args: [ join_paths(meson.current_source_dir(), 'lua', 'user.lua')])
 endif

@@ -2,7 +2,7 @@
 LIB = mptio
 #
 # additional header directories
-INC = . .. ../mptplot ../mptcore
+INC = . .. ../mptcore
 #
 # header to export
 HEADER = notify.h stream.h

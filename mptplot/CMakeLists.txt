@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # subdirectory sources
+set(sources mapping.c)
 foreach(dir IN ITEMS layout output values)
   aux_source_directory(${dir} sources)
   

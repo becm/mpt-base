@@ -31,7 +31,7 @@ int main()
 	/* create reference with loaded function */
 	if ((out = lh.create())) {
 		printf("%s: 0x%02x\n", "object type", out->_vptr->property(out, 0));
-		puts(mpt_object_typename((void *) out));
+		puts(mpt_object_typename(out));
 		out->_vptr->ref.unref((void *) out);
 	}
 	mpt_library_close(&lh);

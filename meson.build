@@ -51,23 +51,50 @@ endif
 with_core = true
 subdir('mptcore')
 static_src = [ core_src ]
-static_inc = [ core_inc ]
+static_dep = [ core ]
 
 if with_loader
   subdir('mptloader')
   static_src += load_src
+  static_dep += load
 endif
 
 if with_plot
   subdir('mptplot')
   static_src += plot_src
-  static_inc += plot_inc
+  static_dep += plot
 endif
 
 if with_io
   subdir('mptio')
   static_src += io_src
-  static_inc += io_inc
+  static_dep += io
+endif
+
+if with_static
+  mpt = static_library('mpt', static_src,
+    dependencies : static_dep,
+    install : true)
+
+  pkg.generate(
+    description : 'static mpt library',
+    libraries : mpt,
+    version : '1.0.0',
+    name : 'mpt')
+  
+  # bind dependencies to static library
+  if not with_shared
+    core = declare_dependency(link_with : mpt, dependencies : core)
+    if with_loader
+      load = declare_dependency(link_with : mpt, dependencies : load)
+    endif
+    if with_plot
+      plot = declare_dependency(link_with : mpt, dependencies : plot)
+    endif
+    if with_io
+      io = declare_dependency(link_with : mpt, dependencies : io)
+    endif
+  endif
 endif
 
 lua = get_option('lua')
@@ -81,23 +108,11 @@ else
   with_lua = false
 endif
 
-if with_static
-  mpt = static_library('mpt', static_src,
-    include_directories : static_inc,
-    install : true)
-
-  pkg.generate(
-    description : 'static mpt library',
-    libraries : [ mpt ],
-    version : '1.0.0',
-    name : 'mpt')
-endif
-
 if with_cxx
   add_languages('cpp')
   subdir('mpt++')
 endif
 
-if with_shared and get_option('with_tests')
+if get_option('with_tests')
   subdir('examples')
 endif

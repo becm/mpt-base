@@ -11,7 +11,7 @@ endforeach
 install_headers('layout.h', 'values.h',
   subdir : 'mpt')
 
-plot_inc = include_directories('.')
+plot = include_directories('.')
 
 if with_shared
   plot_lib = shared_library('mptplot', plot_src, 'libinfo.c',
@@ -32,6 +32,8 @@ if with_shared
   
   plot = declare_dependency(
     link_with : plot_lib,
-    include_directories : [ plot_inc, core_inc ]
-  )
+    dependencies : core,
+    include_directories : plot)
+else
+  plot = declare_dependency(include_directories : plot, dependencies : core)
 endif
