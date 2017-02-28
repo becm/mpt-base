@@ -218,12 +218,13 @@ protected:
 class MessageSource : public reply_context
 {
 public:
-    virtual ~MessageSource()
-    { }
-
-    virtual const struct message *currentMessage(bool align = false) = 0;
-    virtual size_t pendingMessages(int wait = 0) = 0;
-    virtual int reply(const struct message * = 0) __MPT_OVERRIDE;
+	virtual ~MessageSource()
+	{ }
+	
+	void unref() __MPT_OVERRIDE;
+	
+	virtual const struct message *currentMessage(bool align = false) = 0;
+	virtual size_t pendingMessages(int wait = 0) = 0;
 };
 #endif
 

@@ -430,7 +430,7 @@ public:
         if (!(to = static_cast<T *>(a.set(len * sizeof(T))))) return false;
         T *old = begin();
         for (size_t i = 0; i < len; ++i) {
-             new (to+i) T(old[i]);
+            new (to+i) T(old[i]);
         }
         _d = a;
         return true;

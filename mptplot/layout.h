@@ -560,8 +560,7 @@ public:
     enum Flags {
         LimitStages = 1
     };
-    inline Cycle() : _flags(0)
-    { }
+    Cycle();
     
     class Stage : public rawdata_stage
     {

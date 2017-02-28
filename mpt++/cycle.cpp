@@ -23,7 +23,7 @@ int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t of
         return BadValue;
     }
     if (!(curr = arr->type())) {
-        if (!arr->setType(type)) {
+        if (!arr->setType(type & 0xff)) {
             return BadType;
         }
     }
@@ -42,6 +42,8 @@ int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t of
     return arr->type() + (arr->flags() & ~0xff);
 }
 
+Cycle::Cycle() : _act(0), _maxDimensions(0), _flags(0)
+{ }
 Cycle::~Cycle()
 { }
 void Cycle::unref()
@@ -63,10 +65,15 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t le
     }
     Stage *st;
     if (!(st = _stages.get(nc))) {
-        return BadValue;
+        if (_flags & LimitStages) {
+            return BadValue;
+        }
+        if (!_stages.insert(nc, Stage())
+            || !(st = _stages.get(nc))) {
+            return BadOperation;
+        }
     }
-    int code = st->modify(dim, type, src, off, len);
-    
+    int code = st->modify(dim, type | ValueCreate, src, off, len);
     if (code < 0) {
         return code;
     }
@@ -113,11 +120,16 @@ int Cycle::advance()
         _act = 0;
         return _stages.length() ? 0 : BadValue;
     }
-    n = _stages.length();
-    if (!(_flags & LimitStages)
-        || !_stages.insert(n, Stage())) {
-        return BadOperation;
+    // no advance if current stage not assigned
+    if (!(st = _stages.get(_act))) {
+        return _act;
     }
+    // no advance if current stage empty
+    int dim = st->dimensions();
+    if (!dim) {
+        return _act;
+    }
+    _act = n;
     return n;
 }
 int Cycle::dimensions(int n) const

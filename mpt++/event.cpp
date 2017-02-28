@@ -62,9 +62,9 @@ void dispatch::setError(int (*cmd)(void *, event *), void *arg)
 }
 
 // message source interface
-int MessageSource::reply(const message *)
+void MessageSource::unref()
 {
-    return 0;
+    delete this;
 }
 
 __MPT_NAMESPACE_END

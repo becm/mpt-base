@@ -28,7 +28,8 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 	MPT_STRUCT(typed_array) *arr;
 	
 	/* reuse existing dimension */
-	if (buf && buf->used/sizeof(*arr) < dim) {
+	if (buf
+	    && (buf->used/sizeof(*arr) > dim)) {
 		arr = (void *) (buf+1);
 		arr += dim;
 		
@@ -50,9 +51,10 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(arr = mpt_array_insert(&st->_d, dim * sizeof(*arr), 0))) {
+	if (!(arr = mpt_array_insert(&st->_d, dim * sizeof(*arr), sizeof(*arr)))) {
 		return arr;
 	}
+	arr->_d._buf = 0;
 	arr->_flags  = flg & ~MPT_ENUM(ValueCreate);
 	arr->_esize  = 0;
 	arr->_format = 0;
