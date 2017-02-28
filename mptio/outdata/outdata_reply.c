@@ -57,7 +57,6 @@ extern int mpt_outdata_reply(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message)
 		MPT_STRUCT(message) msg = *src;
 		len = mpt_message_read(&msg, sizeof(buf) - ilen, buf + ilen);
 		if (mpt_message_length(&msg)) {
-			len = 0;
 			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
 			        MPT_tr("unable to reply"), id, MPT_tr("message too big"));
 			return MPT_ERROR(MissingBuffer);

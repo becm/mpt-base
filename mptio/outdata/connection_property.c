@@ -64,6 +64,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatyp
 			return 0;
 		}
 		rtype = MPT_ENUM(EncodingCobs);
+		res = 0;
 	}
 	/* resolve type description */
 	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {

@@ -33,9 +33,14 @@ extern int main(int argc, char *argv[])
 			continue;
 		}
 		if (len > max) {
-			if (!(val = realloc(val, len * sizeof(*val)))) {
+			double *next;
+			if (!(next = realloc(val, len * sizeof(*val)))) {
+				if (val) {
+					free(val);
+				}
 				return 1;
 			}
+			val = next;
 			max = len;
 		}
 		desc += pos;

@@ -72,7 +72,7 @@ extern const char *mpt_library_open(MPT_STRUCT(libhandle) *handle, const char *l
 		}
 		left = sizeof(buf) - len;
 		buf[len] = '/';
-		lpath = memcpy(buf, lpath, len++);
+		memcpy(buf, lpath, len++);
 		newlib = buf + len;
 		
 		/* buffer too small */

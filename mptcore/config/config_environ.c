@@ -72,7 +72,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		path.len   = pos - tmp;
 		path.valid = vlen++;
 		
-		path.sep = '_';
+		path.sep = sep;
 		path.assign = '=';
 		path.flags = 0;
 		path.first = 0;

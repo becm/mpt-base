@@ -167,11 +167,10 @@ int metatype::conv(int type, void *ptr)
         if (dest) *dest = (void *) types;
         return 0;
     }
-    switch (type & 0xff) {
-    case Type: ptr = this;
-    default: return BadType;
+    if ((type & 0xff) != Type) {
+        return BadType;
     }
-    if (dest) *dest = ptr;
+    if (dest) *dest = this;
     return type & 0xff;
 }
 
@@ -253,11 +252,13 @@ node *node::create(size_t ilen, size_t dlen)
     node *n;
     size_t left = sizeof(NodePrivate::Data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
     if (left >= (isize + dlen)) {
-        if (!(n = (NodePrivate *) malloc(sizeof(NodePrivate)))) return 0;
-        new (n) NodePrivate(ilen);
-        if (!n->_meta) ::abort();
+        NodePrivate *np;
+        if (!(np = static_cast<NodePrivate *>(malloc(sizeof(NodePrivate))))) return 0;
+        new (np) NodePrivate(ilen);
+        if (!np->_meta) ::abort();
+        n = np;
     }
-    else if (!(n = (node *) malloc(sizeof(*n) - sizeof(n->ident) + isize))) {
+    else if (!(n = static_cast<node *>(malloc(sizeof(*n) - sizeof(n->ident) + isize)))) {
         return 0;
     }
     else {

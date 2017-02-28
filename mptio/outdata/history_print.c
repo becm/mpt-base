@@ -164,7 +164,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	
 	hist->state |= MPT_OUTFLAG(Active);
 	switch (flags & 0x3) {
-	  case 0:
+	  default:
 		hist->state |= MPT_OUTFLAG(PrintRestore);
 		return len;
 	  case MPT_OUTFLAG(PrintNormal):
@@ -183,11 +183,12 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		break;
 	}
 	/* discern log from regular output */
-	if (!hist->file || fd == hist->file) {
+	if (!hist->file || (fd == hist->file)) {
 		fputc('#', fd);
 		fputc(' ', fd);
 	}
 	/* set prefix string */
+	prefix = 0;
 	if ((hist->state & MPT_OUTFLAG(PrintColor))
 	    && (prefix = mpt_ansi_code(type & ~MPT_LOG(File)))
 	    && (isatty(fileno(fd)) <= 0)) {

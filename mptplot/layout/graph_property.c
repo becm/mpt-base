@@ -63,8 +63,8 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
 	if (from) {
 		*gr = *from;
 		
-		if (gr->_axes) gr->_axes = strdup(gr->_axes);
-		if (gr->_worlds) gr->_worlds = strdup(gr->_worlds);
+		if (from->_axes) gr->_axes = strdup(from->_axes);
+		if (from->_worlds) gr->_worlds = strdup(from->_worlds);
 		
 		return;
 	}
@@ -134,6 +134,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		
 		if (!src) {
 			gr->pos = def_graph.pos;
+			return 0;
 		}
 		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
 			return l1;
@@ -161,6 +162,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		
 		if (!src) {
 			gr->scale = def_graph.scale;
+			return 0;
 		}
 		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
 			return l1;

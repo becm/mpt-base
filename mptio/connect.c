@@ -154,23 +154,25 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 		sd->_id = -1;
 		return 1;
 	}
+	/* use mode passed by caller */
 	if (mode) {
 		info = *mode;
+		sock = 0;
 	}
+	/* detect mode based on prefix */
 	else if ((sock = mpt_mode_parse(&info, where)) < 0) {
 		errno = EINVAL;
 		return -1;
 	}
+	/* no prefix detected: default to IP socket */
 	else if (!sock) {
 		info.family = AF_UNSPEC;
 		info.param.sock.type = SOCK_STREAM;
 		info.param.sock.proto = 0;
 		info.param.sock.port = 0;
-		if ((sock = socketSet(where, &info, bind)) < 0) {
-			return sock;
-		}
 	}
-	else if (info.family < 0) {
+	/* open as normal file */
+	if (info.family < 0) {
 		int res = -1;
 		if (info.param.file.open & O_WRONLY) {
 			errno = EINVAL;
@@ -193,11 +195,12 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 		info.stream = 0;
 		info.param.sock.port = 0;
 	}
+	/* bind socket to address */
 	else if ((sock = socketSet(where + sock, &info, bind)) < 0) {
 		return sock;
 	}
 	/* require listening state */
-	if ((info.stream == (MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write) | MPT_SOCKETFLAG(Stream)))
+	else if ((info.stream == (MPT_SOCKETFLAG(Read) | MPT_SOCKETFLAG(Write) | MPT_SOCKETFLAG(Stream)))
 	    && (backlog >= 0)
 	    && listen(sock, backlog) < 0) {
 		(void) close(sock);

@@ -171,7 +171,7 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
         }
         const double *from = 0;
         int max;
-        if (arr->type() != typeIdentifier(*from)) {
+        if (arr->type() != typeIdentifier<double>()) {
             continue;
         };
         from = static_cast<__decltype(from)>(arr->base());

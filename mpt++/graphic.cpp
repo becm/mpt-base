@@ -327,14 +327,11 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
             dst.wld = w;
         }
         else {
-            size_t max = grf->worlds().length();
+            size_t max = gd.length();
             if (max >= UINT8_MAX) {
                 max = UINT8_MAX;
             }
-            for (size_t i = 0, max = gd.length(); i < max; ++i) {
-                if (i >= UINT8_MAX) {
-                    break;
-                }
+            for (size_t i = 0; i < max; ++i) {
                 const Item<Graph::Data> *it = gd.nth(i);
                 Graph::Data *ptr;
                 if (it && (ptr = it->pointer()) && it->equal(buf, part)) {

@@ -18,7 +18,7 @@
 static int setHistfile(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(metatype) *src)
 {
 	const char *where = 0;
-	int len;
+	int len = 0;
 	FILE *fd;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
@@ -88,6 +88,7 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTE
 		uint8_t val;
 		if (!src) {
 			hist->info.ignore = MPT_LOG(Info);
+			return 0;
 		}
 		if ((ret = src->_vptr->conv(src, 'y', &val)) >= 0) {
 			hist->info.ignore = val;
@@ -98,6 +99,7 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTE
 		const char *ign = 0;
 		if (!src) {
 			hist->info.ignore = MPT_LOG(Info);
+			return 0;
 		}
 		if ((ret = src->_vptr->conv(src, 's', &ign)) >= 0) {
 			int lv = mpt_log_level(ign);

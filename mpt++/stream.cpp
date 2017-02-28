@@ -108,7 +108,7 @@ int Stream::conv(int type, void *ptr)
     static const char fmt[] = { output::Type, input::Type, IODevice::Type, 0 };
     const void *addr = 0;
     switch (type) {
-      case 0: addr = fmt; type = Type;
+      case 0: addr = fmt; type = Type; break;
       case metatype::Type: addr = static_cast<metatype *>(this); break;
       case output::Type: addr = static_cast<output *>(this); break;
       case input::Type: addr = static_cast<input *>(this); break;
