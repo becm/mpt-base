@@ -92,6 +92,9 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	conf->children = 0;
 	res = mpt_node_read(conf, fd, format, limit, log);
 	if (fname) {
+		if (val) {
+			mpt_node_set(conf, fname);
+		}
 		fclose(fd);
 	}
 	/* restore old config state */
