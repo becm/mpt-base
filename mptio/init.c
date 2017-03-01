@@ -6,19 +6,66 @@
 # define _POSIX_C_SOURCE 200809L
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <unistd.h>
 #include <poll.h>
 
+#include "meta.h"
 #include "convert.h"
 #include "parse.h"
+#include "node.h"
 
 #include "stream.h"
 #include "notify.h"
 
 #include "client.h"
 
+static void setDebug(int lv)
+{
+	static int old = 0;
+	
+	/* maximize log level */
+	if (old >= lv) {
+		return;
+	}
+	old = lv;
+	/* set log skip begin */
+	lv = MPT_LOG(Debug) + lv * (MPT_LOG(Debug2) - MPT_LOG(Debug));
+	if (lv > MPT_LOG(File)) {
+		lv = MPT_LOG(File);
+	}
+	mpt_log_default_skip(lv);
+}
+static void setEnviron()
+{
+	static int env = 0;
+	/* environment arguments on first occurance only */
+	if (env++) {
+		return;
+	}
+	mpt_config_environ(0, "mpt_*", '_', 0);
+}
+static int loadConfig(const char *fname)
+{
+	MPT_STRUCT(node) *root;
+	FILE *fd;
+	int ret;
+	
+	if (!(fd = fopen(fname, "r"))) {
+		mpt_log(0, "mpt_init::load", MPT_LOG(Error), "%s",
+		        MPT_tr("failed to set global config element"));
+		return MPT_ERROR(BadArgument);
+	}
+	if (!(root = mpt_config_node(0))) {
+		return MPT_ERROR(BadOperation);
+	}
+	mpt_node_set(root, fname);
+	ret = mpt_node_read(root, fd, 0, 0, 0);
+	fclose(fd);
+	return ret;
+}
 /*!
  * \ingroup mptNotify
  * \brief initialize MPT environment
@@ -31,10 +78,12 @@
  */
 extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 {
-	const char *ctl = 0, *src = 0, *cname = 0, *debug, *flags;
-	int32_t lv = 0, env = 0, dbg = 0;
+	MPT_INTERFACE(metatype) *mt;
+	const char *ctl = 0, *src = 0, *debug, *flags;
+	int lv = 0;
 	
 	if ((debug = getenv("MPT_DEBUG"))) {
+		int dbg = 0;
 		if (mpt_cint(&dbg, debug, 0, 0) < 0
 		    || dbg < 0) {
 			dbg = 2;
@@ -42,13 +91,23 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		else if (dbg > 0xf) {
 			dbg = 0xf;
 		}
+		setDebug(dbg);
 	}
+	/* load mpt config from `etc` directory */
+	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
+	
+	/* additional flags from enfironment */
 	if ((flags = getenv("MPT_FLAGS"))) {
 		char curr;
 		while ((curr = *flags++)) {
 			switch (curr) {
-			  case 'v': ++lv; break;
-			  case 'e': ++env; break;
+			  case 'v':
+				setDebug(++lv);
+				continue;
+			  case 'e':
+				/* environment arguments on first occurance only */
+				setEnviron();
+				continue;
 			  default:
 				mpt_log(0, __func__, MPT_LOG(Debug), "%s, %c",
 				        MPT_tr("unknown operation flag"), curr);
@@ -61,14 +120,11 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		switch (c = getopt(argc, argv, "+f:c:l:ve")) {
 		    case -1:
 			argc = 0;
-			if (cname) break;
-			cname = argv[optind];
 			continue;
 		    case 'f':
-			if (cname) {
-				return MPT_ERROR(BadArgument);
+			if ((c = loadConfig(optarg)) < 0) {
+				return c;
 			}
-			cname = optarg;
 			continue;
 		    case 'c':
 			if (ctl) {
@@ -89,54 +145,34 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 			src = optarg;
 			continue;
 		    case 'v':
-			++lv; continue;
+			setDebug(++lv);
+			continue;
 		    case 'e':
-			++env; continue;
+			setEnviron();
+			continue;
 		    default:
 			return MPT_ERROR(BadArgument);
 		}
 	}
-	/* maximize log level */
-	if (lv < dbg) {
-		lv = dbg;
-	}
-	/* maximize log level */
-	if (lv) {
-		lv = MPT_LOG(Debug) + lv * (MPT_LOG(Debug2) - MPT_LOG(Debug));
-		if (lv > MPT_LOG(File)) {
-			lv = MPT_LOG(File);
-		}
-		mpt_log_default_skip(lv);
-	}
-	/* load mpt environment variables */
-	mpt_config_environ(0, "mpt_*", '_', 0);
-	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
-	
 	/* set executable name */
 	mpt_config_set(0, "mpt", argv[0], 0, 0);
 	
-	/* set client filename */
-	if (cname) {
-		mpt_config_set(0, "mpt.config", cname, '.', 0);
+	/* get listen/connect target from configuration */
+	if (!src && (mt = mpt_config_get(0, "mpt.listen", '.', 0))) {
+		mt->_vptr->conv(mt, 's', &src);
 	}
-	/* get arguments from environment */
-	if (env) {
-		if (!src) src = getenv("MPT_LISTEN");
-		if (!ctl) ctl = getenv("MPT_CONNECT");
-	}
-	/* set default event if no input available */
-	if (!src && !ctl) {
-		return 0;
+	if (!ctl && (mt = mpt_config_get(0, "mpt.connect", '.', 0))) {
+		mt->_vptr->conv(mt, 's', &ctl);
 	}
 	/* wait for connection to activate input */
-	if (src && mpt_notify_bind(no, src, 0) < 0) {
+	if (src && (lv = mpt_notify_bind(no, src, 0)) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
 		        MPT_tr("unable to create source"), src);
-		return 0;
+		return lv;
 	}
 	/* no control channel */
 	if (!ctl) {
-		return 1;
+		return optind;
 	}
 	/* use stdin as command source */
 	if (ctl[0] == '-' && !ctl[1]) {
@@ -147,10 +183,14 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		sock._id  = dup(STDIN_FILENO);
 		
 		if (!(in = mpt_stream_input(&sock, mode, MPT_ENUM(EncodingCommand), 0))) {
+			mpt_notify_fini(no);
 			close(sock._id);
+			return MPT_ERROR(BadOperation);
 		}
-		else if (mpt_notify_add(no, POLLIN, in) < 0) {
+		else if ((lv = mpt_notify_add(no, POLLIN, in)) < 0) {
+			mpt_notify_fini(no);
 			in->_vptr->ref.unref((void *) in);
+			return lv;
 		}
 		/* detach regular input to avoid confusion */
 		else {
@@ -158,13 +198,12 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		}
 	}
 	/* add command source */
-	else if (mpt_notify_connect(no, ctl) < 0) {
+	else if ((lv = mpt_notify_connect(no, ctl)) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
 		        MPT_tr("unable to connect to control"), ctl);
-		
 		mpt_notify_fini(no);
-		return 0;
+		return lv;
 	}
-	return 1;
+	return optind;
 }
 

@@ -26,11 +26,30 @@ struct loadCtx
 {
 	MPT_INTERFACE(logger) *log;
 	MPT_STRUCT(node) *root;
+	const char *func;
 };
 
+static int nodeGlobal(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
+{
+	
+	struct loadCtx *ctx = ptr;
+	
+	(void) last;
+	
+	if ((curr & 0x3) != MPT_PARSEFLAG(Option)) {
+		return 0;
+	}
+	if (!(mpt_node_assign(&ctx->root, p))) {
+		if (ctx->log) {
+			mpt_log(ctx->log, ctx->func, MPT_LOG(Error), "%s",
+			        MPT_tr("failed to set global config element"));
+		}
+		return MPT_ERROR(BadOperation);
+	}
+	return 0;
+}
 static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 {
-	static const char _func[] = "mpt_config_load\0";
 	
 	struct loadCtx *ctx = ptr;
 	
@@ -40,7 +59,10 @@ static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 		return 0;
 	}
 	if (!(mpt_node_assign(&ctx->root->children, p))) {
-		if (ctx->log) mpt_log(ctx->log, _func, MPT_LOG(Error), "%s", MPT_tr("failed to set global config element"));
+		if (ctx->log) {
+			mpt_log(ctx->log, ctx->func, MPT_LOG(Error), "%s",
+			        MPT_tr("failed to set global config element"));
+		}
 		return MPT_ERROR(BadOperation);
 	}
 	return 0;
@@ -61,9 +83,21 @@ extern int mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, const M
 {
 	struct loadCtx ctx;
 	
-	if (!(ctx.root = mpt_config_node(dest))) {
-		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("require existing global config target"));
+	if (dest && !dest->len) {
+		ctx.root = mpt_config_node(0);
+	} else {
+		ctx.root = mpt_config_node(dest);
+	}
+	if (!ctx.root) {
+		if (log) {
+			mpt_log(log, __func__, MPT_LOG(Error), "%s",
+			        MPT_tr("require existing global config target"));
+		}
 		return MPT_ERROR(BadArgument);
+	}
+	ctx.func = __func__;
+	if (dest && !dest->len) {
+		return _mpt_config_load(root, ctx.log = log, nodeGlobal, &ctx);
 	}
 	return _mpt_config_load(root, ctx.log = log, nodeSet, &ctx);
 }
