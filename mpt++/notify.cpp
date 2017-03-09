@@ -47,7 +47,8 @@ bool notify::add(input *in)
 }
 bool notify::init(int argc, char * const argv[])
 {
-    return mpt_init(this, argc, argv) >= 0;
+    int take = mpt_init(this, argc, argv);
+    return take == argc;
 }
 
 void notify::setDispatch(dispatch *d)

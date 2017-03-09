@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <poll.h>
@@ -32,20 +33,25 @@ static void setDebug(int lv)
 	}
 	old = lv;
 	/* set log skip begin */
-	lv = MPT_LOG(Debug) + lv * (MPT_LOG(Debug2) - MPT_LOG(Debug));
+	lv = MPT_LOG(Debug) + (lv - 1) * (MPT_LOG(Debug2) - MPT_LOG(Debug));
 	if (lv > MPT_LOG(File)) {
 		lv = MPT_LOG(File);
 	}
 	mpt_log_default_skip(lv);
 }
-static void setEnviron()
+static void setEnviron(const char *match)
 {
-	static int env = 0;
-	/* environment arguments on first occurance only */
-	if (env++) {
-		return;
+	char buf[128];
+	
+	if (match) {
+		int len = snprintf(buf, sizeof(buf), "%s_*", match);
+		if (len < 0 || len > (int) sizeof(buf)) {
+			mpt_log(0, "mpt_init::environ", MPT_LOG(Error), "%s",
+			        MPT_tr("bad match format"));
+		}
+		match = buf;
 	}
-	mpt_config_environ(0, "mpt_*", '_', 0);
+	mpt_config_environ(0, match, '_', 0);
 }
 static int loadConfig(const char *fname)
 {
@@ -64,6 +70,9 @@ static int loadConfig(const char *fname)
 	mpt_node_set(root, fname);
 	ret = mpt_node_read(root, fd, 0, 0, 0);
 	fclose(fd);
+	if (ret < 0) {
+		errno = EINVAL;
+	}
 	return ret;
 }
 /*!
@@ -86,18 +95,19 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		int dbg = 0;
 		if (mpt_cint(&dbg, debug, 0, 0) < 0
 		    || dbg < 0) {
-			dbg = 2;
+			dbg = 1;
 		}
-		else if (dbg > 0xf) {
-			dbg = 0xf;
+		else if (dbg > 0xe) {
+			dbg = 0xe;
 		}
-		setDebug(dbg);
+		setDebug(dbg + 1);
 	}
 	/* load mpt config from `etc` directory */
 	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
 	
 	/* additional flags from enfironment */
 	if ((flags = getenv("MPT_FLAGS"))) {
+		int env = 0;
 		char curr;
 		while ((curr = *flags++)) {
 			switch (curr) {
@@ -106,7 +116,9 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 				continue;
 			  case 'e':
 				/* environment arguments on first occurance only */
-				setEnviron();
+				if (!env++) {
+					setEnviron(0);
+				}
 				continue;
 			  default:
 				mpt_log(0, __func__, MPT_LOG(Debug), "%s, %c",
@@ -117,7 +129,7 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 	while (argc) {
 		int c;
 		
-		switch (c = getopt(argc, argv, "+f:c:l:ve")) {
+		switch (c = getopt(argc, argv, "+f:c:l:e:v")) {
 		    case -1:
 			argc = 0;
 			continue;
@@ -148,7 +160,7 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 			setDebug(++lv);
 			continue;
 		    case 'e':
-			setEnviron();
+			setEnviron(optarg);
 			continue;
 		    default:
 			return MPT_ERROR(BadArgument);

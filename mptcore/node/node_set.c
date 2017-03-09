@@ -29,10 +29,15 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
 	val.fmt = 0;
 	val.ptr = data;
 	
-	if (((old = node->_meta)
-	     && (ret = old->_vptr->assign(old, &val)) >= 0)
-	    || !data) {
-		return ret;
+	if ((old = node->_meta)) {
+		if (((ret = old->_vptr->assign(old, &val)) >= 0)
+		    || !data) {
+			return ret;
+		}
+		/* no reassignment of non-default type */
+		if (old->_vptr->conv(old, 0, 0)) {
+			return ret;
+		}
 	}
 	if (!(replace = mpt_meta_new(strlen(data)))) {
 		return -1;

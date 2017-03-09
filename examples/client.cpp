@@ -39,7 +39,6 @@ MyClient::MyClient(const char *e) : enc(e)
 
 int MyClient::init(mpt::metatype *)
 {
-//     _ref = mpt::mpt_library_bind(0, "output:mpt_output_local", 0, 0);
     _ref = mpt::mpt_output_remote();
 
     mpt::object *o;
@@ -61,18 +60,19 @@ int main(int argc, char * const argv[])
     mtrace();
 
     mpt::notify n;
-    if (n.init(argc, argv) < 0) {
+    int pos;
+    if ((pos = mpt::mpt_init(&n, argc, argv)) < 0) {
         perror("mpt init");
         return 1;
     }
     n.setDispatch(0);
 
-    MyClient *c = new MyClient(argv[1]);
+    MyClient *c = new MyClient(argv[pos]);
     c->init();
 
     c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
-    mpt::object *o;
+    const mpt::object *o;
     if ((o = c->cast<mpt::object>())) {
         for (auto p : *o) {
             std::cout << p << std::endl;
