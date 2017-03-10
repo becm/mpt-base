@@ -116,7 +116,7 @@ function mpt.setup(c, e)
     if not c then
       error('failed to start client process')
     end
-    c.encoding = "command"
+    c.encoding = "cobs"
   end
   client = mpt.client(c)
   

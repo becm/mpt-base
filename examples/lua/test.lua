@@ -24,17 +24,17 @@ end
 
 -- test math loading
 function testmath(...)
-  local m = io.open(os.getenv('MPT_MATHBOX'))
-  m = m:read('*a')
+  if not mbox then
+    mbox = require('mathbox')
+  end
   
   for i,v in pairs({...}) do
-    v = io.open(v)
-    c = m .. v:read('*a')
-    c, e = loadstring(c)
+    c, e = loadfile(v, "t", mbox)  -- Lua < 5.2 ignores mode and env arguments
     if c then
-      pcall(c)
+      if setfenv then setfenv(c, mbox) end  -- Lua < 5.2 environment assignment
+      c()
     else
-      print(e)
+      print("# " .. e)
     end
   end
 end

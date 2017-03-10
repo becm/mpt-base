@@ -28,9 +28,6 @@ CLEAN_FILES = ${CLEAR_FILES} ${OBJS}
 LDFLAGS = -L'${DIR_LIB}' -Wl,-R,'${DIR_LIB}'
 LDLIBS = -llua${LUA} -llua${LUA}-mpt
 #
-# math environment setup
-MBOX = ${DIR_TOP}/share/lua/${LUA}/mathbox.lua
-#
 # file creation
 ${PROG} : ${OBJS}
 	${CC} ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
@@ -44,7 +41,7 @@ ${PROG}_static : ${SRCS}
 # service targets
 .PHONY : clear clean test all
 test : ${PROG}
-	env MPT_MATHBOX='${MBOX}' LUA_PATH='?.lua;${DIR_TOP}/share/lua/${LUA}/?.lua' \
+	env LUA_PATH='?.lua;${DIR_TOP}/share/lua/${LUA}/?.lua' \
 		lua${LUA} -l test -e 'print(testmpt()); testmath([[user.lua]])'
 	./${PROG} 'user.lua'
 
