@@ -128,7 +128,7 @@ enum MPT_ENUM(Types)
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar */
 #define MPT_value_isScalar(v) ((v) >= MPT_ENUM(TypeScalBase) \
-                            && (v) <= MPT_ENUM(_TypeFinal))
+                            && (v) < MPT_ENUM(_TypeDynamic))
 	
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) \
@@ -295,6 +295,8 @@ MPT_STRUCT(value)
 	size_t scalar(int = 0);
 	const struct iovec *vector(int = 0);
 	const struct array *array(int = 0);
+#else
+# define MPT_VALUE_INIT { 0, 0 }
 #endif
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
@@ -313,6 +315,8 @@ MPT_STRUCT(property)
 	{ }
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
+#else
+# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT }
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */
