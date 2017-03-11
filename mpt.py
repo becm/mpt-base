@@ -673,16 +673,16 @@ if __name__ == "__main__":
         if exe is None:
             exe = "./" + cl
         
+        os.environ['MPT_FLAGS'] = "e"
         # start client under debug process
         if os.getenv('MPT_DEBUG') is not None:
             # enable client setup from environment
-            os.environ['MPT_FLAGS'] = "e"
             dbg = os.getenv("MPT_DEBUG_COMMAND")
             if not dbg:
                 dbg = "gdb"
             client([dbg, exe])
         else:
-            client([exe, "-e"])
+            client(exe)
     else:
         if len(sys.argv) < 2:
             name = os.path.basename(sys.argv[0])
