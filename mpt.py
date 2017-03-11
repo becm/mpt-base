@@ -451,7 +451,7 @@ class Shell(cmd.Cmd):
         return self.send('start ' + args)
     
     def complete_start(self, text, line, begidx, endidx):
-        return glob.glob(text + '*')
+        return glob(text + '*')
     
     def do_cont(self, args):
         """ send continue command to first user process """
@@ -466,7 +466,7 @@ class Shell(cmd.Cmd):
         return self.send('read ' + args)
     
     def complete_read(self, text, line, begidx, endidx):
-        return glob.glob(text + '*')
+        return glob(text + '*')
     
     def do_init(self, args):
         """ send initialisation command to first user process """
