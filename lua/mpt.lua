@@ -51,23 +51,24 @@ end
 -- load mpt platform package
 local mpt, err = load('mpt', 1, prefix_lib)
 if not mpt then
-  error(err)
+  mpt = {}  -- no library backend available
+else
+  mpt = mpt()  -- import symbols from library
+
+  -- shortcut to stream create/connect
+  function mpt.connect(...)
+    return mpt.stream():connect(...)
+  end
 end
-mpt = mpt() -- import symbols from library
 
 -- add loading wrapper
 function mpt.loadmodule(name, ver, path)
   if not path then path = prefix_lib end
   local pkg, err = load(name, ver, path)
   if not pkg then
-    error(err)
+    return nil, err
   end
-  return pkg()
-end
-
--- shortcut to stream create/connect
-function mpt.connect(...)
-  return mpt.stream():connect(...)
+  return pkg(), nil
 end
 
 -- create client process
@@ -79,46 +80,54 @@ function mpt.client(c, w, o)
   if not w then twait = 1000 end
   if not o then out = io.output() end
   
-  -- single command submission
-  local function command(...)
-    con:push('\x04\x00')
-    con:push(...)
-    con:push()
-    con:flush()
+  -- open client process with stdin command input
+  if type(c) == 'string' then
+    -- open in current location
+    con = io.popen('./'..c..' -c-', 'w')
+    
+    return {
+      -- merge arguments to command string
+      command = function(...)
+        con:write(table.concat(table.pack(...), ' '))
+        con:write('\000')  -- terminate command
+        con:flush()
+      end,
+      
+      -- ignore wait operation
+      wait = function(t)
+        return nil
+      end
+    }
   end
   
-  -- print output from passed command
-  local function wait(t)
-    if not t then t = twait end
-    local ret = con:read(t)
-    while ret and #ret > 0 do
-      out:write(ret)
-      if t == nil then return end
-      ret = con:read(t)
-    end
-  end
-  
+  -- use existing connection
   return {
-    command = command,
-    wait = wait
+    -- prefix commands with message type header
+    command = function (...)
+      con:push('\x04\x00', ...)
+      con:push()
+      con:flush()
+    end,
+    
+    -- print output from passed command
+    wait = function(t)
+      if not t then t = twait end
+      local ret = con:read(t)
+      while ret and #ret > 0 do
+        out:write(ret)
+        if t == nil then return end
+        ret = con:read(t)
+      end
+    end
   }
 end
 
 -- register operations in environment
 function mpt.setup(c, e)
-  local client
-  
   if not e then e = _G end
   
   -- auto-generate client
-  if type(c) == "string" then
-    c = mpt.pipe(c, '-c-')
-    if not c then
-      error('failed to start client process')
-    end
-    c.encoding = "cobs"
-  end
-  client = mpt.client(c)
+  local client = mpt.client(c)
   
   -- direct client operations
   function e.init(...)

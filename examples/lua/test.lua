@@ -3,7 +3,12 @@
 function testmpt()
   if not mpt then
     mpt = require('mpt')
-    print("loaded mpt module")
+    if mpt.open and mpt.cobs then
+      print("full mpt module capabilities")
+    else
+      print("mpt module without library")
+      return false
+    end
   end
   local n = os.tmpname()
   local s = mpt.open(n, 'w')
