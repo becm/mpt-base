@@ -21,8 +21,9 @@ else
     'lua' + get_option('lua')).stdout().strip()
 endif
 
-install_data('mathbox.lua', 'mpt.lua',
-  install_dir : lua_lmod)
+if not meson.is_subproject()
+  install_data('mpt.lua', install_dir : lua_lmod)
+endif
 
 if with_shared and with_io
   # shared_module() does not allow versioning and links libc by default anyway
@@ -30,8 +31,7 @@ if with_shared and with_io
     version : '1.0.0', soversion : '1',
     install_rpath : '$ORIGIN',
     c_args : lua_cflags,
-    include_directories : include_directories('../mptcore'),
-    link_with : io_lib,
+    dependencies : io,
     link_args : ['-Wl,--unresolved-symbols=ignore-in-object-files'],
     install : with_lua)
   

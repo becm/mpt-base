@@ -1,3 +1,5 @@
+-- mpt.lua
+-- client runtime and math environment
 
 -- get lua version from string
 local version = _VERSION:sub(5)
@@ -169,5 +171,45 @@ function mpt.setup(c, e)
   
   return client
 end
+
+-- create extended math environment
+local mbox = math
+
+-- set number format
+mbox.format = {}
+setmetatable(mbox.format, {
+  __call = function(self, ...)
+      local ret = ''
+      local dec = self.dec
+      local fmt = self.type
+      local width = self.width
+      
+      if width == nil then width = 0 end
+      if dec == nil then dec = 6 end
+      if fmt == nil then fmt = 'e' end
+      local fmt = '%' .. width .. '.' .. dec .. fmt
+      ret = {}
+      for i, v in pairs({...}) do
+        ret[i] = string.format(fmt, v)
+      end
+      return ret
+  end
+})
+
+-- formated line print closure
+mbox.push = function()
+  local out = io.write
+  local nl  = '\n'
+  local fmt = mbox.format
+  return function(...)
+    out(table.concat(fmt(...), ' '))
+    out(nl)
+  end
+end
+mbox.push = mbox.push()
+
+-- assign mathbox to mpt element
+mpt.mathbox = mbox
+
 
 return mpt

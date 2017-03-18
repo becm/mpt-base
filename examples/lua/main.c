@@ -73,30 +73,16 @@ int main(int argc, char *argv[])
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	
-#if LUA_VERSION_NUM < 502
-# ifndef _STATIC
-	/* manual MPT module load */
-	ret = loadModule(L, "mpt");
-	if (ret == 1) {
-		lua_setglobal(L, "mpt");
-	}
-# endif
-#else
-	luaL_requiref(L, "mpt", luaopen_mpt, 1);
-	lua_pop(L, 1);  /* remove module reference from stack */
-#endif
-	/* use mathbox module as environment */
-	ret = loadModule(L, "mathbox");
-	if (ret == 1) {
-		lua_pushvalue(L, -1);  /* use table on stack */
-		lua_setglobal(L, "mpt");
-		setGlobal(L);
-	} else {
+	/* use MPT mathbox module as environment */
+	if ((ret = loadModule(L, "mpt")) != 1
+	    || (ret = lua_getfield(L, -1, "mathbox")) != LUA_TTABLE
+	    || setGlobal(L) < 0) {
 		fputs("failed to load mathbox", stderr);
 		fputc('\n', stderr);
 		lua_close(L);
 		return 2;
 	}
+	lua_pop(L, 1); /* remove `mpt` module from stack */
 	ret = 0;
 	if (argc < 2) {
 		char buf[256];

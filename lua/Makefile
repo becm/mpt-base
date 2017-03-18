@@ -22,7 +22,7 @@ LDLIBS = -lmptio
 DIR_TOP = ${MPT_PREFIX}
 include ../mpt.lib.mk
 #
-SHARE = mpt.lua mathbox.lua
+SHARE = mpt.lua
 LUA_SHARE = ${DIR_SHARE}/lua/${LUA}
 CLEAN_FILES += ${CLEAR_FILES}
 CLEAR_FILES += $(SHARE:%=${LUA_SHARE}/%)

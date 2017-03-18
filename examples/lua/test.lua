@@ -29,14 +29,16 @@ end
 
 -- test math loading
 function testmath(...)
-  if not mbox then
-    mbox = require('mathbox')
+  if not mpt then
+    mpt = require('mpt')
   end
   
   for i,v in pairs({...}) do
-    c, e = loadfile(v, "t", mbox)  -- Lua < 5.2 ignores mode and env arguments
+    -- Lua < 5.2 ignores mode and env arguments
+    c, e = loadfile(v, "t", mpt.mathbox)
     if c then
-      if setfenv then setfenv(c, mbox) end  -- Lua < 5.2 environment assignment
+      -- Lua < 5.2 environment assignment
+      if setfenv then setfenv(c, mpt.mathbox) end
       c()
     else
       print("# " .. e)

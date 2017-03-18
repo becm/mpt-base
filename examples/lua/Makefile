@@ -26,7 +26,7 @@ CLEAN_FILES = ${CLEAR_FILES} ${OBJS}
 #
 # link flags and libraries
 LDFLAGS = -L'${DIR_LIB}' -Wl,-R,'${DIR_LIB}'
-LDLIBS = -llua${LUA} -llua${LUA}-mpt
+LDLIBS = -llua${LUA}
 #
 # file creation
 ${PROG} : ${OBJS}
