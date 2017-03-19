@@ -48,9 +48,6 @@ static int loadModule(lua_State *L, const char *mod)
 
 static int setGlobal(lua_State *L)
 {
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
 #if LUA_VERSION_NUM < 502
 	lua_replace(L, LUA_GLOBALSINDEX);
 #else
@@ -74,9 +71,25 @@ int main(int argc, char *argv[])
 	luaL_openlibs(L);
 	
 	/* use MPT mathbox module as environment */
-	if ((ret = loadModule(L, "mpt")) != 1
-	    || (ret = lua_getfield(L, -1, "mathbox")) != LUA_TTABLE
-	    || setGlobal(L) < 0) {
+	if ((ret = loadModule(L, "mpt")) != 1) {
+		fputs("failed to load mpt", stderr);
+		fputc('\n', stderr);
+		lua_close(L);
+		return 2;
+	}
+#if LUA_VERSION_NUM < 503
+	lua_getfield(L, -1, "mathbox");
+	if (!lua_istable(L, -1))
+#else
+	if ((ret = lua_getfield(L, -1, "mathbox")) != LUA_TTABLE)
+#endif
+	{
+		fputs("bad mathbox type", stderr);
+		fputc('\n', stderr);
+		lua_close(L);
+		return 2;
+	}
+	if (setGlobal(L) < 0) {
 		fputs("failed to load mathbox", stderr);
 		fputc('\n', stderr);
 		lua_close(L);
