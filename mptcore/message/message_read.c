@@ -1,4 +1,6 @@
-
+/*!
+ * read data from message
+ */
 
 #include <string.h>
 #include <sys/uio.h>
@@ -9,17 +11,17 @@
  * \ingroup mptMessage
  * \brief read from mpt::message
  * 
- * read/consume leading data of message
+ * Consume leading data from message.
  * 
- * \param msg  source message data
- * \param len  available length
+ * \param msg  source message
+ * \param len  length to read
  * \param dest target address
  * 
  * \return length of consumed data
  */
 extern size_t mpt_message_read(MPT_STRUCT(message) *msg, size_t len, void *dest)
 {
-	size_t	total = 0, part;
+	size_t total = 0, part;
 	
 	while (len > (part = msg->used)) {
 		if (part) {
@@ -40,11 +42,11 @@ extern size_t mpt_message_read(MPT_STRUCT(message) *msg, size_t len, void *dest)
 		++msg->cont;
 		--msg->clen;
 	}
-	if (dest) memcpy(dest, msg->base, len);
-	
-	msg->base = ((uint8_t *) msg->base) + len;
-	msg->used -= len;
-	
+	if (len) {
+		if (dest) memcpy(dest, msg->base, len);
+		msg->base = ((uint8_t *) msg->base) + len;
+		msg->used -= len;
+	}
 	while (!msg->used && msg->clen) {
 		msg->used = msg->cont->iov_len;
 		msg->base = msg->cont->iov_base;

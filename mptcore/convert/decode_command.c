@@ -1,4 +1,7 @@
-#include <errno.h>
+/*!
+ * text to command
+ */
+
 #include <string.h>
 
 #include <sys/uio.h>
@@ -8,10 +11,10 @@
 
 /*!
  * \ingroup mptConvert
- * \brief command format
+ * \brief command decoder
  * 
- * Convert data to command by adding header at
- * beginning.
+ * Convert zero-delimited text to command message
+ * by prepending message header to segments.
  * 
  * \param off  start of source data
  * \param src  encoded data
@@ -38,18 +41,14 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 	
 	/* peek at data */
 	if (!sourcelen) {
-		pos = source->iov_len;
+		size_t max = source->iov_len;
 		
-		if (!len) {
-			return -2;
+		if (max < off) {
+			return MPT_ERROR(MissingData);
 		}
-		if (pos < off || len != off) {
-			return 0;
-		}
-		pos -= off;
-		
-		if (pos < len) {
-			len = pos;
+		max -= off;
+		if (len < max) {
+			return max;
 		}
 		return len;
 	}
@@ -63,17 +62,17 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 	if (!len) {
 		/* need place for header */
 		if ((off + pos) < sizeof(mt)) {
-			return -3;
+			return MPT_ERROR(MissingBuffer);
 		}
+		/* offset is start of message header */
 		if (pos < sizeof(mt)) {
 			off -= sizeof(mt) - pos;
 			pos = sizeof(mt);
+		} else {
+			off += pos - sizeof(mt);
 		}
-		
-		off += pos;
-		
-		if (off && (mpt_message_read(&from, off, 0) < off)) {
-			return -2;
+		if (mpt_message_read(&from, off, 0) < off) {
+			return MPT_ERROR(MissingData);
 		}
 		/* save command header */
 		end = (uint8_t *) from.base;
@@ -85,7 +84,7 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 				continue;
 			}
 			if (!from.clen--) {
-				return -2;
+				return MPT_ERROR(BadOperation);
 			}
 			cont = from.cont++;
 			from.base = end = cont->iov_base;
@@ -93,13 +92,17 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 		}
 		info->_ctx = len;
 		info->done = off;
-		info->scratch = pos;
+		info->scratch = len;
 	}
 	/* register additional data */
 	else {
+		/* scratch space is message */
+		if (len != pos) {
+			return MPT_ERROR(BadArgument);
+		}
 		off += pos;
-		if (off && mpt_message_read(&from, off, 0) < off) {
-			return -3;
+		if (mpt_message_read(&from, off, 0) < off) {
+			return MPT_ERROR(MissingData);
 		}
 	}
 	/* find command end */
@@ -111,17 +114,16 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 		len += from.used;
 		if (!from.clen--) {
 			info->_ctx = len;
-			return -2;
+			info->scratch = len;
+			return MPT_ERROR(MissingData);
 		}
 		from.base = from.cont->iov_base;
 		from.used = from.cont->iov_len;
 		++from.cont;
 	}
-	++len;
 	
 	info->_ctx = 0;
-	info->done = off + len;
-	info->scratch = 0;
+	info->scratch = len + 1;
 	
 	return len;
 }
