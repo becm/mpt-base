@@ -1,6 +1,4 @@
 
-#include <errno.h>
-
 #include "queue.h"
 
 /*!

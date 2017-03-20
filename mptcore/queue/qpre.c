@@ -1,7 +1,9 @@
+/*!
+ * reserve segment before queue data
+ */
 
 #include <string.h>
 #include <stdint.h>
-#include <errno.h>
 
 #include "queue.h"
 
@@ -23,8 +25,7 @@ extern ssize_t mpt_qpre(MPT_STRUCT(queue) *queue, size_t len)
 	
 	/* not enough remaining space */
 	if (len > total) {
-		errno = ERANGE;
-		return -2;
+		return MPT_ERROR(MissingBuffer);
 	}
 	/* data element wraps around upper border */
 	if (high && high < len) {
@@ -39,4 +40,3 @@ extern ssize_t mpt_qpre(MPT_STRUCT(queue) *queue, size_t len)
 	
 	return total / len;
 }
-

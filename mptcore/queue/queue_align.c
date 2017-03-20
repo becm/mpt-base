@@ -3,7 +3,6 @@
  */
 
 #include <string.h>
-#include <errno.h>
 
 #include "queue.h"
 
@@ -13,14 +12,14 @@ extern void mpt_queue_align(MPT_STRUCT(queue) *queue, size_t pos)
 	size_t pv;
 	
 	if (pos > queue->max) {
-		errno = ERANGE; return;
+		return;
 	}
 	if (!queue->len) {
 		queue->off = 0;
 		return;
 	}
 	if (!(addr = queue->base)) {
-		errno = EFAULT; return;
+		return;
 	}
 	
 	/* align to buffer start */

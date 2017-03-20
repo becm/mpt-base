@@ -1,8 +1,8 @@
 
 #include <string.h>
-#include <errno.h>
 
 #include "queue.h"
+
 /*!
  * \ingroup mptQueue
  * \brief crop queue data
@@ -28,8 +28,7 @@ extern int mpt_queue_crop(MPT_STRUCT(queue) *queue, size_t pos, size_t len)
 	if (!pos) {
 		post = low + high;
 		if (len > post) {
-			errno = ERANGE;
-			return -2;
+			return MPT_ERROR(BadArgument);
 		}
 		queue->len -= len;
 		if (len >= low) {
@@ -47,8 +46,7 @@ extern int mpt_queue_crop(MPT_STRUCT(queue) *queue, size_t pos, size_t len)
 	}
 	/* start position out of range */
 	else if ((pos -= low) > high) {
-		errno = EINVAL;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	/* process high part only */
 	else {
@@ -59,8 +57,7 @@ extern int mpt_queue_crop(MPT_STRUCT(queue) *queue, size_t pos, size_t len)
 	post = low + high;
 	
 	if (post < len) {
-		errno = ERANGE;
-		return -2;
+		return MPT_ERROR(BadArgument);
 	}
 	/* need to move post data */
 	post -= len;

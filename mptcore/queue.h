@@ -84,9 +84,9 @@ MPT_STRUCT(encode_queue)
 __MPT_EXTDECL_BEGIN
 
 /* switch memory before and after pivot */
-extern void *mpt_memrev(void *, size_t , size_t);
+extern int mpt_memrev(void *, size_t , size_t);
 /* switch memory content */
-extern void *mpt_memswap(void *, void *, size_t);
+extern int mpt_memswap(void *, void *, size_t);
 
 /* get address/range of empty parts */
 extern void *mpt_queue_empty(const MPT_STRUCT(queue) *, size_t *, size_t *);

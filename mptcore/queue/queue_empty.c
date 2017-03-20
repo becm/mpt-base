@@ -1,5 +1,6 @@
-
-#include <errno.h>
+/*!
+ * get empty queue segment
+ */
 
 #include "queue.h"
 

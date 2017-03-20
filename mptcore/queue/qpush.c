@@ -2,16 +2,15 @@
  * add/remove data on right side end.
  */
 
-#include <errno.h>
-
 #include "queue.h"
 
 extern int mpt_qpush(MPT_STRUCT(queue) *queue, size_t len, const void *data)
 {
-	if (mpt_qpost(queue, len) < 0) {
-		return -2;
+	int ret;
+	if ((ret = mpt_qpost(queue, len)) < 0) {
+		return ret;
 	}
-	/* set data in new segment */
+	/* set data in appended segment */
 	return mpt_queue_set(queue, queue->len - len, len, data);
 }
 

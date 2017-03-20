@@ -4,7 +4,6 @@
 
 #include <string.h>
 #include <stdint.h>
-#include <errno.h>
 
 #include "queue.h"
 
@@ -22,8 +21,9 @@
  */
 extern int mpt_qunshift(MPT_STRUCT(queue) *queue, size_t len, const void *data)
 {
-	if (mpt_qpre(queue, len) < 0) {
-		return -2;
+	int ret;
+	if ((ret = mpt_qpre(queue, len)) < 0) {
+		return ret;
 	}
 	return mpt_queue_set(queue, 0, len, data);
 }

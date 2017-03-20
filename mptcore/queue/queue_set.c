@@ -2,7 +2,6 @@
  * set data valid queue memory.
  */
 
-#include <errno.h>
 #include <string.h>
 
 #include "queue.h"
@@ -19,17 +18,15 @@ extern int mpt_queue_set(const MPT_STRUCT(queue) *queue, size_t pos, size_t len,
 	}
 	/* get segment properties */
 	if (pos) {
-		if (pos > (tmp.max-tmp.off)) {
+		if (pos > (tmp.max - tmp.off)) {
 			ret |= 1;
 		}
 		if (mpt_queue_crop(&tmp, 0, pos) < 0) {
-			errno = EINVAL;
-			return -1;
+			return MPT_ERROR(BadArgument);
 		}
 	}
 	if (len > tmp.len) {
-		errno = ERANGE;
-		return -2;
+		return MPT_ERROR(MissingBuffer);
 	}
 	tmp.len = len;
 	base = mpt_queue_data(&tmp, &low);

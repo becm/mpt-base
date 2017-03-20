@@ -2,8 +2,6 @@
  * prepare (uninitialized) element at queue end.
  */
 
-#include <errno.h>
-
 #include "queue.h"
 
 /*!
@@ -21,14 +19,13 @@ extern ssize_t mpt_qpost(MPT_STRUCT(queue) *queue, size_t len)
 	
 	/* try to fit in existing memory */
 	if (!mpt_queue_empty(queue, &low, &high)) {
-		return -2;
+		return MPT_ERROR(MissingBuffer);
 	}
 	total = low + high;
 	
 	/* not enough remaining space */
 	if (len > total) {
-		errno = ERANGE;
-		return 0;
+		return MPT_ERROR(MissingBuffer);
 	}
 	total -= len;
 	queue->len += len;

@@ -1,6 +1,8 @@
+/*!
+ * add data to message
+ */
 
 #include <string.h>
-#include <errno.h>
 #include <sys/uio.h>
 
 #include "message.h"

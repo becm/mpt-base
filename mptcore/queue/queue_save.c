@@ -2,8 +2,6 @@
  * save data from queue to file.
  */
 
-#include <errno.h>
-
 #include <sys/uio.h>
 
 #include "queue.h"
@@ -18,7 +16,7 @@ extern ssize_t mpt_queue_save(MPT_STRUCT(queue) *queue, int file)
 	}
 	/* get used parts */
 	if (!(io[0].iov_base = mpt_queue_data(queue, &io[0].iov_len))) {
-		return -2;
+		return MPT_ERROR(MissingData);
 	}
 	/* prepare upper data part */
 	io[1].iov_base = queue->base;

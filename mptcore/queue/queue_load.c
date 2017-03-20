@@ -1,4 +1,12 @@
 /*!
+ * load new queue data from file
+ */
+
+#include <sys/uio.h>
+
+#include "queue.h"
+
+/*!
  * \ingroup mptQueue
  * \~english
  * \brief queue data from file
@@ -9,12 +17,6 @@
  * \param file  file descriptor to read from
  * \param len   size to read, zero to fill all available data
  */
-
-#include <errno.h>
-#include <sys/uio.h>
-
-#include "queue.h"
-
 extern ssize_t mpt_queue_load(MPT_STRUCT(queue) *queue, int file, size_t len)
 {
 	struct iovec io[2];
@@ -53,4 +55,3 @@ extern ssize_t mpt_queue_load(MPT_STRUCT(queue) *queue, int file, size_t len)
 	
 	return ret;
 }
-
