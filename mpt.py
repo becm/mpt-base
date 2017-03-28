@@ -52,7 +52,7 @@ if not TMPDIR:
 
 
 def encodeCommand(msg):
-    if type(msg) == str:
+    if isinstance(msg, str):
         msg = bytearray(msg, "utf-8")
     
     try:
@@ -71,7 +71,7 @@ def encodeCobs(msg):
     
     ret.append(code)
     
-    if type(msg) == str:
+    if isinstance(msg, str):
         msg = bytearray(msg, "utf-8")
     
     for b in msg:
@@ -112,13 +112,13 @@ class Output(object):
         if not self._buf:
             self._buf = bytearray()
         
-        if type(msg) == tuple or type(msg) == list:
+        if isinstance(msg, tuple) or isinstance(msg, list):
             """ serialize message data """
             for t in msg:
                 self._buf = self._buf + t
-        elif type(msg) == bytes:
+        elif isinstance(msg, bytes):
             self._buf = self._buf + msg
-        elif type(msg) == str:
+        elif isinstance(msg, str):
             self._buf = self._buf + bytes(bytearray(msg, "utf-8"))
         else:
             raise TypeError("invalid output data")
@@ -158,7 +158,7 @@ def destination(dest):
     """ serialize destination encoding """
     lay = grf = wld = dim = cyc = off = None
     
-    if type(dest) == tuple or type(dest) == list:
+    if isinstance(dest, tuple) or isinstance(dest, list):
         if len(dest) > 5:
             off = dest[5]
         if len(dest) > 4:
@@ -171,7 +171,7 @@ def destination(dest):
             grf = dest[1]
         if len(dest) > 0:
             lay = dest[0]
-    elif type(dest) == dict:
+    elif isinstance(dest, dict):
         lay = dest.get("lay")
         if not lay:
             lay = dest.get("layout")
@@ -209,7 +209,7 @@ def destination(dest):
 
 def message(msg, dest=None, messageID=None):
     """ create serialized message elements """
-    if type(msg) == array:
+    if isinstance(msg, array):
         if "df".find(msg.typecode) >= 0:
             arg = VALUES_NATIVE + VALUES_FLOAT + msg.itemsize
         elif "LIHBC".find(msg.typecode) >= 0:
@@ -220,10 +220,10 @@ def message(msg, dest=None, messageID=None):
             raise TypeError("invalid value type")
         hdr = header(MESSAGE_DEST, arg, messageID)
         return (hdr + destination(dest), msg.tostring())
-    if type(msg) == str:
+    if isinstance(msg, str):
         msg = bytes(bytearray(msg, "utf-8"))
         return (header(MESSAGE_COMMAND, ord(" "), messageID), msg)
-    if type(msg) == bytes:
+    if isinstance(msg, bytes):
         if dest:
             fmt = VALUES_NATIVE + VALUES_FLOAT + 8
             hdr = header(MESSAGE_VALUES, fmt, messageID)
@@ -248,7 +248,7 @@ class Graphic(Output):
         super(Graphic, self).__init__()
         self._encode = encodeCobs
         
-        if type(dest) == tuple:
+        if isinstance(dest, tuple):
             port = Graphic.DEFAULT_PORT
             if len(dest) > 1:
                 dest, port = dest
@@ -263,9 +263,9 @@ class Graphic(Output):
         if exe is None:
             if dest is None:
                 return
-            if type(dest) == str:
+            if isinstance(dest, str):
                 chan = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            elif type(dest) == tuple:
+            elif isinstance(dest, tuple):
                 chan = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             else:
                 raise TypeError("invalid destination")
@@ -288,10 +288,10 @@ class Graphic(Output):
         # create graphic process arguments
         if dest is None:
             argv = [exe]
-        elif type(dest) == str:
+        elif isinstance(dest, str):
             self.name = "Unix:" + dest
             argv = [exe, "-s", self.name]
-        elif type(dest) == tuple:
+        elif isinstance(dest, tuple):
             argv = [exe, "-s", "Ip:" + dest[0] + ":" + str(dest[1])]
             self.name = "Ip:localhost:" + str(dest[1])
         else:
@@ -354,13 +354,13 @@ def error(*err):
 
 def tolist(arg):
     """ convert argument to list """
-    if type(arg) == tuple:
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, tuple):
         return list(arg)
-    elif type(arg) == str:
+    if isinstance(arg, str):
         return [arg]
-    elif type(arg) != list:
-        raise TypeError("require string, tuple or list")
-    return arg
+    raise TypeError("require string, tuple or list")
 
 
 def getterm():
@@ -368,15 +368,14 @@ def getterm():
     term = os.getenv("MPT_TERMINAL")
     if term is not None:
         exe = which(term)
-        if not exe:
-            error("invalid terminal" + term)
-        return [exe]
-    
+        if exe:
+            return [exe]
+        error("invalid terminal" + term)
+        return None
     for term in SEARCH_TERMINAL:
         exe = which(term[0])
         if exe is not None:
             return [exe] + term[1:]
-    
     return None
 
 
