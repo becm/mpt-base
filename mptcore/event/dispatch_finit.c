@@ -19,21 +19,31 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 		}
 		return 0;
 	}
-	if (ev->reply) {
-		mpt_context_reply(ev->reply, -1, "%s: %" PRIxPTR, MPT_tr("invalid message command"), ev->id);
-		return MPT_EVENTFLAG(Fail);
-	}
+	/* bad event id */
 	if (ev->id) {
-		mpt_log(log, _func, MPT_LOG(Error), "%s: %" PRIxPTR,
-		        MPT_tr("invalid command"), ev->id);
+		if (ev->reply) {
+			mpt_context_reply(ev->reply, MPT_ERROR(BadArgument), "%s: %" PRIxPTR,
+			                  MPT_tr("invalid command"), ev->id);
+		} else {
+			mpt_log(log, _func, MPT_LOG(Error), "%s: %" PRIxPTR,
+			        MPT_tr("invalid command"), ev->id);
+		}
 		ev->id = 0;
 		return MPT_EVENTFLAG(Default) | MPT_EVENTFLAG(Fail);
 	}
+	/* bad default event */
 	if (!ev->msg) {
-		mpt_log(log, _func, MPT_LOG(Error), "%s",
-		        MPT_tr("message required"));
+		if (ev->reply) {
+			mpt_context_reply(ev->reply, MPT_ERROR(MissingData), "%s",
+			                  MPT_tr("message required"));
+		} else {
+			mpt_log(log, _func, MPT_LOG(Error), "%s",
+			        MPT_tr("message required"));
+		}
 		return MPT_EVENTFLAG(Default) | MPT_EVENTFLAG(Fail);
-	} else {
+	}
+	/* bad message type */
+	else {
 		MPT_STRUCT(message) msg = *ev->msg;
 		uint8_t type;
 		
@@ -41,10 +51,15 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 			mpt_log(log, __func__, MPT_LOG(Warning), "%s", MPT_tr("empty message"));
 			return MPT_EVENTFLAG(None);
 		}
-		mpt_log(log, _func, MPT_LOG(Error), "%s: %02x",
-		        MPT_tr("unable to process message type"), type);
+		if (ev->reply) {
+			mpt_context_reply(ev->reply, MPT_ERROR(BadOperation), "%s: %02x",
+			                  MPT_tr("unable to process message type"), type);
+		} else {
+			mpt_log(log, _func, MPT_LOG(Error), "%s: %02x",
+			        MPT_tr("unable to process message type"), type);
+		}
+		return MPT_EVENTFLAG(Fail);
 	}
-	return MPT_EVENTFLAG(None);
 }
 
 /*!
