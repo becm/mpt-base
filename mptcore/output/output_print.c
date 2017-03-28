@@ -13,6 +13,16 @@
 #include "output.h"
 #include "message.h"
 
+/*!
+ * \ingroup mptMessage
+ * \brief push text message
+ * 
+ * Push text message to output.
+ * Transform incompatible messages type to (incomplete) hex string.
+ * 
+ * \param out   output descriptor
+ * \param mptr  generic message
+ */
 extern int mpt_output_print(MPT_INTERFACE(output) *out, const MPT_STRUCT(message) *mptr)
 {
 	MPT_STRUCT(message) msg;

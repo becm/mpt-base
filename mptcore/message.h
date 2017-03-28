@@ -250,12 +250,10 @@ extern int mpt_output_bind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) 
 extern int mpt_output_bind_string(MPT_INTERFACE(output) *, const char *);
 
 
-/* push output/error message */
+/* push (error) message to output */
 extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
-/* push value data to putput */
-extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
-/* convert message to printable */
+/* convert message to printable and push to output */
 extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* push raw value header to output */
