@@ -35,7 +35,8 @@ endif
 if with_io
   cxx_src += files(
     'notify.cpp',
-    'stream.cpp'
+    'stream.cpp',
+    'output.cpp'
   )
   cxx += io
 endif

@@ -35,9 +35,6 @@ public:
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
 	
 	int open(const char *);
-	int setHistory(const char *);
-	int setHistFormat(const char *);
-	
 	int message(const char *, int, const char *, ... );
 # define MPT_OUTFLAG(x) x
 #else
