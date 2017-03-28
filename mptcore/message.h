@@ -226,11 +226,6 @@ extern ssize_t mpt_memtok(const struct iovec *, size_t , const char *, const cha
 /* iovec copy operations */
 extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct iovec *, size_t );
 
-/* value to string conversion */
-#if defined(_STDIO_H) || defined(_STDIO_H_)
-extern ssize_t mpt_message_print(FILE *, const MPT_STRUCT(message) *);
-#endif
-
 /* push message to connection */
 extern int mpt_message_append(MPT_STRUCT(array) *, const MPT_STRUCT(message) *);
 
@@ -253,8 +248,6 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *, const char *);
 /* push (error) message to output */
 extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
-/* convert message to printable and push to output */
-extern int mpt_output_print(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* push raw value header to output */
 extern int mpt_output_init_raw(MPT_INTERFACE(output) *, uint8_t);

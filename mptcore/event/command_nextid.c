@@ -3,21 +3,58 @@
  *   unique command creation
  */
 
-#include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
-#include <sys/uio.h>
 
-#include "event.h"
-#include "array.h"
 #include "message.h"
 
-static int printReply(void *out, void *msg)
+#include "event.h"
+
+static int logReply(void *out, void *arg)
 {
-	if (!out) {
+	static const char _func[] = "mpt::command::reply\0";
+	MPT_STRUCT(message) msg;
+	MPT_STRUCT(msgtype) mt;
+	int len;
+	
+	if (!arg) {
+		mpt_log(0, _func, MPT_LOG(Debug), "%s (" PRIxPTR ")",
+		        MPT_tr("empty reply"), out);
 		return 0;
 	}
-	fputs(" >", out);
-	return mpt_message_print(out, msg);
+	memcpy(&msg, arg, sizeof(msg));
+	if (!(len = mpt_message_read(&msg, sizeof(mt), &mt))) {
+		mpt_log(0, _func, MPT_LOG(Debug), "%s (" PRIxPTR ")",
+		        MPT_tr("zero length reply"), out);
+		return 0;
+	}
+	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
+		int type = MPT_LOG(Debug);
+		if (len < 2) {
+			mt.arg = 0;
+		} else if (mt.arg < 0) {
+			type = MPT_LOG(Error);
+		} else if (mt.arg) {
+			type = MPT_LOG(Info);
+		}
+		mpt_log(0, _func, type, "%s (" PRIxPTR "): %s = %02x",
+		        MPT_tr("answer message"), out, MPT_tr("code"), mt.arg);
+	}
+	else if (mt.cmd == MPT_ENUM(MessageOutput)) {
+		if (len < 2) {
+			mt.arg = MPT_LOG(Debug);
+		}
+		mpt_log(0, _func, mt.arg & 0x7f, "%s (" PRIxPTR ")",
+		        MPT_tr("reply message"), out);
+	}
+	else {
+		len += mpt_message_length(&msg);
+		mpt_log(0, _func, MPT_LOG(Debug), "%s (" PRIxPTR "): %s = %02x, %s = %i",
+		        MPT_tr("message"), out,
+		        MPT_tr("type"), mt.cmd,
+		        MPT_tr("length"), len);
+	}
+	return 0;
 }
 /*!
  * \ingroup mptEvent
@@ -58,9 +95,10 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 		base = (void *) (msg+1);
 	} else {
 		if ((cmd = mpt_array_append(arr, sizeof(*cmd) * 8, 0))) {
-			cmd->id  = 1;
-			cmd->cmd = (int (*)()) mpt_message_print;
-			cmd->arg = stderr;
+			static const uintptr_t firstId = 1;
+			cmd->id  = firstId;
+			cmd->cmd = logReply;
+			cmd->arg = (void *) firstId;
 		}
 		return cmd;
 	}
@@ -116,8 +154,8 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 	
 	/* setup default handling */
 	cmd->id  = mid;
-	cmd->cmd = printReply;
-	cmd->arg = stderr;
+	cmd->cmd = logReply;
+	cmd->arg = (void *) mid;
 	
 	return cmd;
 }

@@ -86,6 +86,11 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			
 			prefix = 0;
 			switch (val) {
+			  case 0x0:
+				/* element delimiter */
+				fputc(':', fd);
+				fputc(' ', fd);
+				continue;
 			  case 0x1: /* start of header */
 				if ((hist->state & MPT_OUTFLAG(PrintColor))) {
 					prefix = mpt_ansi_code(0);
@@ -94,13 +99,13 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 				/* previous segment and function */
 				hist->mode = 0x80 | 0x40 | 0x20 | 0x1;
 				break;
-			  case 0x2:/* start of normal text */
+			  case 0x2: /* start of normal text */
 				val = hist->mode;
 				/* previous segment and text */
 				hist->mode = 0x80 | 0x40 | 0x2;
 				break;
-			  case 0x3:/* end of normal text */
-			  case 0x4:/* end of segment */
+			  case 0x3: /* end of normal text */
+			  case 0x4: /* end of segment */
 				val = hist->mode & 0x8f;
 				/* previous segment */
 				hist->mode = 0x80 | 0x40;

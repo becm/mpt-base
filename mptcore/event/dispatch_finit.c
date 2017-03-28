@@ -3,26 +3,19 @@
  */
 
 #include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-#include <sys/uio.h>
-
-#include "array.h"
-#include "output.h"
 #include "message.h"
+
 #include "event.h"
 
 static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 {
 	static const char _func[] = "mpt::event::unknown";
-	MPT_INTERFACE(output) *out = arg;
+	MPT_INTERFACE(logger) *log = arg;
 	
 	if (!ev) {
-		if (out) {
-			out->_vptr->obj.ref.unref((void *) out);
+		if (log) {
+			log->_vptr->ref.unref((void*) log);
 		}
 		return 0;
 	}
@@ -30,18 +23,28 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 		mpt_context_reply(ev->reply, -1, "%s: %" PRIxPTR, MPT_tr("invalid message command"), ev->id);
 		return MPT_EVENTFLAG(Fail);
 	}
-	if (!out || ev->id) {
-		mpt_output_log(out, _func, MPT_LOG(Error), "%s: %" PRIxPTR,
-		               MPT_tr("invalid command"), ev->id);
+	if (ev->id) {
+		mpt_log(log, _func, MPT_LOG(Error), "%s: %" PRIxPTR,
+		        MPT_tr("invalid command"), ev->id);
 		ev->id = 0;
-		return MPT_EVENTFLAG(Default);
+		return MPT_EVENTFLAG(Default) | MPT_EVENTFLAG(Fail);
 	}
 	if (!ev->msg) {
-		mpt_output_log(out, _func, MPT_LOG(Info), "%s",
-		               MPT_tr("empty message"));
-		return 0;
+		mpt_log(log, _func, MPT_LOG(Error), "%s",
+		        MPT_tr("message required"));
+		return MPT_EVENTFLAG(Default) | MPT_EVENTFLAG(Fail);
+	} else {
+		MPT_STRUCT(message) msg = *ev->msg;
+		uint8_t type;
+		
+		if (!mpt_message_read(&msg, 1, &type)) {
+			mpt_log(log, __func__, MPT_LOG(Warning), "%s", MPT_tr("empty message"));
+			return MPT_EVENTFLAG(None);
+		}
+		mpt_log(log, _func, MPT_LOG(Error), "%s: %02x",
+		        MPT_tr("unable to process message type"), type);
 	}
-	return mpt_output_print(out, ev->msg);
+	return MPT_EVENTFLAG(None);
 }
 
 /*!

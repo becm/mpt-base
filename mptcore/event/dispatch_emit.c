@@ -2,16 +2,9 @@
  * resolve and dispatch command.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <inttypes.h>
 
-#include <sys/uio.h>
-
-#include "array.h"
 #include "message.h"
-#include "output.h"
 
 #include "event.h"
 

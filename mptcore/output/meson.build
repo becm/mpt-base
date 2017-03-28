@@ -7,6 +7,5 @@ src = files(
   'output_init_plot.c',
   'output_init_raw.c',
   'output_log.c',
-  'output_print.c',
   'output_values.c',
 )
