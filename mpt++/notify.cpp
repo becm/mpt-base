@@ -3,15 +3,8 @@
  *   event operations
  */
 
-#include <limits>
-
 #include <poll.h>
 
-#include "array.h"
-#include "output.h"
-
-#include "event.h"
-#include "message.h"
 #include "notify.h"
 
 __MPT_NAMESPACE_BEGIN

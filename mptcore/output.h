@@ -79,6 +79,8 @@ MPT_STRUCT(histfmt)
 {
 #ifdef __cplusplus
 public:
+	inline histfmt() : pos(0), fmt(0)
+	{ }
 	bool setFormat(const char *fmt);
 	bool add(valfmt);
 	bool add(char);
@@ -119,8 +121,6 @@ protected:
 # ifdef __cplusplus
 struct history : public histinfo
 {
-	history();
-	~history();
 # else
 MPT_STRUCT(history)
 {

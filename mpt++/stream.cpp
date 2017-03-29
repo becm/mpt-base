@@ -7,18 +7,10 @@
 #include <cstring>
 
 #include <cstdio>
-#include <cerrno>
-
-#include <poll.h>
 
 #include <sys/uio.h>
 
 #include "queue.h"
-#include "array.h"
-#include "message.h"
-
-#include "output.h"
-#include "meta.h"
 
 #include "stream.h"
 
@@ -57,13 +49,11 @@ void stream::setError(int err)
 bool stream::endline()
 {
     int nl = (mpt_stream_flags(&this->_info) & 0xc000) >> 14;
-    
-    switch (nl) {
-      case NewlineMac:  return mpt_stream_write(this, 1, "\r",   1);
-      case NewlineUnix: return mpt_stream_write(this, 1, "\n",   1);
-      case NewlineNet:  return mpt_stream_write(this, 1, "\r\n", 2);
-      default: return false;
+    const char *endl = mpt_newline_string(nl);
+    if (!endl) {
+        return false;
     }
+    return mpt_stream_write(this, 1, endl, strlen(endl));
 }
 void stream::setNewline(int nl, int what)
 {
@@ -129,7 +119,6 @@ int Stream::property(struct property *pr) const
 
     if (!(name = pr->name)) {
         if (((pos = (intptr_t) pr->desc) < 0)) {
-            errno = EINVAL;
             return BadValue;
         }
     }

@@ -9,6 +9,7 @@ cxx_src = files(
   'message.cpp', 'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
   'node_new.cpp',
   'object.cpp',
+  'output.cpp',
   'proxy.cpp', 'parse.cpp',
   'queue.cpp',
   'reference_wrap.cpp',
@@ -35,8 +36,7 @@ endif
 if with_io
   cxx_src += files(
     'notify.cpp',
-    'stream.cpp',
-    'output.cpp'
+    'stream.cpp'
   )
   cxx += io
 endif
