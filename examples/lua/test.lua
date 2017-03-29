@@ -33,12 +33,14 @@ function testmath(...)
     mpt = require('mpt')
   end
   
+  math.push = mpt.push
+  
   for i,v in pairs({...}) do
     -- Lua < 5.2 ignores mode and env arguments
-    c, e = loadfile(v, "t", mpt.mathbox)
+    c, e = loadfile(v, "t", math)
     if c then
       -- Lua < 5.2 environment assignment
-      if setfenv then setfenv(c, mpt.mathbox) end
+      if setfenv then setfenv(c, math) end
       c()
     else
       print("# " .. e)

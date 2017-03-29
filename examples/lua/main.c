@@ -28,10 +28,12 @@ static int loadModule(lua_State *L, const char *mod)
 		char buf[256];
 #if LUA_VERSION_NUM < 502
 		const char *version = LUA_VERSION;
-		snprintf(buf, sizeof(buf), "%s/%s/%s/%s.%s", prefix, "share/lua", version+4, mod, "lua");
+		snprintf(buf, sizeof(buf), "%s/%s/%s/%s.%s",
+		         prefix, "share/lua", version+4, mod, "lua");
 #else
-		snprintf(buf, sizeof(buf), "%s/%s/%s.%s", prefix, "share/lua/"LUA_VERSION_MAJOR"."LUA_VERSION_MINOR, mod, "lua");
-#endif	
+		snprintf(buf, sizeof(buf), "%s/%s/%s.%s",
+		         prefix, "share/lua/" LUA_VERSION_MAJOR "." LUA_VERSION_MINOR, mod, "lua");
+#endif
 		len = lua_gettop(L);
 		if (luaL_dofile(L, buf)) {
 			const char *err;
@@ -70,27 +72,34 @@ int main(int argc, char *argv[])
 	lua_State *L = luaL_newstate();
 	luaL_openlibs(L);
 	
-	/* use MPT mathbox module as environment */
+	/* load MPT module */
 	if ((ret = loadModule(L, "mpt")) != 1) {
 		fputs("failed to load mpt", stderr);
 		fputc('\n', stderr);
 		lua_close(L);
 		return 2;
 	}
+	/* get global math for table */
+	lua_getglobal(L, "math");
+	
+	/* get mpt.push for math environment */
 #if LUA_VERSION_NUM < 503
-	lua_getfield(L, -1, "mathbox");
-	if (!lua_istable(L, -1))
+	lua_getfield(L, -2, "push");
+	if (!lua_isfunction(L, -1))
 #else
-	if ((ret = lua_getfield(L, -1, "mathbox")) != LUA_TTABLE)
+	if ((ret = lua_getfield(L, -2, "push")) != LUA_TFUNCTION)
 #endif
 	{
-		fputs("bad mathbox type", stderr);
+		fputs("bad push function type", stderr);
 		fputc('\n', stderr);
 		lua_close(L);
 		return 2;
 	}
+	lua_setfield(L, -2, "push"); /* removes push from stack */
+	
+	/* set math table as environment */
 	if (setGlobal(L) < 0) {
-		fputs("failed to load mathbox", stderr);
+		fputs("failed to apply mathbox", stderr);
 		fputc('\n', stderr);
 		lua_close(L);
 		return 2;

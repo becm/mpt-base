@@ -172,12 +172,9 @@ function mpt.setup(c, e)
   return client
 end
 
--- create extended math environment
-local mbox = math
-
--- set number format
-mbox.format = {}
-setmetatable(mbox.format, {
+-- formated number to string
+mpt.format = {}
+setmetatable(mpt.format, {
   __call = function(self, ...)
       local ret = ''
       local dec = self.dec
@@ -197,19 +194,16 @@ setmetatable(mbox.format, {
 })
 
 -- formated line print closure
-mbox.push = function()
-  local out = io.write
+mpt.output = function(out)
   local nl  = '\n'
-  local fmt = mbox.format
+  local fmt = mpt.format
+  local out = out
+  if out == nil then out = io.output() end
   return function(...)
-    out(table.concat(fmt(...), ' '))
-    out(nl)
+    out:write(table.concat(fmt(...), ' '), nl)
   end
 end
-mbox.push = mbox.push()
-
--- assign mathbox to mpt element
-mpt.mathbox = mbox
+mpt.push = mpt.output()
 
 
 return mpt
