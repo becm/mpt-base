@@ -45,23 +45,27 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		}
 		len = 1;
 	}
-	else if (val->fmt[0] == MPT_ENUM(TypeFile)) {
-		FILE * const *ptr = val->ptr;
-		fname = 0;
-		if (!(fd = *ptr)) {
-			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
-			return MPT_ERROR(BadValue);
-		}
-		len = 1;
-	}
-	else if (val->fmt[0] == 's') {
+	else {
 		char * const *ptr = val->ptr;
-		if (!(fname = *ptr)) {
-			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
-			return MPT_ERROR(BadValue);
+		if (val->fmt[0] == MPT_ENUM(TypeFile)) {
+			fname = 0;
+			if (!(fd = (FILE *) *ptr)) {
+				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
+				return MPT_ERROR(BadValue);
+			}
+			len = 1;
 		}
-		len = 1;
-		
+		else if (val->fmt[0] == 's') {
+			if (!(fname = *ptr)) {
+				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
+				return MPT_ERROR(BadValue);
+			}
+			len = 1;
+		}
+		else {
+			return MPT_ERROR(BadType);
+		}
+		/* additional format info */
 		if (val->fmt[1]) {
 			if (val->fmt[1] != 's') {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad format description"));
@@ -70,6 +74,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 			format = ptr[1];
 			len = 2;
 			
+			/* additional name limits */
 			if (val->fmt[2]) {
 				if (val->fmt[2] != 's') {
 					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad name limit"));
@@ -79,9 +84,6 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 				len = 3;
 			}
 		}
-	}
-	else {
-		return MPT_ERROR(BadType);
 	}
 	
 	if (fname && !(fd = fopen(fname, "r"))) {
