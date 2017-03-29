@@ -35,25 +35,25 @@ else:
     VALUES_NATIVE = 0
 
 SEARCH_TERMINAL = [
-    ["x-terminal-emulator", "-e"],
-    ["konsole", "-e"],
-    ["xterm", "-e"]
+    ['x-terminal-emulator', '-e'],
+    ['konsole', '-e'],
+    ['xterm', '-e']
 ]
 
 
-TMPDIR = os.getenv("MPT_TMP")
-DEFAULT_FLAGS = ""
+TMPDIR = os.getenv('MPT_TMP')
+DEFAULT_FLAGS = ''
 
 if not TMPDIR:
-    if os.name != "posix":
-        TMPDIR = os.path.join(gettempdir(), "mpt")
+    if os.name != 'posix':
+        TMPDIR = os.path.join(gettempdir(), 'mpt')
     else:
-        TMPDIR = os.path.join(gettempdir(), "mpt-" + str(os.getuid()))
+        TMPDIR = os.path.join(gettempdir(), 'mpt-' + str(os.getuid()))
 
 
 def encodeCommand(msg):
     if isinstance(msg, str):
-        msg = bytearray(msg, "utf-8")
+        msg = bytearray(msg, 'utf-8')
     
     try:
         msg.index(b"\x00")
@@ -72,7 +72,7 @@ def encodeCobs(msg):
     ret.append(code)
     
     if isinstance(msg, str):
-        msg = bytearray(msg, "utf-8")
+        msg = bytearray(msg, 'utf-8')
     
     for b in msg:
         if b != 0:
@@ -105,7 +105,7 @@ class Output(object):
         self._encode = Output._encode
         if name is None:
             return
-        self._chan = open(name, "wb")
+        self._chan = open(name, 'wb')
     
     def push(self, msg):
         """ send data to output """
@@ -119,7 +119,7 @@ class Output(object):
         elif isinstance(msg, bytes):
             self._buf = self._buf + msg
         elif isinstance(msg, str):
-            self._buf = self._buf + bytes(bytearray(msg, "utf-8"))
+            self._buf = self._buf + bytes(bytearray(msg, 'utf-8'))
         else:
             raise TypeError("invalid output data")
     
@@ -135,12 +135,12 @@ class Output(object):
             self._buf = None
             return
         
-        if hasattr(self._chan, "sendall"):
+        if hasattr(self._chan, 'sendall'):
             ret = self._chan.sendall(self._buf)
         else:
             ret = self._chan.write(self._buf)
         
-        if hasattr(self._chan, "flush"):
+        if hasattr(self._chan, 'flush'):
             self._chan.flush()
         
         self._buf = None
@@ -150,8 +150,8 @@ class Output(object):
 def header(cmd=MESSAGE_COMMAND, arg=0, _id=None):
     """ serialize header """
     if _id is None:
-        return pack(">bb", cmd, arg)
-    return pack(">Hbb", _id, cmd, arg)
+        return pack('>bb', cmd, arg)
+    return pack('>Hbb', _id, cmd, arg)
 
 
 def destination(dest):
@@ -172,24 +172,24 @@ def destination(dest):
         if len(dest) > 0:
             lay = dest[0]
     elif isinstance(dest, dict):
-        lay = dest.get("lay")
+        lay = dest.get('lay')
         if not lay:
-            lay = dest.get("layout")
-        grf = dest.get("grf")
+            lay = dest.get('layout')
+        grf = dest.get('grf')
         if not grf:
-            grf = dest.get("graph")
-        wld = dest.get("wld")
+            grf = dest.get('graph')
+        wld = dest.get('wld')
         if not wld:
-            wld = dest.get("world")
-        dim = dest.get("dim")
+            wld = dest.get('world')
+        dim = dest.get('dim')
         if not dim:
-            dim = dest.get("dimension")
-        cyc = dest.get("cyc")
+            dim = dest.get('dimension')
+        cyc = dest.get('cyc')
         if not cyc:
-            cyc = dest.get("cycle")
-        off = dest.get("off")
+            cyc = dest.get('cycle')
+        off = dest.get('off')
         if not off:
-            off = dest.get("offset")
+            off = dest.get('offset')
     
     if lay is None:
         lay = 1
@@ -204,24 +204,24 @@ def destination(dest):
     if off is None:
         off = 0
     
-    return pack(">BBBBII", lay, grf, wld, dim, cyc, off)
+    return pack('>BBBBII', lay, grf, wld, dim, cyc, off)
 
 
 def message(msg, dest=None, messageID=None):
     """ create serialized message elements """
     if isinstance(msg, array):
-        if "df".find(msg.typecode) >= 0:
+        if 'df'.find(msg.typecode) >= 0:
             arg = VALUES_NATIVE + VALUES_FLOAT + msg.itemsize
-        elif "LIHBC".find(msg.typecode) >= 0:
+        elif 'LIHBC'.find(msg.typecode) >= 0:
             arg = VALUES_NATIVE + VALUES_UNSIGNED + msg.itemsize
-        elif "lihbc".find(msg.typecode) >= 0:
+        elif 'lihbc'.find(msg.typecode) >= 0:
             arg = VALUES_NATIVE + VALUES_INTEGER + msg.itemsize
         else:
             raise TypeError("invalid value type")
         hdr = header(MESSAGE_DEST, arg, messageID)
         return (hdr + destination(dest), msg.tostring())
     if isinstance(msg, str):
-        msg = bytes(bytearray(msg, "utf-8"))
+        msg = bytes(bytearray(msg, 'utf-8'))
         return (header(MESSAGE_COMMAND, ord(" "), messageID), msg)
     if isinstance(msg, bytes):
         if dest:
@@ -243,7 +243,7 @@ class Graphic(Output):
     def nextID(self):
         return None
     
-    def __init__(self, dest=None, exe="mptplot"):
+    def __init__(self, dest=None, exe='mptplot'):
         """ create or connect to graphic process """
         super(Graphic, self).__init__()
         self._encode = encodeCobs
@@ -255,7 +255,7 @@ class Graphic(Output):
             elif len(dest) > 0:
                 dest = dest[0]
             else:
-                dest = "localhost"
+                dest = 'localhost'
             
             dest = (dest, port)
         
@@ -279,9 +279,9 @@ class Graphic(Output):
             return
         
         # use global output process
-        if exe[0] != "/":
+        if exe[0] != '/':
             try:
-                exe = os.path.join(os.environ['MPT_PREFIX'], "bin", exe)
+                exe = os.path.join(os.environ['MPT_PREFIX'], 'bin', exe)
             except:
                 exe = which(exe)
         
@@ -289,17 +289,17 @@ class Graphic(Output):
         if dest is None:
             argv = [exe]
         elif isinstance(dest, str):
-            self.name = "Unix:" + dest
-            argv = [exe, "-s", self.name]
+            self.name = 'Unix:' + dest
+            argv = [exe, '-s', self.name]
         elif isinstance(dest, tuple):
-            argv = [exe, "-s", "Ip:" + dest[0] + ":" + str(dest[1])]
-            self.name = "Ip:localhost:" + str(dest[1])
+            argv = [exe, '-s', 'Ip:' + dest[0] + ':' + str(dest[1])]
+            self.name = 'Ip:localhost:' + str(dest[1])
         else:
             raise TypeError("invalid destination")
         
         # new environment for graphic process
         environ = os.environ
-        environ['MPT_GRAPHIC_PIPE'] = "cobs"
+        environ['MPT_GRAPHIC_PIPE'] = 'cobs'
         
         # start new graphic process
         self.process = Popen(args=argv, executable=exe,
@@ -312,11 +312,11 @@ class Graphic(Output):
             return
         if self.process.poll() is not None:
             return
-        self.send("close")
+        self.send('close')
     
     def __str__(self):
         if not hasattr(self, 'name'):
-            return ""
+            return ''
         return self.name
     
     def send(self, msg, dest=None, onreturn=None):
@@ -365,12 +365,12 @@ def tolist(arg):
 
 def getterm():
     """ get terminal program """
-    term = os.getenv("MPT_TERMINAL")
+    term = os.getenv('MPT_TERMINAL')
     if term is not None:
         exe = which(term)
         if exe:
             return [exe]
-        error("invalid terminal" + term)
+        error("invalid terminal: " + term)
         return None
     for term in SEARCH_TERMINAL:
         exe = which(term[0])
@@ -647,9 +647,9 @@ def run(args):
     """ run Shell environment """
     for i in args:
         if not os.path.exists(i):
-            raise SystemExit('client program not found: ' + i)
+            raise SystemExit("client program not found: " + i)
         if not os.access(i, os.X_OK):
-            raise SystemExit('client program not executable: ' + i)
+            raise SystemExit("client program not executable: " + i)
     i = Shell()
     for arg in args:
         i.add(arg)
@@ -658,29 +658,30 @@ def run(args):
     i.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     cl = os.getenv('MPT_CLIENT')
     if cl is not None:
-        error("Start program '" + "\033[01m" + cl + "\033[00m" + "'")
         
         # change working directory
-        wdir = os.environ['MPT_CWD']
+        wdir = os.getenv('MPT_CWD')
         if wdir is not None:
             os.chdir(wdir)
         
         exe = which(cl)
         if exe is None:
-            exe = "./" + cl
+            exe = './' + cl
         
-        os.environ['MPT_FLAGS'] = "e"
+        os.unsetenv('MPT_CLIENT')
+        os.environ['MPT_FLAGS'] = 'e'
         # start client under debug process
         if os.getenv('MPT_DEBUG') is not None:
             # enable client setup from environment
-            dbg = os.getenv("MPT_DEBUG_COMMAND")
+            dbg = os.getenv('MPT_DEBUG_COMMAND')
             if not dbg:
-                dbg = "gdb"
+                dbg = 'gdb'
             client([dbg, exe])
         else:
+            error("Start program '" + '\033[01m' + cl + '\033[00m' + "'")
             client(exe)
     else:
         if len(sys.argv) < 2:
