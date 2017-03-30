@@ -133,9 +133,9 @@ MPT_STRUCT(message)
 MPT_STRUCT(msgtype)
 {
 #ifdef __cplusplus
-	inline msgtype(int type, int a = 0) : cmd(type), arg(a) { }
+	inline msgtype(int type = MessageOutput, int a = 0) : cmd(type), arg(a) { }
 #else
-# define MPT_MSGTYPE_INIT { 0, 0 }
+# define MPT_MSGTYPE_INIT { MPT_ENUM(MessageOutput), 0 }
 #endif
 	uint8_t  cmd;  /* message command */
 	int8_t   arg;  /* command argument */

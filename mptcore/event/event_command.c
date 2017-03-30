@@ -3,6 +3,7 @@
  */
 
 #include "message.h"
+
 #include "event.h"
 
 /*!
@@ -24,18 +25,21 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
 		arg = mpt_meta_message(ev->msg, 0);
 	}
 	else {
-		MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
+		MPT_STRUCT(msgtype) mt;
 		MPT_STRUCT(message) msg;
-		ssize_t part;
+		size_t part;
 		
 		msg = *ev->msg;
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+		if (!(part = mpt_message_read(&msg, sizeof(mt), &mt))) {
 			mpt_context_reply(ev->reply, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 			return 0;
 		}
-		else if (mt.cmd != MPT_ENUM(MessageCommand)) {
+		if (mt.cmd != MPT_ENUM(MessageCommand)) {
 			mpt_context_reply(ev->reply, MPT_ERROR(BadType), MPT_tr("bad message type"));
 			return 0;
+		}
+		if (part < sizeof(mt)) {
+			mt.arg = 0;
 		}
 		arg = mpt_meta_message(&msg, mt.arg);
 	}

@@ -2,8 +2,6 @@
  * client initialisation event.
  */
 
-#include <string.h>
-
 #include "meta.h"
 #include "message.h"
 #include "event.h"
@@ -40,20 +38,17 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		MPT_STRUCT(msgtype) mt;
 		ssize_t part;
 		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
-		}
-		if (mt.cmd != MPT_ENUM(MessageCommand)) {
-			return MPT_event_fail(ev, MPT_ERROR(BadType), MPT_tr("bad message format"));
-		}
-		/* consume command part  */
-		if ((part = mpt_message_argv(&msg, mt.arg)) >= 0) {
+		/* command message */
+		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) >= (ssize_t) sizeof(mt)
+		    && mt.cmd == MPT_ENUM(MessageCommand)
+		    && (part = mpt_message_argv(&msg, mt.arg)) >= 0) {
+			/* consume command part  */
 			mpt_message_read(&msg, part+1, 0);
-			part = mpt_message_argv(&msg, mt.arg);
-		}
-		if (part >= 0 && !(src = mpt_meta_message(&msg, mt.arg))) {
-			return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("failed to create argument stream"));
+			/* create source for further arguments */
+			if ((part = mpt_message_argv(&msg, mt.arg)) > 0
+			    && !(src = mpt_meta_message(&msg, mt.arg))) {
+				return MPT_event_fail(ev, MPT_ERROR(BadOperation), MPT_tr("failed to create argument stream"));
+			}
 		}
 	}
 	/* initialize and bind solver */

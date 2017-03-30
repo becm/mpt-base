@@ -2,9 +2,6 @@
  * execute solver step
  */
 
-#include <stdio.h>
-#include <errno.h>
-
 #include "event.h"
 #include "message.h"
 #include "meta.h"
@@ -26,11 +23,15 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	
-	if (!ev) return 0;
+	if (!ev) {
+		return 0;
+	}
+	if (!cl) {
+		MPT_ABORT("missing client descriptor");
+	}
 	if (!ev->msg) {
 		/* clear single pass data */
-		cl->_vptr->remove((void *) cl, 0);
-		cl->_vptr->remove((void *) cl, &p);
+		cl->_vptr->remove(cl, &p);
 		return MPT_event_stop(ev, MPT_tr("solver cleared"));
 	}
 	else {
@@ -49,13 +50,18 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 		}
 		/* clear single pass data */
 		if (!ret) {
-			cl->_vptr->remove((void *) cl, 0);
-			cl->_vptr->remove((void *) cl, &p);
+			cl->_vptr->remove(cl, &p);
 		}
 		do {
-			if (arg) {
+			if (arg && *arg) {
 				mpt_path_set(&p, arg, -1);
-				cl->_vptr->remove((void *) cl, &p);
+				if (cl->_vptr->remove(cl, &p) < 0) {
+					mpt_log(0, __func__, MPT_LOG(Info), "%s: %s",
+					        MPT_tr("no config element"), arg);
+				} else {
+					mpt_log(0, __func__, MPT_LOG(Debug2), "%s: %s",
+					        MPT_tr("removed config element"), arg);
+				}
 			}
 			if ((ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &arg)) < 0) {
 				src->_vptr->ref.unref((void *) src);
@@ -64,7 +70,7 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 		} while (ret & MPT_ENUM(ValueConsume));
 		
 		src->_vptr->ref.unref((void *) src);
-		return MPT_event_good(ev, MPT_tr("solver elements cleared"));
+		return MPT_event_stop(ev, MPT_tr("solver elements cleared"));
 	}
 }
 

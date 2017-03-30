@@ -2,19 +2,13 @@
  * setup event controller for solver events
  */
 
-#include <stdio.h>
 #include <inttypes.h>
-
 #include <string.h>
-#include <sys/uio.h>
-
-#include "array.h"
 
 #include "message.h"
 #include "event.h"
 
 #include "meta.h"
-#include "output.h"
 
 #include "client.h"
 
@@ -50,9 +44,8 @@ static int clientConfig(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 			return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
 		}
 		if (err) {
-			char buf[128];
-			snprintf(buf, sizeof(buf), "%s: %d", MPT_tr("compatible argument count"), err);
-			return MPT_event_good(ev, buf);
+			mpt_context_reply(ev->reply, 0, "%s: %d", MPT_tr("compatible argument count"), err);
+			return MPT_EVENTFLAG(None);
 		}
 	}
 	return MPT_event_good(ev, MPT_tr("arguments applied to client configuration"));
@@ -69,9 +62,15 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		MPT_STRUCT(message) msg = *ev->msg;
 		ssize_t part;
 		
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
-			if (part) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
-			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
+		part = mpt_message_read(&msg, sizeof(mt), &mt);
+		if (part == (ssize_t) sizeof(mt)
+		    && mt.cmd == MPT_ENUM(MessageCommand)
+		    && (part = mpt_message_argv(&msg, mt.arg)) >= 0) {
+			mpt_message_read(&msg, part + 1, 0);
+			if ((part = mpt_message_argv(&msg, mt.arg)) >= 0) {
+				const char *msg = MPT_tr("close can not handle arguments");
+				return MPT_event_fail(ev, MPT_ERROR(BadArgument), msg);
+			}
 		}
 	}
 	return MPT_event_term(ev, MPT_tr("terminate event loop"));
@@ -118,9 +117,10 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 	id = mpt_hash(cmd, strlen(cmd));
 	
 	if (!mpt_command_get(&d->_d, id)) {
-		char buf[128];
-		snprintf(buf, sizeof(buf), "%s (%" PRIxPTR ")", MPT_tr("invalid default command id"), id);
-		return MPT_event_fail(ev, MPT_ERROR(BadValue), buf);
+		mpt_context_reply(ev->reply, MPT_ERROR(BadValue), "%s (%" PRIxPTR ")",
+		                  MPT_tr("invalid default command id"), id);
+		ev->id = 0;
+		return MPT_EVENTFLAG(Default) | MPT_EVENTFLAG(Fail);
 	}
 	mpt_context_reply(ev->reply, 2, "%s: %s (%" PRIxPTR ")", MPT_tr("register default event"), cmd, id);
 	
