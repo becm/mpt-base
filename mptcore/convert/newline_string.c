@@ -7,7 +7,7 @@
 #include "convert.h"
 
 /*!
- * \ingroup mptCore
+ * \ingroup mptConvert
  * \brief newline code
  * 
  * Get line separator for build platform.
@@ -18,7 +18,7 @@ extern int mpt_newline_native(void)
 {
 #if defined(__APPLE__)
 	return MPT_ENUM(NewlineMac);
-#elif defined(__unix)
+#elif defined(__unix__) || defined(__unix)
 	return MPT_ENUM(NewlineUnix);
 #elif defined(_WIN32) || defined(_WIN64)
 	return MPT_ENUM(NewlineNet);
@@ -28,7 +28,7 @@ extern int mpt_newline_native(void)
 }
 
 /*!
- * \ingroup mptCore
+ * \ingroup mptConvert
  * \brief newline string
  * 
  * Get correct line separator for platform.

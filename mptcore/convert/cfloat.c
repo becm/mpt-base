@@ -7,10 +7,20 @@
 
 #include "convert.h"
 
-#if _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 
+/*!
+ * \ingroup mptConvert
+ * \brief read float value
+ * 
+ * Convert string to single precision
+ * floating point value inside
+ * (optional) value range.
+ * 
+ * \return consumed length
+ */
 extern int mpt_cfloat(float *val, const char *src, const float *range)
 {
+#if _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 	float tmp;
 	char *end;
 	
@@ -38,13 +48,7 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 		*val = tmp;
 	}
 	return end - src;
-}
-#else /* has(strtof) */
-
-#include <math.h>
-
-extern int mpt_cfloat(float *val, const char *src, const float *range)
-{
+#else
 	double tmp, rf[2] = { 0, 0 };
 	int ret;
 	
@@ -57,5 +61,5 @@ extern int mpt_cfloat(float *val, const char *src, const float *range)
 		*val = tmp;
 	}
 	return ret;
+#endif
 }
-#endif /* has(strtof) */

@@ -12,7 +12,7 @@
  * \ingroup mptConvert
  * \brief get keyword from string
  * 
- * get keyword start and consumed length
+ * Get keyword start and consumed length
  * until keyword end
  * 
  * \param      src  current string position

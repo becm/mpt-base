@@ -8,8 +8,9 @@ foreach d : [ 'layout', 'values' ]
   plot_src += src
 endforeach
 
-install_headers('layout.h', 'values.h',
-  subdir : 'mpt')
+if not meson.is_subproject()
+  install_headers('layout.h', 'values.h', subdir : 'mpt')
+endif
 
 plot = include_directories('.')
 

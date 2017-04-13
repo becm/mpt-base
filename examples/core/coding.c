@@ -48,7 +48,7 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
 {
 	MPT_STRUCT(decode_state) info = MPT_DECODE_INIT;
 	struct iovec vec;
-	ssize_t len;
+	int len;
 	
 	vec.iov_base = arr->_buf + 1;
 	vec.iov_len  = arr->_buf->used;
@@ -61,7 +61,7 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
 			info.scratch += 8;
 			continue;
 		}
-		fprintf(stderr, "%s %"__PRIPTR_PREFIX"d\n", "error", len);
+		fprintf(stderr, "%s %d\n", "error", len);
 		return;
 	}
 	fputc('>',stdout);

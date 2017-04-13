@@ -7,10 +7,10 @@
 #ifdef _MPT_FLOAT_EXTENDED_H
 /*!
  * \ingroup mptConvert
- * \brief get keyword from string
+ * \brief read long double value
  * 
- * get keyword start and consumed length
- * until keyword end
+ * Convert string to long double value inside
+ * (optional) value range.
  * 
  * \return consumed length
  */

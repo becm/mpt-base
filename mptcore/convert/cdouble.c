@@ -7,6 +7,16 @@
 
 #include "convert.h"
 
+/*!
+ * \ingroup mptConvert
+ * \brief read double value
+ * 
+ * Convert string to double precision
+ * floating point value inside
+ * (optional) value range.
+ * 
+ * \return consumed length
+ */
 extern int mpt_cdouble(double *val, const char *src, const double *range)
 {
 	double tmp;
