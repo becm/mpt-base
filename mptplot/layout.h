@@ -720,7 +720,7 @@ public:
     virtual bool setCycle(int pos, const Reference<Cycle> &) const;
     virtual const Reference<Cycle> *cycle(int pos) const;
     
-    const Transform &transform();
+    const Transform &transform() __MPT_OVERRIDE;
     bool updateTransform(int dim = -1);
     
 protected:

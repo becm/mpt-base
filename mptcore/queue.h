@@ -185,7 +185,7 @@ public:
     ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
     ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
     
-    Slice<uint8_t> peek(size_t = 0);
+    Slice<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
     
     /* queue access */
     virtual bool prepare(size_t);
