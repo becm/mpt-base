@@ -7,20 +7,14 @@
 #define _MPT_LAYOUT_H  @INTERFACE_VERSION@
 
 #ifdef __cplusplus
-# include "meta.h"
-# include "array.h"
 # include "object.h"
-#else
-# include "core.h"
 #endif
+
+#include "values.h"
 
 struct iovec;
 
 __MPT_NAMESPACE_BEGIN
-
-MPT_STRUCT(array);
-MPT_STRUCT(typed_array);
-MPT_INTERFACE(metatype);
 
 enum MPT_ENUM(AxisFlags) {
 	MPT_ENUM(AxisStyleGen)  = 0,
@@ -43,46 +37,6 @@ enum MPT_ENUM(GraphFlags) {
 enum MPT_ENUM(TextFlags) {
 	MPT_ENUM(TextItalic)  = 0x1,
 	MPT_ENUM(TextBold)    = 0x2
-};
-
-/* forward declaration */
-MPT_INTERFACE(rawdata);
-
-/* primitive type point/transformation structure */
-#ifdef __cplusplus
-template<typename T>
-struct point
-{
-    inline point(T _x = 0, T _y = 0) : x(_x), y(_y)
-    { }
-    inline point(const point &from) : x(from.x), y(from.y)
-    { }
-    inline bool operator ==(const point &p) const
-    { return x == p.x && y == p.y; }
-
-    inline point & operator +=(const point &p) const
-    { return x += p.x; y += p.y; return *this; }
-    inline point & operator -=(const point &p) const
-    { return x -= p.x; y -= p.y; return *this; }
-
-    T x, y;
-};
-struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
-struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
-#else
-MPT_STRUCT(dpoint) { double x, y; };
-MPT_STRUCT(fpoint) { float x, y; };
-#endif
-
-/* value range */
-MPT_STRUCT(range)
-{
-#ifdef __cplusplus
-	range();
-	inline range(double _min, double _max) : min(_min), max(_max)
-	{ }
-#endif
-	double min, max;
 };
 
 /* argb standard color */
@@ -265,118 +219,16 @@ MPT_STRUCT(transform)
 	MPT_STRUCT(range)  limit;  /* value range */
 };
 
-/* line part metadate */
-MPT_STRUCT(linepart)
-{
-#ifdef __cplusplus
-	linepart(int = 0, int = -1);
-	
-	linepart *join(linepart);
-	
-	float cut() const;
-	float trim() const;
-	
-	bool setTrim(float);
-	bool setCut(float);
-	
-	class array : public Array<linepart>
-	{
-	public:
-		bool apply(const Transform &, int , Slice<const double>);
-		bool set(size_t);
-		size_t userLength();
-		size_t rawLength();
-	};
-#endif
-	uint16_t raw,   /* raw points in line part */
-	         usr,   /* transformed points in line part */
-	        _cut,
-	        _trim;  /* remove fraction from line start/end */
-};
-
-MPT_STRUCT(rawdata_stage)
-#ifdef _MPT_ARRAY_H
-{
-#ifdef __cplusplus
-    public:
-	int modify(unsigned , int , const void *, size_t , size_t);
-	int clearModified(int = -1);
-	
-	inline const typed_array *values(int dim) const
-	{ return dim < 0 ? 0 : _d.get(dim); }
-	inline Slice<const typed_array> values() const
-	{ return _d.slice(); }
-	inline int dimensions() const
-	{ return _d.length(); }
-    protected:
-#else
-# define MPT_RAWDATA_STAGE_INIT { MPT_ARRAY_INIT, 0 }
-#endif
-	_MPT_ARRAY_TYPE(typed_array) _d;
-	uint8_t _maxDimensions;
-}
-#endif
-;
-
-/* part of MPT world */
-#ifdef __cplusplus
-MPT_INTERFACE(rawdata) : public unrefable
-{
-    public:
-	enum { Type = TypeRawData };
-	
-	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
-	virtual int advance() = 0;
-	
-	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
-	virtual int dimensions(int = -1) const = 0;
-	virtual int stages() const = 0;
-    protected:
-	inline ~rawdata() { }
-};
-#else
-MPT_INTERFACE(rawdata);
-MPT_INTERFACE_VPTR(rawdata) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
-	
-	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , size_t , int);
-	int (*advance)(MPT_INTERFACE(rawdata) *);
-	
-	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
-	int (*dimensions)(const MPT_INTERFACE(rawdata) *, int);
-	int (*stages)(const MPT_INTERFACE(rawdata) *);
-}; MPT_INTERFACE(rawdata) {
-	const MPT_INTERFACE_VPTR(rawdata) *_vptr;
-};
-#endif
-
-/* binding to layout mapping */
-MPT_STRUCT(mapping)
-#ifdef _MPT_MESSAGE_H
-{
-#ifdef __cplusplus
-	inline mapping(const msgbind &m = msgbind(0), const msgdest &d = msgdest(), int c = 0) :
-		src(m), client(c), dest(d)
-	{ }
-	inline bool valid() const
-	{ return src.state != 0; }
-#else
-# define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
-#endif
-	MPT_STRUCT(msgbind) src;
-	uint16_t            client;
-	MPT_STRUCT(msgdest) dest;
-}
-#endif
-;
-
 __MPT_EXTDECL_BEGIN
 
-extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt);
-extern int mpt_color_html (MPT_STRUCT(color) *color, const char *txt);
+/* color assignments */
+extern int mpt_color_parse(MPT_STRUCT(color) *, const char *);
+extern int mpt_color_html (MPT_STRUCT(color) *, const char *);
+extern int mpt_color_pset (MPT_STRUCT(color) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
+extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
-extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlags) __MPT_DEFPAR(AxisStyleGen));
-
+/* operations on layout elements */
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
 extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, const MPT_INTERFACE(metatype) *);
@@ -401,58 +253,28 @@ extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
 extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, const MPT_INTERFACE(metatype) *);
 
-/* set axis type and lenth */
-extern void mpt_axis_setx(MPT_STRUCT(axis) *, double );
-extern void mpt_axis_sety(MPT_STRUCT(axis) *, double );
-extern void mpt_axis_setz(MPT_STRUCT(axis) *, double );
+/* initialize transform dimension */
+extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlags) __MPT_DEFPAR(AxisStyleGen));
 
-/* general value setter */
+/* set axis type and lenth */
+extern void mpt_axis_setx(MPT_STRUCT(axis) *, double);
+extern void mpt_axis_sety(MPT_STRUCT(axis) *, double);
+extern void mpt_axis_setz(MPT_STRUCT(axis) *, double);
+
+/* assign line attributes */
 extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
 extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
 extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
 extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int);
 
-extern int mpt_color_pset(MPT_STRUCT(color) *, const MPT_INTERFACE(metatype) *);
+/* change string data */
 extern int mpt_string_pset(char **, const MPT_INTERFACE(metatype) *);
 extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
-
-extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(fpoint) *__MPT_DEFPAR(0), const MPT_STRUCT(range) *__MPT_DEFPAR(0));
-
-/* set line/color attributes */
-extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int);
-extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
-extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
-
-/* multi dimension data operations */
-extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
-extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
-/* set dimensions to defined size */
-extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
-
-/* create cycle interface with default data parts */
-extern MPT_INTERFACE(rawdata) *mpt_rawdata_create(size_t);
-
-/* create linear part in range */
-extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(range) *);
-/* encode/decode linepart trim and cut values */
-extern int mpt_linepart_code(double val);
-extern double mpt_linepart_real(int val);
-/* join parts if allowed by size and no userdata in second */
-extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT_STRUCT(linepart));
-
-/* apply raw to user data using scale parameter and (transform function) */
-extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *, const double *, const MPT_STRUCT(dpoint) *);
 
 /* create pline representation for axis ticks */
 extern void mpt_ticks_linear(MPT_STRUCT(dpoint) *, size_t , double , double);
 extern double mpt_tick_log10(int);
-
-#ifdef _MPT_MESSAGE_H
-/* data mapping operations */
-extern int mpt_mapping_add(_MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(mapping) *);
-extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(msgdest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
-extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
-#endif
 
 __MPT_EXTDECL_END
 
@@ -460,154 +282,6 @@ __MPT_EXTDECL_END
 class Parse;
 struct parseflg;
 struct path;
-
-inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
-{ }
-
-class Transform : public unrefable
-{
-public:
-    virtual int dimensions() const = 0;
-    
-    virtual linepart part(unsigned , const double *, int) const;
-    virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
-    virtual point<double> zero() const;
-protected:
-    inline ~Transform() { }
-};
-
-extern int applyLineData(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
-
-class Transform3 : public Transform
-{
-public:
-    Transform3();
-    
-    inline virtual ~Transform3()
-    { }
-    inline void unref() __MPT_OVERRIDE
-    { delete this; }
-    
-    int dimensions() const __MPT_OVERRIDE;
-    
-    linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
-    bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
-    point<double> zero() const __MPT_OVERRIDE;
-    
-    transform tx, ty, tz; /* dimension transformations */
-    uint8_t fx, fy, fz;   /* transformation options */
-    uint8_t cutoff;       /* limit data to range */
-};
-
-class Polyline
-{
-public:
-    class Point : public point<double>
-    {
-    public:
-        inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
-        { }
-        class array : public Array<Point>
-        {
-        public:
-            inline Point *resize(size_t len)
-            { return reinterpret_cast<Point *>(_d.set(len * sizeof(Point))); }
-        };
-    };
-    class Part
-    {
-    public:
-        Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
-        { }
-        Slice<const Point> line() const;
-        Slice<const Point> points() const;
-    protected:
-        linepart _part;
-        const Point *_pts;
-    };
-    class iterator
-    {
-    public:
-        iterator(Slice<const linepart> l, const Point *p) : _parts(l), _points(p)
-        { }
-        Part operator *() const;
-        iterator & operator++ ();
-        
-        bool operator== (const iterator &it) const
-        { return _points == it._points; }
-        inline bool operator!= (const iterator &it) const
-        { return !operator==(it); }
-    protected:
-        Slice<const linepart> _parts;
-        const Point *_points;
-    };
-    bool set(const Transform &, const rawdata &, int = -1);
-    bool set(const Transform &, Slice<const typed_array>);
-
-    iterator begin() const;
-    iterator end() const;
-    
-    inline void clear()
-    { _vis.set(0); _values.resize(0); }
-    
-    Slice<const linepart> parts() const
-    { return _vis.slice(); }
-    Slice<const Point> points() const
-    { return _values.slice(); }
-protected:
-    linepart::array _vis;
-    Point::array _values;
-};
-
-class Cycle : public rawdata
-{
-public:
-    enum Flags {
-        LimitStages = 1
-    };
-    Cycle();
-    
-    class Stage : public rawdata_stage
-    {
-    public:
-        inline const Polyline &values() const
-        { return _values; }
-        inline void invalidate()
-        { _values.clear(); }
-        bool transform(const Transform &);
-    protected:
-        Polyline _values;
-    };
-    /* add for extensions */
-    virtual uintptr_t addref();
-    
-    /* basic raw data interface */
-    void unref() __MPT_OVERRIDE;
-    
-    int modify(unsigned , int , const void *, size_t , size_t, int = -1) __MPT_OVERRIDE;
-    int advance() __MPT_OVERRIDE;
-    
-    int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
-    int dimensions(int = -1) const __MPT_OVERRIDE;
-    int stages() const __MPT_OVERRIDE;
-    
-    virtual void limitDimensions(uint8_t);
-    virtual bool limitStages(size_t);
-    
-    inline Stage *begin()
-    { return _stages.begin(); }
-    inline Stage *end()
-    { return _stages.end(); }
-    
-    Slice<const Stage> slice() const
-    { return _stages.slice(); }
-protected:
-    virtual ~Cycle();
-    Array<Stage> _stages;
-    uint16_t _act;
-    uint8_t _maxDimensions;
-    uint8_t _flags;
-};
 
 class Line : public object, public line
 {
@@ -685,6 +359,28 @@ protected:
     ItemArray<object> _items;
 };
 
+
+class Transform3 : public Transform
+{
+public:
+    Transform3();
+    
+    inline virtual ~Transform3()
+    { }
+    inline void unref() __MPT_OVERRIDE
+    { delete this; }
+    
+    int dimensions() const __MPT_OVERRIDE;
+    
+    linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
+    bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
+    point<double> zero() const __MPT_OVERRIDE;
+    
+    transform tx, ty, tz; /* dimension transformations */
+    uint8_t fx, fy, fz;   /* transformation options */
+    uint8_t cutoff;       /* limit data to range */
+};
+class Cycle;
 class Graph : public Collection, public Transform3, public graph
 {
 public:
@@ -771,43 +467,6 @@ protected:
     char *_font;
 };
 
-
-template <typename T, typename S>
-void apply(T *d, const linepart &pt, const S *src, const T &scale, S fcn(S))
-{
-    size_t j = 0, len = pt.usr;
-    double sx(scale.x), sy(scale.y), part;
-
-    if ((part = pt.cut())) {
-        S s1, s2;
-        ++j;
-        s1 = fcn(src[0]);
-        s2 = fcn(src[1]);
-        part = s1 + part * (s2-s1);
-
-        d->x += sx * part;
-        d->y += sy * part;
-    }
-    if ((part = pt.trim())) {
-        S s1, s2;
-        --len;
-        s1 = fcn(src[len-1]);
-        s2 = fcn(src[len]);
-        part = s2 + part * (s1-s2);
-
-        d[len].x += sx * part;
-        d[len].y += sy * part;
-    }
-    for ( ; j < len ; j++ ) {
-        d[j].x += sx * fcn(src[j]);
-        d[j].y += sy * fcn(src[j]);
-    }
-}
-template <typename S>
-inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale, S fcn(S))
-{
-    return apply<point<S>, S>(d, pt, src, scale, fcn);
-}
 #endif
 
 __MPT_NAMESPACE_END

@@ -3,7 +3,8 @@
  */
 
 #include "array.h"
-#include "layout.h"
+
+#include "values.h"
 
 /*!
  * \ingroup mptPlot

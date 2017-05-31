@@ -1,9 +1,15 @@
 # meson.build.gen: *.c
 src = files(
+  'fpoint_set.c',
   'iterator_create.c',
   'iterator_factor.c',
   'iterator_linear.c',
   'iterator_values.c',
+  'linepart_code.c',
+  'linepart_join.c',
+  'linepart_linear.c',
+  'stage_data.c',
+  'stage_fini.c',
   'valtype_init.c',
   'valtype_select.c',
   'values_bound.c',

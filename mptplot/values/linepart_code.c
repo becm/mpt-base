@@ -1,5 +1,6 @@
 
-#include "layout.h"
+#include "values.h"
+
 /*!
  * \ingroup mptPlot
  * \brief line part trim/cut encoding
