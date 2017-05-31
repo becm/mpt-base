@@ -8,6 +8,7 @@
 #include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 #include <ctype.h>
+#include <float.h> /* for FLT_MAX */
 
 #include "meta.h"
 
@@ -33,6 +34,7 @@ static const char axes_clip[][4] = {
 	"", "x", "y", "xy",
 	"z" "xz", "yz", "xyz"
 };
+
 
 /*!
  * \ingroup mptPlot
@@ -80,7 +82,7 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(metatype) *src)
+extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	int len = 0;
 	
@@ -91,12 +93,12 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &gr->fg)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
 			return len <= 0 ? len : 1;
 		}
 		return MPT_ERROR(BadType);
@@ -109,7 +111,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
@@ -129,60 +131,14 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		return len <= 0 ? len : 1;
 	}
 	if (!strcmp(name, "pos") || !strcasecmp(name, "position")) {
-		float val;
-		int l1, l2;
-		
-		if (!src) {
-			gr->pos = def_graph.pos;
-			return 0;
-		}
-		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
-			return l1;
-		}
-		if (!l1) {
-			gr->pos.y = gr->pos.x = 0.0;
-			return 0;
-		}
-		if (!(l1 & MPT_ENUM(ValueConsume))) {
-			gr->pos.y = gr->pos.x = val;
-			return 1;
-		}
-		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &gr->pos.y)) < 0) {
-			return l2;
-		}
-		if (!l2) {
-			gr->pos.y = gr->pos.x = val;
-		}
-		gr->pos.x = val;
-		return 2;
+		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
+		static const MPT_STRUCT(fpoint) def = { 0.0f, 0.0f };
+		return mpt_fpoint_set(&gr->pos, src, &def, &r);
 	}
 	if (!strcasecmp(name, "scale")) {
-		float val;
-		int l1, l2;
-		
-		if (!src) {
-			gr->scale = def_graph.scale;
-			return 0;
-		}
-		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &val)) < 0) {
-			return l1;
-		}
-		if (!l1) {
-			gr->scale.y = gr->scale.x = 1.0;
-			return 0;
-		}
-		if (!(l1 & MPT_ENUM(ValueConsume))) {
-			gr->scale.y = gr->scale.x = val;
-			return 1;
-		}
-		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &gr->scale.y)) < 0) {
-			return l2;
-		}
-		if (!l2) {
-			gr->scale.y = gr->scale.x = val;
-		}
-		gr->scale.x = val;
-		return 2;
+		static const MPT_STRUCT(range) r = { 0.0, FLT_MAX };
+		static const MPT_STRUCT(fpoint) def = { 1.0f, 1.0f };
+		return mpt_fpoint_set(&gr->scale, src, &def, &r);
 	}
 	if (!strcmp(name, "type") || !strcasecmp(name, "gridtype")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->grid))) {
@@ -199,11 +155,11 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			gr->align = def_graph.grid;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &gr->align)) >= 0) {
+		if ((len = src->_vptr->conv(src, 'y', &gr->align)) >= 0) {
 			if (!len) gr->align = def_graph.grid;
 			return len <= 0 ? len : 1;
 		}
-		if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &v)) < 0) {
+		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
 			return len <= 0 ? len : 1;
 		}
 		while (len ? i < len : v[i]) {
@@ -230,10 +186,10 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			gr->clip = def_graph.clip;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &gr->clip)) > 0) {
+		if ((len = src->_vptr->conv(src, 'y', &gr->clip)) > 0) {
 			return 1;
 		}
-		if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &v)) < 0) {
+		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
 			return 1;
 		}
 		if (!len || !v) {
@@ -252,7 +208,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		return 1;
 	}
 	if (!strcmp(name, "lpos")) {
-		if (!src || !(len = src->_vptr->conv(src, 'c' | MPT_ENUM(ValueConsume), &gr->lpos))) {
+		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->lpos))) {
 			gr->lpos = def_graph.lpos;
 		}
 		return len <= 0 ? len : 1;

@@ -14,7 +14,7 @@
 #include "meta.h"
 
 MPT_STRUCT(metaBuffer) {
-	MPT_INTERFACE(metatype) _meta;
+	MPT_INTERFACE(iterator) _it;
 	MPT_STRUCT(slice) s;
 };
 
@@ -24,64 +24,9 @@ static void bufferUnref(MPT_INTERFACE(unrefable) *meta)
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
 }
-static int bufferAssign(MPT_INTERFACE(metatype) *meta, const MPT_STRUCT(value) *vorg)
+static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
-	MPT_STRUCT(metaBuffer) *m = (void *) meta;
-	MPT_STRUCT(array) arr = MPT_ARRAY_INIT;
-	MPT_STRUCT(value) val;
-	
-	if (!vorg) {
-		m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
-		m->s._off = 0;
-		return MPT_ENUM(TypeArrBase);
-	}
-	val = *vorg;
-	
-	if (!val.fmt) {
-		size_t len;
-		
-		if (!val.ptr) {
-			mpt_array_clone(&m->s._a, 0);
-			m->s._off = m->s._len = 0;
-			return 0;
-		}
-		len = strlen(val.ptr) + 1;
-		if (!mpt_array_append(&arr, len, val.ptr)) {
-			return MPT_ERROR(BadOperation);
-		}
-		mpt_array_clone(&m->s._a, &arr);
-		m->s._len = m->s._a._buf->used;
-		m->s._off = 0;
-		
-		mpt_array_clone(&arr, 0);
-		
-		return len;
-	}
-	while (*val.fmt) {
-		const char *base;
-		size_t len;
-		
-		if (!(base = mpt_data_tostring(&val.ptr, *val.fmt++, &len))) {
-			return MPT_ERROR(BadValue);
-		}
-		if (len && !mpt_array_append(&arr, len, base)) {
-			return MPT_ERROR(BadOperation);
-		}
-		if (!mpt_array_append(&arr, 1, 0)) {
-			return MPT_ERROR(BadOperation);
-		}
-	}
-	mpt_array_clone(&m->s._a, &arr);
-	m->s._len = m->s._a._buf ? m->s._a._buf->used : 0;
-	m->s._off = 0;
-	
-	mpt_array_clone(&arr, 0);
-	
-	return val.fmt - vorg->fmt;
-}
-static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
-{
-	MPT_STRUCT(metaBuffer) *m = (void *) meta;
+	const MPT_STRUCT(metaBuffer) *m = (void *) meta;
 	void **dest = ptr;
 	
 	if (!type) {
@@ -89,23 +34,51 @@ static int bufferConv(MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	if ((type & 0xff) == MPT_ENUM(TypeMeta)) {
-		if (type & MPT_ENUM(ValueConsume)) {
-			return MPT_ERROR(BadArgument);
-		}
-		if (dest) *dest = &m->_meta;
-		return MPT_ENUM(TypeMeta);
+	if (type == MPT_ENUM(TypeMeta)
+	    || type == MPT_ENUM(TypeIterator)) {
+		if (dest) *dest = (void *) &m->_it;
+		return MPT_ENUM(TypeIterator);
 	}
-	if ((type & 0xff) == MPT_value_toArray('c')) {
-		if (type & MPT_ENUM(ValueConsume)) {
+	if (type == MPT_value_toArray('c')
+	    || type == MPT_ENUM(TypeArrBase)) {
+		if (m->s._off) {
 			return MPT_ERROR(BadArgument);
 		}
-		if (dest) *dest = &m->s._a;
-		return MPT_value_toArray('c');
 	}
 	return mpt_slice_conv(&m->s, type, ptr);
 }
-static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer;
+static int bufferAdvance(MPT_INTERFACE(iterator) *it)
+{
+	MPT_STRUCT(metaBuffer) *m = (void *) it;
+	const MPT_STRUCT(buffer) *buf;
+	const char *base, *end;
+	size_t len;
+	
+	if (!(buf = m->s._a._buf) || !m->s._len) {
+		return MPT_ERROR(MissingData);
+	}
+	base = (void *) (buf + 1);
+	if (!(end = memchr(base + m->s._off, 0, m->s._len))) {
+		return MPT_ERROR(MissingData);
+	}
+	len = (end + 1) - base;
+	
+	m->s._off += len;
+	m->s._len -= len;
+	
+	return len;
+}
+static int bufferReset(MPT_INTERFACE(iterator) *it)
+{
+	MPT_STRUCT(metaBuffer) *m = (void *) it;
+	MPT_STRUCT(buffer) *buf;
+	
+	buf = m->s._a._buf;
+	m->s._off = 0;
+	m->s._len = buf ? buf->used : 0;
+	return MPT_value_toArray('c');
+}
+static const MPT_INTERFACE_VPTR(iterator) _vptr_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 {
 	const MPT_STRUCT(metaBuffer) *old = (void *) meta;
@@ -114,43 +87,38 @@ static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 	if (!(m = malloc(sizeof(*m)))) {
 		return 0;
 	}
-	m->_meta._vptr = &_vptr_buffer;
+	m->_it._vptr = &_vptr_buffer;
 	m->s._a._buf = 0;
+	m->s._len = 0;
+	m->s._off = 0;
 	
 	if (old) {
 		mpt_array_clone(&m->s._a, &old->s._a);
 		if (m->s._a._buf) {
 			m->s._len = old->s._len;
 			m->s._off = old->s._off;
-			return &m->_meta;
 		}
 	}
-	m->s._len = 0;
-	m->s._off = 0;
-	
-	return &m->_meta;
+	return (void *) &m->_it;
 }
 
-static const MPT_INTERFACE_VPTR(metatype) _vptr_buffer = {
-	{ bufferUnref },
-	bufferAssign,
-	bufferConv,
-	bufferClone
+static const MPT_INTERFACE_VPTR(iterator) _vptr_buffer = {
+	{ { bufferUnref }, bufferConv, bufferClone },
+	bufferReset,
+	bufferAdvance
 };
 
 /*!
  * \ingroup mptArray
- * \brief create buffer metatype
+ * \brief create buffer iterator
  * 
- * Create metatype with dynamic data size.
+ * Create text iterator with dynamic data size.
  * 
- * \param name name of created metatype
- * \param len  initial data size
- * \param data initial buffer data
+ * \param a  array data to use for iterator
  * 
- * \return new metatype
+ * \return new iterator
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
+extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 {
 	MPT_STRUCT(metaBuffer) *m;
 	
@@ -161,5 +129,5 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 		mpt_array_clone(&m->s._a, a);
 		if (m->s._a._buf) m->s._len = m->s._a._buf->used;
 	}
-	return &m->_meta;
+	return &m->_it;
 }

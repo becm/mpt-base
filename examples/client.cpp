@@ -29,15 +29,15 @@ public:
     virtual ~MyClient() { }
     
     void unref();
-    int init(mpt::metatype * = 0);
-    int step(mpt::metatype *);
+    int init(mpt::iterator * = 0) __MPT_OVERRIDE;
+    int step(mpt::iterator *) __MPT_OVERRIDE;
     
     const char *enc;
 };
 MyClient::MyClient(const char *e) : enc(e)
 { }
 
-int MyClient::init(mpt::metatype *)
+int MyClient::init(mpt::iterator *)
 {
     _ref = mpt::mpt_output_remote();
 
@@ -49,7 +49,7 @@ int MyClient::init(mpt::metatype *)
     }
     return 0;
 }
-int MyClient::step(mpt::metatype *)
+int MyClient::step(mpt::iterator *)
 { return 0; }
 
 void MyClient::unref()

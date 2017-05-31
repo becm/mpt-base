@@ -25,7 +25,7 @@ int Group::property(struct property *pr) const
     if (!pr) return Type;
     return pr->name ? BadArgument : BadOperation;
 }
-int Group::setProperty(const char *name, metatype *)
+int Group::setProperty(const char *name, const metatype *)
 { return name ? BadArgument : BadOperation; }
 
 size_t Group::clear(const unrefable *)

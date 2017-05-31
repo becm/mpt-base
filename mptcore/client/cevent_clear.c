@@ -35,7 +35,8 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 		return MPT_event_stop(ev, MPT_tr("solver cleared"));
 	}
 	else {
-		MPT_INTERFACE(metatype) *src;
+		MPT_INTERFACE(iterator) *src;
+		MPT_INTERFACE(metatype) *mt;
 		const char *arg;
 		int ret;
 		
@@ -43,13 +44,15 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 			ev->id = 0;
 			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
-		if ((ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), 0)) <= 0
-		    || (ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &arg)) < 0) {
-			src->_vptr->ref.unref((void *) src);
+		mt = (void *) src;
+		if ((ret = mt->_vptr->conv(mt, 's', &arg)) <= 0
+		    || (ret = src->_vptr->advance(src)) < 0
+		    || (ret = mt->_vptr->conv(mt, 's', &arg)) < 0) {
+			src->_vptr->meta.ref.unref((void *) src);
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad argument content"));
 		}
 		/* clear single pass data */
-		if (!ret) {
+		if ((ret = src->_vptr->advance(src)) < 0) {
 			cl->_vptr->remove(cl, &p);
 		}
 		do {
@@ -63,13 +66,13 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 					        MPT_tr("removed config element"), arg);
 				}
 			}
-			if ((ret = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &arg)) < 0) {
-				src->_vptr->ref.unref((void *) src);
+			if ((ret = mt->_vptr->conv(mt, 's', &arg)) < 0) {
+				src->_vptr->meta.ref.unref((void *) src);
 				return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad argument content"));
 			}
-		} while (ret & MPT_ENUM(ValueConsume));
+		} while ((ret = src->_vptr->advance(src)) >= 0);
 		
-		src->_vptr->ref.unref((void *) src);
+		src->_vptr->meta.ref.unref((void *) src);
 		return MPT_event_stop(ev, MPT_tr("solver elements cleared"));
 	}
 }

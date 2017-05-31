@@ -56,6 +56,7 @@ static void setEnviron(const char *match)
 static int loadConfig(const char *fname)
 {
 	MPT_STRUCT(node) *root;
+	MPT_STRUCT(value) val;
 	FILE *fd;
 	int ret;
 	
@@ -67,7 +68,9 @@ static int loadConfig(const char *fname)
 	if (!(root = mpt_config_node(0))) {
 		return MPT_ERROR(BadOperation);
 	}
-	mpt_node_set(root, fname);
+	val.fmt = 0;
+	val.ptr = fname;
+	mpt_node_set(root, &val);
 	ret = mpt_node_read(root, fd, 0, 0, 0);
 	fclose(fd);
 	if (ret < 0) {

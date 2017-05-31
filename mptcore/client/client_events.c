@@ -27,18 +27,17 @@ static int clientConfig(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		}
 	}
 	else {
-		MPT_INTERFACE(metatype) *args = 0;
-		const char *cmd;
+		MPT_INTERFACE(iterator) *args;
 		
 		if (!(args = mpt_event_command(ev))) {
 			ev->id = 0;
 			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
 		/* consume command */
-		args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &cmd);
+		err = args->_vptr->advance(args);
 		/* process config arguments */
-		err = mpt_config_args((void *) cl, args);
-		args->_vptr->ref.unref((void *) args);
+		err = mpt_config_args((void *) cl, (err >= 0) ? args : 0);
+		args->_vptr->meta.ref.unref((void *) args);
 		
 		if (err < 0) {
 			return MPT_event_fail(ev, err, MPT_tr("bad client config element"));
@@ -97,7 +96,7 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		return 0;
 	}
 	if (ev->msg) {
-		MPT_INTERFACE(metatype) *args;
+		MPT_INTERFACE(iterator) *args;
 		const char *next;
 		int ret;
 		
@@ -106,13 +105,13 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
 		/* use second command element */
-		if ((ret = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &next)) > 0
-		    && (ret & MPT_ENUM(ValueConsume))
-		    && (ret = args->_vptr->conv(args, 's' | MPT_ENUM(ValueConsume), &next)) > 0
+		if ((ret = args->_vptr->meta.conv((void *) args, 's', &next)) > 0
+		    && (ret = args->_vptr->advance(args)) >= 0
+		    && (ret = args->_vptr->meta.conv((void *) args, 's', &next)) > 0
 		    && next) {
 			cmd = next;
 		}
-		args->_vptr->ref.unref((void *) args);
+		args->_vptr->meta.ref.unref((void *) args);
 	}
 	id = mpt_hash(cmd, strlen(cmd));
 	

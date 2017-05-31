@@ -17,9 +17,9 @@
  * 
  * \return metatype with command and arguments
  */
-extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
+extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(metatype) *arg;
+	MPT_INTERFACE(iterator) *arg;
 	
 	if (!ev->msg) {
 		arg = mpt_meta_message(ev->msg, 0);

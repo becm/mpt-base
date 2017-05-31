@@ -15,7 +15,7 @@
 
 #include "output.h"
 
-static int setHistfile(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(metatype) *src)
+static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype) *src)
 {
 	const char *where = 0;
 	int len = 0;
@@ -69,7 +69,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, MPT_INTERFACE(metatype) *src)
  * 
  * \return output descriptor
  */
-extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTERFACE(metatype) *src)
+extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	int ret;
 	if (!name) {

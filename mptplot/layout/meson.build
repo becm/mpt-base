@@ -5,6 +5,7 @@ src = files(
   'color_html.c',
   'color_parse.c',
   'color_set.c',
+  'fpoint_set.c',
   'graph_property.c',
   'lattr_set.c',
   'line_property.c',

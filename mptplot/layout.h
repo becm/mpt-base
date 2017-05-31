@@ -309,8 +309,11 @@ MPT_STRUCT(rawdata_stage)
 	inline int dimensions() const
 	{ return _d.length(); }
     protected:
+#else
+# define MPT_RAWDATA_STAGE_INIT { MPT_ARRAY_INIT, 0 }
 #endif
 	_MPT_ARRAY_TYPE(typed_array) _d;
+	uint8_t _maxDimensions;
 }
 #endif
 ;
@@ -376,27 +379,27 @@ extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlags) __M
 
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
-extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(metatype) *);
+extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, const MPT_INTERFACE(metatype) *);
 
 extern void mpt_graph_init(MPT_STRUCT(graph) *, const MPT_STRUCT(graph) *__MPT_DEFPAR(0));
 extern void mpt_graph_fini(MPT_STRUCT(graph) *);
 extern int  mpt_graph_get (const MPT_STRUCT(graph) *, MPT_STRUCT(property) *);
-extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(metatype) *);
+extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, const MPT_INTERFACE(metatype) *);
 
 extern void mpt_axis_init(MPT_STRUCT(axis) *, const MPT_STRUCT(axis) *__MPT_DEFPAR(0));
 extern void mpt_axis_fini(MPT_STRUCT(axis) *);
 extern int  mpt_axis_get (const MPT_STRUCT(axis) *, MPT_STRUCT(property) *);
-extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(metatype) *);
+extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, const MPT_INTERFACE(metatype) *);
 
 extern void mpt_world_init(MPT_STRUCT(world) *, const MPT_STRUCT(world) *__MPT_DEFPAR(0));
 extern void mpt_world_fini(MPT_STRUCT(world) *);
 extern int  mpt_world_get (const MPT_STRUCT(world) *, MPT_STRUCT(property) *);
-extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(metatype) *);
+extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, const MPT_INTERFACE(metatype) *);
 
 extern void mpt_text_init(MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
 extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
-extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, MPT_INTERFACE(metatype) *);
+extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, const MPT_INTERFACE(metatype) *);
 
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double );
@@ -404,14 +407,16 @@ extern void mpt_axis_sety(MPT_STRUCT(axis) *, double );
 extern void mpt_axis_setz(MPT_STRUCT(axis) *, double );
 
 /* general value setter */
-extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
 
-extern int mpt_color_pset(MPT_STRUCT(color) *, MPT_INTERFACE(metatype) *);
-extern int mpt_string_pset(char **, MPT_INTERFACE(metatype) *);
+extern int mpt_color_pset(MPT_STRUCT(color) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_string_pset(char **, const MPT_INTERFACE(metatype) *);
 extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
+
+extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(fpoint) *__MPT_DEFPAR(0), const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
 /* set line/color attributes */
 extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int);
@@ -419,7 +424,7 @@ extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
 extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
 /* multi dimension data operations */
-extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned , int __MPT_DEFPAR(-1));
+extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
 extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
 /* set dimensions to defined size */
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
@@ -614,7 +619,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype * = 0) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype * = 0) __MPT_OVERRIDE;
     
     virtual void *toType(int);
 };
@@ -629,7 +634,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
     
     virtual void *toType(int);
 };
@@ -645,7 +650,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
     
     virtual void *toType(int);
 };
@@ -661,7 +666,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
     
     virtual void *toType(int);
 };
@@ -703,7 +708,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
     
     bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     
@@ -738,7 +743,7 @@ public:
     
     void unref() __MPT_OVERRIDE;
     int property(struct property *pr) const __MPT_OVERRIDE;
-    int setProperty(const char *pr, metatype *src) __MPT_OVERRIDE;
+    int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;
     
     bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
     

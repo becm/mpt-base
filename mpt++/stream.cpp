@@ -85,24 +85,17 @@ void Stream::unref()
     if (_srm) delete _srm;
     delete this;
 }
-int Stream::assign(const value *val)
-{
-    if (val) {
-        return setProperty(0, 0);
-    } else {
-        return mpt_object_pset(this, 0, val);
-    }
-}
-int Stream::conv(int type, void *ptr)
+int Stream::conv(int type, void *ptr) const
 {
     static const char fmt[] = { output::Type, input::Type, IODevice::Type, 0 };
     const void *addr = 0;
+    Stream *srm = const_cast<Stream *>(this);
     switch (type) {
       case 0: addr = fmt; type = Type; break;
-      case metatype::Type: addr = static_cast<metatype *>(this); break;
-      case output::Type: addr = static_cast<output *>(this); break;
-      case input::Type: addr = static_cast<input *>(this); break;
-      case IODevice::Type: addr = static_cast<IODevice *>(this); break;
+      case metatype::Type: addr = static_cast<metatype *>(srm); break;
+      case output::Type: addr = static_cast<output *>(srm); break;
+      case input::Type: addr = static_cast<input *>(srm); break;
+      case IODevice::Type: addr = static_cast<IODevice *>(srm); break;
       default: return BadType;
     }
     if (ptr) *reinterpret_cast<const void **>(ptr) = addr;
@@ -143,7 +136,7 @@ int Stream::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Stream::setProperty(const char *pr, metatype *src)
+int Stream::setProperty(const char *pr, const metatype *src)
 {
     if (!pr) {
         return _srm ? mpt_stream_setter(_srm, src) : BadOperation;

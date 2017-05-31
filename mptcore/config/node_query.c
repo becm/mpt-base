@@ -25,7 +25,7 @@ if (path->len) node = mpt_node_get(node, path);
  * 
  * \return root of created elements
  */
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path, ssize_t vlen)
+extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
 	MPT_STRUCT(node) *match, *parent;
 	const char *base, *curr;
@@ -33,7 +33,9 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 	
 	/* missing path information */
 	if (!path->len) {
-		errno = EINVAL;
+		if (val) {
+			errno = EINVAL;
+		}
 		return 0;
 	}
 	parent = 0;
@@ -50,11 +52,11 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			curr = base + path->off;
 			continue;
 		}
-		if (vlen < 0) {
+		if (!val) {
 			return 0;
 		}
 		/* create node for current path element */
-		if (!(match = mpt_node_new(clen, path->len ? 0 : vlen))) {
+		if (!(match = mpt_node_new(clen, path->len ? 0 : val))) {
 			return 0;
 		}
 		if (clen && !mpt_identifier_set(&match->ident, curr, clen)) {
@@ -66,8 +68,8 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			MPT_STRUCT(path) tmp = *path;
 			MPT_STRUCT(node) *sub;
 			
-			if (!(sub = mpt_node_query(0, &tmp, vlen))) {
-				(void) mpt_node_destroy(match);
+			if (!(sub = mpt_node_query(0, &tmp, val))) {
+				mpt_node_destroy(match);
 				return 0;
 			}
 			match->children = sub;
@@ -83,8 +85,8 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 		}
 		return match;
 	}
-	if (vlen && match && !match->_meta) {
-		match->_meta = mpt_meta_new(vlen);
+	if (val && match && !match->_meta) {
+		match->_meta = mpt_meta_new(*val);
 	}
 	return match;
 }

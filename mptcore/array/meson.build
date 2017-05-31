@@ -24,6 +24,7 @@ src = files(
   'meta_message.c',
   'mmap.c',
   'printf.c',
+  'slice_advance.c',
   'slice_conv.c',
   'slice_write.c',
 )

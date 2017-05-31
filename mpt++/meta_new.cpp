@@ -3,16 +3,10 @@
  */
 
 #include "meta.h"
-#include "queue.h"
-
-#include "../mptio/stream.h"
 
 // metatype creator override
-extern "C" mpt::metatype *mpt_meta_new(size_t size)
+extern "C" mpt::metatype *mpt_meta_new(mpt::value val)
 {
-    mpt::metatype *m = mpt::Metatype::create(size);
-    if (m) return m;
-    mpt::Buffer *b = new mpt::Buffer;
-    if (b) b->prepare(size);
-    return b;
+    return mpt::metatype::create(val);
 }
+

@@ -25,19 +25,15 @@ static void unref(MPT_INTERFACE(unrefable) *src)
 {
 	(void) src;
 }
-static int convert(MPT_INTERFACE(metatype) *src, int type, void *dest)
+static int convert(const MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
 	return mpt_convert_string(*((char **) (src+1)), type, dest);
-}
-static int assign(MPT_INTERFACE(metatype) *src, const MPT_STRUCT(value) *val)
-{
-	(void) src; (void) val; return MPT_ERROR(BadOperation);
 }
 static MPT_INTERFACE(metatype) *clone(const MPT_INTERFACE(metatype) *src)
 {
 	(void) src; return 0;
 }
-static MPT_INTERFACE_VPTR(metatype) src_vptr = { { unref }, assign, convert, clone };
+static MPT_INTERFACE_VPTR(metatype) src_vptr = { { unref }, convert, clone };
 
 int main(int argc, char *argv[])
 {

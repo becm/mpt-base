@@ -54,9 +54,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 		if (dest) {
 			memcpy(dest, from, flen);
 		}
-		if (to & MPT_ENUM(ValueConsume)) {
-			*fptr = from + flen;
-		}
+		*fptr = from + flen;
 		return flen;
 	}
 	if (!flen) flen = sizeof(void *);
@@ -67,9 +65,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 	}
 	/* advance source only */
 	if (!dest) {
-		if (to & MPT_ENUM(ValueConsume)) {
-			*fptr = from + flen;
-		}
+		*fptr = from + flen;
 		return dlen ? dlen : (int) sizeof(void *);
 	}
 	if (ftype == 'l') {
@@ -375,24 +371,20 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 	  }
 #endif
 	  /* allow metatype cast */
-	  case MPT_ENUM(TypeMeta): {
-		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
-		int ret;
-		if (!mt) {
-			if (dtype != ftype) {
+	  case MPT_ENUM(TypeMeta):
+		if (dtype != ftype) {
+			MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
+			int ret;
+			/* use clone for operations on embedded metatype */
+			if (!mt || !(mt = mt->_vptr->clone(mt))) {
 				return MPT_ERROR(BadType);
 			}
-			if (dest) memcpy(dest, from, flen);
-			break;
-		}
-		if (!(to & MPT_ENUM(ValueMeta))) {
-			return MPT_ERROR(BadType);
-		}
-		if ((ret = mt->_vptr->conv(mt, dtype, dest)) < 0) {
+			ret = mt->_vptr->conv(mt, dtype, dest);
+			mt->_vptr->ref.unref((void *) mt);
 			return ret;
 		}
+		if (dest) memcpy(dest, from, flen);
 		break;
-	  }
 	  default:
 		/* array conversion */
 		if (MPT_value_isArray(dtype)) {
@@ -463,8 +455,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 			memcpy(dest, from, flen);
 		}
 	}
-	if (to & MPT_ENUM(ValueConsume)) {
-		*fptr = from + flen;
-	}
+	*fptr = from + flen;
+	
 	return dlen;
 }

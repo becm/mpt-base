@@ -72,7 +72,7 @@ static int localSync(MPT_INTERFACE(output) *out, int timeout)
 	return out ? out->_vptr->sync(out, timeout) : 0;
 }
 /* object property handlers */
-static int localSet(MPT_INTERFACE(object) *out, const char *name, MPT_INTERFACE(metatype) *src)
+static int localSet(MPT_INTERFACE(object) *out, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	MPT_STRUCT(local_output) *lo = (void *) out;
 	int ret;

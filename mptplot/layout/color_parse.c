@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <strings.h>
-#include <errno.h>
 
 #include "layout.h"
 
@@ -55,8 +54,7 @@ extern int mpt_color_parse(MPT_STRUCT(color) *color, const char *txt)
 				return len;
 			}
 		}
-		errno = EINVAL;
-		return -2;
+		return MPT_ERROR(BadValue);
 	}
 	len = mpt_color_html(color, txt+1);
 	

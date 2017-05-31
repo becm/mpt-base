@@ -185,7 +185,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const cha
 extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
 #ifdef _MPT_ARRAY_H
 extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
-extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, MPT_INTERFACE(metatype) *);
+extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, const MPT_INTERFACE(metatype) *);
 #endif
 
 /* type identifier for '(unsigned) long' data type */

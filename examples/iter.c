@@ -14,9 +14,9 @@ extern int main(int argc, char *argv[])
 	int i;
 	
 	for (i = 1; i < argc; ++i) {
-		MPT_INTERFACE(metatype) *mt;
+		MPT_INTERFACE(iterator) *it;
 		
-		if (!(mt = mpt_iterator_create(argv[i]))) {
+		if (!(it = mpt_iterator_create(argv[i]))) {
 			fputs("bad format <", stderr);
 			fputs(argv[i], stderr);
 			fputc('>', stderr);
@@ -26,7 +26,8 @@ extern int main(int argc, char *argv[])
 		while (1) {
 			double val;
 			int res;
-			if (!(res = mt->_vptr->conv(mt, 'd' | MPT_ENUM(ValueConsume), &val))) {
+			if (!(res = it->_vptr->meta.conv((void *) it, 'd', &val))) {
+				fprintf(stderr, "%s: %d\n", "conversion range failed", -res);
 				break;
 			}
 			if (res < 0) {
@@ -34,8 +35,16 @@ extern int main(int argc, char *argv[])
 				break;
 			}
 			fprintf(stdout, "%g ", val);
+			
+			if ((res = it->_vptr->advance(it)) < 0) {
+				fprintf(stderr, "%s: %d\n", "advance error", -res);
+				break;
+			}
+			if (!res) {
+				break;
+			}
 		}
-		mt->_vptr->ref.unref((void *) mt);
+		it->_vptr->meta.ref.unref((void *) it);
 		fputc('\n', stdout);
 	}
 	return 0;

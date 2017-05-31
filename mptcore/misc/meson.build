@@ -6,6 +6,7 @@ src = files(
   'geninfo_clone.c',
   'identifier.c',
   'meta_data.c',
+  'meta_geninfo.c',
   'meta_new.c',
   'mode_parse.c',
   'object_foreach.c',

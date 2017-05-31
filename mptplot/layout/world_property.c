@@ -63,7 +63,7 @@ extern void mpt_world_fini(MPT_STRUCT(world) *wld)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE(metatype) *src)
+extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	
@@ -73,7 +73,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, from);
 			return len ? 1 : 0;
@@ -81,11 +81,11 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if ((len = mpt_string_pset(&wld->_alias, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &wld->color)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
 			if (!len) wld->color = def_world.color;
 			return len ? 1 : 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr) | MPT_ENUM(ValueConsume), &wld->attr)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
 			if (!len) wld->attr = def_world.attr;
 			return len ? 1 : 0;
 		}
@@ -99,7 +99,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 			mpt_world_fini(wld);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeWorld) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeWorld), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, from);
 			return len ? 1 : 0;
@@ -111,9 +111,9 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 			wld->cyc = def_world.cyc;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'u' | MPT_ENUM(ValueConsume), &wld->cyc))) wld->cyc = def_world.cyc;
+		if (!(len = src->_vptr->conv(src, 'u', &wld->cyc))) wld->cyc = def_world.cyc;
 		
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "color") || !strcasecmp(name, "colour")) {
 		if (!src) {

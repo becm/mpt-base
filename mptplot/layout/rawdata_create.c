@@ -52,9 +52,6 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		if (!rd->max || nc >= (int) rd->max) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!(fmt & MPT_ENUM(ValueCreate))) {
-			return MPT_ERROR(BadOperation);
-		}
 		if (!(st = mpt_array_slice(&rd->st, nc * sizeof(*st), sizeof(*st)))) {
 			return MPT_ERROR(BadOperation);
 		}
@@ -64,8 +61,11 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		st = (void *) (buf+1);
 		st += nc;
 	}
-	if (!(arr = mpt_stage_data(st, dim, fmt))) {
+	if (!(arr = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
+	}
+	if (arr->_format && fmt != arr->_format) {
+		return MPT_ERROR(BadType);
 	}
 	if (len) {
 		void *dest;
@@ -77,9 +77,10 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		} else {
 			memset(dest, 0, len);
 		}
-		arr->_flags |= MPT_ENUM(ValueChange);
+		arr->_format = fmt;
+		arr->_flags |= 0x1;
 	}
-	return arr->_format + (arr->_flags & ~0xff);
+	return arr->_flags;
 }
 static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 {
@@ -124,7 +125,7 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 	}
 	/* get existing cycle dimension data */
 	st = (void *) (buf+1);
-	if (!(arr = mpt_stage_data(st + nc, dim, -1))) {
+	if (!(arr = mpt_stage_data(st + nc, dim))) {
 		return MPT_ERROR(BadValue);
 	}
 	if (!arr->_format) {
@@ -139,7 +140,7 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 			vec->iov_len  = 0;
 		}
 	}
-	return arr->_format + arr->_flags * 0x100;
+	return arr->_format;
 }
 
 static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)

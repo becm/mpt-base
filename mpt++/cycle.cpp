@@ -19,11 +19,11 @@ int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t of
     typed_array *arr;
     int curr;
 
-    if (!(arr = mpt_stage_data(this, dim, type & 0xff00))) {
+    if (!(arr = mpt_stage_data(this, dim))) {
         return BadValue;
     }
     if (!(curr = arr->type())) {
-        if (!arr->setType(type & 0xff)) {
+        if (!arr->setType(type)) {
             return BadType;
         }
     }
@@ -73,7 +73,7 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t le
             return BadOperation;
         }
     }
-    int code = st->modify(dim, type | ValueCreate, src, off, len);
+    int code = st->modify(dim, type, src, off, len);
     if (code < 0) {
         return code;
     }

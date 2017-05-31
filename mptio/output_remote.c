@@ -54,20 +54,11 @@ static void outputMetaUnref(MPT_INTERFACE(unrefable) *mt)
 	mpt_connection_fini(&od->con);
 	free(od);
 }
-static int outputMetaAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
-{
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	if (!val) {
-		return mpt_connection_set(&od->con, 0, 0);
-	} else {
-		return mpt_object_pset((void *) &od->_out, 0, val, 0);
-	}
-}
-static int outputMetaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
+static int outputMetaConv(const MPT_INTERFACE(metatype) *mt, int type, void *addr)
 {
 	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
 	MPT_STRUCT(out_data) *od = (void *) mt;
-	void *ptr;
+	const void *ptr;
 	
 	if (type == MPT_ENUM(TypeSocket)) {
 		int fd = outputInfile(od);
@@ -85,7 +76,7 @@ static int outputMetaConv(MPT_INTERFACE(metatype) *mt, int type, void *addr)
 	  default: return MPT_ERROR(BadType);
 	}
 	if (addr) {
-		*((void **) addr) = ptr;
+		*((const void **) addr) = ptr;
 	}
 	return type;
 }
@@ -96,7 +87,6 @@ static MPT_INTERFACE(metatype) *outputMetaClone(const MPT_INTERFACE(metatype) *f
 }
 static const MPT_INTERFACE_VPTR(metatype) metaCtl = {
 	{ outputMetaUnref },
-	outputMetaAssign,
 	outputMetaConv,
 	outputMetaClone
 };
@@ -135,7 +125,7 @@ static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 	}
 	return mpt_connection_get(&od->con, pr);
 }
-static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(metatype) *src) {
+static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);

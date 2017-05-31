@@ -163,8 +163,7 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
     }
     else {
         unused->clear();
-        metatype *m = unused->pointer();
-        if (m) m->assign(0);
+        unused->setPointer(0);
     }
     unused->setName(name.base(), len);
 
@@ -182,29 +181,23 @@ int Config::assign(const path *dest, const value *val)
     Element *curr;
 
     if (!val) {
-        if (!(curr = getElement(_sub, p))
-            || !(m = curr->pointer())) {
+        if (!(curr = getElement(_sub, p))) {
             return 0;
         }
-        return m->assign(val);
+        int type = 0;
+        if ((m = curr->pointer())) type = m->type();
+        curr->setPointer(0);
+        return type;
+    }
+    if (!(m = metatype::create(*val))) {
+        return BadType;
     }
     if (!(curr = makeElement(_sub, p))) {
+        m->unref();
         return BadOperation;
     }
-    int ret = 0;
-    if (!(m = curr->pointer()) || (ret = m->assign(val) < 0)) {
-        if (val->fmt) return BadValue;
-        size_t len = val->ptr ? strlen((const char *) val->ptr) + 1 : 0;
-        if (!(m = metatype::create(len))) {
-            return BadOperation;
-        }
-        if (len && (ret = m->assign(val)) < 0) {
-            m->unref();
-            return ret;
-        }
-        curr->setPointer(m);
-    }
-    return ret;
+    curr->setPointer(m);
+    return m->type();
 }
 metatype *Config::query(const path *dest) const
 {
@@ -238,17 +231,10 @@ int Config::remove(const path *dest)
     if (!(curr = getElement(_sub, p))) {
         return BadOperation;
     }
-    // remove childen from element
-    curr->clear();
+    curr->clear(); // remove childen from element
+    curr->setName(0); // mark element as unused
+    curr->setPointer(0); // remove element data
 
-    // mark element as unused
-    curr->setName(0);
-
-    // try to reset element
-    metatype *m = curr->pointer();
-    if (m && m->assign(0)) {
-        return 2;
-    }
     return 0;
 }
 

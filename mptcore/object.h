@@ -39,7 +39,7 @@ public:
 	
 	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
-	virtual int setProperty(const char *, metatype * = 0) = 0;
+	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
 #else
 MPT_INTERFACE(object);
@@ -47,7 +47,7 @@ MPT_INTERFACE_VPTR(object) {
 	MPT_INTERFACE_VPTR(unrefable) ref;
 	uintptr_t (*addref)(MPT_INTERFACE(object) *);
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*setProperty)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(metatype) *);
+	int (*setProperty)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
 };
@@ -287,7 +287,7 @@ public:
     enum { Type = TypeGroup };
     
     int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
     
     virtual const Item<object> *item(size_t pos) const;
     virtual Item<object> *append(object *);

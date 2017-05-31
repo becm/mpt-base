@@ -13,29 +13,20 @@
 
 struct _iter_ldata
 {
-	MPT_INTERFACE(metatype) mt;
 	double base,  /* current/base value */
 	       step;  /* advance step size */
 	int pos, max; /* curr = first + step * pos */
 };
 
-static void iterUnref(MPT_INTERFACE(unrefable) *mt)
+static int iterAssign(struct _iter_ldata *it, MPT_STRUCT(value) val)
 {
-	free(mt);
-}
-static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
-{
-	struct _iter_ldata *it = (void *) mt;
-	const char *str;
 	double base = 0.0, step = 0.1;
 	int32_t max = 10;
 	int len, curr;
 	
-	if (!val) {
-		len = 0;
-	}
-	else if (!(str = val->fmt)) {
-		if (!(str = val->ptr)) {
+	if (!val.fmt) {
+		const char *str;
+		if (!(str = val.ptr)) {
 			curr = 0;
 		}
 		else if ((curr = mpt_cdouble(&step, str, 0)) < 0) {
@@ -62,16 +53,14 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 			if (curr) ++len;
 		}
 	}
-	else if (*str) {
-		const void *ptr = val->ptr;
-		
-		if ((curr = mpt_data_convert(&ptr, *str++, &step, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+	else if (*val.fmt) {
+		if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &step, 'd')) < 0) {
 			return curr;
 		}
 		len = curr ? 1 : 0;
-		if (curr && *str) {
+		if (curr && *val.fmt) {
 			double tmp;
-			if ((curr = mpt_data_convert(&ptr, *str++, &tmp, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+			if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &tmp, 'd')) < 0) {
 				return curr;
 			}
 			if (curr) {
@@ -80,8 +69,8 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 				step = tmp;
 			}
 		}
-		if (curr && *str) {
-			if ((curr = mpt_data_convert(&ptr, *str++, &max, 'i' | MPT_ENUM(ValueConsume))) < 0) {
+		if (curr && *val.fmt) {
+			if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &max, 'i')) < 0) {
 				return curr;
 			}
 			if (curr) {
@@ -105,43 +94,68 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 	
 	return len;
 }
-static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
+static void iterUnref(MPT_INTERFACE(unrefable) *mt)
 {
-	struct _iter_ldata *it = (void *) mt;
+	free(mt);
+}
+static int iterConv(const MPT_INTERFACE(metatype) *mt, int t, void *ptr)
+{
+	struct _iter_ldata *it = (void *) (mt + 1);
 	if (!t) {
-		static const char fmt[] = { 'd', 0 };
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 'd', 0 };
 		if (ptr) *((const char **) ptr) = fmt;
-		return 0;
+		return MPT_ENUM(TypeIterator);
 	}
-	if ((t & 0xff) != 'd') {
+	if (t == MPT_ENUM(TypeIterator)
+	    || t == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((void **) ptr) = it;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (t != 'd') {
 		return MPT_ERROR(BadType);
 	}
-	if (it->pos > it->max) {
-		return 0;
+	if (it->pos >= it->max) {
+		return MPT_ERROR(MissingData);
 	}
 	if (ptr) {
 		*((double *) ptr) = it->base + it->pos * it->step;
 	}
-	if (t & MPT_ENUM(ValueConsume)) {
-		++it->pos;
-		return 'd' | MPT_ENUM(ValueConsume);
+	return 'd';
+}
+static const MPT_INTERFACE_VPTR(iterator) iteratorLinear;
+static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_ldata *it = (void *) (mt + 1);
+	MPT_INTERFACE(metatype) *copy;
+	
+	if (!(copy = malloc(sizeof(*copy) + sizeof(*it)))) {
+		return 0;
+	}
+	copy->_vptr = &iteratorLinear.meta;
+	memcpy(copy + 1, it, sizeof(*it));
+	return copy;
+}
+static int iterAdvance(MPT_INTERFACE(iterator) *ptr)
+{
+	struct _iter_ldata *it = (void *) (ptr + 1);
+	if (it->pos > it->max) {
+		return MPT_ERROR(MissingData);
+	}
+	if (++it->pos == it->max) {
+		return 0;
 	}
 	return 'd';
 }
-static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
+static int iterReset(MPT_INTERFACE(iterator) *ptr)
 {
-	struct _iter_ldata *c;
-	
-	if (!(c = malloc(sizeof*c))) {
-		return 0;
-	}
-	return memcpy(c, mt, sizeof(*c));
+	struct _iter_ldata *it = (void *) (ptr + 1);
+	it->pos = 0;
+	return it->max - 1;
 }
-static const MPT_INTERFACE_VPTR(metatype) iteratorLinear = {
-	{ iterUnref },
-	iterAssign,
-	iterConv,
-	iterClone
+static const MPT_INTERFACE_VPTR(iterator) iteratorLinear = {
+	{ { iterUnref }, iterConv, iterClone },
+	iterAdvance,
+	iterReset
 };
 
 /*!
@@ -150,26 +164,26 @@ static const MPT_INTERFACE_VPTR(metatype) iteratorLinear = {
  * 
  * Create iterator with linear advancing.
  * 
- * \param conf  linear iterator parameters
+ * \param val  linear iterator parameters
  * 
- * \return linear iterator metatype
+ * \return linear iterator
  */
-extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(const char *conf)
+extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) val)
 {
+	MPT_INTERFACE(iterator) *iter;
 	struct _iter_ldata it;
-	MPT_STRUCT(value) val;
 	
-	if (!(val.ptr = conf)) {
+	if (iterAssign(&it, val) < 0) {
 		return 0;
 	}
-	val.fmt = 0;
-	
-	if (iterAssign(&it.mt, &val) < 0) {
+	++it.max;
+	if (!(iter = malloc(sizeof(*iter) + sizeof(it)))) {
 		return 0;
 	}
-	it.mt._vptr = &iteratorLinear;
+	iter->_vptr = &iteratorLinear;
+	memcpy(iter + 1, &it, sizeof(it));
 	
-	return iterClone(&it.mt);
+	return iter;
 }
 
 /*!
@@ -178,23 +192,27 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(const char *conf)
  * 
  * Create iterator with linear advancing.
  * 
- * \param conf  range iterator parameters
+ * \param val  range iterator parameters
  * 
- * \return linear iterator metatype
+ * \return range iterator
  */
-extern MPT_INTERFACE(metatype) *_mpt_iterator_range(const char *conf)
+extern MPT_INTERFACE(iterator) *_mpt_iterator_range(MPT_STRUCT(value) val)
 {
-	MPT_INTERFACE(metatype) *iter;
-	struct _iter_ldata *it;
+	MPT_INTERFACE(iterator) *iter;
+	struct _iter_ldata it;
 	
-	if (!(iter = _mpt_iterator_linear(conf))) {
+	if (iterAssign(&it, val) < 0) {
 		return 0;
 	}
-	it = (void *) iter;
-	
-	if (it->max) {
-		it->step = (it->step - it->base) / it->max;
+	if (it.max) {
+		it.step = (it.step - it.base) / it.max++;
 	}
+	if (!(iter = malloc(sizeof(*iter) + sizeof(it)))) {
+		return 0;
+	}
+	iter->_vptr = &iteratorLinear;
+	memcpy(iter + 1, &it, sizeof(it));
+	
 	return iter;
 }
 

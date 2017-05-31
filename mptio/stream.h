@@ -129,7 +129,7 @@ extern pid_t mpt_stream_pipe(MPT_STRUCT(streaminfo) *, const char *, char *const
 /* change mode (buffering, newline, ...) */
 extern int mpt_stream_setmode(MPT_STRUCT(stream) *, int);
 /* configure stream via converter function */
-extern int mpt_stream_setter(MPT_STRUCT(stream) *, MPT_INTERFACE(metatype) *);
+extern int mpt_stream_setter(MPT_STRUCT(stream) *, const MPT_INTERFACE(metatype) *);
 
 /* connect stream to file/filedescr/process/address/memory */
 extern int mpt_stream_open(MPT_STRUCT(stream) *, const char *, const char *);
@@ -177,24 +177,27 @@ struct message;
 
 
 /* metatype extension to encode array */
-class Buffer : public metatype, public IODevice, public encode_array
+class Buffer : public iterator, public IODevice, public encode_array
 {
 public:
-    enum { Type = array::Type };
-    
-    Buffer(const Reference<buffer> & = Reference<buffer>(0));
-    virtual ~Buffer();
-    
-    void unref() __MPT_OVERRIDE;
-    int assign(const value *) __MPT_OVERRIDE;
-    int conv(int , void *) __MPT_OVERRIDE;
-    
-    ssize_t write(size_t , const void *, size_t = 1) __MPT_OVERRIDE;
-    ssize_t read(size_t , void *, size_t = 1) __MPT_OVERRIDE;
-    
-    int64_t pos() __MPT_OVERRIDE;
-    bool seek(int64_t) __MPT_OVERRIDE;
-    Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
+	enum { Type = array::Type };
+	
+	Buffer(const Reference<buffer> & = Reference<buffer>(0));
+	virtual ~Buffer();
+	
+	void unref() __MPT_OVERRIDE;
+	int conv(int , void *) const __MPT_OVERRIDE;
+	Buffer *clone() const __MPT_OVERRIDE;
+	
+	int advance() __MPT_OVERRIDE;
+	int reset() __MPT_OVERRIDE;
+	
+	ssize_t write(size_t , const void *, size_t = 1) __MPT_OVERRIDE;
+	ssize_t read(size_t , void *, size_t = 1) __MPT_OVERRIDE;
+	
+	int64_t pos() __MPT_OVERRIDE;
+	bool seek(int64_t) __MPT_OVERRIDE;
+	Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
 };
 
 class Stream : public metatype, public output, public input, public IODevice
@@ -206,11 +209,10 @@ public:
 	enum { Type = IODevice::Type };
 	
 	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) __MPT_OVERRIDE;
-	int assign(const value *) __MPT_OVERRIDE;
+	int conv(int , void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, metatype *) __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;

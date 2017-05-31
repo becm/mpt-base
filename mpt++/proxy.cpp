@@ -26,7 +26,7 @@ int proxy::log(const char *fcn, int type, const char *fmt, ...) const
 {
     va_list va;
     va_start(va, fmt);
-    int ret = mpt_proxy_vlog(this, fcn, type | logger::LogFunction, fmt, va);
+    int ret = mpt_proxy_vlog(_ref, fcn, type | logger::LogFunction, fmt, va);
     va_end(va);
     return ret;
 }

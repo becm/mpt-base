@@ -4,8 +4,8 @@
 
 #include <errno.h>
 #include <string.h>
-#include <strings.h>
 
+#include <limits.h>
 #include <sys/uio.h>
 
 #include "meta.h"
@@ -16,36 +16,33 @@
 struct metaInfo {
 	uint16_t size, /* free allocated memory */
 	         used; /* used data size */
-	uint32_t line;
 };
-static int geninfoSet(struct metaInfo *info, const char *val, int len)
+/*!
+ * \brief get/set geninfo value
+ * 
+ * Set value of geninfo data.
+ * 
+ * \param raw  start of geninfo data
+ * \param src  text data to assign
+ * \param len  new text length
+ * 
+ * \return >= 0 on success
+ */
+int _mpt_geninfo_size(size_t post)
 {
-	if (len < 0) {
-		if (!val) {
-			info->used = 0;
-			return 0;
-		}
-		len = strlen(val);
+	size_t align;
+	if (post > INT_MAX) {
+		return MPT_ERROR(BadValue);
 	}
-	/* remove tailing data */
-	else if (!val) {
-		if (len >= info->used) {
-			return MPT_ERROR(BadArgument);
-		}
-		((char *) (info+1))[len] = 0;
-		info->used = len + 1;
-		
-		return 2;
-	}
-	if (len >= info->size) {
+	post += sizeof(struct metaInfo) + 1;
+	if (post > UINT8_MAX) {
 		return MPT_ERROR(MissingBuffer);
 	}
-	memcpy(info+1, val, len);
-	((char *) (info+1))[len] = 0;
-	
-	info->used = len + 1;
-	
-	return len;
+	align = MPT_align(post);
+	if (align < UINT8_MAX) {
+		return align;
+	}
+	return post;
 }
 /*!
  * \brief get/set geninfo value
@@ -53,67 +50,32 @@ static int geninfoSet(struct metaInfo *info, const char *val, int len)
  * Set value of geninfo data.
  * 
  * \param raw  start of geninfo data
- * \param prop property to change/request
- * \param src  data source to change property
+ * \param src  text data to assign
+ * \param len  new text length
  * 
  * \return >= 0 on success
  */
-extern int _mpt_geninfo_value(uint64_t *raw, const MPT_STRUCT(value) *val)
+extern int _mpt_geninfo_set(void *raw, const char *src, int len)
 {
-	struct metaInfo *info = (void *) raw;
-	const void *ptr;
-	const char *base;
-	size_t len;
-	uint32_t line;
-	int ret;
+	struct metaInfo *info = raw;
 	
-	if (!val) {
-		return info->used ? info->used - 1 : MPT_ERROR(BadValue);
-	}
-	if (!val->fmt) {
-		return geninfoSet(info, val->ptr, -1);
-	}
-	if (!*val->fmt) {
-		return MPT_ERROR(BadValue);
-	}
-	/* try string format */
-	ptr = val->ptr;
-	if (!(base = mpt_data_tostring(&ptr, val->fmt[0], &len))) {
-		/* require string or integer */
-		if ((ret = mpt_data_convert(&ptr, val->fmt[0], &line, 'u')) < 0) {
-			return MPT_ERROR(BadType);
+	if (len < 0) {
+		if (!src) {
+			info->used = 0;
 		}
-		ret = 1;
-		if (val->fmt[1]) {
-			/* too much data */
-			if (val->fmt[2]) {
-				return MPT_ERROR(BadValue);
-			}
-			/* second value must be string */
-			if (!(base = mpt_data_tostring(&ptr, val->fmt[1], &len))) {
-				return MPT_ERROR(BadValue);
-			}
-			if ((ret = geninfoSet(info, base, len)) < 0) {
-				return ret;
-			}
-			ret = 2;
-		}
-		info->line = line;
-		return ret;
+		len = strlen(src);
 	}
-	if (val->fmt[1]) {
-		/* too much data */
-		if (val->fmt[2]) {
-			return MPT_ERROR(BadValue);
-		}
-		/* require integer */
-		if (mpt_data_convert(&ptr, val->fmt[0], &line, 'u') < 0) {
-			return MPT_ERROR(BadType);
-		}
-		info->line = line;
-		
-		return 1;
+	if (len >= info->size) {
+		return MPT_ERROR(MissingBuffer);
 	}
+	if (!src) {
+		memset(info+1, 0, len);
+	} else {
+		memcpy(info+1, src, len);
+	}
+	((char *) (info+1))[len] = 0;
+	info->used = len + 1;
+	
 	return 0;
 }
 /*!
@@ -142,7 +104,6 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen)
 	}
 	info->size = dlen;
 	info->used = 0;
-	info->line = 0;
 	
 	return dlen;
 }
@@ -157,23 +118,28 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen)
  * 
  * \return >= 0 on success
  */
-extern int _mpt_geninfo_conv(const uint64_t *raw, int type, void *ptr)
+extern int _mpt_geninfo_conv(const void *raw, int type, void *ptr)
 {
-	struct metaInfo *info = (void *) raw;
+	const struct metaInfo *info = raw;
 	void **dest = ptr;
 	
-	if (type & MPT_ENUM(ValueConsume)) {
-		return MPT_ERROR(BadArgument);
-	}
 	if (!type) {
 		static const char types[] = { 's', 0 };
 		if (dest) *dest = (void *) (info->used ? types : types + 1);
 		return 0;
 	}
-	switch (type &= 0xff) {
-	  case 's': ptr = info->used ? (info + 1) : 0; break;
+	switch (type) {
+	  case 's':
+		if (dest) *dest = info->used ? (void *) (info + 1) : 0;
+		return type;
+	  case MPT_value_toVector('c'):
+		if (ptr) {
+			struct iovec *vec = ptr;
+			vec->iov_len = info->used;
+			vec->iov_base = (void *) (info + 1);
+		}
+		return type;
 	  default: return MPT_ERROR(BadType);
 	}
-	if (dest) *dest = ptr;
 	return type;
 }

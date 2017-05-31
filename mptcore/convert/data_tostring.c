@@ -36,9 +36,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		if (len) {
 			*len = strlen(base);
 		}
-		if (type & MPT_ENUM(ValueConsume)) {
-			*from = txt + 1;
-		}
+		*from = txt + 1;
 		return base;
 	}
 	/* data is text array */
@@ -64,9 +62,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		else if (used >= size || base[used]) {
 			return 0;
 		}
-		if (type & MPT_ENUM(ValueConsume)) {
-			*from = a + 1;
-		}
+		*from = a + 1;
 		return base;
 	}
 	/* data is text vector */
@@ -87,9 +83,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		else if (!vec->iov_len || base[vec->iov_len - 1]) {
 			return 0;
 		}
-		if (type & MPT_ENUM(ValueConsume)) {
-			*from = vec + 1;
-		}
+		*from = vec + 1;
 		return base;
 	}
 	return 0;

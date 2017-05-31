@@ -31,8 +31,8 @@ MPT_STRUCT(node)
 	
 	const char *data(size_t * = 0) const;
 	
-	static node *create(size_t , const char * = 0, int = -1);
-	static node *create(size_t , size_t);
+	static node *create(const char * = 0, int = -1);
+	static node *create(size_t , value);
 	
 	enum { Type = TypeNode };
 #else
@@ -66,7 +66,7 @@ __MPT_EXTDECL_BEGIN
 /*** node/list/tree structure operations ***/
 
 /* create new MPT storage node */
-extern MPT_STRUCT(node) *mpt_node_new(size_t , size_t);
+extern MPT_STRUCT(node) *mpt_node_new(size_t , const MPT_STRUCT(value) *__MPT_DEFPAR(0));
 
 /* remove edges from and to node */
 extern MPT_STRUCT(node) *mpt_node_unlink(MPT_STRUCT(node) *);
@@ -121,7 +121,7 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *, MPT_TY
 extern const char *mpt_node_ident(const MPT_STRUCT(node) *);
 extern const char *mpt_node_data(const MPT_STRUCT(node) *, size_t *);
 /* set (zero-terminated string) node data */
-extern int mpt_node_set(MPT_STRUCT(node) *, const char *);
+extern int mpt_node_set(MPT_STRUCT(node) *, const MPT_STRUCT(value) *);
 
 /* restore links of node (current and all children) */
 extern void mpt_gnode_relink(MPT_STRUCT(node) *);

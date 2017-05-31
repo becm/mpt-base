@@ -13,29 +13,25 @@
 
 struct _iter_fdata
 {
-	MPT_INTERFACE(metatype) mt;
-	double curr, base, /* current/base value */
-	       fact;       /* multiplication factor */
-	int    pos, max;   /* iterations left */
+	double first, base, /* first/base value */
+	       curr,        /* current value */
+	       fact;        /* multiplication factor */
+	int    pos, max;    /* iterations left */
 };
 
 static void iterUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	free(mt);
 }
-static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
+static int iterAssign(struct _iter_fdata *it, MPT_STRUCT(value) val)
 {
-	struct _iter_fdata *it = (void *) mt;
-	const char *str;
 	double first = 0.0, base = 1.0, fact = 10.;
 	int32_t max = 10;
 	int len, curr;
 	
-	if (!val) {
-		len = 0;
-	}
-	else if (!(str = val->fmt)) {
-		if (!(str = val->ptr)) {
+	if (!val.fmt) {
+		const char *str;
+		if (!(str = val.ptr)) {
 			curr = 0;
 		}
 		else if ((curr = mpt_cdouble(&fact, str, 0)) < 0) {
@@ -63,15 +59,16 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 			if (curr) ++len;
 		}
 	}
-	else if (*str) {
-		const void *ptr = val->ptr;
-		
-		if ((curr = mpt_data_convert(&ptr, *str++, &fact, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+	else if (!*val.fmt) {
+		len = 0;
+	}
+	else {
+		if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &fact, 'd')) < 0) {
 			return curr;
 		}
 		len = curr ? 1 : 0;
-		if (curr && *str) {
-			if ((curr = mpt_data_convert(&ptr, *str++, &max, 'i' | MPT_ENUM(ValueConsume))) < 0) {
+		if (curr && *val.fmt) {
+			if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &max, 'i')) < 0) {
 				return curr;
 			}
 			if (curr) {
@@ -84,72 +81,94 @@ static int iterAssign(MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 				}
 			}
 		}
-		if (curr && *str) {
-			if ((curr = mpt_data_convert(&ptr, *str++, &base, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+		if (curr && *val.fmt) {
+			if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &base, 'd')) < 0) {
 				return curr;
 			}
 			if (curr) ++len;
 		}
-		if (curr && *str) {
-			if ((curr = mpt_data_convert(&ptr, *str++, &first, 'd' | MPT_ENUM(ValueConsume))) < 0) {
+		if (curr && *val.fmt) {
+			if ((curr = mpt_data_convert(&val.ptr, *val.fmt++, &first, 'd')) < 0) {
 				return curr;
 			}
 			if (curr) ++len;
 		}
 	}
-	else {
-		len = 0;
-	}
-	it->curr = first;
+	it->first = first;
 	it->base = base;
+	it->curr = first;
 	it->fact = fact;
 	it->pos = 0;
 	it->max = max;
 	
 	return len;
 }
-static int iterConv(MPT_INTERFACE(metatype) *mt, int t, void *ptr)
+static int iterConv(const MPT_INTERFACE(metatype) *mt, int t, void *ptr)
 {
-	struct _iter_fdata *it = (void *) mt;
+	struct _iter_fdata *it = (void *) (mt + 1);
 	if (!t) {
-		static const char fmt[] = { 'd', 0 };
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 'd', 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return 0;
 	}
-	if ((t & 0xff) != 'd') {
+	if (t == MPT_ENUM(TypeIterator)
+	    || t == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((void **) ptr) = it;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (t != 'd') {
 		return MPT_ERROR(BadType);
 	}
 	if (it->pos > it->max) {
-		return 0;
+		return MPT_ERROR(MissingData);
 	}
 	if (ptr) {
 		*((double *) ptr) = it->curr;
 	}
-	if (t & MPT_ENUM(ValueConsume)) {
-		if (!it->pos++) {
-			it->curr = it->base;
-		} else {
-			it->curr *= it->fact;
-		}
-		return 'd' | MPT_ENUM(ValueConsume);
+	return 'd';
+}
+static MPT_INTERFACE_VPTR(iterator) iteratorFactor;
+static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
+{
+	MPT_INTERFACE(metatype) *copy;
+	struct _iter_fdata *it = (void *) (mt + 1);
+	
+	if (!(copy = malloc(sizeof(*copy) + sizeof(*it)))) {
+		return 0;
+	}
+	copy->_vptr = &iteratorFactor.meta;
+	memcpy(copy + 1, it, sizeof(*it));
+	return copy;
+}
+static int iterAdvance(MPT_INTERFACE(iterator) *ptr)
+{
+	struct _iter_fdata *it = (void *) (ptr + 1);
+	
+	if (it->pos > it->max) {
+		return MPT_ERROR(MissingData);
+	}
+	if (it->pos == it->max) {
+		return 0;
+	}
+	if (!it->pos++) {
+		it->curr = it->base;
+	} else {
+		it->curr *= it->fact;
 	}
 	return 'd';
 }
-static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
+static int iterReset(MPT_INTERFACE(iterator) *ptr)
 {
-	struct _iter_fdata *c;
-	
-	if (!(c = malloc(sizeof*c))) {
-		return 0;
-	}
-	return memcpy(c, mt, sizeof(*c));
+	struct _iter_fdata *it = (void *) (ptr + 1);
+	it->pos = 0;
+	it->curr = it->first;
+	return it->max;
 }
 
-static MPT_INTERFACE_VPTR(metatype) iteratorFactor = {
-	{ iterUnref },
-	iterAssign,
-	iterConv,
-	iterClone
+static MPT_INTERFACE_VPTR(iterator) iteratorFactor = {
+	{ { iterUnref }, iterConv, iterClone },
+	iterAdvance,
+	iterReset
 };
 
 /*!
@@ -162,21 +181,21 @@ static MPT_INTERFACE_VPTR(metatype) iteratorFactor = {
  * 
  * \return factor iterator metatype
  */
-extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(const char *conf)
+extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) val)
 {
+	MPT_INTERFACE(iterator) *iter;
 	struct _iter_fdata it;
-	MPT_STRUCT(value) val;
 	
-	if (!(val.ptr = conf)) {
+	if (iterAssign(&it, val) < 0) {
 		return 0;
 	}
-	val.fmt = 0;
-	
-	if (iterAssign(&it.mt, &val) < 0) {
+	++it.max;
+	if (!(iter = malloc(sizeof(*iter) + sizeof(it)))) {
 		return 0;
 	}
-	it.mt._vptr = &iteratorFactor;
+	iter->_vptr = &iteratorFactor;
+	memcpy(iter + 1, &it, sizeof(it));
 	
-	return iterClone(&it.mt);
+	return iter;
 }
 

@@ -27,15 +27,11 @@ __MPT_NAMESPACE_BEGIN
  * 
  * \return lor operation result
  */
-int mpt_proxy_vlog(const MPT_STRUCT(proxy) *pr, const char *src, int type, const char *fmt, va_list va)
+int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type, const char *fmt, va_list va)
 {
-	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(output) *out;
 	MPT_INTERFACE(logger) *log;
 	
-	if (!(mt = pr->_ref)) {
-		return 0;
-	}
 	log = 0;
 	if (mt->_vptr->conv(mt, MPT_ENUM(TypeLogger), &log) > 0) {
 		if (!log && !(log = mpt_log_default())) {
@@ -43,6 +39,7 @@ int mpt_proxy_vlog(const MPT_STRUCT(proxy) *pr, const char *src, int type, const
 		}
 		return log->_vptr->log(log, src, type, fmt, va);
 	}
+	out = 0;
 	if (mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out) > 0) {
 		if (!out) {
 			return 0;
@@ -57,19 +54,28 @@ int mpt_proxy_vlog(const MPT_STRUCT(proxy) *pr, const char *src, int type, const
  * 
  * Select and use log interface for message.
  * 
+ * \param pr   proxy data
  * \param fcn  originating function
  * \param type message type and flags
  * \param fmt  log arguments format string
  * 
  * \return lor operation result
  */
-int mpt_proxy_log(const MPT_STRUCT(proxy) *pr, const char *fcn, int type, const char *fmt, ...)
+int mpt_proxy_log(const MPT_INTERFACE(metatype) *mt, const char *fcn, int type, const char *fmt, ...)
 {
 	va_list va;
-	int ret;
+	MPT_INTERFACE(logger) *log = 0;
+	int ret = 0;
 	
+	if (!mt && !(log  = mpt_log_default())) {
+		return 0;
+	}
 	va_start(va, fmt);
-	ret = mpt_proxy_vlog(pr, fcn, type | MPT_ENUM(LogFunction) | MPT_ENUM(LogPretty), fmt, va);
+	if (mt) {
+		ret = mpt_proxy_vlog(mt, fcn, type | MPT_ENUM(LogFunction) | MPT_ENUM(LogPretty), fmt, va);
+	} else {
+		ret = log->_vptr->log(log, fcn, type, fmt, va);
+	}
 	va_end(va);
 	return ret;
 }

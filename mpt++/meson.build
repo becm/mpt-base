@@ -3,11 +3,13 @@
 
 cxx_src = files(
   'array.cpp',
+  'buffer.cpp',
   'client.cpp', 'config.cpp',
   'event.cpp',
   'logger.cpp',
-  'message.cpp', 'meta.cpp', 'meta_new.cpp', 'meta_buffer.cpp',
-  'node_new.cpp',
+  'message.cpp',
+  'meta_create.cpp', 'meta_basic.cpp', 'meta_typed.cpp', 'meta_buffer.cpp',
+  'node.cpp',
   'object.cpp',
   'output.cpp',
   'proxy.cpp', 'parse.cpp',
@@ -15,6 +17,11 @@ cxx_src = files(
   'reference_wrap.cpp',
   'std_cout.cpp',
   'value.cpp',
+)
+
+# creator overrides
+cxx_src += files(
+  'meta_new.cpp', 'node_new.cpp'
 )
 
 cxx = [ core ]

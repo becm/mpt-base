@@ -110,6 +110,9 @@ MPT_STRUCT(typed_array)
 {
 #ifdef __cplusplus
 public:
+	enum Flags {
+		ValueChange = 1
+	};
 	inline typed_array() : _flags(0), _format(0), _esize(0)
 	{ }
 	bool setType(int);
@@ -244,8 +247,8 @@ extern void mpt_copy_fd(int , const float  *, int , double *, int);
 extern void mpt_copy_df(int , const double *, int , float  *, int);
 #endif
 
-/* metatype with buffer data */
-extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *);
+/* iterator with buffer data */
+extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *);
 
 /* array manipulation */
 extern size_t mpt_array_reduce(MPT_STRUCT(array) *);
@@ -266,8 +269,9 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *, size_t , size_t __MPT_DEFPAR(0
 /* write data to slice */
 extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *, size_t , const void *, size_t);
 
-/* get strings from slice */
-extern int mpt_slice_conv(MPT_STRUCT(slice) *, int , void *);
+/* get string elements from slice */
+extern int mpt_slice_conv(const MPT_STRUCT(slice) *, int , void *);
+extern ssize_t mpt_slice_advance(MPT_STRUCT(slice) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );

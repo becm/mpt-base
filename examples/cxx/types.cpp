@@ -39,7 +39,8 @@ extern int main(int, char *[])
 	
 	mpt::Slice<double> t(&d, 1);
 	char dFmt[] = { static_cast<char>(mpt::typeIdentifier(t)), 0 };
-	std::cout << "Slice<d>:  " << dFmt[0] << " = " << mpt::value(dFmt, &l) << std::endl;
+	std::cout << "Slice<d>:  " << mpt::typeIdentifier(t) << " = " << t << std::endl;
+	std::cout << "value(Slice<d>):  " << dFmt << " = " << mpt::value(dFmt, &l) << std::endl;
 	
 	
 }

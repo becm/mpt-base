@@ -33,6 +33,6 @@ graphic graphic_static : CC=${CXX}
 #
 # special test arguments
 test_axis : ARGS=title='my axis' intervals=3 tpos=Up
-test_iter : ARGS='fact 2e-3 3 2 1' 'val= 1 2 3'
+test_iter : ARGS='fact 2e-3 3 2 1' 'val= 1 2 3' '0 180 20'
 test_gen  : ARGS='9 poly 1 0 0 : -4'
 

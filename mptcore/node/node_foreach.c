@@ -43,10 +43,15 @@ extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *head, MP
 			if (!(match & MPT_ENUM(TraverseChange))) {
 				continue;
 			}
+			if (curr->_vptr->conv(curr, MPT_ENUM(TypeValue), &prop.val) >= 0) {
+				;
+			}
 			/* default text metatype */
-			if (curr->_vptr->conv(curr, 's', &prop.val.ptr) >= 0) {
+			else if (curr->_vptr->conv(curr, 's', &prop.val.ptr) >= 0) {
 				prop.val.fmt = 0;
-			} else {
+			}
+			/* generic empty value */
+			else {
 				static const char metafmt[2] = { MPT_ENUM(TypeMeta) };
 				prop.val.fmt = metafmt;
 				prop.val.ptr = &curr;

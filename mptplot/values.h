@@ -35,12 +35,12 @@ extern int mpt_valtype_select(const char **);
 extern int mpt_valtype_init(int , const char *, int , double *, int , const double *);
 
 /* create iterator (descr. includes type info) */
-extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *);
+extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
 /* create specific iterator */
-extern MPT_INTERFACE(metatype) *_mpt_iterator_range (const char *);
-extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(const char *);
-extern MPT_INTERFACE(metatype) *_mpt_iterator_values(const char *);
-extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(const char *);
+extern MPT_INTERFACE(iterator) *_mpt_iterator_range (MPT_STRUCT(value));
+extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value));
+extern MPT_INTERFACE(iterator) *_mpt_iterator_values(MPT_STRUCT(value));
+extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value));
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */

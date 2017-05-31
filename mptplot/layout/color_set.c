@@ -1,5 +1,4 @@
 
-#include <errno.h>
 #include <limits.h>
 #include <string.h>
 
@@ -22,9 +21,9 @@
  */
 extern int mpt_color_set(MPT_STRUCT(color) *col, int red, int green, int blue)
 {
-	if (red   < 0 || red   > UINT8_MAX) { errno = ERANGE; return -1; }
-	if (green < 0 || green > UINT8_MAX) { errno = ERANGE; return -1; }
-	if (blue  < 0 || blue  > UINT8_MAX) { errno = ERANGE; return -1; }
+	if (red   < 0 || red   > UINT8_MAX) { return MPT_ERROR(BadValue); }
+	if (green < 0 || green > UINT8_MAX) { return MPT_ERROR(BadValue); }
+	if (blue  < 0 || blue  > UINT8_MAX) { return MPT_ERROR(BadValue); }
 	
 	col->red = red;
 	col->green = green;
@@ -46,8 +45,8 @@ extern int mpt_color_set(MPT_STRUCT(color) *col, int red, int green, int blue)
  */
 extern int mpt_color_setalpha(MPT_STRUCT(color) *col, int alpha)
 {
-	if (alpha < 0 || alpha > UINT8_MAX) { errno = ERANGE; return -1; }
-	return col->alpha = alpha;;
+	if (alpha < 0 || alpha > UINT8_MAX) { return MPT_ERROR(BadValue); }
+	return col->alpha = alpha;
 }
 /*!
  * \ingroup mptPlot
@@ -60,28 +59,26 @@ extern int mpt_color_setalpha(MPT_STRUCT(color) *col, int alpha)
  * 
  * \return consumed length
  */
-extern int mpt_color_pset(MPT_STRUCT(color) *col, MPT_INTERFACE(metatype) *src)
+extern int mpt_color_pset(MPT_STRUCT(color) *col, const MPT_INTERFACE(metatype) *src)
 {
 	const char *txt;
 	int len;
 	
 	if (!src) {
-		MPT_STRUCT(color) tcol;
-		mpt_color_set(&tcol, 0, 0, 0);
 		/* default color is black, no transparency */
+		static const MPT_STRUCT(color) tcol = MPT_COLOR_INIT;
 		return memcmp(&tcol, col, sizeof(*col)) ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), col)) >= 0) {
-		return len & MPT_ENUM(ValueConsume) ? 1 : 0;
+	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), col)) >= 0) {
+		return 0;
 	}
 	/* parse color name/format  */
-	if ((len = src->_vptr->conv(src, 's' | MPT_ENUM(ValueConsume), &txt)) >= 0) {
+	if ((len = src->_vptr->conv(src, 's', &txt)) >= 0) {
 		int take;
 		if ((take = mpt_color_parse(col, txt)) < 0) {
 			return MPT_ERROR(BadValue);
 		}
-		return len & MPT_ENUM(ValueConsume) ? 1 : 0;
+		return 0;
 	}
-	errno = ENOTSUP;
 	return MPT_ERROR(BadType);
 }

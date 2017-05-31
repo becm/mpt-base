@@ -42,7 +42,7 @@ int Line::property(struct property *prop) const
     }
     return mpt_line_get(this, prop);
 }
-int Line::setProperty(const char *name, metatype *src)
+int Line::setProperty(const char *name, const metatype *src)
 {
     return mpt_line_set(this, name, src);
 }
@@ -94,7 +94,7 @@ int Text::property(struct property *prop) const
     }
     return mpt_text_get(this, prop);
 }
-int Text::setProperty(const char *prop, metatype *src)
+int Text::setProperty(const char *prop, const metatype *src)
 {
     return mpt_text_set(this, prop, src);
 }
@@ -139,7 +139,7 @@ int Axis::property(struct property *prop) const
     }
     return mpt_axis_get(this, prop);
 }
-int Axis::setProperty(const char *prop, metatype *src)
+int Axis::setProperty(const char *prop, const metatype *src)
 {
     return mpt_axis_set(this, prop, src);
 }
@@ -188,7 +188,7 @@ int World::property(struct property *prop) const
     }
     return mpt_world_get(this, prop);
 }
-int World::setProperty(const char *prop, metatype *src)
+int World::setProperty(const char *prop, const metatype *src)
 {
     return mpt_world_set(this, prop, src);
 }
@@ -230,7 +230,7 @@ int Graph::property(struct property *prop) const
     }
     return mpt_graph_get(this, prop);
 }
-int Graph::setProperty(const char *prop, metatype *src)
+int Graph::setProperty(const char *prop, const metatype *src)
 {
     int ret = mpt_graph_set(this, prop, src);
 
@@ -540,7 +540,7 @@ int Layout::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Layout::setProperty(const char *name, metatype *src)
+int Layout::setProperty(const char *name, const metatype *src)
 {
     int len;
 

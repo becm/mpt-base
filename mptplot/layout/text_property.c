@@ -71,7 +71,7 @@ extern void mpt_text_init(MPT_STRUCT(text) *tx, const MPT_STRUCT(text) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(metatype) *src)
+extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	int len;
 	
@@ -82,16 +82,16 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
-			return len ? 1 : 0;
+			return 0;
 		}
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor) | MPT_ENUM(ValueConsume), &tx->color)) >= 0) {
-			return len ? 1 : 0;
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}
@@ -103,10 +103,10 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText) | MPT_ENUM(ValueConsume), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
-			return len ? 1 : 0;
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}
@@ -130,7 +130,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->pos.x = def_text.pos.x;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.x)) < 0) {
+		if ((len = src->_vptr->conv(src, 'f', &tx->pos.x)) < 0) {
 			return len;
 		}
 		return len ? 1 : 0;
@@ -140,31 +140,15 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->pos.y = def_text.pos.y;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.y)) < 0) {
+		if ((len = src->_vptr->conv(src, 'f', &tx->pos.y)) < 0) {
 			return len;
 		}
 		return len ? 1 : 0;
 	}
 	if (!strcasecmp(name, "pos")) {
-		int l1, l2;
-		float tmp;
-		
-		if (!src) {
-			tx->pos = def_text.pos;
-			return 0;
-		}
-		if ((l1 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tmp)) < 0) {
-			return l1;
-		}
-		if (!l1) {
-			tx->pos = def_text.pos;
-			return 0;
-		}
-		if ((l2 = src->_vptr->conv(src, 'f' | MPT_ENUM(ValueConsume), &tx->pos.y)) < 0) {
-			return l2;
-		}
-		tx->pos.x = tmp;
-		return l2 ? 2 : 1;
+		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
+		static const MPT_STRUCT(fpoint) def = { 0.0f, 0.0f };
+		return mpt_fpoint_set(&tx->pos, src, &def, &r);
 	}
 	if (!strcasecmp(name, "color")) {
 		return mpt_color_pset(&tx->color, src);
@@ -174,24 +158,24 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(me
 			tx->size = def_text.size;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y' | MPT_ENUM(ValueConsume), &tx->size))) tx->size = def_text.size;
-		return len <= 0 ? len : 1;
+		if (!(len = src->_vptr->conv(src, 'y', &tx->size))) tx->size = def_text.size;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "align")) {
 		if (!src) {
 			tx->align = def_text.align;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'c' | MPT_ENUM(ValueConsume), &tx->align))) tx->align = def_text.align;
-		return len <= 0 ? len : 1;
+		if (!(len = src->_vptr->conv(src, 'c', &tx->align))) tx->align = def_text.align;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "angle")) {
 		if (!src) {
 			tx->angle = def_text.angle;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd' | MPT_ENUM(ValueConsume), &tx->angle))) tx->angle = def_text.angle;
-		return len <= 0 ? len : 1;
+		if (!(len = src->_vptr->conv(src, 'd', &tx->angle))) tx->angle = def_text.angle;
+		return len < 0 ? len : 0;
 	}
 	return MPT_ERROR(BadArgument);
 }

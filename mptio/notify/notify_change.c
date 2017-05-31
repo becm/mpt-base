@@ -9,6 +9,7 @@
 #endif
 
 #include "meta.h"
+#include "object.h"
 
 #include "notify.h"
 
@@ -29,14 +30,21 @@
 extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
 {
 	MPT_INTERFACE(input) *in, *old, **slot;
+	MPT_INTERFACE(object) *obj;
 	MPT_STRUCT(buffer) *buf;
 	int ret, fd = -1;
 	
 	if (!(buf = no->_slot._buf)) {
 		return MPT_ERROR(BadArgument);
 	}
+	in = 0;
 	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeInput), &in)) < 0
 	    || !in) {
+		return MPT_ERROR(BadArgument);
+	}
+	obj = 0;
+	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj)) < 0
+	    || !obj) {
 		return MPT_ERROR(BadArgument);
 	}
 	if ((fd = in->_vptr->_file(in)) < 0) {
@@ -48,7 +56,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 	    || in != slot[fd]) {
 		return MPT_ERROR(BadValue);
 	}
-	if ((ret = mt->_vptr->assign(mt, val)) < 0) {
+	if ((ret = mpt_object_pset(obj, 0, val, 0)) < 0) {
 		return ret;
 	}
 	if ((ret = in->_vptr->_file(in)) < 0) {

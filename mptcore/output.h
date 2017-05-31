@@ -183,7 +183,7 @@ void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
 extern void mpt_history_fini(MPT_STRUCT(history) *);
 /* get/set history properties */
 extern int mpt_history_get(const MPT_STRUCT(history) *, MPT_STRUCT(property) *);
-extern int mpt_history_set(MPT_STRUCT(history) *, const char *, MPT_INTERFACE(metatype) *);
+extern int mpt_history_set(MPT_STRUCT(history) *, const char *, const MPT_INTERFACE(metatype) *);
 
 /* push data to history */
 extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);
@@ -220,7 +220,7 @@ extern int mpt_connection_assign(MPT_STRUCT(connection) *, const MPT_STRUCT(sock
 extern int mpt_connection_open(MPT_STRUCT(connection) *, const char *, const MPT_STRUCT(fdmode) *);
 /* get/set outdata property */
 extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
-extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, MPT_INTERFACE(metatype) *);
+extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, const MPT_INTERFACE(metatype) *);
 /* send reply message */
 extern int mpt_connection_reply(MPT_STRUCT(connection) *, const MPT_STRUCT(message) *);
 

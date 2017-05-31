@@ -104,6 +104,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
 	MPT_ENUM(TypeRawData)   = 0x15,  /* NAK */
+	MPT_ENUM(TypeIterator)  = 0x16,  /* SYN */
 #define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
                                && (v) < MPT_ENUM(TypeVecBase))
 	
@@ -534,6 +535,12 @@ MPT_STRUCT(identifier)
 	bool setName(const char *, int = -1);
 	bool setName(size_t , const void *);
 	bool setName(const identifier &);
+	
+	static inline __MPT_CONST_EXPR size_t minimalLength()
+	{ return 4 + sizeof(char *); }
+	
+	inline size_t totalSize() const
+	{ return sizeof(*this) + _post; }
 protected:
 #else
 # define MPT_IDENTIFIER_INIT { 0, 0, 0, { 0 }, 0 }

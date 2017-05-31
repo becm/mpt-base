@@ -95,7 +95,10 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	res = mpt_node_read(conf, fd, format, limit, log);
 	if (fname) {
 		if (val) {
-			mpt_node_set(conf, fname);
+			MPT_STRUCT(value) fn;
+			fn.fmt = 0;
+			fn.ptr = fname;
+			mpt_node_set(conf, &fn);
 		}
 		fclose(fd);
 	}

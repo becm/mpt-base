@@ -29,8 +29,8 @@ MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
 	MPT_INTERFACE_VPTR(config) cfg;
-	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
-	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(metatype) *);
+	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
+	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
 };
 # define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)
 MPT_INTERFACE(client)
@@ -46,8 +46,8 @@ public:
 	int assign(const path *, const value *) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
 	
-	virtual int  init(MPT_INTERFACE(metatype) * = 0);
-	virtual int  step(MPT_INTERFACE(metatype) * = 0) = 0;
+	virtual int init(iterator * = 0);
+	virtual int step(iterator * = 0) = 0;
 protected:
 	inline ~client() { }
 #endif
@@ -125,11 +125,9 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t , const char *, const c
 
 /* clear proxy references */
 extern void mpt_proxy_fini(MPT_STRUCT(proxy) *);
-/* set matching proxy reference */
-extern int mpt_proxy_assign(MPT_STRUCT(proxy) *, const char *, MPT_INTERFACE(metatype) *);
 /* try to log to proxy metatype */
-extern int mpt_proxy_vlog(const MPT_STRUCT(proxy) *, const char *, int , const char *, va_list);
-extern int mpt_proxy_log(const MPT_STRUCT(proxy) *, const char *, int , const char *, ... );
+extern int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);
+extern int mpt_proxy_log(const MPT_INTERFACE(metatype) *, const char *, int , const char *, ... );
 
 __MPT_EXTDECL_END
 
@@ -138,7 +136,7 @@ inline libhandle::~libhandle()
 {
     mpt_library_close(this);
 }
-inline int client::init(metatype *)
+inline int client::init(iterator *)
 { return 0; }
 #endif /* C++ */
 

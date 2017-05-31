@@ -22,7 +22,7 @@
  * 
  * \return dimension data array
  */
-extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim, int flg)
+extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim)
 {
 	MPT_STRUCT(buffer) *buf = st->_d._buf;
 	MPT_STRUCT(typed_array) *arr;
@@ -31,23 +31,10 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 	if (buf
 	    && (buf->used/sizeof(*arr) > dim)) {
 		arr = (void *) (buf+1);
-		arr += dim;
-		
-		if (flg < 0) {
-			return arr;
-		}
-		flg &= ~MPT_ENUM(ValueCreate);
-		
-		if (flg & MPT_ENUM(ValueReset)) {
-			flg &= ~MPT_ENUM(ValueReset);
-			arr->_esize  = 0;
-			arr->_format = 0;
-		}
-		arr->_flags = flg;
-		return arr;
+		return arr + dim;
 	}
 	/* not allowed to extend dimensions */
-	if (!(flg & MPT_ENUM(ValueCreate))) {
+	if (st->_maxDimensions && (dim >= st->_maxDimensions)) {
 		errno = EINVAL;
 		return 0;
 	}
@@ -55,7 +42,7 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		return arr;
 	}
 	arr->_d._buf = 0;
-	arr->_flags  = flg & ~MPT_ENUM(ValueCreate);
+	arr->_flags  = 0;
 	arr->_esize  = 0;
 	arr->_format = 0;
 	

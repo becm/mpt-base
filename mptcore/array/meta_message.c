@@ -18,10 +18,10 @@
  * 
  * \return pointer to metatype interface
  */
-extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep)
+extern MPT_INTERFACE(iterator) *mpt_meta_message(const MPT_STRUCT(message) *ptr, int asep)
 {
 	MPT_STRUCT(array) a = MPT_ARRAY_INIT;
-	MPT_INTERFACE(metatype) *m;
+	MPT_INTERFACE(iterator) *it;
 	int len;
 	
 	if (!ptr) {
@@ -30,8 +30,8 @@ extern MPT_INTERFACE(metatype) *mpt_meta_message(const MPT_STRUCT(message) *ptr,
 	if ((len = mpt_array_message(&a, ptr, asep)) < 0) {
 		return 0;
 	}
-	m = mpt_meta_buffer(&a);
+	it = mpt_meta_buffer(&a);
 	mpt_array_clone(&a, 0);
 	
-	return m;
+	return it;
 }

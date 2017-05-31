@@ -13,7 +13,7 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(message);
 
 MPT_INTERFACE(output);
-MPT_INTERFACE(metatype);
+MPT_INTERFACE(iterator);
 
 MPT_STRUCT(reply_data)
 {
@@ -204,7 +204,7 @@ extern MPT_INTERFACE(reply_context) *mpt_reply_deferable(size_t, int (*)(void *,
 extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 
 /* command message content */
-extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
+extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *);
 
 __MPT_EXTDECL_END
 

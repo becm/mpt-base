@@ -16,7 +16,7 @@
 #include "output.h"
 
 
-static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *src)
+static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
 {
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	const char *where = 0;
@@ -30,7 +30,7 @@ static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *s
 	}
 	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0
 	    && (ret = mpt_connection_assign(con, &sock)) >= 0) {
-		return 1;
+		return 0;
 	}
 	if ((ret = src->_vptr->conv(src, 's', &where)) < 0) {
 		return ret;
@@ -42,10 +42,10 @@ static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *s
 	if ((ret = mpt_connection_open(con, where, 0)) < 0) {
 		return ret;
 	}
-	return 1;
+	return 0;
 }
 /* set encoding for stream */
-static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatype) *src)
+static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
 {
 	MPT_TYPE(DataEncoder) enc;
 	MPT_TYPE(DataDecoder) dec;
@@ -116,7 +116,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(metatyp
 	return res;
 }
 /* modify output color flag */
-static int connectionColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
+static int connectionColor(uint8_t *flags, const MPT_INTERFACE(metatype) *src)
 {
 	char *where;
 	int len;
@@ -155,7 +155,7 @@ static int connectionColor(uint8_t *flags, MPT_INTERFACE(metatype) *src)
  * 
  * \return state of property
  */
-extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT_INTERFACE(metatype) *src)
+extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, const MPT_INTERFACE(metatype) *src)
 {
 	int ret;
 	if (!name || !*name) {

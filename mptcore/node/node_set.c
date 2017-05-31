@@ -2,10 +2,8 @@
  * set MPT node metatype data.
  */
 
-#include <errno.h>
-#include <string.h>
-
 #include "meta.h"
+#include "object.h"
 
 #include "node.h"
 
@@ -16,41 +14,44 @@
  * Set node data to text value.
  * 
  * \param node  node data
- * \param data  string to assign
+ * \param val   value to assign
  * 
- * \return number of moved elemets
+ * \return type of created meta element
  */
-extern int mpt_node_set(MPT_STRUCT(node) *node, const char *data)
+extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 {
-	MPT_INTERFACE(metatype) *old, *replace;
-	MPT_STRUCT(value) val;
-	int ret = 0;
 	
-	val.fmt = 0;
-	val.ptr = data;
+	MPT_INTERFACE(metatype) *old, *mt;
 	
 	if ((old = node->_meta)) {
-		if (((ret = old->_vptr->assign(old, &val)) >= 0)
-		    || !data) {
-			return ret;
-		}
-		/* no reassignment of non-default type */
-		if (old->_vptr->conv(old, 0, 0)) {
-			return ret;
+		/* try assign existing data */
+		MPT_INTERFACE(object) *obj = 0;
+		if ((old->_vptr->conv(old, MPT_ENUM(TypeObject), &obj)) >= 0
+	            && obj
+	            && mpt_object_pset(obj, 0, val, 0) >= 0) {
+			return old->_vptr->conv(old, 0, 0);
 		}
 	}
-	if (!(replace = mpt_meta_new(strlen(data)))) {
-		return -1;
+	/* default config data */
+	if (!val) {
+		/* try to reset existing iterator */
+		MPT_INTERFACE(iterator) *it = 0;
+		if (old
+		    && old->_vptr->conv(old, MPT_ENUM(TypeIterator), &it) >= 0
+		    && it
+		    && it->_vptr->reset(it) >= 0) {
+			return old->_vptr->conv(old, 0, 0);
+		}
+		mt = 0;
 	}
-	if ((ret = replace->_vptr->assign(replace, &val)) < 0) {
-		replace->_vptr->ref.unref((void *) replace);
-		return -3;
+	/* create new metatype for data */
+	else if (!(mt = mpt_meta_new(*val))) {
+		return MPT_ERROR(BadOperation);
 	}
 	if (old) {
 		old->_vptr->ref.unref((void *) old);
 	}
-	node->_meta = replace;
-	
-	return ret;
+	node->_meta = mt;
+	return mt->_vptr->conv(mt, 0, 0);
 }
 

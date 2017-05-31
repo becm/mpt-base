@@ -10,27 +10,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-enum MPT_ENUM(ConversionFlags) {
-	/* additional conversion options */
-	MPT_ENUM(AssignColon)   = 0x100,
-	MPT_ENUM(AssignEqual)   = 0x200,
-	MPT_ENUM(PropertyColon) = MPT_ENUM(AssignColon) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyEqual) = MPT_ENUM(AssignEqual) | MPT_ENUM(TypeProperty),
-	MPT_ENUM(PropertyAssign) = MPT_ENUM(PropertyColon) | MPT_ENUM(PropertyEqual),
-	
-	/* convert metatype to specific value */
-	MPT_ENUM(ValueMeta)     = 0x800,
-	
-	/* input control options */
-	MPT_ENUM(ValueConsume)  = 0x1000,
-	MPT_ENUM(ValueCreate)   = 0x2000,
-	MPT_ENUM(ValueChange)   = 0x4000,
-	MPT_ENUM(ValueReset)    = 0x8000,
-	
-	/* foreign flag offset */
-	MPT_ENUM(ConvertUser)   = 0x10000
-};
-
 /*! generic metatype interface */
 #ifdef __cplusplus
 MPT_INTERFACE(metatype) : public unrefable
@@ -39,6 +18,8 @@ protected:
 	inline ~metatype() {}
 public:
 	enum { Type = TypeMeta };
+	
+	class Basic;
 	
 	const char *string();
 	
@@ -54,13 +35,13 @@ public:
 	inline operator const char *()
 	{ return string(); }
 	
-	static metatype *create(size_t size);
+	static metatype *create(value);
+	static metatype *create(int, const void *);
 	
-	virtual int assign(const value *);
-	virtual int conv(int, void *);
+	virtual int conv(int , void *) const = 0;
 	virtual metatype *clone() const;
 	
-	inline int type()
+	inline int type() const
 	{ return conv(0, 0); }
 };
 #else
@@ -68,18 +49,63 @@ MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
 {
 	MPT_INTERFACE_VPTR(unrefable) ref;
-	int (*assign)(MPT_INTERFACE(metatype) *, const MPT_INTERFACE(value) *);
-	int (*conv)(MPT_INTERFACE(metatype) *, int, void *);
+	int (*conv)(const MPT_INTERFACE(metatype) *, int , void *);
 	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
 	const MPT_INTERFACE_VPTR(metatype) *_vptr;
 };
 #endif
 
+/*! generic iterator interface */
+#ifdef __cplusplus
+MPT_INTERFACE(iterator) : public metatype
+{
+protected:
+	inline ~iterator() {}
+public:
+	virtual iterator *clone() const __MPT_OVERRIDE;
+	virtual int advance();
+	virtual int reset();
+};
+#else
+MPT_INTERFACE(iterator);
+MPT_INTERFACE_VPTR(iterator)
+{
+	MPT_INTERFACE_VPTR(metatype) meta;
+	int (*advance)(MPT_INTERFACE(iterator) *);
+	int (*reset)(MPT_INTERFACE(iterator) *);
+}; MPT_INTERFACE(iterator) {
+	const MPT_INTERFACE_VPTR(iterator) *_vptr;
+};
+#endif
 
 #ifdef __cplusplus
 inline metatype *metatype::clone() const
 { return 0; }
+inline iterator *iterator::clone() const
+{ return 0; }
+inline int iterator::advance()
+{ return 0; }
+inline int iterator::reset()
+{ return 0; }
+
+/* basic metatype to support typeinfo */
+class metatype::Basic : public metatype
+{
+protected:
+    inline ~Basic() {}
+public:
+    Basic(size_t post);
+
+    void unref() __MPT_OVERRIDE;
+
+    int conv(int , void *) const __MPT_OVERRIDE;
+    Basic *clone() const __MPT_OVERRIDE;
+
+    bool set(const char *, int);
+
+    static Basic *create(const char *, int);
+};
 
 /* specialize metatype string cast */
 template <> inline const char *metatype::cast<const char>()
@@ -95,51 +121,38 @@ template <> inline Reference<metatype> & Reference<metatype>::operator= (Referen
     return *this;
 }
 /* generic implementation for metatype */
+template <typename T>
 class Metatype : public metatype
 {
 public:
-    void unref() __MPT_OVERRIDE;
-    int assign(const value *) __MPT_OVERRIDE;
-    int conv(int, void *) __MPT_OVERRIDE;
-    metatype *clone() const __MPT_OVERRIDE;
-
-    Slice<const char> data() const;
-    class Small;
-    class Big;
-
-    static Metatype *create(size_t size);
-
+    inline Metatype(const T * val = 0) : _val(0)
+    { if (val) _val = *val; }
+    void unref()
+    {
+        delete this;
+    }
+    int conv(int type, void *dest) const
+    {
+        static const int fmt = typeIdentifier<T>();
+        if (type != fmt) return BadType;
+        if (dest) *static_cast<T *>(dest) = _val;
+        return fmt;
+    }
+    metatype *clone() const
+    {
+         return new Metatype(&_val);
+    }
 protected:
-    Metatype(size_t post = 0);
-    virtual ~Metatype();
-
-    uint64_t _info;
-};
-
-class Metatype::Small : public Metatype
-{
-public:
-    Small() : Metatype(sizeof(data))
+    virtual ~Metatype()
     { }
-protected:
-    friend class Metatype;
-    int8_t data[64-sizeof(Metatype)];
-};
-class Metatype::Big : public Metatype
-{
-public:
-    Big() : Metatype(sizeof(data))
-    { }
-protected:
-    friend class Metatype;
-    int8_t data[256-sizeof(Metatype)];
+    T _val;
 };
 
 template <typename T>
-class Source : public metatype
+class Source : public iterator
 {
 public:
-    Source(const T *val, size_t len = 1) : _d(val, len)
+    Source(const T *val, size_t len = 1) : _d(val, len), _pos(0)
     { }
     virtual ~Source()
     { }
@@ -147,34 +160,58 @@ public:
     void unref() __MPT_OVERRIDE
     { delete this; }
 
-    int conv(int type, void *dest) __MPT_OVERRIDE
+    int conv(int type, void *dest) const __MPT_OVERRIDE
     {
-        if (!_d.len()) return -2;
-        const T *val = _d.base();
-        type = convert((const void **) &val, typeIdentifier<T>(), dest, type);
-        if ((type < 0) || !dest) return type;
-        _d.shift(1);
-        return sizeof(T);
+        int fmt = this->type();
+        const T *val = _d.nth(_pos);
+        if (!val) return MissingData;
+        type = convert((const void **) &val, fmt, dest, type);
+        if (type < 0) return type;
+        return fmt;
+    }
+    int advance() __MPT_OVERRIDE
+    {
+        int pos = _pos + 1;
+        if (pos >= _d.size()) return MissingData;
+        _pos = _pos;
+        return type();
+    }
+    int reset() __MPT_OVERRIDE
+    {
+        _pos = 0;
+        return type();
+    }
+    static int type()
+    {
+        static int fmt = 0;
+        if (!fmt) fmt = typeIdentifier<T>();
+        return fmt;
     }
 protected:
     Slice<const T> _d;
+    int _pos;
 };
 #endif
 
 __MPT_EXTDECL_BEGIN
+
 /* create meta type element */
-extern MPT_INTERFACE(metatype) *mpt_meta_new(size_t);
+extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
+
+/* creat basic text small metatype */
+extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);
 
 /* get node/metatype text/raw data */
 extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 /* initialize geninfo data */
+extern int _mpt_geninfo_size(size_t);
 extern int _mpt_geninfo_init(void *, size_t);
 /* operations on geninfo data */
-extern int _mpt_geninfo_value(uint64_t *, const MPT_STRUCT(value) *);
-extern int _mpt_geninfo_line(const uint64_t *);
-extern int _mpt_geninfo_conv(const uint64_t *, int , void *);
+extern int _mpt_geninfo_set(void *, const char *, int __MPT_DEFPAR(-1));
+extern int _mpt_geninfo_flags(const void *, int);
+extern int _mpt_geninfo_conv(const void *, int , void *);
 /* create new metatype with data */
-extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const uint64_t *);
+extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 
 __MPT_EXTDECL_END
 

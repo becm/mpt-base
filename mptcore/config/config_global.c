@@ -5,6 +5,7 @@
 
 #include "node.h"
 #include "meta.h"
+#include "object.h"
 
 #include "config.h"
 
@@ -75,84 +76,51 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	MPT_INTERFACE(metatype) *mt;
 	MPT_STRUCT(node) *n ,*b;
 	MPT_STRUCT(path) p;
-	int len;
 	
 	if (!(n = b = mpt_config_node(0))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!val) {
-		len = -1;
-	}
-	else if (!val->fmt) {
-		len = val->ptr ? strlen(val->ptr) + 1 : 0;
-	}
-	else {
-		len = 0;
-	}
 	if (c->base.len) {
 		p = c->base;
-		if (!(b = mpt_node_query(b, &p, len))) {
-			return len < 0 ? 0 : MPT_ERROR(BadOperation);
+		if (!(b = mpt_node_query(b, &p, 0))) {
+			return val ? MPT_ERROR(BadOperation) : 0;
 		}
-		if (!b->children) {
-			b->children = n;
-		}
-		if (!(n = mpt_node_query(b->children, &p, -1))) {
+		n = b->children;
+		if (p.len && !(n = mpt_node_query(n, &p, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		if (path) {
 			p = *path;
 			
 			b = n;
-			if (!(n = mpt_node_query(n->children, &p, len))) {
-				return len < 0 ? 0 : MPT_ERROR(BadOperation);
+			if (!(n = mpt_node_query(n->children, &p, val))) {
+				return val ? MPT_ERROR(BadOperation) : 0;
 			}
 			if (!b->children) {
 				b->children = n;
 			}
-			if (p.len && !(n = mpt_node_query(n->children, &p, -1))) {
+			if (p.len && !(n = mpt_node_query(n->children, &p, 0))) {
 				return MPT_ERROR(BadOperation);
 			}
 		}
 	}
 	else if (path) {
 		p = *path;
-		if (!(n = mpt_node_query(b, &p, len))) {
-			return len < 0 ? 0 : MPT_ERROR(BadOperation);
+		if (!(n = mpt_node_query(b, &p, val))) {
+			return val ? MPT_ERROR(BadOperation) : 0;
 		}
-		if (p.len && !(n = mpt_node_query(n->children, &p, -1))) {
+		if (p.len && !(n = mpt_node_query(n->children, &p, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 	}
-	if (len <= 0) {
-		if ((mt = n->_meta)) {
-			return mt->_vptr->assign(mt, 0);
-		}
-		return 0;
-	}
-	/* try assign existing data */
+	/* return data type identifier */
 	if ((mt = n->_meta)) {
-		int ret;
-		if ((ret = mt->_vptr->assign(mt, val)) >= 0) {
-			return ret;
-		}
-		/* keep non-default types */
-		if (mt->_vptr->conv(mt, 0, 0)) {
-			return ret;
+		int type = mt->_vptr->conv(mt, 0, 0);
+		if (type > 0) {
+			return type;
 		}
 	}
-	if (!(mt = mpt_meta_new(len))) {
-		return MPT_ERROR(BadOperation);
-	}
-	if ((len = mt->_vptr->assign(mt, val)) < 0) {
-		mt->_vptr->ref.unref((void *) mt);
-		return MPT_ERROR(BadValue);
-	}
-	if (n->_meta) {
-		n->_meta->_vptr->ref.unref((void *) n->_meta);
-	}
-	n->_meta = mt;
-	return len;
+	return 0;
 }
 static const MPT_INTERFACE_VPTR(config) configGlobal = {
 	{ configUnref },

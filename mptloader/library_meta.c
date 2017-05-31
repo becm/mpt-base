@@ -2,7 +2,7 @@
  * initialize solver from shared library.
  */
 
-#include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,43 +36,18 @@ static void mpUnref(MPT_INTERFACE(unrefable) *m)
 	mpt_library_close(&mp->lh);
 	free(mp);
 }
-static int mpAssign(MPT_INTERFACE(metatype) *m, const MPT_STRUCT(value) *val)
+static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
-	struct _mpt_metaProxy *mp = (void *) m;
-	int type;
+	const struct _mpt_metaProxy *mp = (void *) m;
 	
 	if (!(m = mp->ptr)) {
-		if (!(m = mp->lh.create())) {
-			return MPT_ERROR(BadArgument);
-		}
-		mp->ptr = m;
-	}
-	type = mp->type;
-	/* assign metatype */
-	if (type == MPT_ENUM(TypeMeta)) {
-		return m->_vptr->assign(m, val);
-	}
-	/* set generic object property */
-	if (MPT_value_isObject(type)) {
-		return mpt_object_pset(mp->ptr, 0, val, 0);
-	}
-	return MPT_ERROR(BadType);
-}
-static int mpConv(MPT_INTERFACE(metatype) *m, int type, void *ptr)
-{
-	struct _mpt_metaProxy *mp = (void *) m;
-	
-	if (!(m = mp->ptr)) {
-		if (!(m = mp->lh.create())) {
-			return MPT_ERROR(BadArgument);
-		}
-		mp->ptr = m;
+		return MPT_ERROR(BadArgument);
 	}
 	if (type & ~0xff) {
 		return MPT_ERROR(BadValue);
 	}
 	if (!type) {
-		if (ptr) *((void **) ptr) = mp->fmt;
+		if (ptr) *((void **) ptr) = (char *) mp->fmt;
 		return mp->type;
 	}
 	if (type == mp->type) {
@@ -96,21 +71,24 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
 	struct _mpt_metaProxy *n;
+	void *ptr;
 	
-	if (mp->lh.lib) {
+	if (mp->lh.lib || !mp->lh.create) {
+		return 0;
+	}
+	if (!(ptr = mp->lh.create())) {
 		return 0;
 	}
 	if (!(n = malloc(sizeof(*n)))) {
 		return 0;
 	}
 	*n = *mp;
-	n->ptr = 0;
+	n->ptr = ptr;
 	
 	return &n->_mt;
 }
 static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
 	{ mpUnref },
-	mpAssign,
 	mpConv,
 	mpClone
 };
@@ -130,13 +108,17 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *lh
 {
 	struct _mpt_metaProxy *mp;
 	
+	if (!lh->create) {
+		errno = EINVAL;
+		return 0;
+	}
 	if (!(mp = malloc(sizeof(*mp)))) {
 		return 0;
 	}
 	mp->_mt._vptr = &_mpt_metaProxyCtl;
 	mp->lh = *lh;
 	
-	mp->ptr = 0;
+	mp->ptr = lh->create();
 	mp->type = type;
 	
 	mp->fmt[0] = (type >= 0 && type <= 0xff) ? type : 0;

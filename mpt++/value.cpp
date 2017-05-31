@@ -7,21 +7,27 @@
 
 __MPT_NAMESPACE_BEGIN
 
+// conversion wrapper
+int convert(const void **val, int fmt, void *dest, int type)
+{
+    return mpt_data_convert(val, fmt, dest, type);
+}
+
 // byte order adaption
 float swapOrder(float v)
 {
-	mpt_bswap_32(1, reinterpret_cast<uint32_t *>(&v));
-	return v;
+    mpt_bswap_32(1, reinterpret_cast<uint32_t *>(&v));
+    return v;
 }
 double swapOrder(double v)
 {
-	mpt_bswap_64(1, reinterpret_cast<uint64_t *>(&v));
-	return v;
+    mpt_bswap_64(1, reinterpret_cast<uint64_t *>(&v));
+    return v;
 }
 float80 swapOrder(float80 v)
 {
-	mpt_bswap_80(1, reinterpret_cast<float80 *>(&v));
-	return v;
+    mpt_bswap_80(1, &v);
+    return v;
 }
 
 // transport value operations
