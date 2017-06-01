@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <sys/uio.h>
+
 #include "meta.h"
 
 #include "layout.h"
@@ -53,10 +55,19 @@ extern int mpt_string_set(char **ptr, const char *data, int len)
  */
 extern int mpt_string_pset(char **ptr, const MPT_INTERFACE(metatype) *src)
 {
-	char *txt;
+	struct iovec vec;
 	int len;
 	
-	if (!src) return (ptr && *ptr) ? strlen(*ptr) : 0;
-	if ((len = src->_vptr->conv(src, 's', &txt)) < 0) return len;
-	return mpt_string_set(ptr, txt, len ? len : -1);
+	if (!src) {
+		return (ptr && *ptr) ? strlen(*ptr) : 0;
+	}
+	if ((len = src->_vptr->conv(src, MPT_value_toVector('c'), &vec)) > 0) {
+		return mpt_string_set(ptr, vec.iov_base, vec.iov_len);
+	}
+	vec.iov_base = 0;
+	if ((len = src->_vptr->conv(src, 's', &vec.iov_base)) > 0) {
+		mpt_string_set(ptr, vec.iov_base, -1);
+	}
+	if (!len) return mpt_string_set(ptr, 0, 0);
+	return len;
 }

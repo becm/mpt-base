@@ -75,7 +75,7 @@ MPT_STRUCT(lineattr)
 	        size;    /* symbol type/size */
 };
 
-/* simple line/rectangle */
+/* simple line */
 MPT_STRUCT(line)
 {
 #ifdef __cplusplus
@@ -89,7 +89,7 @@ MPT_STRUCT(line)
 	                     to;     /* line end position */
 };
 
-/* axis data */
+/* parameters for axis display */
 MPT_STRUCT(axis)
 {
 #ifdef __cplusplus
@@ -118,7 +118,7 @@ public:
 	        tpos;    /* title position/orientation */
 };
 
-/* format of data */
+/* format for data lines (and history) */
 MPT_STRUCT(world)
 {
 #ifdef __cplusplus
@@ -359,7 +359,7 @@ protected:
     ItemArray<object> _items;
 };
 
-
+/*! Transformation parameters/interface for (up to) 3 dimensions */
 class Transform3 : public Transform
 {
 public:
@@ -380,7 +380,8 @@ public:
     uint8_t fx, fy, fz;   /* transformation options */
     uint8_t cutoff;       /* limit data to range */
 };
-class Cycle;
+
+/*! Container and binding for data to axes */
 class Graph : public Collection, public Transform3, public graph
 {
 public:
@@ -429,6 +430,7 @@ protected:
     ItemArray<Data> _worlds;
 };
 
+/*! Represent elements in layout file */
 class Layout : public Collection
 {
 public:

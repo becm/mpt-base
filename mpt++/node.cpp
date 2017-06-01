@@ -160,8 +160,10 @@ node *node::create(size_t ilen, value val)
     isize = MPT_align(isize);
     size_t dlen = 0;
 
-    if (!val.fmt && val.ptr) {
-        dlen = strlen(static_cast<const char *>(val.ptr)) + 1;
+    if (!val.fmt) {
+        if (val.ptr) dlen = strlen(static_cast<const char *>(val.ptr));
+    } else {
+        val.ptr = mpt_data_tostring(&val.ptr, *val.fmt, &dlen);
     }
     node *n;
     size_t left = sizeof(NodePrivate::_data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
@@ -170,7 +172,7 @@ node *node::create(size_t ilen, value val)
         if (!(np = static_cast<NodePrivate *>(malloc(sizeof(NodePrivate))))) return 0;
         new (np) NodePrivate(ilen);
         if (dlen) {
-            np->local()->set(static_cast<const char *>(val.ptr), dlen - 1);
+            np->local()->set(static_cast<const char *>(val.ptr), dlen);
         }
         return np;
     }
