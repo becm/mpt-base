@@ -19,7 +19,7 @@
  * 
  * \return created configuration element
  */
-extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT(path) *dest, int prevop, int currop)
+extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT(path) *dest, const MPT_STRUCT(value) *val, int prevop, int currop)
 {
 	MPT_STRUCT(path) path = *dest;
 	MPT_STRUCT(node) *conf;
@@ -49,22 +49,8 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 		data = 0;
 		path.first = 0;
 	}
-	/* create node with metadata segment */
-	if (currop == MPT_PARSEFLAG(Data)) {
-		static const char fmt[] = { MPT_value_toVector('c'), 0 };
-		struct iovec vec;
-		MPT_STRUCT(value) val;
-		vec.iov_len = path.valid;
-		vec.iov_base = (char *) mpt_path_data(&path);
-		val.fmt = fmt;
-		val.ptr = &vec;
-		
-		if (!(conf = mpt_node_new(path.first+1, &val))) {
-			return 0;
-		}
-	}
-	/* create section-only node */
-	else if (!(conf = mpt_node_new(path.first+1, 0))) {
+	/* create node with (optional) metadata segment */
+	if (!(conf = mpt_node_new(path.first+1, val))) {
 		return 0;
 	}
 	if (path.first && !mpt_identifier_set(&conf->ident, data, path.first)) {

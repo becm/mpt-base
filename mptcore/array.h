@@ -28,6 +28,7 @@ MPT_STRUCT(buffer)
 	uintptr_t addref();
 protected:
 	friend struct array;
+	friend struct path;
 	buffer();
 	~buffer();
 #endif

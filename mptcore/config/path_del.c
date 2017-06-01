@@ -69,7 +69,7 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 	if (!(path->len = len)) {
 		path->first = 0;
 	}
-	path->valid = 0;
+	path->flags &= ~MPT_PATHFLAG(KeepPost);
 	
 	return part;
 }
@@ -82,7 +82,7 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
  * 
  * \param path  mpt path descriptor
  * 
- * \retval -2 no/bad path data
+ * \retval MissingData  no/bad path data
  * \retval 0  no modification needed
  * \retval 1  used size modified
  * \retval 2  created copy with new size
@@ -91,6 +91,7 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(array) arr;
 	size_t used, len = path->off + path->len;
+	const char *base;
 	
 	if (!(arr._buf = (void *) path->base)) {
 		return len ? -2 : 0;
@@ -101,21 +102,23 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 	used = (--arr._buf)->used;
 	
 	if (len > used) {
-		return -2;
+		return MPT_ERROR(MissingData);
 	}
 	if (len == used) {
+		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		return 0;
 	}
 	if (!arr._buf->shared) {
-		path->valid = 0;
+		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		arr._buf->used = len;
 		((char *) path->base)[len] = 0;
 		return 1;
 	}
 	/* create local buffer copy */
-	if (!(path->base = mpt_array_slice(&arr, 0, len))) {
+	if (!(base = mpt_array_slice(&arr, 0, len))) {
 		return -1;
 	}
-	path->valid = 0;
+	path->base = base;
+	path->flags &= ~MPT_PATHFLAG(KeepPost);
 	return 2;
 }

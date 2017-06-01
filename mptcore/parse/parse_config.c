@@ -1,5 +1,5 @@
 
-#include <errno.h>
+#include <sys/uio.h>
 
 #include "node.h"
 #include "config.h"
@@ -24,18 +24,33 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(par
 	
 	/* accuire next path element */
 	while ((ret = next(npar, parse, &path)) > 0) {
+		static const char fmt[] = { MPT_value_toVector('c'), 0 };
+		MPT_STRUCT(value) val;
+		struct iovec vec;
+		
+		vec.iov_base = (char *) (path.base + path.off + path.len);
+		vec.iov_len  = parse->valid;
+		
+		val.fmt = fmt;
+		val.ptr = &vec;
+		
 		/* save to configuration */
-		if (save(ctx, &path, parse->prev, ret) < 0) {
+		if (save(ctx, &path, ret & MPT_PARSEFLAG(Data) ? &val : 0, parse->prev, ret) < 0) {
 			ret = -0x80;
 			break;
 		}
-		/* remove last path element */
+		/* remove last path element or trailing data */
 		if (ret & MPT_PARSEFLAG(SectEnd)) {
 			mpt_path_del(&path);
+		} else {
+			mpt_path_invalidate(&path);
 		}
-		mpt_path_invalidate(&path);
+		/* cycle parse state */
 		parse->prev = parse->curr;
 		parse->curr = 0;
+		
+		/* reset valid post path size */
+		parse->valid = 0;
 	}
 	mpt_path_fini(&path);
 	

@@ -16,20 +16,13 @@
  * 
  * \return (new/changed) configuration list
  */
-extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRUCT(path) *dest)
+extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRUCT(path) *dest, const MPT_STRUCT(value) *val)
 {
-	static const char vecChar[2] = { MPT_value_toVector('c') };
-	struct iovec vec;
-	MPT_STRUCT(value) val;
+	static const MPT_STRUCT(value) def = MPT_VALUE_INIT;
 	MPT_STRUCT(path) path = *dest;
 	MPT_STRUCT(node) *conf;
 	
-	vec.iov_len = path.valid;
-	vec.iov_base = (char *) mpt_path_data(dest);
-	val.ptr = &vec;
-	val.fmt = vecChar;
-	
-	if (!(conf = mpt_node_query(*base, &path, &val))) {
+	if (!(conf = mpt_node_query(*base, &path, val ? val : &def))) {
 		return 0;
 	}
 	if (!*base) *base = conf;

@@ -70,7 +70,7 @@ MPT_STRUCT(parseflg)
 	uint8_t sect,    /* section name format */
 	        opt;     /* option name format */
 };
-typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, int, int);
+typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int, int);
 
 /* parser input metadata */
 MPT_STRUCT(parseinput)
@@ -105,9 +105,11 @@ enum MPT_PARSEFLAG(Flags) {
 #else
 MPT_STRUCT(parse)
 {
-# define MPT_PARSE_INIT  { MPT_PARSEINPUT_INIT, 0, 0, MPT_PARSEFLG_INIT }
+# define MPT_PARSE_INIT  { MPT_PARSEINPUT_INIT,  0,  0, 0, MPT_PARSEFLG_INIT }
 #endif
 	MPT_STRUCT(parseinput) src;  /* character source */
+	
+	uint16_t             valid;  /* valid size of post data */
 	
 	uint8_t              prev;   /* previous operation */
 	uint8_t              curr;   /* current operation */
@@ -164,7 +166,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, M
 extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
 /* create/modify current node element */
-extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, int , int);
+extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int , int);
 /* set node elements from file */
 extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 

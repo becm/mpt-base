@@ -48,8 +48,7 @@ extern size_t mpt_path_set(MPT_STRUCT(path) *path, const char *val, int len)
 	path->base = val;
 	
 	path->off   = 0;
-	path->len   = plen+add;
-	path->valid = vlen - plen;
+	path->len   = plen + add;
 	
 	path->first  = (first > UINT8_MAX) ? 0 : first;
 	path->sep    = sep;

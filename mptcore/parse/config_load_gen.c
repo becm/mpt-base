@@ -21,10 +21,11 @@
 
 #include "parse.h"
 
-static int acceptAll(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
+static int acceptAll(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
 	(void) ctx;
 	(void) p;
+	(void) val;
 	(void) last;
 	(void) curr;
 	return 0;
@@ -42,7 +43,7 @@ int loadFile(int cfile, MPT_STRUCT(parse) *src, MPT_TYPE(PathHandler) save, void
 	if (!save) save = acceptAll;
 	res = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, src, save, ctx);
 	fclose(src->src.arg);
-	save(ctx, 0, 0, 0);
+	save(ctx, 0, 0, 0, 0);
 	return res;
 }
 
@@ -80,7 +81,7 @@ int loadDir(int cdir, const char *name, MPT_TYPE(PathHandler) save, void *ctx, M
 		p.sep = 0;
 		mpt_path_set(&p, buf, -1);
 		p.len = p.off = 0;
-		if (save) save(ctx, &p, 0, 0);
+		if (save) save(ctx, &p, 0, 0, 0);
 		
 		res = loadFile(cfile, &src, save, ctx);
 		close(cfile);
@@ -139,7 +140,7 @@ extern int _mpt_config_load(const char *root, MPT_INTERFACE(logger) *log, MPT_TY
 			p.sep = 0;
 			mpt_path_set(&p, buf, -1);
 			p.len = p.off = 0;
-			if (save) save(ctx, &p, 0, 0);
+			if (save) save(ctx, &p, 0, 0, 0);
 			
 			src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
 			curr = loadFile(cfg, &src, save, ctx);

@@ -11,22 +11,18 @@
  * 
  * \param path   path data
  * \param out    C file descriptor
- * \param assign assignment string
  * \param sep    path element separator
  * 
  * \return 0 on succes
  */
-extern int mpt_path_fputs(const MPT_STRUCT(path) *path, FILE *out, const char *assign, const char *sep)
+extern int mpt_path_fputs(const MPT_STRUCT(path) *path, FILE *out, const char *sep)
 {
 	MPT_STRUCT(path) tmp;
 	const char *base, *curr;
-	int clen;
+	int clen, elem;
 	
 	if (!path->len) {
-		if ((clen = path->valid) && !fwrite(path->base, clen, 1, out)) {
-			return -1;
-		}
-		return 2;
+		return 0;
 	}
 	tmp  = *path;
 	base = tmp.base;
@@ -35,23 +31,15 @@ extern int mpt_path_fputs(const MPT_STRUCT(path) *path, FILE *out, const char *a
 	if (!sep) sep = "/";
 	
 	/* loop for path elements */
+	elem = 0;
 	while ((clen = mpt_path_next(&tmp)) >= 0) {
 		fputs(sep, out);
 		if (clen && !fwrite(curr, clen, 1, out)) {
 			return -1;
 		}
 		curr = base + tmp.off;
+		++elem;
 	}
-	/* output data part */
-	if ((clen = path->valid)) {
-		if (assign) {
-			fputs(assign, out);
-		}
-		if (!fwrite(curr, clen, 1, out)) {
-			return -1;
-		}
-		return 3;
-	}
-	return 1;
+	return elem;
 }
 

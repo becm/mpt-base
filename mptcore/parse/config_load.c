@@ -29,9 +29,8 @@ struct loadCtx
 	const char *func;
 };
 
-static int nodeGlobal(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
+static int nodeGlobal(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
-	
 	struct loadCtx *ctx = ptr;
 	
 	(void) last;
@@ -39,7 +38,7 @@ static int nodeGlobal(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 	if ((curr & 0x3) != MPT_PARSEFLAG(Option)) {
 		return 0;
 	}
-	if (!(mpt_node_assign(&ctx->root, p))) {
+	if (!(mpt_node_assign(&ctx->root, p, val))) {
 		if (ctx->log) {
 			mpt_log(ctx->log, ctx->func, MPT_LOG(Error), "%s",
 			        MPT_tr("failed to set global config element"));
@@ -48,9 +47,8 @@ static int nodeGlobal(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 	}
 	return 0;
 }
-static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
+static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
-	
 	struct loadCtx *ctx = ptr;
 	
 	(void) last;
@@ -58,7 +56,7 @@ static int nodeSet(void *ptr, const MPT_STRUCT(path) *p, int last, int curr)
 	if ((curr & 0x3) != MPT_PARSEFLAG(Option)) {
 		return 0;
 	}
-	if (!(mpt_node_assign(&ctx->root->children, p))) {
+	if (!(mpt_node_assign(&ctx->root->children, p, val))) {
 		if (ctx->log) {
 			mpt_log(ctx->log, ctx->func, MPT_LOG(Error), "%s",
 			        MPT_tr("failed to set global config element"));

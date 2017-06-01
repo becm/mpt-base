@@ -11,9 +11,6 @@
 __MPT_NAMESPACE_BEGIN
 
 // non-trivial path operations
-bool path::setValid()
-{ return mpt_path_valid(this) < 0 ? false : true; }
-
 path::path(int s, int a, const char *path) : base(0), off(0), len(0)
 {
     sep = s;
@@ -38,26 +35,31 @@ path &path::operator =(const path &from)
     return *this;
 }
 
+Slice<const char> path::data() const
+{
+    if (flags & HasArray) {
+        buffer *buf = (buffer *) base;
+        return Slice<const char>(base, buf[-1].used - off - len);
+    }
+    return Slice<const char>(0, 0);
+}
+bool path::clearData()
+{
+    if (!(flags & HasArray)) {
+        return true;
+    }
+    buffer *buf = (buffer *) base;
+    size_t max = off + len;
+    if (max > buf[-1].used) return false;
+    buf[-1].used = max;
+    return true;
+}
+
 void path::set(const char *path, int len, int s, int a)
 {
     if (s >= 0) this->sep = s;
     if (a >= 0) this->assign = a;
     mpt_path_set(this, path, len);
-}
-
-bool path::append(const char *path, int add)
-{
-    if (add < 0) {
-        if (!path) return false;
-        add = strlen(path);
-    }
-    char *dest = (char *) mpt_path_append(this, add);
-    if (!dest) return false;
-    if (add) {
-        if (path) memcpy(dest, path, add);
-        else memset(dest, 0, add);
-    }
-    return true;
 }
 
 int path::del()
@@ -67,8 +69,8 @@ int path::del()
     return l;
 }
 
-int path::add()
-{ return mpt_path_add(this); }
+int path::add(int)
+{ return mpt_path_add(this, len); }
 
 bool path::next()
 { return (mpt_path_next(this) < 0) ? false : true; }

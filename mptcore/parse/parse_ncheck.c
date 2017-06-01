@@ -2,7 +2,6 @@
  * check element name against conditions.
  */
 
-#include <errno.h>
 #include <string.h>
 
 #include "parse.h"
@@ -14,45 +13,39 @@ extern int mpt_parse_ncheck(const char *name, size_t len, int take)
 	/* name required */
 	if (!len) {
 		if (!(take & MPT_NAMEFLAG(Empty))) {
-			errno = ERANGE;
-			return -2;
+			return MPT_ERROR(MissingData);
 		}
 		return 0;
 	}
 	if (!name) {
-		errno = EFAULT;
-		return -1;
+		return MPT_ERROR(BadArgument);
 	}
 	for (i = 0; i < len; i++) {
 		/* deny whitepace */
 		if (isspace(name[i])) {
 			if (!(take & MPT_NAMEFLAG(Space))) {
-				errno = EINVAL;
-				return -3;
+				return MPT_ERROR(BadType);
 			}
 			continue;
 		}
 		/* deny numerals */
 		if (isdigit(name[i])) {
 			if (!(take & (i ? MPT_NAMEFLAG(NumCont) : MPT_NAMEFLAG(NumStart)))) {
-				errno = EINVAL;
-				return -3;
+				return MPT_ERROR(BadValue);
 			}
 			continue;
 		}
 		/* deny binary characters */
 		if (!isprint(name[i])) {
 			if (!(take & MPT_NAMEFLAG(Binary))) {
-				errno = EINVAL;
-				return -3;
+				return MPT_ERROR(BadValue);
 			}
 			continue;
 		}
 		/* deny special characters */
 		if (!isalnum(name[i])) {
 			if (!(take & MPT_NAMEFLAG(Special))) {
-				errno = EINVAL;
-				return -3;
+				return MPT_ERROR(BadValue);
 			}
 			continue;
 		}

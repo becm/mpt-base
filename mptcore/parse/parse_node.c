@@ -10,16 +10,16 @@
 
 #include "parse.h"
 
-static int saveAppend(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
+static int saveAppend(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
 	MPT_STRUCT(node) *next, **pos = ctx;
-	if ((next = mpt_node_append(*pos, p, last, curr))) {
+	if ((next = mpt_node_append(*pos, p, val, last, curr))) {
 		*pos = next;
 		return 0;
 	}
 	return MPT_ERROR(BadOperation);
 }
-static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
+static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
 	MPT_STRUCT(node) *next, **base = ctx;
 	(void) last;
@@ -28,7 +28,7 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, int last, int curr)
 	if (curr == MPT_PARSEFLAG(SectEnd)) {
 		return 0;
 	}
-	if (!(next = mpt_node_assign(base, p))) {
+	if (!(next = mpt_node_assign(base, p, val))) {
 		return MPT_ERROR(BadOperation);
 	}
 	return 0;

@@ -58,7 +58,11 @@ int main(int argc, char *argv[])
 	while ((type = next(&fmt, &parse, &path)) > 0) {
 		/* skip section end events */
 		if (type & (MPT_ENUM(ParseSection) | MPT_ENUM(ParseData))) {
-			mpt_path_fputs(&path, stdout, " = ", "/");
+			mpt_path_fputs(&path, stdout, "/");
+			if (type & MPT_ENUM(ParseData)) {
+				fputs(" = ", stdout);
+				fwrite(path.base + path.off + path.len, parse.valid, 1, stdout);
+			}
 			fputc('\n', stdout);
 		}
 		/* clear path element on section end or option */
@@ -68,6 +72,7 @@ int main(int argc, char *argv[])
 			mpt_path_invalidate(&path);
 		}
 		parse.prev = parse.curr;
+		parse.valid = 0;
 	}
 	if (type) {
 		fprintf(stderr, "parse error %d, line %lu\n", type, parse.src.line);

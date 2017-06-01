@@ -26,6 +26,7 @@ MPT_STRUCT(path)
 # define MPT_PATHFLAG(x) MPT_ENUM(Path_##x)
 #endif
 enum MPT_PATHFLAG(Flags) {
+	MPT_PATHFLAG(KeepPost)  = 0x01,
 	MPT_PATHFLAG(HasArray)  = 0x40,
 	MPT_PATHFLAG(SepBinary) = 0x80
 };
@@ -35,7 +36,6 @@ enum MPT_PATHFLAG(Flags) {
 	~path();
 	
 	void set(const char *path, int len = -1, int sep = -1, int assign = -1);
-	bool append(const char *path, int len = -1);
 	
 	bool next();
 	
@@ -45,23 +45,21 @@ enum MPT_PATHFLAG(Flags) {
 	
 	path & operator=(path const &);
 	
-	int add();
+	int add(int = -1);
 	int del();
 	
-	bool setValid();
-	void clearData();
+	bool clearData();
 	
     protected:
 #else
 MPT_STRUCT(path)
 {
-# define MPT_PATH_INIT  { 0,  0, 0, 0,  0, 0,  '.', '=' }
+# define MPT_PATH_INIT  { 0,  0, 0,  0, 0,  '.', '=' }
 #endif
 	const char *base;   /* path data */
 	
 	size_t      off,    /* path start offset */
 	            len;    /* path data length */
-	uint16_t    valid;  /* valid after path */
 	
 	uint8_t     first,  /* length of first element */
 	            flags;  /* path format */
@@ -132,7 +130,7 @@ extern int mpt_path_last(MPT_STRUCT(path) *);
 extern const char *mpt_path_data(const MPT_STRUCT(path) *);
 
 /* add/delete element to/from path map */
-extern int mpt_path_add(MPT_STRUCT(path) *);
+extern int mpt_path_add(MPT_STRUCT(path) *, int __MPT_DEFPAR(-1));
 extern int mpt_path_del(MPT_STRUCT(path) *);
 
 /* remove data after path */
@@ -141,17 +139,15 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *);
 /* add/delete character to/from path */
 extern int mpt_path_addchar(MPT_STRUCT(path) *, int);
 extern int mpt_path_delchar(MPT_STRUCT(path) *);
-/* reserve data on path */
-extern void *mpt_path_append(MPT_STRUCT(path) *, size_t);
-/* set valid length */
+/* get valid path length */
 extern int mpt_path_valid(MPT_STRUCT(path) *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* print path to standard stream */
-extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *, const char *);
+extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *);
 #endif
 
-extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(path) *);
+extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 
 __MPT_EXTDECL_END
 
@@ -160,17 +156,9 @@ inline bool path::empty() const
 {
     return len == 0;
 }
-inline Slice<const char> path::data() const
-{
-    return Slice<const char>(base + off + len, valid);
-}
 inline Slice<const char> path::value() const
 {
     return Slice<const char>(base + off, len);
-}
-inline void path::clearData()
-{
-	valid = 0;
 }
 
 class Config : public config

@@ -173,7 +173,6 @@ extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *path)
 	
 	c->base.base  = (char *) (c + 1);
 	c->base.off   = 0;
-	c->base.valid = 0;
 	
 	return &c->cfg;
 }

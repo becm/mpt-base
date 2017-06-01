@@ -32,7 +32,7 @@ extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *pa
 					mpt_path_addchar(path, curr);
 				}
 			}
-			mpt_path_valid(path);
+			parse->valid = mpt_path_valid(path);
 		}
 		else if (MPT_isescape(fmt, curr)) {
 			match = curr;
@@ -52,7 +52,7 @@ extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *pa
 		}
 		/* add currend trailing data to valid area */
 		else if (!isspace(curr)) {
-			mpt_path_valid(path);
+			parse->valid = mpt_path_valid(path);
 		}
 		last = curr;
 	}
@@ -61,5 +61,5 @@ extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *pa
 		parse->curr = MPT_PARSEFLAG(Data);
 		return MPT_ERROR(BadValue);
 	}
-	return path->valid;
+	return parse->valid;
 }

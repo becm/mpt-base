@@ -10,7 +10,6 @@ src = files(
   'node_query.c',
   'path_add.c',
   'path_addchar.c',
-  'path_append.c',
   'path_data.c',
   'path_del.c',
   'path_fini.c',

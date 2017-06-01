@@ -30,10 +30,8 @@ extern int mpt_path_valid(MPT_STRUCT(path) *path)
 	post -= path->off;
 	post -= path->len;
 	
-	if (post > UINT16_MAX) {
-		errno = EOVERFLOW;
-		return -2;
+	if (post) {
+		path->flags |= MPT_PATHFLAG(KeepPost);
 	}
-	return path->valid = post;
+	return post;
 }
-

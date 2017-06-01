@@ -22,7 +22,7 @@ extern void mpt_path_fini(MPT_STRUCT(path) *path)
 		return;
 	}
 	path->flags &= ~MPT_PATHFLAG(HasArray);
-	path->off = path->len = path->valid = 0;
+	path->off = path->len = 0;
 	
 	if (!(buf = (void *) path->base)) {
 		return;

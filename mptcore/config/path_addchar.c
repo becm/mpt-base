@@ -24,7 +24,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	uint8_t *dest;
 	size_t off, pos;
 	
-	pos = path->off + path->len + path->valid;
+	pos = path->off + path->len;
 	
 	/* need new storage */
 	if (!(arr._buf = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
@@ -45,7 +45,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	if (!arr._buf->shared) {
 		dest = (uint8_t *) (arr._buf+1);
 		/* can reuse last existing value */
-		if ((pos < off) && !path->valid) {
+		if ((pos < off) && !(path->flags & MPT_PATHFLAG(KeepPost))) {
 			dest[off-1] = val & 0xff;
 			return 0;
 		}
@@ -57,9 +57,9 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 		}
 	}
 	/* extend storage */
-	if (!(dest = mpt_array_slice(&arr, off, 1)))
+	if (!(dest = mpt_array_slice(&arr, off, 1))) {
 		return -1;
-	
+	}
 	*dest = val & 0xff;
 	
 	return 2;
@@ -79,30 +79,24 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 extern int mpt_path_delchar(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(buffer) *buf;
-	size_t len;
+	size_t len, used;
 	
 	/* need new storage */
 	if (!(buf = (void *) path->base)) {
-		return -1;
+		return MPT_ERROR(MissingData);
 	}
-	len = path->off + path->len + path->valid;
-	
 	/* remove post data */
-	if (path->flags & MPT_PATHFLAG(HasArray)) {
-		/* intersects with used data */
-		if (buf[-1].used <= len) {
-			if (!path->valid) return -2;
-			--path->valid;
-			--len;
-		}
-		len = --buf[-1].used;
+	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
+		return MPT_ERROR(MissingBuffer);
 	}
-	/* no regular data */
-	else if (!path->valid) {
-		return -2;
-	} else {
-		--path->valid;
-		--len;
+	len = path->off + path->len;
+	--buf;
+	
+	/* intersects with used data */
+	if ((used = buf->used) <= len) {
+		return MPT_ERROR(MissingData);
 	}
-	return path->base[len];
+	buf->used = --used;
+	
+	return path->base[used];
 }

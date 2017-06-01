@@ -56,7 +56,7 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			}
 		}
 		else {
-			mpt_path_valid(path);
+			parse->valid = mpt_path_valid(path);
 		}
 		return mpt_parse_option(fmt, parse, path);
 	}
@@ -70,7 +70,7 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 	if (mpt_path_addchar(path, curr) < 0) {
 		return MPT_ERROR(MissingBuffer);
 	}
-	mpt_path_valid(path);
+	parse->valid = mpt_path_valid(path);
 	
 	while (1) {
 		if ((curr = mpt_parse_getchar(&parse->src, path)) <= 0) {
@@ -84,15 +84,16 @@ extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			(void) mpt_parse_endline(&parse->src);
 			break;
 		}
-		mpt_path_valid(path);
+		parse->valid = mpt_path_valid(path);
 	}
 	/* apply simple format limits */
-	if (mpt_parse_ncheck(path->base + path->off + path->len, path->valid, parse->name.sect) < 0) {
+	if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, parse->name.sect) < 0) {
 		return MPT_ERROR(BadType);
 	}
-	if (mpt_path_add(path) < 0) {
+	if (mpt_path_add(path, parse->valid) < 0) {
 		return MPT_ERROR(BadOperation);
 	}
+	parse->valid = 0;
 	return MPT_PARSEFLAG(Section);
 }
 
