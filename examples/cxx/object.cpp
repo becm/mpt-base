@@ -89,9 +89,9 @@ extern int main(int , char * const [])
 		std::cout << "base type: " << typeid(*mt).name() << std::endl;
 	}
 	config.set("next", "val");
-	mt = config.get("next");
-	std::cout << "next type: " << typeid(*mt).name() << std::endl;
-	
+	if ((mt = config.get("next"))) {
+		std::cout << "next type: " << typeid(*mt).name() << std::endl;
+	}
 	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
 	mpt::Object lo(li);
 	mpt::Object op, *opt;

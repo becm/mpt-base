@@ -28,7 +28,7 @@ public:
     MyClient(const char *);
     virtual ~MyClient() { }
     
-    void unref();
+    void unref() __MPT_OVERRIDE;
     int init(mpt::iterator * = 0) __MPT_OVERRIDE;
     int step(mpt::iterator *) __MPT_OVERRIDE;
     
