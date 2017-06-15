@@ -3,6 +3,7 @@
 CXX11_TARGETS = buffer map object
 TESTS = \
 	${CXX11_TARGETS} \
+	array \
 	config \
 	layout \
 	output \

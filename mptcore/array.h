@@ -379,7 +379,7 @@ void move(T *v, size_t from, size_t to)
 }
 
 template <typename T>
-class UniqueContent : public buffer
+class Content : public buffer
 {
 public:
 	void unref() __MPT_OVERRIDE
@@ -422,43 +422,39 @@ public:
 		_used = len * sizeof(T);
 		return true;
 	}
-	UniqueContent *detach(long len = -1) __MPT_OVERRIDE
+	Content *detach(long len = -1) __MPT_OVERRIDE
 	{
-		UniqueContent *d;
-		/* keep current size */
-		if (len < 0) {
-			len = length();
-		}
 		/* detach requires new instance */
 		if (shared()) {
 			return 0;
 		}
-		/* shrink to requested size */
-		if (len < size()) {
-			long max = length();
-			if (len < max) {
-				T *t = data();
-				for (long i = len; i < max; ++i) t[i].~T();
-				_used = len * sizeof(*t);
-			}
-			return this;
+		/* keep current size */
+		if (len < 0) {
+			len = length();
 		}
-		len *= sizeof(T);
-		/* increase reserved size */
-		d = static_cast<UniqueContent *>(std::realloc(this, sizeof(*this) + len));
-		if (d) d->_size = len;
-		return d;
+		/* no resize operation */
+		else if (len > length()) {
+			return 0;
+		}
+		/* shrink to requested size */
+		long max = length();
+		if (len < max) {
+			T *t = data();
+			for (long i = len; i < max; ++i) t[i].~T();
+			_used = len * sizeof(*t);
+		}
+		return this;
 	}
 	inline int content() const __MPT_OVERRIDE
 	{
 		return typeIdentifier<T>();
 	}
-	static UniqueContent *create(long len = -1)
+	static Content *create(long len = -1)
 	{
 		if (len < 1) len = 4;
 		len *= sizeof(T);
-		void *d = std::malloc(sizeof(UniqueContent) + len);
-		return new (d) UniqueContent(len);
+		void *d = std::malloc(sizeof(Content) + len);
+		return new (d) Content(len);
 	}
 	T *insert(long pos)
 	{
@@ -485,9 +481,9 @@ public:
 		return new (t + pos) T;
 	}
 protected:
-	inline UniqueContent(size_t len) : buffer(len)
+	inline Content(size_t len) : buffer(len)
 	{ }
-	inline ~UniqueContent()
+	inline ~Content()
 	{ }
 };
 
@@ -497,19 +493,54 @@ class UniqueArray
 {
 public:
 	typedef T* iterator;
+	
+	class Data : public Content<T>
+	{
+	public:
+		Content<T> *detach(long len = -1) __MPT_OVERRIDE
+		{
+			/* detach requires new instance */
+			if (this->shared()) {
+				return 0;
+			}
+			/* shrink to requested size */
+			if (len < this->size()) {
+				return Content<T>::detach(len);
+			}
+			len *= sizeof(T);
+			/* increase reserved size */
+			Data *d = static_cast<Data *>(std::realloc(this, sizeof(*this) + len));
+			if (d) {
+				d->_size = len;
+			}
+			return d;
+		}
+		static Data *create(long len = -1)
+		{
+			if (len < 1) len = 4;
+			len *= sizeof(T);
+			void *d = std::malloc(sizeof(Data) + len);
+			return new (d) Data(len);
+		}
+	protected:
+		inline Data(long len) : Content<T>(len)
+		{ }
+		inline ~Data()
+		{ }
+	};
 	inline UniqueArray(long len = 0)
 	{
-		if (len) _ref.setPointer(UniqueContent<T>::create(len));
+		if (len) _ref.setPointer(Data::create(len));
 	}
 	inline iterator begin() const
 	{
-		UniqueContent<T> *b = _ref.pointer();
-		return b ? b->data() : 0;
+		Content<T> *d = _ref.pointer();
+		return d ? d->data() : 0;
 	}
 	inline iterator end() const
 	{
-		UniqueContent<T> *b = _ref.pointer();
-		return b ? b->data() + b->length() : 0;
+		Content<T> *d = _ref.pointer();
+		return d ? d->data() + d->length() : 0;
 	}
 	UniqueArray & operator=(const UniqueArray &a)
 	{
@@ -529,8 +560,8 @@ public:
 		if (!detach()) {
 			return false;
 		}
-		T *b = begin();
-		b[pos] = v;
+		T *t = begin();
+		t[pos] = v;
 		return true;
 	}
 	T *insert(long pos)
@@ -545,8 +576,8 @@ public:
 		if (!reserve(min + 1)) {
 			return 0;
 		}
-		UniqueContent<T> *b = _ref.pointer();
-		return b->insert(pos);
+		Content<T> *d = _ref.pointer();
+		return d->insert(pos);
 	}
 	T *get(long pos) const
 	{
@@ -562,8 +593,8 @@ public:
 	}
 	inline long length() const
 	{
-		UniqueContent<T> *b = _ref.pointer();
-		return b ? b->length() : 0;
+		Content<T> *d = _ref.pointer();
+		return d ? d->length() : 0;
 	}
 	inline Slice<const T> slice() const
 	{
@@ -571,38 +602,38 @@ public:
 	}
 	bool detach()
 	{
-		UniqueContent<T> *n, *b = _ref.detach();
-		if ((n = b->detach())) {
+		Content<T> *n, *d = _ref.detach();
+		if ((n = d->detach())) {
 			_ref.setPointer(n);
 			return true;
 		} else {
-			_ref.setPointer(b);
+			_ref.setPointer(d);
 			return false;
 		}
 	}
 	bool reserve(long len)
 	{
-		UniqueContent<T> *b;
-		if (!(b = _ref.detach())) {
+		Content<T> *d;
+		if (!(d = _ref.detach())) {
 			if (len <= 0) {
 				return true;
 			}
-			if (!(b = UniqueContent<T>::create(len))) {
+			if (!(d = Data::create(len))) {
 				return false;
 			}
-			_ref.setPointer(b);
+			_ref.setPointer(d);
 			return true;
 		}
-		if (!len && b->shared()) {
-			b->unref();
+		if (!len && d->shared()) {
+			d->unref();
 			return true;
 		}
-		UniqueContent<T> *r;
-		if ((r = b->detach(len))) {
+		Content<T> *r;
+		if ((r = d->detach(len))) {
 			_ref.setPointer(r);
 			return true;
 		} else {
-			_ref.setPointer(b);
+			_ref.setPointer(d);
 			return false;
 		}
 	}
@@ -611,61 +642,61 @@ public:
 		if (!reserve(len)) {
 			return false;
 		}
-		UniqueContent<T> *b;
-		if (len >= 0 && (b = _ref.pointer())) {
-			return b->setLength(len);
+		Content<T> *d;
+		if (len >= 0 && (d = _ref.pointer())) {
+			return d->setLength(len);
 		}
 		return true;
 	}
 protected:
-	Reference<UniqueContent<T> > _ref;
-};
-
-template <typename T>
-class Content : public UniqueContent<T>
-{
-public:
-	UniqueContent<T> *detach(long len) __MPT_OVERRIDE
-	{
-		/* keep current size */
-		if (len < 0) {
-			len = this->length();
-		}
-		/* force new instance */
-		if (this->shared()) {
-			Content *d = create(len);
-			/* clone existing data */
-			T *o = this->data();
-			T *t = d->data();
-			long elem = this->length();
-			for (long i = 0; i < elem; ++i) t[i] = o[i];
-			d->_used = elem * sizeof(*t);
-			this->unref();
-			return d;
-		}
-		return UniqueContent<T>::detach(len);
-	}
-	static Content *create(long len) {
-		if (len < 1) len = 4;
-		len *= sizeof(T);
-		void *d = std::malloc(sizeof(Content) + len);
-		return new (d) Content(len);
-	}
-protected:
-	inline Content(long len) : UniqueContent<T>(len)
-	{ }
-	inline ~Content()
-	{ }
+	Reference<Content<T> > _ref;
 };
 
 template <typename T>
 class Array : public UniqueArray<T>
 {
 public:
+	class Data : public UniqueArray<T>::Data
+	{
+	public:
+		Content<T> *detach(long len) __MPT_OVERRIDE
+		{
+			/* keep current size */
+			if (len < 0) {
+				len = this->length();
+			}
+			/* force new instance */
+			if (this->shared()) {
+				Data *d = create(len);
+				/* clone existing data */
+				T *o = this->data();
+				T *t = d->data();
+				long elem = this->length();
+				for (long i = 0; i < elem; ++i) {
+					t[i] = o[i];
+				}
+				d->_used = elem * sizeof(*t);
+				this->unref();
+				return d;
+			}
+			return UniqueArray<T>::Data::detach(len);
+		}
+		static Data *create(long len) {
+			if (len < 1) len = 4;
+			len *= sizeof(T);
+			void *d = std::malloc(sizeof(Data) + len);
+			return new (d) Data(len);
+		}
+	protected:
+		inline Data(long len) : UniqueArray<T>::Data(len)
+		{ }
+		inline ~Data()
+		{ }
+	};
 	inline Array(long len = 0)
 	{
 		if (len) {
-			this->_ref.setPointer(Content<T>::create(len));
+			this->_ref.setPointer(Data::create(len));
 		}
 	}
 	inline Array & operator=(const Reference<Content<T *> > &v)
@@ -731,27 +762,39 @@ public:
 
 /*! basic pointer array */
 template <typename T>
-class PointerArray : public UniqueArray<T *>
+class PointerArray : public Array<T *>
 {
 public:
 	typedef T** iterator;
 	
-	inline PointerArray(long len = 0) : UniqueArray<T *>(len)
+	inline PointerArray(long len = 0) : Array<T *>(len)
 	{ }
-	void compact()
+	inline PointerArray &operator =(Array<T *> &from)
 	{
-		compact(Slice<void *>(this->begin(), this->length()));
+		this->_ref = static_cast<PointerArray<T> &>(from)._ref;
+		return *this;
 	}
-	long unused() const
+	inline void compact()
 	{
-		return unused(Slice<void *>(this->begin(), this->length()));
+		compact(generic());
 	}
-	long offset(const T *ref) const
+	inline long unused() const
 	{
-		return offset(Slice<void *>(this->begin(), this->length()), ref);
+		return unused(generic());
 	}
-	bool swap(size_t p1, size_t p2) const;
-	bool move(size_t p1, size_t p2) const;
+	inline long offset(const T *ref) const
+	{
+		return offset(generic(), ref);
+	}
+	inline bool swap(long p1, long p2) const
+	{
+		return swap(generic(), p1, p2);
+	}
+protected:
+	inline Slice<void *> generic() const
+	{
+		return Slice<void *>(this->begin(), this->length());
+	}
 };
 
 /*! extendable array for reference types */
@@ -761,8 +804,26 @@ class RefArray : public UniqueArray<Reference<T> >
 public:
 	typedef Reference<T>* iterator;
 	
-	RefArray(size_t len = 0) : UniqueArray<Reference<T> >(len)
+	inline RefArray(size_t len = 0) : UniqueArray<Reference<T> >(len)
 	{ }
+	bool insert(long pos, T *ref)
+	{
+		Reference<T> *ptr = UniqueArray<Reference<T> >::insert(pos);
+		if (!ptr) {
+			return false;
+		}
+		ptr->setPointer(ref);
+		return true;
+	}
+	bool set(long pos, T *ref)
+	{
+		Reference<T> *ptr = UniqueArray<Reference<T> >::get(pos);
+		if (!ptr) {
+			return false;
+		}
+		ptr->setPointer(ref);
+		return true;
+	}
 	long clear(const T *ref = 0) const
 	{
 		Reference<T> *ptr = this->begin();

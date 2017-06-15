@@ -89,12 +89,10 @@ int Graphic::addLayout(Layout *lay, bool reuse)
         }
     }
     // append layout
-    Reference<Layout> *r;
     long pos = _layouts.length();
-    if (!(r = _layouts.insert(pos))) {
+    if (!_layouts.insert(pos, lay)) {
         return MissingBuffer;
     }
-    r->setPointer(lay);
     return pos;
 }
 // layout removal

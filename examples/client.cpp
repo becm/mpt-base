@@ -14,6 +14,8 @@
 
 #include MPT_INCLUDE(client.h)
 
+#include MPT_INCLUDE(stream.h)
+
 #include MPT_INCLUDE(notify.h)
 
 #ifdef __GLIBC__
@@ -68,6 +70,10 @@ int main(int argc, char * const argv[])
         return 1;
     }
     n.setDispatch(&d);
+
+    mpt::Stream *in = new mpt::Stream();
+    in->open("/dev/stdin");
+    mpt_notify_add(&n, -1, in);
 
     MyClient c(argv[pos]);
     c.init();

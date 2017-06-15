@@ -125,8 +125,10 @@ template <typename T>
 class Metatype : public metatype
 {
 public:
-    inline Metatype(const T * val = 0) : _val(0)
-    { if (val) _val = *val; }
+    inline Metatype(const T *val = 0) : _val(val ? *val : 0)
+    { }
+    inline Metatype(const T &val) : _val(val)
+    { }
     void unref()
     {
         delete this;
@@ -134,13 +136,17 @@ public:
     int conv(int type, void *dest) const
     {
         static const int fmt = typeIdentifier<T>();
+        if (!type) {
+            if (dest) *static_cast<const char **>(dest) = 0;
+            return fmt;
+        }
         if (type != fmt) return BadType;
         if (dest) *static_cast<T *>(dest) = _val;
         return fmt;
     }
     metatype *clone() const
     {
-         return new Metatype(&_val);
+         return new Metatype(_val);
     }
 protected:
     virtual ~Metatype()

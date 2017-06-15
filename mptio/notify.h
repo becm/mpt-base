@@ -58,7 +58,7 @@ protected:
 # define MPT_NOTIFY_INIT { MPT_ARRAY_INIT, MPT_ARRAY_INIT, { 0, 0 }, -1, 0 }
 #endif
 	_MPT_REF_ARRAY_TYPE(input) _slot;  /* compound part pointer array */
-	MPT_STRUCT(array)          _wait;  /* temporary data for poll info */
+	_MPT_ARRAY_TYPE(input *)   _wait;  /* temporary data for poll info */
 	struct {
 		MPT_TYPE(EventHandler) cmd;
 		void *arg;

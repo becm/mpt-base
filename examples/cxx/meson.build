@@ -1,6 +1,11 @@
 # mpt-base/examples/cxx/meson.build
 # tests for MPT C++ library
 
+test('array operations',
+  executable('array', 'array.cpp',
+    cpp_args: test_defines,
+    dependencies: cxx))
+
 test('config data',
   executable('config', 'config.cpp',
     cpp_args: test_defines,

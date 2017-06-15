@@ -1,4 +1,5 @@
 # exclude C++ example binaries
+array
 buffer
 comp
 config
