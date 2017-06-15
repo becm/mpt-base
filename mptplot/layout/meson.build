@@ -8,7 +8,6 @@ src = files(
   'graph_property.c',
   'lattr_set.c',
   'line_property.c',
-  'rawdata_create.c',
   'string_set.c',
   'text_property.c',
   'tick_log10.c',

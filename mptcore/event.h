@@ -114,12 +114,14 @@ MPT_STRUCT(command)
 private:
 	command & operator =(const command &from); /* disable copy */
 public:
+	enum { Type = 0x101 }; /* TODO: make system pointer */
+	
 	inline command() : id(0), cmd(0), arg(0)
 	{ }
 	inline ~command()
 	{ if (cmd) cmd(arg, 0); }
 	
-	class array : public Array<command>
+	class array : public UniqueArray<command>
 	{
 	public:
 		bool set(uintptr_t, EventHandler , void *);
@@ -137,6 +139,8 @@ public:
 MPT_STRUCT(dispatch) : public command::array
 {
 public:
+	enum { Type = 0x102 }; /* TODO: make system pointer */
+	
 	dispatch();
 	~dispatch();
 	
@@ -172,12 +176,12 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_context_reply(MPT_INTERFACE(reply_context) *, int , const char *, ...);
 
 /* get/set event command */
-extern int mpt_command_set(_MPT_ARRAY_TYPE(command) *, const MPT_STRUCT(command) *);
-extern MPT_STRUCT(command) *mpt_command_get(const _MPT_ARRAY_TYPE(command) *, uintptr_t);
-extern void mpt_command_clear(const _MPT_ARRAY_TYPE(command) *);
+extern int mpt_command_set(_MPT_UARRAY_TYPE(command) *, const MPT_STRUCT(command) *);
+extern MPT_STRUCT(command) *mpt_command_get(const _MPT_UARRAY_TYPE(command) *, uintptr_t);
+extern void mpt_command_clear(const _MPT_UARRAY_TYPE(command) *);
 
 /* generate (next) id for message */
-extern MPT_STRUCT(command) *mpt_command_nextid(_MPT_ARRAY_TYPE(command) *, size_t);
+extern MPT_STRUCT(command) *mpt_command_nextid(_MPT_UARRAY_TYPE(command) *, size_t);
 
 /* find command with specified id */
 extern MPT_STRUCT(command) *mpt_command_find(const MPT_STRUCT(command) *, size_t , uintptr_t);
@@ -209,6 +213,9 @@ extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<command>()  { return command::Type; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<dispatch>() { return dispatch::Type; }
+
 class reply_data::context : public reply_context, public reply_data
 {
 protected:

@@ -23,7 +23,7 @@ extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *st)
 	if (!(buf = st->_d._buf)) {
 		return;
 	}
-	len = buf->used / sizeof(*arr);
+	len = buf->_used / sizeof(*arr);
 	arr = (void *) (buf + 1);
 	while (len--) {
 		mpt_array_clone(&(arr++)->_d, 0);

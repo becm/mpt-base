@@ -45,13 +45,13 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 				return MPT_ERROR(BadOperation);
 			}
 			if ((buf = od->buf._buf)) {
-				buf->used = 0;
+				buf->_used = 0;
 			}
 			od->state &= ~MPT_OUTFLAG(Active);
 			return 0;
 		}
 		/* require target address */
-		if (od->_smax && (!od->_scurr || !(buf = od->buf._buf) || buf->used < od->_smax)) {
+		if (od->_smax && (!od->_scurr || !(buf = od->buf._buf) || buf->_used < od->_smax)) {
 			return MPT_ERROR(BadValue);
 		}
 		/* force atomic message id start */
@@ -72,8 +72,8 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 		if (!(buf = od->buf._buf)) {
 			len = 0;
 		} else {
-			len = buf->used;
-			buf->used = 0;
+			len = buf->_used;
+			buf->_used = 0;
 		}
 		if (!MPT_socket_active(&od->sock)) {
 			od->state &= ~MPT_OUTFLAG(Active);

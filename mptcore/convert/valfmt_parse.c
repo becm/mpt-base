@@ -24,8 +24,9 @@ extern int mpt_valfmt_parse(MPT_STRUCT(array) *arr, const char *base)
 	int curr;
 	
 	while ((curr = mpt_valfmt_get(&fmt, pos)) > 0) {
-		if (!mpt_array_append(arr, sizeof(fmt), &fmt)) {
-			break;
+		int err;
+		if ((err = mpt_valfmt_add(arr, fmt)) < 0) {
+			return err;
 		}
 		pos += curr;
 	}

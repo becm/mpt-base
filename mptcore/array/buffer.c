@@ -22,9 +22,9 @@ static int psize = 0;
  * 
  * Set atomic part size for buffer.
  * 
- * \param size	hint to set new atomic allocation size
+ * \param size  hint to set new atomic allocation size
  */
-extern int _mpt_buffer_realloc_align(size_t size)
+static int _mpt_buffer_alloc_align(size_t size)
 {
 	if (psize) {
 		return -3;
@@ -34,92 +34,103 @@ extern int _mpt_buffer_realloc_align(size_t size)
 	}
 	return psize = MPT_align(size);
 }
-/*!
- * \ingroup mptArray
- * \brief delete buffer data
- * 
- * Buffer resize modifier only allowing freeing
- * 
- * \param b	buffer pointer
- * \param size	requested new buffer size
- * 
- * \return new buffer sattisfying size
- */
-extern MPT_STRUCT(buffer) *_mpt_buffer_free(MPT_STRUCT(buffer) *b, size_t size)
+static void _mpt_buffer_alloc_unref(MPT_INTERFACE(unrefable) *ref)
 {
-	 /* no size change of file maps (explicit unset needed) */
-	if (size) {
-		errno = ENOTSUP; return 0;
+	MPT_STRUCT(buffer) *buf = (void *) ref;
+	
+	if (!mpt_reference_lower(&buf->_ref)) {
+		free(buf);
 	}
-	if (b && !(b->shared--)) {
-		free(b);
+}
+static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr;
+static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, long len)
+{
+	MPT_STRUCT(buffer) *b;
+	long used = buf->_used;
+	
+	if (len < 0) {
+		len = used;
 	}
+	if (buf->_ref._val > 1) {
+		if (!(b = _mpt_buffer_alloc(len))) {
+			return 0;
+		}
+	}
+	else {
+		long size = buf->_size, align;
+		
+		if (!len) {
+			len = psize;
+		}
+		else if ((align = len % psize)) {
+			len += psize - align;
+		}
+		/* try to get in-place memory */
+		if (len < size || len <= 1024 || used > size/4) {
+			if (!(b = realloc(buf, len))) {
+				return 0;
+			}
+			len -= sizeof(*b);
+			b->_size = len;
+			if (len < used) {
+				buf->_used = len;
+			}
+			return b;
+		}
+		/* get new memory in favour of less copying */
+		else if (!(b = _mpt_buffer_alloc(len))) {
+			return 0;
+		}
+	}
+	/* copy old data */
+	if ((b->_used = used)) {
+		(void) memcpy(b + 1, buf + 1, used);
+	}
+	/* clear data reference */
+	if (!mpt_reference_lower(&buf->_ref)) {
+		free(buf);
+	}
+	return b;
+}
+static int _mpt_buffer_alloc_type(const MPT_STRUCT(buffer) *buf)
+{
+	(void) buf;
 	return 0;
 }
+static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
+	{ _mpt_buffer_alloc_unref },
+	_mpt_buffer_alloc_detach,
+	_mpt_buffer_alloc_type
+};
 /*!
  * \ingroup mptArray
- * \brief resize buffer data
+ * \brief buffer data
  * 
- * Buffer malloc resize modifier.
+ * Raw data buffer with malloc resize modifier.
  * 
- * \param b	buffer pointer
- * \param size	requested new buffer size
+ * \param size  requested new buffer size
  * 
- * \return new buffer sattisfying size
+ * \return new buffer sattisfying (at least) size
  */
-extern MPT_STRUCT(buffer) *_mpt_buffer_realloc(MPT_STRUCT(buffer) *buf, size_t len)
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len)
 {
-	size_t	used, size;
+	MPT_STRUCT(buffer) *b;
 	
-	if (buf) {
-		size = buf->size;
-		used = buf->used;
-	} else {
-		size = used = 0;
-	}
-	if (!len) {
-		if (buf && !(buf->shared--)) {
-			free(buf);
-		}
-		return 0;
-	}
-	/* no change */
-	if (len == size && (!buf || !buf->shared)) {
-		return buf;
-	}
 	/* get buffer increase size (<page table) */
-	if (!psize && _mpt_buffer_realloc_align(_MPT_BUFFER_PSTD) < 0) {
+	if (!psize && _mpt_buffer_alloc_align(_MPT_BUFFER_PSTD) < 0) {
 		return 0;
 	}
 	/* align to psize */
-	len += sizeof(*buf);
-	len = ((len - 1)/psize + 1) * psize;
+	len += sizeof(*b);
+	len = ((len - 1) / psize + 1) * psize;
 	
-	/* try to get in-place memory */
-	if (buf && (len < size || len <= 1024 || used > size/2)) {
-		if (!(buf = realloc(buf, len))) {
-			return 0;
-		}
-		buf->size = len - sizeof(*buf);
-		return buf;
+	if (!(b = malloc(len))) {
+		return 0;
 	}
-	/* try to get new memory in favour of less copying */
-	else {
-		MPT_STRUCT(buffer) *nb;
-		
-		if (!(nb = malloc(len))) {
-			return 0;
-		}
-		nb->resize = _mpt_buffer_realloc;
-		nb->shared = 0;
-		nb->size   = len - sizeof(*nb);
-		
-		if ((nb->used = used)) {
-			(void) memcpy(nb+1, buf+1, used);
-		}
-		if (buf && !(buf->shared--)) {
-			free(buf);
-		}
-		return nb;
-	}
+	b->_vptr = &_mpt_buffer_vptr;
+	b->_ref._val = 1;
+	b->_size = len - sizeof(*b);
+	b->_used = 0;
+	
+	return b;
 }

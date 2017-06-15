@@ -37,10 +37,10 @@ extern int mpt_command_set(MPT_STRUCT(array) *arr, const MPT_STRUCT(command) *cm
 	}
 	/* place in empty area */
 	if (arr->_buf) {
-		size_t	len;
+		size_t len;
 		
 		dest = (void *) (arr->_buf+1);
-		len = arr->_buf->used/sizeof(*dest);
+		len = arr->_buf->_used / sizeof(*dest);
 		
 		if (len && (dest = mpt_command_empty(dest, len))) {
 			*dest = *cmd;

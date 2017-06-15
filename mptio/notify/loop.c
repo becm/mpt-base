@@ -43,9 +43,9 @@ extern int mpt_loop(MPT_STRUCT(notify) *n)
 			if (!(state & MPT_EVENTFLAG(Retry))) {
 				continue;
 			}
-			if ((s = n->_wait._buf) && s->used) {
-				size_t len = mpt_array_compact((void **) (s+1), s->used/sizeof(in));
-				s->used = len * sizeof(in);
+			if ((s = n->_wait._buf) && s->_used) {
+				size_t len = mpt_array_compact((void **) (s + 1), s->_used / sizeof(in));
+				s->_used = len * sizeof(in);
 			}
 			mpt_array_append(&n->_wait, sizeof(in), &in);
 			continue;

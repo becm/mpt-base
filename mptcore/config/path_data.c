@@ -21,14 +21,19 @@ extern const char *mpt_path_data(const MPT_STRUCT(path) *path)
 	size_t len;
 	
 	if (!(data = path->base)) {
+		errno = EFAULT;
 		return 0;
 	}
-	len  = path->off + path->len;
+	len = path->off + path->len;
 	
 	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		MPT_STRUCT(buffer) *buf = (void *) data;
-		size_t end = buf[-1].used;
-		if (end < buf[-1].size) ((char *) data)[end] = 0;
+		size_t end = buf[-1]._used;
+		if (len > end) {
+			errno = EINVAL;
+			return 0;
+		}
+		if (end < buf[-1]._size) ((char *) data)[end] = 0;
 	}
 	return data + len;
 }

@@ -23,14 +23,14 @@ extern int mpt_message_append(MPT_STRUCT(array) *arr, const MPT_STRUCT(message) 
 	struct iovec *cont;
 	size_t used ,olen, clen;
 	
-	olen = (buf = arr->_buf) ? buf->used : 0;
+	olen = (buf = arr->_buf) ? buf->_used : 0;
 	
 	/* process first message part */
 	if ((used = msg->used)
 	    && !mpt_array_append(arr, used, msg->base)) {
 		/* reset array state */
 		if ((buf = arr->_buf)) {
-			buf-> used = olen;
+			buf->_used = olen;
 		}
 		return MPT_ERROR(MissingBuffer);
 	}
@@ -48,7 +48,7 @@ extern int mpt_message_append(MPT_STRUCT(array) *arr, const MPT_STRUCT(message) 
 		}
 		/* reset array state */
 		if ((buf = arr->_buf)) {
-			buf-> used = olen;
+			buf->_used = olen;
 		}
 		return MPT_ERROR(MissingBuffer);
 	}

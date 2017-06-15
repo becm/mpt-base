@@ -93,7 +93,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	dlen = 0;
 	if ((buf = hist->fmt._dat._buf)) {
 		dat = (void *) (buf + 1);
-		dlen = buf->used / sizeof(*dat);
+		dlen = buf->_used / sizeof(*dat);
 	}
 	/* require leading format identifiers */
 	if (!(hist->info.mode & 0x80)
@@ -125,7 +125,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	flen = 0;
 	if ((buf = hist->fmt._fmt._buf)) {
 		fmt = (void *) (buf + 1);
-		flen = buf->used / sizeof(*fmt);
+		flen = buf->_used / sizeof(*fmt);
 	}
 	while (len) {
 		char buf[256];

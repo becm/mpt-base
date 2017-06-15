@@ -57,7 +57,7 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 	buf = out->buf._buf;
 	
 	vec.iov_base = addr;
-	vec.iov_len  = buf->size;
+	vec.iov_len  = buf->_size;
 	
 	/* message default setup */
 	mh.msg_name = 0;
@@ -79,7 +79,7 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 	if (len < out->_idlen) {
 		return MPT_ERROR(MissingData);
 	}
-	buf->used = len;
+	buf->_used = len;
 	out->state |= MPT_OUTFLAG(Received);
 	
 	if ((out->_scurr = mh.msg_namelen)) {

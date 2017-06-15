@@ -28,12 +28,6 @@ extern void mpt_path_fini(MPT_STRUCT(path) *path)
 		return;
 	}
 	--buf;
-	
-	if (buf->shared) {
-		--buf->shared;
-	}
-	else if (buf->resize) {
-		buf->resize(buf, 0);
-	}
+	buf->_vptr->ref.unref((void *) buf);
 	path->base = 0;
 }

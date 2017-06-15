@@ -151,14 +151,14 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	slen = con->out._smax;
 	hlen = ilen + slen;
 	
-	if ((size_t) hlen > buf->used) {
-		mpt_log(0, _func, MPT_LOG(Error), "%s (%u < %u)", MPT_tr("datagram too small"), hlen, (int) buf->used);
-		buf->used = slen;
+	if ((size_t) hlen > buf->_used) {
+		mpt_log(0, _func, MPT_LOG(Error), "%s (%u < %u)", MPT_tr("datagram too small"), hlen, (int) buf->_used);
+		buf->_used = slen;
 		return MPT_ERROR(BadValue);
 	}
 	/* discard existing message */
 	if (!cmd) {
-		buf->used = slen;
+		buf->_used = slen;
 		return 0;
 	}
 	data = (void *) (buf + 1);
@@ -166,7 +166,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 	if (!ilen) {
 		MPT_STRUCT(message) msg = MPT_MESSAGE_INIT;
 		msg.base = data + hlen;
-		msg.used = buf->used - hlen;
+		msg.used = buf->_used - hlen;
 		ev.msg = &msg;
 		return cmd(arg, &ev);
 	}
@@ -180,7 +180,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		if ((len = mpt_message_buf2id(data + slen, ilen, &id)) < 0) {
 			mpt_log(0, _func, MPT_LOG(Error), "%s (%i)",
 			        MPT_tr("bad message length"), (int) ilen);
-			buf->used = slen;
+			buf->_used = slen;
 			return MPT_ERROR(BadValue);
 		}
 		if (!(ans = mpt_command_get(&con->_wait, id))) {
@@ -189,7 +189,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 			return MPT_ERROR(MissingBuffer);
 		}
 		msg.base = data + hlen;
-		msg.used = buf->used - hlen;
+		msg.used = buf->_used - hlen;
 		if ((len = ans->cmd(ans->arg, &msg)) < 0) {
 			mpt_log(0, _func, MPT_LOG(Error), "%s (%i)",
 			        MPT_tr("reply processing failed"), len);
@@ -226,7 +226,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 			return MPT_ERROR(BadOperation);
 		}
 		msg.base = data + hlen;
-		msg.used = buf->used - hlen;
+		msg.used = buf->_used - hlen;
 		ev.msg = &msg;
 		
 		ret = cmd(arg, &ev);

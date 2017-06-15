@@ -43,7 +43,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 		errno = EAGAIN; return -2;
 	}
 	pslot = (void *) (no->_slot._buf + 1);
-	used  = no->_wait._buf ? no->_wait._buf->used : 0;
+	used  = no->_wait._buf ? no->_wait._buf->_used : 0;
 	
 #if defined(__linux__)
 	if (no->_sysfd >= 0) {
@@ -59,7 +59,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 			if (act < 0 && errno == EINTR) {
 				act = 0;
 			}
-			return (buf->used = used) ? (int) (used / sizeof(curr)) : act;
+			return (buf->_used = used) ? (int) (used / sizeof(curr)) : act;
 		}
 		slot = (MPT_INTERFACE(input) **) epv;
 		
@@ -77,7 +77,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 			}
 			if (ret) slot[fdmax++] = curr;
 		}
-		buf->used = fdmax * sizeof(void*);
+		buf->_used = fdmax * sizeof(void*);
 		
 		return fdmax;
 	}
@@ -87,7 +87,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 		return -1;
 	}
 	buf = no->_wait._buf;
-	ret = no->_slot._buf->used / sizeof(curr);
+	ret = no->_slot._buf->_used / sizeof(curr);
 	
 	for (i = 0, act = 0; i < ret; i++) {
 		if (!pslot[i] )
@@ -104,7 +104,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 	}
 	
 	if ((act = poll(ev, act, timeout)) <= 0) {
-		return (buf->used = used) ? (int) (used / sizeof(curr)) : act;
+		return (buf->_used = used) ? (int) (used / sizeof(curr)) : act;
 	}
 	slot = (MPT_INTERFACE(input) **) ev;
 	
@@ -122,7 +122,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 		}
 		if (ret) slot[fdmax++] = curr;
 	}
-	buf->used = fdmax * sizeof(void*);
+	buf->_used = fdmax * sizeof(void*);
 	
 	return fdmax;
 }

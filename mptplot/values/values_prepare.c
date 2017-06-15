@@ -21,28 +21,45 @@
  */
 extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, int len)
 {
+	MPT_STRUCT(buffer) *buf;
 	double *data;
-	size_t used, add;
+	long used, add;
 	
-	if (!len) {
+	if (!(buf = arr->_buf)) {
+		if (len < 0) {
+			errno = EINVAL;
+			return 0;
+		}
+		return mpt_array_append(arr, len * sizeof(*data), 0);
+	}
+	if (!(used = buf->_vptr->content(buf))) {
+		len /= sizeof(*data);
+	}
+	else if (used != 'd') {
 		errno = EINVAL;
 		return 0;
 	}
-	if (len > 0) {
-		return mpt_array_append(arr, len*sizeof(*data), 0);
+	used = buf->_used / sizeof(*data);
+	if ((add = len) < 0) {
+		add = -len;
+		if (used < add) {
+			errno = EINVAL;
+			return 0;
+		}
 	}
-	add = sizeof(*data) * (-len);
-	
-	/* not enough data available */
-	if (!arr->_buf || ((used = arr->_buf->used) < add)) {
-		errno = ERANGE;
+	if (!(buf = buf->_vptr->detach(buf, used + add))) {
 		return 0;
 	}
-	/* data area at end for old and new data */
-	if (!(data = mpt_array_insert(arr, used, add))) {
+	used *= sizeof(*data);
+	add *= sizeof(*data);
+	/* data area at end for new data */
+	if (!(data = mpt_buffer_insert(buf, used, add))) {
 		return 0;
 	}
 	/* copy data from old location */
-	return memcpy(data, data+len, add);
+	if (len < 0) {
+		memcpy(data, data + len, add);
+	}
+	return data;
 }
 

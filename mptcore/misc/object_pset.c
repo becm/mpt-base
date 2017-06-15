@@ -59,7 +59,7 @@ static int fromText(struct paramSource *par, int type, void *dest)
 	else if (*par->val.fmt == MPT_value_toVector('c')) {
 		const struct iovec *vec = par->val.ptr;
 		if (type == *par->val.fmt
-		    || type == MPT_ENUM(TypeVecBase)) {
+		    || type == MPT_ENUM(TypeVector)) {
 			if (dest) {
 				*((struct iovec *) dest) = *vec;
 			}

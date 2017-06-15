@@ -7,6 +7,7 @@ cxx_src = files(
   'client.cpp', 'config.cpp',
   'event.cpp',
   'logger.cpp',
+  'makeid.cpp',
   'message.cpp',
   'meta_create.cpp', 'meta_basic.cpp', 'meta_typed.cpp', 'meta_buffer.cpp',
   'node.cpp',
@@ -16,6 +17,7 @@ cxx_src = files(
   'queue.cpp',
   'reference_wrap.cpp',
   'std_cout.cpp',
+  'typed_array.cpp',
   'value.cpp',
 )
 

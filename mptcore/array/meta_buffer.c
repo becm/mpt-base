@@ -30,7 +30,7 @@ static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	void **dest = ptr;
 	
 	if (!type) {
-		static const char types[] = { MPT_ENUM(TypeMeta), MPT_value_toArray('c'), 's', 0 };
+		static const char types[] = { MPT_ENUM(TypeMeta), MPT_value_toVector('c'), 's', 0 };
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
@@ -39,8 +39,8 @@ static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) &m->_it;
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_value_toArray('c')
-	    || type == MPT_ENUM(TypeArrBase)) {
+	if (type == MPT_value_toVector('c')
+	    || type == MPT_ENUM(TypeVector)) {
 		if (m->s._off) {
 			return MPT_ERROR(BadArgument);
 		}
@@ -75,8 +75,8 @@ static int bufferReset(MPT_INTERFACE(iterator) *it)
 	
 	buf = m->s._a._buf;
 	m->s._off = 0;
-	m->s._len = buf ? buf->used : 0;
-	return MPT_value_toArray('c');
+	m->s._len = buf ? buf->_used : 0;
+	return MPT_value_toVector('c');
 }
 static const MPT_INTERFACE_VPTR(iterator) _vptr_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
@@ -127,7 +127,12 @@ extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	}
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
-		if (m->s._a._buf) m->s._len = m->s._a._buf->used;
+		m->s._off = 0;
+		if (m->s._a._buf) {
+			m->s._len = m->s._a._buf->_used;
+		} else {
+			m->s._len = 0;
+		}
 	}
 	return &m->_it;
 }

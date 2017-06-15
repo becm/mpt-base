@@ -40,6 +40,9 @@ struct point
 };
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
+
+template<> int typeIdentifier<point<double> >();
+template<> int typeIdentifier<point<float> >();
 #else
 MPT_STRUCT(dpoint) { double x, y; };
 MPT_STRUCT(fpoint) { float x, y; };
@@ -56,6 +59,41 @@ MPT_STRUCT(range)
 	double min, max;
 };
 
+/*! information about containing data */
+MPT_STRUCT(typed_array)
+{
+#ifdef __cplusplus
+public:
+	enum Flags {
+		ValueChange = 1
+	};
+	inline typed_array() : _flags(0), _type(0), _esize(0)
+	{ }
+	bool setType(int);
+	void *reserve(size_t , size_t);
+	
+	inline int flags() const
+	{ return _flags; }
+	void setModified(bool mod = true);
+	
+	inline size_t elementSize() const
+	{ return _esize; }
+	inline size_t elements() const
+	{ return _esize ? _d.length() / _esize : 0; }
+	inline const void *base() const
+	{ return _d.base(); }
+	
+	inline int type() const
+	{ return _type; }
+protected:
+#else
+# define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
+#endif
+	MPT_STRUCT(array) _d;
+	uint16_t _flags;
+	uint8_t _type;
+	uint8_t _esize;
+};
 MPT_STRUCT(rawdata_stage)
 {
 #ifdef __cplusplus
@@ -82,17 +120,18 @@ MPT_STRUCT(rawdata_stage)
 MPT_INTERFACE(rawdata) : public unrefable
 {
     public:
-	enum { Type = TypeRawData };
-	
 	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
 	virtual int advance() = 0;
 	
 	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
 	virtual int dimensions(int = -1) const = 0;
 	virtual int stages() const = 0;
+	
+	static int type();
     protected:
 	inline ~rawdata() { }
 };
+template<> inline __MPT_CONST_EXPR int typeIdentifier<rawdata>();
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
@@ -123,13 +162,15 @@ MPT_STRUCT(linepart)
 	bool setTrim(float);
 	bool setCut(float);
 	
+	static int type();
+	
 	class array : public Array<linepart>
 	{
 	public:
 		bool apply(const Transform &, int , Slice<const double>);
-		bool set(size_t);
-		size_t userLength();
-		size_t rawLength();
+		bool set(long);
+		long userLength();
+		long rawLength();
 	};
 #endif
 	uint16_t raw,   /* raw points in line part */
@@ -225,9 +266,13 @@ extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+size_t maxsize(Slice<const typed_array>, int = -1);
 
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
+
+inline void *typed_array::reserve(size_t off, size_t len)
+{ return mpt_array_slice(&_d, off, len); }
 
 class Transform : public unrefable
 {
@@ -245,18 +290,18 @@ extern int applyLineData(point<double> *, const linepart *, int , Transform &, S
 class Polyline
 {
 public:
-    class Point : public point<double>
+# if __cplusplus >= 201103L
+    using Point = point<double>;
+# else
+    struct Point : public point<double>
     {
     public:
         inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
         { }
-        class array : public Array<Point>
-        {
-        public:
-            inline Point *resize(size_t len)
-            { return reinterpret_cast<Point *>(_d.set(len * sizeof(Point))); }
-        };
+        static inline int type()
+        { return typeIdentifier<point<double> >(); }
     };
+# endif
     class Part
     {
     public:
@@ -297,10 +342,16 @@ public:
     { return _vis.slice(); }
     Slice<const Point> points() const
     { return _values.slice(); }
+    
+    static int type();
 protected:
     linepart::array _vis;
-    Point::array _values;
+    Array<Point> _values;
 };
+template<> inline int typeIdentifier<Polyline::Point>()
+{
+    return typeIdentifier<point<double> >();
+}
 
 class Cycle : public rawdata
 {

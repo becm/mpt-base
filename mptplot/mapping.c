@@ -30,7 +30,7 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
 	size_t i, len = 0;
 	
 	if ((buf = arr->_buf)) {
-		len = buf->used / sizeof(*map);
+		len = buf->_used / sizeof(*map);
 		map = (void *) (buf+1);
 	} else {
 		len = 0;
@@ -79,7 +79,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 	if (!(buf = arr->_buf)) {
 		return 0;
 	}
-	len = buf->used / sizeof(*map);
+	len = buf->_used / sizeof(*map);
 	map = (void *) (buf+1);
 	
 	/* binding matches existing */
@@ -132,7 +132,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 				}
 			}
 		}
-		buf->used = used * sizeof(*map);
+		buf->_used = used * sizeof(*map);
 	}
 	return del;
 }

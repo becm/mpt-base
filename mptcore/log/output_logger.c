@@ -6,9 +6,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "message.h"
+
 #include "output.h"
 
-#include "message.h"
 
 struct mptLogWrapper
 {

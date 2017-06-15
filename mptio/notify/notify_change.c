@@ -52,7 +52,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 	}
 	slot = (void *) (buf + 1);
 	
-	if ((buf->used / sizeof(*slot)) < (size_t) fd
+	if ((buf->_used / sizeof(*slot)) < (size_t) fd
 	    || in != slot[fd]) {
 		return MPT_ERROR(BadValue);
 	}

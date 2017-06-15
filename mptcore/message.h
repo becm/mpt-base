@@ -42,6 +42,8 @@ MPT_STRUCT(queue);
 MPT_STRUCT(array);
 MPT_STRUCT(node);
 
+MPT_INTERFACE(output);
+
 enum MPT_ENUM(MessageType) {
 	/* data interaction */
 	MPT_ENUM(MessageOutput)     = 0x0,   /* send notification */
@@ -173,6 +175,8 @@ MPT_STRUCT(msgdest)
 	{ return lay == ld.lay && grf == ld.grf && wld == ld.wld; }
 	inline bool same(msgdest ld) const
 	{ return *this == ld && dim == ld.dim; }
+	
+	static int type();
 #else
 # define MPT_MSGDEST_INIT { 0, 0, 0, 0 }
 #endif

@@ -162,7 +162,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 			return 0;
 		}
 		pr->val.ptr = buf + 1;
-		return buf->used / sizeof(MPT_STRUCT(valfmt));
+		return buf->_used / sizeof(MPT_STRUCT(valfmt));
 	}
 	if (name ? !strcasecmp(name, "ignore") : pos == id++) {
 		pr->name = "ignore";

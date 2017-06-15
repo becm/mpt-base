@@ -39,7 +39,7 @@ int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t of
         if (src) memcpy(dest, src, len);
         else memset(dest, 0, len);
     }
-    return arr->type() + (arr->flags() & ~0xff);
+    return arr->flags();
 }
 
 Cycle::Cycle() : _act(0), _maxDimensions(0), _flags(0)

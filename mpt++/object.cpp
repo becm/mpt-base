@@ -9,6 +9,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template<> int Item<object>::type()
+{
+    static int id = 0;
+    if (!id) {
+        id = makeItemId(object::Type);
+    }
+    return id;
+}
+
 bool object::const_iterator::select(uintptr_t pos)
 {
     _prop.name = 0;

@@ -29,7 +29,7 @@ path &path::operator =(const path &from)
 {
     memcpy(this, &from, sizeof(*this));
     if (from.flags & HasArray) {
-        buffer *buf = (buffer *) from.base;
+        buffer *buf = reinterpret_cast<buffer *>(const_cast<char *>(from.base));
         buf[-1].addref();
     }
     return *this;
@@ -39,7 +39,7 @@ Slice<const char> path::data() const
 {
     if (flags & HasArray) {
         buffer *buf = (buffer *) base;
-        return Slice<const char>(base, buf[-1].used - off - len);
+        return Slice<const char>(base, buf[-1]._used - off - len);
     }
     return Slice<const char>(0, 0);
 }
@@ -50,8 +50,8 @@ bool path::clearData()
     }
     buffer *buf = (buffer *) base;
     size_t max = off + len;
-    if (max > buf[-1].used) return false;
-    buf[-1].used = max;
+    if (max > buf[-1]._used) return false;
+    buf[-1]._used = max;
     return true;
 }
 
@@ -117,7 +117,7 @@ void Config::unref()
 {
     delete this;
 }
-Config::Element *Config::getElement(const Array<Config::Element> &arr, path &p)
+Config::Element *Config::getElement(const UniqueArray<Config::Element> &arr, path &p)
 {
     const Slice<const char> name = p.value();
     int len;
@@ -136,7 +136,7 @@ Config::Element *Config::getElement(const Array<Config::Element> &arr, path &p)
     }
     return 0;
 }
-Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
+Config::Element *Config::makeElement(UniqueArray<Config::Element> &arr, path &p)
 {
     const Slice<const char> name = p.value();
     int len;
@@ -158,13 +158,12 @@ Config::Element *Config::makeElement(Array<Config::Element> &arr, path &p)
         return e;
     }
     if (!unused) {
-        size_t pos = arr.length();
-        if (!arr.insert(pos, Element()) || !(unused = arr.get(pos))) {
+        if (!(unused = arr.insert(arr.length()))) {
             return 0;
         }
     }
     else {
-        unused->clear();
+        unused->resize(0);
         unused->setPointer(0);
     }
     unused->setName(name.base(), len);
@@ -224,7 +223,7 @@ int Config::remove(const path *dest)
     }
     // clear configuration
     if (dest->empty()) {
-        _sub.clear();
+        _sub.resize(0);
         return 0;
     }
     path p = *dest;
@@ -233,7 +232,7 @@ int Config::remove(const path *dest)
     if (!(curr = getElement(_sub, p))) {
         return BadOperation;
     }
-    curr->clear(); // remove childen from element
+    curr->resize(0); // remove childen from element
     curr->setName(0); // mark element as unused
     curr->setPointer(0); // remove element data
 

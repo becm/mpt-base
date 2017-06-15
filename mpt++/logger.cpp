@@ -253,7 +253,7 @@ const LogStore::Entry *LogStore::nextEntry()
 
 void LogStore::clearLog()
 {
-    _msg.clear();
+    _msg.resize(0);
     _act = 0;
     _level = 0;
 }

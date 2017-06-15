@@ -35,24 +35,34 @@ bool linepart::setCut(float val)
     return true;
 }
 
-bool linepart::array::set(size_t len)
+bool linepart::array::set(long len)
 {
     if (!len) {
-        clear();
+        resize(0);
         return true;
     }
     linepart *lp;
-    size_t num, max = std::numeric_limits<__decltype(lp->usr)>::max();
-
+    long num, max = std::numeric_limits<__decltype(lp->usr)>::max() - 2;
+    // determine existing points
+    if (len < 0) {
+        num = length();
+        len = 0;
+        lp = begin();
+        for (long i = 0; i < num; ++i) {
+            len += lp[i].raw;
+        }
+    }
+    // reserve total size
     num = len / max;
     if (len > num * max) ++num;
-    if (!(lp = static_cast<__decltype(lp)>(_d.set(num * sizeof(*lp))))) {
-         return false;
+    if (!resize(num)) {
+        return false;
     }
-    for (size_t i = 0; i < num; ++i) {
+    for (long i = 0; i < num; ++i) {
         if (len < max) {
             lp[i].usr = lp[i].raw = len;
-            break;
+            resize(i + 1);
+            return true;
         }
         lp[i].usr = lp[i].raw = max;
         len -= max;
@@ -61,7 +71,7 @@ bool linepart::array::set(size_t len)
 }
 bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> src)
 {
-    size_t len, oldlen = 0;
+    long len, oldlen = 0;
     linepart pt;
 
     if (dim < 0 || dim >= tr.dimensions()) {
@@ -73,23 +83,23 @@ bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> sr
     const double *val = src.begin();
 
     if (!(oldlen = length())) {
-        size_t pos = 0;
+        long pos = 0;
         while (pos < len) {
             pt = tr.part(dim, val + pos, len - pos);
-            _d.append(sizeof(pt), &pt);
+            insert(length(), pt);
             ++oldlen;
             pos += pt.raw;
         }
         return true;
     }
-    size_t pos = 0, next = 0;
+    long pos = 0, next = 0;
     linepart *base, old;
 
     base = begin();
     old = *base;
 
     // process vissible points only
-    size_t vlen = len < old.usr ? len : old.usr;
+    long vlen = len < old.usr ? len : old.usr;
 
     while (len && pos < oldlen) {
         pt = tr.part(dim, val, vlen);
@@ -128,27 +138,26 @@ bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> sr
 
         // save current part data
         if (next && base[oldlen+next].join(pt)) continue;
-        _d.append(sizeof(pt), &pt);
+        insert(length(), pt);
         base = begin();
         ++next;
     }
     // set new data active
-    len = next * sizeof(*base);
-    memmove(base, base+oldlen, len);
-    _d.set(len);
+    memmove(base, base + oldlen, next * sizeof(*base));
+    resize(next);
     return true;
 }
-size_t linepart::array::userLength()
+long linepart::array::userLength()
 {
-    size_t len = 0;
+    long len = 0;
     for (auto p : *this) {
         len += p.usr;
     }
     return len;
 }
-size_t linepart::array::rawLength()
+long linepart::array::rawLength()
 {
-    size_t len = 0;
+    long len = 0;
     for (auto p : *this) {
         len += p.raw;
     }
@@ -211,28 +220,30 @@ int applyLineData(point<double> *dest, const linepart *lp, int plen, const Trans
 bool Polyline::set(const Transform &tr, Slice<const typed_array> src)
 {
     // generate parts data
-    size_t max = maxsize(src, typeIdentifier<double>());
+    long max = maxsize(src, typeIdentifier<double>());
     if (!max || !_vis.set(max)) {
         return false;
     }
     const typed_array *arr = src.base();
-    for (size_t i = 0, max = src.length(); i < max; ++i) {
+    for (long i = 0, max = src.length(); i < max; ++i) {
         if (arr->type() != typeIdentifier<double>()) {
             continue;
         }
         _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->elements()));
     }
-
     // prepare target data
-    size_t total = _vis.userLength();
-    Point *pts;
-    if (!(pts = _values.resize(total))) {
-        _values.clear();
+    if (!(max = _vis.userLength())) {
+        _values.resize(0);
+        return false;
+    }
+    if (!_values.resize(max)) {
+        _values.resize(0);
         return false;
     }
     // set start values
+    Point *pts = _values.begin();
     point<double> z = tr.zero();
-    copy(total, &z, 0, pts, 1);
+    copy(max, &z, 0, pts, 1);
 
     // modify according to transformation
     applyLineData(pts, _vis.begin(), _vis.length(), tr, src);

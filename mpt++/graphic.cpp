@@ -80,17 +80,22 @@ int Graphic::addLayout(Layout *lay, bool reuse)
     if (!lay) {
         return -3;
     }
-    size_t max = _layouts.length();
-
     // insert layout on vacant position
     if (reuse) {
-        for (size_t i = 0; i < max; ++i) {
-            if (_layouts.get(i)) continue;
-            return _layouts.set(i, lay) ? i : -1;
+        for (Reference<Layout> *b = _layouts.begin(), *e = _layouts.end(); b < e; ++b) {
+            if (b->pointer()) continue;
+            b->setPointer(lay);
+            return e - b;
         }
     }
     // append layout
-    return _layouts.insert(max, lay) ? max : -1;
+    Reference<Layout> *r;
+    long pos = _layouts.length();
+    if (!(r = _layouts.insert(pos))) {
+        return MissingBuffer;
+    }
+    r->setPointer(lay);
+    return pos;
 }
 // layout removal
 int Graphic::removeLayout(const Layout *lay)
@@ -98,9 +103,12 @@ int Graphic::removeLayout(const Layout *lay)
     if (!lay) {
         return -1;
     }
+    Reference<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
-        if (_layouts.get(i) != lay) continue;
-        _layouts.set(i, 0);
+        if (r[i].pointer() != lay) {
+            continue;
+        }
+        r[i].setPointer(0);
         return i;
     }
     return -2;
@@ -195,22 +203,25 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
     tmp = msg;
     mpt_message_read(&tmp, part+1, buf);
 
+    Reference<Layout> *r;
     if (part) {
         int l = strtol(buf, &end, 0);
         if (end > buf) {
             if (l <= 0 || l > UINT8_MAX) {
                 return -3;
             }
-            lay = _layouts.get(l-1);
+            r = _layouts.get(l-1);
+            lay = r ? r->pointer() : 0;
             dst.lay = l;
         }
         else {
-            size_t max = _layouts.length();
+            long max = _layouts.length();
+            r = _layouts.begin();
             if (max > UINT8_MAX) {
                 return max = UINT8_MAX;
             }
-            for (size_t i = 0; i < max; ++i) {
-                Layout *l = _layouts.get(i);
+            for (long i = 0; i < max; ++i) {
+                Layout *l = r[i].pointer();
                 const char *id;
                 if (l && (id = l->alias()) && part == (ssize_t) strlen(id) && !memcmp(id, buf, part)) {
                     dst.lay = i+1;
@@ -222,7 +233,8 @@ int Graphic::target(msgdest &addr, message &msg, size_t len) const
         mask |= 1;
     }
     else if (dst.lay) {
-        lay = _layouts.get(dst.lay-1);
+        r = _layouts.get(dst.lay-1);
+        lay = r ? r->pointer() : 0;
     }
     if (!lay) {
         return -2;
@@ -380,9 +392,10 @@ object *Graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
+    Reference<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         Layout *l;
-        if (!(l = _layouts.get(i))) {
+        if (!(l = r[i].pointer())) {
             continue;
         }
         const char *id;

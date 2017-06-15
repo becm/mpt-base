@@ -51,13 +51,13 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
 	int len;
 	
 	vec.iov_base = arr->_buf + 1;
-	vec.iov_len  = arr->_buf->used;
+	vec.iov_len  = arr->_buf->_used;
 	/*decode(info, &vec, 0);*/
 	while ((len = decode(&info, &vec, 1)) < 0) {
 		if (len == MPT_ERROR(MissingBuffer)) {
 			assert(mpt_array_insert(arr, info.done + info.scratch, 8));
 			vec.iov_base = (void *) (arr->_buf + 1);
-			vec.iov_len  = arr->_buf->used;
+			vec.iov_len  = arr->_buf->_used;
 			info.scratch += 8;
 			continue;
 		}
@@ -107,7 +107,7 @@ int main(int argc, char * const argv[])
 			enc(&arr, msg[i].len, msg[i].data);
 			dec(&arr._d, decode);
 			
-			arr._d._buf->used = 0;
+			mpt_buffer_cut(arr._d._buf, 0, 0);
 		}
 		puts("joined");
 		for (i = 0; i < max; i++) {
@@ -121,7 +121,7 @@ int main(int argc, char * const argv[])
 		dec(&arr._d, decode);
 		
 		arr._enc(&arr._state, 0, 0);
-		arr._d._buf->used = 0;
+		mpt_buffer_cut(arr._d._buf, 0, 0);
 		
 		puts("big msg");
 		max = sizeof(big);
@@ -130,7 +130,7 @@ int main(int argc, char * const argv[])
 		dec(&arr._d, decode);
 		
 		arr._state.done = arr._state.scratch = 0;
-		arr._d._buf->used = 0;
+		mpt_buffer_cut(arr._d._buf, 0, 0);
 	}
 	return 0;
 }

@@ -31,7 +31,7 @@ extern int mpt_path_add(MPT_STRUCT(path) *path, int add)
 		arr._buf = (void *) data;
 		--arr._buf;
 		pre  = 0;
-		post = arr._buf->used - len;
+		post = arr._buf->_used - len;
 		if (post < (size_t) add) {
 			return MPT_ERROR(BadValue);
 		}
@@ -47,10 +47,10 @@ extern int mpt_path_add(MPT_STRUCT(path) *path, int add)
 			return MPT_ERROR(BadValue);
 		}
 		if (post < 2U) {
-			if (!mpt_array_append(&arr, pre+2-post, 0)) {
+			if (!mpt_array_append(&arr, pre + 2 - post, 0)) {
 				return MPT_ERROR(BadOperation);
 			}
-			data = pre ? memcpy(arr._buf+1, data, pre) : (void*) (arr._buf+1);
+			data = pre ? memcpy(arr._buf + 1, data, pre) : (void*) (arr._buf + 1);
 		}
 		/* set leading/trailing/next size parameter */
 		if (len) {
@@ -69,10 +69,10 @@ extern int mpt_path_add(MPT_STRUCT(path) *path, int add)
 			return MPT_ERROR(BadValue);
 		}
 		if (post < 1U) {
-			if (!mpt_array_append(&arr, pre+1, 0)) {
+			if (!mpt_array_append(&arr, pre + 1, 0)) {
 				return MPT_ERROR(BadOperation);
 			}
-			data = pre ? memcpy(arr._buf+1, data, pre) : (void*) (arr._buf+1);
+			data = pre ? memcpy(arr._buf + 1, data, pre) : (void*) (arr._buf + 1);
 		}
 		/* change path assign to separator */
 		if (len) {

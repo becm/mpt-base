@@ -27,20 +27,29 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	int ret;
 	
 	if (!src) {
-		return arr->_buf ? arr->_buf->used / sizeof(MPT_STRUCT(valfmt)) : 0;
+		MPT_STRUCT(buffer) *buf;
+		if (!(buf = arr->_buf)) {
+			return 0;
+		}
+		if (buf->_vptr->content(buf) != MPT_ENUM(TypeValFmt)) {
+			buf->_vptr->ref.unref((void *) buf);
+			arr->_buf = 0;
+			return 0;
+		}
+		return buf->_used / sizeof(MPT_STRUCT(valfmt));
 	}
 	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValFmt), &fmt)) >= 0
 	    && (ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) >= 0
 	    && it) {
 		int curr;
-		if (!mpt_array_append(&tmp, sizeof(fmt), &fmt)) {
+		if ((curr = mpt_valfmt_add(&tmp, fmt)) < 0) {
 			return MPT_ERROR(BadOperation);
 		}
 		ret = 0;
 		src = (void *) it;
 		while ((curr = it->_vptr->advance(it)) >= 0
 		       && (curr = src->_vptr->conv(src, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
-			if (!mpt_array_append(&tmp, sizeof(fmt), &fmt)) {
+			if (mpt_valfmt_add(&tmp, fmt) < 0) {
 				mpt_array_clone(&tmp, 0);
 				return MPT_ERROR(BadOperation);
 			}

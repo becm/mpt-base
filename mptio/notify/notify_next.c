@@ -24,7 +24,7 @@ extern MPT_INTERFACE(input) *mpt_notify_next(const MPT_STRUCT(notify) *no)
 	MPT_STRUCT(buffer) *s;
 	size_t len;
 	
-	if ((s = no->_wait._buf) && (len = s->used/sizeof(void *))) {
+	if ((s = no->_wait._buf) && (len = s->_used / sizeof(void *))) {
 		void **first = (void *) (s+1);
 		size_t i;
 		
@@ -34,7 +34,7 @@ extern MPT_INTERFACE(input) *mpt_notify_next(const MPT_STRUCT(notify) *no)
 			first[i] = 0;
 			return curr;
 		}
-		s->used = 0;
+		s->_used = 0;
 	}
 	return 0;
 }

@@ -18,20 +18,22 @@
  */
 extern void mpt_command_clear(const MPT_STRUCT(array) *arr)
 {
+	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(command) *cmd;
 	size_t i, len;
 	
-	if (!arr->_buf) return;
-	
-	len = arr->_buf->used / sizeof(*cmd);
-	cmd = (void *) (arr->_buf + 1);
+	if (!(buf = arr->_buf)) {
+		return;
+	}
+	len = buf->_used / sizeof(*cmd);
+	cmd = (void *) (buf + 1);
 	
 	for (i = 0; i < len; ++i) {
 		if (cmd[i].cmd) {
 			cmd[i].cmd(cmd[i].arg, 0);
 		}
 	}
-	arr->_buf->used = 0;
+	buf->_used = 0;
 }
 /*!
  * \ingroup mptEvent
@@ -95,7 +97,7 @@ extern MPT_STRUCT(command) *mpt_command_get(const MPT_STRUCT(array) *arr, uintpt
 	MPT_STRUCT(buffer) *buf = arr->_buf;
 	size_t len;
 	
-	if (!buf || !(len = buf->used / sizeof(MPT_STRUCT(command)))) {
+	if (!buf || !(len = buf->_used / sizeof(MPT_STRUCT(command)))) {
 		return 0;
 	}
 	return mpt_command_find((void *) (buf + 1), len, id);

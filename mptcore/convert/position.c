@@ -22,8 +22,9 @@ extern int mpt_position(const char *fmt, int match)
 	char curr;
 	int pos = 0;
 	
-	if (match & ~0xff) return -2;
-	
+	if (match & ~0xff) {
+		return MPT_ERROR(BadValue);
+	}
 	while ((curr = fmt[pos])) {
 		char type = match;
 		
@@ -32,63 +33,48 @@ extern int mpt_position(const char *fmt, int match)
 		}
 		/* current is vector entry */
 		if (MPT_value_isVector(curr)) {
-			curr |= 0x60;
+			curr = MPT_value_fromVector(curr);
 			if (curr == 'c' && type == 's') {
 				return pos;
 			}
 			/* vector types only */
-			if (!MPT_value_isVector(type)) {
-				++pos;
-				continue;
-			}
-			type |= 0x60;
-		}
-		/* current is array */
-		else if (MPT_value_isArray(curr)) {
-			/* accept generic array */
-			if (type == MPT_ENUM(TypeArrBase)) {
+			if ((type = MPT_value_isVector(type))
+			    && curr == (int) type) {
 				return pos;
 			}
-			/* compatible vector type */
-			if (MPT_value_isVector(type)) {
-				if (!(type & 0x1f)) {
-					return pos;
-				}
-				curr |= 0x60;
-				type |= 0x60;
+			++pos;
+			continue;
+		}
+		/* current is array */
+		if (curr == MPT_ENUM(TypeBuffer)) {
+			/* wide match from array to vector,
+			 * need deep compare for actual datatype */
+			if ((curr = MPT_value_fromVector(match))) {
+				return pos;
 			}
-			/* compatible array type */
-			else if (MPT_value_isArray(type)) {
-				if (!(type & 0x1f)) {
-					return pos;
-				}
-				curr |= 0x60;
-				type |= 0x60;
-			}
-			/* incompatible types */
-			else {
-				++pos;
-				continue;
-			}
+			++pos;
+			continue;
 		}
 		switch (curr) {
 		  /* accept more specific type */
-		  case 'y': if (type == 'y' || type == 'c') return pos; break;
-		  case 'b': if (type == 'b' || type == 'c') return pos; break;
+		  case 'y': if (type == 'y' || type == 'u' || type == 't') return pos; break;
+		  case 'b': if (type == 'b' || type == 'i' || type == 'x') return pos; break;
+		  case 'u': if (type == 'u' || type == 't') return pos; break;
+		  case 'i': if (type == 'i' || type == 'x') return pos; break;
 		  case 'o': if (type == 'o' || type == 's') return pos; break;
 		  case 'k': if (type == 'k' || type == 's') return pos; break;
 		  /* exact match */
 		  case 'c': if (type == 'c') return pos; break;
-		  case 'x': if (type == 'x') return pos; break;
 		  case 't': if (type == 't') return pos; break;
+		  case 'x': if (type == 'x') return pos; break;
 		  case 's': if (type == 's') return pos; break;
 		  /* float types (accept better precision) */
 		  case 'f': if (type == 'f') return pos;
-		  case 'd': if (type == 'd') return pos;
-		  case 'e': if (type == 'e') return pos;
+		  case 'd': if (type == 'd' || type == 'f') return pos;
+		  case 'e': if (type == 'e' || type == MPT_ENUM(TypeFloat80) || type == 'd' || type == 'f') return pos;
 		  default:;
 		}
 		++pos;
 	}
-	return -1;
+	return MPT_ERROR(BadType);
 }

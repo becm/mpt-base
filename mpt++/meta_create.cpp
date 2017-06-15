@@ -12,6 +12,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template<> int Item<metatype>::type()
+{
+    static int id = 0;
+    if (!id) {
+        id = makeItemId(metatype::Type);
+    }
+    return id;
+}
+
 /*!
  * \ingroup mptMeta
  * \brief create metatype

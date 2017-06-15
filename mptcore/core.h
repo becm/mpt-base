@@ -64,7 +64,6 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
-MPT_INTERFACE(output);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
@@ -102,11 +101,13 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
-	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
-	MPT_ENUM(TypeRawData)   = 0x15,  /* NAK */
+	MPT_ENUM(TypeBuffer)    = 0x14,  /* DC4 */
+	
+	MPT_ENUM(TypeMeta)      = 0x15,  /* NAK */
 	MPT_ENUM(TypeIterator)  = 0x16,  /* SYN */
+	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
 #define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
-                               && (v) < MPT_ENUM(TypeVecBase))
+                               && (v) < MPT_ENUM(TypeSpecial))
 	
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
@@ -114,39 +115,30 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeGroup)     = 0x1a,  /* SUB */
 	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
 #define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
-                             && (v) < MPT_ENUM(TypeVecBase))
+                             && (v) < MPT_ENUM(TypeSpecial))
 	
-	/* vector types (0x20..0x3f) */
-	MPT_ENUM(TypeVecBase)   = ' ',   /* 0x20: generic vector */
-#define MPT_value_isVector(v) ((v) >= MPT_ENUM(TypeVecBase) \
-                            && (v) <  MPT_ENUM(TypeArrBase))
+	/* special/format types (0x20..0x3f) */
+	MPT_ENUM(TypeSpecial)    = ' ',   /* 0x20: generic vector */
 	
-	/* array types ('@'..'Z'..0x5f) */
-	MPT_ENUM(TypeArrBase)   = '@',   /* 0x40: generic array */
-#define MPT_value_isArray(v)  ((v) >= MPT_ENUM(TypeArrBase) \
-                            && (v) < MPT_ENUM(TypeScalBase))
+	/* array types ('@'..'Z') */
+	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
+#define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) >= MPT_ENUM(TypeVector) \
+                            && ((v) & ~MPT_ENUM(_TypeDynamic)) <  MPT_ENUM(TypeScalBase))
+#define MPT_value_toVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) > MPT_ENUM(TypeScalBase) \
+                             ? 0 \
+                             : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector))
 	
 	/* scalar types ('`'..'z'..0x7f) */
-	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar */
-#define MPT_value_isScalar(v) ((v) >= MPT_ENUM(TypeScalBase) \
-                            && (v) < MPT_ENUM(_TypeDynamic))
-	
+	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
+#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeDynamic)) > MPT_ENUM(TypeScalBase) \
+                              && (v) < MPT_ENUM(_TypeFinal))
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
-                               ? (v) - MPT_ENUM(TypeVecBase) + MPT_ENUM(TypeScalBase) \
+                               ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeScalBase) \
                                : 0)
-#define MPT_value_fromArray(v)  (MPT_value_isArray(v) \
-                               ? (v) - MPT_ENUM(TypeArrBase) + MPT_ENUM(TypeScalBase) \
-                               : 0)
-#define MPT_value_toVector(v)   (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
-                               ? 0 \
-                               : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVecBase))
-#define MPT_value_toArray(v)    (((v) & 0x7f) < MPT_ENUM(TypeScalBase) \
-                               ? 0 \
-                               : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeArrBase))
-	MPT_ENUM(TypeFloat80)   = MPT_ENUM(TypeScalBase),   /* reuse for 80bit float value */
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeDynamic)  = 0x80,
+	MPT_ENUM(_TypeLimit)    = (0x80 / 4), /* single type range limit */
 	MPT_ENUM(_TypeFinal)    = 0xff
 };
 
@@ -219,10 +211,8 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_position(const char *, int);
 /* get position offset from data description */
 extern int mpt_offset(const char *, int);
-
-/* get/add registered (primitive) types */
+/* get size for registered types */
 extern ssize_t mpt_valsize(int);
-extern int mpt_valtype_add(size_t);
 
 /* determine message ANSI color code */
 extern const char *mpt_ansi_code(uint8_t);
@@ -256,20 +246,20 @@ public:
         if (i < 0 && (i += length()) < 0) return 0;
         return base() + i;
     }
-    inline size_t length() const
+    inline long length() const
     { return _len / sizeof(T); }
     inline T *base() const
     { return _base; };
-    bool skip(size_t l)
+    bool skip(long l)
     {
-        if (l > length()) return false;
+        if (l < 0 || l > length()) return false;
         if (!(_len -= l * sizeof(T))) _base = 0;
         else _base += l;
         return true;
     }
-    bool trim(size_t l)
+    bool trim(long l)
     {
-        if (l > length()) return false;
+        if (l < 0 || l > length()) return false;
         if (!(_len -= (l * sizeof(T)))) _base = 0;
         return true;
     }
@@ -333,6 +323,8 @@ MPT_STRUCT(reference)
 	{ }
 	uintptr_t raise();
 	uintptr_t lower();
+	inline uintptr_t value() const
+	{ return _val; }
 protected:
 #endif
 	uintptr_t _val;
@@ -362,10 +354,19 @@ class Transform;
 
 extern int convert(const void **, int , void *, int);
 
+extern int makeId();
+
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier() { return static_cast<int>(T::Type); }
+inline int typeIdentifier()
+{
+    static int id = 0;
+    if (!id && !(id = makeId())) {
+        id = BadType;
+    }
+    return id;
+}
 template<typename T>
-inline __MPT_CONST_EXPR char typeIdentifier(const T &) { return static_cast<char>(typeIdentifier<T>()); }
+inline char typeIdentifier(const T &) { return static_cast<char>(typeIdentifier<T>()); }
 
 /* floating point values */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }
@@ -381,7 +382,13 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; 
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+/* string data */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<char>() { return 'c'; }
+/* builtin types */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return property::Type; }
 
+/* vector-type auto-cast for constant base types */
 template<typename T>
 inline __MPT_CONST_EXPR unsigned char vectorIdentifier() {
     return MPT_value_toVector(typeIdentifier<T>());
@@ -553,15 +560,31 @@ protected:
 };
 
 #ifdef __cplusplus
+int makeItemId(int);
+
 template<typename T>
 class Item : public Reference<T>, public identifier
 {
 public:
     Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
     { }
+    static int type() {
+        static int id = 0;
+        if (!id) {
+            id = makeItemId(typeIdentifier<T>());
+        }
+        return id;
+    }
 protected:
     char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
 };
+
+template <typename T>
+inline int typeIdentifier(Item<T>)
+{ return Item<T>::type(); }
+template <typename T>
+inline int typeIdentifier(Item<const T>)
+{ return Item<const T>::type(); }
 
 /* auto-create wrapped reference */
 template <typename T>
@@ -707,9 +730,7 @@ extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, 
 extern int mpt_generic_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 
-/* create logging interface with output reference */
-extern MPT_INTERFACE(logger) *mpt_output_logger(MPT_INTERFACE(output) *);
-/* log output */
+/* push log message */
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 /* get default logger instance */
 extern MPT_INTERFACE(logger) *mpt_log_default(void);

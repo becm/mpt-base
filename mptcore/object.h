@@ -69,6 +69,9 @@ extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<object>() { return object::Type; }
+template<> int Item<object>::type();
+
 inline uintptr_t object::addref()
 { return 0; }
 
@@ -303,6 +306,7 @@ protected:
     inline ~Group() {}
     virtual object *create(const char *, int = -1);
 };
+template<> inline __MPT_CONST_EXPR int typeIdentifier<Group>() { return Group::Type; }
 
 /*! Relation implemetation using Group as current element */
 class GroupRelation : public Relation

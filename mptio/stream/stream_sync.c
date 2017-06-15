@@ -38,7 +38,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 	/* waiting messages */
 	if (arr && arr->_buf) {
 		cmd = (void *) (arr->_buf + 1);
-		len = arr->_buf->used / sizeof(*cmd);
+		len = arr->_buf->_used / sizeof(*cmd);
 	}
 	if (!len) {
 		return 0;
@@ -128,7 +128,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 		}
 		++sav;
 	}
-	arr->_buf->used = sav * sizeof(*cmd);
+	arr->_buf->_used = sav * sizeof(*cmd);
 	
 	return sav;
 }

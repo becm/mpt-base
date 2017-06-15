@@ -174,18 +174,19 @@ public:
     class Element;
     
 protected:
-    static Element *getElement(const Array<Element> &, path &);
-    static Element *makeElement(Array<Element> &, path &);
-    Array<Element> _sub;
+    static Element *getElement(const UniqueArray<Element> &, path &);
+    static Element *makeElement(UniqueArray<Element> &, path &);
+    UniqueArray<Element> _sub;
 };
 
-class Config::Element : public Array<Config::Element>, public Reference<metatype>, public identifier
+class Config::Element : public UniqueArray<Config::Element>, public Reference<metatype>, public identifier
 {
 public:
     inline bool unused()
     {
         return _len == 0;
     }
+private:
     Element & operator =(const Element &from);
 };
 #endif

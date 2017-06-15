@@ -241,13 +241,13 @@ Item<object> *Collection::append(object *mt)
 
 size_t Collection::clear(const unrefable *mt)
 {
-    size_t remove = 0;
+    long remove = 0;
     if (!mt) {
         remove = _items.length();
         _items = ItemArray<object>();
         return remove ? true : false;
     }
-    size_t empty = 0;
+    long empty = 0;
     for (auto &it : _items) {
         unrefable *ref = it.pointer();
         if (!ref) { ++empty; continue; }

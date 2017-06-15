@@ -31,9 +31,12 @@ src = files(
   'position.c',
   'tostring.c',
   'type_int.c',
+  'valfmt_add.c',
   'valfmt_get.c',
   'valfmt_parse.c',
   'valfmt_set.c',
   'valsize.c',
+  'valsize_object.c',
+  'valsize_reference.c',
   'value_compare.c',
 )

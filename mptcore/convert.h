@@ -23,15 +23,22 @@ enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCompress)     = 0x4    /* compress data */
 };
 enum MPT_ENUM(NewlineTypes) {
-	MPT_ENUM(NewlineMac)  = 0x1,       /* MacOS line separation */
-	MPT_ENUM(NewlineUnix) = 0x2,       /* UNIX line separation */
-	MPT_ENUM(NewlineNet)  = 0x3        /* network/Windows line separation */
+	MPT_ENUM(NewlineMac)  = 0x1,  /* MacOS line separation */
+	MPT_ENUM(NewlineUnix) = 0x2,  /* UNIX line separation */
+	MPT_ENUM(NewlineNet)  = 0x3   /* network/Windows line separation */
+};
+
+enum MPT_ENUM(TransportTypes) {
+	/* 80bit float value (reuse invalid local scalar) */
+	MPT_ENUM(TypeFloat80) = MPT_ENUM(TypeScalBase)
 };
 
 MPT_STRUCT(float80)
 {
 #ifdef __cplusplus
 public:
+	enum { Type = TypeFloat80 };
+	
 	inline float80() {}
 	inline float80(long double v) { *this = v; }
 	
@@ -41,18 +48,14 @@ protected:
 #endif
 	uint8_t _d[10];
 };
-#ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float80>()  { return TypeFloat80; }
-float swapOrder(float);
-double swapOrder(double);
-float80 swapOrder(float80);
-#endif
 
 /* value output format */
 #ifdef __cplusplus
 MPT_STRUCT(valfmt)
 {
 public:
+	enum { Type = TypeValFmt };
+	
 	inline valfmt() : fmt(6), wdt(0)
 	{ }
 	inline int width() const
@@ -80,14 +83,35 @@ protected:
 #else
 MPT_STRUCT(valfmt)
 {
-# define MPT_VALFMT_INIT  { 0, 0 }
+# define MPT_VALFMT_INIT  { 0, 0, 0 }
 # define MPT_VALFMT_DECMAX  0x7f
 #endif
 	uint16_t fmt;  /* format flags and number of decimals */
 	uint8_t  wdt;  /* field width */
+	uint8_t _pad;
 };
 
+#ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float80>()  { return float80::Type; }
+
+template<> inline __MPT_CONST_EXPR int typeIdentifier<valfmt>() { return valfmt::Type; }
+
+float swapOrder(float);
+double swapOrder(double);
+float80 swapOrder(float80);
+#endif
+
 __MPT_EXTDECL_BEGIN
+
+/* add user scalar or pointer type */
+extern int mpt_valtype_add(size_t);
+
+/* add/check registered reference type */
+extern int mpt_valtype_newref();
+extern int mpt_valtype_isref();
+/* add/check registered object type */
+extern int mpt_valtype_newobject();
+extern int mpt_valtype_isobject();
 
 /* extended double conversions */
 extern void mpt_float80_decode(size_t , const MPT_STRUCT(float80) *, long double *);
@@ -186,6 +210,7 @@ extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
 #ifdef _MPT_ARRAY_H
 extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
 extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(valfmt) *, MPT_STRUCT(valfmt));
 #endif
 
 /* type identifier for '(unsigned) long' data type */

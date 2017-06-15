@@ -36,46 +36,114 @@ template<> void copy<float, double>(int pts, const float *src, int lds, double *
 { mpt_copy_fd(pts, src, lds, dest, ldd); }
 
 // pointer slice compact redirection
-void compact(Slice<void *> &s)
+long compact(Slice<void *> s)
 {
-    size_t len = mpt_array_compact(s.base(), s.length());
-    s.trim(s.length() - len);
+    return mpt_array_compact(s.base(), s.length());
+}
+long unused(Slice<void *> s)
+{
+    long u = 0;
+    for (void **b = s.begin(), **e = s.end(); b < e; ++b) {
+        if (!*b) ++u;
+    }
+    return u;
+}
+bool swap(Slice<void *> s, long p1, long p2)
+{
+    long len = s.length();
+    if (p1 > len || p2 > len) {
+        return false;
+    }
+    void *t, **b = s.begin();
+    t = b[p1];
+    b[p1] = b[p2];
+    b[p2] = t;
+    return true;
 }
 
 // buffer operations
 void buffer::unref()
 {
-    if (shared--) return;
-    if (resize) resize(this, 0);
+    if (!mpt_reference_lower(&_ref)) {
+         free(this);
+    }
+}
+buffer *buffer::detach(long len)
+{
+    if (len < 0) {
+        len = _used;
+    }
+    buffer *b;
+    // create copy
+    if (shared()) {
+        if (!(b = create(len))) {
+            return 0;
+        }
+        if (_used) {
+            memcpy(static_cast<void *>(b + 1), static_cast<void *>(this + 1), _used);
+            b->_used = _used;
+        }
+        _ref.lower();
+        return b;
+    }
+    if ((size_t) len <= _size) {
+        // reduce data to available size
+        if ((size_t) len < _used) {
+            _used = len;
+        }
+        return this;
+    }
+    // set new buffer size
+    len = MPT_align(len);
+    if (!(b = static_cast<buffer *>(realloc(this, sizeof(*b) + len)))) {
+        return 0;
+    }
+    b->_size = len;
+    if ((size_t) len < b->_used) {
+        b->_used = len;
+    }
+    return b;
+}
+int buffer::content() const
+{
+    return 0;
 }
 uintptr_t buffer::addref()
 {
-    if (++shared) return shared;
-    --shared; return 0;
+    return mpt_reference_raise(&_ref);
 }
 
-buffer::buffer() : resize(_mpt_buffer_realloc), shared(0), size(0), used(0)
+buffer::buffer(size_t post) : _size(post), _used(0)
 { }
-buffer::~buffer()
-{ if (resize) resize(this, 0); }
 
+buffer *buffer::create(size_t len)
+{
+    void *b;
+    len += sizeof(buffer);
+    len = MPT_align(len);
+    if (!(b = malloc(len))) {
+        return 0;
+    }
+    return new (b) buffer(len - sizeof(buffer));
+}
 // array initialisation
+array::array(size_t len) : _buf(0)
+{
+    if (len) _buf = buffer::create(len);
+}
 array::array(const array &a) : _buf(0)
 { *this = a; }
 
 // copy buffer reference
 array &array::operator= (const array &a)
 {
-    if (_buf) _buf->unref();
-    _buf = (a._buf && a._buf->addref()) ? a._buf : 0;
+    _buf = a._buf;
     return *this;
 }
 // copy buffer reference
 array &array::operator= (const Reference<buffer> &a)
 {
-    if (_buf) _buf->unref();
-    Reference<buffer> t = a;
-    _buf = t.detach();
+    _buf = a;
     return *this;
 }
 // create buffer reference
@@ -92,50 +160,52 @@ array &array::operator+= (struct iovec const& vec)
 
 void *array::set(size_t len, const void *base)
 {
-    if (!_buf) {
-        if (!(_buf = _mpt_buffer_realloc(0, len))) return 0;
+    buffer *b = _buf.pointer();
+    if (b && b->content()) {
+        b = 0;
     }
-    else if (len > _buf->size) {
-        buffer *b;
-        if (!_buf->resize || !(b = _buf->resize(_buf, len))) return 0;
-        _buf = b;
+    if (!b) {
+        if (!(b = buffer::create(len))) {
+            return 0;
+        }
     }
+    else if (!(b = b->detach(len))) {
+        return 0;
+    } else {
+        _buf.detach();
+    }
+    _buf.setPointer(b);
+    b->_used = len;
     if (base) {
-        memcpy(_buf+1, base, len);
+        memcpy(static_cast<void *>(b + 1), base, len);
+    } else {
+        memset(static_cast<void *>(b + 1), 0, len);
     }
-    if (_buf->used < len) {
-        memset(((uint8_t *)(_buf+1))+_buf->used, 0, len-_buf->used);
-    }
-    _buf->used = len;
-    return _buf+1;
+    return b + 1;
 }
 
 int array::set(metatype &src)
 {
     struct ::iovec vec;
 
-    if (src.conv(TypeVecBase, &vec) >= 0) {
-        return (set(vec.iov_len, vec.iov_base)) ? vec.iov_len : -1;
+    if (src.conv(TypeVector, &vec) >= 0) {
+        return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
+    }
+    if (src.conv(MPT_value_toVector('c'), &vec) >= 0) {
+        return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
     }
     char *data;
     int len;
     if ((len = src.conv('s', &data)) < 0) {
-        if ((len = src.conv(0, &data)) < 0) return -2;
-        if (len && !data) return -1;
-        if (!set(len, data)) return -1;
         return len;
     }
-    if (!data) {
-        if (len) {
-            return -1;
-        }
-        set(0);
-        return 0;
+    if (!len) {
+        return MissingData;
     }
-    else if (!len) {
-        len = strlen(data);
+    len = strlen(data);
+    if (!set(len + 1)) {
+        return BadOperation;
     }
-    if (!set(len+1)) return -1;
     data = (char *) memcpy(base(), data, len);
     data[len] = 0;
 
@@ -156,18 +226,18 @@ int array::set(value val)
         }
         return len;
     }
+    array a;
     while (*val.fmt) {
         /* insert space element */
         if (fmt != val.fmt) {
-            if (!mpt_array_append(this, 1, " ")) {
-                return val.fmt - fmt;
+            if (!mpt_array_append(&a, 1, "\0")) {
+                return BadOperation;
             }
         }
         /* copy string value */
         if ((base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
-            if (!mpt_array_append(this, len, base)) {
-                len = val.fmt - fmt;
-                return len ? (int) len : BadOperation;
+            if (!mpt_array_append(&a, len, base)) {
+                return BadOperation;
             }
             ++val.fmt;
             continue;
@@ -176,19 +246,20 @@ int array::set(value val)
         int ret;
         /* print number data */
         if ((ret = mpt_number_print(buf, sizeof(buf), valfmt(), *val.fmt, val.ptr)) >= 0) {
-            if (!mpt_array_append(this, ret, buf)) {
-                len = val.fmt - fmt;
-                return len ? (int) len : BadOperation;
+            if (!mpt_array_append(&a, ret, buf)) {
+                return BadOperation;
             }
-            if ((ret = mpt_valsize(*val.fmt++)) < 0) {
-                return val.fmt - fmt;
+            if ((ret = mpt_valsize(*val.fmt)) < 0) {
+                return BadType;
             }
+            ++val.fmt;
             val.ptr = ((uint8_t *) val.ptr) + ret;
             continue;
         }
+        break;
     }
-    len = val.fmt - fmt;
-    return len ? (int) len : BadValue;
+    mpt_array_clone(this, &a);
+    return val.fmt - fmt;
 }
 void *array::append(size_t len, const void *data)
 {
@@ -196,9 +267,41 @@ void *array::append(size_t len, const void *data)
     if (!base) return 0;
     return data ? memcpy(base, data, len) : base;
 }
-void *array::prepend(size_t len, size_t off)
+void *array::insert(size_t off, size_t len, const void *data)
 {
-    return mpt_array_insert(this, off, len);
+    size_t used = 0, min;
+    buffer *b;
+    /* compatibility check */
+    if ((b = _buf.pointer())) {
+        int type;
+        if ((type = b->content()) || type != 'c') {
+            b->unref();
+            _buf.detach();
+        }
+    }
+    if (!b) {
+        if (!(b = buffer::create(off + len))) {
+            return 0;
+        }
+    }
+    else {
+        min = off > used ? off : used;
+        if (!(b = b->detach(min + len))) {
+            return 0;
+        }
+        _buf.detach();
+    }
+    _buf.setPointer(b);
+    void *dest;
+    if (!(dest = mpt_buffer_insert(b, off, len))) {
+        return 0;
+    }
+    if (data) {
+        memcpy(dest, data, len);
+    } else {
+        memset(dest, 0, len);
+    }
+    return dest;
 }
 int array::printf(const char *fmt, ... )
 {
@@ -211,50 +314,17 @@ int array::printf(const char *fmt, ... )
 char *array::string()
 { return mpt_array_string(this); }
 
-// typed information for array
-bool typed_array::setType(int t)
-{
-    int esize;
-    if ((esize = mpt_valsize(t)) <= 0) {
-        errno = EINVAL;
-        return false;
-    }
-    _format = t;
-    _esize = esize;
-    return true;
-}
-void typed_array::setModified(bool set)
-{
-    if (set) _flags |= ValueChange;
-    else _flags &= ~ValueChange;
-}
-size_t maxsize(Slice<const typed_array> sl, int type)
-{
-    const typed_array *arr = sl.base();
-    size_t len = 0;
-    for (size_t i = 0, max = sl.length(); i < max; ++i) {
-        if (!arr->elementSize()) {
-            continue;
-        }
-        if (type >= 0 && type != arr->type()) {
-            continue;
-        }
-        size_t curr = arr->elements();
-        if (curr > len) len = curr;
-    }
-    return len;
-}
-
 // data segment from array
 slice::slice(slice const& from) : array(from), _off(0), _len(0)
 {
-    if (!_buf) return;
+    _buf = from._buf;
+    if (!_buf.pointer()) return;
     _len = from._len;
     _off = from._off;
 }
 slice::slice(buffer *b) : _off(0), _len(0)
 {
-    if (!(_buf = b)) return;
+    _buf.setPointer(b);
     _len = length();
 }
 bool slice::shift(ssize_t len)
@@ -362,56 +432,6 @@ bool encode_array::push(const struct message &msg)
         }
     }
     return true;
-}
-
-// basic pointer array
-size_t PointerArray::unused() const
-{
-    void **pos = begin();
-    size_t elem = 0, len = length();
-    for (size_t i = 0; i < len; ++i) {
-        if (!pos[i]) ++elem;
-    }
-    return elem;
-}
-void PointerArray::compact()
-{
-    Slice<void *> s(begin(), length());
-    ::mpt::compact(s);
-    _d.set(s.length() * sizeof(void *));
-}
-bool PointerArray::swap(size_t p1, size_t p2) const
-{
-    size_t len = length();
-    if (p1 > len || p2 > len) return false;
-    void *t, **b = begin();
-    t = b[p1];
-    b[p1] = b[p2];
-    b[p2] = t;
-    return true;
-}
-bool PointerArray::move(size_t p1, size_t p2) const
-{
-    size_t len = length();
-    if (p1 >= len || p2 >= len) return false;
-    ::mpt::move(begin(), p1, p2);
-    return true;
-}
-bool PointerArray::insert(size_t pos, void *ref)
-{
-    void **b;
-    if (_d.shared() || !(b = (void **) _d.prepend(sizeof(*b), pos*sizeof(*b)))) return false;
-    *b = ref;
-    return true;
-}
-ssize_t PointerArray::offset(const void *ref) const
-{
-    void **pos = begin();
-    size_t len = length();
-    for (size_t i = 0; i < len; ++i) {
-         if (ref == pos[i]) return i;
-    }
-    return -1;
 }
 
 __MPT_NAMESPACE_END

@@ -78,7 +78,7 @@ ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {
     Slice<uint8_t> d = data();
     if (!esze) {
-        if (d.length() < nblk) return -2;
+        if ((size_t) d.length() < nblk) return -2;
         if (dest) memcpy(dest, d.base(), nblk);
         return nblk;
     }

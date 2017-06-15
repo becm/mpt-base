@@ -21,46 +21,54 @@
 extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 {
 	MPT_STRUCT(array) arr;
+	MPT_STRUCT(buffer) *b;
 	uint8_t *dest;
 	size_t off, pos;
 	
 	pos = path->off + path->len;
 	
 	/* need new storage */
-	if (!(arr._buf = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
-		arr._buf = 0;
-		if (!(dest = mpt_array_insert(&arr, 0, pos+1))) {
-			return -1;
+	if (!(b = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
+		if (!(b = _mpt_buffer_alloc(pos + 1))) {
+			return MPT_ERROR(BadOperation);
 		}
-		/* 'nonnull' false positive: pos!=0 -> path->base!=null */
-		path->base = pos ? memcpy(dest, path->base, pos) : dest;
+		if (!(dest = mpt_buffer_insert(b, 0, pos + 1))) {
+			b->_vptr->ref.unref((void *) b);
+			return MPT_ERROR(MissingBuffer);
+		}
+		if (path->base) {
+		    memcpy(dest, path->base, pos);
+		}
+		path->base = (void *) (b + 1);
 		dest[pos]  = val & 0xff;
 		path->flags |= MPT_PATHFLAG(HasArray);
 		return 3;
 	}
 	/* next character position */
-	off = (--arr._buf)->used;
+	off = (--b)->_used;
 	
 	/* modify local copy */
-	if (!arr._buf->shared) {
-		dest = (uint8_t *) (arr._buf+1);
+	if (b->_ref._val < 2) {
+		dest = (uint8_t *) (b + 1);
 		/* can reuse last existing value */
 		if ((pos < off) && !(path->flags & MPT_PATHFLAG(KeepPost))) {
-			dest[off-1] = val & 0xff;
+			dest[off - 1] = val & 0xff;
 			return 0;
 		}
 		/* append in unused space */
-		if (off < arr._buf->size) {
+		if (off < b->_size) {
 			dest[off++] = val & 0xff;
-			arr._buf->used = off;
+			b->_used = off;
 			return 1;
 		}
 	}
 	/* extend storage */
+	arr._buf = b;
 	if (!(dest = mpt_array_slice(&arr, off, 1))) {
 		return -1;
 	}
 	*dest = val & 0xff;
+	path->base = (void *) (arr._buf + 1);
 	
 	return 2;
 }
@@ -93,10 +101,10 @@ extern int mpt_path_delchar(MPT_STRUCT(path) *path)
 	--buf;
 	
 	/* intersects with used data */
-	if ((used = buf->used) <= len) {
+	if ((used = buf->_used) <= len) {
 		return MPT_ERROR(MissingData);
 	}
-	buf->used = --used;
+	buf->_used = --used;
 	
 	return path->base[used];
 }

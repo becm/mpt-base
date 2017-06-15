@@ -10,7 +10,7 @@
 
 #include <sys/uio.h>
 
-#include "../mptplot/layout.h"
+# define MPT_TYPE_LIMIT (0x80 / 4)
 
 static const struct {
 	uint8_t key, size;
@@ -21,9 +21,7 @@ static const struct {
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
 	
 	/* basic layout types */
-	{ MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color)) },
-	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
-	{ MPT_ENUM(TypeLine),     sizeof(MPT_STRUCT(line)) },
+	{ MPT_ENUM(TypeBuffer),   0 },
 	
 	/* number format */
 	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
@@ -57,22 +55,24 @@ static const struct {
 	{ 'o', 0 },  /* D-Bus object path */
 };
 
-static size_t scalars_size[0x80/4];
-static int scalars = 0;
-static int pointers = 0;
+static size_t generics[MPT_TYPE_LIMIT];
+static int generics_count = 0;
 
 /*!
  * \ingroup mptConvert
  * \brief get size of registered type
  * 
- * get size of builtin or user type registered by mpt_valtype_add()
+ * Get size of builtin or user type registered by mpt_valtype_add()
+ * or dynamic object/reference type.
  * 
  * \param type  type identifier
  * 
- * \return size of registered type (0 if pointer type)
+ * \return size of registered type (0 if pointer or reference type)
  */
 extern ssize_t mpt_valsize(int type)
 {
+	int base;
+	
 	/* bad type value */
 	if (type < 0
 	    || type > MPT_ENUM(_TypeFinal)) {
@@ -84,10 +84,6 @@ extern ssize_t mpt_valsize(int type)
 		
 		/* generic interface type */
 		if (MPT_value_isUnrefable(type)) {
-			return 0;
-		}
-		/* generic/typed array */
-		if (MPT_value_isArray(type)) {
 			return 0;
 		}
 		/* generic/typed vector */
@@ -103,35 +99,32 @@ extern ssize_t mpt_valsize(int type)
 		return MPT_ERROR(BadType);
 	}
 	type -= MPT_ENUM(_TypeDynamic);
-	/* user pointers */
-	if (pointers) {
-		if (type < pointers) {
-			return 0;
-		}
+	
+	/* type is registered reference (or object) */
+	if ((base = mpt_valtype_isref(type)) >= 0) {
+		return 0;
 	}
-	/* user scalars */
-	if (scalars) {
+	/* user generics */
+	if (generics_count) {
 		int base;
 		
-		if ((type - MPT_ENUM(TypeScalBase)) < scalars) {
+		if ((type - MPT_ENUM(TypeScalBase)) >= generics_count) {
 			return MPT_ERROR(BadType);
 		}
-		if ((base = MPT_value_fromArray(type)) >= 0) {
-			type -= MPT_ENUM(TypeArrBase);
-			return (type < scalars) ? 0 : MPT_ERROR(BadValue);
-		}
+		/* vector for registered user type */
 		if ((base = MPT_value_fromVector(type)) >= 0) {
-			type -= MPT_ENUM(TypeVecBase);
-			return (type < scalars) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
+			type -= MPT_ENUM(TypeVector);
+			return (type < generics_count) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
 		}
 		/* scalar type offset */
 		base = type - MPT_ENUM(TypeScalBase);
-		if (base < scalars) {
-			return scalars_size[base];
+		if (base < generics_count) {
+			return generics[base];
 		}
 	}
 	return MPT_ERROR(BadValue);
 }
+
 /*!
  * \ingroup mptConvert
  * \brief register new type
@@ -144,19 +137,14 @@ extern ssize_t mpt_valsize(int type)
  */
 extern int mpt_valtype_add(size_t csize)
 {
-	if (csize > SIZE_MAX/4) return MPT_ERROR(BadValue);
-	
-	if (!csize) {
-		if (pointers >= MPT_ENUM(TypeVecBase)) {
-			return MPT_ERROR(BadArgument);
-		}
-		return MPT_ENUM(_TypeDynamic) + pointers++;
+	if (csize > SIZE_MAX/4) {
+		return MPT_ERROR(BadValue);
 	}
-	if (scalars >= (int) MPT_arrsize(scalars_size)) {
+	if (generics_count >= (int) MPT_arrsize(generics)) {
 		return MPT_ERROR(BadArgument);
 	}
-	scalars_size[scalars] = csize;
+	generics[generics_count] = csize;
 	
-	return MPT_ENUM(_TypeDynamic) + MPT_ENUM(TypeScalBase) + scalars++;
+	return MPT_ENUM(_TypeDynamic) + MPT_ENUM(TypeScalBase) + generics_count++;
 }
 

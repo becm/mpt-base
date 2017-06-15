@@ -2,72 +2,60 @@
  * insert data in array
  */
 
+#include <errno.h>
 #include <string.h>
+#include <limits.h>
 
 #include "array.h"
 
 /*!
  * \ingroup mptArray
- * \brief insert array data
+ * \brief insert buffer data
  * 
- * Insert data in array on position.
- * Extend array if needed and
- * zero invalid data preceding position.
+ * Insert data in buffer on position.
+ * Need sufficient size for operation.
  * 
- * \param arr	array descriptor
- * \param pos	where to insert
- * \param len	inserted data length
+ * \param buf  buffer data
+ * \param pos  where to insert
+ * \param len  inserted data length
  * 
  * \return start address added data
  */
 extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 {
-	MPT_STRUCT(buffer) *b, *(*resize)(MPT_STRUCT(buffer) *, size_t );
-	uint8_t *base;
-	size_t used, size, total;
+	MPT_STRUCT(buffer) *b;
+	size_t used;
 	
-	if ((b = arr->_buf)) {
-		used = b->used;
-		size = b->size;
-		resize = b->resize;
-		base = (uint8_t *) (b+1);
-	} else {
-		used = size = 0;
-		resize = _mpt_buffer_realloc;
-		base = 0;
-	}
-	
-	if (!len) return base;
-	
-	total = len + pos;
-	
-	/* set after used space */
-	if (pos >= used) {
-		if (total > size) {
-			if (!resize || !(b = resize(b, total))) {
-				return 0;
-			}
-			arr->_buf = b;
-			base = (uint8_t *) (b+1);
-		}
-		/* false 0pointer positive: b = 0 -> size=0, total>=1 */
-		b->used = total;
-		if (pos > used) memset(base+used, 0, pos-used);
-		return base + pos;
-	}
-	total = used + len;
-	
-	/* increase allocation size */
-	if (used >= size && !(b = resize ? resize(b, total) : 0)) {
+	if (len > (LONG_MAX - pos)) {
+		errno = EINVAL;
 		return 0;
 	}
-	/* increase used size */
-	size = used - pos;
-	b->used = total;
-	
-	/* move post data */
-	base = ((uint8_t *) (b+1)) + pos;
-	memmove(base + len, base, size);
-	
-	return base;
+	/* need raw buffer data */
+	if (!(b = arr->_buf)
+	  && (b->_vptr->content(b))) {
+		b->_vptr->ref.unref((void *) b);
+		b = 0;
+	}
+	/* create new raw buffer */
+	if (!b) {
+		uint8_t *base;
+		len += pos;
+		if (!(b = _mpt_buffer_alloc(len))) {
+			return 0;
+		}
+		base = (void *) (b + 1);
+		if (pos) {
+			memset(base, 0, pos);
+		}
+		b->_used = len;
+		return base + pos;
+	}
+	used = b->_used;
+	if (pos > used) {
+		used = pos;
+	}
+	if (!(b = b->_vptr->detach(b, used + len))) {
+		return 0;
+	}
+	return mpt_buffer_insert(b, pos, len);
 }

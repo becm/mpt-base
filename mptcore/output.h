@@ -158,9 +158,9 @@ MPT_STRUCT(connection)
 	~connection();
 protected:
 #endif
-	MPT_STRUCT(outdata)       out;   /* output data backend */
-	uint32_t                  cid;   /* active message id */
-	_MPT_ARRAY_TYPE(command) _wait;  /* pending message reply actions */
+	MPT_STRUCT(outdata)        out;   /* output data backend */
+	uint32_t                   cid;   /* active message id */
+	_MPT_UARRAY_TYPE(command) _wait;  /* pending message reply actions */
 	
 	/* reply context */
 #ifdef __cplusplus
@@ -170,7 +170,6 @@ protected:
 # define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
                                0, MPT_ARRAY_INIT, \
                                0 }
-
 #endif
 };
 
@@ -239,11 +238,13 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , cons
 /* apply command argument to output */
 extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
 
-
 /* create remote output instance */
 extern MPT_INTERFACE(metatype) *mpt_output_remote(void);
 /* create local output instance */
 extern MPT_INTERFACE(output) *mpt_output_local(void);
+
+/* create logging interface with output reference */
+extern MPT_INTERFACE(logger) *mpt_output_logger(MPT_INTERFACE(output) *);
 
 __MPT_EXTDECL_END
 

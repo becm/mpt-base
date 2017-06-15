@@ -197,7 +197,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 		buf = od->con.out.buf._buf;
 		data = (void *) (buf + 1);
 		
-		if (!buf || buf->used < (idlen + smax)) {
+		if (!buf || buf->_used < (idlen + smax)) {
 			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
 			        MPT_tr("bad message size"), MPT_tr("unable to get new data"));
 			return MPT_ERROR(BadValue);
@@ -211,7 +211,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 				return 0;
 			}
 			ans = (void *) (buf + 1);
-			max = buf->used / sizeof(*ans);
+			max = buf->_used / sizeof(*ans);
 			len = 0;
 			
 			/* count waiting slots */
@@ -235,7 +235,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 			MPT_STRUCT(message) msg;
 			
 			msg.base = data + idlen;
-			msg.used = buf->used - idlen;
+			msg.used = buf->_used - idlen;
 			msg.cont = 0;
 			msg.clen = 0;
 			
@@ -303,16 +303,16 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 	if ((what & POLLOUT)
 	    && !(od->con.out.state & (MPT_OUTFLAG(Active) | MPT_OUTFLAG(Received)))
 	    && (buf = od->con.out.buf._buf)
-	    && buf->used) {
+	    && buf->_used) {
 		const struct sockaddr *addr = 0;
 		uint8_t *base = (void *) (buf + 1);
 		ssize_t len = od->con.out._scurr;
 		
 		if (len) {
-			addr = (const struct sockaddr *) (base + buf->used - len);
+			addr = (const struct sockaddr *) (base + buf->_used - len);
 		}
-		if (sendto(od->con.out.sock._id, base, buf->used, 0, addr, len) >= 0) {
-			buf->used = 0;
+		if (sendto(od->con.out.sock._id, base, buf->_used, 0, addr, len) >= 0) {
+			buf->_used = 0;
 			od->con.out._scurr = 0;
 			if (keep < 0) {
 				keep = 0;

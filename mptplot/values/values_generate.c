@@ -31,7 +31,7 @@ extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *arr, int len, const 
 			return data;
 		}
 	}
-	arr->_buf->used -= len * sizeof(double);
+	arr->_buf->_used -= len * sizeof(double);
 	return 0;
 }
 

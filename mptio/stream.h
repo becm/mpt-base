@@ -158,7 +158,7 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 /* push message and flush stream */
 extern int mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
-extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_ARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
+extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_UARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
 /* push message id and content to stream */
 extern int mpt_stream_reply(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *, size_t , const void *);
 /* dispatch next message */
@@ -180,7 +180,7 @@ struct message;
 class Buffer : public iterator, public IODevice, public encode_array
 {
 public:
-	enum { Type = array::Type };
+	enum { Type = IODevice::Type };
 	
 	Buffer(const Reference<buffer> & = Reference<buffer>(0));
 	virtual ~Buffer();
@@ -206,7 +206,7 @@ public:
 	Stream(const streaminfo * = 0);
 	virtual ~Stream();
 	
-	enum { Type = IODevice::Type };
+	enum { Type = output::Type };
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int , void *) const __MPT_OVERRIDE;

@@ -42,18 +42,12 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		MPT_STRUCT(path) path;
 		char *end, *pos, tmp[1024];
 		MPT_STRUCT(value) d;
-		size_t vlen;
 		
 		if (!(end = strchr(var, '='))) {
 			continue;
 		}
 		path.base = pos = tmp;
 		
-		/* valid length too big */
-		if ((vlen = strlen(end+1)) >= UINT16_MAX) {
-			errno = ERANGE;
-			continue;
-		}
 		/* path,sep,value,end > total */
 		if (((size_t) (end - var) + 1) >= sizeof(tmp)) {
 			errno = ERANGE;
@@ -61,7 +55,9 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		}
 		
 		/* normalize path */
-		while (var < end) { *(pos++) = tolower(*(var++)); }
+		while (var < end) {
+			*(pos++) = tolower(*(var++));
+		}
 		*(pos++) = '\0';
 		
 		/* path matches filter */

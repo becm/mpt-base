@@ -30,7 +30,7 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 	int len;
 	
 	if (!type) {
-		static const char types[] = { MPT_value_toArray('c'), 's', 0 };
+		static const char types[] = { MPT_value_toVector('c'), 's', 0 };
 		if (data) *((const char **) data) = types;
 		return 0;
 	}
@@ -40,13 +40,13 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 	base = ((char *) (s->_a._buf + 1)) + s->_off;
 	
 	if (type == MPT_value_toVector('c')
-	    || type == MPT_ENUM(TypeArrBase)) {
+	    || type == MPT_ENUM(TypeVector)) {
 		struct iovec *vec;
 		if ((vec = data)) {
 			vec->iov_base = (char *) base;
 			vec->iov_len  = len;
 		}
-		return s->_off ? type : MPT_value_toArray('c');
+		return s->_off ? type : MPT_ENUM(TypeBuffer);
 	}
 	if (!(end = memchr(base, 0, len))) {
 		return MPT_ERROR(BadValue);

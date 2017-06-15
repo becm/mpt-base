@@ -24,8 +24,12 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 	size_t used, avail, pos, total;
 	
 	if ((buf = sl->_a._buf)) {
-		used = buf->used;
-		avail = buf->size - used;
+		int type = buf->_vptr->content(buf);
+		if (type && type != 'c') {
+			return MPT_ERROR(BadType);
+		}
+		used = buf->_used;
+		avail = buf->_size - used;
 	}
 	else {
 		used = 0;
@@ -46,19 +50,19 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 	if (!esze) {
 		if (!nblk) return 0;
 		if (nblk <= avail) {
-			return avail/nblk;
+			return avail / nblk;
 		}
 		avail += nblk;
 		if (!mpt_array_slice(&sl->_a, pos, nblk)) {
 			return -1;
 		}
-		mpt_array_cut(&sl->_a, pos, nblk);
-		return avail/nblk;
+		mpt_buffer_cut(sl->_a._buf, pos, nblk);
+		return avail / nblk;
 	}
 	total = nblk * esze;
 	
 	/* fast data append path */
-	if (total < avail && !buf->shared) {
+	if (total < avail && buf->_ref._val < 2) {
 		if (mpt_array_append(&sl->_a, total, from)) {
 			sl->_len = pos + total;
 			return nblk;
@@ -74,12 +78,12 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		buf = sl->_a._buf;
 		memmove(to, to+sl->_off, pos = sl->_len);
 		sl->_off = 0;
-		buf->used = pos;
-		avail = buf->size - pos;
+		buf->_used = pos;
+		avail = buf->_size - pos;
 	}
 	/* fast data append */
 	if (total <= avail && mpt_array_append(&sl->_a, total, from)) {
-		sl->_len = sl->_a._buf->used;
+		sl->_len = sl->_a._buf->_used;
 		return nblk;
 	}
         if ((avail /= esze)) {
@@ -95,6 +99,6 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		++avail;
 		from = ((uint8_t *) from) + esze;
 	}
-	sl->_len = sl->_a._buf ? sl->_a._buf->used : 0;
+	sl->_len = sl->_a._buf ? sl->_a._buf->_used : 0;
 	return avail ? (ssize_t) avail : -2;
 }

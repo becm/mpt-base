@@ -385,26 +385,49 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 		}
 		if (dest) memcpy(dest, from, flen);
 		break;
-	  default:
-		/* array conversion */
-		if (MPT_value_isArray(dtype)) {
-			if (ftype != dtype) {
-				/* require generic array target */
-				if ((dtype & 0x1f)
-				    || !MPT_value_isArray(ftype)) {
-					return MPT_ERROR(BadType);
-				}
-			}
-			mpt_array_clone(dest, (const MPT_STRUCT(array) *) from);
-		}
-		/* vector conversion */
-		else if (MPT_value_isVector(dtype)) {
-			struct iovec *vec = dest;
+	  case MPT_ENUM(TypeBuffer):
+		if (ftype != dtype) {
+			MPT_STRUCT(buffer) * const * ptr = (void *) from;
+			MPT_STRUCT(buffer) *b = *ptr;
+			int c = -1;
 			
-			/* no special/pointer types */
-			if ((ftype & 0x7f) < 0x20) {
+			if (b) {
+				c = b->_vptr->content(b);
+			}
+			if (dtype == 's') {
+				const char **txt = dest;
+				if (c < 0) {
+					*txt = 0;
+				}
+				else if (!c || c == 'c') {
+					char *s;
+					if ((s = memchr(b + 1, 0, b->_used))) {
+						*txt = (char *) b + 1;
+					} else {
+						return MPT_ERROR(BadValue);
+					}
+				}
 				return MPT_ERROR(BadType);
 			}
+			if (!(ftype = MPT_value_fromVector(dtype))) {
+				struct iovec *vec = dest;
+				/* require matching types */
+				if ((int) ftype != c) {
+					return MPT_ERROR(BadType);
+				}
+				vec->iov_base = b + 1;
+				vec->iov_len = b->_used;
+				break;
+			}
+			return MPT_ERROR(BadType);
+		}
+		if (dest) memcpy(dest, from, flen);
+		break;
+	  default:
+		/* vector conversion */
+		if (MPT_value_isVector(dtype)) {
+			struct iovec *vec = dest;
+			
 			/* copy vector data */
 			if (MPT_value_isVector(ftype)) {
 				/* require same or generic type */
@@ -412,34 +435,36 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 					return MPT_ERROR(BadType);
 				}
 				memcpy(dest, from, flen);
+				break;
 			}
 			/* convert from array */
-			else if (MPT_value_isArray(ftype)) {
-				MPT_STRUCT(array) *a = (MPT_STRUCT(array) *) from;
-				MPT_STRUCT(buffer) *b;
+			else if (ftype == MPT_ENUM(TypeBuffer)) {
+				MPT_STRUCT(buffer) * const * ptr = (void *) from;
+				MPT_STRUCT(buffer) *b = *ptr;
+				int c = -1;
 				
-				/* check base type */
-				if ((dtype & 0x1f)
-			            && (dtype & 0x1f) != (ftype & 0x1f)) {
-					return MPT_ERROR(BadType);
-				}
-				if ((b = a->_buf) && b->used) {
-					vec->iov_base = b + 1;
-					vec->iov_len = b->used;
-				} else {
+				if (!b) {
 					vec->iov_base = 0;
 					vec->iov_len = 0;
+					break;
 				}
+				/* check base type */
+				c = b->_vptr->content(b);
+				if (c != MPT_value_fromVector(dtype)) {
+					return MPT_ERROR(BadType);
+				}
+				vec->iov_base = b + 1;
+				vec->iov_len = b->_used;
+				break;
 			}
 			/* convert from scalar */
-			else if ((dtype & 0x1f)
-			         && (dtype & 0x1f) != (ftype & 0x1f)) {
+			else if (!MPT_value_isScalar(ftype)
+			      || (dtype & 0x1f) != (ftype & 0x1f)) {
 				return MPT_ERROR(BadType);
 			}
-			else {
-				vec->iov_base = (void *) from;
-				vec->iov_len = flen;
-			}
+			vec->iov_base = (void *) from;
+			vec->iov_len = flen;
+			break;
 		}
 		/* unable to convert */
 		else if (dtype != ftype) {

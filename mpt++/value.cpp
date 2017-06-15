@@ -3,6 +3,8 @@
  *   type ID classification
  */
 
+#include "array.h"
+
 #include "convert.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -63,44 +65,45 @@ size_t value::scalar(int type)
 void * const *value::pointer(int type)
 {
     /* incompatible type */
-    if (!fmt || (type && type != *fmt)) {
+    if (!ptr || !fmt || (type && type != *fmt)) {
         return 0;
     }
-    if (MPT_value_isArray(type & ~0x7f)
-        || mpt_valsize(type)) {
+    if (mpt_valsize(type)) {
         return 0;
     }
     return reinterpret_cast<void * const *>(ptr);
 }
 const struct iovec *value::vector(int type)
 {
+    int from;
+    if (!ptr || !fmt || !(from = *fmt)) {
+        return 0;
+    }
+    if (!MPT_value_isVector(from)) {
+        return 0;
+    }
     /* type out of range */
-    if (type < 0 || type > _TypeFinal) {
-        return 0;
-    }
-    if (type && type != *fmt) {
-        return 0;
-    }
-    if (!MPT_value_isVector(type & ~_TypeDynamic)
-        || mpt_valsize(type) <= 0) {
+    if (type && from != !MPT_value_toVector(type)) {
         return 0;
     }
     return reinterpret_cast<const struct iovec *>(ptr);
 }
 const array *value::array(int type)
 {
+    int from;
+    if (!ptr || !fmt || !(from = *fmt)) {
+        return 0;
+    }
     /* type out of range */
-    if (type < 0 || type > _TypeFinal) {
+    if (from != MPT_ENUM(TypeBuffer)) {
         return 0;
     }
-    if (type && type != *fmt) {
+    const struct array *arr = reinterpret_cast<const struct array *>(ptr);
+    buffer *b = arr->ref().pointer();
+    if (type && b && type != b->content()) {
         return 0;
     }
-    if (!MPT_value_isArray(type & ~_TypeDynamic)
-        || mpt_valsize(type)) {
-        return 0;
-    }
-    return reinterpret_cast<const struct array *>(ptr);
+    return arr;
 }
 
 __MPT_NAMESPACE_END

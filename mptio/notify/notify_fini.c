@@ -22,12 +22,10 @@ extern void mpt_notify_fini(MPT_STRUCT(notify) *no)
 		no->_disp.cmd = 0;
 		no->_disp.arg = 0;
 	}
-	/* clear slot data */
-	mpt_array_callunref(&no->_slot);
-	mpt_array_clone(&no->_slot, 0);
-	
 	/* clear temporal data */
 	mpt_array_clone(&no->_wait, 0);
+	/* clear slot data */
+	mpt_array_clone(&no->_slot, 0);
 	
 	if (no->_sysfd >= 0) {
 		(void) close(no->_sysfd);

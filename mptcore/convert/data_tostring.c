@@ -25,10 +25,9 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 {
 	static const char def[] = "";
 	const char *base;
-	size_t used;
 	
 	/* simple pointer */
-	if ((type & 0xff) == 's') {
+	if (type == 's') {
 		const char * const *txt = *from;
 		if (!(base = *txt)) {
 			base = def;
@@ -40,33 +39,37 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return base;
 	}
 	/* data is text array */
-	if ((type & 0xff) == MPT_value_toArray('c')) {
-		const MPT_STRUCT(array) *a = *from;
-		size_t size;
+	if (type == MPT_ENUM(TypeBuffer)) {
+		static const char def[] = "\0";
+		MPT_STRUCT(buffer) * const *ptr = *from;
+		MPT_STRUCT(buffer) *b;
 		
-		if (!a) {
+		if (!(b = *ptr)) {
+			*from = ptr + 1;
+			if (len) *len = 0;
+			return def;
+		}
+		if ((type = b->_vptr->content(b))
+		    && type != 'c') {
 			return 0;
 		}
-		if (a->_buf) {
-			base = (char *) (a->_buf+1);
-			used = a->_buf->used;
-			size = a->_buf->size;
-		} else {
-			base = def;
-			used = 0;
-			size = 1;
+		if (!len) {
+			char *sep;
+			if (!b->_used) {
+				return def;
+			}
+			if (!(sep = memchr(b + 1, 0, b->_used))) {
+				return 0;
+			}
 		}
-		if (len) {
-			*len = used;
+		else {
+			*len = b->_used;
 		}
-		else if (used >= size || base[used]) {
-			return 0;
-		}
-		*from = a + 1;
-		return base;
+		*from = ptr + 1;
+		return (char *) (b + 1);
 	}
 	/* data is text vector */
-	if ((type & 0xff) == MPT_value_toVector('c')) {
+	if (type == MPT_value_toVector('c')) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;

@@ -2,6 +2,7 @@
  * array extension
  */
 
+#include <errno.h>
 #include <string.h>
 
 #include "array.h"
@@ -22,27 +23,35 @@
 extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *base)
 {
 	MPT_STRUCT(buffer) *b;
-	size_t	used;
-	void	*dest;
+	size_t used;
+	void *dest;
 	
 	if (!len) return 0;
 	
 	if (!(b = arr->_buf)) {
-		if (!(b = _mpt_buffer_realloc(0, sizeof(*b)+len))) {
+		if (!(b = _mpt_buffer_alloc(len))) {
 			return 0;
 		}
-		b->used = len;
 		used = 0;
 		arr->_buf = b;
 	}
-	else if (len > (b->size - (used=b->used))) {
-		if (!b->resize || !(b = b->resize(b, used+len))) {
+	/* require raw buffer to append data */
+	else if (b->_vptr->content(b)) {
+		errno = EINVAL;
+		return 0;
+	}
+	else if (len > (b->_size - (used = b->_used))) {
+		if (len > (SIZE_MAX - used)) {
+			errno = EINVAL;
+			return 0;
+		}
+		if (!(b = b->_vptr->detach(b, used + len))) {
 			return 0;
 		}
 		arr->_buf = b;
 	}
-	dest = ((uint8_t *)(b+1)) + used;
-	b->used = used + len;
+	dest = ((uint8_t *)(b + 1)) + used;
+	b->_used = used + len;
 	
 	if (base) {
 		memcpy(dest, base, len);

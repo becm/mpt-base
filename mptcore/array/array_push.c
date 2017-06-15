@@ -49,10 +49,13 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 	/* current buffer data */
 	if (!(b = arr->_d._buf)) {
 		/* use initial data size */
-		if (!(b = _mpt_buffer_realloc(0, len > 64 ? len : 64))) {
+		if (!(b = _mpt_buffer_alloc(len > 64 ? len : 64))) {
 			return -1;
 		}
 		arr->_d._buf = b;
+	}
+	else if (b->_vptr->content(b)) {
+		return MPT_ERROR(BadType);
 	}
 	max = 0;
 	
@@ -62,11 +65,11 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		
 		off = arr->_state.done + arr->_state.scratch;
 		
-		if ((off = b->used - off) < 0) {
+		if ((off = b->_used - off) < 0) {
 			return MPT_ERROR(BadArgument);
 		}
-		dest.iov_base = ((uint8_t *) (b+1)) + off;
-		dest.iov_len  = b->size - off;
+		dest.iov_base = ((uint8_t *) (b + 1)) + off;
+		dest.iov_len  = b->_size - off;
 		
 		/* next regular operation */
 		if (!len) {
@@ -80,12 +83,12 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		off += arr->_state.done + arr->_state.scratch;
 		
 		/* size update */
-		if (b->size < (size_t) off) {
+		if (b->_size < (size_t) off) {
 			MPT_ABORT("invalid encoder data size");
 			arr->_enc(&arr->_state, 0, 0);
 			return -1;
 		}
-		b->used = off;
+		b->_used = off;
 		
 		/* retry on size problem only */
 		if (cont == MPT_ERROR(MissingBuffer)) {
@@ -114,7 +117,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 			max += cont;
 		}
 		/* get larger buffer */
-		if (!b->resize || !(b = b->resize(b, b->size + 64))) {
+		if (!(b = b->_vptr->detach(b, b->_size + 64))) {
 			return max ? max : MPT_ERROR(MissingBuffer);
 		}
 		arr->_d._buf = b;

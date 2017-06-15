@@ -91,7 +91,7 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 	}
 	/* command data on buffer */
 	if ((msg = arr->_buf)) {
-		len  = msg->used / sizeof(*cmd);
+		len  = msg->_used / sizeof(*cmd);
 		base = (void *) (msg+1);
 	} else {
 		if ((cmd = mpt_array_append(arr, sizeof(*cmd) * 8, 0))) {
@@ -132,7 +132,7 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 		}
 	}
 	/* save used size */
-	msg->used = used * sizeof(*cmd);
+	msg->_used = used * sizeof(*cmd);
 	
 	/* try to find low free id */
 	if (++mid > max) {

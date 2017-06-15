@@ -52,18 +52,18 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 	if (path->flags & MPT_PATHFLAG(HasArray)) {
 		MPT_STRUCT(array) arr;
 		arr._buf = (void *) path->base;
-		pos = (--arr._buf)->used;
+		pos = (--arr._buf)->_used;
 		if (len > pos) {
 			return MPT_ERROR(BadValue);
 		}
 		pos = len + path->off;
-		if (arr._buf->shared) {
+		if (arr._buf->_ref._val > 1) {
 			if (!(data = mpt_array_slice(&arr, 0, pos))) {
 				return -1;
 			}
 			path->base = (char *) data;
 		}
-		arr._buf->used = pos;
+		arr._buf->_used = pos;
 	}
 	
 	if (!(path->len = len)) {
@@ -99,18 +99,18 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
 		return 0;
 	}
-	used = (--arr._buf)->used;
+	used = (--arr._buf)->_used;
 	
 	if (len > used) {
-		return MPT_ERROR(MissingData);
+		return MPT_ERROR(BadValue);
 	}
 	if (len == used) {
 		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		return 0;
 	}
-	if (!arr._buf->shared) {
+	if (arr._buf->_ref._val < 2) {
 		path->flags &= ~MPT_PATHFLAG(KeepPost);
-		arr._buf->used = len;
+		arr._buf->_used = len;
 		((char *) path->base)[len] = 0;
 		return 1;
 	}

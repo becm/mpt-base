@@ -1,6 +1,5 @@
 
-#include <errno.h>
-#include <limits.h>
+#include <inttypes.h>
 
 #include "array.h"
 #include "config.h"
@@ -18,18 +17,22 @@
 extern int mpt_path_valid(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(buffer) *buf;
-	size_t post;
+	ssize_t post;
 	
 	if (!(buf = (void *) path->base)) {
-		return -1;
+		return 0;
 	}
 	if (!(path->flags & MPT_PATHFLAG(HasArray))) {
 		return 0;
 	}
-	post  = buf[-1].used;
+	--buf;
+	post  = buf->_used;
 	post -= path->off;
 	post -= path->len;
 	
+	if (post < 0) {
+		return MPT_ERROR(BadValue);
+	}
 	if (post) {
 		path->flags |= MPT_PATHFLAG(KeepPost);
 	}

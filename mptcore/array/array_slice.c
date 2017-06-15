@@ -2,6 +2,7 @@
  * array slice access
  */
 
+#include <errno.h>
 #include <string.h>
 
 #include "array.h"
@@ -21,47 +22,57 @@
 extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 {
 	MPT_STRUCT(buffer) *buf;
-	size_t	total = off + len, used;
+	size_t total, used, max;
+	uint8_t *ptr;
 	
-	if (!(buf = arr->_buf)) {
-		if (!len) return 0;
-		if (!(buf = _mpt_buffer_realloc(0, total))) return 0;
-		buf->used = total;
-		arr->_buf = buf;
-		if (off) memset(buf+1, 0, off);
-		return ((uint8_t *) (buf+1)) + off;
+	if (len > (SIZE_MAX - off)) {
+		errno = EINVAL;
+		return 0;
 	}
-	used = buf->used;
+	total = off + len;
+	
+	/* require raw buffer data */
+	if ((buf = arr->_buf)
+	  && buf->_vptr->content(buf)) {
+		buf->_vptr->ref.unref((void *) buf);
+		buf = 0;
+	}
+	if (!buf) {
+		if (!len || !(buf = _mpt_buffer_alloc(total))) {
+			return 0;
+		}
+		buf->_used = total;
+		arr->_buf = buf;
+		if (off) memset(buf + 1, 0, off);
+		return ((uint8_t *) (buf + 1)) + off;
+	}
+	used = buf->_used;
 	
 	/* no shared data */
-	if (!buf->shared) {
+	if (buf->_ref._val < 2) {
+		ptr = ((uint8_t *) (buf + 1)) + off;
 		/* slice in existing data */
-		if (total <= used)
-			return ((uint8_t *) (buf+1)) + off;
-		
-		/* resize needed */
-		if (total > buf->size) {
-			if (!buf->resize || !(buf = buf->resize(buf, total)))
-				return 0;
-			arr->_buf = buf;
+		if (total <= used) {
+			return ptr;
+		}
+		if (total < buf->_size) {
+			if (off > used) {
+				memset(ptr, 0, used - off);
+			}
+			buf->_used = total;
+			return ptr;
 		}
 	}
-	/* buffer data is shared */
-	else {
-		if (used > total) total = used;
-		
-		/* forced resize of shared data */
-		if (!buf->resize || !(buf = buf->resize(buf, total)))
-			return 0;
-		
-		arr->_buf = buf;
+	max = total < used ? used : total;
+	if (!(buf = buf->_vptr->detach(buf, max))) {
+		return 0;
 	}
-	buf->used = total;
-	
-	/* initialisation before offset */
-	if (used < off) {
-		memset(((uint8_t *) (buf+1))+used, 0, off-used);
+	ptr = ((uint8_t *) (buf + 1)) + off;
+	if (off > used) {
+		memset(ptr, 0, used - off);
 	}
-	
-	return ((uint8_t *) (buf+1)) + off;
+	if (used < total) {
+		buf->_used = total;
+	}
+	return buf;
 }

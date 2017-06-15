@@ -7,11 +7,7 @@
 
 #include <sys/uio.h>
 
-#include "array.h"
-
-#include "meta.h"
-
-#include "layout.h"
+#include "values.h"
 
 struct RawData
 {
@@ -27,7 +23,7 @@ static void rdUnref(MPT_INTERFACE(unrefable) *ptr)
 	
 	if ((buf = rd->st._buf)) {
 		MPT_STRUCT(rawdata_stage) *st = (void *) (buf+1);
-		size_t i, len = buf->used/sizeof(*st);
+		size_t i, len = buf->_used/sizeof(*st);
 		
 		for (i = 0; i < len; ++i) {
 			mpt_stage_fini(st + i);
@@ -48,7 +44,7 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		nc = rd->act;
 	}
 	if (!(buf = rd->st._buf)
-	    || nc >= (int) (buf->used / sizeof(*st))) {
+	    || nc >= (int) (buf->_used / sizeof(*st))) {
 		if (!rd->max || nc >= (int) rd->max) {
 			return MPT_ERROR(BadValue);
 		}
@@ -64,7 +60,7 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 	if (!(arr = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (arr->_format && fmt != arr->_format) {
+	if (arr->_type && fmt != arr->_type) {
 		return MPT_ERROR(BadType);
 	}
 	if (len) {
@@ -77,7 +73,7 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		} else {
 			memset(dest, 0, len);
 		}
-		arr->_format = fmt;
+		arr->_type = fmt;
 		arr->_flags |= 0x1;
 	}
 	return arr->_flags;
@@ -94,7 +90,7 @@ static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 	}
 	/* reuse existing cycle */
 	if ((buf = rd->st._buf)
-	    && act < buf->used / sizeof(MPT_STRUCT(rawdata_stage))) {
+	    && act < buf->_used / sizeof(MPT_STRUCT(rawdata_stage))) {
 		return act;
 	}
 	/* add cycle placeholder */
@@ -120,7 +116,7 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 		nc = rd->act;
 	}
 	/* cycle does not exist */
-	if (nc >= (int) (buf->used/sizeof(*st))) {
+	if (nc >= (int) (buf->_used / sizeof(*st))) {
 		return MPT_ERROR(BadValue);
 	}
 	/* get existing cycle dimension data */
@@ -128,19 +124,19 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 	if (!(arr = mpt_stage_data(st + nc, dim))) {
 		return MPT_ERROR(BadValue);
 	}
-	if (!arr->_format) {
+	if (!arr->_type) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (vec) {
 		if ((buf = arr->_d._buf)) {
 			vec->iov_base = (void *) (buf + 1);
-			vec->iov_len  = buf->used;
+			vec->iov_len  = buf->_used;
 		} else {
 			vec->iov_base = 0;
 			vec->iov_len  = 0;
 		}
 	}
-	return arr->_format;
+	return arr->_type;
 }
 
 static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
@@ -154,7 +150,7 @@ static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 		return MPT_ERROR(BadOperation);
 	}
 	st = (void *) (buf + 1);
-	max = buf->used/sizeof(*st);
+	max = buf->_used / sizeof(*st);
 	
 	if (part < 0) {
 		part = rd->act;
@@ -165,7 +161,7 @@ static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 	if (!(buf = st[part]._d._buf)) {
 		return 0;
 	}
-	return buf->used/sizeof(MPT_STRUCT(typed_array));
+	return buf->_used / sizeof(MPT_STRUCT(typed_array));
 }
 
 static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
@@ -176,7 +172,7 @@ static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 	if (!(buf = rd->st._buf)) {
 		return 0;
 	}
-	return buf->used/sizeof(MPT_STRUCT(rawdata_stage));
+	return buf->_used / sizeof(MPT_STRUCT(rawdata_stage));
 }
 
 static const MPT_INTERFACE_VPTR(rawdata) _vptr = {

@@ -35,7 +35,7 @@ extern int mpt_array_message(MPT_STRUCT(array) *arr, const MPT_STRUCT(message) *
 	if (!(base = mpt_array_slice(&a, 0, len+1))) {
 		return MPT_ERROR(BadOperation);
 	}
-	a._buf->used = 0;
+	a._buf->_used = 0;
 	
 	msg = *ptr;
 	while ((len = mpt_message_argv(&msg, asep)) >= 0) {
