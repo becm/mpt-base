@@ -124,9 +124,9 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
 #define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) >= MPT_ENUM(TypeVector) \
                             && ((v) & ~MPT_ENUM(_TypeDynamic)) <  MPT_ENUM(TypeScalBase))
-#define MPT_value_toVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) > MPT_ENUM(TypeScalBase) \
-                             ? 0 \
-                             : (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector))
+#define MPT_value_toVector(v) (MPT_value_isScalar(v) \
+                             ? (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector) \
+                             : 0) \
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
