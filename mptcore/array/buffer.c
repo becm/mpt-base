@@ -58,27 +58,33 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, lon
 	}
 	else {
 		long size = buf->_size, align;
+		size_t next = len + sizeof(*b);
 		
-		if (!len) {
-			len = psize;
+		if ((align = next % psize)) {
+			next += psize - align;
 		}
-		else if ((align = len % psize)) {
-			len += psize - align;
+		if (len < used) {
+			used = len;
+		}
+		/* compatible size */
+		if (len < size) {
+			/* keep instance */
+			if (next <= (size_t) psize || len >= size / 2 || len > size - 1024) {
+				buf->_used = used;
+				return buf;
+			}
 		}
 		/* try to get in-place memory */
-		if (len < size || len <= 1024 || used > size/4) {
-			if (!(b = realloc(buf, len))) {
+		if (used > size / 4) {
+			if (!(b = realloc(buf, next))) {
 				return 0;
 			}
-			len -= sizeof(*b);
-			b->_size = len;
-			if (len < used) {
-				buf->_used = len;
-			}
+			b->_used = used;
+			b->_size = next - sizeof(*b);
 			return b;
 		}
 		/* get new memory in favour of less copying */
-		else if (!(b = _mpt_buffer_alloc(len))) {
+		if (!(b = _mpt_buffer_alloc(len))) {
 			return 0;
 		}
 	}
