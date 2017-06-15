@@ -74,7 +74,7 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, const MPT_STRUCT(value) *val)
 				dlen = strlen(val->ptr);
 			}
 		}
-		else if (!(src = mpt_data_tostring((const void **) src, *val->fmt, &dlen))) {
+		else if (!(src = mpt_data_tostring((const void **) &src, *val->fmt, &dlen))) {
 			errno = EINVAL;
 			return 0;
 		}
