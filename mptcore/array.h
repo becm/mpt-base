@@ -29,20 +29,16 @@ public:
 	enum { Type = TypeBuffer };
 	
 	void unref() __MPT_OVERRIDE;
-	virtual buffer *detach(long capacity = -1);
-	virtual int content() const;
+	virtual buffer *detach(long capacity = -1) = 0;
+	virtual int content() const = 0;
 	
 	uintptr_t addref();
 	bool shared() const;
 	size_t left() const;
-	
-	static buffer *create(size_t);
 protected:
 	buffer(size_t);
 	inline ~buffer()
 	{ }
-	friend struct array;
-	friend struct path;
 #else
 MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
@@ -63,6 +59,28 @@ MPT_INTERFACE_VPTR(buffer)
 MPT_STRUCT(array)
 {
 #ifdef __cplusplus
+	class Data : public buffer
+	{
+	public:
+		inline Data(size_t post) : buffer(post)
+		{ }
+		
+		Data *detach(long capacity = -1) __MPT_OVERRIDE;
+		int content() const __MPT_OVERRIDE;
+		
+		inline size_t length() const
+		{ return _used; }
+		inline size_t left() const
+		{ return _size - _used; }
+		inline void *data() const
+		{ return static_cast<void *>(const_cast<Data *>(this + 1)); }
+		
+		bool setLength(size_t);
+		static Data *create(size_t);
+	protected:
+		inline ~Data()
+		{ }
+	};
 	enum { Type = 0x200 }; /* TODO: move to system types */
 	
 	array(array const&);
@@ -85,8 +103,8 @@ MPT_STRUCT(array)
 	int set(value);
 	int set(metatype &);
 	int printf(const char *fmt, ... );
+	bool set(const Reference<buffer> &);
 	
-	array & operator=  (const Reference<buffer> &);
 	array & operator=  (const array &);
 	array & operator=  (const slice &);
 	array & operator+= (const array &);
@@ -97,7 +115,7 @@ protected:
 # define _MPT_ARRAY_TYPE(x)     ::mpt::Array<x>
 # define _MPT_UARRAY_TYPE(x)    ::mpt::UniqueArray<x>
 # define _MPT_REF_ARRAY_TYPE(x) ::mpt::RefArray<x>
-	Reference<buffer> _buf;
+	Reference<Data> _buf;
 #else
 	MPT_STRUCT(buffer) *_buf;
 # define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
@@ -138,7 +156,7 @@ struct slice : array
 {
 	slice(const array &);
 	slice(const slice &);
-	slice(buffer * = 0);
+	slice(Data * = 0);
 	~slice();
 	
 	Slice<uint8_t> data() const;
@@ -296,21 +314,21 @@ inline bool buffer::shared() const
 }
 inline void *array::base() const
 {
-	buffer *b = _buf.pointer();
-	if (!b || b->content()) {
+	Data *d = _buf.pointer();
+	if (!d || d->content()) {
 		return 0;
 	}
-	return static_cast<void *>(b + 1);
+	return d->data();
 }
 inline size_t array::length() const
 {
-	buffer *b = _buf.pointer();
-	return b && !b->content() ? b->_used : 0;
+	Data *d = _buf.pointer();
+	return d && !d->content() ? d->length() : 0;
 }
 inline size_t array::left() const
 {
-	buffer *b = _buf.pointer();
-	return b && !b->content() ? b->_size - b->_used : 0;
+	Data *d = _buf.pointer();
+	return d && !d->content() ? d->left() : 0;
 }
 inline bool array::shared() const
 {

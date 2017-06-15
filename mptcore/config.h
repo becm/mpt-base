@@ -50,7 +50,8 @@ enum MPT_PATHFLAG(Flags) {
 	
 	bool clearData();
 	
-    protected:
+protected:
+	::mpt::array::Data *array() const;
 #else
 MPT_STRUCT(path)
 {

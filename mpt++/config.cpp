@@ -11,13 +11,20 @@
 __MPT_NAMESPACE_BEGIN
 
 // non-trivial path operations
+struct array::Data *path::array() const
+{
+	if (!base || !(flags & HasArray)) {
+		return 0;
+	}
+	return reinterpret_cast<array::Data *>(const_cast<char *>(base)) - 1;
+}
 path::path(int s, int a, const char *path) : base(0), off(0), len(0)
 {
     sep = s;
     assign = a;
     mpt_path_set(this, path, -1);
 }
-path::path(const path &from)
+path::path(const path &from) : base(0)
 {
     *this = from;
 }
@@ -27,32 +34,30 @@ path::~path()
 }
 path &path::operator =(const path &from)
 {
-    memcpy(this, &from, sizeof(*this));
-    if (from.flags & HasArray) {
-        buffer *buf = reinterpret_cast<buffer *>(const_cast<char *>(from.base));
-        buf[-1].addref();
+    if (this == &from) {
+        return *this;
     }
+    ::mpt::array::Data *s = from.array(), *t = array();
+    if (s != t) {
+        if (s) s->addref();
+        if (t) t->unref();
+    }
+    memcpy(this, &from, sizeof(*this));
     return *this;
 }
 
 Slice<const char> path::data() const
 {
-    if (flags & HasArray) {
-        buffer *buf = (buffer *) base;
-        return Slice<const char>(base, buf[-1]._used - off - len);
-    }
+    struct ::mpt::array::Data *d = array();
+    if (d) return Slice<const char>(static_cast<char *>(d->data()), d->length() - off - len);
     return Slice<const char>(0, 0);
 }
 bool path::clearData()
 {
-    if (!(flags & HasArray)) {
-        return true;
-    }
-    buffer *buf = (buffer *) base;
+    struct ::mpt::array::Data *d = array();
     size_t max = off + len;
-    if (max > buf[-1]._used) return false;
-    buf[-1]._used = max;
-    return true;
+    if (d) return d->setLength(max);
+    return max ? false : true;
 }
 
 void path::set(const char *path, int len, int s, int a)
@@ -102,11 +107,11 @@ void config::del(const char *p, int sep, int len)
 }
 int config::environ(const char *glob, int sep, char * const env[])
 {
-	return mpt_config_environ(this, glob, sep, env);
+    return mpt_config_environ(this, glob, sep, env);
 }
 config *config::global(const path *p)
 {
-	return mpt_config_global(p);
+    return mpt_config_global(p);
 }
 // config with private or global node store
 Config::Config()

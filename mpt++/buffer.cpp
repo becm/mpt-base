@@ -18,7 +18,7 @@ __MPT_NAMESPACE_BEGIN
 // buffer metatype
 Buffer::Buffer(const Reference<buffer> &a)
 {
-    _d = a;
+    _d.set(a);
 }
 Buffer::~Buffer()
 { }
