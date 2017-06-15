@@ -60,25 +60,25 @@ int main(int argc, char * const argv[])
     mtrace();
 
     mpt::notify n;
+    mpt::dispatch d;
+
     int pos;
     if ((pos = mpt::mpt_init(&n, argc, argv)) < 0) {
         perror("mpt init");
         return 1;
     }
-    n.setDispatch(0);
+    n.setDispatch(&d);
 
-    MyClient *c = new MyClient(argv[pos]);
-    c->init();
+    MyClient c(argv[pos]);
+    c.init();
 
-    c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     const mpt::object *o;
-    if ((o = c->cast<mpt::object>())) {
+    if ((o = c.cast<mpt::object>())) {
         for (auto p : *o) {
             std::cout << p << std::endl;
         }
     }
     n.loop();
-
-    c->unref();
 }
