@@ -16,9 +16,9 @@
 __MPT_NAMESPACE_BEGIN
 
 // buffer metatype
-Buffer::Buffer(const Reference<buffer> &a)
+Buffer::Buffer(array const &a)
 {
-    _d.set(a);
+    _d = a;
 }
 Buffer::~Buffer()
 { }
@@ -33,7 +33,7 @@ Buffer *Buffer::clone() const
 	    return 0;
 	}
     }
-    Buffer *b = new Buffer(_d.ref());
+    Buffer *b = new Buffer(_d);
     b->_state = _state;
     b->_enc = _enc;
     return b;

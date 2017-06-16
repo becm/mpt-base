@@ -99,8 +99,8 @@ const array *value::array(int type)
         return 0;
     }
     const struct array *arr = reinterpret_cast<const struct array *>(ptr);
-    buffer *b = arr->ref().pointer();
-    if (type && b && type != b->content()) {
+    const buffer *b = arr->data();
+    if (type >= 0 && type != b->content()) {
         return 0;
     }
     return arr;

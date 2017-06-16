@@ -86,11 +86,12 @@ MPT_STRUCT(array)
 	array(array const&);
 	array(size_t = 0);
 	
+	const Data *data() const;
+	
 	size_t length() const;
 	size_t left() const;
 	void *base() const;
 	bool shared() const;
-	const Reference<buffer> &ref() const;
 	
 	char *string();
 	bool compact();
@@ -99,11 +100,11 @@ MPT_STRUCT(array)
 	void *prepend(size_t , const void * = 0);
 	void *insert(size_t , size_t , const void * = 0);
 	void *set(size_t , const void * = 0);
+	bool set(const Reference<buffer> &);
 	
 	int set(value);
 	int set(metatype &);
 	int printf(const char *fmt, ... );
-	bool set(const Reference<buffer> &);
 	
 	array & operator=  (const array &);
 	array & operator=  (const slice &);
@@ -334,6 +335,10 @@ inline bool array::shared() const
 {
 	buffer *b = _buf.pointer();
 	return b && b->shared();
+}
+inline const array::Data *array::data() const
+{
+	return _buf.pointer();
 }
 inline void *array::prepend(size_t len, const void *data)
 { return insert(0, len, data); }

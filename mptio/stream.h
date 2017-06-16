@@ -182,7 +182,7 @@ class Buffer : public iterator, public IODevice, public encode_array
 public:
 	enum { Type = IODevice::Type };
 	
-	Buffer(const Reference<buffer> & = Reference<buffer>(0));
+	Buffer(array const& = array(0));
 	virtual ~Buffer();
 	
 	void unref() __MPT_OVERRIDE;

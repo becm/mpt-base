@@ -165,11 +165,6 @@ bool array::set(const Reference<buffer> &a)
     _buf = reinterpret_cast<const Reference<array::Data> &>(a);
     return true;
 }
-// create buffer reference
-const Reference<buffer> &array::ref() const
-{
-    return *((Reference<buffer> *) this);
-}
 // array size modifier
 array &array::operator= (struct iovec const& vec)
 { set(vec.iov_len, vec.iov_base); return *this; }
