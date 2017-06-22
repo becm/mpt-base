@@ -43,29 +43,7 @@ static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 static int bufferAdvance(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, it, _it, _mt);
-	const MPT_STRUCT(buffer) *buf;
-	const char *base, *end;
-	
-	if (!(buf = m->s._a._buf)) {
-		return MPT_ERROR(MissingData);
-	}
-	/* advance converted area */
-	if (m->s._len) {
-		m->s._off += m->s._len;
-		m->s._len = 0;
-		return 's';
-	}
-	/* find inline string separator */
-	base = (void *) (buf + 1);
-	if (!(end = memchr(base + m->s._off, 0, buf->_used - m->s._off))) {
-		m->s._off = buf->_used;
-		m->s._len = 0;
-		return 0;
-	}
-	m->s._off += (end + 1) - base;
-	m->s._len = 0;
-	
-	return 's';
+	return mpt_slice_advance(&m->s);
 }
 static int bufferReset(MPT_INTERFACE(iterator) *it)
 {
