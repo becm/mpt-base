@@ -136,7 +136,7 @@ public:
 	bool prepare(size_t);
 	ssize_t push(size_t , const void *);
 	bool setEncoding(DataEncoder);
-	bool trim(size_t = 0);
+	bool shift(size_t = 0);
 	
 	bool push(const struct message &);
 	

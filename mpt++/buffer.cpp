@@ -75,7 +75,7 @@ int Buffer::get(int type, void *ptr)
     size_t off = _d.length() - _state.done;
     slice s(_d);
     s.shift(off);
-    type = mpt_slice_conv(&s, type, ptr);
+    type = mpt_slice_get(&s, type, ptr);
     s.shift(s.data().length() - _state.done);
     return Type;
 }
@@ -108,7 +108,7 @@ ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
     avail = nblk * esze;
     if (dest) memcpy(dest, d.base(), avail);
 
-    trim(avail);
+    shift(avail);
 
     return nblk;
 }

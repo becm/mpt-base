@@ -404,19 +404,30 @@ Slice<uint8_t> encode_array::data() const
 
     return Slice<uint8_t>(base + off, _state.done);
 }
-bool encode_array::trim(size_t len)
+/*!
+ * \ingroup mptArray
+ * \brief remove finished data
+ * 
+ * Remove data from completed buffer segment
+ * or move used segment to buffer front (len = 0).
+ * 
+ * \param len  length of data to remove
+ */
+bool encode_array::shift(size_t len)
 {
+    // move data segment to front
     if (!len) {
-        size_t len, max = _state.done + _state.scratch;
-        if ((len = _d.length() <= max)) {
+        size_t max, len = _state.done + _state.scratch;
+        if ((max = _d.length() <= len)) {
             return false;
         }
         uint8_t *d = reinterpret_cast<uint8_t *>(_d.base());
         size_t shift = max - len;
-        memcpy(d, d+shift, len);
+        memcpy(d, d + shift, len);
         _d.set(len);
         return true;
     }
+    // consume terminated data
     if (len > _state.done) {
         return false;
     }
