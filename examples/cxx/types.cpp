@@ -26,7 +26,7 @@ extern int main(int, char *[])
 	std::cout << "long:  " << mpt::typeIdentifier(l) << " = " << v << std::endl;
 	
 	unsigned long u = 5;
-	char ufmt[] = { mpt::typeIdentifier(l), 0 };
+	char ufmt[] = { static_cast<char>(mpt::typeIdentifier(l)), 0 };
 	v.set(ufmt, &u);
 	std::cout << "ulong: " << mpt::typeIdentifier(u) << " = " << v << std::endl;
 	
@@ -44,6 +44,4 @@ extern int main(int, char *[])
 	std::cout << "Slice<d>:  " << mpt::typeIdentifier(t) << " = " << t << std::endl;
 	v.set(dFmt, &l);
 	std::cout << "value(Slice<d>):  " << dFmt << " = " << v << std::endl;
-	
-	
 }

@@ -363,8 +363,7 @@ extern int convert(const void **, int , void *, int);
 extern int makeId();
 
 template<typename T>
-inline int typeIdentifier()
-{
+inline int typeIdentifier() {
     static int id = 0;
     if (!id && !(id = makeId())) {
         id = BadType;
@@ -372,7 +371,7 @@ inline int typeIdentifier()
     return id;
 }
 template<typename T>
-inline char typeIdentifier(const T &) { return static_cast<char>(typeIdentifier<T>()); }
+inline int typeIdentifier(const T &) { return typeIdentifier<T>(); }
 
 /* floating point values */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }

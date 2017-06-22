@@ -16,14 +16,19 @@
 # define mtrace()
 #endif
 
-#include <mpt/array.h>
-#include <mpt/message.h>
-#include <mpt/event.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/stream.h>
-#include <mpt/output.h>
+#include MPT_INCLUDE(array.h)
+#include MPT_INCLUDE(convert.h)
+#include MPT_INCLUDE(message.h)
+#include MPT_INCLUDE(event.h)
 
-#include <mpt/notify.h>
+#include MPT_INCLUDE(stream.h)
+#include MPT_INCLUDE(output.h)
+
+#include MPT_INCLUDE(notify.h)
 
 static int printMessage(void *fd, MPT_STRUCT(event) *ev)
 {
@@ -37,6 +42,7 @@ static int printMessage(void *fd, MPT_STRUCT(event) *ev)
 			fwrite(msg.cont->iov_base, msg.cont->iov_len, 1, fd);
 			++msg.cont;
 		}
+		fputs(mpt_newline_string(0), fd);
 	}
 	if (ev->reply) {
 		ev->reply->_vptr->reply(ev->reply, ev->msg);
@@ -72,7 +78,7 @@ extern int main(int argc, char *argv[])
 			perror("connect");
 			return 1;
 		}
-		if (!(in = mpt_stream_input(&sock, mode.stream, 0, 0))) {
+		if (!(in = mpt_stream_input(&sock, mode.stream, MPT_ENUM(EncodingCobs), 0))) {
 			perror("input");
 			return 1;
 		}
