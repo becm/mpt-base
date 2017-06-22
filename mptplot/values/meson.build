@@ -8,6 +8,7 @@ src = files(
   'linepart_code.c',
   'linepart_join.c',
   'linepart_linear.c',
+  'range_set.c',
   'rawdata_create.c',
   'stage_data.c',
   'stage_fini.c',

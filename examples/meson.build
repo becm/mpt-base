@@ -28,7 +28,7 @@ if with_plot
     executable('iter', 'iter.c',
       c_args: test_defines,
       dependencies: plot),
-    args: [ '1', 'fact 2e-3 3 2 1', 'val= 1 2 3' ])
+    args: [ '1', 'fact(3:2e-2::1)', 'lin(4 : 1 2)' ])
   
   test('input generator',
     executable('gen', 'gen.c',

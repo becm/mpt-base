@@ -217,10 +217,10 @@ extern int mpt_valtype_init(int , const char *, int , double *, int , const doub
 /* create iterator (descr. includes type info) */
 extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
 /* create specific iterator */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_range (MPT_STRUCT(value));
-extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value));
-extern MPT_INTERFACE(iterator) *_mpt_iterator_values(MPT_STRUCT(value));
-extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value));
+extern MPT_INTERFACE(iterator) *_mpt_iterator_range (MPT_STRUCT(value) *);
+extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) *);
+extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *);
+extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */
@@ -255,6 +255,8 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *,
 /* append values described by string */
 extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *, int , const char *);
 
+/* consume range data */
+extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);
 
 #ifdef _MPT_MESSAGE_H
 /* data mapping operations */

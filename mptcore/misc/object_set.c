@@ -14,10 +14,10 @@
  * 
  * Set property to data in argument list.
  * 
- * \param obj   object interface descriptor
- * \param prop  name of property to change
- * \param fmt   argument format
- * \param va    argument list
+ * \param obj    object interface descriptor
+ * \param prop   name of property to change
+ * \param format argument format
+ * \param va     argument list
  */
 extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const char *format, va_list va)
 {
@@ -79,14 +79,14 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 		if ((sizeof(buf) - len) < (size_t) curr) {
 			return MPT_ERROR(BadOperation);
 		}
-		memcpy(buf+len, &val, curr);
+		memcpy(buf + len, &val, curr);
 		len += curr;
 		++fmt;
 	}
 	val.fmt = format;
 	val.ptr = buf;
 	
-	return mpt_object_pset(obj, prop, &val, 0);
+	return mpt_object_iset(obj, prop, &val);
 }
 
 /*!
@@ -105,19 +105,10 @@ extern int mpt_object_set(MPT_INTERFACE(object) *obj, const char *prop, const ch
 	int ret;
 	
 	if (!fmt) {
-		mpt_object_pset(obj, prop, 0, 0);
+		return obj->_vptr->setProperty(obj, prop, 0);
 	}
 	va_start(va, fmt);
-	if (fmt[0] == 's' && !fmt[1]) {
-		MPT_STRUCT(value) val;
-		
-		val.fmt = 0;
-		val.ptr = va_arg(va, void *);
-		
-		ret = mpt_object_pset(obj, prop, &val, 0);
-	} else {
-		ret = mpt_object_vset(obj, prop, fmt, va);
-	}
+	ret = mpt_object_vset(obj, prop, fmt, va);
 	va_end(va);
 	
 	return ret;

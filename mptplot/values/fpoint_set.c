@@ -52,7 +52,7 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) 
 		ret = 0;
 	}
 	else {
-		if ((ret = it->_vptr->meta.conv((void *) it, 'f', &tmp.x)) < 0) {
+		if ((ret = it->_vptr->get(it, 'f', &tmp.x)) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (!ret) {
@@ -62,7 +62,7 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) 
 		else if ((ret = it->_vptr->advance(it)) < 0) {
 			return ret;
 		}
-		else if ((ret = it->_vptr->meta.conv((void *) it, 'f', &tmp.y)) < 0) {
+		else if ((ret = it->_vptr->get(it, 'f', &tmp.y)) < 0) {
 			return ret;
 		}
 		else if (!ret) {

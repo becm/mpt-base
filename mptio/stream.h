@@ -177,7 +177,7 @@ struct message;
 
 
 /* metatype extension to encode array */
-class Buffer : public iterator, public IODevice, public encode_array
+class Buffer : public metatype, public iterator, public IODevice, public encode_array
 {
 public:
 	enum { Type = IODevice::Type };
@@ -189,6 +189,7 @@ public:
 	int conv(int , void *) const __MPT_OVERRIDE;
 	Buffer *clone() const __MPT_OVERRIDE;
 	
+	int get(int , void *) __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
 	int reset() __MPT_OVERRIDE;
 	

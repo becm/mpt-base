@@ -52,7 +52,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 	}
 	/* try to execute next solver step */
 	state = cl->_vptr->step(cl, src);
-	if (src) src->_vptr->meta.ref.unref((void *) src);
+	if (src) src->_vptr->ref.unref((void *) src);
 	
 	if (state < 0) {
 		return MPT_event_fail(ev, state, MPT_tr("step operation failed"));

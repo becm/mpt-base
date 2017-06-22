@@ -26,8 +26,8 @@ extern int main(int argc, char *argv[])
 		while (1) {
 			double val;
 			int res;
-			if (!(res = it->_vptr->meta.conv((void *) it, 'd', &val))) {
-				fprintf(stderr, "%s: %d\n", "conversion range failed", -res);
+			if (!(res = it->_vptr->get(it, 'd', &val))) {
+				fprintf(stderr, "%s: %d\n", "conversion range error", -res);
 				break;
 			}
 			if (res < 0) {
@@ -44,7 +44,7 @@ extern int main(int argc, char *argv[])
 				break;
 			}
 		}
-		it->_vptr->meta.ref.unref((void *) it);
+		it->_vptr->ref.unref((void *) it);
 		fputc('\n', stdout);
 	}
 	return 0;

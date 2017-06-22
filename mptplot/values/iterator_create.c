@@ -2,6 +2,7 @@
  * create iterator from string description.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
@@ -9,7 +10,6 @@
 #include "convert.h"
 
 #include "values.h"
-
 
 /*!
  * \ingroup mptValues
@@ -23,46 +23,56 @@
  */
 extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *conf)
 {
-	static const MPT_STRUCT(value) def = { 0, "0 1" };
-	static const char delims[] = ": \t\r\n\f";
-	const char *delim = delims;
-	MPT_STRUCT(value) tmp;
+	MPT_STRUCT(value) val;
+	size_t len;
+	char buf[32];
+	char curr;
 	
 	if (!conf) {
-		return _mpt_iterator_range(def);
+		return _mpt_iterator_range(0);
 	}
+	/* consume whitespace */
 	while (*conf && isspace(*conf)) {
 		conf++;
 	}
-	tmp.fmt = 0;
-	while (*delim) {
-		if ((tmp.ptr = strchr(conf, *(delim++)))) {
-			break;
-		}
+	if (!(curr = *conf)) {
+		return _mpt_iterator_range(0);
 	}
-	if (!tmp.ptr) {
-		tmp.ptr = conf;
-		return _mpt_iterator_range(tmp);
+	/* extract description string */
+	len = 0;
+	while ((isupper(curr)  ||  islower(curr))) {
+		curr = conf[len++];
 	}
-	tmp.ptr = ((const char *) tmp.ptr) + 1;
-	if (!strncasecmp(conf, "lin", 3)) {
-		return _mpt_iterator_linear(tmp);
-	}
-	if (!strncasecmp(conf, "fac", 3)) {
-		return _mpt_iterator_factor(tmp);
-	}
-	if (!strncasecmp(conf, "val", 3)) {
-		return _mpt_iterator_values(tmp);
-	}
-	if (!strncasecmp(conf, "ran", 3)) {
-		return _mpt_iterator_range(tmp);
-	}
-	/* not a valid format */
-	if (mpt_cdouble(0, conf, 0) < 0) {
+	if (len >= sizeof(buf)) {
+		errno = EINVAL;
 		return 0;
 	}
-	/* fallback to range */
-	tmp.ptr = conf;
-	return _mpt_iterator_range(tmp);
+	/* no description -> use normal values */
+	if (!len--) {
+		return _mpt_iterator_values(conf);
+	}
+	buf[len] = 0;
+	val.fmt = 0;
+	val.ptr = memcpy(buf, conf, len);;
+	
+	/* create matching iterators */
+	if (!strcasecmp(buf, "linear")
+	 || !strcasecmp(buf, "lin")) {
+		val.ptr = conf + len;
+		return _mpt_iterator_linear(&val);
+	}
+	if (!strcasecmp(buf, "factor")
+	 || !strcasecmp(buf, "fact")
+	 || !strcasecmp(buf, "fac")) {
+		val.ptr = conf + len;
+		return _mpt_iterator_factor(&val);
+	}
+	if (!strcasecmp(buf, "range")) {
+		val.ptr = conf + len;
+		return _mpt_iterator_range(&val);
+	}
+	/* unknown value iterator type */
+	errno = EINVAL;
+	return 0;
 }
 

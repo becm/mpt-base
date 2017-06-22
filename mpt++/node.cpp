@@ -17,7 +17,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // basic metatype
-const char *metatype::string()
+const char *metatype::string() const
 {
     return mpt_meta_data(this, 0);
 }

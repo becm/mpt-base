@@ -168,17 +168,14 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             // try value conversion
             value *val;
             if ((val = mt->cast<value>())) {
-                if (!obj->set(name, *val, out) && out) {
-                    out->message(_func, out->Warning, "%s: %s: %s = <%s>", MPT_tr("failed to assign property"), ni->name(), name, val->fmt);
+                if (obj->set(name, *val, out)) {
+                    continue;
                 }
-                continue;
             }
             if (mt->conv('s', &data) >= 0) {
-                value txt(0, data);
-                if (!obj->set(name, txt, out) && out) {
-                    out->message(_func, out->Warning, "%s: %s: %s = %s", MPT_tr("failed to assign property"), ni->name(), name, txt.ptr);
+                if (obj->set(name, data, out)) {
+                    continue;
                 }
-                continue;
             }
             if (out) out->message(_func, out->Warning, "%s: %s: %s", MPT_tr("bad value type"), ni->name(), name);
         }

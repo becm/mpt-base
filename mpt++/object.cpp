@@ -48,13 +48,23 @@ int object::type() const
 bool object::set(const char *name, const value &val, logger *out)
 {
     static const char _fname[] = "mpt::object::set";
+    const char *str;
     int ret;
-    if ((ret = mpt_object_pset(this, name, &val)) >= 0) return true;
+    if (!(str = val.string())) {
+        value tmp = val;
+        ret = mpt_object_iset(this, name, &tmp);
+    } else {
+        ret = mpt_object_pset(this, name, str, 0);
+    }
+    if (ret >= 0) return true;
     if (!out) return false;
     struct property pr;
     if (property(&pr) < 0) pr.name = "object";
     pr.val.fmt = val.fmt;
-    if (!(pr.val.ptr = val.ptr)) { pr.val.ptr = ""; pr.val.fmt = 0; }
+    if (!(pr.val.ptr = val.ptr)) {
+        pr.val.fmt = 0;
+        pr.val.ptr = "";
+    }
 
     const char *err;
     if (ret == BadArgument) {
@@ -116,7 +126,7 @@ Property & Property::operator= (metatype &meta)
 }
 Property & Property::operator= (const char *val)
 {
-    if (_ref && _prop.name && !set(value((const char *) 0, (const void *) val))) {
+    if (_ref && _prop.name && !set(val)) {
         _prop.name = 0;
     }
     return *this;
@@ -148,7 +158,8 @@ bool Property::set(metatype &src)
 bool Property::set(const value &val)
 {
     if (!_ref || !_prop.name) return false;
-    if (mpt_object_pset(_ref, _prop.name, &val) < 0) return false;
+    value tmp = val;
+    if (mpt_object_iset(_ref, _prop.name, &tmp) < 0) return false;
     if (_ref->property(&_prop) < 0) _prop.name = 0;
     return true;
 }
@@ -243,7 +254,7 @@ static int objectPropertySet(void *addr, const property *pr)
 {
     const objectSetContext *con = static_cast<objectSetContext *>(addr);
     int ret;
-    if (!pr->name) {
+    if (!pr || !pr->name) {
         return con->check ? con->check(con->cdata, pr) : 1;
     }
     if (!pr->val.ptr) {
@@ -255,7 +266,14 @@ static int objectPropertySet(void *addr, const property *pr)
             if (ret) return ret;
         }
     }
-    if ((ret = mpt_object_pset(con->obj, pr->name, &pr->val)) < 0) {
+    const char *val;
+    if ((val = pr->val.string())) {
+        ret = mpt_object_pset(con->obj, pr->name, val, 0);
+    } else {
+        value tmp = pr->val;
+        ret = mpt_object_iset(con->obj, pr->name, &tmp);
+    }
+    if (ret < 0) {
         property tmp = *pr;
         tmp.desc = (ret == -1) ? 0 : "";
         return con->check ? con->check(con->cdata, &tmp) : 3;

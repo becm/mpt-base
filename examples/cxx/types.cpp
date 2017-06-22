@@ -19,14 +19,16 @@
 extern int main(int, char *[])
 {
 	mtrace();
-	
+	mpt::value v;
 	
 	long l = -5;
-	std::cout << "long:  " << mpt::typeIdentifier(l) << " = " << mpt::value("l", &l) << std::endl;
+	v.set("l", &l);
+	std::cout << "long:  " << mpt::typeIdentifier(l) << " = " << v << std::endl;
 	
 	unsigned long u = 5;
 	char ufmt[] = { mpt::typeIdentifier(l), 0 };
-	std::cout << "ulong: " << mpt::typeIdentifier(u) << " = " << mpt::value(ufmt, &u) << std::endl;
+	v.set(ufmt, &u);
+	std::cout << "ulong: " << mpt::typeIdentifier(u) << " = " << v << std::endl;
 	
 	float f(5);
 	std::cout << mpt::typeIdentifier(f) << " = " << f << std::endl;
@@ -40,7 +42,8 @@ extern int main(int, char *[])
 	mpt::Slice<double> t(&d, 1);
 	char dFmt[] = { static_cast<char>(mpt::typeIdentifier(t)), 0 };
 	std::cout << "Slice<d>:  " << mpt::typeIdentifier(t) << " = " << t << std::endl;
-	std::cout << "value(Slice<d>):  " << dFmt << " = " << mpt::value(dFmt, &l) << std::endl;
+	v.set(dFmt, &l);
+	std::cout << "value(Slice<d>):  " << dFmt << " = " << v << std::endl;
 	
 	
 }

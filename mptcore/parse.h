@@ -181,6 +181,8 @@ extern int _mpt_config_load(const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *
 extern int mpt_config_load (const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0), const MPT_STRUCT(path) *__MPT_DEFPAR(0));
 #endif
 
+extern int mpt_string_nextvis(const char **);
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus

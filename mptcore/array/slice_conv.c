@@ -73,7 +73,7 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 		return MPT_value_toVector('c');
 	}
 	if (type == 'k') {
-		if (data && !(base = mpt_convert_key(&base, 0, data))) {
+		if (data && !(base = mpt_convert_key(&base, 0, 0))) {
 			return MPT_ERROR(BadType);
 		}
 		return MPT_value_toVector('c');

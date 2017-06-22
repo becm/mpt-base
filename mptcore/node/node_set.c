@@ -27,8 +27,16 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 		/* try assign existing data */
 		MPT_INTERFACE(object) *obj = 0;
 		if ((old->_vptr->conv(old, MPT_ENUM(TypeObject), &obj)) >= 0
-	            && obj
-	            && mpt_object_pset(obj, 0, val, 0) >= 0) {
+	            && obj) {
+			MPT_STRUCT(value) tmp;
+			int ret;
+			if (!val) {
+				return obj->_vptr->setProperty(obj, 0, 0);
+			}
+			tmp = *val;
+			if ((ret = mpt_object_iset(obj, 0, &tmp) < 0)) {
+				return ret;
+			}
 			return old->_vptr->conv(old, 0, 0);
 		}
 	}

@@ -64,6 +64,7 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
+MPT_INTERFACE(iterator);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
@@ -118,7 +119,7 @@ enum MPT_ENUM(Types)
                              && (v) < MPT_ENUM(TypeSpecial))
 	
 	/* special/format types (0x20..0x3f) */
-	MPT_ENUM(TypeSpecial)    = ' ',   /* 0x20: generic vector */
+	MPT_ENUM(TypeSpecial)   = ' ',   /* SPACE */
 	
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
@@ -126,7 +127,8 @@ enum MPT_ENUM(Types)
                             && ((v) & ~MPT_ENUM(_TypeDynamic)) <  MPT_ENUM(TypeScalBase))
 #define MPT_value_toVector(v) (MPT_value_isScalar(v) \
                              ? (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector) \
-                             : 0) \
+                             : 0)
+#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) || MPT_value_isVector(v))
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
@@ -275,17 +277,19 @@ MPT_STRUCT(value)
 #ifdef __cplusplus
 	enum { Type = TypeValue };
 	
-	inline value(const char *f, const void *v) : fmt(f), ptr(v)
-	{ }
 	inline value(const char *v = 0) : fmt(0), ptr(v)
 	{ }
-	inline void set(const struct value &v)
-	{ fmt = v.fmt; ptr = v.ptr; }
 	
-	void * const *pointer(int = 0);
-	size_t scalar(int = 0);
-	const struct iovec *vector(int = 0);
-	const struct array *array(int = 0);
+	bool set(const char *, const void *);
+	value &operator =(const char *);
+	
+	const char *string() const;
+	const void *scalar(int) const;
+	void *pointer(int = 0) const;
+	const struct iovec *vector(int = 0) const;
+	const struct array *array(int = 0) const;
+	class iterator *iterator() const;
+	bool next();
 #else
 # define MPT_VALUE_INIT { 0, 0 }
 #endif
@@ -300,10 +304,12 @@ MPT_STRUCT(property)
     public:
 	enum { Type = TypeProperty };
 	
-	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(0, v)
+	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(v)
 	{ }
-	inline property(const char *n, const char *f, const void *d) : name(n), desc(0), val(f, d)
-	{ }
+	inline property(const char *n, const char *f, const void *d) : name(n), desc(0)
+	{
+		val.set(f, d);
+	}
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
 #else
@@ -723,6 +729,8 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUC
 
 /* compare data types */
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
+/* read from value */
+extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
 
 /* get matching property by name */
 extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
@@ -758,7 +766,7 @@ __MPT_EXTDECL_END
 __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
-std::ostream &operator<<(std::ostream &, mpt::value);
+std::ostream &operator<<(std::ostream &, const mpt::value &);
 std::ostream &operator<<(std::ostream &, const mpt::property &);
 
 template <typename T>

@@ -3,6 +3,8 @@
  *   type ID classification
  */
 
+#include <sys/uio.h>
+
 #include "array.h"
 
 #include "convert.h"
@@ -45,7 +47,40 @@ long double float80::value() const
     return v;
 }
 
-size_t value::scalar(int type)
+bool value::set(const char *f, const void *d)
+{
+    if (!f || !d) {
+        return false;
+    }
+    fmt = f;
+    ptr = d;
+    return true;
+}
+
+const char *value::string() const
+{
+    if (!fmt) {
+        return static_cast<const char *>(ptr);
+    }
+    if (!*fmt) {
+        return 0;
+    }
+    if (*fmt == 's') {
+        return *static_cast<char * const *>(ptr);
+    }
+    if (*fmt == MPT_value_toVector('c')) {
+        const struct iovec *vec = static_cast<const struct iovec *>(ptr);
+        if (!vec->iov_base || !vec->iov_len) {
+            return 0;
+        }
+        if (!memchr(vec->iov_base, 0, vec->iov_len)) {
+            return 0;
+        }
+        return static_cast<const char *>(vec->iov_base);
+    }
+    return 0;
+}
+const void *value::scalar(int type) const
 {
     /* incompatible type */
     if (!fmt || type < 0 || type > _TypeFinal) {
@@ -60,9 +95,9 @@ size_t value::scalar(int type)
     if ((s = mpt_valsize(type)) <= 0) {
         return 0;
     }
-    return s;
+    return ptr;
 }
-void * const *value::pointer(int type)
+void *value::pointer(int type) const
 {
     /* incompatible type */
     if (!ptr || !fmt || (type && type != *fmt)) {
@@ -71,9 +106,9 @@ void * const *value::pointer(int type)
     if (mpt_valsize(type)) {
         return 0;
     }
-    return reinterpret_cast<void * const *>(ptr);
+    return *reinterpret_cast<void * const *>(ptr);
 }
-const struct iovec *value::vector(int type)
+const struct iovec *value::vector(int type) const
 {
     int from;
     if (!ptr || !fmt || !(from = *fmt)) {
@@ -88,7 +123,7 @@ const struct iovec *value::vector(int type)
     }
     return reinterpret_cast<const struct iovec *>(ptr);
 }
-const array *value::array(int type)
+const array *value::array(int type) const
 {
     int from;
     if (!ptr || !fmt || !(from = *fmt)) {

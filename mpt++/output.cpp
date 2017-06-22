@@ -12,8 +12,7 @@ __MPT_NAMESPACE_BEGIN
 
 int output::open(const char *to)
 {
-    value val(to);
-    return mpt_object_pset(this, 0, &val, 0);
+    return mpt_object_pset(this, 0, to, 0);
 }
 int output::message(const char *from, int type, const char *fmt, ... )
 {

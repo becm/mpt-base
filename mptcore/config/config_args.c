@@ -39,9 +39,9 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 	p.assign = '=';
 	while (1) {
 		/* get assign target */
-		if ((res = args->_vptr->meta.conv((void *) args, MPT_ENUM(TypeProperty), &pr)) < 0) {
+		if ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr)) < 0) {
 			const char *end;
-			res = args->_vptr->meta.conv((void *) args, 's', &pr.name);
+			res = args->_vptr->get(args, 's', &pr.name);
 			if (res < 0) {
 				return (res && count) ? count : res;
 			}

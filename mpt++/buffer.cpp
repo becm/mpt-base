@@ -50,8 +50,25 @@ int Buffer::conv(int type, void *ptr) const
         return Type;
     }
     if (type == MPT_value_toVector('c')) {
-        Slice<uint8_t> d = data();
-        if (ptr) memcpy(ptr, &d, sizeof(d));
+        struct iovec *vec;
+        if ((vec = static_cast<struct iovec *>(ptr))) {
+            Slice<uint8_t> d = data();
+            vec->iov_base = d.begin();
+            vec->iov_len = d.length();
+        }
+        return Type;
+    }
+    return BadType;
+}
+int Buffer::get(int type, void *ptr)
+{
+    if (!type) {
+        value *val;
+        if ((val = static_cast<value *>(ptr))) {
+            static const char fmt[] = { buffer::Type, 0 };
+            val->fmt = fmt;
+            val->ptr = &_d;
+        }
         return Type;
     }
     if (_state.scratch) return MessageInProgress;

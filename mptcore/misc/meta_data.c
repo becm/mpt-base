@@ -20,7 +20,7 @@
  * 
  * \return start of string
  */
-extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *meta, size_t *len)
+extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *meta, size_t *len)
 {
 	struct iovec vec;
 	const char *base;

@@ -10,7 +10,7 @@ static ssize_t writeOutStream(void *p, const char *str, size_t len)
     return len;
 }
 
-std::ostream &operator<<(std::ostream &o, const mpt::value v)
+std::ostream &operator<<(std::ostream &o, const mpt::value &v)
 {
     if (!v.fmt) {
         if (v.ptr) o << static_cast<const char *>(v.ptr);

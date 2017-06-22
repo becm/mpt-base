@@ -62,9 +62,11 @@ extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 /* set metatype property to match argument */
-extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const MPT_STRUCT(value) *, const char * __MPT_DEFPAR(0));
+extern int mpt_object_iset(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
+extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
+
 
 __MPT_EXTDECL_END
 
@@ -210,7 +212,9 @@ public:
     Property & operator= (const T &v)
     {
         static const char _fmt[2] = { static_cast<char>(typeIdentifier<T>()) };
-        if (!set(value(_fmt, &v))) _prop.name = 0;
+        value val;
+        val.set(_fmt, &v);
+        if (!set(val)) _prop.name = 0;
         return *this;
     }
 

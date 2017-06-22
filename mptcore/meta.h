@@ -21,10 +21,10 @@ public:
 	
 	class Basic;
 	
-	const char *string();
+	const char *string() const;
 	
 	template <typename T>
-	inline T *cast()
+	inline T *cast() const
 	{
 	    static const int t = typeIdentifier<T>();
 	    if (mpt_valsize(t)) return 0;
@@ -58,12 +58,12 @@ MPT_INTERFACE_VPTR(metatype)
 
 /*! generic iterator interface */
 #ifdef __cplusplus
-MPT_INTERFACE(iterator) : public metatype
+MPT_INTERFACE(iterator) : public unrefable
 {
 protected:
 	inline ~iterator() {}
 public:
-	virtual iterator *clone() const __MPT_OVERRIDE;
+	virtual int get(int, void *) = 0;
 	virtual int advance();
 	virtual int reset();
 };
@@ -71,7 +71,8 @@ public:
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
 {
-	MPT_INTERFACE_VPTR(metatype) meta;
+	MPT_INTERFACE_VPTR(unrefable) ref;
+	int (*get)(MPT_INTERFACE(iterator) *, int , void *);
 	int (*advance)(MPT_INTERFACE(iterator) *);
 	int (*reset)(MPT_INTERFACE(iterator) *);
 }; MPT_INTERFACE(iterator) {
@@ -81,8 +82,6 @@ MPT_INTERFACE_VPTR(iterator)
 
 #ifdef __cplusplus
 inline metatype *metatype::clone() const
-{ return 0; }
-inline iterator *iterator::clone() const
 { return 0; }
 inline int iterator::advance()
 { return 0; }
@@ -108,7 +107,7 @@ public:
 };
 
 /* specialize metatype string cast */
-template <> inline const char *metatype::cast<const char>()
+template <> inline const char *metatype::cast<const char>() const
 { return string(); }
 
 /* special copy for metatype */
@@ -166,7 +165,7 @@ public:
     void unref() __MPT_OVERRIDE
     { delete this; }
 
-    int conv(int type, void *dest) const __MPT_OVERRIDE
+    int get(int type, void *dest) __MPT_OVERRIDE
     {
         int fmt = this->type();
         const T *val = _d.nth(_pos);
@@ -178,14 +177,15 @@ public:
     int advance() __MPT_OVERRIDE
     {
         int pos = _pos + 1;
-        if (pos >= _d.size()) return MissingData;
-        _pos = _pos;
+        if (pos > _d.size()) return MissingData;
+        if (pos == _d.size()) return 0;
+        _pos = pos;
         return type();
     }
     int reset() __MPT_OVERRIDE
     {
         _pos = 0;
-        return type();
+        return _d.size();
     }
     static int type()
     {
@@ -208,7 +208,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);
 
 /* get node/metatype text/raw data */
-extern const char *mpt_meta_data(MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
+extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 /* initialize geninfo data */
 extern int _mpt_geninfo_size(size_t);
 extern int _mpt_geninfo_init(void *, size_t);
@@ -218,6 +218,14 @@ extern int _mpt_geninfo_flags(const void *, int);
 extern int _mpt_geninfo_conv(const void *, int , void *);
 /* create new metatype with data */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
+
+/* assign to value via iterator */
+extern int mpt_iterator_process(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
+extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_DEFPAR(-1));
+extern MPT_INTERFACE(iterator) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
+
+/* create metatype for iterator instance */
+extern MPT_INTERFACE(metatype) *mpt_iterator_meta(MPT_INTERFACE(iterator) *);
 
 __MPT_EXTDECL_END
 

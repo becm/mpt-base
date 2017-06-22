@@ -21,4 +21,5 @@ src = files(
   'parse_nextvis.c',
   'parse_node.c',
   'parse_option.c',
+  'string_nextvis.c',
 )

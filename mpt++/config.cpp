@@ -89,7 +89,7 @@ bool config::set(const char *p, const char *val, int sep)
     if (!val) {
         return (remove(&where) < 0) ? false : true;
     }
-    value tmp(0, val);
+    value tmp(val);
 
     return assign(&where, &tmp) < 0 ? false : true;
 }

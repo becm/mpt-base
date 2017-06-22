@@ -56,7 +56,15 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 	    || in != slot[fd]) {
 		return MPT_ERROR(BadValue);
 	}
-	if ((ret = mpt_object_pset(obj, 0, val, 0)) < 0) {
+	if (!val) {
+		ret = obj->_vptr->setProperty(obj, 0, 0);
+	} else if (!val->fmt) {
+		ret = mpt_object_pset(obj, 0, val->ptr, 0);
+	} else {
+		MPT_STRUCT(value) tmp = *val;
+		ret = mpt_object_iset(obj, 0, &tmp);
+	}
+	if (ret < 0) {
 		return ret;
 	}
 	if ((ret = in->_vptr->_file(in)) < 0) {
