@@ -32,7 +32,7 @@ static MPT_STRUCT(buffer) *valfmtCreate(long len)
 static void valfmtUnref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(buffer) *b = (void *) ref;
-	if (!mpt_reference_lower(&b->_ref)) {
+	if (!mpt_refcount_lower(&b->_ref)) {
 		free(b);
 	}
 }
@@ -49,7 +49,7 @@ static MPT_STRUCT(buffer) *valfmtDetach(MPT_STRUCT(buffer) *b, long len)
 			return 0;
 		}
 		len *= sizeof(*fmt);
-		mpt_reference_lower(&b->_ref);
+		mpt_refcount_lower(&b->_ref);
 		used = b->_used;
 		if (used > len) {
 			used = len;

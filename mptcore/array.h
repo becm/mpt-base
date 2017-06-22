@@ -50,7 +50,7 @@ MPT_INTERFACE_VPTR(buffer)
 {
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
 #endif
-	MPT_STRUCT(reference) _ref;
+	MPT_STRUCT(refcount) _ref;
 	uintptr_t _size;
 	uintptr_t _used;
 };

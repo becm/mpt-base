@@ -13,7 +13,7 @@ MPT_STRUCT(local_output)
 {
 	MPT_INTERFACE(output) _out;
 	
-	MPT_STRUCT(reference) ref;
+	MPT_STRUCT(refcount) ref;
 	
 	MPT_INTERFACE(output) *pass;
 	MPT_STRUCT(history) hist;
@@ -125,14 +125,14 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 uintptr_t localRef(MPT_INTERFACE(object) *obj)
 {
 	MPT_STRUCT(local_output) *lo = (void *) obj;
-	return mpt_reference_raise(&lo->ref);
+	return mpt_refcount_raise(&lo->ref);
 }
 static void localUnref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(local_output) *lo = (void *) ref;
 	
 	/* remove active reference */
-	if (mpt_reference_lower(&lo->ref)) {
+	if (mpt_refcount_lower(&lo->ref)) {
 		return;
 	}
 	mpt_history_fini(&lo->hist);

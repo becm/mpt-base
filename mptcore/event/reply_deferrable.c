@@ -12,7 +12,7 @@ MPT_STRUCT(deferrable_reply_context)
 {
 	int (*set)(void *, const MPT_STRUCT(message) *);
 	
-	MPT_STRUCT(reference) ref;
+	MPT_STRUCT(refcount) ref;
 	
 	MPT_INTERFACE(reply_context) _ctx;
 	MPT_STRUCT(reply_data) data;
@@ -22,7 +22,7 @@ static void contextUnref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(deferrable_reply_context) *ctx = MPT_reladdr(deferrable_reply_context, ref, _ctx, set);
 	
-	if (mpt_reference_lower(&ctx->ref)) {
+	if (mpt_refcount_lower(&ctx->ref)) {
 		return;
 	}
 	if (ctx->data.len) {

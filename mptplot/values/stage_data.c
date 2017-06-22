@@ -12,7 +12,7 @@ static void stageDataUnref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
-	if (!mpt_reference_lower(&buf->_ref)) {
+	if (!mpt_refcount_lower(&buf->_ref)) {
 		MPT_STRUCT(typed_array) *arr = (void *) (buf + 1);
 		size_t i, len = buf->_used / sizeof(*arr);
 		for (i = 0; i < len; ++i) {
@@ -48,11 +48,11 @@ static MPT_STRUCT(buffer) *stageDataDetach(MPT_STRUCT(buffer) *buf, long len)
 		len = buf->_used / sizeof(*arr);
 		for (i = 0; i < len; ++i) {
 			MPT_STRUCT(buffer) *tmp = arr[i]._d._buf;
-			if (tmp) mpt_reference_raise(&tmp->_ref);
+			if (tmp) mpt_refcount_raise(&tmp->_ref);
 			ptr[i] = arr[i];
 		}
 		b->_used = len * sizeof(*ptr);
-		mpt_reference_lower(&buf->_ref);
+		mpt_refcount_lower(&buf->_ref);
 		return b;
 	}
 	if ((size_t) len <= buf->_size / sizeof(*arr)) {

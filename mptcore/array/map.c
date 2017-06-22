@@ -67,7 +67,7 @@ static void _mpt_buffer_map_unref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
-	if (mpt_reference_lower(&buf->_ref)) {
+	if (mpt_refcount_lower(&buf->_ref)) {
 		return;
 	}
 	munmap(buf, sizeof(*buf) + buf->_size);

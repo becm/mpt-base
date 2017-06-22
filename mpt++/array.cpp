@@ -64,13 +64,13 @@ bool swap(Slice<void *> s, long p1, long p2)
 // buffer operations
 void buffer::unref()
 {
-    if (!mpt_reference_lower(&_ref)) {
+    if (!mpt_refcount_lower(&_ref)) {
          free(this);
     }
 }
 uintptr_t buffer::addref()
 {
-    return mpt_reference_raise(&_ref);
+    return mpt_refcount_raise(&_ref);
 }
 
 buffer::buffer(size_t post) : _size(post), _used(0)

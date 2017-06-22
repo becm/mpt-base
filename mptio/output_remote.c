@@ -27,7 +27,7 @@ MPT_STRUCT(out_data) {
 	MPT_INTERFACE(output)   _out;
 	MPT_INTERFACE(input)    _in;
 	
-	MPT_STRUCT(reference) _ref;
+	MPT_STRUCT(refcount) _ref;
 	
 	MPT_STRUCT(connection) con;
 };
@@ -48,7 +48,7 @@ static void outputMetaUnref(MPT_INTERFACE(unrefable) *mt)
 {
 	MPT_STRUCT(out_data) *od = (void *) mt;
 	uintptr_t c;
-	if ((c = mpt_reference_lower(&od->_ref))) {
+	if ((c = mpt_refcount_lower(&od->_ref))) {
 		return;
 	}
 	mpt_connection_fini(&od->con);
@@ -95,7 +95,7 @@ static void outputUnref(MPT_INTERFACE(unrefable) *obj)
 {
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
 	uintptr_t c;
-	if ((c = mpt_reference_lower(&od->_ref))) {
+	if ((c = mpt_refcount_lower(&od->_ref))) {
 		return;
 	}
 	mpt_connection_fini(&od->con);
@@ -105,7 +105,7 @@ static uintptr_t outputRef(MPT_INTERFACE(object) *obj)
 {
 	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
 	
-	return mpt_reference_raise(&od->_ref);
+	return mpt_refcount_raise(&od->_ref);
 }
 static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {

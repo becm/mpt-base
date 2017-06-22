@@ -61,7 +61,7 @@ void mpt_array_clone(MPT_STRUCT(array) *arr, const MPT_STRUCT(array) *from)
 	}
 	if (from
 	    && (buf = from->_buf)
-	    && mpt_reference_raise(&buf->_ref)) {
+	    && mpt_refcount_raise(&buf->_ref)) {
 		arr->_buf = buf;
 	}
 }

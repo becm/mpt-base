@@ -15,7 +15,7 @@ cxx_src = files(
   'output.cpp',
   'proxy.cpp', 'parse.cpp',
   'queue.cpp',
-  'reference_wrap.cpp',
+  'refcount_wrap.cpp',
   'std_cout.cpp',
   'typed_array.cpp',
   'value.cpp',
@@ -36,7 +36,6 @@ if with_plot
     'layout.cpp',
     'mapping.cpp',
     'polyline.cpp',
-    'reference_wrap.cpp',
     'transform.cpp'
   )
   cxx += plot

@@ -271,7 +271,7 @@ protected:
 };
 #endif
 
-/*! generic struct reference */
+/*! generic data type and offset */
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
@@ -321,11 +321,11 @@ MPT_STRUCT(property)
 };
 typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
 
-/*! wrapper for references */
-MPT_STRUCT(reference)
+/*! wrapper for reference count */
+MPT_STRUCT(refcount)
 {
 #ifdef __cplusplus
-	inline reference(uintptr_t ref = 1) : _val(ref)
+	inline refcount(uintptr_t ref = 1) : _val(ref)
 	{ }
 	uintptr_t raise();
 	uintptr_t lower();
@@ -422,7 +422,7 @@ public:
             return _ref.raise();
         }
     protected:
-        reference _ref;
+        refcount _ref;
     };
     inline Reference(T *ref = 0) : _ref(ref)
     { }
@@ -703,9 +703,9 @@ inline object *Relation::find(int type, const char *name, int nlen) const
 
 __MPT_EXTDECL_BEGIN
 
-/* reference operations */
-extern uintptr_t mpt_reference_raise(MPT_STRUCT(reference) *);
-extern uintptr_t mpt_reference_lower(MPT_STRUCT(reference) *);
+/* reference counter operations */
+extern uintptr_t mpt_refcount_raise(MPT_STRUCT(refcount) *);
+extern uintptr_t mpt_refcount_lower(MPT_STRUCT(refcount) *);
 
 
 /* get file/socket properties from string */

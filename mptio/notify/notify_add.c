@@ -19,13 +19,14 @@ static void notifyDataUnref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
-	if (!mpt_reference_lower(&buf->_ref)) {
+	if (!mpt_refcount_lower(&buf->_ref)) {
 		MPT_INTERFACE(input) **base = (void *) (buf + 1);
 		size_t i, len = buf->_used / sizeof(*base);
 		for (i = 0; i < len; ++i) {
 			MPT_INTERFACE(input) *curr;
 			if ((curr = base[i])) {
 				curr->_vptr->ref.unref((void *) curr);
+				base[i] = 0;
 			}
 		}
 		free(buf);

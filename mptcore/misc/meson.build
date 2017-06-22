@@ -18,6 +18,6 @@ src = files(
   'object_set.c',
   'object_typename.c',
   'property_match.c',
-  'reference.c',
+  'refcount.c',
   'value_read.c',
 )

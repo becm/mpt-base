@@ -38,7 +38,7 @@ static void _mpt_buffer_alloc_unref(MPT_INTERFACE(unrefable) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
-	if (!mpt_reference_lower(&buf->_ref)) {
+	if (!mpt_refcount_lower(&buf->_ref)) {
 		free(buf);
 	}
 }
@@ -93,7 +93,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, lon
 		(void) memcpy(b + 1, buf + 1, used);
 	}
 	/* clear data reference */
-	if (!mpt_reference_lower(&buf->_ref)) {
+	if (!mpt_refcount_lower(&buf->_ref)) {
 		free(buf);
 	}
 	return b;

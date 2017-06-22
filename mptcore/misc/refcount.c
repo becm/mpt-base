@@ -12,7 +12,7 @@
  * 
  * \param ref  reference information
  */
-extern uintptr_t mpt_reference_raise(MPT_STRUCT(reference) *ref)
+extern uintptr_t mpt_refcount_raise(MPT_STRUCT(refcount) *ref)
 {
 	if (!ref->_val) return 0;
 	if (++ref->_val) return ref->_val;
@@ -28,7 +28,7 @@ extern uintptr_t mpt_reference_raise(MPT_STRUCT(reference) *ref)
  * 
  * \param ref  reference information
  */
-extern uintptr_t mpt_reference_lower(MPT_STRUCT(reference) *ref)
+extern uintptr_t mpt_refcount_lower(MPT_STRUCT(refcount) *ref)
 {
 	if (!ref->_val) return 1;
 	return --ref->_val;
