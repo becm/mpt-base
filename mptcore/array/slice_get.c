@@ -2,15 +2,14 @@
  * configure and prepare bound solver.
  */
 
+#include <ctype.h>
 #include <string.h>
 
 #include <sys/uio.h>
 
-#include "array.h"
-
-#include "meta.h"
-
 #include "convert.h"
+
+#include "array.h"
 
 /*!
  * \ingroup mptArray
@@ -24,8 +23,9 @@
  * 
  * \return source type and applied flags
  */
-extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
+extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 {
+	MPT_STRUCT(buffer) *buf;
 	const char *base, *end;
 	int len;
 	
@@ -34,10 +34,12 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 		if (data) *((const char **) data) = types;
 		return 0;
 	}
-	if (!(len = s->_len)) {
+	if (!(buf = s->_a._buf)) {
 		return 0;
 	}
+	/* available space */
 	base = ((char *) (s->_a._buf + 1)) + s->_off;
+	len = buf->_used - s->_off;
 	
 	if (type == MPT_value_toVector('c')
 	    || type == MPT_ENUM(TypeVector)) {
@@ -46,23 +48,14 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 			vec->iov_base = (char *) base;
 			vec->iov_len  = len;
 		}
+		s->_len = len;
 		return s->_off ? type : MPT_ENUM(TypeBuffer);
 	}
 	if (!(end = memchr(base, 0, len))) {
 		return MPT_ERROR(BadValue);
 	}
-	if (type == MPT_ENUM(TypeValue)) {
-		MPT_STRUCT(value) *val;
-		
-		if ((val = data)) {
-			if (!end) {
-				return MPT_ERROR(BadValue);
-			}
-			val->fmt = 0;
-			val->ptr = base;
-		}
-		return 's';
-	}
+	len = end + 1 - base;
+	
 	if (type == 's') {
 		if (data) {
 			if (!end) {
@@ -70,16 +63,31 @@ extern int mpt_slice_conv(const MPT_STRUCT(slice) *s, int type, void *data)
 			}
 			*((const char **) data) = base;
 		}
+		s->_len = len;
 		return MPT_value_toVector('c');
 	}
 	if (type == 'k') {
-		if (data && !(base = mpt_convert_key(&base, 0, 0))) {
+		const char *key;
+		end = base;
+		if (!(key = mpt_convert_key(&end, 0, 0))) {
 			return MPT_ERROR(BadType);
 		}
+		/* advance empy space and separator */
+		while (isspace(*end)) {
+			++end;
+		}
+		if (*end) {
+			++end;
+		}
+		if (data) {
+			*((const char **) data) = key;
+		}
+		s->_len = end - base;
 		return MPT_value_toVector('c');
 	}
 	if ((len = mpt_convert_string(base, type, data)) <= 0) {
 		return len;
 	}
+	s->_len = len;
 	return MPT_value_toVector('c');
 }

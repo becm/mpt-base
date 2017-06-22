@@ -38,28 +38,32 @@ static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 		}
 		return 0;
 	}
-	return mpt_slice_conv(&m->s, type, ptr);
+	return mpt_slice_get(&m->s, type, ptr);
 }
 static int bufferAdvance(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, it, _it, _mt);
 	const MPT_STRUCT(buffer) *buf;
 	const char *base, *end;
-	size_t len;
 	
-	if (!(buf = m->s._a._buf) || !m->s._len) {
+	if (!(buf = m->s._a._buf)) {
 		return MPT_ERROR(MissingData);
 	}
-	base = (void *) (buf + 1);
-	if (!(end = memchr(base + m->s._off, 0, m->s._len))) {
+	/* advance converted area */
+	if (m->s._len) {
 		m->s._off += m->s._len;
+		m->s._len = 0;
+		return 's';
+	}
+	/* find inline string separator */
+	base = (void *) (buf + 1);
+	if (!(end = memchr(base + m->s._off, 0, buf->_used - m->s._off))) {
+		m->s._off = buf->_used;
 		m->s._len = 0;
 		return 0;
 	}
-	len = (end + 1) - base;
-	
-	m->s._off += len;
-	m->s._len -= len;
+	m->s._off += (end + 1) - base;
+	m->s._len = 0;
 	
 	return 's';
 }
@@ -103,11 +107,20 @@ static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	}
 	if (type == MPT_value_toVector('c')
 	    || type == MPT_ENUM(TypeVector)) {
-		if (m->s._off) {
-			return MPT_ERROR(BadArgument);
+		struct iovec *vec;
+		if ((vec = ptr)) {
+			MPT_STRUCT(buffer) *buf;
+			if ((buf = m->s._a._buf)) {
+				vec->iov_base = buf + 1;
+				vec->iov_len = buf->_used - m->s._off;
+			} else {
+				vec->iov_base = 0;
+				vec->iov_len = 0;
+			}
 		}
+		return MPT_ENUM(TypeBuffer);
 	}
-	return MPT_ERROR(BadValue);
+	return MPT_ERROR(BadType);
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer;
 static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
@@ -158,12 +171,6 @@ extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	}
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
-		m->s._off = 0;
-		if (m->s._a._buf) {
-			m->s._len = m->s._a._buf->_used;
-		} else {
-			m->s._len = 0;
-		}
 	}
 	return &m->_it;
 }
