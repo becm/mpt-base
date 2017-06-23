@@ -22,7 +22,7 @@ extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *ev)
 	MPT_INTERFACE(iterator) *arg;
 	
 	if (!ev->msg) {
-		arg = mpt_meta_message(ev->msg, 0);
+		arg = mpt_message_iterator(ev->msg, 0);
 	}
 	else {
 		MPT_STRUCT(msgtype) mt;
@@ -41,7 +41,7 @@ extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *ev)
 		if (part < sizeof(mt)) {
 			mt.arg = 0;
 		}
-		arg = mpt_meta_message(&msg, mt.arg);
+		arg = mpt_message_iterator(&msg, mt.arg);
 	}
 	if (!arg) {
 		mpt_context_reply(ev->reply, MPT_ERROR(BadArgument), MPT_tr("no command content"));

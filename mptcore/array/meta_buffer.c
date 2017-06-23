@@ -140,7 +140,7 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer = {
  * 
  * \return new iterator
  */
-extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
+extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 {
 	MPT_STRUCT(metaBuffer) *m;
 	
@@ -150,5 +150,5 @@ extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
 	}
-	return &m->_it;
+	return &m->_mt;
 }

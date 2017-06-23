@@ -255,7 +255,7 @@ extern void mpt_copy_df(int , const double *, int , float  *, int);
 #endif
 
 /* iterator with buffer data */
-extern MPT_INTERFACE(iterator) *mpt_meta_buffer(const MPT_STRUCT(array) *);
+extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *);
 
 /* array manipulation */
 extern size_t mpt_array_reduce(MPT_STRUCT(array) *);
