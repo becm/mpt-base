@@ -59,26 +59,15 @@ bool value::set(const char *f, const void *d)
 
 const char *value::string() const
 {
+    
     if (!fmt) {
         return static_cast<const char *>(ptr);
     }
     if (!*fmt) {
         return 0;
     }
-    if (*fmt == 's') {
-        return *static_cast<char * const *>(ptr);
-    }
-    if (*fmt == MPT_value_toVector('c')) {
-        const struct iovec *vec = static_cast<const struct iovec *>(ptr);
-        if (!vec->iov_base || !vec->iov_len) {
-            return 0;
-        }
-        if (!memchr(vec->iov_base, 0, vec->iov_len)) {
-            return 0;
-        }
-        return static_cast<const char *>(vec->iov_base);
-    }
-    return 0;
+    const void *str = ptr;
+    return mpt_data_tostring(&str, *fmt, 0);
 }
 const void *value::scalar(int type) const
 {
@@ -99,8 +88,12 @@ const void *value::scalar(int type) const
 }
 void *value::pointer(int type) const
 {
+    int from;
     /* incompatible type */
-    if (!ptr || !fmt || (type && type != *fmt)) {
+    if (!ptr || !fmt || !(from = *fmt)) {
+        return 0;
+    }
+    if (type && type != from) {
         return 0;
     }
     if (mpt_valsize(type)) {

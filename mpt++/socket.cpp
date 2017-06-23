@@ -28,8 +28,11 @@ bool socket::bind(const char *addr, int listen)
 bool socket::set(metatype &src)
 {
     socket tmp;
-    const char *dst;
-    if (src.conv('s', &dst) < 0 || !dst || mpt_connect(&tmp, dst, 0) < 0) {
+    const char *dst = 0;
+    if (src.conv('s', &dst) < 0) {
+        return false;
+    }
+    if (dst && mpt_connect(&tmp, dst, 0) < 0) {
         return false;
     }
     if (_id) {
@@ -44,10 +47,11 @@ bool socket::set(const value *val)
         mpt_bind(this, 0, 0, 0);
         return 0;
     }
-    socket tmp;
     if (!val->fmt) {
-        const char *dst = (const char *) val->ptr;
-        if (!dst || mpt_connect(&tmp, dst, 0) < 0) {
+        socket tmp;
+        const char *dst;
+        if (!(dst = val->string())
+         || mpt_connect(&tmp, dst, 0) < 0) {
             return false;
         }
         if (_id) {

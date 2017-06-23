@@ -40,17 +40,18 @@ metatype *metatype::create(value val)
     if (!val.fmt) {
         len = src ? strlen(src) : 0;
     }
+    /* simple empty value */
+    else if (!val.fmt[0]) {
+        return metatype::Basic::create(0, 0);
+    }
     // single value payload only
-    else if (!val.fmt[0] || val.fmt[1]) {
+    else if (val.fmt[1]) {
         errno = EINVAL;
         return 0;
     }
     // extended text format
     else if (!(src = mpt_data_tostring((const void **) src, *val.fmt, &len))) {
-        return 0;
-    }
-    // dispatch to typed metatype creator
-    else {
+        // dispatch to typed metatype creator
         return create(*val.fmt, val.ptr);
     }
     // compatible small generic metatype
@@ -60,7 +61,7 @@ metatype *metatype::create(value val)
     }
     // create buffer-backed text metatype
     Buffer *b = new mpt::Buffer;
-    b->push(strlen(static_cast<const char *>(val.ptr)), val.ptr);
+    b->push(len, src);
     return b;
 }
 

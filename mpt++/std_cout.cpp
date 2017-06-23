@@ -16,8 +16,7 @@ std::ostream &operator<<(std::ostream &o, const mpt::value &v)
         if (v.ptr) o << static_cast<const char *>(v.ptr);
         return o;
     }
-    if (!*v.fmt) return o;
-    mpt_tostring(&v, writeOutStream, &o);
+    if (*v.fmt) mpt_tostring(&v, writeOutStream, &o);
     return o;
 }
 std::ostream &operator<<(std::ostream &o, const mpt::property &p)

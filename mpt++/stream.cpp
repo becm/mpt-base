@@ -145,19 +145,19 @@ int Stream::setProperty(const char *pr, const metatype *src)
         if (_inputFile >= 0) {
             return BadOperation;
         }
-        int ret;
         uint8_t l;
 
         if (!src) {
-            ret = l = 0;
+            l = 0;
         } else {
-            if ((ret = src->conv('y', &l)) < 0) return ret;
+            int ret = src->conv('y', &l);
+            if (ret < 0) return ret;
             if (l > sizeof(uintptr_t)) {
                 return BadValue;
             }
         }
         _idlen = l;
-        return ret;
+        return 0;
     }
     return BadArgument;
 }
