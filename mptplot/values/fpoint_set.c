@@ -16,14 +16,14 @@
  * \param src  value source
  * \param def  default point value
  */
-extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) *src, const MPT_STRUCT(fpoint) *def, const MPT_STRUCT(range) *r)
+extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) *src, const MPT_STRUCT(range) *r)
 {
 	MPT_INTERFACE(iterator) *it;
 	MPT_STRUCT(fpoint) tmp;
 	int ret;
 	
 	if (!src) {
-		*pt = *def;
+		*pt = tmp;
 		return 0;
 	}
 	it = 0;
@@ -49,15 +49,15 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) 
 		else {
 			return MPT_ERROR(BadType);
 		}
-		ret = 0;
+		ret = 2;
 	}
 	else {
 		if ((ret = it->_vptr->get(it, 'f', &tmp.x)) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		if (!ret) {
-			tmp = *def;
-			ret = 0;
+			*pt = tmp;
+			return 0;
 		}
 		else if ((ret = it->_vptr->advance(it)) < 0) {
 			return ret;
@@ -68,7 +68,11 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) 
 		else if (!ret) {
 			tmp.y = tmp.x;
 			ret = 1;
-		} else {
+		}
+		else if ((ret = it->_vptr->advance(it)) < 0) {
+			return ret;
+		}
+		else {
 			ret = 2;
 		}
 	}

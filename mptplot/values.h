@@ -250,7 +250,7 @@ extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT
 extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *, const double *, const MPT_STRUCT(dpoint) *);
 
 /* set point data */
-extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(fpoint) *__MPT_DEFPAR(0), const MPT_STRUCT(range) *__MPT_DEFPAR(0));
+extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
 /* append values described by string */
 extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *, int , const char *);

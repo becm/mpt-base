@@ -147,8 +147,11 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 	}
 	if (!strcasecmp(name, "pos")) {
 		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
-		static const MPT_STRUCT(fpoint) def = { 0.0f, 0.0f };
-		return mpt_fpoint_set(&tx->pos, src, &def, &r);
+		if (!src || !(len = mpt_fpoint_set(&tx->pos, src, &r))) {
+			tx->pos = def_text.pos;
+			return 0;
+		}
+		return len;
 	}
 	if (!strcasecmp(name, "color")) {
 		return mpt_color_pset(&tx->color, src);

@@ -132,13 +132,19 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 	}
 	if (!strcmp(name, "pos") || !strcasecmp(name, "position")) {
 		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
-		static const MPT_STRUCT(fpoint) def = { 0.0f, 0.0f };
-		return mpt_fpoint_set(&gr->pos, src, &def, &r);
+		if (!src || !(len = mpt_fpoint_set(&gr->pos, src, &r))) {
+			gr->pos = def_graph.pos;
+			return 0;
+		}
+		return len;
 	}
 	if (!strcasecmp(name, "scale")) {
 		static const MPT_STRUCT(range) r = { 0.0, FLT_MAX };
-		static const MPT_STRUCT(fpoint) def = { 1.0f, 1.0f };
-		return mpt_fpoint_set(&gr->scale, src, &def, &r);
+		if (!src || !(len = mpt_fpoint_set(&gr->scale, src, &r))) {
+			gr->scale = def_graph.scale;
+			return 0;
+		}
+		return len;
 	}
 	if (!strcmp(name, "type") || !strcasecmp(name, "gridtype")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->grid))) {
