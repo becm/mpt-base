@@ -264,7 +264,7 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 		pr->val.fmt = format;
 		pr->val.ptr = ax;
 		
-		return MPT_ENUM(TypeAxis);
+		return ax && memcmp(ax, &def_axis, sizeof(*ax)) ? 1 : 0;
 	}
 	/* find property by name */
 	else if ((pos = mpt_property_match(pr->name, 3, elem, MPT_arrsize(elem))) < 0) {

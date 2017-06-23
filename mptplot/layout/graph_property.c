@@ -293,7 +293,7 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		pr->val.fmt = format;
 		pr->val.ptr = gr;
 		
-		return MPT_ENUM(TypeGraph);
+		return gr && memcmp(gr, &def_graph, sizeof(*gr)) ? 1 : 0;
 	}
 	/* find property by name */
 	else if ((pos = mpt_property_match(pr->name, 2, elem, MPT_arrsize(elem))) < 0) {
