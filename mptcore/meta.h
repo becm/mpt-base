@@ -207,6 +207,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
 /* creat basic text small metatype */
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);
 
+/* create meta type element */
+extern MPT_INTERFACE(metatype) *mpt_metatype_default();
+
 /* get node/metatype text/raw data */
 extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 /* initialize geninfo data */

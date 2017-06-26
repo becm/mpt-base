@@ -21,12 +21,11 @@ static int metaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	switch (type) {
-	  case MPT_ENUM(TypeMeta): ptr = (void *) meta; break;
-	  default: return _mpt_geninfo_conv(info, type, ptr);
+	if (type == MPT_ENUM(TypeMeta)) {
+		if (dest) *dest = (void *) meta;
+		return 0;
 	}
-	if (dest) *dest = ptr;
-	return 0;
+	return _mpt_geninfo_conv(info, type, ptr);
 }
 static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *meta)
 {

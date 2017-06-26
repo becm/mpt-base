@@ -11,6 +11,7 @@ src = files(
   'meta_data.c',
   'meta_geninfo.c',
   'meta_new.c',
+  'metatype_generic.c',
   'mode_parse.c',
   'object_foreach.c',
   'object_iset.c',
