@@ -101,9 +101,6 @@ static void valError(MPT_INTERFACE(unrefable) *ctl)
 static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 {
 	struct valSource *it = (void *) ctl;
-#ifndef MPT_NO_CONVERT
-	const void *from;
-#endif
 	int len;
 	uint8_t ftype;
 	
@@ -117,6 +114,13 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	if (!it->val.fmt
 	 || !(ftype = *it->val.fmt)) {
 		return 0;
+	}
+	if (ftype == MPT_ENUM(TypeMeta)) {
+		MPT_INTERFACE(metatype) *mt;
+		if (!(mt = *((MPT_INTERFACE(metatype) **) it->val.ptr))) {
+			return MPT_ERROR(BadValue);
+		}
+		return mt->_vptr->conv(mt, type, dest);
 	}
 	/* copy scalar or untracked pointer data */
 	if (type == ftype
@@ -132,15 +136,7 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		}
 		return ftype;
 	}
-#ifdef MPT_NO_CONVERT
-	return fromText(&src->val, type, dest);
-#else
-	from = it->val.ptr;
-	if ((len = mpt_data_convert(&from, ftype, dest, type)) < 0) {
-		return fromText(&it->val, type, dest);
-	}
-	return len;
-#endif
+	return fromText(&it->val, type, dest);
 }
 static int valAdvance(MPT_INTERFACE(iterator) *ctl)
 {
