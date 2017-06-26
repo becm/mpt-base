@@ -90,9 +90,12 @@ static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	}
 	/* terminate consumed substring */
 	it->restore = it->val + len;
-	it->save = *it->restore;
-	*it->restore = 0;
-	
+	if (it->restore >= it->end) {
+		it->restore = 0;
+	} else {
+		it->save = *it->restore;
+		*it->restore = 0;
+	}
 	return 's';
 }
 static int parseAdvance(MPT_INTERFACE(iterator) *ctl)
@@ -115,14 +118,17 @@ static int parseAdvance(MPT_INTERFACE(iterator) *ctl)
 		return 0;
 	}
 	if (it->restore) {
+		it->val = it->restore + 1;
 		*it->restore = it->save;
 		it->restore = 0;
 	}
-	if (!(next = memchr(it->val, 0, len))) {
+	else if ((next = memchr(it->val, 0, len))) {
+		it->val = next + 1;
+	}
+	else {
 		it->val = 0;
 		return 0;
 	}
-	it->val = next + 1;
 	return 's';
 }
 static int parseReset(MPT_INTERFACE(iterator) *ctl)

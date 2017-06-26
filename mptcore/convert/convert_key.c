@@ -40,16 +40,22 @@ extern const char *mpt_convert_key(const char **src, const char *sep, size_t *kl
 		while (*s) { if (isspace(*s++)) { match = 1; break; } }
 		
 		while (*end) {
-			/* character is separator */
-			if (strchr(sep, *end)) { ++end; break; }
-			/* save visible length */
-			if (!isspace(*end++)) len = end - key;
 			/* break on ANY space character */
-			else if (match) break;
+			if (match && isspace(*end)) {
+				len = end - key;
+				break;
+			}
+			/* character is separator */
+			if (strchr(sep, *end)) {
+				len = ++end - key;
+				break;
+			}
+			++end;
 		}
 	}
 	else while (*end) {
-		if (isspace(*end++)) break;
+		if (isspace(*end)) break;
+		++end;
 		++len;
 	}
 	
