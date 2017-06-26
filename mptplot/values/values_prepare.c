@@ -24,6 +24,7 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, int len)
 	MPT_STRUCT(buffer) *buf;
 	double *data;
 	long used, add;
+	int type;
 	
 	if (!(buf = arr->_buf)) {
 		if (len < 0) {
@@ -32,29 +33,39 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, int len)
 		}
 		return mpt_array_append(arr, len * sizeof(*data), 0);
 	}
-	if (!(used = buf->_vptr->content(buf))) {
-		len /= sizeof(*data);
+	/* existing size and limit */
+	used = buf->_used / sizeof(*data);
+	if (len >= 0) {
+		add = len;
 	}
-	else if (used != 'd') {
+	else if (used < (-len)) {
 		errno = EINVAL;
 		return 0;
-	}
-	used = buf->_used / sizeof(*data);
-	if ((add = len) < 0) {
+	} else {
 		add = -len;
-		if (used < add) {
-			errno = EINVAL;
+	}
+	/* use raw data buffer */
+	if (!(type = buf->_vptr->content(buf))) {
+		add *= sizeof(*data);
+		if (!(data = mpt_array_append(arr, add, 0))) {
 			return 0;
 		}
 	}
-	if (!(buf = buf->_vptr->detach(buf, used + add))) {
+	else if (type != 'd') {
+		errno = EINVAL;
 		return 0;
 	}
-	used *= sizeof(*data);
-	add *= sizeof(*data);
-	/* data area at end for new data */
-	if (!(data = mpt_buffer_insert(buf, used, add))) {
+	else if (!(buf = buf->_vptr->detach(buf, used + add))) {
 		return 0;
+	}
+	else {
+		arr->_buf = buf;
+		used *= sizeof(*data);
+		add *= sizeof(*data);
+		/* data area at end for new data */
+		if (!(data = mpt_buffer_insert(buf, used, add))) {
+			return 0;
+		}
 	}
 	/* copy data from old location */
 	if (len < 0) {

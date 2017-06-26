@@ -41,9 +41,6 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	/* get elements from iterator */
 	it = 0;
 	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) > 0) {
-		if ((curr = mpt_valfmt_add(&tmp, fmt)) < 0) {
-			return MPT_ERROR(BadOperation);
-		}
 		ret = 0;
 		while ((curr = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) > 0) {
 			if (it->_vptr->advance(it) < 0) {
@@ -55,9 +52,22 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 			}
 			++ret;
 		}
+		if (ret) {
+			return ret;
+		}
 	}
 	/* get elements from value */
-	else if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) > 0 && val.fmt) {
+	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) < 0) {
+		const char *from;
+		if ((ret = src->_vptr->conv(src, 's', &from)) < 0) {
+			return ret;
+		}
+		if (ret && (ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
+			return ret;
+		}
+	}
+	/* get elements from value elements */
+	else if (val.fmt) {
 		static const char valfmt[] = { MPT_ENUM(TypeValFmt), 0 };
 		if (!val.ptr) {
 			return MPT_ERROR(BadValue);
@@ -75,23 +85,15 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 			++ret;
 		}
 	}
-	/* get elements from string */
-	else {
-		char *from;
-		
-		if ((ret = src->_vptr->conv(src, 's', &from)) < 0) {
-			return ret;
-		}
-		else if (!from) {
-			mpt_array_clone(arr, 0);
-			return 0;
-		}
-		else if ((curr = mpt_valfmt_parse(&tmp, from)) < 0) {
-			return curr;
-		}
-		ret = 0;
+	/* get elements from string value */
+	if (ret && val.ptr && (ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
+		return ret;
 	}
-	mpt_array_clone(arr, &tmp);
+	if (!ret) {
+		mpt_array_clone(arr, 0);
+	} else {
+		mpt_array_clone(arr, &tmp);
+	}
 	mpt_array_clone(&tmp, 0);
 	return ret;
 }

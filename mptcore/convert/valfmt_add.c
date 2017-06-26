@@ -23,7 +23,7 @@ static MPT_STRUCT(buffer) *valfmtCreate(long len)
 		return 0;
 	}
 	b->_vptr = &valfmtCtl;
-	b->_ref._val = 0;
+	b->_ref._val = 1;
 	b->_size = len - sizeof(*b);
 	b->_used = 0;
 	return b;

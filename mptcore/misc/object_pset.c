@@ -84,7 +84,6 @@ extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const c
 	struct wrapIter mt;
 	
 	mt._ctl._vptr = &ctl;
-	mt.val = val;
 	if (!val) {
 		mt.it = 0;
 		mt.val = "";
@@ -96,6 +95,7 @@ extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const c
 			return MPT_ERROR(BadValue);
 		}
 		mt.it = it;
+		mt.val = val;
 		ret = obj->_vptr->setProperty(obj, name, &mt._ctl);
 		it->_vptr->ref.unref((void *) it);
 		return ret;
