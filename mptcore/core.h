@@ -73,43 +73,34 @@ MPT_INTERFACE(iterator);
 
 enum MPT_ENUM(Types)
 {
-	/* system types (scalar) */
+	/* system types */
 	MPT_ENUM(TypeSocket)    = 0x1,   /* SOH */
-	MPT_ENUM(TypeValue)     = 0x2,   /* STX */
-	MPT_ENUM(TypeProperty)  = 0x3,   /* ETX */
-	
-	/* layout types (scalar) */
-	MPT_ENUM(TypeLineAttr)  = 0x4,   /* EOT */
-	MPT_ENUM(TypeColor)     = 0x5,   /* ENQ rgba(0..255) */
-	MPT_ENUM(TypeLine)      = 0x6,   /* ACK */
-	
-	/* number output format */
-	MPT_ENUM(TypeValFmt)    = 0x7,   /* BEL '\a' */
-	
 	/* system pointer types */
-	MPT_ENUM(TypeAddress)   = 0x8,   /* BS  '\b' */
-	MPT_ENUM(TypeFile)      = 0x9,   /* HT  '\t' */
-	MPT_ENUM(TypeNode)      = 0xa,   /* LF  '\n' */
+	MPT_ENUM(TypeFile)      = 0x4,   /* EOT */
+	MPT_ENUM(TypeAddress)   = 0x5,   /* ENQ */
 	
-	/* layout pointer types */
-	MPT_ENUM(TypeText)      = 0xc,   /* FF  '\f' */
-	MPT_ENUM(TypeAxis)      = 0xd,   /* CR  '\r' */
-	MPT_ENUM(TypeWorld)     = 0xe,   /* SO */
-	MPT_ENUM(TypeGraph)     = 0xf,   /* SI */
+	/* format types (scalar) */
+	MPT_ENUM(TypeValFmt)    = 0x8,   /* BS '\b' */
+	MPT_ENUM(TypeValue)     = 0x9,   /* HT '\t' */
+	MPT_ENUM(TypeProperty)  = 0xa,   /* LF '\n' */
+	
+	/* special pointer types */
+	MPT_ENUM(TypeNode)      = 0xc,   /* FF '\f' */
+	MPT_ENUM(TypeArray)     = 0xd,   /* CR '\r' */
+	MPT_ENUM(TypeCommand)   = 0xe,   /* SO */
 	
 	/* reference types */
 	MPT_ENUM(TypeUnrefable) = 0x10,  /* DLE */
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
-	MPT_ENUM(TypeBuffer)    = 0x14,  /* DC4 */
-	
-	MPT_ENUM(TypeMeta)      = 0x15,  /* NAK */
-	MPT_ENUM(TypeIterator)  = 0x16,  /* SYN */
+	/* typed content data */
+	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
+	MPT_ENUM(TypeIterator)  = 0x15,  /* NAK */
+	MPT_ENUM(TypeBuffer)    = 0x16,  /* SYN */
 	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
 #define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
                                && (v) < MPT_ENUM(TypeSpecial))
-	
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
 	MPT_ENUM(TypeSolver)    = 0x19,  /* EM */

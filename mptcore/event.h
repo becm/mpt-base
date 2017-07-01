@@ -114,7 +114,7 @@ MPT_STRUCT(command)
 private:
 	command & operator =(const command &from); /* disable copy */
 public:
-	enum { Type = 0x101 }; /* TODO: make system pointer */
+	enum { Type = TypeCommand };
 	
 	inline command() : id(0), cmd(0), arg(0)
 	{ }
@@ -139,8 +139,6 @@ public:
 MPT_STRUCT(dispatch) : public command::array
 {
 public:
-	enum { Type = 0x102 }; /* TODO: make system pointer */
-	
 	dispatch();
 	~dispatch();
 	
@@ -214,7 +212,6 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 template<> inline __MPT_CONST_EXPR int typeIdentifier<command>()  { return command::Type; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<dispatch>() { return dispatch::Type; }
 
 class reply_data::context : public reply_context, public reply_data
 {

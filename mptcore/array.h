@@ -81,7 +81,7 @@ MPT_STRUCT(array)
 		inline ~Data()
 		{ }
 	};
-	enum { Type = 0x200 }; /* TODO: move to system types */
+	enum { Type = TypeArray };
 	
 	array(array const&);
 	array(size_t = 0);

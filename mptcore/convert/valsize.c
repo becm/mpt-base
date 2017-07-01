@@ -3,6 +3,8 @@
  * mpt type registry
  */
 
+#include "../mptplot/layout.h"
+
 #include "convert.h"
 #include "array.h"
 
@@ -15,16 +17,29 @@
 static const struct {
 	uint8_t key, size;
 } static_ptypes[] = {
-	/* scalar system types */
+	/* system types (0x1 - 0x7) */
 	{ MPT_ENUM(TypeSocket),   sizeof(MPT_STRUCT(socket)) },
+	{ MPT_ENUM(TypeFile),     0 },
+	{ MPT_ENUM(TypeAddress),  0 },
+	
+	/* basic types (0x8 - 0xf) */
+	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
 	{ MPT_ENUM(TypeValue),    sizeof(MPT_STRUCT(value)) },
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
+	{ MPT_ENUM(TypeNode),     0 },
+	{ MPT_ENUM(TypeArray),    0 },
+	{ MPT_ENUM(TypeCommand),  0 },
 	
-	/* basic layout types */
-	{ MPT_ENUM(TypeBuffer),   0 },
+	/* skip reference and object data types */
 	
-	/* number format */
-	{ MPT_ENUM(TypeValFmt),   sizeof(MPT_STRUCT(valfmt)) },
+	/* layout types (0x30 - 0x39) */
+	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
+	{ MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color)) },
+	{ MPT_ENUM(TypeLine),     sizeof(MPT_STRUCT(line)) },
+	{ MPT_ENUM(TypeText),     0 },
+	{ MPT_ENUM(TypeAxis),     0 },
+	{ MPT_ENUM(TypeWorld),    0 },
+	{ MPT_ENUM(TypeGraph),    0 },
 	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
