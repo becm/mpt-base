@@ -39,11 +39,6 @@ bool object::iterator::select(uintptr_t pos)
     return true;
 }
 
-int object::type() const
-{
-    struct property pr("");
-    return property(&pr);
-}
 // object assignment
 bool object::set(const char *name, const value &val, logger *out)
 {
@@ -126,7 +121,7 @@ Property & Property::operator= (metatype &meta)
 }
 Property & Property::operator= (const char *val)
 {
-    if (_ref && _prop.name && !set(val)) {
+    if (_ref && _prop.name && mpt_object_pset(_ref, _prop.name, val, 0) < 0) {
         _prop.name = 0;
     }
     return *this;

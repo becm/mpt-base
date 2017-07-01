@@ -84,13 +84,14 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_text_fini(tx);
-			mpt_text_init(tx, from);
+			mpt_text_init(tx, len ? from : 0);
 			return 0;
 		}
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
+			if (!len) tx->color = def_text.color;
 			return 0;
 		}
 		return MPT_ERROR(BadType);

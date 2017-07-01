@@ -382,7 +382,7 @@ public:
 };
 
 /*! Container and binding for data to axes */
-class Graph : public Collection, public Transform3, public graph
+class Graph : public Collection, public graph
 {
 public:
     class Data : public unrefable
@@ -398,7 +398,7 @@ public:
         Reference<World> world;
         Reference<Cycle> cycle;
     };
-    enum { Type = graph::Type };
+    enum { Type = Collection::Type };
     
     Graph(const graph * = 0);
     virtual ~Graph();
@@ -423,9 +423,13 @@ public:
     virtual const Reference<Cycle> *cycle(int pos) const;
     
     const Transform &transform() __MPT_OVERRIDE;
+    
+    const struct transform *getTransform(int = -1) const;
+    int getFlags(int = -1) const;
     bool updateTransform(int dim = -1);
     
 protected:
+    Reference<Transform3> _gtr;
     ItemArray<Axis> _axes;
     ItemArray<Data> _worlds;
 };
@@ -434,8 +438,6 @@ protected:
 class Layout : public Collection
 {
 public:
-    enum { Type = Collection::Type };
-    
     Layout();
     virtual ~Layout();
     

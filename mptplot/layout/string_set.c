@@ -27,15 +27,23 @@ extern int mpt_string_set(char **ptr, const char *data, int len)
 {
 	char *txt;
 	
-	if (!data) len = 0;
-	else if (len < 0) len = strlen(data);
-	
-	if (!len) { free(*ptr); *ptr = 0; return 0; }
-	
-	if (data == *ptr) return 0;
-	
-	if (!(txt = realloc(*ptr, len+1))) return -1;
-	
+	if (!data) {
+		len = 0;
+	}
+	else if (len < 0) {
+		len = strlen(data);
+	}
+	if (!len) {
+		free(*ptr);
+		*ptr = 0;
+		return 0;
+	}
+	if (data == *ptr) {
+		return 0;
+	}
+	if (!(txt = realloc(*ptr, len + 1))) {
+		return MPT_ERROR(BadOperation);
+	}
 	*ptr = memcpy(txt, data, len);
 	txt[len] = 0;
 	
@@ -62,12 +70,20 @@ extern int mpt_string_pset(char **ptr, const MPT_INTERFACE(metatype) *src)
 		return (ptr && *ptr) ? strlen(*ptr) : 0;
 	}
 	if ((len = src->_vptr->conv(src, MPT_value_toVector('c'), &vec)) > 0) {
-		return mpt_string_set(ptr, vec.iov_base, vec.iov_len);
+		if ((len = mpt_string_set(ptr, vec.iov_base, vec.iov_len)) < 0) {
+			return len;
+		}
+		return 0;
 	}
 	vec.iov_base = 0;
-	if ((len = src->_vptr->conv(src, 's', &vec.iov_base)) > 0) {
-		mpt_string_set(ptr, vec.iov_base, -1);
+	if ((len = src->_vptr->conv(src, 's', &vec.iov_base)) < 0) {
+		return len;
 	}
-	if (!len) return mpt_string_set(ptr, 0, 0);
-	return len;
+	if (!len || !vec.iov_base) {
+		mpt_string_set(ptr, 0, 0);
+	}
+	else if ((len = mpt_string_set(ptr, vec.iov_base, -1) < 0)) {
+		return len;
+	}
+	return 0;
 }

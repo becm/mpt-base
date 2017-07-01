@@ -414,7 +414,7 @@ public:
 			return false;
 		}
 		long max = _size / sizeof(T);
-		if (len >= max) {
+		if (len > max) {
 			return false;
 		}
 		T *t = static_cast<T *>(data());
@@ -712,10 +712,10 @@ public:
 	bool insert(long pos, const T &v)
 	{
 		T *ptr;
-		if ((ptr = UniqueArray<T>::insert(pos))) {
-			*ptr = v;
+		if (!(ptr = UniqueArray<T>::insert(pos))) {
 			return false;
 		}
+		*ptr = v;
 		return true;
 	}
 };

@@ -134,9 +134,6 @@ void Axis::unref()
 }
 int Axis::property(struct property *prop) const
 {
-    if (!prop) {
-        return object::Type;
-    }
     return mpt_axis_get(this, prop);
 }
 int Axis::setProperty(const char *prop, const metatype *src)
@@ -183,9 +180,6 @@ void World::unref()
 }
 int World::property(struct property *prop) const
 {
-    if (!prop) {
-        return object::Type;
-    }
     return mpt_world_get(this, prop);
 }
 int World::setProperty(const char *prop, const metatype *src)
@@ -457,7 +451,14 @@ bool Graph::setCycle(int pos, const Reference<Cycle> &cyc) const
 }
 
 const Transform &Graph::transform()
-{ return *this; }
+{
+    Transform *t;
+    if ((t = _gtr.pointer())) {
+        return *t;
+    } else {
+        return Group::transform();
+    }
+}
 
 bool Graph::updateTransform(int dim)
 {
@@ -472,21 +473,59 @@ bool Graph::updateTransform(int dim)
     if (!it || !(a = it->pointer())) {
         return false;
     }
-    cutoff = clip;
+    Transform3 *t;
+    if (!(t = _gtr.pointer())) {
+        t = new Transform3;
+        _gtr.setPointer(t);
+    }
+    t->cutoff = clip;
     switch (dim) {
     case 0:
-        fx = tx.fromAxis(*a, AxisStyleX);
+        t->fx = t->tx.fromAxis(*a, AxisStyleX);
         return true;
     case 1:
-        fy = ty.fromAxis(*a, AxisStyleY);
+        t->fy = t->ty.fromAxis(*a, AxisStyleY);
         return true;
     case 2:
-        fz = tz.fromAxis(*a, AxisStyleZ);
+        t->fz = t->tz.fromAxis(*a, AxisStyleZ);
         return true;
     default: return false;
     }
 }
-
+const struct transform *Graph::getTransform(int dim) const
+{
+    Transform3 *t;
+    if (!(t = _gtr.pointer())) {
+        return 0;
+    }
+    switch (dim) {
+    case 0:
+        return &t->tx;
+    case 1:
+        return &t->ty;
+    case 2:
+        return &t->tz;
+    default:
+        return 0;
+    }
+}
+int Graph::getFlags(int dim) const
+{
+    Transform3 *t;
+    if (!(t = _gtr.pointer())) {
+        return 0;
+    }
+    switch (dim) {
+    case 0:
+        return t->fx;
+    case 1:
+        return t->fy;
+    case 2:
+        return t->fz;
+    default:
+        return 0;
+    }
+}
 // graph data operations
 Graph::Data::Data(World *w) : world(w)
 { }
@@ -576,8 +615,9 @@ bool Layout::bind(const Relation &rel, logger *out)
     for (auto &it : _items) {
         object *o;
         Graph *g;
-        if (!(o = it.pointer()) || o->type() != Graph::Type) continue;
+        if (!(o = it.pointer()) || o->type() != Group::Type) continue;
         g = static_cast<Graph *>(o);
+        if (!g->toType(Graph::Type)) continue;
         const char *name = it.name();
         if (!g->addref()) {
             g = new Graph();

@@ -69,13 +69,20 @@ static int setPosition(char *val, const MPT_INTERFACE(metatype) *src, int def)
 		*val = def;
 		return 0;
 	}
-	if (!(len = src->_vptr->conv(src, 'k', &s))) {
+	if (!(len = src->_vptr->conv(src, 'c', val))) {
 		*val = def;
 		return 0;
 	}
-	if (len < 0
-	    || (len = src->_vptr->conv(src, 'c', val)) < 0) {
+	if (len > 0) {
+		return 0;
+	}
+	if ((len = src->_vptr->conv(src, 'k', &s)) < 0) {
 		return len;
+	}
+	if (len && s) {
+		*val = *s;
+	} else {
+		*val = def;
 	}
 	return 0;
 }
@@ -102,8 +109,8 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeAxis), &from)) >= 0) {
 			mpt_axis_fini(ax);
-			mpt_axis_init(ax, from);
-			return len ? 1 : 0;
+			mpt_axis_init(ax, len ? from : 0);
+			return 0;
 		}
 		if ((len = mpt_string_pset(&ax->_title, src)) >= 0) {
 			return len;
@@ -189,7 +196,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 			ax->sub = def_axis.sub;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'b', &ax->sub))) ax->sub = def_axis.sub;
+		if (!(len = src->_vptr->conv(src, 'y', &ax->sub))) ax->sub = def_axis.sub;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "dec") || !strcasecmp(name, "decimals")) {
@@ -197,7 +204,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 			ax->dec = def_axis.dec;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'b', &ax->dec))) ax->dec = def_axis.dec;
+		if (!(len = src->_vptr->conv(src, 'y', &ax->dec))) ax->dec = def_axis.dec;
 		return len <= 0 ? len : 1;
 	}
 	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos") || !strcasecmp(name, "label position")) {

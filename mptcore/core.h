@@ -240,13 +240,13 @@ public:
     { return _base; }
     
     inline iterator end() const
-    { return _base+length(); }
+    { return _base + length(); }
     
     inline iterator nth(int i) const
     {
         if (i > (int) length()) return 0;
         if (i < 0 && (i += length()) < 0) return 0;
-        return base() + i;
+        return _base + i;
     }
     inline long length() const
     { return _len / sizeof(T); }
@@ -304,7 +304,7 @@ MPT_STRUCT(property)
     public:
 	enum { Type = TypeProperty };
 	
-	inline property(const char *n = "", const char *v = 0) : name(n), desc(0), val(v)
+	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
 	{ }
 	inline property(const char *n, const char *f, const void *d) : name(n), desc(0)
 	{

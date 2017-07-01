@@ -75,19 +75,19 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_world_fini(wld);
-			mpt_world_init(wld, from);
-			return len ? 1 : 0;
+			mpt_world_init(wld, len ? from : 0);
+			return 0;
 		}
 		if ((len = mpt_string_pset(&wld->_alias, src)) >= 0) {
 			return len;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
 			if (!len) wld->color = def_world.color;
-			return len ? 1 : 0;
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
 			if (!len) wld->attr = def_world.attr;
-			return len ? 1 : 0;
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}

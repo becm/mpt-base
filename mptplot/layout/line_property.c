@@ -31,15 +31,25 @@ extern void mpt_line_init(MPT_STRUCT(line) *line)
 /* set/get functions */
 static int setPosition(float *val, const MPT_INTERFACE(metatype) *src)
 {
+	double tmp;
 	int len;
 	if (!src) {
 		*val = 0;
 		return 0;
 	}
-	if (!(len = src->_vptr->conv(src, 'f', val))) {
-		*val = 0.0;
+	if ((len = src->_vptr->conv(src, 'f', val)) >= 0) {
+		if (!len) *val = 0.0f;
+		return 0;
 	}
-	return len < 0 ? len : 0;
+	if ((len = src->_vptr->conv(src, 'd', &tmp)) >= 0) {
+		if (!len) {
+			*val = 0.0f;
+		} else {
+			*val = tmp;
+		}
+		return 0;
+	}
+	return MPT_ERROR(BadType);
 }
 /*!
  * \ingroup mptPlot
@@ -64,13 +74,15 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERF
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine), &from)) >= 0) {
 			*li = from ? *from : def_line;
-			return len ? 1 : 0;
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
-			return len ? 1 : 0;
+			if (!len) li->color = def_line.color;
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
-			return len ? 1 : 0;
+			if (!len) li->attr = def_line.attr;
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}

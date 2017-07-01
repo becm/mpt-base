@@ -111,8 +111,19 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		return it->val.fmt - it->save.fmt;
 	}
 	/* indicate consumed contents */
-	if (!it->val.fmt
-	 || !(ftype = *it->val.fmt)) {
+	if (!it->val.fmt) {
+		if (type != 's') {
+			return MPT_ERROR(BadType);
+		}
+		if (!it->val.ptr) {
+			return 0;
+		}
+		if (dest) {
+			*((const char **) dest) = it->val.ptr;
+		}
+		return 's';
+	}
+	if (!(ftype = *it->val.fmt)) {
 		return 0;
 	}
 	if (ftype == MPT_ENUM(TypeMeta)) {
@@ -144,10 +155,15 @@ static int valAdvance(MPT_INTERFACE(iterator) *ctl)
 	int adv;
 	
 	if (!it->val.fmt) {
-		return MPT_ERROR(MissingData);
+		if (!it->val.ptr) {
+			return MPT_ERROR(MissingData);
+		}
+		it->val.ptr = 0;
+		return 0;
 	}
 	if (!(adv = *it->val.fmt)) {
 		it->val.fmt = 0;
+		it->val.ptr = 0;
 		return 0;
 	}
 	if ((adv = mpt_valsize(adv)) < 0) {

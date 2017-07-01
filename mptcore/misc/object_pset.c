@@ -6,6 +6,7 @@
 
 #include <sys/uio.h>
 
+#include "convert.h"
 #include "meta.h"
 
 #include "object.h"
@@ -14,7 +15,7 @@ struct wrapIter
 {
 	MPT_INTERFACE(metatype) _ctl;
 	MPT_INTERFACE(iterator) *it;
-	const char *val;
+	const char *val, *sep;
 };
 
 static void metaIterUnref(MPT_INTERFACE(unrefable) *ref)
@@ -29,7 +30,6 @@ static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
 	struct wrapIter *it = (void *) mt;
-	MPT_INTERFACE(iterator) *src = it->it;
 	if (!type) {
 		static const char fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
 		if (dest) {
@@ -37,7 +37,14 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return *fmt;
 	}
-	if (src && type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_ENUM(TypeIterator)) {
+		MPT_INTERFACE(iterator) *src;
+		if (!(src = it->it)
+		 && it->val
+		 && *it->val
+		 && !(it->it = src = mpt_iterator_string(it->val, it->sep))) {
+			return MPT_ERROR(BadValue);
+		}
 		if (dest) {
 			*((const void **) dest) = src;
 		}
@@ -57,10 +64,14 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return 's';
 	}
-	if (src) {
-		return src->_vptr->get(src, type, dest);
+	if (it->val) {
+		int ret = mpt_convert_string(it->val, type, dest);
+		if (ret < 0) {
+			return ret;
+		}
+		return 's';
 	}
-	return MPT_ERROR(BadType);
+	return 0;
 }
 
 /*!
@@ -81,23 +92,17 @@ extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const c
 		metaIterConv,
 		metaIterClone
 	};
+	MPT_INTERFACE(iterator) *it;
 	struct wrapIter mt;
+	int ret;
 	
 	mt._ctl._vptr = &ctl;
-	if (!val) {
-		mt.it = 0;
-		mt.val = "";
-		return obj->_vptr->setProperty(obj, name, &mt._ctl);
-	} else {
-		MPT_INTERFACE(iterator) *it;
-		int ret;
-		if (!(it = mpt_iterator_string(val, sep))) {
-			return MPT_ERROR(BadValue);
-		}
-		mt.it = it;
-		mt.val = val;
-		ret = obj->_vptr->setProperty(obj, name, &mt._ctl);
+	mt.it = 0;
+	mt.val = val;
+	mt.sep = sep;
+	ret = obj->_vptr->setProperty(obj, name, &mt._ctl);
+	if ((it = mt.it)) {
 		it->_vptr->ref.unref((void *) it);
-		return ret;
 	}
+	return ret;
 }

@@ -58,6 +58,7 @@ bool linepart::array::set(long len)
     if (!resize(num)) {
         return false;
     }
+    lp = begin();
     for (long i = 0; i < num; ++i) {
         if (len < max) {
             lp[i].usr = lp[i].raw = len;

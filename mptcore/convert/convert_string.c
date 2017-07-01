@@ -29,11 +29,14 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 			val->fmt = 0;
 			val->ptr = from;
 		}
-		return strlen(from);
+		return from ? strlen(from) : 0;
 	}
 	if (type == 'k') {
 		const char *key, *txt = from;
 		size_t klen;
+		if (!txt || !*txt) {
+			return 0;
+		}
 		if (!(key = mpt_convert_key(&txt, 0, &klen))) {
 			return MPT_ERROR(BadValue);
 		}
@@ -45,6 +48,9 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 	}
 	if (type != 's') {
 		const char *txt = from;
+		if (!txt || !*txt) {
+			return 0;
+		}
 		while (isspace(*txt)) {
 			++txt;
 		}
@@ -57,5 +63,5 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 	if (dest) {
 		*(const char **) dest = from;
 	}
-	return strlen(from);
+	return from ? strlen(from) : 0;
 }

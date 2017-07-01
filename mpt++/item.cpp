@@ -298,8 +298,8 @@ object *GroupRelation::find(int type, const char *name, int nlen) const
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
             object *o = c->pointer();
-            if (!o || !c->equal(name, nlen)) continue;
-            if (type && o->type() != type) continue;
+            if (!o || (type && o->type() != type)) continue;
+            if (!c->equal(name, nlen)) continue;
             return o;
         }
     }

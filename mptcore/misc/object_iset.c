@@ -28,9 +28,11 @@ static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 }
 static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
-	struct wrapIter *it = (void *) mt;
+	struct wrapIter *wr = (void *) mt;
+	MPT_INTERFACE(iterator) *it;
+	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
 		if (dest) {
 			*((const char **) dest) = fmt;
 		}
@@ -38,11 +40,14 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		if (dest) {
-			*((const void **) dest) = it->it;
+			*((const void **) dest) = wr->it;
 		}
-		return 's';
+		return MPT_ENUM(TypeValue);
 	}
-	return MPT_ERROR(BadType);
+	if (!(it = wr->it)) {
+		return MPT_ERROR(BadType);
+	}
+	return it->_vptr->get(it, type, dest);
 }
 
 static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)

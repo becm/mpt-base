@@ -95,11 +95,12 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph), &from)) >= 0) {
 			mpt_graph_fini(gr);
-			mpt_graph_init(gr, from);
-			return len <= 0 ? len : 1;
+			mpt_graph_init(gr, len ? from : 0);
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
-			return len <= 0 ? len : 1;
+			if (!len) gr->fg = def_graph.fg;
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}

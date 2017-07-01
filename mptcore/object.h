@@ -35,7 +35,8 @@ public:
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
 	bool setProperties(const object &, logger * = logger::defaultInstance());
 	
-	int type() const;
+	inline int type() const
+	{ return property(0); }
 	
 	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
