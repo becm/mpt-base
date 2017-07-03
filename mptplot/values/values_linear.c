@@ -20,27 +20,21 @@
  * 
  * \return zero on success
  */
-extern int mpt_values_linear(int points, double *target, int ld, double min, double max)
+extern void mpt_values_linear(long points, double *target, long ld, double min, double max)
 {
-	int	i, len;
-	double	dv;
+	long i, len;
+	double dv;
 	
-	if (!target) {
-		errno = EFAULT; return -1;
+	if (!target || points < 1) {
+		return;
 	}
-	if (points < 1) {
-		errno = ERANGE; return -1;
-	}
-	
-	dv = (max - min)/(len = points-1);
+	dv = (max - min) / (len = points - 1);
 	
 	target[0] = min;
 	
 	for (i = 1; i < len; i++) {
-		target[i*ld] = min + i * dv;
+		target[i * ld] = min + i * dv;
 	}
-	target[len*ld] = max;
-	
-	return 0;
+	target[len * ld] = max;
 }
 

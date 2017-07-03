@@ -1,9 +1,13 @@
 # meson.build.gen: *.c
 src = files(
   'fpoint_set.c',
+  'iterator_boundary.c',
   'iterator_create.c',
   'iterator_factor.c',
+  'iterator_file.c',
   'iterator_linear.c',
+  'iterator_poly.c',
+  'iterator_profile.c',
   'iterator_values.c',
   'linepart_code.c',
   'linepart_join.c',
@@ -12,13 +16,9 @@ src = files(
   'rawdata_create.c',
   'stage_data.c',
   'stage_fini.c',
-  'valtype_init.c',
-  'valtype_select.c',
   'values_bound.c',
   'values_file.c',
-  'values_generate.c',
   'values_linear.c',
-  'values_poly.c',
   'values_prepare.c',
   'values_string.c',
 )

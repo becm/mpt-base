@@ -103,7 +103,7 @@ static const MPT_INTERFACE_VPTR(iterator) iteratorStr = {
  * 
  * \return iterator interface
  */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *val)
+extern MPT_INTERFACE(iterator) *mpt_iterator_values(const char *val)
 {
 	MPT_INTERFACE(iterator) *iter;
 	struct _iter_sdata *data;

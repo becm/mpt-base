@@ -23,10 +23,10 @@
  * 
  * \return zero on success
  */
-extern int mpt_values_file(FILE *fd, int len, int ld, double *data)
+extern int mpt_values_file(FILE *fd, long len, long ld, double *data)
 {
 	double val;
-	int i, j;
+	long i, j;
 	
 	/* read aligned columns */
 	if (len < 0) {

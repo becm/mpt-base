@@ -19,7 +19,7 @@
  * 
  * \return zeroed/copied start address
  */
-extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, int len)
+extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 {
 	MPT_STRUCT(buffer) *buf;
 	double *data;

@@ -91,6 +91,41 @@ static int parseRange(const char *from, MPT_STRUCT(range) *r)
 	r->min = tmp;
 	return r1 + r2;
 }
+
+/*!
+ * \ingroup mptValues
+ * \brief create linear iterator
+ * 
+ * Create iterator with linear advancing.
+ * 
+ * \param len    number of elements to serve
+ * \param start  start value
+ * \param end    final value
+ * 
+ * \return linear iterator
+ */
+extern MPT_INTERFACE(iterator) *mpt_iterator_linear(uint32_t len, double start, double end)
+{
+	MPT_INTERFACE(iterator) *iter;
+	struct _iter_ldata *data;
+	if (len < 2) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (!(iter = malloc(sizeof(*iter) + sizeof(*data)))) {
+		return 0;
+	}
+	iter->_vptr = &iteratorLinear;
+	data = (void *) (iter + 1);
+	
+	data->base = start;
+	data->step = (end - start) / (len - 1);
+	data->elem = len;
+	data->pos  = 0;
+	
+	return iter;
+}
+
 /*!
  * \ingroup mptValues
  * \brief create linear iterator
@@ -103,8 +138,6 @@ static int parseRange(const char *from, MPT_STRUCT(range) *r)
  */
 extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 {
-	MPT_INTERFACE(iterator) *iter;
-	struct _iter_ldata *data;
 	MPT_STRUCT(range) r = { 0.0, 1.0 };
 	uint32_t iv = 10;
 	int ret;
@@ -142,18 +175,7 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 			}
 		}
 	}
-	if (!(iter = malloc(sizeof(*iter) + sizeof(*data)))) {
-		return 0;
-	}
-	iter->_vptr = &iteratorLinear;
-	data = (void *) (iter + 1);
-	
-	data->base = r.min;
-	data->step = (r.max - r.min) / iv++;
-	data->elem = iv;
-	data->pos = 0;
-	
-	return iter;
+	return mpt_iterator_linear(iv + 1, r.min, r.max);
 }
 
 /*!

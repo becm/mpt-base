@@ -10,15 +10,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-enum MPT_ENUM(ValueDescription)
-{
-	MPT_ENUM(ValueFormatLinear) = 1,
-	MPT_ENUM(ValueFormatBoundaries),
-	MPT_ENUM(ValueFormatText),
-	MPT_ENUM(ValueFormatPolynom),
-	MPT_ENUM(ValueFormatFile)
-};
-
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
 template<typename T>
@@ -202,17 +193,22 @@ MPT_STRUCT(mapping)
 __MPT_EXTDECL_BEGIN
 
 /* create profile of specific type */
-extern int mpt_values_linear(int , double *, int , double , double);
-extern int mpt_values_bound (int , double *, int , double , double , double);
-extern int mpt_values_string(const char *, int , double *, int);
-extern int mpt_values_poly  (const char *, int , double *, int , const double *);
+extern void mpt_values_linear(long , double *, long , double , double);
+extern void mpt_values_bound (long , double *, long , double , double , double);
+extern long mpt_values_iter(long , double *, long , MPT_INTERFACE(iterator) *);
 
 /* prepare values on buffer offset */
-extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *, int);
+extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *, long);
 
-/* select/set solver profile type */
-extern int mpt_valtype_select(const char **);
-extern int mpt_valtype_init(int , const char *, int , double *, int , const double *);
+/* create profile for grid */
+extern MPT_INTERFACE(iterator) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *, const char *);
+
+/* create iterators for input */
+extern MPT_INTERFACE(iterator) *mpt_iterator_linear(uint32_t , double , double);
+extern MPT_INTERFACE(iterator) *mpt_iterator_boundary(uint32_t , double , double , double);
+extern MPT_INTERFACE(iterator) *mpt_iterator_poly(const char *, const _MPT_ARRAY_TYPE(double) *);
+extern MPT_INTERFACE(iterator) *mpt_iterator_file(int);
+extern MPT_INTERFACE(iterator) *mpt_iterator_values(const char *);
 
 /* create iterator (descr. includes type info) */
 extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
@@ -220,11 +216,10 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
 extern MPT_INTERFACE(iterator) *_mpt_iterator_range (MPT_STRUCT(value) *);
 extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) *);
 extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_values(const char *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */
-extern int mpt_values_file(FILE *, int , int , double *);
+extern int mpt_values_file(FILE *, long , long , double *);
 #endif
 
 
@@ -251,9 +246,6 @@ extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *,
 
 /* set point data */
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
-
-/* append values described by string */
-extern double *mpt_values_generate(_MPT_ARRAY_TYPE(double) *, int , const char *);
 
 /* consume range data */
 extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);

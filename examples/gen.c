@@ -1,58 +1,67 @@
-#include <stdlib.h>
 #include <stdio.h>
 
 #ifndef MPT_INCLUDE
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(convert.h)
 
 #include MPT_INCLUDE(values.h)
 
-static void fail(const char *txt)
-{
-	fputs("bad format <", stderr);
-	fputs(txt, stderr);
-	fputc('>', stderr);
-	fputc('\n', stderr);
-}
-
 extern int main(int argc, char *argv[])
 {
-	double *val;
-	int i, max;
+	_MPT_ARRAY_TYPE(double) arr = MPT_ARRAY_INIT;
+	double *src;
+	int i, len;
 	
-	val = 0;
-	max = 0;
-	for (i = 1; i < argc; ++i) {
-		const char *desc = argv[i];
-		int i, len, pos;
+	if (argc < 2 || sscanf(argv[1], "%d", &len) < 0) {
+		fputs(argv[0], stderr);
+		fputs(": bad arguments", stderr);
+		fputc('\n', stderr);
+		fputs("profile <len> {[profile]}", stderr);
+		fputc('\n', stderr);
+		return 1;
+	}
+	if (!(src = mpt_values_prepare(&arr, len))) {
+		return 2;
+	}
+	for (i = 0; i < len; ++i) {
+		src[i] = i;
+	}
+	for (i = 2; i < argc; ++i) {
+		MPT_INTERFACE(iterator) *it;
 		
-		if ((pos = mpt_cint(&len, desc, 0, 0)) < 0 || len < 1) {
-			fail(desc);
+		if (!(it = mpt_iterator_profile(&arr, argv[i]))) {
+			fputs("bad format <", stderr);
+			fputs(argv[i], stderr);
+			fputc('>', stderr);
+			fputc('\n', stderr);
 			continue;
 		}
-		if (len > max) {
-			double *next;
-			if (!(next = realloc(val, len * sizeof(*val)))) {
-				if (val) {
-					free(val);
-				}
-				return 1;
+		while (1) {
+			double val;
+			int res;
+			if (!(res = it->_vptr->get(it, 'd', &val))) {
+				fprintf(stderr, "%s: %d\n", "conversion range error", -res);
+				break;
 			}
-			val = next;
-			max = len;
+			if (res < 0) {
+				fprintf(stderr, "%s: %d\n", "conversion error", -res);
+				break;
+			}
+			fprintf(stdout, "%g ", val);
+			
+			if ((res = it->_vptr->advance(it)) < 0) {
+				fprintf(stderr, "%s: %d\n", "advance error", -res);
+				break;
+			}
+			if (!res) {
+				break;
+			}
 		}
-		desc += pos;
-		
-		if ((pos = mpt_valtype_select(&desc)) < 0
-		    || (pos = mpt_valtype_init(pos, desc, len, val, 1, 0)) < 0) {
-			fail(desc);
-			continue;
-		}
-		for (i = 0; i < len; ++i) fprintf(stdout, "%g ", val[i]);
+		it->_vptr->ref.unref((void *) it);
 		fputc('\n', stdout);
 	}
-	free(val);
 	return 0;
 }

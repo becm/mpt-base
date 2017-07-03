@@ -34,7 +34,7 @@ if with_plot
     executable('gen', 'gen.c',
       c_args: test_defines,
       dependencies: plot),
-    args: [ '9 poly 1 0 0 : -4' ])
+    args: [ '9', 'poly 1 0 0 : -4', 'lin 1 0' ])
 endif
 
 if with_io

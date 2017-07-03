@@ -49,7 +49,7 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *conf)
 	}
 	/* no description -> use normal values */
 	if (!len--) {
-		return _mpt_iterator_values(conf);
+		return mpt_iterator_values(conf);
 	}
 	buf[len] = 0;
 	val.fmt = 0;

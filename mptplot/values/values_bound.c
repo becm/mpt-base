@@ -3,7 +3,6 @@
  */
 
 #include <stdlib.h>
-#include <errno.h>
 
 #include "values.h"
 
@@ -22,24 +21,22 @@
  * 
  * \return zero on success
  */
-extern int mpt_values_bound(int points, double *target, int ld, double left, double cont, double right)
+extern void mpt_values_bound(long points, double *target, long ld, double left, double cont, double right)
 {
-	int i, end = points - 1;
+	long i, end = points - 1;
 	
-	if (!target) {
-		errno = EFAULT; return -1;
+	if (!target || points < 1) {
+		return;
 	}
-	if (points < 1) {
-		errno = ERANGE; return -1;
+	if (points < 2) {
+		target[0] = (left + cont + right) / 3;
+		return;
 	}
-	
 	target[0] = left;
 	
 	for (i = 1; i < end; i++) {
-		target[i*ld] = cont;
+		target[i * ld] = cont;
 	}
-	target[ld*end] = right;
-	
-	return 0;
+	target[ld * end] = right;
 }
 
