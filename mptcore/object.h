@@ -63,7 +63,8 @@ extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 /* set metatype property to match argument */
-extern int mpt_object_iset(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
+extern int mpt_object_iset(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
+extern int mpt_object_nset(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
 extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );

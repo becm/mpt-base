@@ -86,7 +86,7 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 	val.fmt = format;
 	val.ptr = buf;
 	
-	return mpt_object_iset(obj, prop, &val);
+	return mpt_object_nset(obj, prop, &val);
 }
 
 /*!

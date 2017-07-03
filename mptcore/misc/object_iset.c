@@ -49,19 +49,19 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	return it->_vptr->get(it, type, dest);
 }
+static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
+	{ metaIterUnref },
+	metaIterConv,
+	metaIterClone
+};
 
 static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
 {
-	static const MPT_INTERFACE_VPTR(metatype) ctl = {
-		{ metaIterUnref },
-		metaIterConv,
-		metaIterClone
-	};
 	struct objectParam *par = ptr;
 	MPT_INTERFACE(object) *obj = par->obj;
 	struct wrapIter mt;
 	
-	mt._ctl._vptr = &ctl;
+	mt._ctl._vptr = &metaIterCtl;
 	mt.it = it;
 	
 	return obj->_vptr->setProperty(obj, par->prop, &mt._ctl);
@@ -77,7 +77,7 @@ static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
  * \param prop name of property to change
  * \param val  data to set
  */
-extern int mpt_object_iset(MPT_INTERFACE(object) *obj, const char *prop, MPT_STRUCT(value) *val)
+extern int mpt_object_nset(MPT_INTERFACE(object) *obj, const char *prop, MPT_STRUCT(value) *val)
 {
 	
 	struct objectParam par;
@@ -88,4 +88,24 @@ extern int mpt_object_iset(MPT_INTERFACE(object) *obj, const char *prop, MPT_STR
 	par.prop = prop;
 	
 	return mpt_iterator_process(val, processIterator, &par);
+}
+/*!
+ * \ingroup mptObject
+ * \brief set object property
+ * 
+ * Set property data to value.
+ * Use iterator as intermediate for type conversions.
+ * 
+ * \param obj  object interface descriptor
+ * \param prop name of property to change
+ * \param val  data to set
+ */
+extern int mpt_object_iset(MPT_INTERFACE(object) *obj, const char *prop, MPT_INTERFACE(iterator) *it)
+{
+	struct wrapIter mt;
+	
+	mt._ctl._vptr = &metaIterCtl;
+	mt.it = it;
+	
+	return obj->_vptr->setProperty(obj, prop, &mt._ctl);
 }

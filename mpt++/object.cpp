@@ -47,7 +47,7 @@ bool object::set(const char *name, const value &val, logger *out)
     int ret;
     if (!(str = val.string())) {
         value tmp = val;
-        ret = mpt_object_iset(this, name, &tmp);
+        ret = mpt_object_nset(this, name, &tmp);
     } else {
         ret = mpt_object_pset(this, name, str, 0);
     }
@@ -154,7 +154,7 @@ bool Property::set(const value &val)
 {
     if (!_ref || !_prop.name) return false;
     value tmp = val;
-    if (mpt_object_iset(_ref, _prop.name, &tmp) < 0) return false;
+    if (mpt_object_nset(_ref, _prop.name, &tmp) < 0) return false;
     if (_ref->property(&_prop) < 0) _prop.name = 0;
     return true;
 }
@@ -266,7 +266,7 @@ static int objectPropertySet(void *addr, const property *pr)
         ret = mpt_object_pset(con->obj, pr->name, val, 0);
     } else {
         value tmp = pr->val;
-        ret = mpt_object_iset(con->obj, pr->name, &tmp);
+        ret = mpt_object_nset(con->obj, pr->name, &tmp);
     }
     if (ret < 0) {
         property tmp = *pr;

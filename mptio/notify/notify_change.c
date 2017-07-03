@@ -62,7 +62,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 		ret = mpt_object_pset(obj, 0, val->ptr, 0);
 	} else {
 		MPT_STRUCT(value) tmp = *val;
-		ret = mpt_object_iset(obj, 0, &tmp);
+		ret = mpt_object_nset(obj, 0, &tmp);
 	}
 	if (ret < 0) {
 		return ret;
