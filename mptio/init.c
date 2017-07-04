@@ -90,7 +90,7 @@ static int loadConfig(const char *fname)
  */
 extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 {
-	MPT_INTERFACE(metatype) *mt;
+	const MPT_INTERFACE(metatype) *mt;
 	const char *ctl = 0, *src = 0, *debug, *flags;
 	int lv = 0;
 	

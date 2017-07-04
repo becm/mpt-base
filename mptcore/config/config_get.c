@@ -14,7 +14,7 @@
  * 
  * \return config element if exists
  */
-extern MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
+extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	

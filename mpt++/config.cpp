@@ -93,7 +93,7 @@ bool config::set(const char *p, const char *val, int sep)
 
     return assign(&where, &tmp) < 0 ? false : true;
 }
-metatype *config::get(const char *base, int sep, int len)
+const metatype *config::get(const char *base, int sep, int len)
 {
     path to;
     to.set(base, len, sep, 0);
@@ -205,7 +205,7 @@ int Config::assign(const path *dest, const value *val)
     curr->setPointer(m);
     return m->type();
 }
-metatype *Config::query(const path *dest) const
+const metatype *Config::query(const path *dest) const
 {
     // no 'self' element(s)
     if (!dest || dest->empty()) {

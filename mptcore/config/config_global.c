@@ -22,7 +22,7 @@ static void configUnref(MPT_INTERFACE(unrefable) *cfg)
 		free(c);
 	}
 }
-static MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
+static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
 	struct configRoot *c = (void *) cfg;
 	MPT_STRUCT(node) *n;

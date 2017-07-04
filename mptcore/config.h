@@ -72,14 +72,14 @@ MPT_STRUCT(path)
 MPT_INTERFACE(config) : public unrefable
 {
 public:
-	virtual metatype *query(const path *) const = 0;
+	virtual const metatype *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 	
 	int environ(const char *filter = "mpt_*", int sep = '_', char * const env[] = 0);
 	void del(const char *path, int sep = '.', int len = -1);
 	bool set(const char *path, const char *value = 0, int sep = '.');
-	metatype *get(const char *path, int sep = '.', int len = -1);
+	const metatype *get(const char *path, int sep = '.', int len = -1);
 	
 	static config *global(const path * = 0);
 protected:
@@ -89,7 +89,7 @@ protected:
 MPT_INTERFACE(config);
 MPT_INTERFACE_VPTR(config) {
 	MPT_INTERFACE_VPTR(unrefable) ref;
-	MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
+	const MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
@@ -100,7 +100,7 @@ MPT_INTERFACE_VPTR(config) {
 __MPT_EXTDECL_BEGIN
 
 /* get/set config element */
-extern MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
+extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
 extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
 /* use config data to store environment */
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
@@ -169,7 +169,7 @@ public:
     virtual ~Config();
     
     void unref() __MPT_OVERRIDE;
-    metatype *query(const path *) const __MPT_OVERRIDE;
+    const metatype *query(const path *) const __MPT_OVERRIDE;
     int assign(const path *, const value * = 0) __MPT_OVERRIDE;
     int remove(const path *) __MPT_OVERRIDE;
     class Element;

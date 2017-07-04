@@ -31,7 +31,7 @@ int client::assign(const path *p, const value *v)
  * 
  * \return metatype at location
  */
-metatype *client::query(const path *p) const
+const metatype *client::query(const path *p) const
 {
 	return config::global()->query(p);
 }

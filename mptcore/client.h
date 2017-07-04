@@ -42,7 +42,7 @@ MPT_INTERFACE(client) : public config
 public:
 	enum { LogStatus = logger::Debug2 };
 	
-	metatype *query(const path *) const __MPT_OVERRIDE;
+	const metatype *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value *) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
 	
