@@ -2,10 +2,33 @@
  * MPT default client config operations
  */
 
+#include <stdlib.h>
+
 #include "client.h"
 
 __MPT_NAMESPACE_BEGIN
 
+static config *cfg = 0;
+
+static void unrefConfig()
+{
+	if (cfg) {
+		cfg->unref();
+		cfg = 0;
+	}
+}
+static config *clientConfig()
+{
+	static const char dest[] = "mpt.client\0";
+	static path p;
+	
+	p.set(dest);
+	if (!cfg) {
+		atexit(unrefConfig);
+		cfg = config::global(&p);
+	}
+	return cfg;
+}
 /*!
  * \ingroup mptClient
  * \brief set client config
@@ -19,7 +42,8 @@ __MPT_NAMESPACE_BEGIN
  */
 int client::assign(const path *p, const value *v)
 {
-	return config::global()->assign(p, v);
+	config *cfg = clientConfig();
+	return cfg ? cfg->assign(p, v) : BadArgument;
 }
 /*!
  * \ingroup mptClient
@@ -33,7 +57,8 @@ int client::assign(const path *p, const value *v)
  */
 const metatype *client::query(const path *p) const
 {
-	return config::global()->query(p);
+	config *cfg = clientConfig();
+	return cfg ? cfg->query(p) : 0;
 }
 /*!
  * \ingroup mptClient
@@ -48,7 +73,8 @@ const metatype *client::query(const path *p) const
  */
 int client::remove(const path *p)
 {
-	return config::global()->remove(p);
+	config *cfg = clientConfig();
+	return cfg ? cfg->remove(p) : 0;
 }
 
 __MPT_NAMESPACE_END

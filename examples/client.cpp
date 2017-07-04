@@ -78,6 +78,12 @@ int main(int argc, char * const argv[])
     MyClient c(argv[pos]);
     c.init();
 
+    c.set("test", "value");
+    const mpt::metatype *mt = c.get("test");
+
+    if (mt) {
+        std::cout << mt->string() << std::endl;
+    }
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     const mpt::object *o;

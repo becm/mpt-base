@@ -109,7 +109,7 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	if (!(n = mpt_node_assign(&r, path, val))) {
 		return val ? MPT_ERROR(BadOperation) : 0;
 	}
-	if (!b->children) {
+	if (c->base.len && !b->children) {
 		b->children = r;
 		r->parent = b;
 	}
@@ -155,10 +155,14 @@ extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *path)
 	
 	n = mpt_config_node(0);
 	if (!(n = mpt_node_query(n, &p, 0))) {
-		return 0;
-	}
-	if (p.len && !(n = mpt_node_query(n, &p, 0))) {
-		return 0;
+		MPT_STRUCT(value) val = MPT_VALUE_INIT;
+		p = *path;
+		if (!(n = mpt_node_query(mpt_config_node(0), &p, &val))) {
+			return 0;
+		}
+		if (p.len && !(n = mpt_node_query(n, &p, 0))) {
+			return 0;
+		}
 	}
 	if (!(c = malloc(sizeof(*c) + path->len))) {
 		return 0;
