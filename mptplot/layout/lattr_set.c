@@ -44,14 +44,22 @@ extern int mpt_lattr_set(MPT_STRUCT(lineattr) *attr, int width, int style, int s
 
 static int lattr_pset(unsigned char *val, const MPT_INTERFACE(metatype) *src, int def[3])
 {
-	int len, sym;
+	int len;
+	uint8_t sym;
 	
 	if (!src) {
 		*val = def[0];
 		return 0;
 	}
-	if ((len = src->_vptr->conv(src, 'i', &sym)) < 0) {
-		return len;
+	if ((len = src->_vptr->conv(src, 'y', &sym)) < 0) {
+		int32_t tmp = *val;
+		if ((len = src->_vptr->conv(src, 'i', &tmp)) < 0) {
+			return len;
+		}
+		if (tmp < 0 || tmp > UINT8_MAX) {
+			return MPT_ERROR(BadValue);
+		}
+		sym = tmp;
 	}
 	if (!len) {
 		*val = def[0];

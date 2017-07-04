@@ -109,7 +109,7 @@ enum MPT_ENUM(Types)
 #define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
                              && (v) < MPT_ENUM(TypeSpecial))
 	
-	/* special/format types (0x20..0x3f) */
+	/* special/format types (0x20..0x2f) */
 	MPT_ENUM(TypeSpecial)   = ' ',   /* SPACE */
 	
 	/* array types ('@'..'Z') */
@@ -119,7 +119,8 @@ enum MPT_ENUM(Types)
 #define MPT_value_toVector(v) (MPT_value_isScalar(v) \
                              ? (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector) \
                              : 0)
-#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) || MPT_value_isVector(v))
+#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) || MPT_value_isVector(v) \
+                            || MPT_value_isLayout(v))
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
@@ -128,6 +129,7 @@ enum MPT_ENUM(Types)
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeScalBase) \
                                : 0)
+#define MPT_value_isLayout(v)   ((v) >= 0x30 && (v) <= 0x39)
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeDynamic)  = 0x80,

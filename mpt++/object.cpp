@@ -53,7 +53,7 @@ bool object::set(const char *name, const value &val, logger *out)
     }
     if (ret >= 0) return true;
     if (!out) return false;
-    struct property pr;
+    struct property pr("");
     if (property(&pr) < 0) pr.name = "object";
     pr.val.fmt = val.fmt;
     if (!(pr.val.ptr = val.ptr)) {

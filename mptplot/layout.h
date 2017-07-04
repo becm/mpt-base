@@ -41,8 +41,8 @@ enum MPT_ENUM(TextFlags) {
 
 enum MPT_ENUM(LayoutTypes) {
 	/* layout data types */
-	MPT_ENUM(TypeLineAttr)  = 0x30,  /* '0' */
-	MPT_ENUM(TypeColor)     = 0x31,  /* '1' */
+	MPT_ENUM(TypeColor)     = 0x30,  /* '1' */
+	MPT_ENUM(TypeLineAttr)  = 0x31,  /* '0' */
 	MPT_ENUM(TypeLine)      = 0x32,  /* '2' */
 	
 	/* layout pointer types */
