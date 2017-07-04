@@ -20,7 +20,7 @@
 extern int main(int , char * const [])
 {
 	mpt::Config conf;
-	mpt::metatype *m;
+	const mpt::metatype *m;
 	const char *name;
 	
 	mtrace();

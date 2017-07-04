@@ -32,7 +32,7 @@ public:
 	    if (conv(t, &ptr) < 0) return 0;
 	    return ptr;
 	}
-	inline operator const char *()
+	inline operator const char *() const
 	{ return string(); }
 	
 	static metatype *create(value);
