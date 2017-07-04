@@ -59,7 +59,7 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 		pos = len + path->off;
 		if (arr._buf->_ref._val > 1) {
 			if (!(data = mpt_array_slice(&arr, 0, pos))) {
-				return -1;
+				return MPT_ERROR(BadOperation);
 			}
 			path->base = (char *) data;
 		}

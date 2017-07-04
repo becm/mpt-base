@@ -49,15 +49,14 @@ path &path::operator =(const path &from)
 Slice<const char> path::data() const
 {
     struct ::mpt::array::Data *d = array();
-    if (d) return Slice<const char>(static_cast<char *>(d->data()), d->length() - off - len);
-    return Slice<const char>(0, 0);
+    size_t skip, max;
+    if (!d || (skip = off + len) > (max = d->length())) return Slice<const char>(0, 0);
+    return Slice<const char>(static_cast<char *>(d->data()) + skip, max - skip);
 }
 bool path::clearData()
 {
     struct ::mpt::array::Data *d = array();
-    size_t max = off + len;
-    if (d) return d->setLength(max);
-    return max ? false : true;
+    return d ? d->setLength(off + len) : true;
 }
 
 void path::set(const char *path, int len, int s, int a)
@@ -68,11 +67,7 @@ void path::set(const char *path, int len, int s, int a)
 }
 
 int path::del()
-{
-    int l = mpt_path_del(this);
-    mpt_path_invalidate(this);
-    return l;
-}
+{ return mpt_path_del(this); }
 
 int path::add(int)
 { return mpt_path_add(this, len); }
