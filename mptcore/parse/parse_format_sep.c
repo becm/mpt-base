@@ -47,7 +47,7 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			if (mpt_path_addchar(path, curr) < 0) {
 				return MPT_ERROR(BadOperation);
 			}
-			mpt_path_valid(path);
+			parse->valid = mpt_path_valid(path);
 		}
 		return mpt_parse_option(fmt, parse, path);
 	}
@@ -77,7 +77,7 @@ extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			break;
 		}
 		if (!isspace(curr)) {
-			mpt_path_valid(path);
+			parse->valid = mpt_path_valid(path);
 		}
 		else if (curr == '\n') {
 			break;

@@ -41,9 +41,13 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(par
 		}
 		/* remove last path element or trailing data */
 		if (ret & MPT_PARSEFLAG(SectEnd)) {
-			mpt_path_del(&path);
+			ret = mpt_path_del(&path);
 		} else {
-			mpt_path_invalidate(&path);
+			ret = mpt_path_invalidate(&path);
+		}
+		if (ret < 0) {
+			ret = MPT_ERROR(MissingData);
+			break;
 		}
 		/* cycle parse state */
 		parse->prev = parse->curr;
