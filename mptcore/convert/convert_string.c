@@ -41,7 +41,7 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 			return MPT_ERROR(BadValue);
 		}
 		if (dest) {
-			((const char **) dest)[0] = txt;
+			((const char **) dest)[0] = key;
 		}
 		/* restore start address */
 		return txt - from;
