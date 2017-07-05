@@ -55,12 +55,11 @@ static void setEnviron(const char *match)
 }
 static int loadConfig(const char *fname)
 {
-	MPT_STRUCT(node) *root;
-	MPT_STRUCT(value) val;
-	FILE *fd;
+	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
+	MPT_STRUCT(node) *root, *old;
 	int ret;
 	
-	if (!(fd = fopen(fname, "r"))) {
+	if (!(parse.src.arg = fopen(fname, "r"))) {
 		mpt_log(0, "mpt_init::load", MPT_LOG(Error), "%s",
 		        MPT_tr("failed to set global config element"));
 		return MPT_ERROR(BadArgument);
@@ -68,13 +67,18 @@ static int loadConfig(const char *fname)
 	if (!(root = mpt_config_node(0))) {
 		return MPT_ERROR(BadOperation);
 	}
-	val.fmt = 0;
-	val.ptr = fname;
-	mpt_node_set(root, &val);
-	ret = mpt_node_read(root, fd, 0, 0, 0);
-	fclose(fd);
+	old = root->children;
+	root->children = 0;
+	
+	parse.src.getc = (int (*)()) mpt_getchar_stdio;
+	ret = mpt_parse_node(root, &parse, 0);
+	fclose(parse.src.arg);
 	if (ret < 0) {
-		errno = EINVAL;
+		root->children = old;
+	} else {
+		MPT_STRUCT(node) tmp = MPT_NODE_INIT;
+		tmp.children = old;
+		mpt_node_clear(&tmp);
 	}
 	return ret;
 }

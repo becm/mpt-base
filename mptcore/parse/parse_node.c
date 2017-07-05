@@ -46,15 +46,25 @@ static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(val
  * 
  * \return parse result
  */
-extern int mpt_parse_node(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse) *parse, MPT_STRUCT(node) *root)
+extern int mpt_parse_node(MPT_STRUCT(node) *root, MPT_STRUCT(parse) *parse, const char *fmt)
 {
+	MPT_STRUCT(parsefmt) pfmt;
+	MPT_TYPE(ParserFcn) next;
 	int err;
 	
+	if (!root || !parse) {
+		return MPT_ERROR(BadArgument);
+	}
+	err = mpt_parse_format(&pfmt, fmt);
+	
+	if (!(next = mpt_parse_next_fcn(err))) {
+		return MPT_ERROR(BadType);
+	}
 	/* create new nodes */
 	if (!(root->children)) {
 		MPT_STRUCT(node) *curr = root;
 		parse->prev = MPT_PARSEFLAG(Section);
-		err = mpt_parse_config(next, npar, parse, saveAppend, &curr);
+		err = mpt_parse_config(next, &pfmt, parse, saveAppend, &curr);
 		
 		/* clear created nodes on error */
 		if (err < 0) {
@@ -65,7 +75,7 @@ extern int mpt_parse_node(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse
 	else {
 		MPT_STRUCT(node) conf = MPT_NODE_INIT;
 		parse->prev = 0;
-		err = mpt_parse_config(next, npar, parse, saveInsert, &conf.children);
+		err = mpt_parse_config(next, &pfmt, parse, saveInsert, &conf.children);
 		
 		/* clear created nodes on error */
 		if (err < 0) {

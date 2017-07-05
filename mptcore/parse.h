@@ -146,8 +146,6 @@ extern int mpt_getchar_file(void *);
 /* get character from stdio stream */
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 extern int mpt_getchar_stdio(FILE *);
-/* read configuration from file */
-extern int mpt_node_read(MPT_STRUCT(node) *, FILE *, const char *__MPT_DEFPAR(0), const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
 #endif
 /* get character from IO vector */
 extern int mpt_getchar_iovec(struct iovec *);
@@ -173,7 +171,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INT
 /* parse configuration tree */
 extern int mpt_parse_config(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_TYPE(PathHandler), void *);
 /* save config tree to node children */
-extern int mpt_parse_node(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_STRUCT(node) *);
+extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parse) *, const char *);
 
 #if _POSIX_C_SOURCE >= 200809L
 /* load configuration file/path */

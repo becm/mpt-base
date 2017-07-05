@@ -23,13 +23,15 @@
  */
 extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, MPT_INTERFACE(logger) *log)
 {
+	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
 	MPT_STRUCT(node) *old;
-	const char *fname, *format, *limit;
-	FILE *fd;
+	const char *fname, *format;
 	int res, len;
 	
 	format = 0;
-	limit = "ns";
+	
+	parse.src.getc = (int (*)()) mpt_getchar_stdio;
+	mpt_parse_accept(&parse.name, "ns");
 	
 	if (!val) {
 		if (!(fname = mpt_node_data(conf, 0))) {
@@ -49,22 +51,21 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		char * const *ptr = val->ptr;
 		if (val->fmt[0] == MPT_ENUM(TypeFile)) {
 			fname = 0;
-			if (!(fd = (FILE *) *ptr)) {
+			if (!(parse.src.arg = *ptr)) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
 				return MPT_ERROR(BadValue);
 			}
-			len = 1;
 		}
 		else if (val->fmt[0] == 's') {
 			if (!(fname = *ptr)) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
 				return MPT_ERROR(BadValue);
 			}
-			len = 1;
 		}
 		else {
 			return MPT_ERROR(BadType);
 		}
+		len = 1;
 		/* additional format info */
 		if (val->fmt[1]) {
 			if (val->fmt[1] != 's') {
@@ -80,38 +81,50 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad name limit"));
 					return MPT_ERROR(BadType);
 				}
-				limit = ptr[2];
+				if ((res = mpt_parse_accept(&parse.name, ptr[2])) < 0) {
+					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("bad name limit"), ptr[2]);
+					return MPT_ERROR(BadValue);
+				}
 				len = 3;
 			}
 		}
 	}
-	
-	if (fname && !(fd = fopen(fname, "r"))) {
-		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("failed to open file"), fname);
-		return MPT_ERROR(BadValue);
+	if (fname) {
+		if (!(parse.src.arg = fopen(fname, "r"))) {
+			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("failed to open file"), fname);
+			return MPT_ERROR(BadValue);
+		}
 	}
+	/* clear children to trigger full read */
 	old = conf->children;
 	conf->children = 0;
-	res = mpt_node_read(conf, fd, format, limit, log);
+	
+	res = mpt_parse_node(conf, &parse, format);
 	if (fname) {
-		if (val) {
-			MPT_STRUCT(value) fn;
-			fn.fmt = 0;
-			fn.ptr = fname;
-			mpt_node_set(conf, &fn);
-		}
-		fclose(fd);
+		fclose(parse.src.arg);
 	}
 	/* restore old config state */
 	if (res < 0) {
+		if (fname) {
+			(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u: %s",
+			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line, fname);
+		} else {
+			(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u",
+			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
+		}
 		conf->children = old;
 		return res;
 	}
 	/* delete old config nodes */
 	else {
 		MPT_STRUCT(node) root = MPT_NODE_INIT;
+		MPT_STRUCT(value) val = MPT_VALUE_INIT;
 		root.children = old;
 		mpt_node_clear(&root);
+		
+		if ((val.ptr = fname)) {
+			mpt_node_set(conf, &val);
+		}
 		return len;
 	}
 }
