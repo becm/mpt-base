@@ -39,11 +39,14 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		MPT_INTERFACE(iterator) *src;
-		if (!(src = it->it)
-		 && it->val
-		 && *it->val
-		 && !(it->it = src = mpt_iterator_string(it->val, it->sep))) {
-			return MPT_ERROR(BadValue);
+		if (!(src = it->it)) {
+			if (!it->val || !*it->val) {
+				return MPT_ERROR(BadValue);
+			}
+			if (!(src = mpt_iterator_string(it->val, it->sep))) {
+				return MPT_ERROR(BadValue);
+			}
+			it->it = src;
 		}
 		if (dest) {
 			*((const void **) dest) = src;

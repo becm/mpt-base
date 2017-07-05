@@ -85,8 +85,13 @@ extern MPT_STRUCT(node) *mpt_node_new(size_t ilen, const MPT_STRUCT(value) *val)
 	if (!dlen || post > defsize) {
 		MPT_INTERFACE(metatype) *meta = 0;
 		
-		if (val && !(meta = mpt_meta_new(*val))) {
-			return 0;
+		if (val) {
+			if (!val->fmt && !val->ptr) {
+				meta = mpt_metatype_default();
+			}
+			else if (!(meta = mpt_meta_new(*val))) {
+				return 0;
+			}
 		}
 		if (ilen > defsize) {
 			ilen = sizeof(node->ident);

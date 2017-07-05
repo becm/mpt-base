@@ -50,7 +50,7 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 		    && it->_vptr->reset(it) >= 0) {
 			return old->_vptr->conv(old, 0, 0);
 		}
-		mt = 0;
+		mt = mpt_metatype_default();
 	}
 	/* create new metatype for data */
 	else if (!(mt = mpt_meta_new(*val))) {
