@@ -18,6 +18,7 @@ src = files(
   'object_pset.c',
   'object_set.c',
   'object_typename.c',
+  'process_vararg.c',
   'property_match.c',
   'refcount.c',
   'value_read.c',

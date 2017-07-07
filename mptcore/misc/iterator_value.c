@@ -95,7 +95,7 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 }
 static void valError(MPT_INTERFACE(unrefable) *ctl)
 {
-	mpt_log(0, "mpt::iterator::process", MPT_LOG(Critical), "%s (%" PRIxPTR ")",
+	mpt_log(0, "mpt::iterator::value", MPT_LOG(Critical), "%s (%" PRIxPTR ")",
 	        MPT_tr("tried to unref temporary iterator"), ctl);
 }
 static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
@@ -185,7 +185,7 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
 
 
 /*!
- * \ingroup mptObject
+ * \ingroup mptMeta
  * \brief dispatch value via iterator
  * 
  * Use temporary iterator instance to access
@@ -197,7 +197,7 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
  * 
  * \return value of assignment operation
  */
-extern int mpt_iterator_process(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
+extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
 {
 	static const MPT_INTERFACE_VPTR(iterator) ctl = {
 		{ valError },

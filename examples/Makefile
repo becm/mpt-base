@@ -2,7 +2,7 @@
 #
 
 DIRS = core io cxx lua
-TESTS = client axis iter gen libassign
+TESTS = client graph axis iter gen libassign
 PROGS = readline graphic ${TESTS}
 STATIC = libassign_static
 
@@ -17,6 +17,7 @@ libassign : LDLIBS=-lmptloader -lmptcore
 libassign_static : LDLIBS=-lmpt -ldl
 
 # library config
+graph : LDLIBS=-lmpt++ -lmptcore
 client : LDLIBS=-lmpt++ -lmptio -lmptloader -lmptcore
 readline : LDLIBS=-lmptloader
 axis iter gen : LDLIBS=-lmptplot -lmptcore

@@ -231,7 +231,8 @@ extern int _mpt_geninfo_conv(const void *, int , void *);
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 
 /* assign to value via iterator */
-extern int mpt_iterator_process(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
+extern int mpt_process_value(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
+extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
 extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_DEFPAR(-1));
 extern MPT_INTERFACE(iterator) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
 

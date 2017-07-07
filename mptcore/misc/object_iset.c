@@ -87,7 +87,7 @@ extern int mpt_object_nset(MPT_INTERFACE(object) *obj, const char *prop, MPT_STR
 	}
 	par.prop = prop;
 	
-	return mpt_iterator_process(val, processIterator, &par);
+	return mpt_process_value(val, processIterator, &par);
 }
 /*!
  * \ingroup mptObject
