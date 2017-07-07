@@ -61,19 +61,36 @@ bool Parse::open(const char *fn)
     return true;
 }
 
+static int saveAppend(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
+{
+	node *next, **pos = static_cast<node **>(ctx);
+	if ((next = mpt_node_append(*pos, p, val, last, curr))) {
+		*pos = next;
+		return 0;
+	}
+	return BadOperation;
+}
+
 int Parse::read(struct node &to, logger *out)
 {
     static const char _func[] = "mpt::Parse::read";
-    int ret;
 
     if (!_d.src.getc) {
         if (out) out->message(_func, out->Error, "%s", MPT_tr("no parser input"));
-        return -1;
+        return BadArgument;
     }
     if (!_next) {
         if (out) out->message(_func, out->Error, "%s", MPT_tr("no format specified"));
+        return BadArgument;
     }
-    if ((ret = mpt_parse_node(_next, _nextCtx, &_d, &to)) < 0 && out) {
+    node tmp, *ptr = &tmp;
+    _d.prev = parse::Section;
+    int ret = mpt_parse_config(_next, _nextCtx, &_d, saveAppend, &ptr);
+    /* clear created nodes on error */
+    if (ret < 0) {
+        if (!out) {
+            return ret;
+        }
         const char *fname;
         if (!(fname = to.data())) fname = "";
         if (ret == BadOperation) {
@@ -81,6 +98,14 @@ int Parse::read(struct node &to, logger *out)
         } else {
             out->message(_func, out->Error, "%s (%x): %s %u: %s", MPT_tr("parse error"), _d.curr, MPT_tr("line"), (int) _d.src.line, fname);
         }
+        return ret;
+    }
+    mpt_node_clear(&to);
+    node *child;
+    if ((child = tmp.children)) {
+        to.children = child;
+        tmp.children = 0;
+        do { child->parent = &to; } while ((child = child->next));
     }
     return ret;
 }

@@ -63,6 +63,8 @@ MPT_INTERFACE(iterator) : public unrefable
 protected:
 	inline ~iterator() {}
 public:
+	enum { Type = TypeIterator };
+	
 	virtual int get(int, void *) = 0;
 	virtual int advance();
 	virtual int reset();
@@ -170,7 +172,7 @@ public:
 	
 	int get(int type, void *dest) __MPT_OVERRIDE
 	{
-		int fmt = this->type();
+		int fmt = this->content();
 		const T *val = _d.nth(_pos);
 		if (!val) return MissingData;
 		type = convert((const void **) &val, fmt, dest, type);
@@ -183,7 +185,7 @@ public:
 		if (pos > _d.size()) return MissingData;
 		if (pos == _d.size()) return 0;
 		_pos = pos;
-		return type();
+		return content();
 	}
 	int reset() __MPT_OVERRIDE
 	{
@@ -198,7 +200,11 @@ protected:
 	Slice<const T> _d;
 	int _pos;
 };
-template <> typeIdentifier(const Source<T> &) { return iterator::Type; }
+template <typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const Source<T> &)
+{
+	return iterator::Type;
+}
 #endif
 
 __MPT_EXTDECL_BEGIN
