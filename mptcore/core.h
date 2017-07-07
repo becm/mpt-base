@@ -224,43 +224,43 @@ template <typename T>
 class Slice
 {
 public:
-    typedef T* iterator;
-    
-    inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
-    { }
-
-    inline iterator begin() const
-    { return _base; }
-    
-    inline iterator end() const
-    { return _base + length(); }
-    
-    inline iterator nth(int i) const
-    {
-        if (i > (int) length()) return 0;
-        if (i < 0 && (i += length()) < 0) return 0;
-        return _base + i;
-    }
-    inline long length() const
-    { return _len / sizeof(T); }
-    inline T *base() const
-    { return _base; };
-    bool skip(long l)
-    {
-        if (l < 0 || l > length()) return false;
-        if (!(_len -= l * sizeof(T))) _base = 0;
-        else _base += l;
-        return true;
-    }
-    bool trim(long l)
-    {
-        if (l < 0 || l > length()) return false;
-        if (!(_len -= (l * sizeof(T)))) _base = 0;
-        return true;
-    }
+	typedef T* iterator;
+	
+	inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
+	{ }
+	
+	inline iterator begin() const
+	{ return _base; }
+	
+	inline iterator end() const
+	{ return _base + length(); }
+	
+	inline iterator nth(int i) const
+	{
+		if (i > (int) length()) return 0;
+		if (i < 0 && (i += length()) < 0) return 0;
+		return _base + i;
+	}
+	inline long length() const
+	{ return _len / sizeof(T); }
+	inline T *base() const
+	{ return _base; };
+	bool skip(long l)
+	{
+		if (l < 0 || l > length()) return false;
+		if (!(_len -= l * sizeof(T))) _base = 0;
+		else _base += l;
+		return true;
+	}
+	bool trim(long l)
+	{
+		if (l < 0 || l > length()) return false;
+		if (!(_len -= (l * sizeof(T)))) _base = 0;
+		return true;
+	}
 protected:
-    T *_base;
-    size_t _len;
+	T *_base;
+	size_t _len;
 };
 #endif
 
@@ -356,12 +356,12 @@ extern int convert(const void **, int , void *, int);
 extern int makeId();
 
 template<typename T>
-inline int typeIdentifier() {
-    static int id = 0;
-    if (!id && !(id = makeId())) {
-        id = BadType;
-    }
-    return id;
+int typeIdentifier() {
+	static int id = 0;
+	if (!id && !(id = makeId())) {
+		id = BadType;
+	}
+	return id;
 }
 template<typename T>
 inline int typeIdentifier(const T &) { return typeIdentifier<T>(); }
@@ -388,8 +388,9 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return prope
 
 /* vector-type auto-cast for constant base types */
 template<typename T>
-inline __MPT_CONST_EXPR unsigned char vectorIdentifier() {
-    return MPT_value_toVector(typeIdentifier<T>());
+inline __MPT_CONST_EXPR unsigned char vectorIdentifier()
+{
+	return MPT_value_toVector(typeIdentifier<T>());
 }
 
 /*! container for reference type pointer */
@@ -397,60 +398,69 @@ template<typename T>
 class Reference
 {
 public:
-    class instance : public T
-    {
-    public:
-        instance(uintptr_t initial = 1) : _ref(initial)
-        { }
-        void unref()
-        {
-            if (_ref.lower()) {
-                return;
-            }
-            delete this;
-        }
-        uintptr_t addref()
-        {
-            return _ref.raise();
-        }
-    protected:
-        refcount _ref;
-    };
-    inline Reference(T *ref = 0) : _ref(ref)
-    { }
-    inline Reference(const Reference &ref) : _ref(0)
-    { *this = ref; }
-    inline ~Reference()
-    { if (_ref) _ref->unref(); }
-    
-    inline T *pointer() const
-    { return _ref; }
-    
-    inline void setPointer(T *ref)
-    {
-        if (_ref) _ref->unref();
-        _ref = ref;
-    }
-    inline Reference & operator= (Reference const &ref)
-    {
-        T *r = ref._ref;
-        if (r == _ref) return *this;
-        if (r && !r->addref()) r = 0;
-        if (_ref) _ref->unref();
-        _ref = r;
-        return *this;
-    }
+	class instance : public T
+	{
+	public:
+		instance(uintptr_t initial = 1) : _ref(initial)
+		{ }
+		void unref()
+		{
+			if (_ref.lower()) {
+				return;
+			}
+			delete this;
+		}
+		uintptr_t addref()
+		{
+			return _ref.raise();
+		}
+	protected:
+		refcount _ref;
+	};
+	inline Reference(T *ref = 0) : _ref(ref)
+	{ }
+	inline Reference(const Reference &ref) : _ref(0)
+	{
+		*this = ref;
+	}
+	inline ~Reference()
+	{
+		if (_ref) _ref->unref();
+	}
+	
+	inline T *pointer() const
+	{ 
+		return _ref;
+	}
+	inline void setPointer(T *ref)
+	{
+		if (_ref) _ref->unref();
+		_ref = ref;
+	}
+	inline Reference & operator= (Reference const &ref)
+	{
+		T *r = ref._ref;
+		if (r == _ref) return *this;
+		if (r && !r->addref()) r = 0;
+		if (_ref) _ref->unref();
+		_ref = r;
+		return *this;
+	}
 #if __cplusplus >= 201103L
-    inline Reference & operator= (Reference &&ref)
-    {
-        T *r = ref._ref;
-        ref._ref = 0;
-        setPointer(r);
-        return *this;
-    }
+	inline Reference & operator= (Reference &&ref)
+	{
+		T *r = ref._ref;
+		ref._ref = 0;
+		setPointer(r);
+		return *this;
+	}
 #endif
-    inline T *detach()
-    { T *ref = _ref; _ref = 0; return ref; }
+	inline T *detach()
+	{
+		T *ref = _ref;
+		_ref = 0;
+		return ref;
+	}
 protected:
     T *_ref;
 };

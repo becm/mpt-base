@@ -26,11 +26,11 @@ public:
 	template <typename T>
 	inline T *cast() const
 	{
-	    static const int t = typeIdentifier<T>();
-	    if (mpt_valsize(t)) return 0;
-	    T *ptr;
-	    if (conv(t, &ptr) < 0) return 0;
-	    return ptr;
+		static const int t = typeIdentifier<T>();
+		if (mpt_valsize(t)) return 0;
+		T *ptr;
+		if (conv(t, &ptr) < 0) return 0;
+		return ptr;
 	}
 	inline operator const char *() const
 	{ return string(); }
@@ -92,111 +92,113 @@ inline int iterator::reset()
 class metatype::Basic : public metatype
 {
 protected:
-    inline ~Basic() {}
+	inline ~Basic() {}
 public:
-    Basic(size_t post);
-
-    void unref() __MPT_OVERRIDE;
-
-    int conv(int , void *) const __MPT_OVERRIDE;
-    Basic *clone() const __MPT_OVERRIDE;
-
-    bool set(const char *, int);
-
-    static Basic *create(const char *, int);
+	Basic(size_t post);
+	
+	void unref() __MPT_OVERRIDE;
+	
+	int conv(int , void *) const __MPT_OVERRIDE;
+	Basic *clone() const __MPT_OVERRIDE;
+	
+	bool set(const char *, int);
+	
+	static Basic *create(const char *, int);
 };
 
 /* specialize metatype string cast */
 template <> inline const char *metatype::cast<const char>() const
-{ return string(); }
-
+{
+	return string();
+}
 /* special copy for metatype */
 template <> inline Reference<metatype> & Reference<metatype>::operator= (Reference<metatype> const &ref)
 {
-    metatype *r = ref._ref;
-    if (r) r = r->clone();
-    if (_ref) _ref->unref();
-    _ref = r;
-    return *this;
+	metatype *r = ref._ref;
+	if (r) r = r->clone();
+	if (_ref) _ref->unref();
+	_ref = r;
+	return *this;
 }
 /* generic implementation for metatype */
 template <typename T>
 class Metatype : public metatype
 {
 public:
-    inline Metatype(const T *val = 0) : _val(val ? *val : 0)
-    { }
-    inline Metatype(const T &val) : _val(val)
-    { }
-    void unref()
-    {
-        delete this;
-    }
-    int conv(int type, void *dest) const
-    {
-        static const int fmt = typeIdentifier<T>();
-        if (!type) {
-            if (dest) *static_cast<const char **>(dest) = 0;
-            return fmt;
-        }
-        if (type != fmt) return BadType;
-        if (dest) *static_cast<T *>(dest) = _val;
-        return fmt;
-    }
-    metatype *clone() const
-    {
-         return new Metatype(_val);
-    }
+	inline Metatype(const T *val = 0) : _val(val ? *val : 0)
+	{ }
+	inline Metatype(const T &val) : _val(val)
+	{ }
+	virtual ~Metatype()
+	{ }
+	void unref()
+	{
+		delete this;
+	}
+	int conv(int type, void *dest) const
+	{
+		static const int fmt = typeIdentifier<T>();
+		if (!type) {
+		if (dest) *static_cast<const char **>(dest) = 0;
+		return fmt;
+		}
+		if (type != fmt) return BadType;
+		if (dest) *static_cast<T *>(dest) = _val;
+		return fmt;
+	}
+	metatype *clone() const
+	{
+		return new Metatype(_val);
+	}
 protected:
-    virtual ~Metatype()
-    { }
-    T _val;
+	T _val;
 };
 
 template <typename T>
 class Source : public iterator
 {
 public:
-    Source(const T *val, size_t len = 1) : _d(val, len), _pos(0)
-    { }
-    virtual ~Source()
-    { }
-
-    void unref() __MPT_OVERRIDE
-    { delete this; }
-
-    int get(int type, void *dest) __MPT_OVERRIDE
-    {
-        int fmt = this->type();
-        const T *val = _d.nth(_pos);
-        if (!val) return MissingData;
-        type = convert((const void **) &val, fmt, dest, type);
-        if (type < 0) return type;
-        return fmt;
-    }
-    int advance() __MPT_OVERRIDE
-    {
-        int pos = _pos + 1;
-        if (pos > _d.size()) return MissingData;
-        if (pos == _d.size()) return 0;
-        _pos = pos;
-        return type();
-    }
-    int reset() __MPT_OVERRIDE
-    {
-        _pos = 0;
-        return _d.size();
-    }
-    static int type()
-    {
-        static int fmt = 0;
-        if (!fmt) fmt = typeIdentifier<T>();
-        return fmt;
-    }
+	Source(const T *val, size_t len = 1) : _d(val, len), _pos(0)
+	{ }
+	virtual ~Source()
+	{ }
+	
+	void unref() __MPT_OVERRIDE
+	{
+		delete this;
+	}
+	
+	int get(int type, void *dest) __MPT_OVERRIDE
+	{
+		int fmt = this->type();
+		const T *val = _d.nth(_pos);
+		if (!val) return MissingData;
+		type = convert((const void **) &val, fmt, dest, type);
+		if (type < 0) return type;
+		return fmt;
+	}
+	int advance() __MPT_OVERRIDE
+	{
+		int pos = _pos + 1;
+		if (pos > _d.size()) return MissingData;
+		if (pos == _d.size()) return 0;
+		_pos = pos;
+		return type();
+	}
+	int reset() __MPT_OVERRIDE
+	{
+		_pos = 0;
+		return _d.size();
+	}
+	inline static int content()
+	{
+		return typeIdentifier<T>();
+	}
 protected:
-    Slice<const T> _d;
-    int _pos;
+	Slice<const T> _d;
+	int _pos;
 };
+template <> typeIdentifier(const Source<T> &) { return iterator::Type; }
 #endif
 
 __MPT_EXTDECL_BEGIN
