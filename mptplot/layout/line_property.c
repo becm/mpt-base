@@ -88,15 +88,12 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERF
 	}
 	/* copy from sibling */
 	if (!*name) {
-		const MPT_STRUCT(line) *from;
-		
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, MPT_ENUM(TypeLine), li))) {
 			*li = def_line;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
-			*li = from ? *from : def_line;
-			return len ? 1 : 0;
+		if (len) {
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}

@@ -101,18 +101,16 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeWorld), &from)) >= 0) {
 			mpt_world_fini(wld);
-			mpt_world_init(wld, from);
-			return len ? 1 : 0;
+			mpt_world_init(wld, len ? from : 0);
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}
 	if (!strcasecmp(name, "cyc") || !strcasecmp(name, "cycles")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'u', &wld->cyc))) {
 			wld->cyc = def_world.cyc;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'u', &wld->cyc))) wld->cyc = def_world.cyc;
-		
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "color") || !strcasecmp(name, "colour")) {

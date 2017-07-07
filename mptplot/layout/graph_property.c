@@ -84,7 +84,7 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
  */
 extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTERFACE(metatype) *src)
 {
-	int len = 0;
+	int len;
 	
 	/* auto-select matching property */
 	if (!name) {
@@ -122,14 +122,16 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 	if (!strcmp(name, "fg") || !strcasecmp(name, "foreground")) {
 		if (!src || !(len = mpt_color_pset(&gr->fg, src))) {
 			gr->fg = def_graph.fg;
+			return 0;
 		}
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcmp(name, "bg") || !strcasecmp(name, "background")) {
 		if (!src || !(len = mpt_color_pset(&gr->bg, src))) {
 			gr->bg = def_graph.bg;
+			return 0;
 		}
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcmp(name, "pos") || !strcasecmp(name, "position")) {
 		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
@@ -137,7 +139,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 			gr->pos = def_graph.pos;
 			return 0;
 		}
-		return len;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "scale")) {
 		static const MPT_STRUCT(range) r = { 0.0, FLT_MAX };
@@ -150,26 +152,30 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 	if (!strcmp(name, "type") || !strcasecmp(name, "gridtype")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->grid))) {
 			gr->grid = def_graph.grid;
+			return 0;
 		}
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcmp(name, "align") || !strcasecmp(name, "alignment")) {
 		const char *v;
 		uint8_t n = 0;
 		int i = 0;
 		
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'y', &gr->align))) {
 			gr->align = def_graph.grid;
+			if (!len) gr->align = def_graph.grid;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y', &gr->align)) >= 0) {
-			if (!len) gr->align = def_graph.grid;
-			return len <= 0 ? len : 1;
+		if (len) {
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
-			return len <= 0 ? len : 1;
+			return len;
 		}
-		while (len ? i < len : v[i]) {
+		if (!len || !v) {
+			n = 0;
+		}
+		else while (v[i]) {
 			if (i >= 4) {
 				break;
 			}
@@ -183,21 +189,21 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		}
 		gr->align = n;
 		
-		return i;
+		return 0;
 	}
 	if (!strcmp(name, "clip") || !strcasecmp(name, "clipping")) {
 		const char *v;
 		uint8_t n = 0;
 		
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'y', &gr->clip))) {
 			gr->clip = def_graph.clip;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'y', &gr->clip)) > 0) {
-			return 1;
+		if (len) {
+			return 0;
 		}
 		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
-			return 1;
+			return len;
 		}
 		if (!len || !v) {
 			gr->clip = def_graph.clip;
@@ -212,13 +218,14 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 			}
 		}
 		gr->clip = n;
-		return 1;
+		return 0;
 	}
 	if (!strcmp(name, "lpos")) {
 		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->lpos))) {
 			gr->lpos = def_graph.lpos;
+			return 0;
 		}
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcmp(name, "axes")) {
 		if (!src) {

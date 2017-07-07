@@ -127,24 +127,18 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		return mpt_string_pset(&tx->_font, src);
 	}
 	if (!strcasecmp(name, "x")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.x))) {
 			tx->pos.x = def_text.pos.x;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'f', &tx->pos.x)) < 0) {
-			return len;
-		}
-		return len ? 1 : 0;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "y")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.y)) < 0) {
 			tx->pos.y = def_text.pos.y;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 'f', &tx->pos.y)) < 0) {
-			return len;
-		}
-		return len ? 1 : 0;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "pos")) {
 		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
@@ -152,33 +146,30 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 			tx->pos = def_text.pos;
 			return 0;
 		}
-		return len;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "color")) {
 		return mpt_color_pset(&tx->color, src);
 	}
 	if (!strcasecmp(name, "size")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'y', &tx->size))) {
 			tx->size = def_text.size;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y', &tx->size))) tx->size = def_text.size;
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "align")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'c', &tx->align))) {
 			tx->align = def_text.align;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'c', &tx->align))) tx->align = def_text.align;
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "angle")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'd', &tx->angle))) {
 			tx->angle = def_text.angle;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &tx->angle))) tx->angle = def_text.angle;
 		return len < 0 ? len : 0;
 	}
 	return MPT_ERROR(BadArgument);

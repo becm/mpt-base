@@ -127,8 +127,8 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 		}
 		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
 			mpt_axis_fini(ax);
-			mpt_axis_init(ax, from);
-			return len ? 1 : 0;
+			mpt_axis_init(ax, len ? from : 0);
+			return 0;
 		}
 		return MPT_ERROR(BadType);
 	}
@@ -140,28 +140,25 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 		return mpt_string_pset(&ax->_title, src);
 	}
 	if (!strcasecmp(name, "begin")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'd', &ax->begin))) {
 			ax->begin = def_axis.begin;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &ax->begin))) ax->begin = def_axis.begin;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "end")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'd', &ax->end))) {
 			ax->end = def_axis.end;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'd', &ax->end))) ax->end = def_axis.end;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "tlen")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'f', &ax->tlen))) {
 			ax->tlen = def_axis.tlen;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'f', &ax->tlen))) ax->tlen = def_axis.tlen;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "int") || !strcasecmp(name, "intv") || !strcasecmp(name, "intervals")) {
 		const char *l;
@@ -181,31 +178,28 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 			ax->format |= MPT_ENUM(AxisLg);
 			ax->intv = 0;
 		}
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "exp") || !strcasecmp(name, "exponent")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'n', &ax->exp))) {
 			ax->exp = def_axis.exp;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'n', &ax->exp))) ax->exp = def_axis.exp;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "sub") || !strcasecmp(name, "subtick")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'y', &ax->sub))) {
 			ax->sub = def_axis.sub;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y', &ax->sub))) ax->sub = def_axis.sub;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "dec") || !strcasecmp(name, "decimals")) {
-		if (!src) {
+		if (!src || !(len = src->_vptr->conv(src, 'y', &ax->dec))) {
 			ax->dec = def_axis.dec;
 			return 0;
 		}
-		if (!(len = src->_vptr->conv(src, 'y', &ax->dec))) ax->dec = def_axis.dec;
-		return len <= 0 ? len : 1;
+		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "lpos") || !strcasecmp(name, "labelpos") || !strcasecmp(name, "label position")) {
 		return setPosition(&ax->lpos, src, def_axis.lpos);
