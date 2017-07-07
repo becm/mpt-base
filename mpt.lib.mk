@@ -58,9 +58,6 @@ ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${SHLIB_OBJS}
 extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
 #
-# object dependancies
-${OBJS} : ${HEADER}
-#
 # header export
 .PHONY: header
 header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})

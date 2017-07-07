@@ -28,5 +28,7 @@ endif
 #
 # additional dependencies
 libinfo.o : ../libinfo.h ../version.h
+#
+# remove library info object
 CLEAN_FILES += libinfo.o
 CLEAN_FILES += libinfo.o

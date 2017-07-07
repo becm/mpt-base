@@ -30,6 +30,9 @@ include ../mpt.lib.mk
 ${NEED_CXX_11} : CPPFLAGS+=-std=c++11
 #
 # additional dependencies
+graphic.o mapping.o : ${HEADER}
 libinfo.o : ../libinfo.h ../version.h
+#
+# remove library info object
 CLEAR_FILES += libinfo.o
 CLEAN_FILES += libinfo.o

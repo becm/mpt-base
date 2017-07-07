@@ -26,6 +26,9 @@ DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
 # additional dependencies
+${OBJS} : ${HEADER}
 libinfo.o : ../libinfo.h ../version.h
+#
+# remove library info object
 CLEAR_FILES += libinfo.o
 CLEAN_FILES += libinfo.o
