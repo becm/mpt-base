@@ -676,11 +676,15 @@ bool Layout::load(logger *out)
 
     return true;
 }
-void Layout::reset()
+bool Layout::reset()
 {
+    if (_parse && !_parse->reset()) {
+        return false;
+    }
     _graphs = ItemArray<Graph>();
     setFont(0);
     setAlias(0);
+    return true;
 }
 
 bool Layout::open(const char *fn)

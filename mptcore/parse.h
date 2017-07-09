@@ -187,40 +187,43 @@ __MPT_EXTDECL_END
 class Parse
 {
 public:
-    Parse();
-    virtual ~Parse();
-    
-    virtual bool reset();
-    virtual bool setFormat(const char *);
-    virtual bool open(const char *);
-    virtual int read(struct node &, logger * = logger::defaultInstance());
-    
-    inline size_t line() const
-    { return _d.src.line; }
-    
+	Parse();
+	virtual ~Parse();
+	
+	virtual bool reset();
+	virtual bool setFormat(const char *);
+	virtual bool open(const char *);
+	virtual int read(struct node &, logger * = logger::defaultInstance());
+	
+	inline size_t line() const
+	{
+		return _d.src.line;
+	}
+	inline const char *file() const
+	{
+		return _fn;
+	}
 protected:
-    parse _d;
-    ParserFcn _next;
-    void *_nextCtx;
+	parse _d;
+	ParserFcn _next;
+	void *_nextCtx;
+	char *_fn;
 };
 inline bool Parse::setFormat(const char *)
-{ return false; }
-
+{
+	return false;
+}
 class LayoutParser : public Parse
 {
 public:
-    LayoutParser();
-    ~LayoutParser();
-    
-    bool reset() __MPT_OVERRIDE;
-    bool open(const char *) __MPT_OVERRIDE;
-    bool setFormat(const char *) __MPT_OVERRIDE;
-    
-    static const char *defaultFormat();
-    
+	LayoutParser();
+	
+	bool reset() __MPT_OVERRIDE;
+	bool setFormat(const char *) __MPT_OVERRIDE;
+	
+	static const char *defaultFormat();
 protected:
-    parsefmt _fmt;
-    char *_fn;
+	parsefmt _fmt;
 };
 #endif
 

@@ -462,7 +462,7 @@ public:
     
     virtual bool load(logger * = logger::defaultInstance());
     virtual bool open(const char *);
-    virtual void reset();
+    virtual bool reset();
     
     inline Slice<const Item<Graph> > graphs() const
     { return _graphs.slice(); }

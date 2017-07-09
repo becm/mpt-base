@@ -25,15 +25,16 @@ parsefmt::parsefmt()
 parseinput::parseinput() : getc((int (*)(void *)) mpt_getchar_stdio), arg(stdin), line(1)
 { }
 
-Parse::Parse() : _next(0), _nextCtx(0)
+Parse::Parse() : _next(0), _nextCtx(0), _fn(0)
 {
     _d.src.getc = 0;
     _d.src.arg  = 0;
 }
 Parse::~Parse()
 {
-    FILE *file = (FILE *) _d.src.arg;
+    FILE *file = static_cast<FILE *>(_d.src.arg);
     if (file) fclose(file);
+    if (_fn) free(_fn);
 }
 
 bool Parse::reset()
@@ -53,11 +54,13 @@ bool Parse::open(const char *fn)
     if (fn && !(f = fopen(fn, "r"))) {
         return false;
     }
-    old = (FILE *)_d.src.arg;
+    old = static_cast<FILE *>(_d.src.arg);
     if (old) fclose(old);
     _d.src.getc = (int (*)(void *)) mpt_getchar_stdio;
     _d.src.arg  = f;
     _d.src.line = 0;
+    if (_fn) free(_fn);
+    _fn = fn ? strdup(fn) : 0;
     return true;
 }
 
@@ -88,15 +91,27 @@ int Parse::read(struct node &to, logger *out)
     int ret = mpt_parse_config(_next, _nextCtx, &_d, saveAppend, &ptr);
     /* clear created nodes on error */
     if (ret < 0) {
+        mpt_node_clear(&tmp);
         if (!out) {
             return ret;
         }
-        const char *fname;
-        if (!(fname = to.data())) fname = "";
+        const char *fn;
+        if (!(fn = file())) {
+            if (ret == BadOperation) {
+                out->message(_func, out->Error, "%s (%x)", MPT_tr("unable to save element"), _d.curr);
+            } else {
+                out->message(_func, out->Error, "%s (%x)", MPT_tr("parse error"), _d.curr);
+            }
+            return ret;
+        }
         if (ret == BadOperation) {
-            out->message(_func, out->Error, "%s: %s %zu", MPT_tr("unable to save element"), MPT_tr("line"), _d.src.line);
+            out->message(_func, out->Error, "%s (%x): %s %zu: %s",
+                         MPT_tr("unable to save element"), _d.curr,
+                         MPT_tr("line"), _d.src.line, fn);
         } else {
-            out->message(_func, out->Error, "%s (%x): %s %u: %s", MPT_tr("parse error"), _d.curr, MPT_tr("line"), (int) _d.src.line, fname);
+            out->message(_func, out->Error, "%s (%x): %s %zu: %s",
+                         MPT_tr("parse error"), _d.curr,
+                         MPT_tr("line"), _d.src.line, fn);
         }
         return ret;
     }
@@ -110,7 +125,7 @@ int Parse::read(struct node &to, logger *out)
     return ret;
 }
 
-LayoutParser::LayoutParser() : _fn(0)
+LayoutParser::LayoutParser()
 {
     _d.name.sect = _d.name.NumCont | _d.name.Space | _d.name.Special;
     _d.name.opt  = _d.name.NumCont;
@@ -118,30 +133,13 @@ LayoutParser::LayoutParser() : _fn(0)
     _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, defaultFormat()));
     _nextCtx = &_fmt;
 }
-LayoutParser::~LayoutParser()
-{
-    if (_fn) free(_fn);
-}
 bool LayoutParser::reset()
 {
     if (!_d.src.line) return true;
-    if (!_fn) return false;
-    return Parse::open(_fn);
-}
-bool LayoutParser::open(const char *fn)
-{
-    if (!fn) {
-        if (!Parse::open(0)) return false;
-        if (_fn) free(_fn);
-        return true;
-    }
-    if (!Parse::open(fn)) {
-        return false;
-    }
-    char *n = strdup(fn);
-    if (_fn) free(_fn);
-    _fn = n;
-
+    FILE *f = static_cast<FILE *>(_d.src.arg);
+    if (!_fn || !f) return false;
+    if (!(f = freopen(_fn, "r", f))) return false;
+    _d.src.line = 0;
     return true;
 }
 bool LayoutParser::setFormat(const char *fmt)

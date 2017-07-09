@@ -28,5 +28,11 @@ extern int main(int argc, char *argv[])
 		mpt::error(__func__, "%s: %s", "unable to open layout", argv[1]);
 		return 2;
 	}
-	if (!lay.load()) return 3;
+	if (!lay.load()) {
+		return 3;
+	}
+	if (!lay.reset()) {
+		mpt::error(__func__, "%s: %s", "unable to reset layout parser", argv[1]);
+		return 4;
+	}
 }
