@@ -1,5 +1,5 @@
 /*!
- * set metatype data.
+ * set object data from arguments.
  */
 
 #include "meta.h"

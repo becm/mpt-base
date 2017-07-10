@@ -5,6 +5,10 @@
 #include <stdarg.h>
 #include <inttypes.h>
 
+#ifdef MPT_NO_CONVERT
+# include <string.h>
+#endif
+
 #include <sys/uio.h>
 
 #include "convert.h"
@@ -97,8 +101,9 @@ static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 	val = &va->val;
 #ifdef MPT_NO_CONVERT
 	if (type == fmt) {
+		val = &va->val;
 		if (ptr) {
-			memcpy(ptr, va->val, va->len);
+			memcpy(ptr, val, va->len);
 		}
 		return fmt;
 	}
