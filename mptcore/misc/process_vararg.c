@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <inttypes.h>
 
+#include <sys/uio.h>
+
 #include "convert.h"
 
 #include "meta.h"
@@ -33,6 +35,7 @@ struct iteratorVararg
 		long double e;
 #endif
 		void *p;
+		struct iovec v;
 	} val;
 };
 
@@ -46,8 +49,13 @@ static int nextArgument(struct iteratorVararg *va)
 		va->fmt = 0;
 		return 0;
 	}
+	if (MPT_value_isVector(fmt)) {
+		va->val.v = va_arg(va->arg, struct iovec);
+		va->len = sizeof(struct iovec);
+		return fmt;
+	}
 	switch (fmt) {
-		case 'b': va->val.b = va_arg(va->arg, int  );        len = sizeof(int8_t);   break;
+		case 'b': va->val.b = va_arg(va->arg, int);          len = sizeof(int8_t);   break;
 		case 'y': va->val.y = va_arg(va->arg, unsigned int); len = sizeof(uint8_t);  break;
 		case 'n': va->val.n = va_arg(va->arg, int);          len = sizeof(int16_t);  break;
 		case 'q': va->val.q = va_arg(va->arg, unsigned int); len = sizeof(uint16_t); break;
