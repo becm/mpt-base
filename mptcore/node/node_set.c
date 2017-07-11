@@ -34,7 +34,7 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 				return obj->_vptr->setProperty(obj, 0, 0);
 			}
 			tmp = *val;
-			if ((ret = mpt_object_nset(obj, 0, &tmp) < 0)) {
+			if ((ret = mpt_object_set_value(obj, 0, &tmp) < 0)) {
 				return ret;
 			}
 			return old->_vptr->conv(old, 0, 0);

@@ -17,7 +17,7 @@
  * \param prop name of property to change
  * \param val  data to set
  */
-extern int mpt_object_iset(MPT_INTERFACE(object) *obj, const char *prop, MPT_INTERFACE(iterator) *it)
+extern int mpt_object_set_iterator(MPT_INTERFACE(object) *obj, const char *prop, MPT_INTERFACE(iterator) *it)
 {
 	struct wrapIter mt;
 	

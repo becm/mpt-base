@@ -88,7 +88,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
  * \param val  string data to set
  * \param sep  allowed keyword separators
  */
-extern int mpt_object_pset(MPT_INTERFACE(object) *obj, const char *name, const char *val, const char *sep)
+extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, const char *val, const char *sep)
 {
 	static const MPT_INTERFACE_VPTR(metatype) ctl = {
 		{ metaIterUnref },

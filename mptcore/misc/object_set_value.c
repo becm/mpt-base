@@ -33,7 +33,7 @@ static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
  * \param prop name of property to change
  * \param val  data to set
  */
-extern int mpt_object_nset(MPT_INTERFACE(object) *obj, const char *prop, MPT_STRUCT(value) *val)
+extern int mpt_object_set_value(MPT_INTERFACE(object) *obj, const char *prop, MPT_STRUCT(value) *val)
 {
 	
 	struct objectParam par;

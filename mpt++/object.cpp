@@ -47,9 +47,9 @@ bool object::set(const char *name, const value &val, logger *out)
     int ret;
     if (!(str = val.string())) {
         value tmp = val;
-        ret = mpt_object_nset(this, name, &tmp);
+        ret = mpt_object_set_value(this, name, &tmp);
     } else {
-        ret = mpt_object_pset(this, name, str, 0);
+        ret = mpt_object_set_string(this, name, str, 0);
     }
     if (ret >= 0) return true;
     if (!out) return false;
@@ -105,56 +105,56 @@ bool object::setProperties(const object &from, logger *out)
 }
 
 // class extension for basic property
-Property::Property(const Reference<object> &from) : Reference<object>(from)
+object::Property::Property(const Reference<object> &from) : Reference<object>(from)
 { }
-Property::Property(object *obj) : Reference<object>(obj)
+object::Property::Property(object *obj) : Reference<object>(obj)
 { }
-Property::~Property()
+object::Property::~Property()
 { }
 // assignment operation for metatypes
-Property & Property::operator= (metatype &meta)
+object::Property & object::Property::operator= (const metatype &meta)
 {
     if (_ref && _prop.name && !set(meta)) {
         _prop.name = 0;
     }
     return *this;
 }
-Property & Property::operator= (const char *val)
+object::Property & object::Property::operator= (const char *val)
 {
-    if (_ref && _prop.name && mpt_object_pset(_ref, _prop.name, val, 0) < 0) {
+    if (_ref && _prop.name && mpt_object_set_string(_ref, _prop.name, val, 0) < 0) {
         _prop.name = 0;
     }
     return *this;
 }
 
-bool Property::select(const char *name)
+bool object::Property::select(const char *name)
 {
     if (!_ref) return false;
-    property pr(name);
+    struct property pr(name);
     if (_ref->property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
-bool Property::select(int pos)
+bool object::Property::select(int pos)
 {
     if (!_ref || pos <= 0) return false;
-    property pr(pos);
+    struct property pr(pos);
     if (_ref->property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
-bool Property::set(metatype &src)
+bool object::Property::set(const metatype &src)
 {
     if (!_ref || !_prop.name) return false;
     if (_ref->setProperty(_prop.name, &src) < 0) return false;
     if (_ref->property(&_prop) < 0) _prop.name = 0;
     return false;
 }
-bool Property::set(const value &val)
+bool object::Property::set(const value &val)
 {
     if (!_ref || !_prop.name) return false;
-    value tmp = val;
-    if (mpt_object_nset(_ref, _prop.name, &tmp) < 0) return false;
+    struct value tmp = val;
+    if (mpt_object_set_value(_ref, _prop.name, &tmp) < 0) return false;
     if (_ref->property(&_prop) < 0) _prop.name = 0;
     return true;
 }
@@ -225,15 +225,15 @@ bool Object::setName(const char *name, int len)
 }
 
 // get property by name/position
-Property Object::operator [](const char *name)
+object::Property Object::operator [](const char *name)
 {
-    Property prop(ref());
+    object::Property prop(ref());
     prop.select(name);
     return prop;
 }
-Property Object::operator [](int pos)
+object::Property Object::operator [](int pos)
 {
-    Property prop(ref());
+    object::Property prop(ref());
     prop.select(pos);
     return prop;
 }
@@ -263,10 +263,10 @@ static int objectPropertySet(void *addr, const property *pr)
     }
     const char *val;
     if ((val = pr->val.string())) {
-        ret = mpt_object_pset(con->obj, pr->name, val, 0);
+        ret = mpt_object_set_string(con->obj, pr->name, val, 0);
     } else {
         value tmp = pr->val;
-        ret = mpt_object_nset(con->obj, pr->name, &tmp);
+        ret = mpt_object_set_value(con->obj, pr->name, &tmp);
     }
     if (ret < 0) {
         property tmp = *pr;

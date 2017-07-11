@@ -59,10 +59,10 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 	if (!val) {
 		ret = obj->_vptr->setProperty(obj, 0, 0);
 	} else if (!val->fmt) {
-		ret = mpt_object_pset(obj, 0, val->ptr, 0);
+		ret = mpt_object_set_string(obj, 0, val->ptr, 0);
 	} else {
 		MPT_STRUCT(value) tmp = *val;
-		ret = mpt_object_nset(obj, 0, &tmp);
+		ret = mpt_object_set_value(obj, 0, &tmp);
 	}
 	if (ret < 0) {
 		return ret;

@@ -15,7 +15,7 @@ struct objectProperty
 static int processObjectArgs(void *ptr, MPT_INTERFACE(iterator) *it)
 {
 	const struct objectProperty *op = ptr;
-	return mpt_object_iset(op->obj, op->prop, it);
+	return mpt_object_set_iterator(op->obj, op->prop, it);
 }
 /*!
  * \ingroup mptObject

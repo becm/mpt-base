@@ -23,6 +23,7 @@ public:
 	
 	class iterator;
 	class const_iterator;
+	class Property;
 	
 	class iterator begin();
 	class iterator end();
@@ -63,9 +64,9 @@ extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 /* set metatype property to match argument */
-extern int mpt_object_iset(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
-extern int mpt_object_nset(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
-extern int mpt_object_pset(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
+extern int mpt_object_set_iterator(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
+extern int mpt_object_set_string(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
+extern int mpt_object_set_value(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
 
@@ -182,28 +183,28 @@ inline object::const_iterator object::end() const
     return const_end();
 }
 
-class Property : Reference<object>
+class object::Property : Reference<object>
 {
 public:
     Property(const Reference<object> &);
     Property(object * = 0);
     ~Property();
 
-    inline operator const property&() const
+    inline operator const struct property&() const
     { return _prop; }
 
-    inline operator const value&() const
+    inline operator const struct value&() const
     { return _prop.val; }
 
     bool select(const char * = 0);
     bool select(int);
 
-    bool set(metatype &);
+    bool set(const metatype &);
     bool set(const struct value &);
 
     Property & operator= (const char *val);
-    Property & operator= (metatype &meta);
-    Property & operator= (const property &);
+    Property & operator= (const metatype &meta);
+    Property & operator= (const struct property &);
 
     inline Property & operator= (const value &v)
     { if (!set(v)) _prop.name = 0; return *this; }
@@ -220,7 +221,7 @@ public:
     }
 
 protected:
-    property _prop;
+    struct property _prop;
     friend class Object;
 
 private:
@@ -263,8 +264,8 @@ public:
     virtual bool setName(const char *, int = -1);
 
     /* get property by name/position */
-    Property operator [](const char *);
-    Property operator [](int);
+    object::Property operator [](const char *);
+    object::Property operator [](int);
     int type();
 
     /* object name hash */

@@ -118,7 +118,7 @@ extern int main(int , char * const [])
 	
 	std::cout << "nao.name() = " << nao.name() << std::endl;
 	
-	mpt::Property prop = lo["x1"];
+	mpt::object::Property prop = lo["x1"];
 	mpt::line *l = li;
 	
 	std::cout << l->from.x << std::endl;

@@ -72,7 +72,7 @@ extern int mpt_output_control(MPT_INTERFACE(output) *out, int sep, const MPT_STR
 			}
 			return MPT_ERROR(MissingBuffer);
 		}
-		if ((part = mpt_object_pset((void *) out, 0, msg.base, 0)) < 0) {
+		if ((part = mpt_object_set_string((void *) out, 0, msg.base, 0)) < 0) {
 			if (log) {
 				mpt_log(log, __func__, MPT_LOG(Error), "%s",
 				        MPT_tr("unable to open connection"));
@@ -87,7 +87,7 @@ extern int mpt_output_control(MPT_INTERFACE(output) *out, int sep, const MPT_STR
 	}
 	/* command is close operation */
 	else if (part >= 5 && !strncmp("close", buf, part)) {
-		if ((part = mpt_object_pset((void *) out, 0, 0, 0)) < 0) {
+		if ((part = mpt_object_set_string((void *) out, 0, 0, 0)) < 0) {
 			if (log) {
 				mpt_log(log, __func__, MPT_LOG(Error), "%s",
 				        MPT_tr("error on connection close"));
