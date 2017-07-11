@@ -112,6 +112,9 @@ enum MPT_ENUM(Types)
 	/* special/format types (0x20..0x2f) */
 	MPT_ENUM(TypeSpecial)   = ' ',   /* SPACE */
 	
+	/* reserved range for layout types (0x30..0x39) */
+#define MPT_value_isLayout(v)  ((v) >= 0x30 && (v) <= 0x39)
+	
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
 #define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) >= MPT_ENUM(TypeVector) \
@@ -129,7 +132,6 @@ enum MPT_ENUM(Types)
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeScalBase) \
                                : 0)
-#define MPT_value_isLayout(v)   ((v) >= 0x30 && (v) <= 0x39)
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeDynamic)  = 0x80,

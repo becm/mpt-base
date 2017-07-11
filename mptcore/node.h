@@ -113,9 +113,6 @@ extern MPT_STRUCT(node) *mpt_node_next(const MPT_STRUCT(node) *, const char *);
 /* find node with ascii identifier in sublevel */
 extern MPT_STRUCT(node) *mpt_node_find(const MPT_STRUCT(node) *, const char *, int);
 
-/* process properties from description list */
-extern const MPT_STRUCT(node) *mpt_node_foreach(const MPT_STRUCT(node) *, MPT_TYPE(PropertyHandler) , void *, int);
-
 
 /* get node identifier */
 extern const char *mpt_node_ident(const MPT_STRUCT(node) *);

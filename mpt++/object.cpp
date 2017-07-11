@@ -237,49 +237,31 @@ object::Property Object::operator [](int pos)
     prop.select(pos);
     return prop;
 }
-
-struct objectSetContext
-{
-    object *obj;
-    PropertyHandler check;
-    void *cdata;
-};
-
-static int objectPropertySet(void *addr, const property *pr)
-{
-    const objectSetContext *con = static_cast<objectSetContext *>(addr);
-    int ret;
-    if (!pr || !pr->name) {
-        return con->check ? con->check(con->cdata, pr) : 1;
-    }
-    if (!pr->val.ptr) {
-        if (!con->check) {
-            if (!pr->val.fmt) return 2;
-        }
-        else {
-            int ret = con->check(con->cdata, pr);
-            if (ret) return ret;
-        }
-    }
-    const char *val;
-    if ((val = pr->val.string())) {
-        ret = mpt_object_set_string(con->obj, pr->name, val, 0);
-    } else {
-        value tmp = pr->val;
-        ret = mpt_object_set_value(con->obj, pr->name, &tmp);
-    }
-    if (ret < 0) {
-        property tmp = *pr;
-        tmp.desc = (ret == -1) ? 0 : "";
-        return con->check ? con->check(con->cdata, &tmp) : 3;
-    }
-    return 0;
-}
 const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
 {
     if (!_ref) return 0;
-    objectSetContext con = { _ref, proc, pdata };
-    return mpt_node_foreach(head, objectPropertySet, &con, TraverseNonLeafs);
+    while ((head = mpt_object_set_list(_ref, head, TraverseNonLeafs))) {
+        if (!proc) {
+            return head;
+        }
+        property pr(head->ident.name());
+        _ref->property(&pr);
+        const metatype *mt;
+        static const char metafmt[] = { mt->Type };
+        pr.val.fmt = metafmt;
+        pr.val.ptr = &mt;
+        if ((mt = head->_meta)) {
+           if (mt->conv(pr.val.Type, &pr.val) < 0
+            && mt->conv('s', &pr.val.ptr) >= 0) {
+                pr.val.fmt = 0;
+           }
+        }
+        if (proc(pdata, &pr) < 0) {
+            return head;
+        }
+        head = head->next;
+    }
+    return 0;
 }
 int Object::type()
 {

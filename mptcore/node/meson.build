@@ -11,7 +11,6 @@ src = files(
   'node_clone.c',
   'node_destroy.c',
   'node_find.c',
-  'node_foreach.c',
   'node_ident.c',
   'node_insert.c',
   'node_locate.c',

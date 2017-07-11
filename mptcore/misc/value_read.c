@@ -21,6 +21,7 @@
 extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 {
 	const char *src, *desc;
+	uint8_t curr;
 	int len;
 	
 	if (!fmt) {
@@ -43,7 +44,10 @@ extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 		val->ptr = src;
 		return len;
 	}
-	while (desc[len] == fmt[len] && fmt[len]) {
+	while ((curr = fmt[len]) && curr == desc[len]) {
+		if (!MPT_value_isBasic(curr)) {
+			break;
+		}
 		++len;
 	}
 	if (len) {
