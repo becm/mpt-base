@@ -28,8 +28,7 @@ static void mpUnref(MPT_INTERFACE(unrefable) *m)
 	if ((m = mp->ptr)) {
 		if (mp->type) {
 			m->_vptr->unref(m);
-		}
-		else if (!mp->type) {
+		} else {
 			free(m);
 		}
 	}
@@ -84,6 +83,9 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	}
 	*n = *mp;
 	n->ptr = ptr;
+	n->type = mp->type;
+	n->fmt[0] = mp->fmt[0];
+	n->fmt[1] = 0;
 	
 	return &n->_mt;
 }

@@ -23,7 +23,7 @@
 extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *handle, const char *descr, const char *lpath)
 {
 	char buf[128], *libname;
-	MPT_STRUCT(libhandle) lh = { 0, 0 };
+	MPT_STRUCT(libhandle) lh = MPT_LIBHANDLE_INIT;
 	const char *err;
 	union {
 		void *ptr;
@@ -35,14 +35,17 @@ extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *handle, const char 
 	}
 	if ((libname = strchr(descr, '@'))) {
 		size_t len;
-		if ((len = libname++ - descr) >= sizeof(buf))
+		if ((len = libname++ - descr) >= sizeof(buf)) {
 			return MPT_tr("symbol name exceeds temporary buffer");
-		
-		if (!len) return MPT_tr("no init symbol defined");
-		
+		}
+		if (!len) {
+			return MPT_tr("no init symbol defined");
+		}
 		descr = memcpy(buf, descr, len);
 		buf[len] = '\0';
-		if (!*libname || isspace(*libname)) libname = 0;
+		if (!*libname || isspace(*libname)) {
+			libname = 0;
+		}
 	}
 	if (libname && (err = mpt_library_open(&lh, libname, lpath))) {
 		return err;
