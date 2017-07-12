@@ -90,14 +90,6 @@ enum MPT_ENUM(CommandType) {
 	MPT_ENUM(BindingParse)    = 0x32   /* binding in text format */
 };
 
-enum MPT_ENUM(DataStates) {
-	MPT_ENUM(DataStateInit)   = 0x1,   /* data states */
-	MPT_ENUM(DataStateStep)   = 0x2,
-	MPT_ENUM(DataStateFini)   = 0x4,
-	MPT_ENUM(DataStateFail)   = 0x8,
-	MPT_ENUM(DataStateAll)    = 0x7
-};
-
 /* message data */
 #ifdef __cplusplus
 MPT_STRUCT(message)
@@ -112,10 +104,9 @@ MPT_STRUCT(message)
 # define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MSGVAL(f) | MPT_ENUM(ByteOrderNative))
 #endif
 enum MPT_MSGVAL(Types) {
-	
-	MPT_MSGVAL(Integer)   = 0x20,  /* signed integer data */
+	MPT_MSGVAL(Unsigned)  = 0x20,  /* unsigned integer data */
 	MPT_MSGVAL(Float)     = 0x40,  /* floating point data */
-	MPT_MSGVAL(Unsigned)  = 0x60,  /* unsigned integer data */
+	MPT_MSGVAL(Integer)   = 0x60,  /* signed integer data */
 	MPT_MSGVAL(Normal)    = 0x60,  /* size = (val&0x1f)+1, unset for big numbers */
 	
 	MPT_MSGVAL(BigAtom)   = 0x40   /* size = ((val&0x1f)+1) * ValuesBigAtom */
@@ -152,13 +143,28 @@ MPT_STRUCT(msgworld)
 	        offset;  /* data offset (<0: append) */
 };
 /* source data type */
+#ifdef __cplusplus
 MPT_STRUCT(msgbind)
 {
+	enum {
+#define MPT_DATASTATE(x)  x
+#else
+enum MPT_ENUM(DataStates) {
+#define MPT_DATASTATE(x)  MPT_ENUM(DataState##x)
+#endif
+	MPT_DATASTATE(Init)  = 0x1,   /* data states */
+	MPT_DATASTATE(Step)  = 0x2,
+	MPT_DATASTATE(Fini)  = 0x4,
+	MPT_DATASTATE(Fail)  = 0x8,
+	MPT_DATASTATE(All)   = 0x7
+};
 #ifdef __cplusplus
-	inline msgbind(int d, int s = DataStateInit | DataStateStep) : dim(d), state(s)
+	inline msgbind(int d, int s = Init | Step) : dim(d), state(s)
 	{ }
 #else
-# define MPT_MSGBIND_INIT { 0, (MPT_ENUM(OutputStateInit) | MPT_ENUM(OutputStateStep)) }
+MPT_STRUCT(msgbind)
+{
+# define MPT_MSGBIND_INIT { 0, (MPT_DATASTATE(Init) | MPT_DATASTATE(Step)) }
 #endif
 	uint8_t dim,    /* source dimension */
 	        state;  /* context of data */

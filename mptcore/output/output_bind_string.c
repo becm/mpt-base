@@ -37,7 +37,7 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 	}
 	
 	bnd.src.dim = 0;
-	bnd.src.state = MPT_ENUM(DataStateAll);
+	bnd.src.state = MPT_DATASTATE(All);
 	
 	bnd.dst.lay = bnd.dst.grf = bnd.dst.wld = 1;
 	bnd.dst.dim = 0;
