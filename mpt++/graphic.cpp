@@ -21,11 +21,11 @@ __MPT_NAMESPACE_BEGIN
 // update registration
 UpdateHint::UpdateHint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
 {
-    if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= MatchLayout; }
-    if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= MatchGraph; }
-    if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= MatchWorld; }
+    if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= msgdest::MatchLayout; }
+    if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= msgdest::MatchGraph; }
+    if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= msgdest::MatchWorld; }
 }
-
+// update reduction
 bool UpdateHint::merge(const UpdateHint &with, int mask)
 {
     // unconditional update
@@ -37,27 +37,27 @@ bool UpdateHint::merge(const UpdateHint &with, int mask)
         return true;
     }
     // need same layout
-    if (lay != with.lay && !(mask & MatchLayout)) {
+    if (lay != with.lay && !(mask & msgdest::MatchLayout)) {
         return false;
     }
     // match layout
-    if (match == MatchLayout) {
+    if (match == msgdest::MatchLayout) {
         return true;
     }
-    if (with.match == MatchLayout) {
-        match = MatchLayout;
+    if (with.match == msgdest::MatchLayout) {
+        match = msgdest::MatchLayout;
         return true;
     }
     // need same graph
-    if (grf != with.grf && !(mask & MatchGraph)) {
+    if (grf != with.grf && !(mask & msgdest::MatchGraph)) {
         return false;
     }
     // match graph
-    if (match == (MatchLayout | MatchGraph)) {
+    if (match == (msgdest::MatchLayout | msgdest::MatchGraph)) {
         return true;
     }
-    if (!(with.match & MatchWorld) || !(mask & MatchWorld)) {
-        match = MatchLayout | MatchGraph;
+    if (!(with.match & msgdest::MatchWorld) || !(mask & msgdest::MatchWorld)) {
+        match = msgdest::MatchLayout | msgdest::MatchGraph;
         return true;
     }
     // need same world
@@ -66,7 +66,20 @@ bool UpdateHint::merge(const UpdateHint &with, int mask)
     }
     return false;
 }
-
+// update target
+bool UpdateHint::destination(msgdest *dst)
+{
+    if (match != msgdest::MatchPath) {
+        return false;
+    }
+    if (dst) {
+        dst->lay = lay;
+        dst->grf = grf;
+        dst->wld = wld;
+        dst->dim = 0;
+    }
+    return true;
+}
 // graphic interface
 Graphic::Graphic()
 { }
@@ -78,20 +91,20 @@ Graphic::~Graphic()
 int Graphic::addLayout(Layout *lay, bool reuse)
 {
     if (!lay) {
-        return -3;
+        return BadArgument;
     }
     // insert layout on vacant position
     if (reuse) {
         for (Reference<Layout> *b = _layouts.begin(), *e = _layouts.end(); b < e; ++b) {
             if (b->pointer()) continue;
             b->setPointer(lay);
-            return e - b;
+            return b - e;
         }
     }
     // append layout
     long pos = _layouts.length();
     if (!_layouts.insert(pos, lay)) {
-        return MissingBuffer;
+        return BadOperation;
     }
     return pos;
 }
@@ -124,13 +137,7 @@ int Graphic::layoutCount() const
 // layout creation
 Layout *Graphic::createLayout()
 {
-    Layout *lay = new Layout;
-
-    if (addLayout(lay) < 0) {
-        delete lay;
-        return 0;
-    }
-    return lay;
+    return new Layout;
 }
 
 static ssize_t nextPart(const message &msg, size_t len)
@@ -142,7 +149,7 @@ static ssize_t nextPart(const message &msg, size_t len)
     }
     if (len <= msg.used) {
         if (!(end = (char *) memchr(dest = (const char *) msg.base, ':', len))) {
-            return -2;
+            return MissingData;
         }
         return end - dest;
     }
@@ -165,7 +172,7 @@ static ssize_t nextPart(const message &msg, size_t len)
             total += curr;
             ++cont;
         }
-        return -2;
+        return MissingData;
     }
 }
 static Graph::Data *graphData(Slice<const Item<Graph::Data> > gd, int pos)
@@ -175,195 +182,204 @@ static Graph::Data *graphData(Slice<const Item<Graph::Data> > gd, int pos)
     return it->pointer();
 }
 
-int Graphic::target(msgdest &addr, message &msg, size_t len) const
+int Graphic::target(msgdest &old, message &msg, size_t len) const
 {
     message tmp;
-    msgdest dst(_lastTarget.lay, _lastTarget.grf, _lastTarget.wld);
-    Layout *lay = 0;
-    Graph *grf = 0;
-    World *wld = 0;
+    msgdest dst = old;
     ssize_t part;
     char *end, buf[128];
-    int mask = 0;
+    int match = 0;
 
     if (!len && !(len = msg.length())) {
-        return -2;
+        return MissingData;
     }
 
     if ((part = nextPart(msg, len)) < 0) {
-        return part;
+        return MissingData;
     }
 
     /* get layout */
     if (part >= (ssize_t) sizeof(buf)) {
-        return -3;
+        return MissingBuffer;
     }
     tmp = msg;
-    mpt_message_read(&tmp, part+1, buf);
+    mpt_message_read(&tmp, part + 1, buf);
 
     Reference<Layout> *r;
+    Layout *lay = 0;
     if (part) {
         int l = strtol(buf, &end, 0);
         if (end > buf) {
             if (l <= 0 || l > UINT8_MAX) {
-                return -3;
+                return BadValue;
             }
-            r = _layouts.get(l-1);
-            lay = r ? r->pointer() : 0;
-            dst.lay = l;
+            r = _layouts.get(l - 1);
+            if ((lay = r ? r->pointer() : 0)) {
+                dst.lay = l;
+                match |= dst.MatchLayout;
+            }
         }
         else {
             long max = _layouts.length();
             r = _layouts.begin();
-            if (max > UINT8_MAX) {
-                return max = UINT8_MAX;
+            if (max >= UINT8_MAX) {
+                max = UINT8_MAX - 1;
             }
             for (long i = 0; i < max; ++i) {
                 Layout *l = r[i].pointer();
                 const char *id;
                 if (l && (id = l->alias()) && part == (ssize_t) strlen(id) && !memcmp(id, buf, part)) {
-                    dst.lay = i+1;
+                    dst.lay = i + 1;
+                    match |= msgdest::MatchLayout;
                     lay = l;
                     break;
                 }
             }
         }
-        mask |= 1;
     }
     else if (dst.lay) {
-        r = _layouts.get(dst.lay-1);
+        r = _layouts.get(dst.lay - 1);
         lay = r ? r->pointer() : 0;
     }
     if (!lay) {
-        return -2;
+        return BadValue;
     }
 
     /* get graph */
-    if ((part = nextPart(tmp, len -= part+1)) < 0) {
+    if ((part = nextPart(tmp, len -= part + 1)) < 0) {
         return part;
     }
     if (part >= (ssize_t) sizeof(buf)) {
-        return -3;
+        return MissingBuffer;
     }
-    mpt_message_read(&tmp, part+1, buf);
+    mpt_message_read(&tmp, part + 1, buf);
 
     Slice<const Item<Graph> > graphs = lay->graphs();
-    const Item<Graph> *it;
+    const Item<Graph> *gi;
+    Graph *grf = 0;
     if (part) {
         int g = strtol(buf, &end, 0);
         if (end > buf) {
             if (g <= 0 || g > UINT8_MAX) {
-                return -3;
+                return BadValue;
             }
-            it = graphs.nth(g-1);
-            grf = it ? it->pointer() : 0;
-            dst.grf = g;
+            gi = graphs.nth(g - 1);
+            if (gi && (grf = gi->pointer())) {
+                dst.grf = g;
+                match |= dst.MatchGraph;
+            }
         }
         else {
             size_t max = graphs.length();
-            if (max > UINT8_MAX) {
-                max = UINT8_MAX;
+            if (max >= UINT8_MAX) {
+                max = UINT8_MAX - 1;
             }
             for (size_t i = 0; i < max; ++i) {
-                it = graphs.nth(i);
-                if (it->equal(buf, part)) {
-                    dst.grf = i+1;
-                    grf = it->pointer();
+                gi = graphs.nth(i);
+                if (gi->equal(buf, part)) {
+                    if ((grf = gi->pointer())) {
+                        dst.grf = i + 1;
+                        match |= dst.MatchGraph;
+                    }
                     break;
                 }
             }
         }
-        mask |= 2;
     }
     else if (dst.grf) {
-        it = graphs.nth(dst.grf-1);
-        grf = it ? it->pointer() : 0;
+        if ((gi = graphs.nth(dst.grf - 1))) {
+            grf = gi->pointer();
+        }
     }
     if (!grf) {
-        return -2;
+        return BadValue;
     }
 
     /* get world */
-    if ((part = nextPart(tmp, len -= part+1)) < 0) {
+    uint8_t dim;
+    if ((part = nextPart(tmp, len -= part + 1)) < 0) {
         if (len >= sizeof(buf)) {
-            return -3;
+            return MissingBuffer;
         }
         mpt_message_read(&tmp, part = len, buf);
         buf[part] = 0;
     }
     else if (part >= (ssize_t) sizeof(buf)) {
-        return -3;
-    }
-    else {
-        message after;
-        char dim, post;
-
-        mpt_message_read(&tmp, part+1, buf);
-
-        /* dimension target */
-        if (!mpt_message_read(&tmp, 1, &dim)) {
-            return -1;
-        }
-        after = tmp;
-        if (mpt_message_read(&after, 1, &post) && post && !isspace(post)) {
-            return -1;
-        }
-        if (dim == 'x') {
-            dst.dim = 0;
-        }
-        else if (dim == 'y') {
-            dst.dim = 1;
-        }
-        else if (dim == 'z') {
-            dst.dim = 2;
-        }
-        else if (dim >= '0' && dim <= '9') {
-            dst.dim = dim - '0';
-        }
-        else {
-            return -3;
-        }
-        mask |= 8;
+        return MissingBuffer;
     }
     Slice<const Item<Graph::Data> > gd = grf->worlds();
+    World *wld = 0;
     if (part) {
         int w = strtol(buf, &end, 0);
         if (end > buf) {
             if (w <= 0 || w > UINT8_MAX) {
-                return -3;
+                return BadValue;
             }
-            const Graph::Data *d = graphData(gd, w-1);
-            wld = d ? d->world.pointer() : 0;
-            dst.wld = w;
+            const Graph::Data *d = graphData(gd, w - 1);
+            if (d && (wld = d->world.pointer())) {
+                dst.wld = w;
+                match = dst.MatchWorld;
+            }
         }
         else {
             size_t max = gd.length();
             if (max >= UINT8_MAX) {
-                max = UINT8_MAX;
+                max = UINT8_MAX - 1;
             }
             for (size_t i = 0; i < max; ++i) {
                 const Item<Graph::Data> *it = gd.nth(i);
                 Graph::Data *ptr;
                 if (it && (ptr = it->pointer()) && it->equal(buf, part)) {
-                    dst.wld = i+1;
-                    wld = ptr->world.pointer();
+                    if ((wld = ptr->world.pointer())) {
+                        dst.wld = i + 1;
+                        match |= dst.MatchWorld;
+                    }
                     break;
                 }
             }
         }
-        mask |= 4;
     }
     else if (dst.wld) {
-        const Graph::Data *d = graphData(gd, dst.wld-1);
-        wld = d ? d->world.pointer() : 0;
+        const Graph::Data *d;
+        if ((d = graphData(gd, dst.wld - 1))) {
+            wld = d->world.pointer();
+        }
     }
     if (!wld) {
-        return -3;
+        return BadValue;
     }
-    msg = tmp;
-    addr = dst;
+    char post;
 
-    return mask;
+    mpt_message_read(&tmp, part + 1, buf);
+
+    /* dimension target */
+    if (!mpt_message_read(&tmp, 1, &dim)) {
+        return match;
+    }
+    if (mpt_message_read(&tmp, 1, &post) && post && !isspace(post)) {
+        return MissingData;
+    }
+    if (dim == 'x') {
+        dim = 0;
+    }
+    else if (dim == 'y') {
+        dim = 1;
+    }
+    else if (dim == 'z') {
+        dim = 2;
+    }
+    else if (dim >= '0' && dim <= '9') {
+        dim = dim - '0';
+    }
+    else {
+        return BadValue;
+    }
+    dst.dim = dim;
+    match |= dst.MatchDimension;
+    msg = tmp;
+    old = dst;
+
+    return match;
 }
 object *Graphic::item(message &msg, size_t len) const
 {
@@ -450,7 +466,7 @@ object *Graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool Graphic::registerUpdate(const object *, const UpdateHint &)
+bool Graphic::registerUpdate(const unrefable *, UpdateHint)
 { return true; }
 void Graphic::dispatchUpdates()
 { }

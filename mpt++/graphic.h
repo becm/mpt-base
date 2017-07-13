@@ -7,7 +7,7 @@
 #define _MPT_GRAPHIC_H  @INTERFACE_VERSION@
 
 #include "array.h"
-#include "event.h"
+#include "message.h"
 
 #include "output.h"
 
@@ -17,48 +17,44 @@ class Cycle;
 class Graph;
 class Layout;
 
-struct msgdest;
-struct message;
-struct msgbind;
 struct mapping;
-struct event;
+
+class UpdateHint
+{
+public:
+    UpdateHint(int = -1, int = -1, int = -1);
+
+    bool merge(const UpdateHint &, int = 0);
+    bool destination(msgdest * = 0);
+
+    uint8_t match;
+    uint8_t lay, grf, wld;
+};
 
 class Mapping : Map<msgdest, Reference<Cycle> >
 {
 public:
-    int add(const msgbind &, const msgdest &, int = 0);
+    int add(msgbind , msgdest , int = 0);
     int del(const msgbind *, const msgdest * = 0, int = 0) const;
-    Array<msgdest> destinations(const msgbind &, int = 0) const;
+    Array<msgdest> destinations(msgbind , int = 0) const;
 
-    // save/load layout cycles
-    bool saveCycles(int , const Layout &);
-    int loadCycles(int , const Layout &) const;
-    bool saveCycles(int , int , const Graph &);
-    int loadCycles(int , int , const Graph &) const;
-    void clearCycles(int = -1, int = -1, int = -1) const;
+    inline const Map<msgdest, Reference<Cycle> > &targets() const
+    { return *this; }
 
-    const Reference<Cycle> *getCycle(const msgdest &dest) const;
+    // direct cycle access
+    const Reference<Cycle> *cycle(msgdest) const;
+    bool setCycle(msgdest, Cycle *);
+
+    // modify target elements
+    int setCycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
+    int getCycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
+    int clearCycles(UpdateHint = UpdateHint()) const;
 
     void clear();
 protected:
     Array<mapping> _bind;
 };
 
-class UpdateHint
-{
-public:
-    enum Match {
-        MatchLayout = 1,
-        MatchGraph = 2,
-        MatchWorld = 4
-    };
-    UpdateHint(int = -1, int = -1, int = -1);
-
-    bool merge(const UpdateHint &, int = 0);
-
-    uint8_t match;
-    uint8_t lay, grf, wld;
-};
 
 template<typename T>
 class Updates : array
@@ -94,7 +90,7 @@ public:
             }
         }
         if (!(cmp = (Element *) array::append(sizeof(*cmp)))) {
-            return -1;
+            return BadOperation;
         }
         new (cmp) Element(m, d);
         return 2;
@@ -152,20 +148,19 @@ public:
     virtual int removeLayout(const Layout *);
     int layoutCount() const;
 
-    // layout creation
+    // create new layout
     virtual Layout *createLayout();
 
     // mapping helpers
     int target(msgdest &, message &, size_t = 0) const;
     object *item(message &, size_t = 0) const;
 
-    // untracked references to shedule update
-    virtual bool registerUpdate(const object *, const UpdateHint & = UpdateHint());
+    // untracked reference to shedule update
+    virtual bool registerUpdate(const unrefable *, UpdateHint = UpdateHint());
 
 protected:
     virtual void dispatchUpdates();
     RefArray<Layout> _layouts;
-    UpdateHint _lastTarget;
 };
 
 __MPT_NAMESPACE_END

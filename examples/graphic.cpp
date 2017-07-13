@@ -9,8 +9,16 @@
 #include MPT_INCLUDE(graphic.h)
 #include MPT_INCLUDE(layout.h)
 
+#ifdef __GLIBC__
+# include <mcheck.h>
+#else
+# define mtrace()
+#endif
+
 int main()
 {
+    mtrace();
+    
     mpt::Graphic g;
     mpt::Layout *l;
     
@@ -18,7 +26,8 @@ int main()
     
     l->set("name", "lay");
     
-    g.registerUpdate(l, mpt::UpdateHint(0));
+    int pos = g.addLayout(l);
+    g.registerUpdate(l, mpt::UpdateHint(pos));
     
     g.removeLayout(l);
 }

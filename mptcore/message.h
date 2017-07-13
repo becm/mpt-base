@@ -177,12 +177,18 @@ MPT_STRUCT(msgdest)
 	inline msgdest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
 		lay(l), grf(g), wld(w), dim(d)
 	{ }
-	inline bool operator==(msgdest ld) const
-	{ return lay == ld.lay && grf == ld.grf && wld == ld.wld; }
-	inline bool same(msgdest ld) const
-	{ return *this == ld && dim == ld.dim; }
+	enum {
+		MatchLayout    = 1,
+		MatchGraph     = 2,
+		MatchWorld     = 4,
+		MatchPath      = MatchLayout | MatchGraph | MatchWorld,
+		MatchDimension = 8,
+		MatchAll       = -1
+	};
+	bool match(msgdest dst, int = MatchAll);
 	
-	static int type();
+	inline bool operator ==(const msgdest &cmp)
+	{ return match(cmp); }
 #else
 # define MPT_MSGDEST_INIT { 0, 0, 0, 0 }
 #endif
