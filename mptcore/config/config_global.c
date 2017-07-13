@@ -118,11 +118,42 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	/* return data type identifier */
 	return mt ? mt->_vptr->conv(mt, 0, 0) : 0;
 }
+static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
+{
+	struct configRoot *c = (void *) cfg;
+	MPT_STRUCT(path) p;
+	MPT_STRUCT(node) *b;
+	
+	if (!(b = mpt_config_node(0))) {
+		return MPT_ERROR(BadOperation);
+	}
+	/* get top level node */
+	if (c->base.len) {
+		if (!path) {
+			return MPT_ERROR(BadArgument);
+		}
+		p = c->base;
+		if (!(b = mpt_node_query(b, &p, 0))) {
+			return 0;
+		}
+	}
+	if (!path) {
+		mpt_node_clear(b);
+		return 0;
+	}
+	p = *path;
+	if (!(b = mpt_node_query(b->children, &p, 0))) {
+		return 0;
+	}
+	mpt_node_unlink(b);
+	mpt_node_destroy(b);
+	return 1;
+}
 static const MPT_INTERFACE_VPTR(config) configGlobal = {
 	{ configUnref },
 	configQuery,
 	configAssign,
-	0
+	configRemove
 };
 
 /*!
