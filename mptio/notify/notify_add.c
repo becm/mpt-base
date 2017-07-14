@@ -79,44 +79,38 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	if (!in || (file = in->_vptr->_file(in)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
-	if ((buf = no->_slot._buf)) {
-		if (buf->_vptr->content(buf) != notifyDataType(0)) {
-			buf->_vptr->ref.unref((void *) buf);
-			no->_slot._buf = buf = 0;
-		}
-	}
-	if (!buf) {
+	/* create new buffer */
+	if (!(buf = no->_slot._buf)) {
 		size_t len = (file + 1) * sizeof(*base);
 		if (!(buf = malloc(sizeof(*buf) + len))) {
-			return 0;
+			return MPT_ERROR(BadOperation);
 		}
 		buf->_vptr = &notifyDataCtl;
 		buf->_ref._val = 1;
 		buf->_size = len;
-		buf->_used = 0;
+		buf->_used = len;
 		no->_slot._buf = buf;
+		base = memset(buf + 1, 0, len);
+		base += file;
 	}
-	/* check for existing */
-	else if ((base = mpt_buffer_data(buf, file, sizeof(*base)))
-	       && *base) {
-		errno = EADDRINUSE;
-		return -2;
+	/* reject incompatible data */
+	else if (buf->_vptr->content(buf) != notifyDataType(0)) {
+		return MPT_ERROR(BadType);
 	}
-	else {
-		long len = buf->_used / sizeof(*base);
-		if (len <= file) {
-			len = file + 1;
+	/* already existing position */
+	else if ((base = mpt_buffer_data(buf, file, sizeof(*base)))) {
+		if (*base) {
+			return MPT_ERROR(BadArgument);
 		}
-		if (!(buf = buf->_vptr->detach(buf, len))) {
-			return 0;
-		}
-		no->_slot._buf = buf;
 	}
 	/* add new element */
-	if ((base = mpt_buffer_insert(buf, file * sizeof(*base), sizeof(*base)))) {
+	else if (!(buf = buf->_vptr->detach(buf, file + 1))) {
+		return MPT_ERROR(BadOperation);
+	}
+	else {
+		no->_slot._buf = buf;
+		base = mpt_buffer_insert(buf, file * sizeof(*base), sizeof(*base));
 		*base = 0;
-	} else {
-		return -1;
 	}
 #if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {
