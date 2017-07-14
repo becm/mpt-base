@@ -17,57 +17,55 @@
 #include "message.h"
 #include "stream.h"
 
-extern int mpt_outdata_reply(MPT_STRUCT(outdata) *out, const MPT_STRUCT(message) *src, size_t len, const void *hdr)
+extern int mpt_outdata_reply(MPT_STRUCT(outdata) *out, size_t len, const void *hdr, const MPT_STRUCT(message) *src)
 {
-	uint8_t buf[0x10000];
-	uint64_t id = 0;
+	uint8_t tmp[0x100]; /* 256b reply limit */
+	uint8_t *ptr = tmp;
 	int ret;
 	uint8_t ilen, slen;
+	uint16_t max;
 	
 	/* already answered */
-	if (!len) {
-		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %s",
-		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
-		return MPT_ERROR(BadArgument);
-	}
 	if (!MPT_socket_active(&out->sock)) {
-		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %s",
-		        MPT_tr("bad reply operation"), MPT_tr("no connection"));
 		return MPT_ERROR(BadArgument);
 	}
 	ilen = out->_idlen;
 	slen = out->_smax;
+	max = ilen + slen;
 	
-	if (len > (ilen + slen)) {
-		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %s (%u)",
-		        MPT_tr("bad reply state"), MPT_tr("context data too big"), (int) len);
-		return MPT_ERROR(BadArgument);
+	if (len > max || len < ilen) {
+		return MPT_ERROR(BadValue);
 	}
-	slen = len - ilen;
-	
-	
 	if (ilen) {
-		memcpy(buf, ((int8_t *) hdr) + slen, ilen);
-		buf[0] &= 0x7f;
-		mpt_message_buf2id(buf, ilen, &id);
-		buf[0] |= 0x80;
+		memcpy(tmp, hdr, ilen);
+		hdr = ((uint8_t *) hdr) + ilen;
+	}
+	if (!slen || !(slen = len - ilen)) {
+		hdr = 0;
 	}
 	len = 0;
 	if (src) {
 		MPT_STRUCT(message) msg = *src;
-		len = mpt_message_read(&msg, sizeof(buf) - ilen, buf + ilen);
-		if (mpt_message_length(&msg)) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
-			        MPT_tr("unable to reply"), id, MPT_tr("message too big"));
-			return MPT_ERROR(MissingBuffer);
+		size_t left;
+		len = mpt_message_read(&msg, sizeof(tmp) - ilen, tmp + ilen);
+		/* temporary reply limit exceeded */
+		if ((left = mpt_message_length(&msg))) {
+			len += ilen + left;
+			/* use temporary data in unused buffer segment */
+			if (!(ptr = mpt_array_append(&out->buf, len, 0))) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			out->buf._buf->_used -= len;
+			if (ilen) {
+				memcpy(ptr, hdr, ilen);
+			}
+			len = mpt_message_read(&msg, len - ilen, ptr + ilen);
 		}
 	}
-	ret = sendto(out->sock._id, buf, ilen + len, 0, slen ? hdr : 0, slen);
+	ret = sendto(out->sock._id, ptr, ilen + len, 0, hdr, slen);
 	
 	if (ret < 0) {
-		mpt_log(0, __func__, MPT_LOG(Error), "%s (%08" PRIx64 "): %s",
-		        MPT_tr("unable to reply"), id, MPT_tr("send failed"));
-		return MPT_ERROR(BadArgument);
+		return MPT_ERROR(BadOperation);
 	}
 	return ret;
 }

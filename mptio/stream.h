@@ -12,7 +12,6 @@
 
 #ifdef __cplusplus
 # include "meta.h"
-# include "event.h"
 # include "notify.h"
 # include "output.h"
 #endif
@@ -156,11 +155,11 @@ extern int64_t mpt_stream_seek(MPT_STRUCT(stream) *, int64_t , int);
 /* finish or add data to current message */
 extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *, size_t , const void *);
 /* push message and flush stream */
-extern int mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
+extern ssize_t mpt_stream_append(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *);
 /* wait for and handle return messages */
 extern int mpt_stream_sync(MPT_STRUCT(stream) *, size_t , const _MPT_UARRAY_TYPE(command) *, int __MPT_DEFPAR(-1));
 /* push message id and content to stream */
-extern int mpt_stream_reply(MPT_STRUCT(stream) *, const MPT_STRUCT(message) *, size_t , const void *);
+extern int mpt_stream_reply(MPT_STRUCT(stream) *, size_t , const void *, const MPT_STRUCT(message) *);
 /* dispatch next message */
 extern int mpt_stream_dispatch(MPT_STRUCT(stream) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 

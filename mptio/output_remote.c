@@ -329,8 +329,8 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 
 static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
-	MPT_STRUCT(out_data) *odata = MPT_reladdr(out_data, in, _in, _out);
-	return mpt_connection_dispatch(&odata->con, cmd, arg);
+	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
+	return mpt_connection_dispatch(&od->con, cmd, arg);
 }
 static int outputInputFile(MPT_INTERFACE(input) *in)
 {

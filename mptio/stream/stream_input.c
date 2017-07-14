@@ -49,7 +49,7 @@ static int streamReply(MPT_INTERFACE(reply_context) *rc, const MPT_STRUCT(messag
 		        MPT_tr("unable to reply"), id, MPT_tr("output destroyed"));
 		return MPT_ERROR(BadArgument);
 	}
-	ret = mpt_stream_reply(&srm->data, msg, rd->len, rd->val);
+	ret = mpt_stream_reply(&srm->data, rd->len, rd->val, msg);
 	
 	if (ret >= 0) {
 		rd->len = 0;

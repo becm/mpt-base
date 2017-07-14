@@ -4,13 +4,10 @@
 
 #include <inttypes.h>
 
-#include <cstring>
-
 #include <cstdio>
+#include <limits>
 
 #include <sys/uio.h>
-
-#include "queue.h"
 
 #include "stream.h"
 
@@ -139,7 +136,14 @@ int Stream::property(struct property *pr) const
 int Stream::setProperty(const char *pr, const metatype *src)
 {
     if (!pr) {
-        return _srm ? mpt_stream_setter(_srm, src) : BadOperation;
+        if (!_srm) {
+            return BadOperation;
+        }
+        int ret = mpt_stream_setter(_srm, src);
+        if (ret >= 0) {
+            _ctx.setPointer(0);
+        }
+        return ret;
     }
     if (strcasecmp(pr, "idlen")) {
         if (_inputFile >= 0) {
@@ -152,7 +156,7 @@ int Stream::setProperty(const char *pr, const metatype *src)
         } else {
             int ret = src->conv('y', &l);
             if (ret < 0) return ret;
-            if (l > sizeof(uintptr_t)) {
+            if (l > std::numeric_limits<__decltype(_idlen)>::max() / 2 + 1) {
                 return BadValue;
             }
         }
@@ -259,7 +263,9 @@ public:
                 return BadValue;
             }
             if ((ans = srm._wait.get(rid))) {
-                return ans->cmd(ans->arg, &tmp);
+                int ret = ans->cmd(ans->arg, &tmp);
+                ans->cmd = 0;
+                return ret;
             }
             error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
             return BadValue;
@@ -285,7 +291,7 @@ public:
             struct msgtype mt(MessageAnswer, ret);
             struct message msg(&mt, sizeof(mt));
             id[0] |= 0x80;
-            mpt_stream_reply(srm._srm, &msg, idlen, id);
+            mpt_stream_reply(srm._srm, idlen, id, &msg);
         }
         return ret;
     }

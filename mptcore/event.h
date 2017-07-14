@@ -201,7 +201,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
 /* create deferrable reply context */
-extern MPT_INTERFACE(reply_context) *mpt_reply_deferable(size_t, int (*)(void *, const MPT_STRUCT(message) *), void *);
+extern MPT_INTERFACE(reply_context) *mpt_reply_deferrable(size_t, int (*)(const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *));
 /* set reply data */
 extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 

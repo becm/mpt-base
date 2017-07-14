@@ -12,16 +12,16 @@
 
 /*!
  * \ingroup mptStream
- * \brief send message
+ * \brief add message data
  * 
- * Push complete message and flush stream.
+ * Push complete message content to stream.
  * 
  * \param srm stream descriptor
  * \param m   message to push
  * 
- * \return zero on success
+ * \return number of bytes written or error
  */
-extern int mpt_stream_append(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m)
+extern ssize_t mpt_stream_append(MPT_STRUCT(stream) *srm, const MPT_STRUCT(message) *m)
 {
 	const struct iovec *cont;
 	const uint8_t *base;

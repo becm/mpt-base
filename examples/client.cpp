@@ -57,6 +57,12 @@ int MyClient::step(mpt::iterator *)
 void MyClient::unref()
 { delete this; }
 
+static int doCommand(void *, mpt::event *ev)
+{
+    if (!ev || !ev->msg) return 0;
+    std::cout << ev->msg->length() << std::endl;
+    return 0;
+}
 int main(int argc, char * const argv[])
 {
     mtrace();
@@ -77,6 +83,8 @@ int main(int argc, char * const argv[])
 
     MyClient c(argv[pos]);
     c.init();
+
+    d.set(mpt::MessageCommand, doCommand, 0);
 
     c.set("test", "value");
     const mpt::metatype *mt = c.get("test");

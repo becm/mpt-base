@@ -208,7 +208,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *, size_t , const void *);
 /* process return messages */
 extern int mpt_outdata_recv(MPT_STRUCT(outdata) *);
 /* send reply message */
-extern int mpt_outdata_reply(MPT_STRUCT(outdata) *, const MPT_STRUCT(message) *, size_t, const void *);
+extern int mpt_outdata_reply(MPT_STRUCT(outdata) *, size_t, const void *, const MPT_STRUCT(message) *);
 
 /* reset connection data */
 extern void mpt_connection_fini(MPT_STRUCT(connection) *);
@@ -220,8 +220,6 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *, const char *, const MPT
 /* get/set outdata property */
 extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
 extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, const MPT_INTERFACE(metatype) *);
-/* send reply message */
-extern int mpt_connection_reply(MPT_STRUCT(connection) *, const MPT_STRUCT(message) *);
 
 /* push data to connection */
 extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void *);
