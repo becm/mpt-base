@@ -12,13 +12,13 @@
 
 static char *_readline(const char *prompt)
 {
-	char	*buf = 0, *curr = 0, *end;
-	size_t	len = 64;
+	char *buf = 0, *curr = 0, *end;
+	size_t len = 64;
 	
 	fputs(prompt, stdout);
 	
 	while (1) {
-		size_t	clen = buf+len-curr;
+		size_t clen = (buf - curr) + len;
 		
 		if (!(curr = realloc(buf, len))) {
 			free(buf);
@@ -31,6 +31,11 @@ static char *_readline(const char *prompt)
 			return 0;
 		}
 		if (!*end || (end = memchr(end, '\n', clen))) {
+			if (end == buf) {
+				static const char empty = 0;
+				free(buf);
+				return (char *) &empty;
+			}
 			*end = 0;
 			return buf;
 		}
