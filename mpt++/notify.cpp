@@ -44,9 +44,26 @@ bool notify::init(int argc, char * const argv[])
     return take == argc;
 }
 
+static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
+{
+    if (!ev) {
+        return 0;
+    }
+    if (!ev->msg) {
+        ev = 0;
+    }
+    return mpt_dispatch_emit(static_cast<dispatch *>(arg), ev);
+}
 void notify::setDispatch(dispatch *d)
 {
-    mpt_notify_setdispatch(this, d);
+    if (_disp.cmd) {
+        _disp.cmd(_disp.arg, 0);
+    }
+    if ((_disp.arg = d)) {
+        _disp.cmd = dispatchEvent;
+    } else {
+        _disp.cmd = 0;
+    }
 }
 
 input *notify::next() const

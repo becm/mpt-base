@@ -22,7 +22,7 @@ MPT_STRUCT(local_output)
 static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
 	MPT_STRUCT(local_output) *lo = (void *) out;
-	int ret;
+	ssize_t ret;
 	
 	out = lo->pass;
 	
