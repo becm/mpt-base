@@ -8,7 +8,6 @@ src = files(
   'connection_open.c',
   'connection_property.c',
   'connection_push.c',
-  'connection_reply.c',
   'histfmt_reset.c',
   'history_fini.c',
   'history_log.c',
