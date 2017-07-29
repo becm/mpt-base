@@ -239,8 +239,11 @@ object::Property Object::operator [](int pos)
 }
 const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
 {
-    if (!_ref) return 0;
-    while ((head = mpt_object_set_list(_ref, head, TraverseNonLeafs))) {
+    if (!_ref || !head) return 0;
+    do {
+        if (mpt_object_set_node(_ref, head, TraverseNonLeafs) < 0) {
+            return head;
+        }
         if (!proc) {
             return head;
         }
@@ -259,8 +262,7 @@ const node *Object::getProperties(const node *head, PropertyHandler proc, void *
         if (proc(pdata, &pr) < 0) {
             return head;
         }
-        head = head->next;
-    }
+    } while ((head = head->next));
     return 0;
 }
 int Object::type()

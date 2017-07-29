@@ -73,7 +73,7 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, 
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
 
 /* set properties matching node identifiers to node values */
-extern const MPT_STRUCT(node) *mpt_object_set_list(MPT_INTERFACE(object) *, const MPT_STRUCT(node) *, int);
+extern int mpt_object_set_node(MPT_INTERFACE(object) *, const MPT_STRUCT(node) *, int);
 
 
 __MPT_EXTDECL_END
