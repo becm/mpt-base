@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int luaopen_mpt(lua_State *);
+#define MPT_MAX_LUA_BUF 256
 
 const char *stdRead(lua_State *L, void *data, size_t *size)
 {
-	ssize_t len = read(0, data, 256);
+	ssize_t len = read(0, data, MPT_MAX_LUA_BUF);
 	(void) L;
 	if (len < 0) return 0;
 	*size = len;
@@ -25,7 +25,7 @@ static int loadModule(lua_State *L, const char *mod)
 	}
 	else {
 		int len;
-		char buf[256];
+		char buf[MPT_MAX_LUA_BUF];
 #if LUA_VERSION_NUM < 502
 		const char *version = LUA_VERSION;
 		snprintf(buf, sizeof(buf), "%s/%s/%s/%s.%s",
@@ -79,6 +79,23 @@ int main(int argc, char *argv[])
 		lua_close(L);
 		return 2;
 	}
+	if (argc < 2) {
+		char buf[MPT_MAX_LUA_BUF];
+		/* make mpt module visible */
+		lua_setglobal(L, "mpt");
+#if LUA_VERSION_NUM < 502
+		if ((lua_load(L, stdRead, buf, "<stdin>")
+#else
+		if ((lua_load(L, stdRead, buf, "<stdin>", "t")
+#endif
+		     || lua_pcall(L, 0, LUA_MULTRET, 0))
+		    && (str = lua_tostring(L, -1))) {
+			fputs(str, stderr);
+			fputc('\n', stderr);
+		};
+		lua_close(L);
+		return 0;
+	}
 	/* get global math for table */
 	lua_getglobal(L, "math");
 	
@@ -106,20 +123,7 @@ int main(int argc, char *argv[])
 	}
 	lua_pop(L, 1); /* remove `mpt` module from stack */
 	ret = 0;
-	if (argc < 2) {
-		char buf[256];
-#if LUA_VERSION_NUM < 502
-		if ((lua_load(L, stdRead, buf, "<stdin>")
-#else
-		if ((lua_load(L, stdRead, buf, "<stdin>", "t")
-#endif
-		     || lua_pcall(L, 0, LUA_MULTRET, 0))
-		    && (str = lua_tostring(L, -1))) {
-			fputs(str, stderr);
-			fputc('\n', stderr);
-		};
-	}
-	else for (i = 1; i < argc; ++i) {
+	for (i = 1; i < argc; ++i) {
 		if (luaL_dofile(L, argv[i])) {
 			if ((str = lua_tostring(L, -1))) {
 				fputs(str, stderr);
