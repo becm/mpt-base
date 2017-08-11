@@ -1,7 +1,7 @@
 # Makefile: MPT lua tests
 #
 # lua version to build for
-LUA = 5.2
+LUA = 5.3
 #
 # import MPT config
 DIR_TOP ?= ${MPT_PREFIX}

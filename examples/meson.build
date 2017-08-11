@@ -55,6 +55,5 @@ endif
 if with_lua
   test('lua interpreter',
     executable('interp', join_paths('lua', 'main.c'), dependencies: lua),
-    env: [ 'MPT_MATHBOX=' + join_paths(meson.source_root(), 'lua', 'mathbox.lua') ],
     args: [ join_paths(meson.current_source_dir(), 'lua', 'user.lua')])
 endif

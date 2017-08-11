@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	/* get global math for table */
 	lua_getglobal(L, "math");
 	
-	/* get mpt.push for math environment */
+	/* copy mpt.push to math table */
 #if LUA_VERSION_NUM < 503
 	lua_getfield(L, -2, "push");
 	if (!lua_isfunction(L, -1))

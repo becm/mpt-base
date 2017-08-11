@@ -1,14 +1,14 @@
 # Makefile: lua bindings for MPT
 #
 # lua version to build for
-LUA = 5.2
+LUA = 5.3
 #
 # shared library version
 LIB = lua${LUA}-mpt
 #
 # include lua and MPT core header
 INC_LUA = /usr/include/lua${LUA}
-INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptplot ${DIR_BASE}mptio
+INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptio
 #
 # library sources
 SRCS = mpt.c
