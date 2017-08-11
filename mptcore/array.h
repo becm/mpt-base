@@ -73,7 +73,7 @@ MPT_STRUCT(array)
 		inline size_t left() const
 		{ return _size - _used; }
 		inline void *data() const
-		{ return static_cast<void *>(const_cast<Data *>(this + 1)); }
+		{ return static_cast<void *>(const_cast<Data *>(this) + 1); }
 		
 		bool setLength(size_t);
 		static Data *create(size_t);
@@ -409,15 +409,15 @@ public:
 	}
 	bool setLength(long len)
 	{
-		long end = _used / sizeof(T);
-		if ((len < 0 && (len += end)) < 0) {
+		long end = length();
+		if (len < 0 && (len += end) < 0) {
 			return false;
 		}
-		long max = _size / sizeof(T);
+		long max = size();
 		if (len > max) {
 			return false;
 		}
-		T *t = static_cast<T *>(data());
+		T *t = data();
 		for (long i = end; i < len; ++i) {
 			new (t + i) T();
 		}
@@ -435,19 +435,17 @@ public:
 		}
 		/* keep current size */
 		if (len < 0) {
-			len = length();
+			return this;
 		}
-		/* no resize operation */
-		else if (len > length()) {
+		long max = length();
+		/* no expand operation */
+		if (len > max) {
 			return 0;
 		}
 		/* shrink to requested size */
-		long max = length();
-		if (len < max) {
-			T *t = data();
-			for (long i = len; i < max; ++i) t[i].~T();
-			_used = len * sizeof(*t);
-		}
+		T *t = data();
+		for (long i = len; i < max; ++i) t[i].~T();
+		_used = len * sizeof(*t);
 		return this;
 	}
 	inline int content() const __MPT_OVERRIDE
@@ -464,14 +462,14 @@ public:
 	T *insert(long pos)
 	{
 		long end = length();
-		if ((pos < 0 && (pos += end)) < 0) {
+		if (pos < 0 && (pos += end) < 0) {
 			return 0;
 		}
 		long max = size();
 		if (pos >= max || end >= max) {
 			return 0;
 		}
-		T *t = static_cast<T *>(data());
+		T *t = data();
 		if ((max = end - pos) > 0) {
 			/* move elements after position */
 			std::memmove(t + pos + 1, t + pos, max * sizeof(*t));

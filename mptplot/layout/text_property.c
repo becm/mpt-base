@@ -134,7 +134,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "y")) {
-		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.y)) < 0) {
+		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.y))) {
 			tx->pos.y = def_text.pos.y;
 			return 0;
 		}
