@@ -1,5 +1,5 @@
 -- mpt.lua
--- client runtime and math environment
+-- client runtime and formated value output
 
 -- get lua version from string
 local version = _VERSION:sub(5)
@@ -15,36 +15,36 @@ if not env_prefix then
 end
 
 -- library loader path
-local prefix_lib = os.getenv(env_prefix..'PREFIX_LIB')
+local prefix_lib = os.getenv(env_prefix .. 'PREFIX_LIB')
 if not prefix_lib then
-  local platform = os.getenv(env_prefix..'ARCH')
+  local platform = os.getenv(env_prefix .. 'ARCH')
   
   -- prefix or default root
-  local prefix = os.getenv(env_prefix..'PREFIX')
+  local prefix = os.getenv(env_prefix .. 'PREFIX')
   if not prefix then prefix = '/usr/local/mpt' end
   
   if platform then
     -- explicit platform selected
-    prefix_lib = prefix..'/lib/'..platform
+    prefix_lib = prefix .. '/lib/' .. platform
   else
     -- determine platform string from default shared object location
-    local p, a = package.cpath:match('(/usr/lib/([%w_-]+)/lua/'..version..'/%?.so)')
+    local p, a = package.cpath:match('(/usr/lib/([%w_-]+)/lua/' .. version .. '/%?.so)')
     if p and a then
-      prefix_lib = prefix.."/lib/"..a
+      prefix_lib = prefix .. "/lib/" .. a
     else
       -- fallback to generic shared object location
-      prefix_lib = prefix.."/lib"
+      prefix_lib = prefix .. "/lib"
     end
   end
 end
 
 -- generic load for lua library
 local function load(name, ver, path)
-  local file = 'liblua'..version..'-'..name..'.so'
-  if ver then file = file..'.'..ver end
-  name = 'luaopen_'..name
+  local file = 'liblua' .. version .. '-' .. name .. '.so'
+  if ver then file = file .. '.' .. ver end
+  name = 'luaopen_' .. name
   if path then
-    local lib, err = package.loadlib(path..'/'.. file, name)
+    local lib, err = package.loadlib(path .. '/' .. file, name)
     if lib then return lib end
   end
   return package.loadlib(file, name)
@@ -85,7 +85,7 @@ function mpt.client(c, w, o)
   -- open client process with stdin command input
   if type(c) == 'string' then
     -- open in current location
-    con = io.popen('./'..c..' -c-', 'w')
+    con = io.popen('./' .. c .. ' -c-', 'w')
     
     return {
       -- merge arguments to command string
@@ -141,7 +141,7 @@ function mpt.setup(c, e)
     client.wait()
   end
   function e.step(...)
-    client.command('step',...)
+    client.command('step', ...)
     client.wait()
   end
   -- no regular return

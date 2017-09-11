@@ -29,7 +29,7 @@ static int loadModule(lua_State *L, const char *mod)
 #if LUA_VERSION_NUM < 502
 		const char *version = LUA_VERSION;
 		snprintf(buf, sizeof(buf), "%s/%s/%s/%s.%s",
-		         prefix, "share/lua", version+4, mod, "lua");
+		         prefix, "share/lua", version + 4, mod, "lua");
 #else
 		snprintf(buf, sizeof(buf), "%s/%s/%s.%s",
 		         prefix, "share/lua/" LUA_VERSION_MAJOR "." LUA_VERSION_MINOR, mod, "lua");
