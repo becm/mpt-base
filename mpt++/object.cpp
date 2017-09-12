@@ -163,10 +163,9 @@ bool object::Property::set(const value &val)
 Object::Object(Object &other) : Item<object>(0), _hash(0)
 {
     Reference<object>::operator=(other.ref());
-    if (identifier::setName(other)) {
-        Slice<const char> d = nameData();
-        _hash = mpt_hash(d.base(), d.length());
-    }
+    identifier::operator=(other);
+    Slice<const char> d = nameData();
+    _hash = mpt_hash(d.base(), d.length());
 }
 Object::Object(object *from) : Item<object>(from), _hash(0)
 { }
@@ -202,9 +201,9 @@ Object & Object::operator =(Object & other)
 {
     Reference<object> ref(other.ref());
     object *obj = ref.pointer();
-    if (obj && setPointer(obj)) ref.detach();
-
-    if (identifier::setName(other)) {
+    if (obj && setPointer(obj)) {
+        ref.detach();
+        identifier::operator=(other);
         Slice<const char> d = nameData();
         _hash = mpt_hash(d.base(), d.length());
     }

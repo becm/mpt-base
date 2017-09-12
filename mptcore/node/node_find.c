@@ -27,11 +27,11 @@ extern MPT_STRUCT(node) *mpt_node_find(const MPT_STRUCT(node) *parent, const cha
 	idlen = name ? strlen(name) : 0;
 	
 	if (pos >= 0) {
-		return mpt_node_locate(tmp, pos, name, idlen);
+		return mpt_node_locate(tmp, pos, name, idlen, -1);
 	}
-	if (!(tmp = mpt_node_locate(tmp, 0, name, idlen))) {
+	if (!(tmp = mpt_node_locate(tmp, 0, name, idlen, -1))) {
 		return 0;
 	}
-	return mpt_node_locate(tmp, pos, name, idlen);
+	return mpt_node_locate(tmp, pos, name, idlen, -1);
 }
 

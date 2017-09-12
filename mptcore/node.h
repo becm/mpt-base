@@ -19,12 +19,11 @@ MPT_STRUCT(node)
 {
 #if defined(__cplusplus)
     public:
-	node(struct node const& node);
 	node(metatype *ref = 0);
 	~node();
 	
 	void setMeta(metatype *mt);
-	struct node &operator=(const struct node & node);
+	struct node &operator=(const Reference<metatype> &);
 	
 	inline const Reference<metatype> &meta() const
 	{ return *((Reference<metatype> *) &_meta); }
@@ -107,7 +106,7 @@ extern MPT_STRUCT(node) *mpt_tree_clone(const MPT_STRUCT(node) *);
 extern MPT_STRUCT(node) *mpt_gnode_pos(const MPT_STRUCT(node) *, int);
 
 /* get node with same identifier relative to current node */
-extern MPT_STRUCT(node) *mpt_node_locate(const MPT_STRUCT(node) *, int , const void *, int);
+extern MPT_STRUCT(node) *mpt_node_locate(const MPT_STRUCT(node) *, int , const void *, size_t , int);
 extern MPT_STRUCT(node) *mpt_node_next(const MPT_STRUCT(node) *, const char *);
 
 /* find node with ascii identifier in sublevel */
@@ -149,13 +148,11 @@ extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *, int , siz
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-inline node::node(struct node const& node) : next(0), prev(0), parent(0), children(0)
-{ _meta = node._meta ? node._meta->clone() : 0; }
 inline node::node(metatype *ref) : _meta(ref), next(0), prev(0), parent(0), children(0)
 { }
-inline node &node::operator = (const struct node & other)
+inline node &node::operator = (const Reference<metatype> &other)
 {
-    Reference<metatype> m(other._meta ? other._meta->clone() : 0);
+    Reference<metatype> m(other);
     if (_meta) _meta->unref();
     _meta = m.detach();
     return *this;

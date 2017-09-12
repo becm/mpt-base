@@ -76,7 +76,7 @@ extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *path)
 	
 	conf = nodeRoot();
 	while ((clen = mpt_path_next(&p)) >= 0) {
-		if (!(conf = mpt_node_locate(conf, 1, curr, clen))) {
+		if (!(conf = mpt_node_locate(conf, 1, curr, clen, -1))) {
 			return 0;
 		}
 		if (!p.len || !(conf = conf->children)) {

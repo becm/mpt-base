@@ -37,7 +37,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 	}
 	count = 0;
 	p.assign = '=';
-	while (1) {
+	do {
 		/* get assign target */
 		if ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr)) < 0) {
 			const char *end;

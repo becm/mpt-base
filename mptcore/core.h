@@ -550,21 +550,21 @@ MPT_STRUCT(identifier)
 	const char *name() const;
 	
 	bool setName(const char *, int = -1);
-	bool setName(size_t , const void *);
-	bool setName(const identifier &);
+	
+	identifier &operator =(const identifier &);
 	
 	static inline __MPT_CONST_EXPR size_t minimalLength()
 	{ return 4 + sizeof(char *); }
 	
 	inline size_t totalSize() const
-	{ return sizeof(*this) + _post; }
+	{ return 4 + _max; }
 protected:
 #else
 # define MPT_IDENTIFIER_INIT { 0, 0, 0, { 0 }, 0 }
 #endif
 	uint16_t _len;
-	uint8_t  _post;
-	uint8_t  _flags;
+	uint8_t  _type;
+	uint8_t  _max;
 	char     _val[4];
 	char    *_base;
 };

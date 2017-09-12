@@ -46,23 +46,24 @@ bool identifier::equal(const char *name, int nlen) const
 {
     return mpt_identifier_compare(this, name, nlen) ? false : true;
 }
-bool identifier::setName(const identifier &id)
+identifier &identifier::operator=(const identifier &id)
 {
-    return (mpt_identifier_copy(this, &id)) ? true : false;
+    mpt_identifier_copy(this, &id);
+    return *this;
 }
 bool identifier::setName(const char *name, int nlen)
 {
-    if (nlen < 0) {
-        nlen = name ? strlen(name) : 0;
-    }
     return (mpt_identifier_set(this, name, nlen)) ? true : false;
 }
 const char *identifier::name() const
 {
-    return (mpt_identifier_len(this) <= 0) ? 0 : (const char *) mpt_identifier_data(this);
+    return (mpt_identifier_len(this) <= 0) ? 0 : static_cast<const char *>(mpt_identifier_data(this));
 }
 Slice<const char> identifier::nameData() const
 {
+    if (mpt_identifier_len(this) <= 0) {
+        return Slice<const char>(0, 0);
+    }
     const char *id = (const char *) mpt_identifier_data(this);
     return Slice<const char>(id, _len);
 }
@@ -90,7 +91,7 @@ public:
     Meta *local() const;
 protected:
     friend struct node;
-    int8_t _data[128-sizeof(node)];
+    int8_t _data[128 - sizeof(node)];
 };
 
 NodePrivate::NodePrivate(size_t len) : node()

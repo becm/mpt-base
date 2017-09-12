@@ -22,9 +22,9 @@
  * \param curr  base node
  * \param pos   relative position to base node
  * \param ident name of node
- * \param len   length of node name
+ * \param len   length of node name or negative key type
  */
-/*@null@*/extern MPT_STRUCT(node) *mpt_node_locate(const MPT_STRUCT(node) *curr, int pos, const void *ident, int len)
+/*@null@*/extern MPT_STRUCT(node) *mpt_node_locate(const MPT_STRUCT(node) *curr, int pos, const void *ident, size_t len, int type)
 {
 	const char *cid;
 	size_t clen, idlen;
@@ -34,27 +34,56 @@
 		errno = EFAULT;
 		return 0;
 	}
-	idlen = (len <= 0) ? (len = -len) : len + 1;
-	
+	/* existing identifier type */
+	if (type >= 0) {
+		idlen = len;
+	}
+	/* base identifier */
+	else {
+		type = 0;
+		idlen = len + 1;
+	}
 	/* simple end search, check final for match */
 	if (!pos) {
 		while (curr->next) {
 			curr = curr->next;
 		}
-		cid  = mpt_identifier_data(&curr->ident);
-		clen = curr->ident._len;
-		if (idlen == clen && (idlen == (size_t) len || !cid[len])
-		    && (!len || !memcmp(ident, cid, len))) {
-			return (MPT_STRUCT(node) *) curr;
+		if (type == curr->ident._type) {
+			if (type && !idlen) {
+				if (curr->ident._base == ident) {
+					return (MPT_STRUCT(node) *) curr;
+				}
+			}
+			else {
+				cid  = mpt_identifier_data(&curr->ident);
+				clen = curr->ident._len;
+				if (idlen == clen
+				    && (idlen == (size_t) len || !cid[len])
+				    && (!len || !memcmp(ident, cid, len))) {
+					return (MPT_STRUCT(node) *) curr;
+				}
+			}
 		}
 		pos = -1;
 	}
 	/* negative offset, start with previous */
 	if (pos < 0) {
 		while ((curr = curr->prev)) {
+			if (type != curr->ident._type) {
+				continue;
+			}
+			if (type && !idlen) {
+				if (!curr->ident._len
+				    && curr->ident._base == ident
+				    && !(++pos)) {
+					break;
+				}
+				continue;
+			}
 			cid  = mpt_identifier_data(&curr->ident);
 			clen = curr->ident._len;
-			if (idlen == clen && (idlen == (size_t) len || !cid[len])
+			if (idlen == clen
+			    && (idlen == (size_t) len || !cid[len])
 			    && (!len || !memcmp(ident, cid, len))) {
 				if (!(++pos)) {
 					break;
@@ -65,9 +94,20 @@
 	}
 	/* positive offset, start with current */
 	do {
+		if (type != curr->ident._type) {
+			continue;
+		}
+		if (type && !idlen) {
+			if (curr->ident._base == ident
+			    && !(--pos)) {
+				break;
+			}
+			continue;
+		}
 		cid  = mpt_identifier_data(&curr->ident);
 		clen = curr->ident._len;
-		if (idlen == clen && (idlen == (size_t) len || !cid[len])
+		if (idlen == clen
+		    && (idlen == (size_t) len || !cid[len])
 		    && (!len || !memcmp(ident, cid, len))) {
 			if (!(--pos)) {
 				break;
@@ -76,9 +116,4 @@
 	} while ((curr = curr->next));
 	
 	return (MPT_STRUCT(node) *) curr;
-}
-
-extern MPT_STRUCT(node) *mpt_node_next(const MPT_STRUCT(node) *node, const char *ident)
-{
-	return mpt_node_locate(node, 1, ident, ident ? strlen(ident) : 0);
 }

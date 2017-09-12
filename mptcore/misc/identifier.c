@@ -7,14 +7,9 @@
 
 #include "core.h"
 
-#define MPT_IdentifierPrintable  0x1
-#define MPT_IdentifierPointer    0x2
-
-#define MPT_IDENT_SMAX 0x7
-#define MPT_IDENT_PMAX 0x1fu
-#define MPT_IDENT_LMAX(s) ((0x10u<<s) + (0x1fu<<(s-1)))
-#define MPT_IDENT_MAX MPT_IDENT_LMAX(MPT_IDENT_SMAX)
 #define MPT_IDENT_HSZE 4
+#define MPT_IDENT_VSZE (MPT_IDENT_HSZE + 4 + sizeof(void *))
+#define MPT_IDENT_MAX  (0x100 - MPT_IDENT_HSZE)
 #define MPT_IDENT_BSZE (sizeof(MPT_STRUCT(identifier)) - MPT_IDENT_HSZE)
 
 /*!
@@ -29,35 +24,21 @@
  */
 size_t mpt_identifier_align(size_t len)
 {
-	uint8_t shift = 0;
+	size_t space = sizeof(MPT_STRUCT(identifier));
 	
-	if ((len < MPT_IDENT_BSZE) || (len > (MPT_IDENT_BSZE + MPT_IDENT_MAX))) {
-		return sizeof(MPT_STRUCT(identifier));
-	}
-	/* no exponent required */
-	if (len <= (MPT_IDENT_BSZE + MPT_IDENT_PMAX)) {
-		return MPT_IDENT_HSZE + len;
-	}
-	len -= MPT_IDENT_BSZE;
-	
-	/* align size to header+data */
-	while (++shift <= MPT_IDENT_SMAX) {
-		size_t min, step, add;
-		if (len > MPT_IDENT_LMAX(shift)) {
-			continue;
-		}
-		step = 0x1 << (shift - 1);
-		min  = 0x10 << shift;
-		add  = (len - min) / step;
-		
-		/* smallest size above needed */
-		if (len > (min += add * step)) {
-			min += step;
-		}
-		return sizeof(MPT_STRUCT(identifier)) + min;
+	/* bad length constraint */
+	if (len > UINT16_MAX) {
+		return 0;
 	}
 	/* length exceeds local size */
-	return sizeof(MPT_STRUCT(identifier));
+	if (len > MPT_IDENT_MAX) {
+		return space;
+	}
+	/* select pow(2) slot */
+	while (len > (space - MPT_IDENT_HSZE)) {
+		space *= 2; /* 16, 32, 64, 128, 256 */
+	}
+	return space;
 }
 
 /*!
@@ -71,51 +52,17 @@ size_t mpt_identifier_align(size_t len)
  */
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *id, size_t len)
 {
-	uint8_t shift = 1;
-	
 	/* length out of range */
-	if (len < sizeof(*id)) {
-		len = 0;
-	} else {
-		len -= sizeof(*id);
+	if (len < MPT_IDENT_HSZE) {
+		return;
+	}
+	if ((len -= MPT_IDENT_HSZE) > MPT_IDENT_MAX) {
+		len = MPT_IDENT_MAX;
 	}
 	/* initial header values */
 	id->_len = 0;
-	id->_flags = 0;
-	
-	if (len <= MPT_IDENT_PMAX) {
-		id->_post = len;
-		len += MPT_IDENT_BSZE;
-		memset(id->_val, 0, len);
-		return;
-	}
-	/* find matching exponent */
-	else while (shift <= MPT_IDENT_SMAX) {
-		if (len <= MPT_IDENT_LMAX(shift)) {
-			size_t min, step, add;
-			
-			step = 0x1 << (shift - 1);
-			min  = 0x10 << shift;
-			add  = (len - min) / step;
-			
-			/* smallest size above needed */
-			if (len > (min += add * step)) {
-				++add;
-				min += step;
-			}
-			id->_post = (shift << 0x5) + add;
-			len = min + MPT_IDENT_BSZE;
-			
-			memset(id->_val, 0, len);
-			return;
-		}
-		++shift;
-	}
-	/* max size */
-	id->_post = 0xff;
-	len = MPT_IDENT_BSZE + MPT_IDENT_MAX;
-	
-	/* clear covered data */
+	id->_type = 0;
+	id->_max = len;
 	memset(id->_val, 0, len);
 }
 
@@ -132,17 +79,30 @@ extern void mpt_identifier_init(MPT_STRUCT(identifier) *id, size_t len)
 extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *from)
 {
 	const void *base;
+	void *dest;
+	
 	if (!from) {
 		return mpt_identifier_set(id, 0, 0);
 	}
-	base = (from->_flags & MPT_IdentifierPointer) ? from->_base : from->_val;
-	
-	if (!(base = mpt_identifier_set(id, base, -from->_len))) {
+	base = (from->_len > from->_max) ? from->_base : from->_val;
+	if (id == from) {
+		return base;
+	}
+	if (from->_len <= id->_max) {
+		dest = id->_val;
+	}
+	else if (!(dest = malloc(from->_len))) {
 		return 0;
 	}
-	id->_flags = (id->_flags ^ MPT_IdentifierPrintable) | (from->_flags | MPT_IdentifierPrintable);
+	if (id->_len > id->_max) {
+		free(id->_base);
+		id->_base = 0;
+	}
+	id->_len  = from->_len;
+	id->_type = from->_type;
+	memcpy(dest, base, from->_len);
 	
-	return base;
+	return dest;
 }
 
 /*!
@@ -160,61 +120,67 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STR
  */
 extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, int nlen)
 {
-	char *addr = id->_val;
+	char *addr;
 	int len;
-	uint8_t max;
 	
 	/* auto-detect length */
-	len = (nlen > 0) ? nlen + 1 : -nlen;
-	
-	/* max length exceeded */
-	if (len > UINT16_MAX) {
-		return 0;
-	}
-	/* get size of ident data */
-	if ((max = id->_post) >= (0x1<<0x5)) {
-		uint8_t shift = max >> 0x5;
-		max = (0x10 << shift) + ((max & 0x1f) << (shift-1));
-	}
-	max += MPT_IDENT_BSZE;
-	
-	/* length exceeds local size */
-	if (len > max) {
-		addr = (id->_flags & MPT_IdentifierPointer) ? id->_base : 0;
-		
-		if (!(addr = realloc(addr, len))) {
+	if ((len = nlen)) {
+		if (nlen < 0) {
+			if (!name) {
+				return 0;
+			}
+			nlen = strlen(name);
+		}
+		len = nlen + 1;
+		/* max length exceeded */
+		if (len > UINT16_MAX) {
 			return 0;
 		}
+	}
+	/* length exceeds local size */
+	if (len > id->_max) {
+		if (!(addr = malloc(len))) {
+			return 0;
+		}
+		/* copy name content */
+		if (nlen) {
+			memcpy(addr, name, nlen);
+			addr[nlen] = 0;
+		} else {
+			memset(addr, 0, len);
+		}
+		/* clear old allocation */
+		if ((id->_len > id->_max) && id->_base) {
+			free(id->_base);
+		}
+		/* set new name content address */
+		id->_len = len;
+		id->_type = 0;
+		memset(id->_val, 0, id->_max);
 		id->_base = addr;
-		id->_flags |= MPT_IdentifierPointer;
+		
+		return addr;
 	}
 	/* data fits local data */
-	else if (id->_flags & MPT_IdentifierPointer) {
-		free(id->_base);
-	}
-	id->_len = len;
+	addr = (id->_len > id->_max) ? id->_base : 0;
 	
-	/* set identifier type */
-	if (!nlen) {
-		if (name) {
-			id->_flags |= MPT_IdentifierPrintable;
-		} else {
-			id->_flags &= ~MPT_IdentifierPrintable;
-		}
-		return memset(addr, 0, MPT_IDENT_BSZE);
-	}
-	else if (nlen < 0) {
-		id->_flags &= ~MPT_IdentifierPrintable;
-		nlen = -nlen;
-	}
-	else {
-		id->_flags |= MPT_IdentifierPrintable;
-		addr[nlen] = 0;
-	}
 	if (name) {
-		return memcpy(addr, name, nlen);
+		int post = id->_max - nlen;
+		if (post) {
+			memset(id->_val + nlen, 0, post);
+		}
+		name = memcpy(id->_val, name, nlen);
+	} else {
+		name = memset(id->_val, 0, id->_max);
 	}
-	return memset(addr, 0, nlen);
+	/* clear old allocation */
+	if (addr) {
+		free(addr);
+	}
+	id->_len  = len;
+	id->_type = 0;
+	
+	return name;
 }
 
 /*!
@@ -225,7 +191,7 @@ extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *na
  * 
  * \param id    address of identifier
  * \param name  data to compare
- * \param nlen  data length (<0 for non-printable)
+ * \param nlen  data length
  * 
  * \return start of identifier data
  */
@@ -233,27 +199,26 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *
 {
 	const char *base = id->_val;
 	
-	if (id->_flags & MPT_IdentifierPointer) {
-		base = id->_base;
-	}
 	if (nlen < 0) {
 		if (!name) {
 			return -2;
 		}
-		if ((nlen = -nlen) != id->_len) {
-			return nlen - id->_len;
-		}
+		nlen = strlen(name);
 	}
-	else {
-		if (!nlen && !id->_len) {
-			return 0;
-		}
-		if ((nlen + 1) != id->_len) {
-			return -2;
-		}
-		if (base[nlen]) {
-			return nlen;
-		}
+	if (!nlen && !id->_len) {
+		return 0;
+	}
+	if (id->_type) {
+		return 1;
+	}
+	if ((nlen + 1) != id->_len) {
+		return 2;
+	}
+	if (id->_len > id->_max) {
+		base = id->_base;
+	}
+	if (base[nlen]) {
+		return nlen;
 	}
 	return memcmp(base, name, nlen);
 }
@@ -262,29 +227,31 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *
  * \ingroup mptCore
  * \brief compare identifier
  * 
- * Check if identifier are equal.
+ * Check if identifier are of same type and value.
  * 
  * \param id   first identifier
  * \param cmp  second identifier
  * 
- * \return start of identifier data
+ * \return zero on equality
  */
 extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *cmp)
 {
 	const char *idbase;
 	const char *cmpbase;
-	
 	int diff;
 	
+	if ((diff = id->_type - cmp->_type)) {
+		return diff;
+	}
 	if ((diff = id->_len - cmp->_len)) {
 		return diff;
 	}
 	idbase = id->_val;
-	if (id->_flags & MPT_IdentifierPointer) {
+	if (id->_len > id->_max) {
 		idbase = id->_base;
 	}
 	cmpbase = cmp->_val;
-	if (cmp->_flags & MPT_IdentifierPointer) {
+	if (cmp->_len > cmp->_max) {
 		cmpbase = cmp->_base;
 	}
 	return memcmp(idbase, cmpbase, id->_len);
@@ -301,7 +268,7 @@ extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *id, const MPT_ST
  */
 extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *id)
 {
-	return (id->_flags & MPT_IdentifierPointer) ? id->_base : id->_val;
+	return (id->_len > id->_max) ? id->_base : id->_val;
 }
 /*!
  * \ingroup mptCore
@@ -311,9 +278,12 @@ extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *id)
  * 
  * \param id  address of identifier
  * 
- * \return length of printable data (negative for non-printable)
+ * \return length of printable data (error code for non-printable type)
  */
 extern int mpt_identifier_len(const MPT_STRUCT(identifier) *id)
 {
-	return (id->_flags & MPT_IdentifierPrintable) ? (id->_len ? id->_len - 1 : 0) : -id->_len;
+	if (id->_type) {
+		return MPT_ERROR(BadType);
+	}
+	return id->_len ? id->_len - 1 : 0;
 }

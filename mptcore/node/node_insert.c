@@ -13,7 +13,7 @@
 /* insert on position in list, insertion strategy based on getnode() */
 static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node, MPT_STRUCT(node) *(*getnode)(const MPT_STRUCT(node) *, int , const MPT_STRUCT(node) *))
 {
-	MPT_STRUCT(node)  *tmp, *start;
+	MPT_STRUCT(node) *tmp, *start;
 	
 	/* get starting position */
 	start = getnode(first, (pos > 0) ? 1 : 0, node);
@@ -48,7 +48,7 @@ static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node
 static MPT_STRUCT(node) *node_locate(const MPT_STRUCT(node) *first, int pos, const MPT_STRUCT(node) *node)
 {
 	const char *ident = mpt_identifier_data(&node->ident);
-	return mpt_node_locate(first, pos, ident, -node->ident._len);
+	return mpt_node_locate(first, pos, ident, node->ident._len, node->ident._type);
 }
 /* insert node on absolute position in list */
 extern MPT_STRUCT(node) *mpt_gnode_add(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node)
@@ -64,11 +64,7 @@ extern MPT_STRUCT(node) *mpt_gnode_add(MPT_STRUCT(node) *first, int pos, MPT_STR
 /* insert node on relative position in list */
 extern MPT_STRUCT(node) *mpt_node_add(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node)
 {
-	if (!node->_meta) {
-		errno = EFAULT;
-		return 0;
-	}
-	if (!first) {
+	if (!first || !node) {
 		return node;
 	}
 	node_insert(first, pos, node, node_locate);

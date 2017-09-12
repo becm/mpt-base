@@ -41,7 +41,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 		base = p.base + p.off;
 		
 		while ((len = mpt_path_next(&p)) >= 0) {
-			if (!(n = mpt_node_locate(n, 1, base, len))) {
+			if (!(n = mpt_node_locate(n, 1, base, len, -1))) {
 				return 0;
 			}
 			if (!p.len && !path->len) {
@@ -57,7 +57,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 	base = p.base + p.off;
 	
 	while ((len = mpt_path_next(&p)) >= 0) {
-		if (!(n = mpt_node_locate(n, 1, base, len))) {
+		if (!(n = mpt_node_locate(n, 1, base, len, -1))) {
 			return 0;
 		}
 		if (!p.len) {

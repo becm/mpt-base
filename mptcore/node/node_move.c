@@ -28,13 +28,11 @@ size_t mpt_node_move(MPT_STRUCT(node) **from, MPT_STRUCT(node) *dst)
 	while (src) {
 		MPT_STRUCT(node) *curr;
 		const void *id;
-		int len;
 		
 		id  = mpt_identifier_data(&src->ident);
-		len = mpt_identifier_len(&src->ident);
 		
 		/* move complete node */
-		if (!(curr = mpt_node_locate(dst, 1, id, len))) {
+		if (!(curr = mpt_node_locate(dst, 1, id, src->ident._len, src->ident._type))) {
 			curr = src;
 			src = src->next;
 			mpt_node_unlink(curr);

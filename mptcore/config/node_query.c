@@ -47,7 +47,7 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 	/* get next path element */
 	while ((clen = mpt_path_next(path)) >= 0) {
 		/* path element found */
-		if ((match = mpt_node_locate(conf, 1, curr, clen))) {
+		if ((match = mpt_node_locate(conf, 1, curr, clen, -1))) {
 			parent = match; conf = match->children;
 			curr = base + path->off;
 			continue;
