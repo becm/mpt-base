@@ -50,7 +50,7 @@ metatype *metatype::create(value val)
         return 0;
     }
     // extended text format
-    else if (!(src = mpt_data_tostring((const void **) src, *val.fmt, &len))) {
+    else if (!(src = mpt_data_tostring((const void **) &src, *val.fmt, &len))) {
         // dispatch to typed metatype creator
         return create(*val.fmt, val.ptr);
     }

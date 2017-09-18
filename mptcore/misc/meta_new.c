@@ -41,7 +41,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value) val)
 		errno = EINVAL;
 		return 0;
 	}
-	else if (!(src = mpt_data_tostring((const void **) src, *val.fmt, &len))) {
+	else if (!(src = mpt_data_tostring((const void **) &src, *val.fmt, &len))) {
 		errno = EINVAL;
 		return 0;
 	}
