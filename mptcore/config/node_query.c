@@ -75,6 +75,10 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			match->children = sub;
 			sub->parent = match;
 		}
+		else if (!(match->_meta = mpt_meta_new(*val))) {
+			mpt_node_destroy(match);
+			return 0;
+		}
 		/* append/insert created path element */
 		if (conf) {
 			mpt_gnode_add(conf, 0, match);
