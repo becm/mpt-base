@@ -721,7 +721,7 @@ extern int mpt_bind(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode)
 
 
 /* identifier operations */
-size_t mpt_identifier_align(size_t);
+extern MPT_STRUCT(identifier) *mpt_identifier_new(size_t);
 extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_len(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, int);

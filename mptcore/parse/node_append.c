@@ -2,6 +2,7 @@
 #include <sys/uio.h>
 
 #include "node.h"
+#include "meta.h"
 #include "config.h"
 
 #include "parse.h"
@@ -23,6 +24,7 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 {
 	MPT_STRUCT(path) path = *dest;
 	MPT_STRUCT(node) *conf;
+	MPT_INTERFACE(metatype) *mt;
 	const char *data;
 	
 	/* no save operation */
@@ -49,10 +51,19 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 		data = 0;
 		path.first = 0;
 	}
-	/* create node with (optional) metadata segment */
-	if (!(conf = mpt_node_new(path.first+1, val))) {
+	/* create data for node */
+	mt = 0;
+	if (val && !(mt = mpt_meta_new(*val))) {
 		return 0;
 	}
+	/* create node with (optional) metadata segment */
+	if (!(conf = mpt_node_new(path.first + 1))) {
+		if (mt) {
+			mt->_vptr->ref.unref((void *) mt);
+		}
+		return 0;
+	}
+	conf->_meta = mt;
 	if (path.first && !mpt_identifier_set(&conf->ident, data, path.first)) {
 		mpt_node_destroy(conf);
 		return 0;

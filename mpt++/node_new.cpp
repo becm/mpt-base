@@ -4,8 +4,7 @@
 
 #include "node.h"
 
-extern "C" mpt::node *mpt_node_new(size_t nlen, const mpt::value *val)
+extern "C" mpt::node *mpt_node_new(size_t nlen)
 {
-    if (!val) return mpt::node::create(0, nlen);
-    return mpt::node::create(nlen, *val);
+    return mpt::node::create(nlen);
 }

@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "core.h"
 
@@ -22,23 +23,28 @@
  * 
  * \return needed size for identifier
  */
-size_t mpt_identifier_align(size_t len)
+MPT_STRUCT(identifier) *mpt_identifier_new(size_t len)
 {
-	size_t space = sizeof(MPT_STRUCT(identifier));
+	MPT_STRUCT(identifier) *id;
+	size_t size = 4 * sizeof(void *);
 	
 	/* bad length constraint */
 	if (len > UINT16_MAX) {
+		errno = EINVAL;
 		return 0;
 	}
-	/* length exceeds local size */
-	if (len > MPT_IDENT_MAX) {
-		return space;
+	/* non-default identifier size */
+	len += MPT_IDENT_HSZE;
+	if (len > size && len <= 0x100) {
+		while (size < len) {
+			size *= 2; /* (16,) 32, 64, 128, 256 */
+		}
 	}
-	/* select pow(2) slot */
-	while (len > (space - MPT_IDENT_HSZE)) {
-		space *= 2; /* 16, 32, 64, 128, 256 */
+	if (!(id = malloc(size))) {
+		return 0;
 	}
-	return space;
+	mpt_identifier_init(id, size);
+	return id;
 }
 
 /*!

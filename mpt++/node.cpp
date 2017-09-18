@@ -72,123 +72,28 @@ Slice<const char> identifier::nameData() const
 class NodePrivate : public node
 {
 public:
-    NodePrivate(size_t);
-
-    class Meta : public metatype
-    {
-    public:
-        Meta(size_t, node *);
-        void unref() __MPT_OVERRIDE;
-        int conv(int, void *) const __MPT_OVERRIDE;
-        metatype *clone() const __MPT_OVERRIDE;
-
-        bool set(const char *, int = -1);
-    protected:
-        node *_base;
-        inline ~Meta() { }
-    };
-
-    Meta *local() const;
+    NodePrivate();
 protected:
     friend struct node;
     int8_t _data[128 - sizeof(node)];
 };
 
-NodePrivate::NodePrivate(size_t len) : node()
+NodePrivate::NodePrivate() : node()
 {
-    size_t skip = mpt_identifier_align(len);
-    skip = MPT_align(skip);
-
-    if (skip > (sizeof(ident) + sizeof(_data))) {
-        skip = MPT_align(sizeof(ident));
-    }
-    else {
-        new (&ident) identifier(skip);
-    }
-    size_t left = sizeof(_data) + sizeof(ident) - skip;
-    if (left >= sizeof(Meta)) {
-        _meta = new (_data - sizeof(ident) + skip) Meta(left, this);
-    }
-}
-NodePrivate::Meta *NodePrivate::local() const
-{
-    // determine metatype data offset
-    size_t pos = ident.totalSize() - sizeof(ident);
-    pos = MPT_align(pos);
-    // not enough space for propert locat metatype
-    if (sizeof(_data) < (pos + sizeof(Meta) + sizeof(uint32_t))) {
-        return 0;
-    }
-    return reinterpret_cast<Meta *>(const_cast<int8_t *>(_data + pos));
+    mpt_identifier_init(&ident, sizeof(ident) + sizeof(_data));
 }
 
-NodePrivate::Meta::Meta(size_t len, node *base) : _base(base)
+node *node::create(size_t len)
 {
-    _mpt_geninfo_init(this + 1, len - sizeof(*this));
-}
-
-void NodePrivate::Meta::unref()
-{ }
-int NodePrivate::Meta::conv(int type, void *ptr) const
-{
-    void **dest = (void **) ptr;
-
-    if (!type) {
-        static const char types[] = { metatype::Type, node::Type, 's', 0 };
-        if (dest) *dest = (void *) types;
-        return 0;
+    static const size_t preSize = sizeof(node) - sizeof(identifier);
+    void *ptr;
+    len += preSize;
+    if (len > sizeof(node) && len <= sizeof(NodePrivate)) {
+        if (!(ptr = (malloc(sizeof(NodePrivate))))) return 0;
+        return new (ptr) NodePrivate();
     }
-    switch (type) {
-    case metatype::Type: ptr = static_cast<metatype *>(const_cast<Meta *>(this)); break;
-    case node::Type: ptr = _base; break;
-    default: return _mpt_geninfo_conv(this + 1, type, ptr);
-    }
-    if (dest) *dest = ptr;
-    return type;
-}
-metatype *NodePrivate::Meta::clone() const
-{
-    return _mpt_geninfo_clone(this + 1);
-}
-bool NodePrivate::Meta::set(const char *str, int len)
-{
-    return _mpt_geninfo_set(this + 1, str, len) >= 0;
-}
-
-node *node::create(size_t ilen, value val)
-{
-    size_t isize = mpt_identifier_align(ilen);
-    isize = MPT_align(isize);
-    size_t dlen = 0;
-
-    if (!val.fmt) {
-        if (val.ptr) dlen = strlen(static_cast<const char *>(val.ptr));
-    } else {
-        val.ptr = mpt_data_tostring(&val.ptr, *val.fmt, &dlen);
-    }
-    node *n;
-    size_t left = sizeof(NodePrivate::_data) + sizeof(n->ident) - sizeof(NodePrivate::Meta);
-    if (left >= (isize + dlen)) {
-        NodePrivate *np;
-        if (!(np = static_cast<NodePrivate *>(malloc(sizeof(NodePrivate))))) return 0;
-        new (np) NodePrivate(ilen);
-        if (dlen) {
-            np->local()->set(static_cast<const char *>(val.ptr), dlen);
-        }
-        return np;
-    }
-    metatype *mt;
-    if (!(mt = metatype::create(val))) {
-        return 0;
-    }
-    if (!(n = static_cast<node *>(malloc(sizeof(*n) - sizeof(n->ident) + isize)))) {
-        mt->unref();
-        return 0;
-    }
-    new (n) node(mt);
-    mpt_identifier_init(&n->ident, isize);
-
-    return n;
+    if (!(ptr = malloc(sizeof(node)))) return 0;
+    return new (ptr) node();
 }
 
 node *node::create(const char *ident, int len)
@@ -199,14 +104,10 @@ node *node::create(const char *ident, int len)
     } else {
         need = len + 1;
     }
-    size_t max = identifier::minimalLength();
     node *n;
     // identifier in extended node data only
-    if (need > max
-        && (need - max) < sizeof(NodePrivate::_data)) {
-        n = new NodePrivate(need);
-    } else {
-        n = new node();
+    if (!(n = create(need))) {
+        return 0;
     }
     n->ident.setName(ident, len);
     return n;

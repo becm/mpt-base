@@ -26,7 +26,7 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	node *n = mpt_node_new(0, 0);
+	node *n = mpt_node_new(0);
 	delete n;
 	
 	Stream *out = new Stream;

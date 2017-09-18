@@ -732,7 +732,7 @@ public:
 		if (!(it = this->insert(pos))) {
 			return 0;
 		}
-		if (it->setName(id, len)) {
+		if (!id || it->setName(id, len)) {
 			it->setPointer(t);
 			return it;
 		}

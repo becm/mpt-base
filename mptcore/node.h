@@ -31,7 +31,7 @@ MPT_STRUCT(node)
 	const char *data(size_t * = 0) const;
 	
 	static node *create(const char * = 0, int = -1);
-	static node *create(size_t , value);
+	static node *create(size_t);
 	
 	enum { Type = TypeNode };
 #else
@@ -65,7 +65,7 @@ __MPT_EXTDECL_BEGIN
 /*** node/list/tree structure operations ***/
 
 /* create new MPT storage node */
-extern MPT_STRUCT(node) *mpt_node_new(size_t , const MPT_STRUCT(value) *__MPT_DEFPAR(0));
+extern MPT_STRUCT(node) *mpt_node_new(size_t);
 
 /* remove edges from and to node */
 extern MPT_STRUCT(node) *mpt_node_unlink(MPT_STRUCT(node) *);

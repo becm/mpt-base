@@ -56,7 +56,7 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 			return 0;
 		}
 		/* create node for current path element */
-		if (!(match = mpt_node_new(clen, path->len ? 0 : val))) {
+		if (!(match = mpt_node_new(clen))) {
 			return 0;
 		}
 		if (clen && !mpt_identifier_set(&match->ident, curr, clen)) {

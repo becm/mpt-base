@@ -11,7 +11,7 @@ test('identifier sizes',
   executable('ident', 'ident.c',
     c_args : test_defines,
     dependencies: core),
-  args: [ '11', '12', '13', '1020', '1021', '4080' ])
+  args: [ '2', '28', '29', '60', '61', '124', '125', '252', '253', '4080' ])
 
 test('config environment import',
   executable('environ', 'environ.c',
