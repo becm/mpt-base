@@ -37,9 +37,6 @@ void Line::unref()
 }
 int Line::property(struct property *prop) const
 {
-    if (!prop) {
-        return object::Type;
-    }
     return mpt_line_get(this, prop);
 }
 int Line::setProperty(const char *name, const metatype *src)
@@ -89,9 +86,6 @@ void Text::unref()
 }
 int Text::property(struct property *prop) const
 {
-    if (!prop) {
-        return object::Type;
-    }
     return mpt_text_get(this, prop);
 }
 int Text::setProperty(const char *prop, const metatype *src)
