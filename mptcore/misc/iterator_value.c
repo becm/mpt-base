@@ -250,7 +250,7 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	const char *fmt;
 	char *data;
 	size_t vlen, flen, vpos;
-	int type, curr = 0;
+	int type, curr;
 	
 	if (!(fmt = val.fmt) || !val.ptr) {
 		errno = EINVAL;
@@ -266,6 +266,7 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 		it->save = val;
 		return &it->ctl;
 	}
+	vlen = 0;
 	flen = 0;
 	vpos = 0;
 	curr = 0;

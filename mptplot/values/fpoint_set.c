@@ -19,7 +19,7 @@
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) *src, const MPT_STRUCT(range) *r)
 {
 	MPT_INTERFACE(iterator) *it;
-	MPT_STRUCT(fpoint) tmp;
+	MPT_STRUCT(fpoint) tmp = { 0.0, 0.0 };
 	int ret;
 	
 	if (!src) {

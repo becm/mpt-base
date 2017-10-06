@@ -162,8 +162,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		int i = 0;
 		
 		if (!src || !(len = src->_vptr->conv(src, 'y', &gr->align))) {
-			gr->align = def_graph.grid;
-			if (!len) gr->align = def_graph.grid;
+			gr->align = def_graph.align;
 			return 0;
 		}
 		if (len) {

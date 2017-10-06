@@ -193,12 +193,10 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 	MPT_INTERFACE(iterator) *iter;
 	struct _iter_ldata *data;
 	MPT_STRUCT(range) r = { 0.0, 1.0 };
-	double step;
+	double step = 0.1;
 	int iv = 10;
 	
-	if (!val) {
-		step = 0.1;
-	} else {
+	if (val) {
 		const char *str;
 		int ret;
 		if ((str = val->fmt)) {

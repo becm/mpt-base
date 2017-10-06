@@ -32,11 +32,12 @@ extern MPT_INTERFACE(iterator) *mpt_message_iterator(const MPT_STRUCT(message) *
 	if ((len = mpt_array_message(&a, ptr, asep)) < 0) {
 		return 0;
 	}
-	if ((mt = mpt_meta_buffer(&a))
-	 && ((mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it))< 0
-	  || !it)) {
+	if (!(mt = mpt_meta_buffer(&a))) {
+		it = 0;
+	}
+	else if ((mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it)) < 0
+	      || !it) {
 		mt->_vptr->ref.unref((void *) mt);
-		mt = 0;
 	}
 	mpt_array_clone(&a, 0);
 	

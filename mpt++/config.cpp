@@ -11,7 +11,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // non-trivial path operations
-struct array::Data *path::array() const
+array::Data *path::array() const
 {
 	if (!base || !(flags & HasArray)) {
 		return 0;
@@ -48,14 +48,14 @@ path &path::operator =(const path &from)
 
 Slice<const char> path::data() const
 {
-    struct ::mpt::array::Data *d = array();
+    struct array::Data *d = array();
     size_t skip, max;
     if (!d || (skip = off + len) > (max = d->length())) return Slice<const char>(0, 0);
     return Slice<const char>(static_cast<char *>(d->data()) + skip, max - skip);
 }
 bool path::clearData()
 {
-    struct ::mpt::array::Data *d = array();
+    struct array::Data *d = array();
     return d ? d->setLength(off + len) : true;
 }
 

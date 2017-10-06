@@ -71,11 +71,6 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	mpt::Object ao(new mpt::Axis);
-	
-	std::cout << "ao: " << ao.type() << std::endl;
-	std::cout << "axis type: " << typeid(*ao.pointer()).name() << std::endl;
-	
 	std::cout << "int: " << has_get<Int>() << std::endl;
 	std::cout << "dbl: " << has_get<Double>() << std::endl;
 	std::cout << toString(hallo) << std::endl;
@@ -93,9 +88,10 @@ extern int main(int , char * const [])
 		std::cout << "next type: " << typeid(*mt).name() << std::endl;
 	}
 	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
-	mpt::Object lo(li);
+	mpt::Object lo(li), ao(new mpt::Axis);
 	mpt::Object op, *opt;
 	
+	std::cout << "ao: " << ao.type() << std::endl;
 	std::cout << "lo: " << lo.type() << std::endl;
 	
 	for (auto &i : *static_cast<const mpt::object *>(li)) {

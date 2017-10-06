@@ -216,10 +216,10 @@ int64_t Stream::pos()
 }
 bool Stream::seek(int64_t pos)
 {
-    if (!_srm) {
-        return BadArgument;
+    if (!_srm || mpt_stream_seek(_srm, pos, SEEK_SET) < 0) {
+        return false;
     }
-    return mpt_stream_seek(_srm, pos, SEEK_SET) >= 0 ? true : false;
+    return true;
 }
 // input interface
 int Stream::next(int what)
