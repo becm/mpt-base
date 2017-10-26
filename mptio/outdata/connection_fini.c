@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 
+#include "meta.h"
 #include "stream.h"
 
 #include "output.h"
@@ -19,7 +20,7 @@
 extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 {
 	MPT_STRUCT(buffer) *buf;
-	MPT_INTERFACE(reply_context) *rc;
+	MPT_INTERFACE(metatype) *rc;
 	
 	if (MPT_socket_active(&con->out.sock)) {
 		mpt_outdata_close(&con->out);

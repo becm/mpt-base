@@ -30,5 +30,5 @@ extern int mpt_reply_set(MPT_INTERFACE(reply_data) *rd, size_t len, const void *
 	}
 	rd->len = len;
 	
-	return rd->ptr ? 1 : 0;
+	return rd->_max - len;
 }

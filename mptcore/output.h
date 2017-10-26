@@ -164,9 +164,9 @@ protected:
 	
 	/* reply context */
 #ifdef __cplusplus
-	Reference<reply_context> _rctx;
+	Reference<metatype> _rctx;
 #else
-	MPT_INTERFACE(reply_context) *_rctx;
+	MPT_INTERFACE(metatype) *_rctx;
 # define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
                                0, MPT_ARRAY_INIT, \
                                0 }

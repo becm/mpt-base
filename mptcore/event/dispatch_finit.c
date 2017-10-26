@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 
+#include "meta.h"
 #include "message.h"
 
 #include "event.h"
@@ -92,7 +93,7 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *disp)
  */
 extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 {
-	MPT_STRUCT(reply_context) *ctx;
+	MPT_STRUCT(metatype) *ctx;
 	
 	/* dereference registered commands */
 	disp->_def  = 0;

@@ -57,7 +57,6 @@ extern int mpt_msgvalfmt_type(uint8_t fmt)
 		switch (size) {
 		  case sizeof(float): return 'f';
 		  case sizeof(double): return 'd';
-		  case sizeof(MPT_STRUCT(float80)): return MPT_ENUM(TypeFloat80);
 		  case sizeof(long double): return 'e';
 		  default: return MPT_ERROR(BadType);
 		}

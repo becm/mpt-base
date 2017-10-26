@@ -71,7 +71,7 @@ extern int mpt_position(const char *fmt, int match)
 		  /* float types (accept better precision) */
 		  case 'f': if (type == 'f') return pos;
 		  case 'd': if (type == 'd' || type == 'f') return pos;
-		  case 'e': if (type == 'e' || type == MPT_ENUM(TypeFloat80) || type == 'd' || type == 'f') return pos;
+		  case 'e': if (type == 'e' || type == 'd' || type == 'f') return pos;
 		  default:;
 		}
 		++pos;

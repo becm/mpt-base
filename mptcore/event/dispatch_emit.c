@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 
+#include "meta.h"
 #include "message.h"
 
 #include "event.h"
@@ -56,7 +57,10 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	}
 	/* fallback on dispatcher output */
 	if (!ev->reply) {
-		ev->reply = disp->_ctx;
+		MPT_INTERFACE(metatype) *mt;
+		if ((mt = disp->_ctx)) {
+			mt->_vptr->conv(mt, MPT_ENUM(TypeReply), &ev->reply);
+		}
 	}
 	/* execute resolved command */
 	if (cmd) {

@@ -11,60 +11,58 @@
 #include <errno.h>
 
 #include "event.h"
+#include "meta.h"
 #include "message.h"
 #include "convert.h"
 
 #include "notify.h"
 #include "stream.h"
 
-struct streamInput {
+MPT_STRUCT(streamInput) {
 	MPT_INTERFACE(input) _in;
 	MPT_STRUCT(stream) data;
-	struct {
-		MPT_INTERFACE(reply_context) _ctx;
-		MPT_STRUCT(reply_data) data;
-	} ctx;
+	MPT_INTERFACE(reply_context) _rc;
+	MPT_STRUCT(reply_data) rd;
 };
 
-static MPT_INTERFACE(reply_context) *streamDefer(MPT_INTERFACE(reply_context) *ctx)
-{
-	(void) ctx; return 0;
-}
 static int streamReply(MPT_INTERFACE(reply_context) *rc, const MPT_STRUCT(message) *msg)
 {
+	MPT_STRUCT(streamInput) *srm = MPT_baseaddr(streamInput, rc, _rc);
 	static const char _func[] = "mpt::stream::reply";
-	MPT_STRUCT(reply_data) *rd = (void *) (rc + 1);
-	struct streamInput *srm;
-	uint64_t id = 0;
 	int ret;
 	
-	if (!rd->len) {
+	if (!srm->rd.len) {
 		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
 		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
 		return MPT_ERROR(BadArgument);
 	}
-	mpt_message_buf2id(rd->val, rd->len, &id);
-	if (!(srm = rd->ptr)) {
-		mpt_log(0, _func, MPT_LOG(Error), "%s (%08" PRIx64 ": %s",
-		        MPT_tr("unable to reply"), id, MPT_tr("output destroyed"));
-		return MPT_ERROR(BadArgument);
-	}
-	ret = mpt_stream_reply(&srm->data, rd->len, rd->val, msg);
+	ret = mpt_stream_reply(&srm->data, srm->rd.len, srm->rd.val, msg);
 	
 	if (ret >= 0) {
-		rd->len = 0;
+		srm->rd.len = 0;
+	} else {
+		uint64_t id = 0;
+		mpt_message_buf2id(srm->rd.val, srm->rd.len, &id);
+		mpt_log(0, _func, MPT_LOG(Warning), "%s: %s",
+		        MPT_tr("bad reply operation"), MPT_tr("unable to send"));
+		return MPT_ERROR(BadArgument);
 	}
 	return ret;
 }
+static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_context) *ctx)
+{
+	(void) ctx;
+	return 0;
+}
 static const MPT_INTERFACE_VPTR(reply_context) _mpt_stream_reply_context = {
-	{ 0 },
 	streamReply,
 	streamDefer
 };
+
 /* reference interface */
 static void streamUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct streamInput *srm = (void *) ref;
+	MPT_STRUCT(streamInput) *srm = (void *) ref;
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
 }
@@ -76,20 +74,28 @@ static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
 /* metatype interface */
 static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	struct streamInput *srm = (void *) mt;
+	MPT_STRUCT(streamInput) *srm = (void *) mt;
+	int me = MPT_ENUM(TypeInput);
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeInput), MPT_ENUM(TypeSocket), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
-		return MPT_ENUM(TypeInput);
+		if (ptr) {
+			static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
+			*((const char **) ptr) = fmt;
+		}
+		return me;
 	}
-	if (type == MPT_ENUM(TypeInput)) {
-		if (ptr) *((const void **) ptr) = &srm->_in;
+	if (type == MPT_ENUM(TypeMeta)
+	    || type == me) {
+		if (ptr) {
+			*((void **) ptr) = &srm->_in;
+		}
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) *((int *) ptr) = _mpt_stream_fread(&srm->data._info);
-		return MPT_ENUM(TypeInput);
+		if (ptr) {
+			*((int *) ptr) = _mpt_stream_fread(&srm->data._info);
+		}
+		return me;
 	}
 	return MPT_ERROR(BadType);
 }
@@ -101,19 +107,19 @@ static MPT_INTERFACE(metatype) *streamClone(const MPT_INTERFACE(metatype) *mt)
 /* input interface */
 static int streamNext(MPT_INTERFACE(input) *in, int what)
 {
-	struct streamInput *srm = (void *) in;
+	MPT_STRUCT(streamInput) *srm = (void *) in;
 	return mpt_stream_poll(&srm->data, what, -1);
 }
 struct streamWrap
 {
-	struct streamInput *in;
+	MPT_STRUCT(streamInput) *in;
 	MPT_TYPE(EventHandler) cmd;
 	void *arg;
 };
 static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 {
 	struct streamWrap *sw = ptr;
-	struct streamInput *srm;
+	MPT_STRUCT(streamInput) *srm;
 	MPT_STRUCT(event) ev = MPT_EVENT_INIT;
 	int idlen;
 	
@@ -121,35 +127,28 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 	
 	ev.msg = msg;
 	
-	if (!(idlen = srm->ctx.data._max)) {
+	if (!(idlen = srm->rd._max)) {
 		return sw->cmd(sw->arg, &ev);
 	}
 	else {
 		static const char _func[] = "mpt::stream::dispatch";
 		MPT_STRUCT(reply_context) *rc = 0;
 		MPT_STRUCT(message) tmp;
-		uint8_t id[UINT8_MAX];
 		int i, ret;
 		
-		/* check id length limit */
-		if (idlen > (int) sizeof(id)) {
-			mpt_log(0, _func, MPT_LOG(Error), "%s: %s: %d",
-			        MPT_tr("dispatch failed"), MPT_tr("message size too big"), idlen);
-			return MPT_ERROR(BadArgument);
-		}
 		/* consume message ID */
 		ev.msg = &tmp;
 		tmp = *msg;
-		if ((mpt_message_read(&tmp, idlen, id)) < (size_t) idlen) {
+		if ((mpt_message_read(&tmp, idlen, srm->rd.val)) < (size_t) idlen) {
 			mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
 			        MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 			return MPT_ERROR(BadValue);
 		}
 		/* reply indicated */
-		if (id[0] & 0x80) {
+		if (srm->rd.val[0] & 0x80) {
 			uint64_t rid;
-			id[0] &= 0x7f;
-			if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0) {
+			srm->rd.val[0] &= 0x7f;
+			if ((ret = mpt_message_buf2id(srm->rd.val, idlen, &rid)) < 0) {
 				mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
 				        MPT_tr("dispatch failed"), MPT_tr("message id incomplete"));
 				return MPT_ERROR(BadValue);
@@ -168,16 +167,17 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 		}
 		for (i = 0; i < idlen; ++i) {
 			/* skip zero elements */
-			if (!id[i]) {
+			if (!srm->rd.val[i]) {
 				continue;
 			}
-			rc = &srm->ctx._ctx;
+			srm->rd.len = idlen;
+			ev.reply = rc = &srm->_rc;
 			break;
 		}
 		ret = sw->cmd(sw->arg, &ev);
 		
 		/* generic reply to failed command */
-		if (rc && srm->ctx.data.len) {
+		if (rc && srm->rd.len) {
 			MPT_STRUCT(msgtype) hdr;
 			hdr.cmd = MPT_ENUM(MessageAnswer);
 			hdr.arg = ret < 0 ? ret : 0;
@@ -185,14 +185,14 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 			tmp.used = sizeof(hdr);
 			tmp.cont = 0;
 			tmp.clen = 0;
-			streamReply(rc, &tmp);
+			mpt_stream_reply(&srm->data, srm->rd.len, srm->rd.val, msg);
 		}
 		return ret;
 	}
 }
 static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
-	struct streamInput *srm = (void *) in;
+	MPT_STRUCT(streamInput) *srm = (void *) in;
 	struct streamWrap sw;
 	
 	if (srm->data._mlen < 0
@@ -212,11 +212,6 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	return mpt_stream_dispatch(&srm->data, streamMessage, &sw);
 }
 
-static const MPT_INTERFACE_VPTR(input) streamCtl = {
-        { { streamUnref, streamRef }, streamConv, streamClone },
-	streamNext,
-	streamDispatch
-};
 
 /*!
  * \ingroup mptStream
@@ -231,8 +226,16 @@ static const MPT_INTERFACE_VPTR(input) streamCtl = {
  */
 extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, int mode, int code, size_t idlen)
 {
+	static const MPT_INTERFACE_VPTR(input) streamInput = {
+		{ { streamUnref, streamRef },
+		  streamConv,
+		  streamClone
+		},
+		streamNext,
+		streamDispatch
+	};
 	MPT_STRUCT(stream) tmp = MPT_STREAM_INIT;
-	struct streamInput *srm;
+	MPT_STRUCT(streamInput) *srm;
 	
 	/* id size limit exceeded */
 	if (idlen > UINT8_MAX) {
@@ -267,13 +270,11 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		mpt_stream_close(&tmp);
 		return 0;
 	}
-	srm->_in._vptr = &streamCtl;
+	srm->_in._vptr = &streamInput;
+	srm->_rc._vptr = &_mpt_stream_reply_context;
 	srm->data = tmp;
-	
-	srm->ctx._ctx._vptr = &_mpt_stream_reply_context;
-	srm->ctx.data.ptr = srm;
-	srm->ctx.data._max = idlen;
-	srm->ctx.data.len = 0;
+	srm->rd._max = idlen;
+	srm->rd.len = 0;
 	
 	return &srm->_in;
 }

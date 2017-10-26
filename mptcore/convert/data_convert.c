@@ -166,10 +166,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((int8_t *) from); break;
 		  case 'd': *((double *) dest) = *((int8_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((int8_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((int8_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -192,10 +188,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((uint8_t *) from); break;
 		  case 'd': *((double *) dest) = *((uint8_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((uint8_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((uint8_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -219,10 +211,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((int16_t *) from); break;
 		  case 'd': *((double *) dest) = *((int16_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((int16_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((int16_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -246,10 +234,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((uint16_t *) from); break;
 		  case 'd': *((double *) dest) = *((uint16_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((uint16_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((uint16_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -274,10 +258,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((int32_t *) from); break;
 		  case 'd': *((double *) dest) = *((int32_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((int32_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((int32_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -303,10 +283,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((uint32_t *) from); break;
 		  case 'd': *((double *) dest) = *((uint32_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((uint32_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((uint32_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -335,10 +311,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'D':
 		  case 'd': *((double *) dest) = *((int64_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((int64_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((int64_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -367,10 +339,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'D':
 		  case 'd': *((double *) dest) = *((uint64_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((uint64_t *) from);
-			  mpt_float80_encode(1, &val, dest); break;
-		  }
 		  case 'e': *((long double *) dest) = *((uint64_t *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -381,11 +349,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'f': *((float *) dest) = *((float *) from); break;
 		  case 'd': *((double *) dest) = *((float *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			  long double val = *((float *) from);
-			  mpt_float80_encode(1, &val, dest);
-			  break;
-		  }
 		  case 'e': *((long double *) dest) = *((float *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
@@ -397,34 +360,12 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		            *((float *) dest) = *((double *) from); break;
 		  case 'd': *((double *) dest) = *((double *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-		  case MPT_ENUM(TypeFloat80): {
-			    long double val = *((double *) from);
-			    mpt_float80_encode(1, &val, dest);
-			    break;
-		  }
 		  case 'e': *((long double *) dest) = *((double *) from); break;
 #endif
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
 		}
 		break;
 #ifdef _MPT_FLOAT_EXTENDED_H
-	  case MPT_ENUM(TypeFloat80):
-		if (dtype == MPT_ENUM(TypeFloat80)) {
-			memcpy(dest, from, sizeof(MPT_STRUCT(float80)));
-		} else {
-			long double val;
-			mpt_float80_decode(1, (const void *) from, &val);
-			
-			switch (dtype) {
-			  case 'f': if (val < FLT_MIN || val > FLT_MAX) return MPT_ERROR(BadValue);
-			            *((float *) dest) = val; break;
-			  case 'd': if (val < DBL_MIN || val > DBL_MIN) return MPT_ERROR(BadValue);
-			            *((double *) dest) = val; break;
-			  case 'e': *((long double *) dest) = val; break;
-			  default: return MPT_ERROR(BadType); /* invalid conversion */
-		}
-		break;
-	  }
 	  case 'e': {
 		long double val = *((long double *) from);
 		switch (dtype) {
@@ -432,8 +373,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		            *((float *) dest) = val; break;
 		  case 'd': if (val < DBL_MIN || val > DBL_MIN) return MPT_ERROR(BadValue);
 		            *((double *) dest) = val; break;
-		  case MPT_ENUM(TypeFloat80):
-		            mpt_float80_encode(1, &val, dest); break;
 		  case 'e': *((long double *) dest) = val; break;
 		  default: return MPT_ERROR(BadType); /* invalid conversion */
 		}

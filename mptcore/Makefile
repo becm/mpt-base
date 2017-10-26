@@ -27,7 +27,7 @@ include ../mpt.lib.mk
 #
 # additional dependencies
 ${OBJS} : ${HEADER}
-misc/object_iset.o misc/object_nset.o : misc/meta_wrap.h
+misc/object_set_value.o misc/object_set_iterator.o : misc/meta_wrap.h
 libinfo.o : ../libinfo.h ../version.h
 #
 # remove library info object

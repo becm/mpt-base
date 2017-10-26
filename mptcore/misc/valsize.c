@@ -25,7 +25,6 @@ static const struct {
 	{ MPT_ENUM(TypeValue),    sizeof(MPT_STRUCT(value)) },
 	{ MPT_ENUM(TypeProperty), sizeof(MPT_STRUCT(property)) },
 	{ MPT_ENUM(TypeNode),     0 },
-	{ MPT_ENUM(TypeArray),    0 },
 	{ MPT_ENUM(TypeCommand),  0 },
 	
 	/* skip reference and object data types */
@@ -58,7 +57,6 @@ static const struct {
 	
 	{ 'f', sizeof(float) },
 	{ 'd', sizeof(double) },
-	{ MPT_ENUM(TypeFloat80), sizeof(MPT_STRUCT(float80)) },
 #ifdef _MPT_FLOAT_EXTENDED_H
 	{ 'e', sizeof(long double) },
 #endif
@@ -68,7 +66,7 @@ static const struct {
 	{ 'o', 0 },  /* D-Bus object path */
 };
 
-static size_t types[MPT_ENUM(_TypeBaseDynamic) - MPT_ENUM(TypeScalBase)];
+static size_t types[MPT_ENUM(_TypeBaseDynamic) / 4];
 static int types_count = 0;
 
 /*!

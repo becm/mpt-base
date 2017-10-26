@@ -18,27 +18,46 @@ MPT_INTERFACE(iterator);
 MPT_STRUCT(reply_data)
 {
 #ifdef __cplusplus
-	inline reply_data(void *addr = 0) : ptr(addr), _max(4), len(0)
-	{ }
-	inline bool active() const
-	{ return len; }
-	bool setData(size_t , const void *);
+	inline static int typeIdentifier()
+	{ return TypeReplyData; }
 	
-	class context;
+	reply_data(size_t len);
+	
+	inline bool active() const
+	{ return len != 0; }
+	bool setData(size_t , const void *);
 protected:
 #endif
-	void     *ptr;
 	uint16_t _max;
 	uint16_t  len;
 	uint8_t   val[4];
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-class reply_context : public reference
+class reply_context_detached
 {
 public:
 	virtual int reply(const struct message *) = 0;
-	virtual reply_context *defer();
+protected:
+	inline ~reply_context_detached()
+	{ }
+};
+#else
+MPT_INTERFACE(reply_context_detached);
+MPT_INTERFACE_VPTR(reply_context_detached) {
+	int (*reply)(MPT_INTERFACE(reply_context_detached) *, const MPT_STRUCT(message) *);
+}; MPT_INTERFACE(reply_context_detached) {
+	const MPT_INTERFACE_VPTR(reply_context_detached) *_vptr;
+};
+#endif
+#ifdef __cplusplus
+class reply_context
+{
+public:
+	enum { Type = TypeReply };
+	
+	virtual int reply(const struct message *) = 0;
+	virtual reply_context_detached *defer();
 protected:
 	inline ~reply_context()
 	{ }
@@ -46,12 +65,9 @@ protected:
 #else
 MPT_INTERFACE(reply_context);
 MPT_INTERFACE_VPTR(reply_context) {
-	MPT_INTERFACE_VPTR(reference) ref;
 	int (*reply)(MPT_INTERFACE(reply_context) *, const MPT_STRUCT(message) *);
-	MPT_INTERFACE(reply_context) *(*defer)(MPT_INTERFACE(reply_context) *);
-};
-MPT_INTERFACE(reply_context)
-{
+	MPT_INTERFACE(reply_context_detached) *(*defer)(MPT_INTERFACE(reply_context) *);
+}; MPT_INTERFACE(reply_context) {
 	const MPT_INTERFACE_VPTR(reply_context) *_vptr;
 };
 #endif
@@ -164,7 +180,7 @@ MPT_STRUCT(dispatch)
 		void *arg;
 	} _err;         /* handler for unknown ids */
 	
-	MPT_INTERFACE(reply_context) *_ctx;  /* fallback reply context */
+	MPT_INTERFACE(metatype) *_ctx;  /* fallback reply context */
 };
 
 
@@ -201,7 +217,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(output) *);
 
 /* create deferrable reply context */
-extern MPT_INTERFACE(reply_context) *mpt_reply_deferrable(size_t, int (*)(const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *));
+extern MPT_INTERFACE(metatype) *mpt_reply_deferrable(size_t, int (*)(void *, const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *), void *);
 /* set reply data */
 extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 
@@ -213,20 +229,11 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 template<> inline __MPT_CONST_EXPR int typeIdentifier<command>()  { return command::Type; }
 
-class reply_data::context : public reply_context, public reply_data
-{
-protected:
-	inline ~context()
-	{ }
-};
 class MessageSource : public reply_context
 {
 public:
 	virtual ~MessageSource()
 	{ }
-	
-	void unref() __MPT_OVERRIDE;
-	
 	virtual const struct message *currentMessage(bool align = false) = 0;
 	virtual size_t pendingMessages(int wait = 0) = 0;
 };

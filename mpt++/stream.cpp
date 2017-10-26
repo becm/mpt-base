@@ -282,28 +282,33 @@ public:
             error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
             return BadValue;
         }
-        reply_data::context *rc = 0;
+        metatype *ctx = 0;
+        reply_data *rd = 0;
+        reply_context *rc = 0;
         for (uint8_t i = 0; i < idlen; ++i) {
             if (!id[i]) {
                 continue;
             }
-            if (!(rc = srm._ctx.pointer())) {
+            if (!(ctx = srm._ctx.pointer())) {
                 warning(_func, "%s", MPT_tr("no reply context"));
                 break;
             }
-            if (!rc->setData(idlen, id)) {
+            if (!(rd = ctx->cast<reply_data>())) {
+                break;
+            }
+            if (!rd->setData(idlen, id)) {
                 error(_func, "%s", MPT_tr("reply context unusable"));
                 return BadOperation;
             }
+            rc = ctx->cast<reply_context>();
             break;
         }
         ev.reply = rc;
         ret = cmd(arg, &ev);
-        if (rc && rc->active()) {
+        if (rc && rd && rd->active()) {
             struct msgtype mt(MessageAnswer, ret);
             struct message msg(&mt, sizeof(mt));
-            id[0] |= 0x80;
-            mpt_stream_reply(srm._srm, idlen, id, &msg);
+            rc->reply(&msg);
         }
         return ret;
     }

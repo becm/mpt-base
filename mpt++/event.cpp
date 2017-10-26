@@ -17,7 +17,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // event reply andling
-reply_context *reply_context::defer()
+reply_context_detached *reply_context::defer()
 {
     return 0;
 }
@@ -59,12 +59,6 @@ void dispatch::setError(int (*cmd)(void *, event *), void *arg)
     }
     _err.cmd = cmd;
     _err.arg = arg;
-}
-
-// message source interface
-void MessageSource::unref()
-{
-    delete this;
 }
 
 __MPT_NAMESPACE_END

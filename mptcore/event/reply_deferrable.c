@@ -5,117 +5,151 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "meta.h"
 #include "message.h"
 
 #include "event.h"
 
 MPT_STRUCT(reply_context_defer)
 {
-	int (*send)(const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *);
+	struct {
+		int (*send)(void *, const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *);
+		void *ptr;
+	} reply;
+	MPT_STRUCT(refcount)     ref;
 	
-	MPT_STRUCT(refcount) ref;
-	
+	MPT_INTERFACE(metatype) _mt;
 	MPT_INTERFACE(reply_context) _ctx;
+	
+	MPT_STRUCT(reply_data) data;
+};
+struct replyDataDelayed
+{
+	MPT_INTERFACE(reply_context_detached) _rc;
+	MPT_STRUCT(reply_context_defer) *base;
 	MPT_STRUCT(reply_data) data;
 };
 
-static int deferContextSet(const MPT_STRUCT(reply_context_defer) *ctx, MPT_STRUCT(reply_data) *rd, const MPT_STRUCT(message) *msg)
+static int contextSend(const MPT_STRUCT(reply_context_defer) *ctx, MPT_STRUCT(reply_data) *rd, const MPT_STRUCT(message) *msg)
 {
 	int ret;
 	uint64_t id = 0;
-	void *save;
 	
 	if (!rd->len) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %s",
 		        MPT_tr("bad reply operation"), MPT_tr("reply already sent"));
 		return MPT_ERROR(BadArgument);
 	}
-	if (!ctx->send) {
+	if (!ctx->reply.send) {
 		rd->len = 0;
 		return 0;
 	}
 	mpt_message_buf2id(rd->val, rd->len, &id);
 	
-	if (!ctx->data.ptr) {
+	if (!ctx->reply.ptr) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("no reply target available"));
 		return 0;
 	}
 	rd->val[0] |= 0x80;
-	save = rd->ptr;
-	rd->ptr = ctx->data.ptr;
-	ret = ctx->send(rd, msg);
-	rd->ptr = save;
-	rd->val[0] &= 0x7f;
+	ret = ctx->reply.send(ctx->reply.ptr, rd, msg);
 	if (ret >= 0) {
 		rd->len = 0;
 	} else {
+		rd->val[0] &= 0x7f;
 		mpt_log(0, __func__, MPT_LOG(Error), "%s %s",
 		        MPT_tr("unable to reply"), id, MPT_tr("reply send failed"));
 	}
 	return ret;
 }
-
-static void contextUnref(MPT_INTERFACE(reference) *ref)
+static void contextDetach(MPT_STRUCT(reply_context_defer) *ctx)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _ctx);
-	
 	if (mpt_refcount_lower(&ctx->ref)) {
 		return;
 	}
-	if (ctx->send && ctx->data.len) {
-		ctx->send(&ctx->data, 0);
+	free(ctx);
+}
+/* reference interface */
+static void contextUnref(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _mt);
+	
+	if (mpt_refcount_lower(&ctx->ref)) {
+		ctx->reply.send = 0;
+		return;
+	}
+	if (ctx->reply.send && ctx->data.len) {
+		contextSend(ctx, &ctx->data, 0);
 	}
 	free(ctx);
 }
+/* reference interface */
 static uintptr_t contextRef(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _ctx);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _mt);
 	return mpt_refcount_raise(&ctx->ref);
 }
-
+/* metatype interface */
+static int contextConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, mt, _mt);
+	
+	if (!type) {
+		if (ptr) {
+			static const char fmt[] = { MPT_ENUM(TypeReply), MPT_ENUM(TypeReplyData) };
+			*((const char **) ptr) = fmt;
+		}
+		return MPT_ENUM(TypeReply);
+	}
+	if (type == MPT_ENUM(TypeReply)) {
+		if (ptr) {
+			*((void **) ptr) = &ctx->_ctx;
+		}
+		return MPT_ENUM(TypeReplyData);
+	}
+	if (type == MPT_ENUM(TypeReplyData)) {
+		if (ptr) {
+			*((void **) ptr) = &ctx->_ctx;
+		}
+		return MPT_ENUM(TypeReply);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *contextClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* deferred context interface */
+static int deferReply(MPT_STRUCT(reply_context_detached) *def, const MPT_STRUCT(message) *msg)
+{
+	struct replyDataDelayed *rd = (void *) def;
+	int ret;
+	if ((ret = contextSend(rd->base, &rd->data, msg)) < 0) {
+		if (msg) {
+			return ret;
+		} else {
+			ret = 0;
+		}
+	}
+	contextDetach(rd->base);
+	free(def);
+	return ret;
+}
+/* reply context interface */
 static int contextSet(MPT_STRUCT(reply_context) *ptr, const MPT_STRUCT(message) *msg)
 {
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ptr, _ctx);
-	return deferContextSet(ctx, &ctx->data, msg);
+	return contextSend(ctx, &ctx->data, msg);
 }
-
-
-static void deferUnref(MPT_INTERFACE(reference) *ref)
+static MPT_INTERFACE(reply_context_detached) *contextDefer(MPT_STRUCT(reply_context) *ptr)
 {
-	MPT_STRUCT(reply_data) *rd = (void *) (ref + 1);
-	MPT_STRUCT(reply_context_defer) *ctx = rd->ptr;
-	if (rd->len) {
-		deferContextSet(ctx, rd, 0);
-	}
-	contextUnref((void *) &ctx->_ctx);
-	free(ref);
-}
-static uintptr_t deferRef(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-	return 0;
-}
-static int deferSet(MPT_STRUCT(reply_context) *def, const MPT_STRUCT(message) *msg)
-{
-	MPT_STRUCT(reply_data) *rd = (void *) (def + 1);
-	return deferContextSet(rd->ptr, rd, msg);
-}
-static MPT_STRUCT(reply_context) *deferContext(MPT_STRUCT(reply_context) *ptr)
-{
-	(void) ptr;
-	return 0;
-}
-static MPT_STRUCT(reply_context) *contextDefer(MPT_STRUCT(reply_context) *ptr)
-{
-	static const MPT_INTERFACE_VPTR(reply_context) def_vptr = {
-		{ deferUnref, deferRef },
-		deferSet,
-		deferContext
+	static const MPT_INTERFACE_VPTR(reply_context_detached) deferCtx = {
+		deferReply
 	};
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ptr, _ctx);
-	MPT_INTERFACE(reply_context) *def;
-	MPT_STRUCT(reply_data) *rd;
+	struct replyDataDelayed *def;
+	size_t post;
 	
 	if (!ctx->data.len) {
 		return 0;
@@ -123,24 +157,24 @@ static MPT_STRUCT(reply_context) *contextDefer(MPT_STRUCT(reply_context) *ptr)
 	if (!mpt_refcount_raise(&ctx->ref)) {
 		return 0;
 	}
-	if (!(def = malloc(sizeof(*def) + sizeof(*rd) + ctx->data._max - sizeof(ctx->data.val)))) {
+	if ((post = ctx->data._max) < sizeof(ctx->data.val)) {
+		post = 0;
+	} else {
+		post -= sizeof(ctx->data.val);
+	}
+	if (!(def = malloc(sizeof(*def) + post))) {
 		mpt_refcount_lower(&ctx->ref);
 		return 0;
 	}
-	def->_vptr = &def_vptr;
-	rd = memcpy(def + 1, &ctx->data, sizeof(*rd) + ctx->data.len - sizeof(ctx->data.val));
-	rd->ptr = ctx;
+	def->_rc._vptr = &deferCtx;
+	memcpy(&def->data, &ctx->data, sizeof(def->data) + post);
+	def->base = ctx;
 	
 	/* reply data belongs to new context */
 	ctx->data.len = 0;
 	
-	return def;
+	return &def->_rc;
 }
-static const MPT_INTERFACE_VPTR(reply_context) _context_vptr = {
-	{ contextUnref, contextRef },
-	contextSet,
-	contextDefer
-};
 /*!
  * \ingroup mptEvent
  * \brief event reply context
@@ -152,24 +186,37 @@ static const MPT_INTERFACE_VPTR(reply_context) _context_vptr = {
  * 
  * \return available reply context
  */
-extern MPT_INTERFACE(reply_context) *mpt_reply_deferrable(size_t len, int (*send)(const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *))
+extern MPT_INTERFACE(metatype) *mpt_reply_deferrable(size_t len, int (*send)(void *, const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *), void *ptr)
 {
+	static const MPT_INTERFACE_VPTR(metatype) replyMeta = {
+		{ contextUnref, contextRef },
+		contextConv,
+		contextClone
+	};
+	static const MPT_INTERFACE_VPTR(reply_context) replyCtx = {
+		contextSet,
+		contextDefer
+	};
 	MPT_STRUCT(reply_context_defer) *ctx;
+	size_t post;
 	
 	if (len > UINT16_MAX) {
 		return 0;
 	}
-	if (!(ctx = malloc(sizeof(*ctx) + len - sizeof(ctx->data.val)))) {
+	post = len > sizeof(ctx->data.val) ? len - sizeof(ctx->data.val) : 0;
+	if (!(ctx = malloc(sizeof(*ctx) + post))) {
 		return 0;
 	}
-	ctx->send = send;
+	ctx->reply.send = send;
+	ctx->reply.ptr  = ptr;
+	
 	ctx->ref._val = 1;
 	
-	ctx->_ctx._vptr = &_context_vptr;
+	ctx->_mt._vptr = &replyMeta;
+	ctx->_ctx._vptr = &replyCtx;
 	
-	ctx->data.ptr = 0;
 	ctx->data._max = len;
 	ctx->data.len = 0;
 	
-	return &ctx->_ctx;
+	return &ctx->_mt;
 }

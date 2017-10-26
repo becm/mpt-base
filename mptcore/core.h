@@ -85,9 +85,9 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeProperty)  = 0xa,   /* LF '\n' */
 	
 	/* special pointer types */
-	MPT_ENUM(TypeNode)      = 0xc,   /* FF '\f' */
-	MPT_ENUM(TypeArray)     = 0xd,   /* CR '\r' */
-	MPT_ENUM(TypeCommand)   = 0xe,   /* SO */
+	MPT_ENUM(TypeCommand)   = 0xc,   /* FF '\f' */
+	MPT_ENUM(TypeReplyData) = 0xd,   /* CR */
+	MPT_ENUM(TypeNode)      = 0xe,   /* SO */
 	
 	/* reference types */
 	MPT_ENUM(TypeConfig)    = 0x10,  /* DLE */
@@ -95,7 +95,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	/* typed content data */
-	MPT_ENUM(TypeMeta)      = 0x14,  /* DC4 */
+	MPT_ENUM(TypeReply)     = 0x14,  /* DC4 */
 	MPT_ENUM(TypeIterator)  = 0x15,  /* NAK */
 	MPT_ENUM(TypeBuffer)    = 0x16,  /* SYN */
 	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
@@ -117,24 +117,29 @@ enum MPT_ENUM(Types)
 	
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
-#define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeVector) \
-                            && ((v) & ~MPT_ENUM(_TypeBaseDynamic)) <  MPT_ENUM(TypeScalBase))
-#define MPT_value_toVector(v) (MPT_value_isScalar(v) \
-                             ? (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector) \
-                             : 0)
 #define MPT_value_isBasic(v)  (MPT_value_isScalar(v) || MPT_value_isVector(v) \
                             || MPT_value_isLayout(v))
 	
-	/* scalar types ('`'..'z'..0x7f) */
-	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
+	/* generic type on non-array position */
+	MPT_ENUM(TypeMeta)      = '`',   /* 0x60: generic type */
 #define MPT_value_isMetatype(v)  ((v) == MPT_ENUM(TypeMeta) \
                                 || ((v) >= MPT_ENUM(_TypeMetaBase) \
                                     && (v) <= (MPT_ENUM(_TypeMetaBase)) + MPT_ENUM(_TypeDynamicMax)))
-#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) > MPT_ENUM(TypeScalBase) \
+	/* scalar types ('a'..'z'..0x7f) */
+	MPT_ENUM(TypeArray)     = 'a',   /* array content */
+	
+	/* type range checks */
+#define MPT_value_isVector(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeVector) \
+                              && ((v) & ~MPT_ENUM(_TypeBaseDynamic)) <  MPT_ENUM(TypeMeta))
+#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeMeta) \
                               && (v) < MPT_ENUM(_TypeDynamicMax))
-#define MPT_value_fromVector(v) (MPT_value_isVector(v) \
-                               ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeScalBase) \
+
+#define MPT_value_toVector(v)   (MPT_value_isScalar(v) \
+                               ? (v) - MPT_ENUM(TypeMeta) + MPT_ENUM(TypeVector) \
                                : 0)
+#define MPT_value_fromVector(v) (MPT_value_isVector(v) \
+                               ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeMeta) \
+                               : -1)
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeBaseDynamic)   = 0x80,

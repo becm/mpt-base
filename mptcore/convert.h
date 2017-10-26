@@ -28,17 +28,10 @@ enum MPT_ENUM(NewlineTypes) {
 	MPT_ENUM(NewlineNet)  = 0x3   /* network/Windows line separation */
 };
 
-enum MPT_ENUM(TransportTypes) {
-	/* 80bit float value (reuse invalid local scalar) */
-	MPT_ENUM(TypeFloat80) = MPT_ENUM(TypeScalBase)
-};
-
 MPT_STRUCT(float80)
 {
 #ifdef __cplusplus
 public:
-	enum { Type = TypeFloat80 };
-	
 	inline float80() {}
 	inline float80(long double v) { *this = v; }
 	
@@ -92,8 +85,6 @@ MPT_STRUCT(valfmt)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float80>()  { return float80::Type; }
-
 template<> inline __MPT_CONST_EXPR int typeIdentifier<valfmt>() { return valfmt::Type; }
 
 float swapOrder(float);
