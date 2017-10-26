@@ -69,7 +69,7 @@ MPT_INTERFACE(iterator);
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
 #define MPT_offset(s,e)       ((size_t) &(((MPT_STRUCT(s) *) 0)->e))
-#define MPT_reladdr(s,b,c,t)  ((void *) (((int8_t *) (b)) + MPT_offset(s,t) - MPT_offset(s,c)))
+#define MPT_baseaddr(t,p,m)   ((MPT_STRUCT(t) *) (((int8_t *) (p)) - MPT_offset(t,m)))
 
 enum MPT_ENUM(Types)
 {

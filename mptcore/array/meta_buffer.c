@@ -21,13 +21,13 @@ MPT_STRUCT(metaBuffer) {
 
 static void bufferIterUnref(MPT_INTERFACE(unrefable) *ref)
 {
-	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, ref, _it, _mt);
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _it);
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
 }
 static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
-	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, it, _it, _mt);
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
 	
 	if (!type) {
 		MPT_STRUCT(value) *val;
@@ -42,12 +42,12 @@ static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 }
 static int bufferAdvance(MPT_INTERFACE(iterator) *it)
 {
-	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, it, _it, _mt);
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
 	return mpt_slice_advance(&m->s);
 }
 static int bufferReset(MPT_INTERFACE(iterator) *it)
 {
-	MPT_STRUCT(metaBuffer) *m = MPT_reladdr(metaBuffer, it, _it, _mt);
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
 	MPT_STRUCT(buffer) *buf;
 	
 	buf = m->s._a._buf;

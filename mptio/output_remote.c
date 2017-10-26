@@ -93,7 +93,7 @@ static const MPT_INTERFACE_VPTR(metatype) metaCtl = {
 /* object interface */
 static void outputUnref(MPT_INTERFACE(unrefable) *obj)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
 	uintptr_t c;
 	if ((c = mpt_refcount_lower(&od->_ref))) {
 		return;
@@ -103,13 +103,13 @@ static void outputUnref(MPT_INTERFACE(unrefable) *obj)
 }
 static uintptr_t outputRef(MPT_INTERFACE(object) *obj)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
 	
 	return mpt_refcount_raise(&od->_ref);
 }
 static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
@@ -128,7 +128,7 @@ static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, obj, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
 	int ret;
 	
 	ret = mpt_connection_set(&od->con, name, src);
@@ -146,13 +146,13 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, const
 /* output interface */
 static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	return mpt_connection_push(&od->con, len, src);
 }
 static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 {
 	static const char _func[] = "mpt::output::sync";
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	int pos;
 	
 	if (!od->con.out._idlen) {
@@ -251,7 +251,7 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 }
 static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, out, _out, _mt);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	return mpt_connection_await(&od->con, ctl, udata);
 }
 static const MPT_INTERFACE_VPTR(output) outCtl = {
@@ -263,11 +263,12 @@ static const MPT_INTERFACE_VPTR(output) outCtl = {
 /* input interface */
 static void outputInputUnref(MPT_INTERFACE(unrefable) *in)
 {
-	outputUnref(MPT_reladdr(out_data, in, _in, _out));
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
+	outputUnref((void *) &od->_out);
 }
 static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	MPT_STRUCT(buffer) *buf;
 	int keep = 0;
 	
@@ -329,12 +330,12 @@ static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 
 static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
 {
-	MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	return mpt_connection_dispatch(&od->con, cmd, arg);
 }
 static int outputInputFile(MPT_INTERFACE(input) *in)
 {
-	const MPT_STRUCT(out_data) *od = MPT_reladdr(out_data, in, _in, _out);
+	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	return outputInfile(od);
 }
 const MPT_INTERFACE_VPTR(input) inputCtl = {

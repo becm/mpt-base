@@ -58,7 +58,7 @@ static int deferContextSet(const MPT_STRUCT(reply_context_defer) *ctx, MPT_STRUC
 
 static void contextUnref(MPT_INTERFACE(unrefable) *ref)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_reladdr(reply_context_defer, ref, _ctx, send);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _ctx);
 	
 	if (mpt_refcount_lower(&ctx->ref)) {
 		return;
@@ -70,7 +70,7 @@ static void contextUnref(MPT_INTERFACE(unrefable) *ref)
 }
 static int contextSet(MPT_STRUCT(reply_context) *ptr, const MPT_STRUCT(message) *msg)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_reladdr(reply_context_defer, ptr, _ctx, send);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ptr, _ctx);
 	return deferContextSet(ctx, &ctx->data, msg);
 }
 
@@ -102,7 +102,7 @@ static MPT_STRUCT(reply_context) *contextDefer(MPT_STRUCT(reply_context) *ptr)
 		deferSet,
 		deferContext
 	};
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_reladdr(reply_context_defer, ptr, _ctx, send);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ptr, _ctx);
 	MPT_INTERFACE(reply_context) *def;
 	MPT_STRUCT(reply_data) *rd;
 	
