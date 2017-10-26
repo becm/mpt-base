@@ -31,9 +31,11 @@ static int printMessage(mpt::input *in, mpt::event *ev)
 	msg = *ev->msg;
 	total = msg.length();
 	
+	int file = -1;
+	in->conv(mpt::socket::Type, &file);
 	msg.read(sizeof(mt), &mt);
 	printf("file: %d, size: %d, { cmd: %d, arg: %d }\n",
-	       in->_file(), total, mt.cmd, mt.cmd);
+	       file, total, mt.cmd, mt.cmd);
 	
 	while ((len = msg.read(sizeof(buf)-1, &buf))) {
 		buf[sizeof(buf)-1] = 0;

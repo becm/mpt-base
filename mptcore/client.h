@@ -116,7 +116,7 @@ extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
 extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, const char *);
 
 /* interpret type part of library symbol */
-extern int mpt_proxy_type(const char *, const char **);
+extern int mpt_proxy_typeid(const char *, const char **);
 
 /* dynamic binding with metatype proxy instance */
 extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *, int);

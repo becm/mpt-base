@@ -92,7 +92,6 @@ enum MPT_ENUM(Types)
 	/* reference types */
 	MPT_ENUM(TypeConfig)    = 0x10,  /* DLE */
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
-	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
 	/* typed content data */
 	MPT_ENUM(TypeReply)     = 0x14,  /* DC4 */

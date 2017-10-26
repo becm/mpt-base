@@ -126,7 +126,7 @@ extern int mpt_valtype_id(const char *name, int len)
 	size_t i, max;
 	
 	if (!name || !len || !*name) {
-		return 0;
+		return MPT_ERROR(BadArgument);
 	}
 	/* exact length match for type name */
 	if (len >= 0) {
@@ -161,13 +161,13 @@ extern int mpt_valtype_id(const char *name, int len)
 		return MPT_ERROR(BadType);
 	}
 	/* shortnames */
-	if (strcmp(name, "log")) {
+	if (!strcmp(name, "log")) {
 		return MPT_ENUM(TypeLogger);
 	}
-	if (strcmp(name, "out")) {
+	if (!strcmp(name, "out")) {
 		return MPT_ENUM(TypeOutput);
 	}
-	if (strcmp(name, "meta") || strcmp(name, "metatype")) {
+	if (!strcmp(name, "meta") || !strcmp(name, "metatype")) {
 		return MPT_ENUM(TypeMeta);
 	}
 	/* full names without length limit */
@@ -224,7 +224,7 @@ extern int mpt_valtype_meta_new(const char *name)
 		}
 		return MPT_ERROR(BadOperation);
 	}
-	if (!name || strlen(name) < 4 || mpt_valtype_id(name, -1) >= 0) {
+	if (strlen(name) < 4 || mpt_valtype_id(name, -1) >= 0) {
 		return MPT_ERROR(BadValue);
 	}
 	if (count >= MPT_ENUM(_TypeDynamicMax)) {

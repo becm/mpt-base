@@ -20,8 +20,13 @@ src = files(
   'object_set_string.c',
   'object_set_value.c',
   'object_typename.c',
+  'offset.c',
+  'position.c',
   'process_vararg.c',
   'property_match.c',
   'refcount.c',
+  'valsize.c',
+  'valtype.c',
+  'value_compare.c',
   'value_read.c',
 )

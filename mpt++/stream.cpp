@@ -89,24 +89,30 @@ uintptr_t Stream::addref()
 // metatype interface
 int Stream::conv(int type, void *ptr) const
 {
-    static const char fmt[] = { output::Type, input::Type, IODevice::Type, 0 };
-    const void *addr = 0;
+    int me = mpt_input_type_identifier();
     
+    if (!type) {
+        static const char fmt[] = { output::Type, socket::Type, 0 };
+        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        return Type;
+    }
     if (type == socket::Type) {
-        if (ptr) *((int *) ptr) = _inputFile;
-        return input::Type;
+        if (ptr) *reinterpret_cast<int *>(ptr) = _inputFile;
+        return me;
     }
-    
-    switch (type) {
-      case 0: addr = fmt; type = Type; break;
-      case metatype::Type: addr = static_cast<const metatype *>(this); break;
-      case output::Type: addr = static_cast<const output *>(this); break;
-      case input::Type: addr = static_cast<const input *>(this); break;
-      case IODevice::Type: addr = static_cast<const IODevice *>(this); break;
-      default: return BadType;
+    if (type == me) {
+        if (ptr) *static_cast<const input **>(ptr) = this;
+        return Type;
     }
-    if (ptr) *reinterpret_cast<const void **>(ptr) = addr;
-    return type;
+    if (type == metatype::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
+        return output::Type;
+    }
+    if (type == output::Type) {
+        if (ptr) *static_cast<const output **>(ptr) = this;
+        return me;
+    }
+    return BadType;
 }
 // object interface
 int Stream::property(struct property *pr) const

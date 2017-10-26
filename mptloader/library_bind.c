@@ -34,7 +34,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 		if (out) mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
 		return 0;
 	}
-	if ((type = mpt_proxy_type(conf, &conf)) < 0) {
+	if ((type = mpt_proxy_typeid(conf, &conf)) < 0) {
 		if (!def && out) {
 			mpt_log(out, __func__, MPT_LOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
 		}

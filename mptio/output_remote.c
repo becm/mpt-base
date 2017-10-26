@@ -225,21 +225,22 @@ static uintptr_t outputInputRef(MPT_INTERFACE(reference) *ref)
 /* metatype interface */
 static int outputInputConv(const MPT_INTERFACE(metatype) *mt, int type, void *addr)
 {
-	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
+	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), 0 };
 	MPT_STRUCT(out_data) *od = (void *) mt;
 	const void *ptr;
+	int me = mpt_input_type_identifier();
 	
+	if (type == me) {
+		if (addr) *((const void **) addr) = &od->_in;
+		return MPT_ENUM(TypeOutput);
+	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		int fd = outputInfile(od);
-		if (addr) {
-			*((int *) addr) = fd;
-		}
+		if (addr)  *((int *) addr) = outputInfile(od);
 		return type;
 	}
 	switch (type) {
-	  case 0: ptr = (void *) fmt; type = MPT_ENUM(TypeOutput); break;
+	  case 0: ptr = (void *) fmt; break;
 	  case MPT_ENUM(TypeMeta): ptr = &od->_in; break;
-	  case MPT_ENUM(TypeInput): ptr = &od->_in; break;
 	  case MPT_ENUM(TypeObject): ptr = &od->_out; break;
 	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
 	  default: return MPT_ERROR(BadType);
@@ -247,7 +248,7 @@ static int outputInputConv(const MPT_INTERFACE(metatype) *mt, int type, void *ad
 	if (addr) {
 		*((const void **) addr) = ptr;
 	}
-	return type;
+	return me;
 }
 static MPT_INTERFACE(metatype) *outputInputClone(const MPT_INTERFACE(metatype) *from)
 {

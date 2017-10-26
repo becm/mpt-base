@@ -42,7 +42,7 @@ static uintptr_t socketRef(MPT_INTERFACE(reference) *ref)
 static int socketConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	struct socketInput *sd = (void *) mt;
-	int me = MPT_ENUM(TypeInput);
+	int me = mpt_input_type_identifier();
 	
 	if (!type) {
 		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };

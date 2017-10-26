@@ -6,5 +6,5 @@ src = files(
   'client_events.c',
   'proxy_fini.c',
   'proxy_log.c',
-  'proxy_type.c',
+  'proxy_typeid.c',
 )

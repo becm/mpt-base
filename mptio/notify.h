@@ -15,7 +15,7 @@ __MPT_NAMESPACE_BEGIN
 MPT_INTERFACE(input) : public metatype
 {
 public:
-	enum { Type = TypeInput };
+	static int typeIdentifier();
 	
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
@@ -96,6 +96,9 @@ extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
 
 /* execute get/dispatch in loop */
 extern int mpt_loop(MPT_STRUCT(notify) *);
+
+/* id for registratioon for input */
+extern int mpt_input_type_identifier(void);
 
 __MPT_EXTDECL_END
 

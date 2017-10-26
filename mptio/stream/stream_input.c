@@ -24,7 +24,7 @@ MPT_STRUCT(streamInput) {
 	MPT_INTERFACE(reply_context) _rc;
 	MPT_STRUCT(reply_data) rd;
 };
-
+/* reply context interface */
 static int streamReply(MPT_INTERFACE(reply_context) *rc, const MPT_STRUCT(message) *msg)
 {
 	MPT_STRUCT(streamInput) *srm = MPT_baseaddr(streamInput, rc, _rc);
@@ -54,11 +54,6 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 	(void) ctx;
 	return 0;
 }
-static const MPT_INTERFACE_VPTR(reply_context) _mpt_stream_reply_context = {
-	streamReply,
-	streamDefer
-};
-
 /* reference interface */
 static void streamUnref(MPT_INTERFACE(reference) *ref)
 {
@@ -75,7 +70,7 @@ static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
 static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) mt;
-	int me = MPT_ENUM(TypeInput);
+	int me = mpt_input_type_identifier();
 	
 	if (!type) {
 		if (ptr) {
@@ -162,7 +157,7 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 			return sw->cmd(sw->arg, &ev);
 		}
 		/* unable to reply to message */
-		if (!(mpt_stream_flags(&srm->data._info) & MPT_STREAMFLAG(Write))) {
+		if (!(MPT_stream_writable(mpt_stream_flags(&srm->data._info)))) {
 			return sw->cmd(sw->arg, &ev);
 		}
 		for (i = 0; i < idlen; ++i) {
@@ -234,6 +229,10 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		streamNext,
 		streamDispatch
 	};
+	static const MPT_INTERFACE_VPTR(reply_context) streamContext = {
+		streamReply,
+		streamDefer
+	};
 	MPT_STRUCT(stream) tmp = MPT_STREAM_INIT;
 	MPT_STRUCT(streamInput) *srm;
 	
@@ -271,7 +270,7 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		return 0;
 	}
 	srm->_in._vptr = &streamInput;
-	srm->_rc._vptr = &_mpt_stream_reply_context;
+	srm->_rc._vptr = &streamContext;
 	srm->data = tmp;
 	srm->rd._max = idlen;
 	srm->rd.len = 0;
