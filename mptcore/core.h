@@ -90,7 +90,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeCommand)   = 0xe,   /* SO */
 	
 	/* reference types */
-	MPT_ENUM(TypeUnrefable) = 0x10,  /* DLE */
+	MPT_ENUM(TypeConfig)    = 0x10,  /* DLE */
 	MPT_ENUM(TypeIODevice)  = 0x11,  /* DC1 */
 	MPT_ENUM(TypeInput)     = 0x12,  /* DC2 */
 	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
@@ -99,7 +99,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeIterator)  = 0x15,  /* NAK */
 	MPT_ENUM(TypeBuffer)    = 0x16,  /* SYN */
 	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
-#define MPT_value_isUnrefable(v) ((v) >= MPT_ENUM(TypeUnrefable) \
+#define MPT_value_isInterface(v) ((v) >= MPT_ENUM(TypeConfig) \
                                && (v) < MPT_ENUM(TypeSpecial))
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
@@ -117,8 +117,8 @@ enum MPT_ENUM(Types)
 	
 	/* array types ('@'..'Z') */
 	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
-#define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeDynamic)) >= MPT_ENUM(TypeVector) \
-                            && ((v) & ~MPT_ENUM(_TypeDynamic)) <  MPT_ENUM(TypeScalBase))
+#define MPT_value_isVector(v) (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeVector) \
+                            && ((v) & ~MPT_ENUM(_TypeBaseDynamic)) <  MPT_ENUM(TypeScalBase))
 #define MPT_value_toVector(v) (MPT_value_isScalar(v) \
                              ? (v) - MPT_ENUM(TypeScalBase) + MPT_ENUM(TypeVector) \
                              : 0)
@@ -127,16 +127,45 @@ enum MPT_ENUM(Types)
 	
 	/* scalar types ('`'..'z'..0x7f) */
 	MPT_ENUM(TypeScalBase)  = '`',   /* 0x60: generic scalar offset */
-#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeDynamic)) > MPT_ENUM(TypeScalBase) \
-                              && (v) < MPT_ENUM(_TypeFinal))
+#define MPT_value_isMetatype(v)  ((v) == MPT_ENUM(TypeMeta) \
+                                || ((v) >= MPT_ENUM(_TypeMetaBase) \
+                                    && (v) <= (MPT_ENUM(_TypeMetaBase)) + MPT_ENUM(_TypeDynamicMax)))
+#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) > MPT_ENUM(TypeScalBase) \
+                              && (v) < MPT_ENUM(_TypeDynamicMax))
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeScalBase) \
                                : 0)
 	
 	/* range for type allocations */
-	MPT_ENUM(_TypeDynamic)  = 0x80,
-	MPT_ENUM(_TypeLimit)    = (0x80 / 4), /* single type range limit */
-	MPT_ENUM(_TypeFinal)    = 0xff
+	MPT_ENUM(_TypeBaseDynamic)   = 0x80,
+	MPT_ENUM(_TypeDynamicMax)    = 0xff,
+	
+	/* range for dynamic interfaces */
+	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeBaseDynamic),
+	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeInterfaceBase) + 0x3f,
+	
+	/* range for dynamic base types */
+	MPT_ENUM(_TypeScalarBase)    = MPT_ENUM(_TypeBaseDynamic) + MPT_ENUM(TypeMeta),
+	MPT_ENUM(_TypeScalarMax)     = MPT_ENUM(_TypeScalarBase) + 0x1f,
+	
+	/* range for explicit metatypes */
+	MPT_ENUM(_TypeMetaBase)      = 0x0100,
+	MPT_ENUM(_TypeMetaMax)       = 0x01ff,
+	
+	/* range for generic types */
+	MPT_ENUM(_TypeGenericBase)   = 0x0200,
+	MPT_ENUM(_TypeGenericMax)    = 0x0fff,
+	
+	/* automatic range types */
+	MPT_ENUM(_TypePointerBase)   = 0x1000,
+	MPT_ENUM(_TypeReferenceBase) = 0x2000,
+	MPT_ENUM(_TypeItemBase)      = 0x3000,
+	
+	/* range for map element types */
+	MPT_ENUM(_TypeMapBase)       = 0x4000,
+	MPT_ENUM(_TypeMapMax)        = 0x4fff,
+	
+	MPT_ENUM(_TypeUserMin)       = 0x10000
 };
 
 /* tree and list operation flags */
@@ -210,6 +239,16 @@ extern int mpt_position(const char *, int);
 extern int mpt_offset(const char *, int);
 /* get size for registered types */
 extern ssize_t mpt_valsize(int);
+
+/* add user scalar or pointer type */
+extern int mpt_valtype_add(size_t);
+
+/* add/check registered reference type */
+extern const char *mpt_valtype_name(int);
+extern int mpt_valtype_id(const char *, int);
+/* add/check registered object type */
+extern int mpt_valtype_meta_new(const char *);
+extern int mpt_valtype_interface_new(const char *);
 
 /* determine message ANSI color code */
 extern const char *mpt_ansi_code(uint8_t);

@@ -6,6 +6,8 @@
 #include <sys/uio.h>
 
 #include "array.h"
+#include "object.h"
+
 #include "meta.h"
 
 #include "convert.h"
@@ -27,38 +29,106 @@
  * \retval >0               destiantion data size
  */
 
-extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
+extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 {
 	const uint8_t *from = *fptr;
 	int flen, dlen;
-	char dtype = to & 0xff;
 	
+	/* special array processing */
+	if (ftype == MPT_ENUM(TypeArray)) {
+		const MPT_STRUCT(array) *arr = (void *) from;
+		MPT_STRUCT(buffer) *b = arr->_buf;
+		int content;
+		
+		content = b ? b->_vptr->content(b) : -1;
+		
+		if (ftype == dtype) {
+			if (dest) {
+				mpt_array_clone(dest, b ? arr : 0);
+			}
+			*fptr = arr + 1;
+			return sizeof(*arr);
+		}
+		if (dtype == 's') {
+			const char **txt = dest;
+			if (content < 0) {
+				*txt = 0;
+			}
+			else if (!content || content == 'c') {
+				char *s;
+				if ((s = memchr(b + 1, 0, b->_used))) {
+					if (dest) *txt = (char *) b + 1;
+					*fptr = arr + 1;
+					return sizeof(*txt);
+				} else {
+					return MPT_ERROR(BadValue);
+				}
+			}
+			return MPT_ERROR(BadType);
+		}
+		if ((dtype = MPT_value_fromVector(dtype)) >= 0) {
+			struct iovec *vec;
+			/* require matching types */
+			if (dtype != content) {
+				return MPT_ERROR(BadType);
+			}
+			if ((vec = dest)) {
+				vec->iov_base = b + 1;
+				vec->iov_len = b->_used;
+			}
+			*fptr = arr + 1;
+			return sizeof(*vec);
+		}
+		return MPT_ERROR(BadType);
+	}
+	/* special metatype processing */
+	if (MPT_value_isMetatype(ftype)) {
+		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
+		
+		flen = sizeof(mt);
+		if (dtype != ftype) {
+			if (dtype != MPT_ENUM(TypeMeta)) {
+				return MPT_ERROR(BadType);
+			}
+			if (dest) {
+				if (mt && !mt->_vptr->ref.addref((void *) mt)) {
+					return MPT_ERROR(BadOperation);
+				}
+				*((void **) dest) = mt;
+			}
+			*fptr = from + flen;
+			return sizeof(void *);
+		}
+		if (dest) {
+			MPT_INTERFACE(metatype) *to, **ptr = dest;
+			if (mt && !mt->_vptr->ref.addref((void *) mt)) {
+				return MPT_ERROR(BadOperation);
+			}
+			if ((to = *ptr)) {
+				to->_vptr->ref.unref((void *) to);
+			}
+			*ptr = mt;
+			*fptr = from + flen;
+			return sizeof(*ptr);
+		}
+		return sizeof(void *);
+	}
 	/* check input type size */
 	if ((flen = mpt_valsize(ftype)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* allow reference type downgrade */
-	if (dtype == MPT_ENUM(TypeUnrefable)
-	    && MPT_value_isUnrefable(ftype)) {
-		ftype = MPT_ENUM(TypeUnrefable);
+	/* pointer type */
+	else if (!flen) {
 		flen = sizeof(void *);
 	}
-	/* allow object type downgrade */
-	if (dtype == MPT_ENUM(TypeObject)
-	    && MPT_value_isObject(ftype)) {
-		ftype = MPT_ENUM(TypeObject);
-		flen = sizeof(void *);
-	}
-	/* same primitive type */
-	if (flen && ftype == dtype) {
+	/* same type (copy pointer) */
+	if (ftype == dtype) {
 		if (dest) {
 			memcpy(dest, from, flen);
 		}
 		*fptr = from + flen;
 		return flen;
 	}
-	if (!flen) flen = sizeof(void *);
-	
 	/* check output type size */
 	if ((dlen = mpt_valsize(dtype)) < 0) {
 		return MPT_ERROR(BadArgument);
@@ -370,59 +440,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 		break;
 	  }
 #endif
-	  /* allow metatype cast */
-	  case MPT_ENUM(TypeMeta):
-		if (dtype != ftype) {
-			MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
-			int ret;
-			/* use clone for operations on embedded metatype */
-			if (!mt || !(mt = mt->_vptr->clone(mt))) {
-				return MPT_ERROR(BadType);
-			}
-			ret = mt->_vptr->conv(mt, dtype, dest);
-			mt->_vptr->ref.unref((void *) mt);
-			return ret;
-		}
-		if (dest) memcpy(dest, from, flen);
-		break;
-	  case MPT_ENUM(TypeBuffer):
-		if (ftype != dtype) {
-			MPT_STRUCT(buffer) * const * ptr = (void *) from;
-			MPT_STRUCT(buffer) *b = *ptr;
-			int c = -1;
-			
-			if (b) {
-				c = b->_vptr->content(b);
-			}
-			if (dtype == 's') {
-				const char **txt = dest;
-				if (c < 0) {
-					*txt = 0;
-				}
-				else if (!c || c == 'c') {
-					char *s;
-					if ((s = memchr(b + 1, 0, b->_used))) {
-						*txt = (char *) b + 1;
-					} else {
-						return MPT_ERROR(BadValue);
-					}
-				}
-				return MPT_ERROR(BadType);
-			}
-			if (!(ftype = MPT_value_fromVector(dtype))) {
-				struct iovec *vec = dest;
-				/* require matching types */
-				if ((int) ftype != c) {
-					return MPT_ERROR(BadType);
-				}
-				vec->iov_base = b + 1;
-				vec->iov_len = b->_used;
-				break;
-			}
-			return MPT_ERROR(BadType);
-		}
-		if (dest) memcpy(dest, from, flen);
-		break;
 	  default:
 		/* vector conversion */
 		if (MPT_value_isVector(dtype)) {
@@ -435,26 +452,6 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int to)
 					return MPT_ERROR(BadType);
 				}
 				memcpy(dest, from, flen);
-				break;
-			}
-			/* convert from array */
-			else if (ftype == MPT_ENUM(TypeBuffer)) {
-				MPT_STRUCT(buffer) * const * ptr = (void *) from;
-				MPT_STRUCT(buffer) *b = *ptr;
-				int c = -1;
-				
-				if (!b) {
-					vec->iov_base = 0;
-					vec->iov_len = 0;
-					break;
-				}
-				/* check base type */
-				c = b->_vptr->content(b);
-				if (c != MPT_value_fromVector(dtype)) {
-					return MPT_ERROR(BadType);
-				}
-				vec->iov_base = b + 1;
-				vec->iov_len = b->_used;
 				break;
 			}
 			/* convert from scalar */

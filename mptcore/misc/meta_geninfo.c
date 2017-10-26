@@ -16,6 +16,7 @@ static uintptr_t metaRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
+/* metatype interface */
 static int metaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
 	const void *info = meta + 1;
@@ -32,15 +33,10 @@ static int metaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	}
 	return _mpt_geninfo_conv(info, type, ptr);
 }
-static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *meta)
+static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *mt)
 {
-	return _mpt_geninfo_clone(meta + 1);
+	return _mpt_geninfo_clone(mt + 1);
 }
-static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
-	{ metaUnref, metaRef },
-	metaConv,
-	metaClone
-};
 
 /*!
  * \ingroup mptMeta
@@ -55,6 +51,11 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
  */
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t post)
 {
+	static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
+		{ metaUnref, metaRef },
+		metaConv,
+		metaClone
+	};
 	MPT_INTERFACE(metatype) *mt;
 	
 	post = _mpt_geninfo_size(post + 1);

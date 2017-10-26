@@ -72,7 +72,7 @@ const char *value::string() const
 const void *value::scalar(int type) const
 {
     /* incompatible type */
-    if (!fmt || type < 0 || type > _TypeFinal) {
+    if (!fmt || type < 0) {
         return 0;
     }
     /* exact scalar type */
@@ -81,8 +81,9 @@ const void *value::scalar(int type) const
     }
     /* regular and user scalar type */
     ssize_t s;
-    if ((s = mpt_valsize(type)) <= 0) {
-        return 0;
+    if (type > _TypeDynamicMax
+        || (s = mpt_valsize(type)) <= 0) {
+          return 0;
     }
     return ptr;
 }

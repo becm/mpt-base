@@ -103,16 +103,6 @@ float80 swapOrder(float80);
 
 __MPT_EXTDECL_BEGIN
 
-/* add user scalar or pointer type */
-extern int mpt_valtype_add(size_t);
-
-/* add/check registered reference type */
-extern int mpt_valtype_newref();
-extern int mpt_valtype_isref();
-/* add/check registered object type */
-extern int mpt_valtype_newobject();
-extern int mpt_valtype_isobject();
-
 /* extended double conversions */
 extern void mpt_float80_decode(size_t , const MPT_STRUCT(float80) *, long double *);
 extern void mpt_float80_encode(size_t , const long double *, MPT_STRUCT(float80) *);

@@ -12,8 +12,6 @@
 
 #include <sys/uio.h>
 
-# define MPT_TYPE_LIMIT (0x80 / 4)
-
 static const struct {
 	uint8_t key, size;
 } static_ptypes[] = {
@@ -70,8 +68,8 @@ static const struct {
 	{ 'o', 0 },  /* D-Bus object path */
 };
 
-static size_t generics[MPT_TYPE_LIMIT];
-static int generics_count = 0;
+static size_t types[MPT_ENUM(_TypeBaseDynamic) - MPT_ENUM(TypeScalBase)];
+static int types_count = 0;
 
 /*!
  * \ingroup mptConvert
@@ -86,19 +84,21 @@ static int generics_count = 0;
  */
 extern ssize_t mpt_valsize(int type)
 {
-	int base;
-	
 	/* bad type value */
 	if (type < 0
-	    || type > MPT_ENUM(_TypeFinal)) {
+	    || type > MPT_ENUM(_TypeDynamicMax)) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* builtin types */
-	if (type < MPT_ENUM(_TypeDynamic)) {
+	if (type < MPT_ENUM(_TypeBaseDynamic)) {
 		uint8_t i;
 		
 		/* generic interface type */
-		if (MPT_value_isUnrefable(type)) {
+		if (MPT_value_isInterface(type)) {
+			return 0;
+		}
+		/* generic reference type */
+		if (MPT_value_isMetatype(type)) {
 			return 0;
 		}
 		/* generic/typed vector */
@@ -113,29 +113,27 @@ extern ssize_t mpt_valsize(int type)
 		}
 		return MPT_ERROR(BadType);
 	}
-	type -= MPT_ENUM(_TypeDynamic);
-	
-	/* type is registered reference (or object) */
-	if ((base = mpt_valtype_isref(type)) >= 0) {
-		return 0;
-	}
+	type -= MPT_ENUM(_TypeBaseDynamic);
 	/* user generics */
-	if (generics_count) {
-		int base;
-		
-		if ((type - MPT_ENUM(TypeScalBase)) >= generics_count) {
-			return MPT_ERROR(BadType);
+	if (!types_count) {
+		return MPT_ERROR(BadValue);
+	}
+	/* invalid basic type value */
+	if (type < MPT_ENUM(TypeVector)) {
+		return MPT_ERROR(BadType);
+	}
+	/* vector for valid user type */
+	if (type < MPT_ENUM(TypeMeta)) {
+		type -= MPT_ENUM(TypeVector);
+		if (type < types_count) {
+			return MPT_ERROR(BadValue);
 		}
-		/* vector for registered user type */
-		if ((base = MPT_value_fromVector(type)) >= 0) {
-			type -= MPT_ENUM(TypeVector);
-			return (type < generics_count) ? (int) sizeof(struct iovec) : MPT_ERROR(BadValue);
-		}
-		/* scalar type offset */
-		base = type - MPT_ENUM(TypeScalBase);
-		if (base < generics_count) {
-			return generics[base];
-		}
+		return sizeof(struct iovec);
+	}
+	/* scalar user type range */
+	type -= MPT_ENUM(TypeMeta);
+	if (type < types_count) {
+		return types[type];
 	}
 	return MPT_ERROR(BadValue);
 }
@@ -155,11 +153,11 @@ extern int mpt_valtype_add(size_t csize)
 	if (csize > SIZE_MAX/4) {
 		return MPT_ERROR(BadValue);
 	}
-	if (generics_count >= (int) MPT_arrsize(generics)) {
+	if (types_count >= (int) MPT_arrsize(types)) {
 		return MPT_ERROR(BadArgument);
 	}
-	generics[generics_count] = csize;
+	types[types_count] = csize;
 	
-	return MPT_ENUM(_TypeDynamic) + MPT_ENUM(TypeScalBase) + generics_count++;
+	return MPT_ENUM(_TypeBaseDynamic) + MPT_ENUM(TypeMeta) + types_count++;
 }
 
