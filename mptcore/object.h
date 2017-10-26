@@ -16,7 +16,7 @@ MPT_STRUCT(node);
 
 /*! generic object interface */
 #ifdef __cplusplus
-MPT_INTERFACE(object) : public unrefable
+MPT_INTERFACE(object) : public reference
 {
 protected:
 	inline ~object() {}
@@ -41,15 +41,13 @@ public:
 	inline int type() const
 	{ return property(0); }
 	
-	virtual uintptr_t addref();
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
-	uintptr_t (*addref)(MPT_INTERFACE(object) *);
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
 	int (*setProperty)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
@@ -80,9 +78,6 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 template<> int Item<object>::type();
-
-inline uintptr_t object::addref()
-{ return 0; }
 
 class object::const_iterator
 {
@@ -304,11 +299,10 @@ public:
 	
 	virtual const Item<object> *item(size_t pos) const;
 	virtual Item<object> *append(object *);
-	virtual size_t clear(const unrefable * = 0);
+	virtual size_t clear(const reference * = 0);
 	virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
 	
 	virtual void *toType(int);
-	virtual const Transform &transform();
 	
 	bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
 protected:

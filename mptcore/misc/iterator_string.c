@@ -19,9 +19,14 @@ struct parseIterator {
 	char *val, *end, *restore, save;
 };
 
-static void parseUnref(MPT_INTERFACE(unrefable) *ctl)
+static void parseUnref(MPT_INTERFACE(reference) *ctl)
 {
 	free(ctl);
+}
+static uintptr_t parseRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 {
@@ -146,7 +151,7 @@ static int parseReset(MPT_INTERFACE(iterator) *ctl)
 	return 1;
 }
 static const MPT_INTERFACE_VPTR(iterator) _parse_vptr = {
-	{ parseUnref },
+	{ parseUnref, parseRef },
 	parseGet,
 	parseAdvance,
 	parseReset

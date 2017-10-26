@@ -12,7 +12,7 @@ struct iteratorContent
 	MPT_INTERFACE(iterator) *it;
 };
 
-static void iteratorUnref(MPT_INTERFACE(unrefable) *ref)
+static void iteratorUnref(MPT_INTERFACE(reference) *ref)
 {
 	struct iteratorContent *c = (void *) ref;
 	MPT_INTERFACE(iterator) *it;
@@ -21,6 +21,11 @@ static void iteratorUnref(MPT_INTERFACE(unrefable) *ref)
 		it->_vptr->ref.unref((void *) it);
 	}
 	free(c);
+}
+static uintptr_t iteratorRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iteratorConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
@@ -48,7 +53,7 @@ static MPT_INTERFACE(metatype) *iteratorClone(const MPT_INTERFACE(metatype) *mt)
 }
 
 static const MPT_INTERFACE_VPTR(metatype) iteratorCtl = {
-	{ iteratorUnref },
+	{ iteratorUnref, iteratorRef },
 	iteratorConv,
 	iteratorClone
 };

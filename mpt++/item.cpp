@@ -28,7 +28,7 @@ int Group::property(struct property *pr) const
 int Group::setProperty(const char *name, const metatype *)
 { return name ? BadArgument : BadOperation; }
 
-size_t Group::clear(const unrefable *)
+size_t Group::clear(const reference *)
 { return 0; }
 Item<object> *Group::append(object *)
 { return 0; }
@@ -216,12 +216,6 @@ object *Group::create(const char *type, int nl)
     return 0;
 }
 
-const Transform &Group::transform()
-{
-    static Transform3 gt;
-    return gt;
-}
-
 // group storing elements in RefArray
 Collection::~Collection()
 { }
@@ -236,7 +230,7 @@ Item<object> *Collection::append(object *mt)
     return _items.append(mt, 0);
 }
 
-size_t Collection::clear(const unrefable *mt)
+size_t Collection::clear(const reference *mt)
 {
     long remove = 0;
     if (!mt) {
@@ -246,7 +240,7 @@ size_t Collection::clear(const unrefable *mt)
     }
     long empty = 0;
     for (auto &it : _items) {
-        unrefable *ref = it.pointer();
+        reference *ref = it.pointer();
         if (!ref) { ++empty; continue; }
         if (mt != ref) continue;
         it.setPointer(nullptr);

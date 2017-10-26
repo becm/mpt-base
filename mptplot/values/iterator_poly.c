@@ -21,11 +21,16 @@ struct iterPoly
 	int coeff;
 };
 
-static void iterPolyUnref(MPT_INTERFACE(unrefable) *ref)
+static void iterPolyUnref(MPT_INTERFACE(reference) *ref)
 {
 	struct iterPoly *ip = (void *) ref;
 	mpt_array_clone(&ip->grid, 0);
 	free(ref);
+}
+static uintptr_t iterPolyRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *dest)
 {
@@ -125,7 +130,7 @@ static int iterPolyReset(MPT_INTERFACE(iterator) *it)
 extern MPT_INTERFACE(iterator) *mpt_iterator_poly(const char *desc, const _MPT_ARRAY_TYPE(double) *base)
 {
 	static const MPT_INTERFACE_VPTR(iterator) polyIterCtl = {
-		{ iterPolyUnref },
+		{ iterPolyUnref, iterPolyRef },
 		iterPolyGet,
 		iterPolyAdvance,
 		iterPolyReset

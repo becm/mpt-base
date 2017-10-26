@@ -34,7 +34,7 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-class reply_context : public unrefable
+class reply_context : public reference
 {
 public:
 	virtual int reply(const struct message *) = 0;
@@ -46,7 +46,7 @@ protected:
 #else
 MPT_INTERFACE(reply_context);
 MPT_INTERFACE_VPTR(reply_context) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*reply)(MPT_INTERFACE(reply_context) *, const MPT_STRUCT(message) *);
 	MPT_INTERFACE(reply_context) *(*defer)(MPT_INTERFACE(reply_context) *);
 };

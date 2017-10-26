@@ -12,7 +12,7 @@ __MPT_NAMESPACE_BEGIN
 
 /*! generic metatype interface */
 #ifdef __cplusplus
-MPT_INTERFACE(metatype) : public unrefable
+MPT_INTERFACE(metatype) : public reference
 {
 protected:
 	inline ~metatype() {}
@@ -48,7 +48,7 @@ public:
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
 {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*conv)(const MPT_INTERFACE(metatype) *, int , void *);
 	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
@@ -58,7 +58,7 @@ MPT_INTERFACE_VPTR(metatype)
 
 /*! generic iterator interface */
 #ifdef __cplusplus
-MPT_INTERFACE(iterator) : public unrefable
+MPT_INTERFACE(iterator) : public reference
 {
 protected:
 	inline ~iterator() {}
@@ -73,7 +73,7 @@ public:
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
 {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*get)(MPT_INTERFACE(iterator) *, int , void *);
 	int (*advance)(MPT_INTERFACE(iterator) *);
 	int (*reset)(MPT_INTERFACE(iterator) *);

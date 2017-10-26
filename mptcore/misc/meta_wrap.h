@@ -12,9 +12,14 @@ struct wrapIter
 	MPT_INTERFACE(iterator) *it;
 };
 
-static void metaIterUnref(MPT_INTERFACE(unrefable) *ref)
+static void metaIterUnref(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
+}
+static uintptr_t metaIterRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -45,7 +50,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	return it->_vptr->get(it, type, dest);
 }
 static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
-	{ metaIterUnref },
+	{ metaIterUnref, metaIterRef },
 	metaIterConv,
 	metaIterClone
 };

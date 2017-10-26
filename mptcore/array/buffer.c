@@ -34,13 +34,18 @@ static int _mpt_buffer_alloc_align(size_t size)
 	}
 	return psize = MPT_align(size);
 }
-static void _mpt_buffer_alloc_unref(MPT_INTERFACE(unrefable) *ref)
+static void _mpt_buffer_alloc_unref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
 	if (!mpt_refcount_lower(&buf->_ref)) {
 		free(buf);
 	}
+}
+static uintptr_t _mpt_buffer_alloc_ref(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(buffer) *buf = (void *) ref;
+	return mpt_refcount_raise(&buf->_ref);
 }
 static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr;
 static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, long len)
@@ -104,7 +109,7 @@ static int _mpt_buffer_alloc_type(const MPT_STRUCT(buffer) *buf)
 	return 0;
 }
 static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
-	{ _mpt_buffer_alloc_unref },
+	{ _mpt_buffer_alloc_unref, _mpt_buffer_alloc_ref },
 	_mpt_buffer_alloc_detach,
 	_mpt_buffer_alloc_type
 };

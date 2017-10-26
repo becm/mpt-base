@@ -25,11 +25,16 @@ struct _iter_fdata
 	uint8_t val[16];
 };
 
-static void iterUnref(MPT_INTERFACE(unrefable) *ref)
+static void iterUnref(MPT_INTERFACE(reference) *ref)
 {
 	struct _iter_fdata *d = (void *) (ref + 1);
 	fclose(d->fd);
 	free(ref);
+}
+static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iterGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
 {
@@ -110,7 +115,7 @@ static int iterReset(MPT_INTERFACE(iterator) *it)
 	return 0;
 }
 static const MPT_INTERFACE_VPTR(iterator) iteratorFile = {
-	{ iterUnref },
+	{ iterUnref, iterRef },
 	iterGet,
 	iterAdvance,
 	iterReset

@@ -24,9 +24,14 @@ struct _iter_fdata
 	double   curr;  /* current value */
 };
 
-static void iterUnref(MPT_INTERFACE(unrefable) *mt)
+static void iterUnref(MPT_INTERFACE(reference) *mt)
 {
 	free(mt);
+}
+static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iterGet(MPT_INTERFACE(iterator) *mt, int type, void *ptr)
 {
@@ -83,7 +88,7 @@ static int iterReset(MPT_INTERFACE(iterator) *ptr)
 }
 
 static MPT_INTERFACE_VPTR(iterator) iteratorFactor = {
-	{ iterUnref },
+	{ iterUnref, iterRef },
 	iterGet,
 	iterAdvance,
 	iterReset

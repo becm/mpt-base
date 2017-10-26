@@ -56,7 +56,7 @@ static int deferContextSet(const MPT_STRUCT(reply_context_defer) *ctx, MPT_STRUC
 	return ret;
 }
 
-static void contextUnref(MPT_INTERFACE(unrefable) *ref)
+static void contextUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _ctx);
 	
@@ -68,6 +68,12 @@ static void contextUnref(MPT_INTERFACE(unrefable) *ref)
 	}
 	free(ctx);
 }
+static uintptr_t contextRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _ctx);
+	return mpt_refcount_raise(&ctx->ref);
+}
+
 static int contextSet(MPT_STRUCT(reply_context) *ptr, const MPT_STRUCT(message) *msg)
 {
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ptr, _ctx);
@@ -75,7 +81,7 @@ static int contextSet(MPT_STRUCT(reply_context) *ptr, const MPT_STRUCT(message) 
 }
 
 
-static void deferUnref(MPT_INTERFACE(unrefable) *ref)
+static void deferUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(reply_data) *rd = (void *) (ref + 1);
 	MPT_STRUCT(reply_context_defer) *ctx = rd->ptr;
@@ -84,6 +90,11 @@ static void deferUnref(MPT_INTERFACE(unrefable) *ref)
 	}
 	contextUnref((void *) &ctx->_ctx);
 	free(ref);
+}
+static uintptr_t deferRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int deferSet(MPT_STRUCT(reply_context) *def, const MPT_STRUCT(message) *msg)
 {
@@ -98,7 +109,7 @@ static MPT_STRUCT(reply_context) *deferContext(MPT_STRUCT(reply_context) *ptr)
 static MPT_STRUCT(reply_context) *contextDefer(MPT_STRUCT(reply_context) *ptr)
 {
 	static const MPT_INTERFACE_VPTR(reply_context) def_vptr = {
-		{ deferUnref },
+		{ deferUnref, deferRef },
 		deferSet,
 		deferContext
 	};
@@ -126,7 +137,7 @@ static MPT_STRUCT(reply_context) *contextDefer(MPT_STRUCT(reply_context) *ptr)
 	return def;
 }
 static const MPT_INTERFACE_VPTR(reply_context) _context_vptr = {
-	{ contextUnref },
+	{ contextUnref, contextRef },
 	contextSet,
 	contextDefer
 };

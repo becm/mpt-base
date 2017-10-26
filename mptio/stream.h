@@ -209,6 +209,7 @@ public:
 	enum { Type = output::Type };
 	
 	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int , void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;

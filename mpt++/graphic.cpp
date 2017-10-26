@@ -444,7 +444,7 @@ object *Graphic::item(message &msg, size_t len) const
                 term = true;
             }
             // find object by name
-            unrefable *u;
+            reference *u;
             if (!(u = GroupRelation(*g, 0).find(object::Type, buf, part))) {
                 return 0;
             }
@@ -466,7 +466,7 @@ object *Graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool Graphic::registerUpdate(const unrefable *, UpdateHint)
+bool Graphic::registerUpdate(const reference *, UpdateHint)
 { return true; }
 void Graphic::dispatchUpdates()
 { }

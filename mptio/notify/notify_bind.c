@@ -25,11 +25,16 @@ struct socketInput {
 	int nl;
 };
 
-static void socketUnref(MPT_INTERFACE(unrefable) *in)
+static void socketUnref(MPT_INTERFACE(reference) *in)
 {
 	struct socketInput *sd = (void *) in;
 	mpt_bind(&sd->sock, 0, 0, 0);
 	free(sd);
+}
+static uintptr_t socketRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int socketNext(MPT_INTERFACE(input) *in, int what)
 {
@@ -70,7 +75,7 @@ static int socketFile(MPT_INTERFACE(input) *in)
 	return sd->sock._id;
 }
 static const MPT_INTERFACE_VPTR(input) socketInput = {
-	{ socketUnref },
+	{ socketUnref, socketRef },
 	socketNext,
 	socketDispatch,
 	socketFile

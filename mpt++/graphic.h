@@ -156,7 +156,7 @@ public:
     object *item(message &, size_t = 0) const;
 
     // untracked reference to shedule update
-    virtual bool registerUpdate(const unrefable *, UpdateHint = UpdateHint());
+    virtual bool registerUpdate(const reference *, UpdateHint = UpdateHint());
 
 protected:
     virtual void dispatchUpdates();

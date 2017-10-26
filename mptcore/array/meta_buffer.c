@@ -19,11 +19,16 @@ MPT_STRUCT(metaBuffer) {
 	MPT_STRUCT(slice) s;
 };
 
-static void bufferIterUnref(MPT_INTERFACE(unrefable) *ref)
+static void bufferIterUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _it);
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
+}
+static uintptr_t bufferIterRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
@@ -57,17 +62,22 @@ static int bufferReset(MPT_INTERFACE(iterator) *it)
 }
 
 static const MPT_INTERFACE_VPTR(iterator) _vptr_iter_buffer = {
-	{ bufferIterUnref },
+	{ bufferIterUnref, bufferIterRef },
 	bufferGet,
 	bufferReset,
 	bufferAdvance
 };
 
-static void bufferMetaUnref(MPT_INTERFACE(unrefable) *meta)
+static void bufferMetaUnref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(metaBuffer) *m = (void *) meta;
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _mt);
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
+}
+static uintptr_t bufferMetaRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
@@ -125,7 +135,7 @@ static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
 	return &m->_mt;
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer = {
-	{ bufferMetaUnref },
+	{ bufferMetaUnref, bufferMetaRef },
 	bufferConv,
 	bufferClone
 };

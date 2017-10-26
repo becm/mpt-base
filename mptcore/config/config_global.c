@@ -15,12 +15,17 @@ struct configRoot
 	MPT_STRUCT(path)      base;
 };
 
-static void configUnref(MPT_INTERFACE(unrefable) *cfg)
+static void configUnref(MPT_INTERFACE(reference) *cfg)
 {
 	struct configRoot *c = (void *) cfg;
 	if (c->base.len) {
 		free(c);
 	}
+}
+static uintptr_t configRef(MPT_INTERFACE(reference) *cfg)
+{
+	(void) cfg;
+	return 0;
 }
 static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
@@ -150,7 +155,7 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	return 1;
 }
 static const MPT_INTERFACE_VPTR(config) configGlobal = {
-	{ configUnref },
+	{ configUnref, configRef },
 	configQuery,
 	configAssign,
 	configRemove

@@ -8,7 +8,7 @@
 
 #include "values.h"
 
-static void stageDataUnref(MPT_INTERFACE(unrefable) *ref)
+static void stageDataUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
@@ -20,6 +20,11 @@ static void stageDataUnref(MPT_INTERFACE(unrefable) *ref)
 		}
 		free(buf);
 	}
+}
+static uintptr_t stageDataRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(buffer) *buf = (void *) ref;
+	return mpt_refcount_raise(&buf->_ref);
 }
 static MPT_INTERFACE_VPTR(buffer) stageData;
 static MPT_STRUCT(buffer) *stageDataDetach(MPT_STRUCT(buffer) *buf, long len)
@@ -80,7 +85,7 @@ static int stageDataType(const MPT_STRUCT(buffer) *buf)
 	return MPT_ENUM(TypeBuffer);
 }
 static MPT_INTERFACE_VPTR(buffer) stageDataCtl = {
-	{ stageDataUnref },
+	{ stageDataUnref, stageDataRef },
 	stageDataDetach,
 	stageDataType
 };

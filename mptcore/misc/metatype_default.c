@@ -7,9 +7,14 @@
 
 #include "meta.h"
 
-static void genMetaUnref(MPT_INTERFACE(unrefable) *meta)
+static void genMetaUnref(MPT_INTERFACE(reference) *meta)
 {
 	(void) meta;
+}
+static uintptr_t genMetaRef(MPT_INTERFACE(reference) *meta)
+{
+	(void) meta;
+	return 1;
 }
 static int genMetaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 {
@@ -44,7 +49,7 @@ static MPT_INTERFACE(metatype) *genMetaClone(const MPT_INTERFACE(metatype) *meta
 extern MPT_INTERFACE(metatype) *mpt_metatype_default()
 {
 	static const MPT_INTERFACE_VPTR(metatype) ctl = {
-		{ genMetaUnref },
+		{ genMetaUnref, genMetaRef },
 		genMetaConv,
 		genMetaClone
 	};

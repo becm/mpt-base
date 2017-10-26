@@ -91,7 +91,7 @@ static int localSet(MPT_INTERFACE(object) *out, const char *name, const MPT_INTE
 		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeOutput), &no)) < 0) {
 			return ret;
 		}
-		if (no && !no->_vptr->obj.addref((void *) no)) {
+		if (no && !no->_vptr->obj.ref.addref((void *) no)) {
 			return MPT_ERROR(BadOperation);
 		}
 		if (out) out->_vptr->ref.unref((void *) out);
@@ -122,12 +122,7 @@ static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
 	return mpt_history_get(&lo->hist, pr);
 }
 /* reference operations */
-uintptr_t localRef(MPT_INTERFACE(object) *obj)
-{
-	MPT_STRUCT(local_output) *lo = (void *) obj;
-	return mpt_refcount_raise(&lo->ref);
-}
-static void localUnref(MPT_INTERFACE(unrefable) *ref)
+static void localUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(local_output) *lo = (void *) ref;
 	
@@ -142,9 +137,14 @@ static void localUnref(MPT_INTERFACE(unrefable) *ref)
 	}
 	free(lo);
 }
+uintptr_t localRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(local_output) *lo = (void *) ref;
+	return mpt_refcount_raise(&lo->ref);
+}
 
 static const MPT_INTERFACE_VPTR(output) localCtl = {
-	{ { localUnref }, localRef, localGet, localSet },
+	{ { localUnref, localRef }, localGet, localSet },
 	localPush,
 	localSync,
 	localAwait

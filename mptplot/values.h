@@ -12,6 +12,8 @@ __MPT_NAMESPACE_BEGIN
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
+class Transform;
+
 template<typename T>
 struct point
 {
@@ -108,7 +110,7 @@ MPT_STRUCT(rawdata_stage)
 
 /* part of MPT world */
 #ifdef __cplusplus
-MPT_INTERFACE(rawdata) : public unrefable
+MPT_INTERFACE(rawdata) : public reference
 {
     public:
 	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
@@ -126,7 +128,7 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<rawdata>();
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	
 	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , size_t , int);
 	int (*advance)(MPT_INTERFACE(rawdata) *);
@@ -268,7 +270,7 @@ inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr
 inline void *typed_array::reserve(size_t off, size_t len)
 { return mpt_array_slice(&_d, off, len); }
 
-class Transform : public unrefable
+class Transform : public reference
 {
 public:
     virtual int dimensions() const = 0;

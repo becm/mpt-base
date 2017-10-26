@@ -21,7 +21,7 @@ struct _mpt_metaProxy
 	char fmt[2];
 };
 
-static void mpUnref(MPT_INTERFACE(unrefable) *m)
+static void mpUnref(MPT_INTERFACE(reference) *m)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
@@ -34,6 +34,11 @@ static void mpUnref(MPT_INTERFACE(unrefable) *m)
 	}
 	mpt_library_close(&mp->lh);
 	free(mp);
+}
+static uintptr_t mpRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
@@ -90,7 +95,7 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	return &n->_mt;
 }
 static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
-	{ mpUnref },
+	{ mpUnref, mpRef },
 	mpConv,
 	mpClone
 };

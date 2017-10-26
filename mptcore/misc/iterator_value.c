@@ -93,10 +93,15 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 	}
 	return 's';
 }
-static void valError(MPT_INTERFACE(unrefable) *ctl)
+static void valError(MPT_INTERFACE(reference) *ctl)
 {
 	mpt_log(0, "mpt::iterator::value", MPT_LOG(Critical), "%s (%" PRIxPTR ")",
 	        MPT_tr("tried to unref temporary iterator"), ctl);
+}
+static uintptr_t valRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 {
@@ -200,7 +205,7 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
 extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
 {
 	static const MPT_INTERFACE_VPTR(iterator) ctl = {
-		{ valError },
+		{ valError, valRef },
 		valGet,
 		valAdvance,
 		valReset
@@ -221,12 +226,12 @@ extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INT
 	return ret;
 }
 
-static void valUnref(MPT_INTERFACE(unrefable) *ctl)
+static void valUnref(MPT_INTERFACE(reference) *ctl)
 {
 	free(ctl);
 }
 static const MPT_INTERFACE_VPTR(iterator) _val_vptr = {
-	{ valUnref },
+	{ valUnref, valRef },
 	valGet,
 	valAdvance,
 	valReset

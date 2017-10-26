@@ -450,7 +450,8 @@ const Transform &Graph::transform()
     if ((t = _gtr.pointer())) {
         return *t;
     } else {
-        return Group::transform();
+        static Transform3 tr3;
+        return tr3;
     }
 }
 

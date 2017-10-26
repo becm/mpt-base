@@ -366,7 +366,7 @@ public:
     
     const Item<object> *item(size_t) const __MPT_OVERRIDE;
     Item<object> *append(object *) __MPT_OVERRIDE;
-    size_t clear(const unrefable * = 0) __MPT_OVERRIDE;
+    size_t clear(const reference * = 0) __MPT_OVERRIDE;
     bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 protected:
     ItemArray<object> _items;
@@ -398,7 +398,7 @@ public:
 class Graph : public Collection, public graph
 {
 public:
-    class Data : public unrefable
+    class Data : public reference
     {
     public:
         Data(World *w = 0);
@@ -435,7 +435,7 @@ public:
     virtual bool setCycle(int pos, const Reference<Cycle> &) const;
     virtual const Reference<Cycle> *cycle(int pos) const;
     
-    const Transform &transform() __MPT_OVERRIDE;
+    virtual const Transform &transform();
     
     const struct transform *getTransform(int = -1) const;
     int getFlags(int = -1) const;

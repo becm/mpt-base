@@ -12,7 +12,7 @@
 __MPT_NAMESPACE_BEGIN
 
 #ifdef __cplusplus
-MPT_INTERFACE(input) : public unrefable
+MPT_INTERFACE(input) : public reference
 {
 public:
 	enum { Type = TypeInput };
@@ -26,7 +26,7 @@ protected:
 # else
 MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*next)(MPT_INTERFACE(input) *, int);
 	int (*dispatch)(MPT_INTERFACE(input) *, MPT_TYPE(EventHandler) , void *);
 	int (*_file)(MPT_INTERFACE(input) *);

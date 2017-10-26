@@ -76,12 +76,17 @@ Stream::Stream(const streaminfo *from) : _srm(0), _cid(0), _inputFile(-1), _idle
 Stream::~Stream()
 { }
 
-// metatype interface
+// reference interface
 void Stream::unref()
 {
     if (_srm) delete _srm;
     delete this;
 }
+uintptr_t Stream::addref()
+{
+    return 0;
+}
+// metatype interface
 int Stream::conv(int type, void *ptr) const
 {
     static const char fmt[] = { output::Type, input::Type, IODevice::Type, 0 };

@@ -62,11 +62,16 @@ static const MPT_INTERFACE_VPTR(reply_context) _mpt_stream_reply_context = {
 	streamDefer
 };
 
-static void streamUnref(MPT_INTERFACE(unrefable) *in)
+static void streamUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct streamInput *srm = (void *) in;
+	struct streamInput *srm = (void *) ref;
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
+}
+static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int streamNext(MPT_INTERFACE(input) *in, int what)
 {
@@ -187,7 +192,7 @@ static int streamFile(MPT_INTERFACE(input) *in)
 }
 
 static const MPT_INTERFACE_VPTR(input) streamCtl = {
-	{ streamUnref },
+	{ streamUnref, streamRef },
 	streamNext,
 	streamDispatch,
 	streamFile

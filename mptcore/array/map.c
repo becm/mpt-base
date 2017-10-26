@@ -63,7 +63,7 @@ extern void *_mpt_memmap(size_t len, void *base)
 	return (base == MAP_FAILED) ? 0 : base;
 }
 
-static void _mpt_buffer_map_unref(MPT_INTERFACE(unrefable) *ref)
+static void _mpt_buffer_map_unref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
@@ -71,6 +71,11 @@ static void _mpt_buffer_map_unref(MPT_INTERFACE(unrefable) *ref)
 		return;
 	}
 	munmap(buf, sizeof(*buf) + buf->_size);
+}
+static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(buffer) *buf = (void *) ref;
+	return mpt_refcount_raise(&buf->_ref);
 }
 static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *buf, long len)
 {
@@ -113,7 +118,7 @@ static int _mpt_buffer_map_type(const MPT_STRUCT(buffer) *buf)
 	return 0;
 }
 static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
-	{ _mpt_buffer_map_unref },
+	{ _mpt_buffer_map_unref, _mpt_buffer_map_ref },
 	_mpt_buffer_map_detach,
 	_mpt_buffer_map_type
 };

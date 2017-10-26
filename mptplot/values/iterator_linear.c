@@ -21,9 +21,14 @@ struct _iter_ldata
 	         pos;
 };
 
-static void iterUnref(MPT_INTERFACE(unrefable) *ref)
+static void iterUnref(MPT_INTERFACE(reference) *ref)
 {
 	free(ref);
+}
+static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iterGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
 {
@@ -72,7 +77,7 @@ static int iterReset(MPT_INTERFACE(iterator) *it)
 	return d->elem;
 }
 static const MPT_INTERFACE_VPTR(iterator) iteratorLinear = {
-	{ iterUnref },
+	{ iterUnref, iterRef },
 	iterGet,
 	iterAdvance,
 	iterReset

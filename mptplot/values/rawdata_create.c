@@ -16,7 +16,7 @@ struct RawData
 	size_t act, max;
 };
 
-static void rdUnref(MPT_INTERFACE(unrefable) *ptr)
+static void rdUnref(MPT_INTERFACE(reference) *ptr)
 {
 	struct RawData *rd = (void *) ptr;
 	MPT_STRUCT(buffer) *buf;
@@ -32,6 +32,11 @@ static void rdUnref(MPT_INTERFACE(unrefable) *ptr)
 	}
 	rd->gen._vptr = 0;
 	free(rd);
+}
+static uintptr_t rdRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t pos, size_t len, int nc)
 {
@@ -176,7 +181,7 @@ static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 }
 
 static const MPT_INTERFACE_VPTR(rawdata) _vptr = {
-	{ rdUnref },
+	{ rdUnref, rdRef },
 	rdModify, rdAdvance,
 	rdValues, rdDimensions, rdStages
 };

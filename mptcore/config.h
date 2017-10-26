@@ -69,7 +69,7 @@ MPT_STRUCT(path)
 };
 
 #if defined(__cplusplus)
-MPT_INTERFACE(config) : public unrefable
+MPT_INTERFACE(config) : public reference
 {
 public:
 	virtual const metatype *query(const path *) const = 0;
@@ -88,7 +88,7 @@ protected:
 #else
 MPT_INTERFACE(config);
 MPT_INTERFACE_VPTR(config) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	const MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);

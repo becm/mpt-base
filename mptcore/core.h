@@ -333,25 +333,28 @@ protected:
 
 /* basic unref interface */
 #ifdef __cplusplus
-MPT_INTERFACE(unrefable)
+MPT_INTERFACE(reference)
 {
+protected:
+	inline ~reference() { }
 public:
 	virtual void unref() = 0;
-protected:
-	inline ~unrefable() { }
+	virtual uintptr_t addref();
 };
 #else
-MPT_INTERFACE(unrefable);
-MPT_INTERFACE_VPTR(unrefable)
+MPT_INTERFACE(reference);
+MPT_INTERFACE_VPTR(reference)
 {
-	void (*unref)(MPT_INTERFACE(unrefable) *);
-}; MPT_INTERFACE(unrefable) {
-	const MPT_INTERFACE_VPTR(unrefable) *_vptr;
+	void (*unref)(MPT_INTERFACE(reference) *);
+	uintptr_t (*addref)(MPT_INTERFACE(reference) *);
+}; MPT_INTERFACE(reference) {
+	const MPT_INTERFACE_VPTR(reference) *_vptr;
 };
 #endif
 
 #ifdef __cplusplus
-class Transform;
+inline uintptr_t reference::addref()
+{ return 0; }
 
 extern int convert(const void **, int , void *, int);
 
@@ -470,7 +473,7 @@ protected:
 
 /*! interface to send data */
 #ifdef __cplusplus
-MPT_INTERFACE(logger) : public unrefable
+MPT_INTERFACE(logger) : public reference
 {
 protected:
 	inline ~logger() {}
@@ -514,7 +517,7 @@ enum MPT_ENUM(LogFlags)
 #else
 MPT_INTERFACE(logger);
 MPT_INTERFACE_VPTR(logger) {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	int (*log)(MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;

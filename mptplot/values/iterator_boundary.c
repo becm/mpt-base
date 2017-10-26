@@ -22,9 +22,14 @@ struct _iter_bdata
 	         pos;
 };
 
-static void iterBoundaryUnref(MPT_INTERFACE(unrefable) *ref)
+static void iterBoundaryUnref(MPT_INTERFACE(reference) *ref)
 {
 	free(ref);
+}
+static uintptr_t iterBoundaryRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 0;
 }
 static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
 {
@@ -87,7 +92,7 @@ static int iterBoundaryReset(MPT_INTERFACE(iterator) *it)
 	return d->elem;
 }
 static const MPT_INTERFACE_VPTR(iterator) iteratorBoundary = {
-	{ iterBoundaryUnref },
+	{ iterBoundaryUnref, iterBoundaryRef },
 	iterBoundaryGet,
 	iterBoundaryAdvance,
 	iterBoundaryReset

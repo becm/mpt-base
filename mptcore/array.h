@@ -23,16 +23,16 @@ MPT_INTERFACE(metatype);
 
 /*! header for data segment */
 #ifdef __cplusplus
-MPT_STRUCT(buffer) : public unrefable
+MPT_STRUCT(buffer) : public reference
 {
 public:
 	enum { Type = TypeBuffer };
 	
 	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
 	virtual buffer *detach(long capacity = -1) = 0;
 	virtual int content() const = 0;
 	
-	uintptr_t addref();
 	bool shared() const;
 	size_t left() const;
 protected:
@@ -43,7 +43,7 @@ protected:
 MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
 {
-	MPT_INTERFACE_VPTR(unrefable) ref;
+	MPT_INTERFACE_VPTR(reference) ref;
 	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, long);
 	int (*content)(const MPT_STRUCT(buffer) *);
 }; MPT_STRUCT(buffer)

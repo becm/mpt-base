@@ -29,12 +29,17 @@ static MPT_STRUCT(buffer) *valfmtCreate(long len)
 	return b;
 }
 
-static void valfmtUnref(MPT_INTERFACE(unrefable) *ref)
+static void valfmtUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *b = (void *) ref;
 	if (!mpt_refcount_lower(&b->_ref)) {
 		free(b);
 	}
+}
+static uintptr_t valfmtRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(buffer) *b = (void *) ref;
+	return mpt_refcount_raise(&b->_ref);
 }
 static MPT_STRUCT(buffer) *valfmtDetach(MPT_STRUCT(buffer) *b, long len)
 {
@@ -79,7 +84,7 @@ static int valfmtType(const MPT_STRUCT(buffer) *b)
 	return MPT_ENUM(TypeValFmt);
 }
 static MPT_INTERFACE_VPTR(buffer) valfmtCtl = {
-	{ valfmtUnref },
+	{ valfmtUnref, valfmtRef },
 	valfmtDetach,
 	valfmtType
 };
