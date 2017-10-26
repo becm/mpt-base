@@ -61,7 +61,7 @@ static const MPT_INTERFACE_VPTR(reply_context) _mpt_stream_reply_context = {
 	streamReply,
 	streamDefer
 };
-
+/* reference interface */
 static void streamUnref(MPT_INTERFACE(reference) *ref)
 {
 	struct streamInput *srm = (void *) ref;
@@ -73,6 +73,32 @@ static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
+/* metatype interface */
+static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	struct streamInput *srm = (void *) mt;
+	
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeInput), MPT_ENUM(TypeSocket), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return MPT_ENUM(TypeInput);
+	}
+	if (type == MPT_ENUM(TypeInput)) {
+		if (ptr) *((const void **) ptr) = &srm->_in;
+		return MPT_ENUM(TypeSocket);
+	}
+	if (type == MPT_ENUM(TypeSocket)) {
+		if (ptr) *((int *) ptr) = _mpt_stream_fread(&srm->data._info);
+		return MPT_ENUM(TypeInput);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *streamClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* input interface */
 static int streamNext(MPT_INTERFACE(input) *in, int what)
 {
 	struct streamInput *srm = (void *) in;
@@ -185,17 +211,11 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	sw.arg = arg;
 	return mpt_stream_dispatch(&srm->data, streamMessage, &sw);
 }
-static int streamFile(MPT_INTERFACE(input) *in)
-{
-	struct streamInput *srm = (void *) in;
-	return _mpt_stream_fread(&srm->data._info);
-}
 
 static const MPT_INTERFACE_VPTR(input) streamCtl = {
-	{ streamUnref, streamRef },
+        { { streamUnref, streamRef }, streamConv, streamClone },
 	streamNext,
-	streamDispatch,
-	streamFile
+	streamDispatch
 };
 
 /*!

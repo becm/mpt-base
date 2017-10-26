@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "meta.h"
 #include "convert.h"
 
 #include "stream.h"
@@ -20,14 +21,15 @@
 
 struct socketInput {
 	MPT_INTERFACE(input) _in;
-	MPT_STRUCT(socket)    sock;
-	MPT_STRUCT(notify)   *no;
+	MPT_STRUCT(socket)  sock;
+	MPT_STRUCT(notify) *no;
 	int nl;
 };
 
-static void socketUnref(MPT_INTERFACE(reference) *in)
+/* reference interface */
+static void socketUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct socketInput *sd = (void *) in;
+	struct socketInput *sd = (void *) ref;
 	mpt_bind(&sd->sock, 0, 0, 0);
 	free(sd);
 }
@@ -36,6 +38,33 @@ static uintptr_t socketRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
+/* metatype interface */
+static int socketConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	struct socketInput *sd = (void *) mt;
+	int me = MPT_ENUM(TypeInput);
+	
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return me;
+	}
+	if (type == me || type == MPT_ENUM(TypeMeta)) {
+		if (ptr) *((void **) ptr) = &sd->_in;
+		return MPT_ENUM(TypeSocket);
+	}
+	if (type == MPT_ENUM(TypeSocket)) {
+		if (ptr) *((int *) ptr) = sd->sock._id;
+		return me;
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *socketClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* input interface */
 static int socketNext(MPT_INTERFACE(input) *in, int what)
 {
 	static int flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
@@ -53,7 +82,7 @@ static int socketNext(MPT_INTERFACE(input) *in, int what)
 		return -1;
 	}
 	if (mpt_notify_add(sd->no, POLLIN, srm) < 0) {
-		srm->_vptr->ref.unref((void *) srm);
+		srm->_vptr->meta.ref.unref((void *) srm);
 		return -1;
 	}
 	/* single connection mode */
@@ -67,19 +96,8 @@ static int socketDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	(void) in;
 	(void) cmd;
 	(void) arg;
-	return -1;
+	return MPT_ERROR(BadOperation);
 }
-static int socketFile(MPT_INTERFACE(input) *in)
-{
-	struct socketInput *sd = (void *) in;
-	return sd->sock._id;
-}
-static const MPT_INTERFACE_VPTR(input) socketInput = {
-	{ socketUnref, socketRef },
-	socketNext,
-	socketDispatch,
-	socketFile
-};
 
 /*!
  * \ingroup mptNotify
@@ -95,6 +113,14 @@ static const MPT_INTERFACE_VPTR(input) socketInput = {
  */
 extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 {
+	static const MPT_INTERFACE_VPTR(input) socketInput = {
+		{ { socketUnref, socketRef },
+		  socketConv,
+		  socketClone
+		},
+		socketNext,
+		socketDispatch
+	};
 	MPT_STRUCT(fdmode) mode;
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	struct socketInput *in;
@@ -130,7 +156,7 @@ extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 	in->no = no;
 	in->nl = nl;
 	
-	if ((type = mpt_notify_add(no, POLLIN, &in->_in)) >= 0) {
+	if ((type = mpt_notify_add(no, POLLIN, (void *) in)) >= 0) {
 		return port;
 	}
 	close(sock._id);

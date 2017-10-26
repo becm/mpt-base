@@ -3,6 +3,7 @@
  */
 
 #include <inttypes.h>
+#include <poll.h>
 
 #if defined(__linux__)
 # include <sys/epoll.h>
@@ -27,35 +28,34 @@
  * 
  * \return output descriptor
  */
-extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt, const MPT_STRUCT(value) *val)
+extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next, const MPT_STRUCT(value) *val)
 {
-	MPT_INTERFACE(input) *in, *old, **slot;
+	MPT_INTERFACE(input) *in, **slot;
 	MPT_INTERFACE(object) *obj;
 	MPT_STRUCT(buffer) *buf;
-	int ret, fd = -1;
+	int ret, fdold, fdnew, len;
 	
-	if (!(buf = no->_slot._buf)) {
-		return MPT_ERROR(BadArgument);
-	}
-	in = 0;
-	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeInput), &in)) < 0
-	    || !in) {
+	fdold = -1;
+	if ((ret = next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeSocket), &fdold)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	obj = 0;
-	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj)) < 0
+	if ((ret = next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeObject), &obj)) < 0
 	    || !obj) {
 		return MPT_ERROR(BadArgument);
 	}
-	if ((fd = in->_vptr->_file(in)) < 0) {
-		return MPT_ERROR(BadArgument);
+	/* get old slot pointer */
+	in = 0;
+	len = 0;
+	slot = 0;
+	if (fdold >= 0
+	    && (buf = no->_slot._buf)
+	    && (len = buf->_used / sizeof(*slot))
+	    && len > fdold) {
+		slot = (void *) (buf + 1);
+		in = slot[fdold];
 	}
-	slot = (void *) (buf + 1);
-	
-	if ((buf->_used / sizeof(*slot)) < (size_t) fd
-	    || in != slot[fd]) {
-		return MPT_ERROR(BadValue);
-	}
+	/* assign new target */
 	if (!val) {
 		ret = obj->_vptr->setProperty(obj, 0, 0);
 	} else if (!val->fmt) {
@@ -64,54 +64,36 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(metatype) *mt
 		MPT_STRUCT(value) tmp = *val;
 		ret = mpt_object_set_value(obj, 0, &tmp);
 	}
-	if (ret < 0) {
-		return ret;
+	/* get new descriptor */
+	fdnew = -1;
+	next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeSocket), &fdnew);
+	
+	/* distinct instances */
+	if (next != in) {
+		if (fdnew < 0) {
+			return 0;
+		}
+		/* need separate reference */
+		if (!(next->_vptr->meta.ref.addref((void *) next))) {
+			return MPT_ERROR(BadOperation);
+		}
 	}
-	if ((ret = in->_vptr->_file(in)) < 0) {
-		mpt_notify_clear(no, fd);
+	/* no change in position */
+	else if (fdnew == fdold) {
 		return 0;
 	}
-	/* same descriptor */
-	if (ret == fd) {
-		return 0;
+	/* detach reference from old slot */
+	else if (in) {
+		slot[fdold] = 0;
+		if (fdold >= 0) {
+			mpt_notify_clear(no, fdold);
+		}
 	}
-	/* unable to reserve new space */
-	if (!(slot = mpt_array_slice(&no->_slot, ret * sizeof(*slot), sizeof(*slot)))) {
-		mpt_notify_clear(no, fd);
+	/* move reference to notifier */
+	if (mpt_notify_add(no, POLLIN, next) < 0) {
+		in->_vptr->meta.ref.unref((void *) in);
 		return MPT_ERROR(BadOperation);
 	}
-	/* descriptor already removed */
-	if (!(old = slot[fd])) {
-		return 0;
-	}
-	/* target has open descriptor */
-	if ((old = slot[ret])) {
-		mpt_log(0, __func__, MPT_LOG(Warning), "%s: " PRIxPTR "-> %d",
-		        MPT_tr("replace active input slot"), no, ret);
-		old->_vptr->ref.unref((void *) old);
-	}
-#if defined(__linux)
-	if (no->_sysfd >= 0) {
-		struct epoll_event ev;
-		int err;
-		
-		ev.data.fd = fd;
-		ev.events = 0;
-		
-		if ((err = epoll_ctl(no->_sysfd, EPOLL_CTL_DEL, fd, &ev)) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Warning), "%s: " PRIxPTR "-> %d",
-			        MPT_tr("unable to remove active epoll descriptor"), no, fd);
-		}
-		ev.data.fd = ret;
-		ev.events = EPOLLIN;
-		if ((err = epoll_ctl(no->_sysfd, EPOLL_CTL_ADD, ret, &ev)) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Warning), "%s: " PRIxPTR "-> %d",
-			        MPT_tr("unable to set new epoll descriptor"), no, ret);
-		}
-	}
-#endif
-	slot[ret] = in;
-	slot[fd] = 0;
 	
-	return 2;
+	return fdold < 0 ? 1 : 2;
 }

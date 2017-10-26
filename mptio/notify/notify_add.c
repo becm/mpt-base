@@ -7,6 +7,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include "meta.h"
 #include "array.h"
 
 #include "notify.h"
@@ -15,15 +16,15 @@
 # include <sys/epoll.h>
 #endif
 
+/* reference interface */
 static void notifyDataUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
 	if (!mpt_refcount_lower(&buf->_ref)) {
-		MPT_INTERFACE(input) **base = (void *) (buf + 1);
+		MPT_INTERFACE(metatype) *curr, **base = (void *) (buf + 1);
 		size_t i, len = buf->_used / sizeof(*base);
 		for (i = 0; i < len; ++i) {
-			MPT_INTERFACE(input) *curr;
 			if ((curr = base[i])) {
 				curr->_vptr->ref.unref((void *) curr);
 				base[i] = 0;
@@ -37,6 +38,7 @@ static uintptr_t notifyDataRef(MPT_INTERFACE(reference) *ref)
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	return mpt_refcount_raise(&buf->_ref);
 }
+/* buffer interface */
 static MPT_STRUCT(buffer) *notifyDataDetach(MPT_STRUCT(buffer) *buf, long len)
 {
 	/* unable to clone input references */
@@ -81,7 +83,10 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	MPT_INTERFACE(input) **base;
 	int file;
 	
-	if (!in || (file = in->_vptr->_file(in)) < 0) {
+	file = -1;
+	if (!in
+	    || in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeSocket), &file) < 0
+	    || file < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* create new buffer */
@@ -160,7 +165,7 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 			errno = EBADF;
 			return -2;
 		}
-		curr->_vptr->ref.unref((void *) curr);
+		curr->_vptr->meta.ref.unref((void *) curr);
 		*base = 0;
 		if ((buf = no->_wait._buf)) {
 			size_t i, len = buf->_used / sizeof(*base);

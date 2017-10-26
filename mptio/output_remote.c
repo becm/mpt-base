@@ -23,11 +23,10 @@
 #include "notify.h"
 
 MPT_STRUCT(out_data) {
-	MPT_INTERFACE(metatype) _mt;
-	MPT_INTERFACE(output)   _out;
-	MPT_INTERFACE(input)    _in;
+	MPT_INTERFACE(input)  _in;
+	MPT_INTERFACE(output) _out;
 	
-	MPT_STRUCT(refcount) _ref;
+	MPT_STRUCT(refcount)  _ref;
 	
 	MPT_STRUCT(connection) con;
 };
@@ -43,58 +42,6 @@ static int outputInfile(const MPT_STRUCT(out_data) *od)
 	}
 	return _mpt_stream_fread(&srm->_info);
 }
-/* metatype interface */
-static void outputMetaUnref(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(out_data) *od = (void *) ref;
-	uintptr_t c;
-	if ((c = mpt_refcount_lower(&od->_ref))) {
-		return;
-	}
-	mpt_connection_fini(&od->con);
-	free(od);
-}
-static uintptr_t outputMetaRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(out_data) *od = (void *) ref;
-	return mpt_refcount_raise(&od->_ref);
-}
-static int outputMetaConv(const MPT_INTERFACE(metatype) *mt, int type, void *addr)
-{
-	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	const void *ptr;
-	
-	if (type == MPT_ENUM(TypeSocket)) {
-		int fd = outputInfile(od);
-		if (addr) {
-			*((int *) addr) = fd;
-		}
-		return type;
-	}
-	switch (type) {
-	  case 0: ptr = (void *) fmt; type = MPT_ENUM(TypeOutput); break;
-	  case MPT_ENUM(TypeMeta): ptr = &od->_mt; break;
-	  case MPT_ENUM(TypeInput): ptr = &od->_in; break;
-	  case MPT_ENUM(TypeObject): ptr = &od->_out; break;
-	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
-	  default: return MPT_ERROR(BadType);
-	}
-	if (addr) {
-		*((const void **) addr) = ptr;
-	}
-	return type;
-}
-static MPT_INTERFACE(metatype) *outputMetaClone(const MPT_INTERFACE(metatype) *from)
-{
-	(void) from;
-	return 0;
-}
-static const MPT_INTERFACE_VPTR(metatype) metaCtl = {
-	{ outputMetaUnref, outputMetaRef },
-	outputMetaConv,
-	outputMetaClone
-};
 /* object interface */
 static void outputUnref(MPT_INTERFACE(reference) *obj)
 {
@@ -264,7 +211,7 @@ static const MPT_INTERFACE_VPTR(output) outCtl = {
 	outputSync,
 	outputAwait
 };
-/* input interface */
+/* reference interface */
 static void outputInputUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
@@ -275,6 +222,39 @@ static uintptr_t outputInputRef(MPT_INTERFACE(reference) *ref)
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
 	return mpt_refcount_raise(&od->_ref);
 }
+/* metatype interface */
+static int outputInputConv(const MPT_INTERFACE(metatype) *mt, int type, void *addr)
+{
+	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), MPT_ENUM(TypeInput), 0 };
+	MPT_STRUCT(out_data) *od = (void *) mt;
+	const void *ptr;
+	
+	if (type == MPT_ENUM(TypeSocket)) {
+		int fd = outputInfile(od);
+		if (addr) {
+			*((int *) addr) = fd;
+		}
+		return type;
+	}
+	switch (type) {
+	  case 0: ptr = (void *) fmt; type = MPT_ENUM(TypeOutput); break;
+	  case MPT_ENUM(TypeMeta): ptr = &od->_in; break;
+	  case MPT_ENUM(TypeInput): ptr = &od->_in; break;
+	  case MPT_ENUM(TypeObject): ptr = &od->_out; break;
+	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
+	  default: return MPT_ERROR(BadType);
+	}
+	if (addr) {
+		*((const void **) addr) = ptr;
+	}
+	return type;
+}
+static MPT_INTERFACE(metatype) *outputInputClone(const MPT_INTERFACE(metatype) *from)
+{
+	(void) from;
+	return 0;
+}
+/* input interface */
 static int outputInputNext(MPT_INTERFACE(input) *in, int what)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
@@ -342,16 +322,10 @@ static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) 
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	return mpt_connection_dispatch(&od->con, cmd, arg);
 }
-static int outputInputFile(MPT_INTERFACE(input) *in)
-{
-	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
-	return outputInfile(od);
-}
 const MPT_INTERFACE_VPTR(input) inputCtl = {
-	{ outputInputUnref, outputInputRef },
+	{ { outputInputUnref, outputInputRef }, outputInputConv, outputInputClone },
 	outputInputNext,
-	outputInputDispatch,
-	outputInputFile
+	outputInputDispatch
 };
 
 /*!
@@ -364,10 +338,10 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
  * 
  * \return remote output metatype
  */
-extern MPT_INTERFACE(metatype) *mpt_output_remote()
+extern MPT_INTERFACE(input) *mpt_output_remote()
 {
 	static const MPT_STRUCT(out_data) defOut = {
-		{ &metaCtl }, { &outCtl }, { &inputCtl },
+		{ &inputCtl }, { &outCtl },
 		{ 1 },
 		MPT_CONNECTION_INIT
 	};
@@ -380,5 +354,5 @@ extern MPT_INTERFACE(metatype) *mpt_output_remote()
 	
 	od->con.out.state = MPT_OUTFLAG(PrintColor);
 	
-	return &od->_mt;
+	return &od->_in;
 }

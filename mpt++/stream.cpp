@@ -91,13 +91,18 @@ int Stream::conv(int type, void *ptr) const
 {
     static const char fmt[] = { output::Type, input::Type, IODevice::Type, 0 };
     const void *addr = 0;
-    Stream *srm = const_cast<Stream *>(this);
+    
+    if (type == socket::Type) {
+        if (ptr) *((int *) ptr) = _inputFile;
+        return input::Type;
+    }
+    
     switch (type) {
       case 0: addr = fmt; type = Type; break;
-      case metatype::Type: addr = static_cast<metatype *>(srm); break;
-      case output::Type: addr = static_cast<output *>(srm); break;
-      case input::Type: addr = static_cast<input *>(srm); break;
-      case IODevice::Type: addr = static_cast<IODevice *>(srm); break;
+      case metatype::Type: addr = static_cast<const metatype *>(this); break;
+      case output::Type: addr = static_cast<const output *>(this); break;
+      case input::Type: addr = static_cast<const input *>(this); break;
+      case IODevice::Type: addr = static_cast<const IODevice *>(this); break;
       default: return BadType;
     }
     if (ptr) *reinterpret_cast<const void **>(ptr) = addr;
@@ -174,7 +179,9 @@ bool Stream::open(const char *dest, const char *type)
 {
     if (_inputFile >= 0) return false;
     if (!_srm) _srm = new stream;
-    return mpt_stream_open(_srm, dest, type) < 0 ? false : true;
+    if (mpt_stream_open(_srm, dest, type) < 0) return false;
+    _inputFile = _mpt_stream_fread(&_srm->_info);
+    return true;
 }
 bool Stream::open(void *base, size_t len, int mode)
 {
@@ -324,19 +331,6 @@ int Stream::dispatch(EventHandler cmd, void *arg)
     }
     class Dispatch sd(*this, cmd, arg);
     return mpt_stream_dispatch(_srm, streamDispatch, &sd);
-}
-int Stream::_file()
-{
-    if (_inputFile >= 0) {
-        return _inputFile;
-    }
-    if (!_srm) {
-        return BadArgument;
-    }
-    if ((_inputFile = _mpt_stream_fread(&_srm->_info)) >= 0) {
-        return _inputFile;
-    }
-    return _inputFile = _mpt_stream_fwrite(&_srm->_info);
 }
 
 ssize_t Stream::push(size_t len, const void *src)

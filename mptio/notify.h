@@ -6,30 +6,28 @@
 #ifndef _MPT_NOTIFY_H
 #define _MPT_NOTIFY_H  @INTERFACE_VERSION@
 
-#include "array.h"
+#include "meta.h"
 #include "event.h"
 
 __MPT_NAMESPACE_BEGIN
 
 #ifdef __cplusplus
-MPT_INTERFACE(input) : public reference
+MPT_INTERFACE(input) : public metatype
 {
 public:
 	enum { Type = TypeInput };
 	
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
-	virtual int _file();
 protected:
 	inline ~input() { }
 };
 # else
 MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
-	MPT_INTERFACE_VPTR(reference) ref;
+	MPT_INTERFACE_VPTR(metatype) meta;
 	int (*next)(MPT_INTERFACE(input) *, int);
 	int (*dispatch)(MPT_INTERFACE(input) *, MPT_TYPE(EventHandler) , void *);
-	int (*_file)(MPT_INTERFACE(input) *);
 }; MPT_INTERFACE(input) {
 	const MPT_INTERFACE_VPTR(input) *_vptr;
 };

@@ -20,8 +20,6 @@ int input::dispatch(EventHandler cmd, void *arg)
     event ev;
     return cmd(arg, &ev);
 }
-int input::_file()
-{ return -1; }
 
 // notifier operations
 notify::notify() : _sysfd(-1), _fdused(0)

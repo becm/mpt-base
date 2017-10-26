@@ -237,7 +237,7 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , cons
 extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
 
 /* create remote output instance */
-extern MPT_INTERFACE(metatype) *mpt_output_remote(void);
+extern MPT_INTERFACE(input) *mpt_output_remote(void);
 /* create local output instance */
 extern MPT_INTERFACE(output) *mpt_output_local(void);
 

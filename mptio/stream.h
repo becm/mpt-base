@@ -200,7 +200,7 @@ public:
 	Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
 };
 
-class Stream : public metatype, public output, public input, public IODevice
+class Stream : public input, public output, public IODevice
 {
 public:
 	Stream(const streaminfo * = 0);
@@ -221,7 +221,6 @@ public:
 	
 	int next(int) __MPT_OVERRIDE;
 	int dispatch(EventHandler , void *) __MPT_OVERRIDE;
-	int _file() __MPT_OVERRIDE;
 	
 	ssize_t write(size_t , const void *, size_t part = 1) __MPT_OVERRIDE;
 	ssize_t read(size_t , void *, size_t part = 1) __MPT_OVERRIDE;

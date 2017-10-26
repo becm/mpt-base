@@ -208,7 +208,7 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		}
 		else if ((lv = mpt_notify_add(no, POLLIN, in)) < 0) {
 			mpt_notify_fini(no);
-			in->_vptr->ref.unref((void *) in);
+			in->_vptr->meta.ref.unref((void *) in);
 			return lv;
 		}
 		/* detach regular input to avoid confusion */
