@@ -9,27 +9,60 @@
 
 #include "config.h"
 
-struct configRoot
-{
-	MPT_INTERFACE(config) cfg;
-	MPT_STRUCT(path)      base;
+MPT_STRUCT(configRoot) {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(config)   _cfg;
+	MPT_STRUCT(path)  base;
 };
 
-static void configUnref(MPT_INTERFACE(reference) *cfg)
+/* reference interface */
+static void configUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct configRoot *c = (void *) cfg;
-	if (c->base.len) {
-		free(c);
-	}
+	MPT_STRUCT(configRoot) *c = (void *) ref;
+	free(c);
 }
-static uintptr_t configRef(MPT_INTERFACE(reference) *cfg)
+static uintptr_t configRef(MPT_INTERFACE(reference) *ref)
 {
-	(void) cfg;
+	(void) ref;
 	return 0;
 }
+/* special operations for static global instance */
+static void configNoUnref(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+}
+static uintptr_t configNoRef(MPT_INTERFACE(reference) *ref)
+{
+	(void) ref;
+	return 1;
+}
+/* metatype interface */
+static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	if (!type) {
+		if (ptr) {
+			static const char fmt[] = { MPT_ENUM(TypeConfig) };
+			*((const char **) ptr) = fmt;
+		}
+		return MPT_ENUM(TypeConfig);
+	}
+	if (type == MPT_ENUM(TypeConfig)) {
+		if (ptr) {
+			*((void **) ptr) = (void *) (mt + 1);
+		}
+		return MPT_ENUM(TypeConfig);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *configClone(const MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(configRoot) *c = (void *) mt;
+	return mpt_config_global(&c->base);
+}
+/* config interface */
 static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
-	struct configRoot *c = (void *) cfg;
+	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_STRUCT(node) *n;
 	MPT_STRUCT(path) p;
 	const char *base;
@@ -77,7 +110,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 }
 static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
-	struct configRoot *c = (void *) cfg;
+	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_INTERFACE(metatype) *mt;
 	MPT_STRUCT(node) *n ,*b, *r;
 	
@@ -125,7 +158,7 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 }
 static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
-	struct configRoot *c = (void *) cfg;
+	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_STRUCT(path) p;
 	MPT_STRUCT(node) *b;
 	
@@ -154,12 +187,6 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	mpt_node_destroy(b);
 	return 1;
 }
-static const MPT_INTERFACE_VPTR(config) configGlobal = {
-	{ configUnref, configRef },
-	configQuery,
-	configAssign,
-	configRemove
-};
 
 /*!
  * \ingroup mptConfig
@@ -171,15 +198,34 @@ static const MPT_INTERFACE_VPTR(config) configGlobal = {
  * 
  * \return config node if exists
  */
-extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *path)
+extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 {
-	struct configRoot *c;
+	static const MPT_INTERFACE_VPTR(metatype) configMeta = {
+		{ configUnref, configRef },
+		configConv,
+		configClone
+	};
+	static const MPT_INTERFACE_VPTR(config) configCfg = {
+		configQuery,
+		configAssign,
+		configRemove
+	};
+	MPT_STRUCT(configRoot) *c;
 	MPT_STRUCT(path) p;
 	MPT_STRUCT(node) *n;
 	
 	if (!path) {
-		static struct configRoot global = { { &configGlobal }, MPT_PATH_INIT };
-		return &global.cfg;
+		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
+			{ configNoUnref, configNoRef },
+			configConv,
+			configClone,
+		};
+		static MPT_STRUCT(configRoot) global = {
+			{ &configMeta },
+			{ &configCfg },
+			MPT_PATH_INIT
+		};
+		return &global._mt;
 	}
 	/* missing path information */
 	if (!path->len) {
@@ -203,12 +249,13 @@ extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *path)
 	if (!(c = malloc(sizeof(*c) + path->len))) {
 		return 0;
 	}
-	c->cfg._vptr = &configGlobal;
+	c->_mt._vptr  = &configMeta;
+	c->_cfg._vptr = &configCfg;
 	memcpy(&c->base, path, sizeof(c->base));
 	memcpy(c + 1, path->base + path->off, path->len);
 	
 	c->base.base  = (char *) (c + 1);
 	c->base.off   = 0;
 	
-	return &c->cfg;
+	return &c->_mt;
 }

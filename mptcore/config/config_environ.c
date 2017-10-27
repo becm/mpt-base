@@ -5,7 +5,8 @@
 
 #include <fnmatch.h>
 
-#include "node.h"
+#include "meta.h"
+
 #include "config.h"
 
 extern char **environ;
@@ -35,7 +36,13 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 	
 	/* populate global config */
 	if (!conf) {
-		conf = mpt_config_global(0);
+		MPT_INTERFACE(metatype) *mt;
+		
+		if (!(mt = mpt_config_global(0))
+		    || (mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &conf) < 0)
+		    || !conf) {
+			return MPT_ERROR(BadOperation);
+		}
 	}
 	/* (re)evaluate environment */
 	while ((var = *(env++))) {

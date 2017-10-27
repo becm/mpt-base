@@ -1,5 +1,6 @@
 
-#include "node.h"
+#include "meta.h"
+
 #include "config.h"
 
 /*!
@@ -18,8 +19,14 @@ extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	
-	if (!conf && !(conf = mpt_config_global(0))) {
-		return 0;
+	if (!conf) {
+		MPT_INTERFACE(metatype) *mt;
+		
+		if (!(mt = mpt_config_global(0))
+		    || (mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &conf) < 0)
+		    || !conf) {
+			return 0;
+		}
 	}
 	if (dest) {
 		p.sep = sep;

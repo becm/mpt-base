@@ -69,9 +69,11 @@ MPT_STRUCT(path)
 };
 
 #if defined(__cplusplus)
-MPT_INTERFACE(config) : public reference
+MPT_INTERFACE(config)
 {
 public:
+	enum { Type = TypeConfig };
+	
 	virtual const metatype *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
@@ -81,14 +83,13 @@ public:
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	const metatype *get(const char *path, int sep = '.', int len = -1);
 	
-	static config *global(const path * = 0);
+	static metatype *global(const path * = 0);
 protected:
 	inline ~config() { }
 };
 #else
 MPT_INTERFACE(config);
 MPT_INTERFACE_VPTR(config) {
-	MPT_INTERFACE_VPTR(reference) ref;
 	const MPT_INTERFACE(metatype) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
@@ -111,7 +112,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *);
 /* get global config node */
 extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *);
 /* get config of global (sub-)tree */
-extern MPT_INTERFACE(config) *mpt_config_global(const MPT_STRUCT(path) *);
+extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *);
 
 extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 /* use node to store environment */
@@ -155,40 +156,39 @@ __MPT_EXTDECL_END
 #if defined(__cplusplus)
 inline bool path::empty() const
 {
-    return len == 0;
+	return len == 0;
 }
 inline Slice<const char> path::value() const
 {
-    return Slice<const char>(base + off, len);
+	return Slice<const char>(base + off, len);
 }
-
+/* config with private element store */
 class Config : public config
 {
 public:
-    Config();
-    virtual ~Config();
-    
-    void unref() __MPT_OVERRIDE;
-    const metatype *query(const path *) const __MPT_OVERRIDE;
-    int assign(const path *, const value * = 0) __MPT_OVERRIDE;
-    int remove(const path *) __MPT_OVERRIDE;
-    class Element;
-    
+	Config();
+	virtual ~Config();
+	
+	virtual void unref();
+	
+	const metatype *query(const path *) const __MPT_OVERRIDE;
+	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
+	int remove(const path *) __MPT_OVERRIDE;
+	class Element;
 protected:
-    static Element *getElement(const UniqueArray<Element> &, path &);
-    static Element *makeElement(UniqueArray<Element> &, path &);
-    UniqueArray<Element> _sub;
+	static Element *getElement(const UniqueArray<Element> &, path &);
+	static Element *makeElement(UniqueArray<Element> &, path &);
+	UniqueArray<Element> _sub;
 };
-
-class Config::Element : public UniqueArray<Config::Element>, public Reference<metatype>, public identifier
+class Config::Element : public UniqueArray<Config::Element>, public Item<metatype>
 {
 public:
-    inline bool unused()
-    {
-        return _len == 0;
-    }
+	inline bool unused()
+	{
+		return _len == 0;
+	}
 private:
-    Element & operator =(const Element &from);
+	Element & operator =(const Element &from);
 };
 #endif
 

@@ -6,52 +6,43 @@
 #ifndef _MPT_CLIENT_H
 #define _MPT_CLIENT_H  @INTERFACE_VERSION@
 
-#include "config.h"
-
-#ifdef __cplusplus
-# include "meta.h"
-# include "output.h"
-#endif
+#include "meta.h"
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_INTERFACE(output);
-
-MPT_STRUCT(node);
 MPT_STRUCT(event);
-MPT_STRUCT(message);
 MPT_STRUCT(dispatch);
 
+MPT_INTERFACE(config);
 MPT_INTERFACE(object);
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+MPT_INTERFACE(client) : public metatype
+{
+public:
+	/* metatype interface */
+	int conv(int , void *) const __MPT_OVERRIDE;
+	
+	/* client extensions */
+	virtual int init(iterator * = 0);
+	virtual int step(iterator * = 0) = 0;
+	
+	static class config &config();
+	
+	enum { LogStatus = logger::Debug2 };
+};
+#else
+# define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)
 MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
-	MPT_INTERFACE_VPTR(config) cfg;
+	MPT_INTERFACE_VPTR(metatype) meta;
 	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
 	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
-};
-# define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)
-MPT_INTERFACE(client)
-{
+}; MPT_INTERFACE(client) {
 	const MPT_INTERFACE_VPTR(client) *_vptr;
-#else
-MPT_INTERFACE(client) : public config
-{
-public:
-	enum { LogStatus = logger::Debug2 };
-	
-	const metatype *query(const path *) const __MPT_OVERRIDE;
-	int assign(const path *, const value *) __MPT_OVERRIDE;
-	int remove(const path *) __MPT_OVERRIDE;
-	
-	virtual int init(iterator * = 0);
-	virtual int step(iterator * = 0) = 0;
-protected:
-	inline ~client() { }
-#endif
 };
+#endif
 
 MPT_STRUCT(libhandle)
 {
@@ -102,11 +93,8 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *, MPT_STRUCT(event) *);
 
 /* register events on notifier */
 extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
-
-/* set client output */
-extern MPT_INTERFACE(output) *mpt_client_output(MPT_INTERFACE(client) *, MPT_INTERFACE(output) * const *);
-/* set/create client logger */
-extern MPT_INTERFACE(logger) *mpt_client_logger(MPT_INTERFACE(client) *, MPT_INTERFACE(object) *);
+/* get client id */
+extern int mpt_client_typeid();
 
 
 /* open/close library descriptor */

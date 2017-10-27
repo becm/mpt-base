@@ -14,6 +14,7 @@
 #include <poll.h>
 
 #include "meta.h"
+#include "config.h"
 #include "convert.h"
 #include "parse.h"
 #include "node.h"

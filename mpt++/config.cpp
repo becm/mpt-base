@@ -104,11 +104,12 @@ int config::environ(const char *glob, int sep, char * const env[])
 {
     return mpt_config_environ(this, glob, sep, env);
 }
-config *config::global(const path *p)
+metatype *config::global(const path *p)
 {
     return mpt_config_global(p);
 }
-// config with private or global node store
+
+// config with private element store
 Config::Config()
 { }
 Config::~Config()
@@ -117,6 +118,7 @@ void Config::unref()
 {
     delete this;
 }
+// private element access
 Config::Element *Config::getElement(const UniqueArray<Config::Element> &arr, path &p)
 {
     const Slice<const char> name = p.value();
@@ -170,6 +172,7 @@ Config::Element *Config::makeElement(UniqueArray<Config::Element> &arr, path &p)
 
     return p.empty() ? unused : makeElement(*unused, p);
 }
+// config interface
 int Config::assign(const path *dest, const value *val)
 {
     // no 'self' element(s)

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "message.h"
+#include "config.h"
 #include "event.h"
 
 #include "meta.h"
@@ -55,7 +56,7 @@ static int clientClose(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	if (!ev) {
-		cl->_vptr->cfg.ref.unref((void *) cl);
+		cl->_vptr->meta.ref.unref((void *) cl);
 		return 0;
 	}
 	if (ev->msg) {
@@ -96,6 +97,7 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 	if (!ev) {
 		return 0;
 	}
+	id = mpt_hash(cmd, strlen(cmd));
 	if (ev->msg) {
 		MPT_INTERFACE(metatype) *src;
 		MPT_INTERFACE(iterator) *it;
@@ -113,12 +115,11 @@ static int clientCont(void *ptr, MPT_STRUCT(event) *ev)
 		    && (ret = it->_vptr->advance(it)) >= 0
 		    && (ret = it->_vptr->get(it, 's', &next)) > 0
 		    && next) {
-			cmd = next;
+			id = mpt_hash(next, strlen(next));
 		}
 		src->_vptr->ref.unref((void *) src);
 	}
-	id = mpt_hash(cmd, strlen(cmd));
-	
+	/* require registered id as default */
 	if (!mpt_command_get(&d->_d, id)) {
 		mpt_context_reply(ev->reply, MPT_ERROR(BadValue), "%s (%" PRIxPTR ")",
 		                  MPT_tr("invalid default command id"), id);

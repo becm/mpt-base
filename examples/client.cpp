@@ -34,17 +34,25 @@ public:
     int init(mpt::iterator * = 0) __MPT_OVERRIDE;
     int step(mpt::iterator *) __MPT_OVERRIDE;
     
-    const char *enc;
+    template<typename T>
+    T *cast()
+    {
+        return proxy::cast<T>();
+    }
+protected:
+    char *enc;
 };
-MyClient::MyClient(const char *e) : enc(e)
-{ }
+MyClient::MyClient(const char *e) : enc(0)
+{
+    if (e) enc = strdup(e);
+}
 
 int MyClient::init(mpt::iterator *)
 {
     _ref = mpt::mpt_output_remote();
 
     mpt::object *o;
-    if ((o = cast<mpt::object>())) {
+    if ((o = proxy::cast<mpt::object>())) {
         o->set(0, "w:client.out");
         if (enc) o->set("encoding", enc);
         return 1;
@@ -55,7 +63,10 @@ int MyClient::step(mpt::iterator *)
 { return 0; }
 
 void MyClient::unref()
-{ delete this; }
+{
+    if (enc) free(enc);
+    delete this;
+}
 
 static int doCommand(void *, mpt::event *ev)
 {
@@ -71,7 +82,7 @@ int main(int argc, char * const argv[])
     mpt::dispatch d;
 
     int pos;
-    if ((pos = mpt::mpt_init(&n, argc, argv)) < 0) {
+    if ((pos = mpt_init(&n, argc, argv)) < 0) {
         perror("mpt init");
         return 1;
     }
@@ -86,12 +97,6 @@ int main(int argc, char * const argv[])
 
     d.set(mpt::MessageCommand, doCommand, 0);
 
-    c.set("test", "value");
-    const mpt::metatype *mt = c.get("test");
-
-    if (mt) {
-        std::cout << mt->string() << std::endl;
-    }
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     const mpt::object *o;
