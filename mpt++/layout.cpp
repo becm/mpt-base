@@ -135,6 +135,9 @@ uintptr_t Text::addref()
 int Text::conv(int type, void *ptr) const
 {
     int me = typeIdentifier();
+    if (me < 0) {
+        me = metatype::Type;
+    }
     if (!type) {
         static const char fmt[] = {
             metatype::Type, object::Type,
@@ -143,20 +146,20 @@ int Text::conv(int type, void *ptr) const
         if (ptr) *static_cast<const char **>(ptr) = fmt;
         return me;
     }
-    if (type == me) {
-        if (ptr) *static_cast<const void **>(ptr) = this;
-        return me;
-    }
     if (type == object::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const object *>(this);
+        if (ptr) *static_cast<const object **>(ptr) = this;
         return text::Type;
     }
     if (type == text::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const text *>(this);
+        if (ptr) *static_cast<const text **>(ptr) = this;
         return object::Type;
     }
     if (type == color::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = &color;
+        if (ptr) *static_cast<const struct color **>(ptr) = &color;
+        return me;
+    }
+    if (type == me) {
+        if (ptr) *static_cast<const Text **>(ptr) = this;
         return me;
     }
     return BadType;
@@ -207,6 +210,9 @@ uintptr_t Axis::addref()
 int Axis::conv(int type, void *ptr) const
 {
     int me = typeIdentifier();
+    if (me < 0) {
+        me = metatype::Type;
+    }
     if (!type) {
         static const char fmt[] = {
             metatype::Type, object::Type,
@@ -215,17 +221,21 @@ int Axis::conv(int type, void *ptr) const
         if (ptr) *static_cast<const char **>(ptr) = fmt;
         return me;
     }
-    if (type == me || type == metatype::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = this;
+    if (type == metatype::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
     if (type == object::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const object *>(this);
+        if (ptr) *static_cast<const object **>(ptr) = this;
         return axis::Type;
     }
     if (type == axis::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const axis *>(this);
+        if (ptr) *static_cast<const axis **>(ptr) = this;
         return object::Type;
+    }
+    if (type == me) {
+        if (ptr) *static_cast<const Axis **>(ptr) = this;
+        return me;
     }
     return BadType;
 }
@@ -280,6 +290,9 @@ uintptr_t World::addref()
 int World::conv(int type, void *ptr) const
 {
     int me = typeIdentifier();
+    if (me < 0) {
+        me = metatype::Type;
+    }
     if (!type) {
         static const char fmt[] = {
             metatype::Type, object::Type,
@@ -288,24 +301,28 @@ int World::conv(int type, void *ptr) const
         if (ptr) *static_cast<const char **>(ptr) = fmt;
         return me;
     }
-    if (type == me || type == metatype::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = this;
+    if (type == metatype::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
     if (type == object::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const object *>(this);
+        if (ptr) *static_cast<const object **>(ptr) = this;
         return world::Type;
     }
     if (type == world::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = static_cast<const world *>(this);
+        if (ptr) *static_cast<const world **>(ptr) = this;
         return object::Type;
     }
     if (type == color::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = &color;
+        if (ptr) *static_cast<const struct color **>(ptr) = &color;
         return me;
     }
     if (type == lineattr::Type) {
-        if (ptr) *static_cast<const void **>(ptr) = &attr;
+        if (ptr) *static_cast<const lineattr **>(ptr) = &attr;
+        return me;
+    }
+    if (type == me) {
+        if (ptr) *static_cast<const World **>(ptr) = this;
         return me;
     }
     return BadType;
@@ -353,12 +370,15 @@ uintptr_t Graph::addref()
 int Graph::conv(int type, void *ptr) const
 {
     int me = typeIdentifier();
+    if (me < 0) {
+        me = metatype::Type;
+    }
     if (!type) {
         static const char fmt[] = { metatype::Type, object::Type, graph::Type, color::Type, 0 };
         if (ptr) *static_cast<const char **>(ptr) = fmt;
         return me;
     }
-    if (type == me || type == metatype::Type) {
+    if (type == metatype::Type) {
         if (ptr) *static_cast<const Graph **>(ptr) = this;
         return me;
     }
@@ -372,6 +392,10 @@ int Graph::conv(int type, void *ptr) const
     }
     if (type == color::Type) {
         if (ptr) *static_cast<const color **>(ptr) = &fg;
+        return me;
+    }
+    if (type == me) {
+        if (ptr) *static_cast<const Graph **>(ptr) = this;
         return me;
     }
     return BadType;
