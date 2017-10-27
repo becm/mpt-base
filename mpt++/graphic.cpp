@@ -381,7 +381,7 @@ int Graphic::target(msgdest &old, message &msg, size_t len) const
 
     return match;
 }
-object *Graphic::item(message &msg, size_t len) const
+metatype *Graphic::item(message &msg, size_t len) const
 {
     message tmp = msg;
     ssize_t part;
@@ -406,6 +406,8 @@ object *Graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
+    int type = Group::typeIdentifier();
+    
     Reference<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         Layout *l;
@@ -422,12 +424,14 @@ object *Graphic::item(message &msg, size_t len) const
         else if (part != (ssize_t) strlen(id) || memcmp(id, buf, part)) {
             continue;
         }
-
+        if (type < 0) {
+            continue;
+        }
         Group *g = l;
-        object *o = l;
+        metatype *m = l;
 
         while (!term) {
-            /* get next part */
+            // get next part
             if ((part = nextPart(tmp, len)) >= 0) {
                 if (part >= (ssize_t) sizeof(buf)) {
                     return 0;
@@ -435,32 +439,34 @@ object *Graphic::item(message &msg, size_t len) const
                 mpt_message_read(&tmp, part+1, buf);
                 len -= part + 1;
             }
+            // temporary buffer insufficient
             else if (len > sizeof(buf)) {
                 return 0;
             }
+            // final part
             else {
                 mpt_message_read(&tmp, part = len, buf);
                 len = 0;
-                term = true;
+                term = false;
+                type = 0;
             }
-            // find object by name
-            reference *u;
-            if (!(u = GroupRelation(*g, 0).find(object::Type, buf, part))) {
+            // find element by type and name
+            metatype *m;
+            if (!(m = GroupRelation(*g, 0).find(type, buf, part))) {
                 return 0;
             }
-            o = static_cast<object *>(u);
             // last name part
             if (term) {
                 break;
             }
-            // need group for further path search
-            if (!(o->type() != Group::Type)) {
+            // need group for next path element
+            if (m->conv(type, &g) < 0
+                || !g) {
                 return 0;
             }
-            g = static_cast<Group *>(o);
         }
         msg = tmp;
-        return o;
+        return m;
     }
     return 0;
 }

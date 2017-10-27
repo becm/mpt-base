@@ -18,35 +18,43 @@
 
 __MPT_NAMESPACE_BEGIN
 
-
-// generic item group
+int Group::typeIdentifier()
+{
+    static int id = 0;
+    if (!id && (id = mpt_valtype_meta_new("group")) < 0) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+// object interface for group
 int Group::property(struct property *pr) const
 {
-    if (!pr) return Type;
-    return pr->name ? BadArgument : BadOperation;
+    if (!pr) {
+        return typeIdentifier();
+    }
+    if (!pr->name || *pr->name) {
+        return BadArgument;
+    }
+    pr->name = "group";
+    pr->desc = "mpt item group";
+    pr->val.fmt = 0;
+    pr->val.ptr = 0;
+    return 0;
 }
-int Group::setProperty(const char *name, const metatype *)
-{ return name ? BadArgument : BadOperation; }
-
+int Group::setProperty(const char *, const metatype *)
+{
+    return BadOperation;
+}
+// generic item group
 size_t Group::clear(const reference *)
 { return 0; }
-Item<object> *Group::append(object *)
+Item<metatype> *Group::append(metatype *)
 { return 0; }
-const Item<object> *Group::item(size_t) const
+const Item<metatype> *Group::item(size_t) const
 { return 0; }
 bool Group::bind(const Relation &, logger *)
 { return true; }
 
-void *Group::toType(int type)
-{
-    static const char types[] = { object::Type, Group::Type, 0 };
-    switch (type) {
-      case 0: return (void *) types;
-      case object::Type: return static_cast<object *>(this);
-      case Group::Type: return static_cast<object *>(this);
-      default: return 0;
-    }
-}
 bool Group::addItems(node *head, const Relation *relation, logger *out)
 {
     const char _func[] = "mpt::Group::addItems";
@@ -54,24 +62,18 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
     for (; head; head = head->next) {
         metatype *from = head->_meta;
 
-        object *obj;
-        if (from && from->conv(object::Type, &obj) > 0 && obj) {
-            Reference<object> ro;
-            if (!obj->addref()) {
-                if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("object"), obj, MPT_tr("failed to raise object reference"));
-                continue;
-            }
-            ro.setPointer(obj);
-            Item<object> *it;
-            if ((it = append(obj))) {
-                ro.detach();
+        if (from && from->addref()) {
+            Reference<metatype> m;
+            m.setPointer(from);
+            Item<metatype> *it;
+            if ((it = append(from))) {
+                m.detach();
                 it->setName(head->ident.name());
             } else {
                 if (out) out->message(_func, out->Warning, "%s %p: %s", MPT_tr("group"), this, MPT_tr("failed to add object"));
             }
             continue;
         }
-
         // name is property
         const char *name;
 
@@ -79,12 +81,16 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("node"), head, MPT_tr("bad element name"));
             return false;
         }
-
         // set property
         value val;
         if (from && (val.ptr = mpt_meta_data(from))) {
-            val.fmt = 0;
-            set(name, val, out);
+            object *obj;
+            if ((obj = from->cast<object>())) {
+                val.fmt = 0;
+                obj->set(name, val, out);
+                continue;
+            }
+            if (out) out->message(_func, out->Warning, "%s (%p): %s", name, from, MPT_tr("parent not an object"));
             continue;
         }
         // get item type
@@ -93,28 +99,26 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         val.fmt = pos = name;
         name = mpt_convert_key(&pos, 0, &len);
         if (!name || name != val.fmt || !*name) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("bad object name"), val.fmt);
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("bad element name"), val.fmt);
             continue;
         }
-
         // create item
-        if (!(obj = create(name, len))) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("invalid object type"), std::string(name, len).c_str());
+        if (!(from = create(name, len))) {
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("invalid item type"), std::string(name, len).c_str());
             continue;
         }
-
         // get item name
         name = mpt_convert_key(&pos, ":", &len);
 
         if (!name || !len) {
-            if (out) out->message(_func, out->Warning, "%s", MPT_tr("empty object name"));
-            obj->unref();
+            if (out) out->message(_func, out->Warning, "%s", MPT_tr("empty item name"));
+            from->unref();
             continue;
         }
         // name conflict on same level
-        if (GroupRelation(*this).find(obj->type(), name, len)) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("conflicting object name"), std::string(name, len).c_str());
-            obj->unref();
+        if (GroupRelation(*this).find(from->type(), name, len)) {
+            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("conflicting item name"), std::string(name, len).c_str());
+            from->unref();
             continue;
         }
         const char *ident = name;
@@ -122,11 +126,12 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
 
         // find dependant items
         while ((name = mpt_convert_key(&pos, 0, &len))) {
-            object *curr;
-            if (relation) curr = relation->find(obj->type(), name, len);
-            else curr = GroupRelation(*this).find(obj->type(), name, len);
-            if (curr) {
-                obj->setProperties(*curr, out);
+            metatype *curr;
+            if (relation) curr = relation->find(from->type(), name, len);
+            else curr = GroupRelation(*this).find(from->type(), name, len);
+            object *obj, *src;
+            if ((src = curr->cast<object>()) && (obj = from->cast<object>())) {
+                obj->setProperties(*src, out);
                 continue;
             }
             if (out) out->message(_func, out->Error, "%s: %s: %s",
@@ -134,9 +139,9 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             return false;
         }
         // add item to group
-        Item<object> *ni = append(obj);
+        Item<metatype> *ni = append(from);
         if (!ni) {
-            obj->unref();
+            from->unref();
             if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("unable add item"), std::string(ident, ilen).c_str());
             continue;
         }
@@ -146,8 +151,8 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         if (!head->children) continue;
 
         // process child items
-        if (obj->property(0) == Group::Type) {
-            Group *ig = static_cast<Group *>(obj);
+        Group *ig;
+        if ((ig = from->cast<Group>())) {
             if (!relation) {
                 if (!(ig->addItems(head->children, relation, out))) return false;
                 continue;
@@ -156,19 +161,26 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (!(ig->addItems(head->children, &rel, out))) return false;
             continue;
         }
+        object *obj;
+        if (!(obj = from->cast<object>())) {
+            continue;
+        }
         // load item properties
         for (node *sub = head->children; sub; sub = sub->next) {
             metatype *mt;
             const char *data;
 
-            if (!(mt = sub->_meta)) continue;
+            if (!(mt = sub->_meta)) {
+                continue;
+            }
             // skip invalid name
-            if (!(name = mpt_node_ident(sub)) || !*name) continue;
-
+            if (!(name = mpt_node_ident(sub)) || !*name) {
+                continue;
+            }
             // try value conversion
-            value *val;
-            if ((val = mt->cast<value>())) {
-                if (obj->set(name, *val, out)) {
+            value val;
+            if (mt->conv(value::Type, &val) >= 0) {
+                if (obj->set(name, val, out)) {
                     continue;
                 }
             }
@@ -182,7 +194,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
     }
     return true;
 }
-object *Group::create(const char *type, int nl)
+metatype *Group::create(const char *type, int nl)
 {
     if (!type || !nl) return 0;
 
@@ -220,29 +232,63 @@ object *Group::create(const char *type, int nl)
 Collection::~Collection()
 { }
 
-const Item<object> *Collection::item(size_t pos) const
+void Collection::unref()
+{
+    delete this;
+}
+int Collection::conv(int type, void *ptr) const
+{
+    int me = Group::typeIdentifier();
+    if (me < 0) {
+        me = object::Type;
+    }
+    if (!type) {
+        static const char fmt[] = { array::Type };
+        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        return me;
+    }
+    if (type == metatype::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
+        return me;
+    }
+    if (type == object::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
+        return me;
+    }
+    if (type == me) {
+        if (ptr) *static_cast<const Group **>(ptr) = this;
+        return array::Type;
+    }
+    return BadType;
+}
+Collection *Collection::clone() const
+{
+    Collection *copy = new Collection;
+    copy->_items = _items;
+    return copy;
+}
+
+const Item<metatype> *Collection::item(size_t pos) const
 {
     return _items.get(pos);
 }
-
-Item<object> *Collection::append(object *mt)
+Item<metatype> *Collection::append(metatype *mt)
 {
     return _items.append(mt, 0);
 }
-
-size_t Collection::clear(const reference *mt)
+size_t Collection::clear(const reference *ref)
 {
     long remove = 0;
-    if (!mt) {
+    if (!ref) {
         remove = _items.length();
-        _items = ItemArray<object>();
+        _items = ItemArray<metatype>();
         return remove ? true : false;
     }
     long empty = 0;
     for (auto &it : _items) {
-        reference *ref = it.pointer();
-        if (!ref) { ++empty; continue; }
-        if (mt != ref) continue;
+        reference *curr = it.pointer();
+        if (!curr) { ++empty; continue; }
+        if (curr != ref) continue;
         it.setPointer(nullptr);
         ++remove;
     }
@@ -254,12 +300,11 @@ size_t Collection::clear(const reference *mt)
 bool Collection::bind(const Relation &from, logger *out)
 {
     for (auto &it : _items) {
-        object *o;
+        metatype *curr;
         Group *g;
-        if (!(o = it.pointer()) || o->property(0) != Group::Type) {
+        if (!(curr = it.pointer()) || !(g = curr->cast<Group>())) {
             continue;
         }
-        g = static_cast<Group *>(o);
         if (!g->bind(GroupRelation(*g, &from), out)) {
             return false;
         }
@@ -269,9 +314,9 @@ bool Collection::bind(const Relation &from, logger *out)
 
 
 // Relation search operations
-object *GroupRelation::find(int type, const char *name, int nlen) const
+metatype *GroupRelation::find(int type, const char *name, int nlen) const
 {
-    const Item<object> *c;
+    const Item<metatype> *c;
     const char *sep;
 
     if (nlen < 0) nlen = name ? strlen(name) : 0;
@@ -279,28 +324,27 @@ object *GroupRelation::find(int type, const char *name, int nlen) const
     if (_sep && (sep = (char *) memchr(name, _sep, nlen))) {
         size_t plen = sep - name;
         for (int i = 0; (c = _curr.item(i)); ++i) {
-            object *o = c->pointer();
-            if (!o || !c->equal(name, plen)) continue;
+            metatype *m = c->pointer();
+            if (!m || !c->equal(name, plen)) continue;
             const Group *g;
-            if (o->property(0) != Group::Type) continue;
-            g = static_cast<Group *>(o);
-            if ((o = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
-                return o;
+            if (!(g = m->cast<Group>())) continue;
+            if ((m = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
+                return m;
             }
         }
     }
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
-            object *o = c->pointer();
-            if (!o || (type && o->type() != type)) continue;
+            metatype *m = c->pointer();
+            if (!m || (type && m->type() != type)) continue;
             if (!c->equal(name, nlen)) continue;
-            return o;
+            return m;
         }
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
 }
 
-object *NodeRelation::find(int type, const char *name, int nlen) const
+metatype *NodeRelation::find(int type, const char *name, int nlen) const
 {
     if (!_curr) return 0;
 
@@ -309,10 +353,8 @@ object *NodeRelation::find(int type, const char *name, int nlen) const
     for (const node *c = _curr->children; c; c = c->next) {
         metatype *m;
         if (!(m = c->_meta) || !c->ident.equal(name, nlen)) continue;
-        object *o = m->cast<object>();
-        if (!o) continue;
-        if (type && o->type() != type) continue;
-        return o;
+        if (type && m->type() != type) continue;
+        return m;
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
 }

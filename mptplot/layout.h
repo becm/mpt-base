@@ -41,8 +41,8 @@ enum MPT_ENUM(TextFlags) {
 
 enum MPT_ENUM(LayoutTypes) {
 	/* layout data types */
-	MPT_ENUM(TypeColor)     = 0x30,  /* '1' */
-	MPT_ENUM(TypeLineAttr)  = 0x31,  /* '0' */
+	MPT_ENUM(TypeColor)     = 0x30,  /* '0' */
+	MPT_ENUM(TypeLineAttr)  = 0x31,  /* '1' */
 	MPT_ENUM(TypeLine)      = 0x32,  /* '2' */
 	
 	/* layout pointer types */
@@ -296,192 +296,205 @@ class Parse;
 struct parseflg;
 struct path;
 
-class Line : public object, public line
+class Line : public metatype, public object, public line
 {
 public:
-    enum { Type = line::Type };
-    
-    Line(const line *from = 0);
-    virtual ~Line();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, const metatype * = 0) __MPT_OVERRIDE;
-    
-    virtual void *toType(int);
+	Line(const line *from = 0);
+	virtual ~Line();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype * = 0) __MPT_OVERRIDE;
 };
 
-class Text : public object, public text
+class Text : public metatype, public object, public text
 {
 public:
-    enum { Type = text::Type };
-    
-    Text(const text *from = 0);
-    virtual ~Text();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
-    
-    virtual void *toType(int);
+	Text(const text *from = 0);
+	virtual ~Text();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
-class Axis : public object, public axis
+class Axis : public metatype, public object, public axis
 {
 public:
-    enum { Type = axis::Type };
-    
-    Axis(const axis *from = 0);
-    Axis(AxisFlags type);
-    virtual ~Axis();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
-    
-    virtual void *toType(int);
+	Axis(const axis *from = 0);
+	Axis(AxisFlags type);
+	virtual ~Axis();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
-class World : public object, public world
+class World : public metatype, public object, public world
 {
 public:
-    enum { Type = world::Type };
-    
-    World(int = 0);
-    World(const world *);
-    virtual ~World();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
-    
-    virtual void *toType(int);
+	World(int = 0);
+	World(const world *);
+	virtual ~World();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 /*! Group implementation using reference array */
-class Collection : public Group
+class Collection : public metatype, public Group
 {
 public:
-    virtual ~Collection();
-    
-    const Item<object> *item(size_t) const __MPT_OVERRIDE;
-    Item<object> *append(object *) __MPT_OVERRIDE;
-    size_t clear(const reference * = 0) __MPT_OVERRIDE;
-    bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	virtual ~Collection();
+	
+	void unref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	Collection *clone() const __MPT_OVERRIDE;
+	
+	const Item<metatype> *item(size_t) const __MPT_OVERRIDE;
+	Item<metatype> *append(metatype *) __MPT_OVERRIDE;
+	size_t clear(const reference * = 0) __MPT_OVERRIDE;
+	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 protected:
-    ItemArray<object> _items;
+	ItemArray<metatype> _items;
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
 class Transform3 : public Transform
 {
 public:
-    Transform3();
-    
-    inline virtual ~Transform3()
-    { }
-    inline void unref() __MPT_OVERRIDE
-    { delete this; }
-    
-    int dimensions() const __MPT_OVERRIDE;
-    
-    linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
-    bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
-    point<double> zero() const __MPT_OVERRIDE;
-    
-    transform tx, ty, tz; /* dimension transformations */
-    uint8_t fx, fy, fz;   /* transformation options */
-    uint8_t cutoff;       /* limit data to range */
+	Transform3();
+	
+	inline virtual ~Transform3()
+	{ }
+	void unref() __MPT_OVERRIDE;
+	
+	int dimensions() const __MPT_OVERRIDE;
+	
+	linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
+	bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
+	point<double> zero() const __MPT_OVERRIDE;
+	
+	transform tx, ty, tz; /* dimension transformations */
+	uint8_t fx, fy, fz;   /* transformation options */
+	uint8_t cutoff;       /* limit data to range */
 };
 
 /*! Container and binding for data to axes */
 class Graph : public Collection, public graph
 {
 public:
-    class Data : public reference
-    {
-    public:
-        Data(World *w = 0);
-        virtual ~Data()
-        { }
-        
-        inline void unref()
-        { delete this; }
-        
-        Reference<World> world;
-        Reference<Cycle> cycle;
-    };
-    enum { Type = Collection::Type };
-    
-    Graph(const graph * = 0);
-    virtual ~Graph();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *) const __MPT_OVERRIDE;
-    int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
-    
-    bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
-    
-    void *toType(int) __MPT_OVERRIDE;
-    
-    virtual Item<Axis> *addAxis(Axis * = 0, const char * = 0, int = -1);
-    inline Slice<const Item<Axis> > axes() const
-    { return _axes.slice(); }
-    
-    virtual Item<Data> *addWorld(World * = 0, const char * = 0, int = -1);
-    inline Slice<const Item<Data> > worlds() const
-    { return _worlds.slice(); }
-    
-    virtual bool setCycle(int pos, const Reference<Cycle> &) const;
-    virtual const Reference<Cycle> *cycle(int pos) const;
-    
-    virtual const Transform &transform();
-    
-    const struct transform *getTransform(int = -1) const;
-    int getFlags(int = -1) const;
-    bool updateTransform(int dim = -1);
-    
+	class Data : public reference
+	{
+	public:
+		Data(class World *w = 0);
+		virtual ~Data()
+		{ }
+		
+		void unref() __MPT_OVERRIDE;
+		
+		static int typeIdentifier();
+		
+		Reference<class World> world;
+		Reference<class Cycle> cycle;
+	};
+	Graph(const graph * = 0);
+	virtual ~Graph();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	int conv(int, void *) const __MPT_OVERRIDE;
+	
+	int property(struct property *) const __MPT_OVERRIDE;
+	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	
+	bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	
+	virtual Item<class Axis> *addAxis(class Axis * = 0, const char * = 0, int = -1);
+	inline Slice<const Item<class Axis> > axes() const
+	{ return _axes.slice(); }
+	
+	virtual Item<class Data> *addWorld(class World * = 0, const char * = 0, int = -1);
+	inline Slice<const Item<class Data> > worlds() const
+	{ return _worlds.slice(); }
+	
+	virtual bool setCycle(int pos, const Reference<class Cycle> &) const;
+	virtual const Reference<class Cycle> *cycle(int pos) const;
+	
+	const Transform &transform();
+	
+	const struct transform *getTransform(int = -1) const;
+	int getFlags(int = -1) const;
+	bool updateTransform(int dim = -1);
+	
 protected:
-    Reference<Transform3> _gtr;
-    ItemArray<Axis> _axes;
-    ItemArray<Data> _worlds;
+	Reference<Transform3> _gtr;
+	ItemArray<Axis> _axes;
+	ItemArray<Data> _worlds;
 };
 
 /*! Represent elements in layout file */
 class Layout : public Collection
 {
 public:
-    Layout();
-    virtual ~Layout();
-    
-    void unref() __MPT_OVERRIDE;
-    int property(struct property *pr) const __MPT_OVERRIDE;
-    int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;
-    
-    bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
-    
-    virtual bool load(logger * = logger::defaultInstance());
-    virtual bool open(const char *);
-    virtual bool reset();
-    
-    inline Slice<const Item<Graph> > graphs() const
-    { return _graphs.slice(); }
-    
-    virtual bool setAlias(const char *, int = -1);
-    inline const char *alias() const
-    { return _alias; }
-    
-    virtual bool setFont(const char *, int = -1);
-    inline const char *font() const
-    { return _font; }
-    
-    fpoint minScale() const;
-    
+	Layout();
+	virtual ~Layout();
+	
+	static int typeIdentifier();
+	
+	void unref() __MPT_OVERRIDE;
+	uintptr_t addref() __MPT_OVERRIDE;
+	
+	int property(struct property *pr) const __MPT_OVERRIDE;
+	int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;
+	
+	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	
+	virtual bool load(logger * = logger::defaultInstance());
+	virtual bool open(const char *);
+	virtual bool reset();
+	
+	inline Slice<const Item<Graph> > graphs() const
+	{ return _graphs.slice(); }
+	
+	virtual bool setAlias(const char *, int = -1);
+	inline const char *alias() const
+	{ return _alias; }
+	
+	virtual bool setFont(const char *, int = -1);
+	inline const char *font() const
+	{ return _font; }
+	
+	fpoint minScale() const;
+	
 protected:
-    ItemArray<Graph> _graphs;
-    Parse *_parse;
-    char *_alias;
-    char *_font;
+	ItemArray<Graph> _graphs;
+	Parse *_parse;
+	char *_alias;
+	char *_font;
 };
 
 #endif

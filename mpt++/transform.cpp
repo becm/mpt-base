@@ -97,9 +97,15 @@ bool Transform::apply(unsigned , const linepart &, point<double> *, const double
 Transform3::Transform3() : tx(AxisStyleX), ty(AxisStyleY), tz(AxisStyleZ), fx(0), fy(0), fz(0), cutoff(0xff)
 { }
 
-int Transform3::dimensions() const
-{ return (tz.scale.x || tz.scale.y) ? 3 : 2; }
+void Transform3::unref()
+{
+    delete this;
+}
 
+int Transform3::dimensions() const
+{
+    return (tz.scale.x || tz.scale.y) ? 3 : 2;
+}
 point<double> Transform3::zero() const
 {
     double x = tx.move.x + ty.move.x + tz.move.x;

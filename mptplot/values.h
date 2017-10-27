@@ -8,6 +8,10 @@
 
 #include "array.h"
 
+#ifdef __cplusplus
+# include "meta.h"
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 /* primitive type point/transformation structure */

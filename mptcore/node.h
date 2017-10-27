@@ -52,7 +52,7 @@ class NodeRelation : public Relation
 public:
     inline NodeRelation(const node *n, const Relation *p = 0) : Relation(p), _curr(n)
     { }
-    object *find(int type, const char *, int = -1) const;
+    metatype *find(int type, const char *, int = -1) const;
 protected:
     const node *_curr;
 };

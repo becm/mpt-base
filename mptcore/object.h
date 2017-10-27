@@ -44,6 +44,7 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
+template<> inline int typeIdentifier<object>() { return object::Type; }
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
@@ -288,28 +289,27 @@ protected:
 	uintptr_t _hash;
 };
 
+struct node;
 /*! interface to generic groups of metatypes elements */
 class Group : public object
 {
 public:
-	enum { Type = TypeGroup };
+	static int typeIdentifier();
 	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	virtual const Item<object> *item(size_t pos) const;
-	virtual Item<object> *append(object *);
+	virtual const Item<metatype> *item(size_t pos) const;
+	virtual Item<metatype> *append(metatype *);
 	virtual size_t clear(const reference * = 0);
 	virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
-	
-	virtual void *toType(int);
 	
 	bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
 protected:
 	inline ~Group() {}
-	virtual object *create(const char *, int = -1);
+	virtual metatype *create(const char *, int = -1);
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<Group>() { return Group::Type; }
+template<> inline int typeIdentifier<Group>() { return Group::typeIdentifier(); } 
 
 /*! Relation implemetation using Group as current element */
 class GroupRelation : public Relation
@@ -319,7 +319,7 @@ public:
 	{ }
 	virtual ~GroupRelation()
 	{ }
-	object *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
+	metatype *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
 protected:
 	const Group &_curr;
 	char _sep;

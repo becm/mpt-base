@@ -101,7 +101,6 @@ enum MPT_ENUM(Types)
 	/* object types */
 	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
 	MPT_ENUM(TypeSolver)    = 0x19,  /* EM */
-	MPT_ENUM(TypeGroup)     = 0x1a,  /* SUB */
 	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
 #define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
                              && (v) < MPT_ENUM(TypeSpecial))
@@ -731,18 +730,17 @@ public:
 };
 
 /*! interface to search objects in tree */
-class object;
 class Relation
 {
 public:
     inline Relation(const Relation *p = 0) : _parent(p)
     { }
-    virtual object *find(int , const char *, int = -1) const;
+    virtual metatype *find(int , const char *, int = -1) const;
 protected:
     virtual ~Relation() {}
     const Relation *_parent;
 };
-inline object *Relation::find(int type, const char *name, int nlen) const
+inline metatype *Relation::find(int type, const char *name, int nlen) const
 { return _parent ? _parent->find(type, name, nlen) : 0; }
 #endif
 
