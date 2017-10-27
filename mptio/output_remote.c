@@ -17,6 +17,7 @@
 #include "meta.h"
 #include "message.h"
 
+#include "object.h"
 #include "output.h"
 
 #include "stream.h"
@@ -24,14 +25,17 @@
 
 MPT_STRUCT(out_data) {
 	MPT_INTERFACE(input)  _in;
-	MPT_INTERFACE(output) _out;
 	
-	MPT_STRUCT(refcount)  _ref;
+	MPT_INTERFACE(object) _obj;
+	MPT_INTERFACE(output) _out;
+	MPT_INTERFACE(logger) _log;
+	
+	MPT_STRUCT(refcount) _ref;
 	
 	MPT_STRUCT(connection) con;
 };
 
-static int outputInfile(const MPT_STRUCT(out_data) *od)
+static int remoteInfile(const MPT_STRUCT(out_data) *od)
 {
 	MPT_STRUCT(stream) *srm;
 	if (MPT_socket_active(&od->con.out.sock)) {
@@ -42,10 +46,10 @@ static int outputInfile(const MPT_STRUCT(out_data) *od)
 	}
 	return _mpt_stream_fread(&srm->_info);
 }
-/* object interface */
-static void outputUnref(MPT_INTERFACE(reference) *obj)
+/* reference interface */
+static void remoteUnref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
 	uintptr_t c;
 	if ((c = mpt_refcount_lower(&od->_ref))) {
 		return;
@@ -53,14 +57,142 @@ static void outputUnref(MPT_INTERFACE(reference) *obj)
 	mpt_connection_fini(&od->con);
 	free(od);
 }
-static uintptr_t outputRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t remoteRef(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _out);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
+	
 	return mpt_refcount_raise(&od->_ref);
 }
-static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
+/* metatype interface */
+static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
+	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
+	int me = mpt_input_type_identifier();
+	
+	if (!type) {
+		static const char fmt[] = {
+			MPT_ENUM(TypeMeta),
+			MPT_ENUM(TypeObject),
+			MPT_ENUM(TypeOutput),
+			MPT_ENUM(TypeLogger),
+			0
+		};
+		if (ptr) *((const char **) ptr) = fmt;
+		return me;
+	}
+	if (type == me) {
+		if (ptr) *((const void **) ptr) = &od->_in;
+		return MPT_ENUM(TypeObject);
+	}
+	if (type == me || type == MPT_ENUM(TypeMeta)) {
+		if (ptr) *((const void **) ptr) = &od->_in;
+		return MPT_ENUM(TypeSocket);
+	}
+	if (type == MPT_ENUM(TypeSocket)) {
+		int fd = remoteInfile(od);
+		if (ptr) *((int *) ptr) = fd;
+		return me;
+	}
+	if (type == MPT_ENUM(TypeObject)) {
+		if (ptr) *((const void **) ptr) = &od->_obj;
+		return me;
+	}
+	if (type == MPT_ENUM(TypeOutput)) {
+		if (ptr) *((const void **) ptr) = &od->_out;
+		return MPT_ENUM(TypeObject);
+	}
+	if (type == MPT_ENUM(TypeLogger)) {
+		if (ptr) *((const void **) ptr) = &od->_log;
+		return me;
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *remoteClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* input interface */
+static int remoteNext(MPT_INTERFACE(input) *in, int what)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
+	MPT_STRUCT(buffer) *buf;
+	int keep = 0;
+	
+	if (!MPT_socket_active(&od->con.out.sock)) {
+		if (!(buf = od->con.out.buf._buf)) {
+			return -3;
+		}
+		return mpt_stream_poll((void *) buf, what, 0);
+	}
+	if (what & POLLIN) {
+		int ret;
+		/* existing input data */
+		if ((od->con.out.state & MPT_OUTFLAG(Received))) {
+			keep = POLLIN;
+		}
+		/* get new datagram */
+		else if ((ret = mpt_outdata_recv(&od->con.out)) < 0) {
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
+			        MPT_tr("receive failed"), MPT_tr("unable to get new data"));
+		}
+		/* message size invalid */
+		else if (ret < od->con.out._idlen) {
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s: %d < %d",
+			        MPT_tr("bad message size"), MPT_tr("messag smaller than id"),
+			        ret, od->con.out._idlen);
+		}
+		/* save input parameters */
+		else {
+			keep = POLLIN;
+			what &= ~POLLHUP;
+		}
+	}
+	if ((what & POLLOUT)
+	    && !(od->con.out.state & (MPT_OUTFLAG(Active) | MPT_OUTFLAG(Received)))
+	    && (buf = od->con.out.buf._buf)
+	    && buf->_used) {
+		const struct sockaddr *addr = 0;
+		uint8_t *base = (void *) (buf + 1);
+		ssize_t len = od->con.out._scurr;
+		
+		if (len) {
+			addr = (const struct sockaddr *) (base + buf->_used - len);
+		}
+		if (sendto(od->con.out.sock._id, base, buf->_used, 0, addr, len) >= 0) {
+			buf->_used = 0;
+			od->con.out._scurr = 0;
+			if (keep < 0) {
+				keep = 0;
+			}
+		}
+	}
+	if (what & POLLHUP) {
+		mpt_outdata_close(&od->con.out);
+		return -2;
+	}
+	/* dispatch dereference to notifier */
+	return keep;
+}
+static int remoteDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
+	return mpt_connection_dispatch(&od->con, cmd, arg);
+}
+/* object interface */
+static void remoteObjectUnref(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _obj);
+	remoteUnref((void *) &od->_in);
+}
+static uintptr_t remoteObjectRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _obj);
+	return mpt_refcount_raise(&od->_ref);
+}
+static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _obj);
 	
 	if (!pr) {
 		return MPT_ENUM(TypeOutput);
@@ -76,10 +208,10 @@ static int outputProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 	}
 	return mpt_connection_get(&od->con, pr);
 }
-static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src) {
+static int remoteSetProperty(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _out);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _obj);
 	int ret;
 	
 	ret = mpt_connection_set(&od->con, name, src);
@@ -95,14 +227,15 @@ static int outputSetProperty(MPT_INTERFACE(object) *obj, const char *name, const
 	return ret;
 }
 /* output interface */
-static ssize_t outputPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
+static ssize_t remotePush(MPT_INTERFACE(output) *out, size_t len, const void *src)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	return mpt_connection_push(&od->con, len, src);
 }
-static int outputSync(MPT_INTERFACE(output) *out, int timeout)
+static int remoteSync(MPT_INTERFACE(output) *out, int timeout)
 {
 	static const char _func[] = "mpt::output::sync";
+	
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	int pos;
 	
@@ -200,134 +333,17 @@ static int outputSync(MPT_INTERFACE(output) *out, int timeout)
 		return MPT_ERROR(BadValue);
 	}
 }
-static int outputAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
+static int remoteAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, out, _out);
 	return mpt_connection_await(&od->con, ctl, udata);
 }
-static const MPT_INTERFACE_VPTR(output) outCtl = {
-	{ { outputUnref, outputRef }, outputProperty, outputSetProperty },
-	outputPush,
-	outputSync,
-	outputAwait
-};
-/* reference interface */
-static void outputInputUnref(MPT_INTERFACE(reference) *ref)
+/* logger interface */
+static int remoteLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list arg)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
-	outputUnref((void *) &od->_out);
+	MPT_INTERFACE(output) *out = &MPT_baseaddr(out_data, log, _log)->_out;
+	return mpt_output_log(out, from, type, fmt, arg);
 }
-static uintptr_t outputInputRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
-	return mpt_refcount_raise(&od->_ref);
-}
-/* metatype interface */
-static int outputInputConv(const MPT_INTERFACE(metatype) *mt, int type, void *addr)
-{
-	static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeOutput), 0 };
-	MPT_STRUCT(out_data) *od = (void *) mt;
-	const void *ptr;
-	int me = mpt_input_type_identifier();
-	
-	if (type == me) {
-		if (addr) *((const void **) addr) = &od->_in;
-		return MPT_ENUM(TypeOutput);
-	}
-	if (type == MPT_ENUM(TypeSocket)) {
-		if (addr)  *((int *) addr) = outputInfile(od);
-		return type;
-	}
-	switch (type) {
-	  case 0: ptr = (void *) fmt; break;
-	  case MPT_ENUM(TypeMeta): ptr = &od->_in; break;
-	  case MPT_ENUM(TypeObject): ptr = &od->_out; break;
-	  case MPT_ENUM(TypeOutput): ptr = &od->_out; break;
-	  default: return MPT_ERROR(BadType);
-	}
-	if (addr) {
-		*((const void **) addr) = ptr;
-	}
-	return me;
-}
-static MPT_INTERFACE(metatype) *outputInputClone(const MPT_INTERFACE(metatype) *from)
-{
-	(void) from;
-	return 0;
-}
-/* input interface */
-static int outputInputNext(MPT_INTERFACE(input) *in, int what)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
-	MPT_STRUCT(buffer) *buf;
-	int keep = 0;
-	
-	if (!MPT_socket_active(&od->con.out.sock)) {
-		if (!(buf = od->con.out.buf._buf)) {
-			return -3;
-		}
-		return mpt_stream_poll((void *) buf, what, 0);
-	}
-	if (what & POLLIN) {
-		int ret;
-		/* existing input data */
-		if ((od->con.out.state & MPT_OUTFLAG(Received))) {
-			keep = POLLIN;
-		}
-		/* get new datagram */
-		else if ((ret = mpt_outdata_recv(&od->con.out)) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
-			        MPT_tr("receive failed"), MPT_tr("unable to get new data"));
-		}
-		/* message size invalid */
-		else if (ret < od->con.out._idlen) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s: %s: %d < %d",
-			        MPT_tr("bad message size"), MPT_tr("messag smaller than id"),
-			        ret, od->con.out._idlen);
-		}
-		/* save input parameters */
-		else {
-			keep = POLLIN;
-			what &= ~POLLHUP;
-		}
-	}
-	if ((what & POLLOUT)
-	    && !(od->con.out.state & (MPT_OUTFLAG(Active) | MPT_OUTFLAG(Received)))
-	    && (buf = od->con.out.buf._buf)
-	    && buf->_used) {
-		const struct sockaddr *addr = 0;
-		uint8_t *base = (void *) (buf + 1);
-		ssize_t len = od->con.out._scurr;
-		
-		if (len) {
-			addr = (const struct sockaddr *) (base + buf->_used - len);
-		}
-		if (sendto(od->con.out.sock._id, base, buf->_used, 0, addr, len) >= 0) {
-			buf->_used = 0;
-			od->con.out._scurr = 0;
-			if (keep < 0) {
-				keep = 0;
-			}
-		}
-	}
-	if (what & POLLHUP) {
-		mpt_outdata_close(&od->con.out);
-		return -2;
-	}
-	/* dispatch dereference to notifier */
-	return keep;
-}
-
-static int outputInputDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
-	return mpt_connection_dispatch(&od->con, cmd, arg);
-}
-const MPT_INTERFACE_VPTR(input) inputCtl = {
-	{ { outputInputUnref, outputInputRef }, outputInputConv, outputInputClone },
-	outputInputNext,
-	outputInputDispatch
-};
 
 /*!
  * \ingroup mptOutput
@@ -341,8 +357,29 @@ const MPT_INTERFACE_VPTR(input) inputCtl = {
  */
 extern MPT_INTERFACE(input) *mpt_output_remote()
 {
+	static const MPT_INTERFACE_VPTR(input) remoteInput = {
+		{ { remoteUnref, remoteRef },
+		  remoteConv,
+		  remoteClone
+		},
+		remoteNext,
+		remoteDispatch
+	};
+	static const MPT_INTERFACE_VPTR(object) remoteObject = {
+		{ remoteObjectUnref, remoteObjectRef },
+		remoteProperty,
+		remoteSetProperty
+	};
+	static const MPT_INTERFACE_VPTR(output) remoteOutput = {
+		remotePush,
+		remoteSync,
+		remoteAwait
+	};
+	static const MPT_INTERFACE_VPTR(logger) remoteLogger = {
+		remoteLog
+	};
 	static const MPT_STRUCT(out_data) defOut = {
-		{ &inputCtl }, { &outCtl },
+		{ &remoteInput }, { &remoteObject }, { &remoteOutput }, { &remoteLogger },
 		{ 1 },
 		MPT_CONNECTION_INIT
 	};

@@ -10,10 +10,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-int output::open(const char *to)
-{
-    return mpt_object_set_string(this, 0, to, 0);
-}
 int output::message(const char *from, int type, const char *fmt, ... )
 {
     va_list va;

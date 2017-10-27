@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "array.h"
+#include "meta.h"
 #include "output.h"
 #include "message.h"
 
@@ -12,30 +13,30 @@
 
 static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(output) *out = ptr;
+	MPT_INTERFACE(metatype) *mt = ptr;
 	if (!ev) {
-		out->_vptr->obj.ref.unref((void *) out);
+		mt->_vptr->ref.unref((void *) mt);
 		return 0;
 	}
 	if (ev->msg) {
 		MPT_STRUCT(message) msg = *ev->msg;
-		MPT_STRUCT(msgtype) mt;
+		MPT_STRUCT(msgtype) hdr;
 		ssize_t part;
 		int err;
 		
 		/* get command type */
-		if ((part = mpt_message_read(&msg, sizeof(mt), &mt)) < (ssize_t) sizeof(mt)) {
+		if ((part = mpt_message_read(&msg, sizeof(hdr), &hdr)) < (ssize_t) sizeof(hdr)) {
 			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		}
-		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+		if (hdr.cmd != MPT_ENUM(MessageCommand)) {
 			return MPT_event_fail(ev, MPT_ERROR(BadArgument), MPT_tr("bad message type"));
 		}
 		/* consume command */
-		if (((part = mpt_message_argv(&msg, mt.arg)) <= 0)
+		if (((part = mpt_message_argv(&msg, hdr.arg)) <= 0)
 		    || (mpt_message_read(&msg, part, 0) < (size_t) part)) {
 			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing filter element"));
 		}
-		if ((err = mpt_output_control(out, mt.arg, &msg, mpt_log_default())) >= 0) {
+		if ((err = mpt_output_control(mt, hdr.arg, &msg, mpt_log_default())) >= 0) {
 			return MPT_event_good(ev, MPT_tr("output command processed"));
 		}
 		if (err == MPT_ERROR(MissingData)) {
@@ -66,7 +67,7 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
  * \retval 0  success
  * \retval <0 assignment error
  */
-extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name, MPT_INTERFACE(output) *out)
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name, MPT_INTERFACE(metatype) *mt)
 {
 	uintptr_t id;
 	
@@ -75,10 +76,10 @@ extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name, MPT
 	}
 	id = mpt_hash(name, strlen(name));
 	
-	if (!out) {
+	if (!mt) {
 		return mpt_dispatch_set(dsp, id, 0, 0);
 	}
-	if (mpt_dispatch_set(dsp, id, clientOutput, out) < 0) {
+	if (mpt_dispatch_set(dsp, id, clientOutput, mt) < 0) {
 		return MPT_ERROR(BadOperation);
 	}
 	return 0;

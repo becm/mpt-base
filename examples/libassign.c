@@ -18,7 +18,7 @@
 int main()
 {
 	struct mpt_libhandle lh = MPT_LIBHANDLE_INIT;
-	struct mpt_object *out;
+	struct mpt_metatype *mt;
 	const char *str;
 	
 	mtrace();
@@ -29,10 +29,12 @@ int main()
 		return 1;
 	}
 	/* create reference with loaded function */
-	if ((out = lh.create())) {
-		printf("%s: 0x%02x\n", "object type", out->_vptr->property(out, 0));
-		puts(mpt_object_typename(out));
-		out->_vptr->ref.unref((void *) out);
+	if ((mt = lh.create())) {
+		struct mpt_object *obj = 0;
+		mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj);
+		printf("%s: 0x%02x\n", "object type", obj->_vptr->property(obj, 0));
+		puts(mpt_object_typename(obj));
+		mt->_vptr->ref.unref((void *) mt);
 	}
 	mpt_library_close(&lh);
 	return 0;

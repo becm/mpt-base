@@ -6,7 +6,6 @@
 #ifndef _MPT_OUTPUT_H
 #define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
-#include "object.h"
 #include "event.h"
 
 #ifdef __cplusplus
@@ -23,7 +22,7 @@ MPT_STRUCT(message);
 
 #define MPT_OUTPUT_LOGMSG_MAX 256
 #ifdef __cplusplus
-MPT_INTERFACE(output) : public object
+MPT_INTERFACE(output)
 {
 protected:
 	inline ~output() {}
@@ -34,7 +33,6 @@ public:
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
 	
-	int open(const char *);
 	int message(const char *, int, const char *, ... );
 # define MPT_OUTFLAG(x) x
 #else
@@ -53,17 +51,11 @@ enum MPT_OUTFLAG(Flags) {
 };
 #ifdef __cplusplus
 };
-class Output : public Object
-{
-public:
-	inline Output(output *o) : Object(o)
-	{ }
-};
+template<> inline __MPT_CONST_EXPR int typeIdentifier<output>() { return output::Type; }
 #else
 MPT_INTERFACE(output);
 MPT_INTERFACE_VPTR(output)
 {
-	MPT_INTERFACE_VPTR(object) obj;
 	ssize_t (*push)(MPT_INTERFACE(output) *, size_t , const void *);
 	int     (*sync)(MPT_INTERFACE(output) *, int);
 	int     (*await)(MPT_INTERFACE(output) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
@@ -234,12 +226,12 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , cons
 
 
 /* apply command argument to output */
-extern int mpt_output_control(MPT_INTERFACE(output) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
+extern int mpt_output_control(MPT_INTERFACE(metatype) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
 
 /* create remote output instance */
 extern MPT_INTERFACE(input) *mpt_output_remote(void);
 /* create local output instance */
-extern MPT_INTERFACE(output) *mpt_output_local(void);
+extern MPT_INTERFACE(metatype) *mpt_output_local(void);
 
 __MPT_EXTDECL_END
 

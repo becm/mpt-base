@@ -11,7 +11,7 @@
 #include "queue.h"
 
 #ifdef __cplusplus
-# include "meta.h"
+# include "object.h"
 # include "notify.h"
 # include "output.h"
 #endif
@@ -198,7 +198,7 @@ public:
 	Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
 };
 
-class Stream : public input, public output, public IODevice
+class Stream : public input, public object, public output, public IODevice
 {
 public:
 	Stream(const streaminfo * = 0);

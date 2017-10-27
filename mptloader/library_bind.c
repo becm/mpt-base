@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "meta.h"
-#include "output.h"
+#include "object.h"
 
 #include "client.h"
 

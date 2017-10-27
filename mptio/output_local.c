@@ -6,122 +6,34 @@
 #include <stdlib.h>
 
 #include "meta.h"
+#include "object.h"
 
 #include "output.h"
 
 MPT_STRUCT(local_output)
 {
+	MPT_INTERFACE(metatype) _mt;
+	
+	MPT_INTERFACE(object) _obj;
 	MPT_INTERFACE(output) _out;
+	MPT_INTERFACE(logger) _log;
 	
 	MPT_STRUCT(refcount) ref;
 	
-	MPT_INTERFACE(output) *pass;
+	MPT_INTERFACE(metatype) *pass;
 	MPT_STRUCT(history) hist;
 };
-/* output operations */
-static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
+inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_output) *lo)
 {
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	ssize_t ret;
-	
-	out = lo->pass;
-	
-	/* remote output active */
-	if (lo->hist.info.state & MPT_OUTFLAG(Remote)) {
-		if (!out) {
-			return MPT_ERROR(BadArgument);
-		}
-		ret = out->_vptr->push(out, len, src);
-		if (ret >= 0 && !len) {
-			lo->hist.info.state &= ~MPT_OUTFLAG(Remote);
-		}
-		return ret;
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(output) *out;
+	out = 0;
+	if ((mt = lo->pass)) {
+		mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out);
 	}
-	/* try local output */
-	ret = mpt_history_push(&lo->hist, len, src);
-	
-	/* invalid local output operation */
-	if (ret < 0 && !(lo->hist.info.state & MPT_OUTFLAG(Active))) {
-		if (!out || (ret = out->_vptr->push(out, len, src)) < 0) {
-			return ret;
-		}
-		if (len && src) {
-			lo->hist.info.state |= MPT_OUTFLAG(Remote);
-		}
-	}
-	return ret;
+	return out;
 }
-static int localAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
-{
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	int ret;
-	if (!(out = lo->pass)) {
-		return MPT_ERROR(BadOperation);
-	}
-	ret = out->_vptr->await(out, ctl, udata);
-	
-	if (ret >= 0) {
-		lo->hist.info.state |= MPT_OUTFLAG(Remote);
-	}
-	return ret;
-}
-static int localSync(MPT_INTERFACE(output) *out, int timeout)
-{
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	out = lo->pass;
-	return out ? out->_vptr->sync(out, timeout) : 0;
-}
-/* object property handlers */
-static int localSet(MPT_INTERFACE(object) *out, const char *name, const MPT_INTERFACE(metatype) *src)
-{
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	int ret;
-	
-	out = (void *) lo->pass;
-	
-	if (!name) {
-		return mpt_history_set(&lo->hist, name, src);
-	}
-	if (!*name) {
-		MPT_INTERFACE(output) *no;
-		int ret;
-		if (!src) {
-			return MPT_ERROR(BadValue);
-		}
-		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeOutput), &no)) < 0) {
-			return ret;
-		}
-		if (no && !no->_vptr->obj.ref.addref((void *) no)) {
-			return MPT_ERROR(BadOperation);
-		}
-		if (out) out->_vptr->ref.unref((void *) out);
-		lo->pass = no;
-		return ret;
-	}
-	if ((ret = mpt_history_set(&lo->hist, name, src)) >= 0) {
-		return ret;
-	}
-	return MPT_ERROR(BadArgument);
-}
-static int localGet(const MPT_INTERFACE(object) *out, MPT_STRUCT(property) *pr)
-{
-	MPT_STRUCT(local_output) *lo = (void *) out;
-	const char *name;
-	
-	if (!pr) {
-		return MPT_ENUM(TypeOutput);
-	}
-	if ((name = pr->name) && !*name) {
-		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
-		pr->name = "history";
-		pr->desc = MPT_tr("local output filter");
-		pr->val.fmt = fmt;
-		pr->val.ptr = &lo->pass;
-		return lo->pass ? 1 : 0;
-	}
-	return mpt_history_get(&lo->hist, pr);
-}
-/* reference operations */
+/* reference interface */
 static void localUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(local_output) *lo = (void *) ref;
@@ -142,13 +54,182 @@ uintptr_t localRef(MPT_INTERFACE(reference) *ref)
 	MPT_STRUCT(local_output) *lo = (void *) ref;
 	return mpt_refcount_raise(&lo->ref);
 }
-
-static const MPT_INTERFACE_VPTR(output) localCtl = {
-	{ { localUnref, localRef }, localGet, localSet },
-	localPush,
-	localSync,
-	localAwait
-};
+/* metatype interface */
+static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	MPT_STRUCT(local_output) *lo = (void *) mt;
+	
+	if (!type) {
+		if (ptr) {
+			static const char fmt[] = {
+				MPT_ENUM(TypeObject),
+				MPT_ENUM(TypeOutput),
+				MPT_ENUM(TypeFile),
+				0
+			};
+			*((const char **) ptr) = fmt;
+		}
+		return MPT_ENUM(TypeObject);
+	}
+	if (type == MPT_ENUM(TypeObject)) {
+		if (ptr) {
+			*((void **) ptr) = &lo->_obj;
+		}
+		return MPT_ENUM(TypeOutput);
+	}
+	if (type == MPT_ENUM(TypeOutput)) {
+		if (ptr) {
+			*((void **) ptr) = &lo->_out;
+		}
+		return MPT_ENUM(TypeObject);
+	}
+	if (type == MPT_ENUM(TypeFile)) {
+		if (ptr) {
+			*((void **) ptr) = lo->hist.info.file;
+		}
+		return MPT_ENUM(TypeOutput);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *localClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* object interface */
+static void localObjectUnref(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, ref, _obj);
+	localUnref((void *) &lo->_mt);
+}
+static uintptr_t localObjectRef(MPT_INTERFACE(reference) *ref)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, ref, _obj);
+	return mpt_refcount_raise(&lo->ref);
+}
+static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, obj, _obj);
+	const char *name;
+	
+	if (!pr) {
+		return MPT_ENUM(TypeOutput);
+	}
+	if ((name = pr->name) && !*name) {
+		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
+		pr->name = "history";
+		pr->desc = MPT_tr("local output filter");
+		pr->val.fmt = fmt;
+		pr->val.ptr = &lo->pass;
+		return lo->pass ? 1 : 0;
+	}
+	return mpt_history_get(&lo->hist, pr);
+}
+static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, obj, _obj);
+	int ret;
+	
+	if (!name) {
+		return mpt_history_set(&lo->hist, name, src);
+	}
+	if (!*name) {
+		MPT_INTERFACE(metatype) *mt;
+		MPT_INTERFACE(output) *out;
+		int ret;
+		if (!src) {
+			return MPT_ERROR(BadValue);
+		}
+		out = 0;
+		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeOutput), &out)) < 0) {
+			return ret;
+		}
+		if (!out || out == &lo->_out) {
+			return MPT_ERROR(BadValue);
+		}
+		if (!src->_vptr->ref.addref((void *) src)) {
+			return MPT_ERROR(BadOperation);
+		}
+		if ((mt = lo->pass)) {
+			mt->_vptr->ref.unref((void *) mt);
+		}
+		lo->pass = (void *) src;
+		return ret;
+	}
+	if ((ret = mpt_history_set(&lo->hist, name, src)) >= 0) {
+		return ret;
+	}
+	return MPT_ERROR(BadArgument);
+}
+/* output interface */
+static ssize_t localPush(MPT_INTERFACE(output) *out, size_t len, const void *src)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, out, _out);
+	ssize_t ret;
+	
+	/* remote output active */
+	if (lo->hist.info.state & MPT_OUTFLAG(Remote)) {
+		if (!(out = localPassOutput(lo))) {
+			return MPT_ERROR(BadArgument);
+		}
+		ret = out->_vptr->push(out, len, src);
+		if (ret >= 0 && !len) {
+			lo->hist.info.state &= ~MPT_OUTFLAG(Remote);
+		}
+		return ret;
+	}
+	/* try local output */
+	ret = mpt_history_push(&lo->hist, len, src);
+	
+	/* invalid local output operation */
+	if (ret < 0 && !(lo->hist.info.state & MPT_OUTFLAG(Active))) {
+		if (!(out = localPassOutput(lo))) {
+			return MPT_ERROR(BadType);
+		}
+		if ((ret = out->_vptr->push(out, len, src)) < 0) {
+			return ret;
+		}
+		if (len && src) {
+			lo->hist.info.state |= MPT_OUTFLAG(Remote);
+		}
+	}
+	return ret;
+}
+static int localAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_STRUCT(message) *), void *udata)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, out, _out);
+	int ret;
+	
+	if (!(out = localPassOutput(lo))) {
+		return MPT_ERROR(BadOperation);
+	}
+	ret = out->_vptr->await(out, ctl, udata);
+	
+	if (ret >= 0) {
+		lo->hist.info.state |= MPT_OUTFLAG(Remote);
+	}
+	return ret;
+}
+static int localSync(MPT_INTERFACE(output) *out, int timeout)
+{
+	if (!(out = localPassOutput(MPT_baseaddr(local_output, out, _out)))) {
+		return MPT_ERROR(BadOperation);
+	}
+	return out ? out->_vptr->sync(out, timeout) : 0;
+}
+/* logger interface */
+static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list arg)
+{
+	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, log, _log);
+	
+	if (!(lo->hist.info.state & MPT_OUTFLAG(Active))) {
+		return mpt_history_log(&lo->hist.info, from, type, fmt, arg);
+	}
+	if ((log = mpt_log_default())) {
+		return log->_vptr->log(log, from, type, fmt, arg);
+	}
+	return 0;
+}
 
 /*!
  * \ingroup mptOutput
@@ -166,10 +247,29 @@ static const MPT_INTERFACE_VPTR(output) localCtl = {
  * 
  * \return output descriptor
  */
-extern MPT_INTERFACE(output) *mpt_output_local(void)
+extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 {
+	static const MPT_INTERFACE_VPTR(metatype) localMeta = {
+		{ localUnref, localRef },
+		localConv,
+		localClone
+	};
+	static const MPT_INTERFACE_VPTR(object) localObject = {
+		{ localObjectUnref, localObjectRef },
+		localGet,
+		localSet
+	};
+	static const MPT_INTERFACE_VPTR(output) localOutput = {
+		localPush,
+		localSync,
+		localAwait
+	};
+	static const MPT_INTERFACE_VPTR(logger) localLogger = {
+		localLog
+	};
 	static const MPT_STRUCT(local_output) defOut = {
-		{ &localCtl }, { 1 }, 0, MPT_HISTORY_INIT
+		{ &localMeta }, { &localObject }, { &localOutput }, { &localLogger },
+		{ 1 }, 0, MPT_HISTORY_INIT
 	};
 	MPT_STRUCT(local_output) *od;
 	
@@ -182,6 +282,6 @@ extern MPT_INTERFACE(output) *mpt_output_local(void)
 	od->hist.info.state  = MPT_OUTFLAG(PrintColor);
 	od->hist.info.ignore = MPT_LOG(Info);
 	
-	return &od->_out;
+	return &od->_mt;
 }
 
