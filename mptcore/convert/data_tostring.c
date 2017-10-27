@@ -39,13 +39,13 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return base;
 	}
 	/* data is text array */
-	if (type == MPT_ENUM(TypeBuffer)) {
+	if (type == MPT_ENUM(TypeArray)) {
 		static const char def[] = "\0";
-		MPT_STRUCT(buffer) * const *ptr = *from;
+		const MPT_STRUCT(array) *arr = *from;
 		MPT_STRUCT(buffer) *b;
 		
-		if (!(b = *ptr)) {
-			*from = ptr + 1;
+		if (!(b = arr->_buf)) {
+			*from = arr + 1;
 			if (len) *len = 0;
 			return def;
 		}
@@ -65,7 +65,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		else {
 			*len = b->_used;
 		}
-		*from = ptr + 1;
+		*from = arr + 1;
 		return (char *) (b + 1);
 	}
 	/* data is text vector */

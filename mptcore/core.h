@@ -95,7 +95,6 @@ enum MPT_ENUM(Types)
 	/* typed content data */
 	MPT_ENUM(TypeReply)     = 0x14,  /* DC4 */
 	MPT_ENUM(TypeIterator)  = 0x15,  /* NAK */
-	MPT_ENUM(TypeBuffer)    = 0x16,  /* SYN */
 	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
 #define MPT_value_isInterface(v) ((v) >= MPT_ENUM(TypeConfig) \
                                && (v) < MPT_ENUM(TypeSpecial))

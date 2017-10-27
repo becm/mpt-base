@@ -33,16 +33,6 @@ static uintptr_t bufferIterRef(MPT_INTERFACE(reference) *ref)
 static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	
-	if (!type) {
-		MPT_STRUCT(value) *val;
-		if ((val = ptr)) {
-			static const char fmt[] = { MPT_ENUM(TypeBuffer), 0 };
-			val->fmt = fmt;
-			val->ptr = &m->s._a;
-		}
-		return 0;
-	}
 	return mpt_slice_get(&m->s, type, ptr);
 }
 static int bufferAdvance(MPT_INTERFACE(iterator) *it)
@@ -106,7 +96,7 @@ static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 				vec->iov_len = 0;
 			}
 		}
-		return MPT_ENUM(TypeBuffer);
+		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
 }

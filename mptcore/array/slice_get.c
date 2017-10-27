@@ -46,10 +46,9 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 		struct iovec *vec;
 		if ((vec = data)) {
 			vec->iov_base = (char *) base;
-			vec->iov_len  = len;
+			vec->iov_len  = s->_len;
 		}
-		s->_len = len;
-		return s->_off ? type : MPT_ENUM(TypeBuffer);
+		return s->_off ? type : MPT_ENUM(TypeArray);
 	}
 	if (!(end = memchr(base, 0, len))) {
 		return MPT_ERROR(BadValue);

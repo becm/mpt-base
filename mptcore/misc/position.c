@@ -46,10 +46,10 @@ extern int mpt_position(const char *fmt, int match)
 			continue;
 		}
 		/* current is array */
-		if (curr == MPT_ENUM(TypeBuffer)) {
+		if (curr == MPT_ENUM(TypeArray)) {
 			/* wide match from array to vector,
 			 * need deep compare for actual datatype */
-			if ((curr = MPT_value_fromVector(match))) {
+			if ((curr = MPT_value_fromVector(match)) >= 0) {
 				return pos;
 			}
 			++pos;

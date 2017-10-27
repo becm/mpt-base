@@ -26,8 +26,6 @@ MPT_INTERFACE(metatype);
 MPT_STRUCT(buffer) : public reference
 {
 public:
-	enum { Type = TypeBuffer };
-	
 	void unref() __MPT_OVERRIDE;
 	uintptr_t addref() __MPT_OVERRIDE;
 	virtual buffer *detach(long capacity = -1) = 0;

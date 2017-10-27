@@ -62,7 +62,7 @@ extern void *_mpt_memmap(size_t len, void *base)
 	/* memory mapping failed */
 	return (base == MAP_FAILED) ? 0 : base;
 }
-
+/* reference interface */
 static void _mpt_buffer_map_unref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
@@ -75,8 +75,10 @@ static void _mpt_buffer_map_unref(MPT_INTERFACE(reference) *ref)
 static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
+	
 	return mpt_refcount_raise(&buf->_ref);
 }
+/* buffer interface */
 static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *buf, long len)
 {
 	long align, max;
@@ -112,16 +114,11 @@ static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *buf, long 
 	}
 	return buf;
 }
-static int _mpt_buffer_map_type(const MPT_STRUCT(buffer) *buf)
+static int _mpt_buffer_map_content(const MPT_STRUCT(buffer) *buf)
 {
 	(void) buf;
 	return 0;
 }
-static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
-	{ _mpt_buffer_map_unref, _mpt_buffer_map_ref },
-	_mpt_buffer_map_detach,
-	_mpt_buffer_map_type
-};
 /*!
  * \ingroup mptArray
  * \brief mmap buffer data
@@ -134,6 +131,11 @@ static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
  */
 extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len)
 {
+	static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
+		{ _mpt_buffer_map_unref, _mpt_buffer_map_ref },
+		_mpt_buffer_map_detach,
+		_mpt_buffer_map_content
+	};
 	MPT_STRUCT(buffer) *buf;
 	size_t align;
 	

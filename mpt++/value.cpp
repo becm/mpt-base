@@ -72,17 +72,17 @@ const char *value::string() const
 const void *value::scalar(int type) const
 {
     /* incompatible type */
-    if (!fmt || type < 0) {
+    int from;
+    if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
         return 0;
     }
     /* exact scalar type */
-    if (type && *fmt != type) {
+    if (type && type != from) {
         return 0;
     }
     /* regular and user scalar type */
-    ssize_t s;
     if (type > _TypeDynamicMax
-        || (s = mpt_valsize(type)) <= 0) {
+        || mpt_valsize(from) <= 0) {
           return 0;
     }
     return ptr;
@@ -91,7 +91,7 @@ void *value::pointer(int type) const
 {
     int from;
     /* incompatible type */
-    if (!ptr || !fmt || !(from = *fmt)) {
+    if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
         return 0;
     }
     if (type && type != from) {
@@ -105,7 +105,7 @@ void *value::pointer(int type) const
 const struct iovec *value::vector(int type) const
 {
     int from;
-    if (!ptr || !fmt || !(from = *fmt)) {
+    if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
         return 0;
     }
     if (!MPT_value_isVector(from)) {
@@ -120,11 +120,11 @@ const struct iovec *value::vector(int type) const
 const array *value::array(int type) const
 {
     int from;
-    if (!ptr || !fmt || !(from = *fmt)) {
+    if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
         return 0;
     }
     /* type out of range */
-    if (from != MPT_ENUM(TypeBuffer)) {
+    if (from != MPT_ENUM(TypeArray)) {
         return 0;
     }
     const struct array *arr = reinterpret_cast<const struct array *>(ptr);

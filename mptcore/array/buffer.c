@@ -34,6 +34,7 @@ static int _mpt_buffer_alloc_align(size_t size)
 	}
 	return psize = MPT_align(size);
 }
+/* reference interface */
 static void _mpt_buffer_alloc_unref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(buffer) *buf = (void *) ref;
@@ -103,7 +104,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, lon
 	}
 	return b;
 }
-static int _mpt_buffer_alloc_type(const MPT_STRUCT(buffer) *buf)
+static int _mpt_buffer_alloc_content(const MPT_STRUCT(buffer) *buf)
 {
 	(void) buf;
 	return 0;
@@ -111,7 +112,7 @@ static int _mpt_buffer_alloc_type(const MPT_STRUCT(buffer) *buf)
 static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
 	{ _mpt_buffer_alloc_unref, _mpt_buffer_alloc_ref },
 	_mpt_buffer_alloc_detach,
-	_mpt_buffer_alloc_type
+	_mpt_buffer_alloc_content
 };
 /*!
  * \ingroup mptArray
