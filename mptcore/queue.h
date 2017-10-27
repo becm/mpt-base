@@ -141,147 +141,148 @@ __MPT_EXTDECL_END
 class DecodingQueue : protected decode_queue
 {
 public:
-    DecodingQueue(DataDecoder = 0);
-    ~DecodingQueue();
-    
-    bool pendingMessage();
-    bool currentMessage(struct message &, struct iovec * = 0);
-    bool advance();
-    
+	DecodingQueue(DataDecoder = 0);
+	~DecodingQueue();
+	
+	bool pendingMessage();
+	bool currentMessage(struct message &, struct iovec * = 0);
+	bool advance();
 protected:
-    ssize_t _mlen;
+	ssize_t _mlen;
 };
 
 /*! interface to raw device */
 class IODevice
 {
 public:
-    enum { Type = TypeIODevice };
-    
-    virtual void unref() = 0;
-    virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
-    virtual ssize_t read(size_t , void *, size_t = 1) = 0;
-    
-    virtual int64_t pos();
-    virtual bool seek(int64_t);
-    virtual Slice<uint8_t> peek(size_t);
-    virtual int getchar();
-    
+	static int typeIdentifier();
+	
+	virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
+	virtual ssize_t read(size_t , void *, size_t = 1) = 0;
+	
+	virtual int64_t pos();
+	virtual bool seek(int64_t);
+	virtual Slice<uint8_t> peek(size_t);
+	virtual int getchar();
 protected:
-    virtual ~IODevice()
-    { }
+	virtual ~IODevice()
+	{ }
 };
 
 class Queue : public IODevice
 {
 public:
-    Queue(size_t = 0);
-    ~Queue();
-    
-    enum { Type = IODevice::Type };
-    
-    /* IODevice interface */
-    void unref() __MPT_OVERRIDE;
-    ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
-    ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
-    
-    Slice<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
-    
-    /* queue access */
-    virtual bool prepare(size_t);
-    
-    virtual bool push(const void *, size_t);
-    virtual bool pop(void *, size_t);
-    
-    virtual bool unshift(const void *, size_t);
-    virtual bool shift(void *, size_t);
-    
+	Queue(size_t = 0);
+	virtual ~Queue();
+	
+	/* IODevice interface */
+	ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
+	ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
+	
+	Slice<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
+	
+	/* queue access */
+	virtual bool prepare(size_t);
+	
+	virtual bool push(const void *, size_t);
+	virtual bool pop(void *, size_t);
+	
+	virtual bool unshift(const void *, size_t);
+	virtual bool shift(void *, size_t);
 protected:
-    struct queue _d;
+	struct queue _d;
 };
 
 template <typename T>
 class Pipe
 {
 public:
-    Pipe(const T &v, size_t len)
-    {
-        if (len && ref().pointer()->prepare(len * sizeof(T))) {
-            while (len--) push(v);
-        }
-    }
-    inline Pipe(const Pipe &from)
-    {
-        *this = from.ref();
-    }
-    inline Pipe & operator=(const Pipe &from)
-    {
-        *this = from.ref();
-    }
-    inline Pipe(Queue *q = 0) : _d(q)
-    {
-        ref();
-    }
-    ~Pipe()
-    {
-        while (pop());
-    }
-    const Reference<Queue> &ref()
-    {
-        if (!_d.pointer()) _d.setPointer(new Reference<Queue>::instance);
-        return _d;
-    }
-    bool push(const T & elem)
-    {
-        Queue *d = ref().pointer();
-        uint8_t buf[sizeof(T)];
-        T *t = static_cast<T *>(static_cast<void *>(buf));
-        new (t) T(elem);
-        if (d->push(t, sizeof(T))) return true;
-        t->~T();
-        return false;
-    }
-    bool pop(T *data = 0) const
-    {
-        Queue *d;
-        if (!(d = _d.pointer())) return false;
-        uint8_t buf[sizeof(T)];
-        T *t = static_cast<T *>(static_cast<void *>(buf));
-        if (!d->pop(t, sizeof(T))) return false;
-        if (data) *data = *t;
-        else t->~T();
-        return true;
-    }
-    bool unshift(const T & elem)
-    {
-        Queue *d = ref().pointer();
-        uint8_t buf[sizeof(T)];
-        T *t = static_cast<T *>(static_cast<void *>(buf));
-        new (t) T(elem);
-        if (d->unshift(t, sizeof(T))) return true;
-        t->~T();
-        return false;
-    }
-    bool shift(T *data = 0) const
-    {
-        Queue *d;
-        if (!(d = _d.pointer())) return false;
-        uint8_t buf[sizeof(T)];
-        T *t = static_cast<T *>(static_cast<void *>(buf));
-        if (!d->shift(t, sizeof(T))) return false;
-        if (data) *data = *t;
-        else t->~T();
-        return true;
-    }
-    Slice<T> data()
-    {
-        Queue *d;
-        if (!(d = _d.pointer())) return Slice<T>(0, 0);
-        Slice<uint8_t> r = d->peek();
-        return Slice<T>((T *) r.base(), r.length() / sizeof(T));
-    }
+	class instance : public Reference<Queue>::instance
+	{
+	public:
+		void unref()
+		{
+			if (!_ref.lower()) delete this;
+		}
+	};
+	Pipe(const T &v, size_t len)
+	{
+		if (len && ref().pointer()->prepare(len * sizeof(T))) {
+			while (len--) push(v);
+		}
+	}
+	inline Pipe(const Pipe &from)
+	{
+		*this = from.ref();
+	}
+	inline Pipe & operator=(const Pipe &from)
+	{
+		*this = from.ref();
+	}
+	inline Pipe(instance *q = 0) : _d(q)
+	{
+		ref();
+	}
+	~Pipe()
+	{
+		while (pop());
+	}
+	const Reference<instance> &ref()
+	{
+		if (!_d.pointer()) _d.setPointer(new instance);
+		return _d;
+	}
+	bool push(const T & elem)
+	{
+		Queue *d = ref().pointer();
+		uint8_t buf[sizeof(T)];
+		T *t = static_cast<T *>(static_cast<void *>(buf));
+		new (t) T(elem);
+		if (d->push(t, sizeof(T))) return true;
+		t->~T();
+		return false;
+	}
+	bool pop(T *data = 0) const
+	{
+		Queue *d;
+		if (!(d = _d.pointer())) return false;
+		uint8_t buf[sizeof(T)];
+		T *t = static_cast<T *>(static_cast<void *>(buf));
+		if (!d->pop(t, sizeof(T))) return false;
+		if (data) *data = *t;
+		else t->~T();
+		return true;
+	}
+	bool unshift(const T & elem)
+	{
+		Queue *d = ref().pointer();
+		uint8_t buf[sizeof(T)];
+		T *t = static_cast<T *>(static_cast<void *>(buf));
+		new (t) T(elem);
+		if (d->unshift(t, sizeof(T))) return true;
+		t->~T();
+		return false;
+	}
+	bool shift(T *data = 0) const
+	{
+		Queue *d;
+		if (!(d = _d.pointer())) return false;
+		uint8_t buf[sizeof(T)];
+		T *t = static_cast<T *>(static_cast<void *>(buf));
+		if (!d->shift(t, sizeof(T))) return false;
+		if (data) *data = *t;
+		else t->~T();
+		return true;
+	}
+	Slice<T> data()
+	{
+		Queue *d;
+		if (!(d = _d.pointer())) return Slice<T>(0, 0);
+		Slice<uint8_t> r = d->peek();
+		return Slice<T>((T *) r.base(), r.length() / sizeof(T));
+	}
 protected:
-    Reference<Queue> _d;
+	Reference<instance> _d;
 };
 
 #endif /* defined(__cplusplus) */
@@ -289,4 +290,3 @@ protected:
 __MPT_NAMESPACE_END
 
 #endif /* _MPT_QUEUE_H */
-

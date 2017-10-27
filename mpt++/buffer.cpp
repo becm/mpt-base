@@ -15,17 +15,19 @@
 
 __MPT_NAMESPACE_BEGIN
 
-// buffer metatype
+// buffer instance
 Buffer::Buffer(array const &a)
 {
     _d = a;
 }
 Buffer::~Buffer()
 { }
+// reference interface
 void Buffer::unref()
 {
     delete this;
 }
+// metatype interface
 Buffer *Buffer::clone() const
 {
     if (_enc) {
@@ -40,14 +42,18 @@ Buffer *Buffer::clone() const
 }
 int Buffer::conv(int type, void *ptr) const
 {
+    int me;
+    if ((me = IODevice::typeIdentifier()) < 0) {
+        me = metatype::Type;
+    }
     if (!type) {
         static const char types[] = { metatype::Type, MPT_value_toVector('c'), 's', 0 };
         if (ptr) *((const char **) ptr) = types;
-        return Type;
+        return me;
     }
     if (type == metatype::Type) {
-        if (ptr) *((void **) ptr) = static_cast<metatype *>(const_cast<Buffer *>(this));
-        return Type;
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
+        return me;
     }
     if (type == MPT_value_toVector('c')) {
         struct iovec *vec;
@@ -56,31 +62,29 @@ int Buffer::conv(int type, void *ptr) const
             vec->iov_base = d.begin();
             vec->iov_len = d.length();
         }
-        return Type;
+        return me;
     }
     return BadType;
 }
+// iterator interface
 int Buffer::get(int type, void *ptr)
 {
     if (!type) {
-        value *val;
-        if ((val = static_cast<value *>(ptr))) {
-            static const char fmt[] = { buffer::Type, 0 };
-            val->fmt = fmt;
-            val->ptr = &_d;
-        }
-        return Type;
+        return conv(type, ptr);
     }
-    if (_state.scratch) return MessageInProgress;
+    if (_state.scratch) {
+        return MessageInProgress;
+    }
     size_t off = _d.length() - _state.done;
     slice s(_d);
     s.shift(off);
-    type = mpt_slice_get(&s, type, ptr);
+    if ((type = mpt_slice_get(&s, type, ptr)) < 0) {
+        return type;
+    }
     s.shift(s.data().length() - _state.done);
-    return Type;
+    int me = IODevice::typeIdentifier();
+    return me < 0 ? metatype::Type : me;
 }
-
-// iterator extensions for buffer
 int Buffer::advance()
 {
     return MissingData;
@@ -90,7 +94,7 @@ int Buffer::reset()
     return BadOperation;
 }
 
-// I/O interface implementation
+// I/O device interface
 ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {
     Slice<uint8_t> d = data();

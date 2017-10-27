@@ -179,8 +179,6 @@ struct message;
 class Buffer : public metatype, public iterator, public IODevice, public encode_array
 {
 public:
-	enum { Type = IODevice::Type };
-	
 	Buffer(array const& = array(0));
 	virtual ~Buffer();
 	
@@ -205,8 +203,6 @@ class Stream : public input, public output, public IODevice
 public:
 	Stream(const streaminfo * = 0);
 	virtual ~Stream();
-	
-	enum { Type = output::Type };
 	
 	void unref() __MPT_OVERRIDE;
 	uintptr_t addref() __MPT_OVERRIDE;

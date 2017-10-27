@@ -13,13 +13,28 @@
 
 __MPT_NAMESPACE_BEGIN
 
+int IODevice::typeIdentifier()
+{
+    static int id = 0;
+    if (!id) {
+        id = mpt_valtype_interface_new("io");
+    }
+    return id;
+}
+
 // generic IODevice operations
 Slice<uint8_t> IODevice::peek(size_t)
-{ return Slice<uint8_t>(0, 0); }
+{
+    return Slice<uint8_t>(0, 0);
+}
 int64_t IODevice::pos()
-{ return -1; }
+{
+    return -1;
+}
 bool IODevice::seek(int64_t )
-{ return false; }
+{
+    return false;
+}
 int IODevice::getchar()
 {
     uint8_t letter;
@@ -28,7 +43,7 @@ int IODevice::getchar()
         return rv < 0 ? rv : -1;
     return letter;
 }
-
+// coding queue dispatch and process
 ssize_t decode_queue::receive()
 {
     return mpt_queue_recv(this);
@@ -50,13 +65,14 @@ bool encode_queue::trim(size_t take)
     return true;
 }
 
+// queue with data decoder
 DecodingQueue::DecodingQueue(DataDecoder dec) : decode_queue(dec), _mlen(-1)
 { }
 DecodingQueue::~DecodingQueue()
 {
     mpt_queue_resize(this, 0);
 }
-
+// message source interface
 bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
 {
     if (_mlen < 0) {
@@ -94,23 +110,19 @@ bool DecodingQueue::advance()
     return true;
 }
 
-// queue metatype operations
+// queue with raw throughput
 Queue::Queue(size_t len)
 {
     if (len) Queue::prepare(len);
 }
 Queue::~Queue()
-{ mpt_queue_resize(&_d, 0); }
-
-// queue metatype interface
-void Queue::unref()
 {
-    delete this;
+    mpt_queue_resize(&_d, 0);
 }
-
 bool Queue::prepare(size_t len = 1)
-{ return (!len || mpt_queue_prepare(&_d, len)) ? true : false; }
-
+{
+    return (!len || mpt_queue_prepare(&_d, len)) ? true : false;
+}
 bool Queue::push(const void *data, size_t len = 1)
 {
     mpt_queue_prepare(&_d, len);
@@ -131,28 +143,7 @@ bool Queue::shift(void *data = 0, size_t len = 1)
     if (data) return mpt_qshift(&_d, len, data);
     return mpt_queue_crop(&_d, 0, len) >= 0;
 }
-
-Slice<uint8_t> Queue::peek(size_t len)
-{
-    size_t low = 0;
-    void *base = mpt_queue_data(&_d, &low);
-
-    if (!len) len = _d.len;
-
-    if (len <= low) {
-        len = low;
-    }
-    else if (!_d.fragmented()) {
-        len = _d.len;
-    }
-    else {
-        mpt_queue_align(&_d, 0);
-        base = _d.base;
-        len = _d.len;
-    }
-    return Slice<uint8_t>(static_cast<uint8_t *>(base), len);
-}
-
+// I/O device interface
 ssize_t Queue::write(size_t len, const void *d, size_t part)
 {
     size_t done = 0;
@@ -174,6 +165,26 @@ ssize_t Queue::read(size_t len, void *d, size_t part)
         d = ((char *) d) + part;
     }
     return len;
+}
+Slice<uint8_t> Queue::peek(size_t len)
+{
+    size_t low = 0;
+    void *base = mpt_queue_data(&_d, &low);
+
+    if (!len) len = _d.len;
+
+    if (len <= low) {
+        len = low;
+    }
+    else if (!_d.fragmented()) {
+        len = _d.len;
+    }
+    else {
+        mpt_queue_align(&_d, 0);
+        base = _d.base;
+        len = _d.len;
+    }
+    return Slice<uint8_t>(static_cast<uint8_t *>(base), len);
 }
 
 __MPT_NAMESPACE_END
