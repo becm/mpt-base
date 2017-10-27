@@ -220,7 +220,7 @@ extern size_t mpt_message_length(const MPT_STRUCT(message) *);
 extern int mpt_message_pset(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
 
 /* create metatype from message text arguments */
-extern MPT_INTERFACE(iterator) *mpt_message_iterator(const MPT_STRUCT(message) *, int);
+extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *, int);
 
 /* set array to message text arguments */
 extern int mpt_array_message(MPT_STRUCT(array) *, const MPT_STRUCT(message) *, int);

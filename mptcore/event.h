@@ -222,7 +222,7 @@ extern MPT_INTERFACE(metatype) *mpt_reply_deferrable(size_t, int (*)(void *, con
 extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 
 /* command message content */
-extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *);
+extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 
 __MPT_EXTDECL_END
 

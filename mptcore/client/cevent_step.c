@@ -22,7 +22,8 @@
  */
 extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(iterator) *src;
+	MPT_INTERFACE(metatype) *src;
+	MPT_INTERFACE(iterator) *it;
 	int state;
 	
 	if (!ev) {
@@ -42,7 +43,7 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		    && mt.cmd == MPT_ENUM(MessageCommand)
 		    && (part = mpt_message_argv(&msg, mt.arg)) >= 0) {
 			/* consume command part  */
-			mpt_message_read(&msg, part+1, 0);
+			mpt_message_read(&msg, part + 1, 0);
 			/* create source for further arguments */
 			if ((part = mpt_message_argv(&msg, mt.arg)) > 0
 			    && !(src = mpt_message_iterator(&msg, mt.arg))) {
@@ -51,9 +52,14 @@ extern int mpt_cevent_step(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		}
 	}
 	/* try to execute next solver step */
-	state = cl->_vptr->step(cl, src);
-	if (src) src->_vptr->ref.unref((void *) src);
-	
+	it = 0;
+	if (src) {
+		src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it);
+	}
+	state = cl->_vptr->step(cl, it);
+	if (src) {
+		src->_vptr->ref.unref((void *) src);
+	}
 	if (state < 0) {
 		return MPT_event_fail(ev, state, MPT_tr("step operation failed"));
 	}

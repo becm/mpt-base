@@ -85,16 +85,6 @@ static int nextArgument(struct iteratorVararg *va)
 	va->len = len;
 	return fmt;
 }
-static void iteratorVarargUnref(MPT_INTERFACE(reference) *ref)
-{
-	mpt_log(0, "mpt::iterator::vararg", MPT_LOG(Critical), "%s (%" PRIxPTR ")",
-	        MPT_tr("tried to unref temporary iterator"), ref);
-}
-static uintptr_t iteratorVarargRef(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-	return 0;
-}
 static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct iteratorVararg *va = (void *) it;
@@ -149,7 +139,6 @@ static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
 {
 	static const MPT_INTERFACE_VPTR(iterator) ctl = {
-		{ iteratorVarargUnref, iteratorVarargRef },
 		iteratorVarargGet,
 		iteratorVarargAdvance,
 		iteratorVarargReset
@@ -167,6 +156,7 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 	if (fmt && (ret = nextArgument(&va)) < 0) {
 		return ret;
 	}
+	ret = proc(ctx, &va._it);
 	va_end(va.arg);
-	return proc(ctx, &va._it);
+	return ret;
 }

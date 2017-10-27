@@ -12,18 +12,17 @@
  * \ingroup mptArray
  * \brief create message iterator
  * 
- * Create iterator with message arguments as (basic) data.
+ * Create iterator with message text segments.
  * 
  * \param ptr   message data
  * \param asep  argument separator
  * 
- * \return pointer to iterator interface for message elements
+ * \return new iterator for message elements
  */
-extern MPT_INTERFACE(iterator) *mpt_message_iterator(const MPT_STRUCT(message) *ptr, int asep)
+extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *ptr, int asep)
 {
 	MPT_STRUCT(array) a = MPT_ARRAY_INIT;
 	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
 	int len;
 	
 	if (!ptr) {
@@ -32,14 +31,7 @@ extern MPT_INTERFACE(iterator) *mpt_message_iterator(const MPT_STRUCT(message) *
 	if ((len = mpt_array_message(&a, ptr, asep)) < 0) {
 		return 0;
 	}
-	if (!(mt = mpt_meta_buffer(&a))) {
-		it = 0;
-	}
-	else if ((mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it)) < 0
-	      || !it) {
-		mt->_vptr->ref.unref((void *) mt);
-	}
+	mt = mpt_meta_buffer(&a);
 	mpt_array_clone(&a, 0);
-	
-	return it;
+	return mt;
 }

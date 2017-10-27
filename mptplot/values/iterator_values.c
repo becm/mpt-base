@@ -15,88 +15,120 @@
 struct _iter_sdata
 {
 	const char *next;  /* next position in string */
-	double curr;      /* current iterator value */
+	double curr;       /* current iterator value */
 };
 
-static void iterUnref(MPT_INTERFACE(reference) *mt)
+/* reference interface */
+static void iterValueUnref(MPT_INTERFACE(reference) *mt)
 {
 	free(mt);
 }
-static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterValueRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 0;
 }
-static int iterValGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+/* metatype interface */
+static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	struct _iter_sdata *data = (void *) (it + 1);
+	const struct _iter_sdata *d = (void *) (mt + 2);
 	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return 's';
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((const void **) ptr) = mt + 1;
+		return 's';
+	}
+	if (type == 's') {
+		if (ptr) *((const char **) ptr) = (char *) d + 1;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeValue)) {
 		MPT_STRUCT(value) *val;
 		if ((val = ptr)) {
 			val->fmt = 0;
-			val->ptr = (void *) (data + 1);
+			val->ptr = (char *) (d + 1);
 		}
-		return data->next - (char *) (data + 1);
+		return MPT_ENUM(TypeIterator);
 	}
-	if (!data->next) {
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *iterValueClone(const MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_sdata *d = (void *) (mt + 2);
+	MPT_INTERFACE(metatype) *ptr;
+	
+	if ((ptr = mpt_iterator_values((void *) (d + 1)))) {
+		struct _iter_sdata *val = (void *) (ptr + 2);
+		size_t diff = d->next - (char *) mt;
+		val->next = ((char *) mt) + diff;
+		val->curr = d->curr;
+	}
+	return ptr;
+}
+/* iterator interface */
+static int iterValueGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+{
+	struct _iter_sdata *d = (void *) (it + 1);
+	if (!type) {
+		static const char fmt[] = "df";
+		if (ptr) *((const char **) ptr) = fmt;
+		return d->next - (char *) (d + 1);
+	}
+	if (!d->next) {
 		return 0;
 	}
-	if (isnan(data->curr)) {
+	if (isnan(d->curr)) {
 		return MPT_ERROR(BadValue);
 	}
 	if (type == 'd') {
 		if (ptr) {
-			*((double *) ptr) = data->curr;
+			*((double *) ptr) = d->curr;
 		}
 		return 's';
 	}
 	if (type == 'f') {
 		if (ptr) {
-			*((float *) ptr) = data->curr;
+			*((float *) ptr) = d->curr;
 		}
 		return 's';
 	}
 	return MPT_ERROR(BadType);
 }
-static int iterValAdvance(MPT_INTERFACE(iterator) *it)
+static int iterValueAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_sdata *data = (void *) (it + 1);
+	struct _iter_sdata *d = (void *) (it + 1);
 	int len;
-	if (!data->next) {
+	if (!d->next) {
 		return MPT_ERROR(MissingData);
 	}
-	if (!*data->next || !(len = mpt_cdouble(&data->curr, data->next, 0))) {
-		data->next = 0;
+	if (!*d->next || !(len = mpt_cdouble(&d->curr, d->next, 0))) {
+		d->next = 0;
 		return 0;
 	}
-	if (len < 0 || isnan(data->curr)) {
+	if (len < 0 || isnan(d->curr)) {
 		return MPT_ERROR(BadValue);
 	}
-	data->next += len;
+	d->next += len;
 	return 'd';
 }
-static int iterValReset(MPT_INTERFACE(iterator) *it)
+static int iterValueReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_sdata *data = (void *) (it + 1);
-	const char *base = (const char *) (data + 1);
+	struct _iter_sdata *d = (void *) (it + 1);
+	const char *base = (const char *) (d + 1);
 	int len;
-	if (!(len = mpt_cdouble(&data->curr, base, 0))) {
-		data->curr = 0;
+	if (!(len = mpt_cdouble(&d->curr, base, 0))) {
+		d->curr = 0;
 		return MPT_ERROR(MissingData);
 	}
-	if (len < 0 || isnan(data->curr)) {
+	if (len < 0 || isnan(d->curr)) {
 		return MPT_ERROR(BadValue);
 	}
-	data->next = base + len;
+	d->next = base + len;
 	return 0;
 }
-
-static const MPT_INTERFACE_VPTR(iterator) iteratorStr = {
-	{ iterUnref, iterRef },
-	iterValGet,
-	iterValAdvance,
-	iterValReset
-};
 
 /*!
  * \ingroup mptValues
@@ -108,10 +140,21 @@ static const MPT_INTERFACE_VPTR(iterator) iteratorStr = {
  * 
  * \return iterator interface
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_values(const char *val)
+extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 {
-	MPT_INTERFACE(iterator) *iter;
-	struct _iter_sdata *data;
+	static const MPT_INTERFACE_VPTR(metatype) valueMeta = {
+		{ iterValueUnref, iterValueRef },
+		iterValueConv,
+		iterValueClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) valueIter = {
+		iterValueGet,
+		iterValueAdvance,
+		iterValueReset
+	};
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(iterator) *it;
+	struct _iter_sdata *d;
 	size_t len;
 	double flt;
 	int adv;
@@ -127,16 +170,18 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_values(const char *val)
 	}
 	len = strlen(val) + 1;
 	
-	if (!(iter = malloc(sizeof(*iter) + sizeof(*data) + len))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + len))) {
 		return 0;
 	}
-	data = (void *) (iter + 1);
+	mt->_vptr = &valueMeta;
 	
-	iter->_vptr = &iteratorStr;
+	it = (void *) (mt + 1);
+	it->_vptr = &valueIter;
 	
-	memcpy(data + 1, val, len);
-	data->next = val + adv;
-	data->curr = flt;
+	d = (void *) (it + 1);
+	memcpy(d + 1, val, len);
+	d->next = val + adv;
+	d->curr = flt;
 	
-	return iter;
+	return mt;
 }

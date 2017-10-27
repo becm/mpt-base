@@ -35,40 +35,41 @@ extern int mpt_cevent_clear(MPT_INTERFACE(config) *cl, MPT_STRUCT(event) *ev)
 		return MPT_event_stop(ev, MPT_tr("solver cleared"));
 	}
 	else {
-		MPT_INTERFACE(iterator) *src;
+		MPT_INTERFACE(metatype) *src;
+		MPT_INTERFACE(iterator) *it;
 		const char *arg;
 		int ret;
 		
-		if (!(src = mpt_event_command(ev))) {
+		if (!(src = mpt_event_command(ev))
+		    || src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it) < 0
+		    || !it) {
 			ev->id = 0;
 			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
 		}
-		if ((ret = src->_vptr->get(src, 's', &arg)) <= 0
-		    || (ret = src->_vptr->advance(src)) < 0
-		    || (ret = src->_vptr->get(src, 's', &arg)) < 0) {
+		if ((ret = src->_vptr->conv(src, 's', &arg)) <= 0) {
 			src->_vptr->ref.unref((void *) src);
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad argument content"));
 		}
-		/* clear single pass data */
-		if ((ret = src->_vptr->advance(src)) < 0) {
-			cl->_vptr->remove(cl, &p);
-		}
 		do {
-			if (arg && *arg) {
-				mpt_path_set(&p, arg, -1);
-				if (cl->_vptr->remove(cl, &p) < 0) {
-					mpt_log(0, __func__, MPT_LOG(Info), "%s: %s",
-					        MPT_tr("no config element"), arg);
-				} else {
-					mpt_log(0, __func__, MPT_LOG(Debug2), "%s: %s",
-					        MPT_tr("removed config element"), arg);
-				}
-			}
-			if ((ret = src->_vptr->get(src, 's', &arg)) < 0) {
+			if ((ret = it->_vptr->get(it, 's', &arg)) < 0) {
 				src->_vptr->ref.unref((void *) src);
 				return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad argument content"));
 			}
-		} while ((ret = src->_vptr->advance(src)) >= 0);
+			if (!ret) {
+				break;
+			}
+			if (!arg || !*arg) {
+				continue;
+			}
+			mpt_path_set(&p, arg, -1);
+			if (cl->_vptr->remove(cl, &p) < 0) {
+				mpt_log(0, __func__, MPT_LOG(Info), "%s: %s",
+				        MPT_tr("no config element"), arg);
+			} else {
+				mpt_log(0, __func__, MPT_LOG(Debug2), "%s: %s",
+				        MPT_tr("removed config element"), arg);
+			}
+		} while ((ret = it->_vptr->advance(it)) > 0);
 		
 		src->_vptr->ref.unref((void *) src);
 		return MPT_event_stop(ev, MPT_tr("solver elements cleared"));

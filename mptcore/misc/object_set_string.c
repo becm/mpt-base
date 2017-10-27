@@ -14,7 +14,7 @@
 struct wrapIter
 {
 	MPT_INTERFACE(metatype) _ctl;
-	MPT_INTERFACE(iterator) *it;
+	MPT_INTERFACE(metatype) *src;
 	const char *val, *sep;
 };
 
@@ -25,11 +25,6 @@ static void metaIterUnref(MPT_INTERFACE(reference) *ref)
 static uintptr_t metaIterRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
-	return 0;
-}
-static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
 	return 0;
 }
 static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
@@ -43,18 +38,18 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		return *fmt;
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		MPT_INTERFACE(iterator) *src;
-		if (!(src = it->it)) {
+		if (dest) {
+			MPT_INTERFACE(metatype) *src;
 			if (!it->val || !*it->val) {
 				return MPT_ERROR(BadValue);
 			}
-			if (!(src = mpt_iterator_string(it->val, it->sep))) {
-				return MPT_ERROR(BadValue);
+			if (!(src = it->src)) {
+				if (!(src = mpt_iterator_string(it->val, it->sep))) {
+					return MPT_ERROR(BadValue);
+				}
+				it->src = src;
 			}
-			it->it = src;
-		}
-		if (dest) {
-			*((const void **) dest) = src;
+			return src->_vptr->conv(src, MPT_ENUM(TypeIterator), dest);
 		}
 		return 's';
 	}
@@ -81,6 +76,11 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	return 0;
 }
+static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
 
 /*!
  * \ingroup mptObject
@@ -100,17 +100,17 @@ extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, c
 		metaIterConv,
 		metaIterClone
 	};
-	MPT_INTERFACE(iterator) *it;
+	MPT_INTERFACE(metatype) *src;
 	struct wrapIter mt;
 	int ret;
 	
 	mt._ctl._vptr = &ctl;
-	mt.it = 0;
+	mt.src = 0;
 	mt.val = val;
 	mt.sep = sep;
 	ret = obj->_vptr->setProperty(obj, name, &mt._ctl);
-	if ((it = mt.it)) {
-		it->_vptr->ref.unref((void *) it);
+	if ((src = mt.src)) {
+		src->_vptr->ref.unref((void *) src);
 	}
 	return ret;
 }

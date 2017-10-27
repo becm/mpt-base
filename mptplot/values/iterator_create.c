@@ -21,7 +21,7 @@
  * 
  * \return interable metatype
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *conf)
+extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 {
 	MPT_STRUCT(value) val;
 	size_t len;
@@ -40,7 +40,7 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *conf)
 	}
 	/* extract description string */
 	len = 0;
-	while ((isupper(curr)  ||  islower(curr))) {
+	while ((isupper(curr) || islower(curr))) {
 		curr = conf[len++];
 	}
 	if (len >= sizeof(buf)) {

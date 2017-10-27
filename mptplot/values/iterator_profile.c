@@ -66,7 +66,7 @@ static int getValues(double *val, int len, const char *ptr)
  * 
  * \return type of profile
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *arr, const char *desc)
+extern MPT_INTERFACE(metatype) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *arr, const char *desc)
 {
 	MPT_STRUCT(buffer) *buf;
 	long len;

@@ -17,17 +17,19 @@
  * 
  * \return metatype with command and arguments
  */
-extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *ev)
+extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(iterator) *arg;
+	MPT_INTERFACE(metatype) *arg;
 	
 	if (!ev->msg) {
 		arg = mpt_message_iterator(ev->msg, 0);
 	}
 	else {
+		MPT_STRUCT(array) a = MPT_ARRAY_INIT;
 		MPT_STRUCT(msgtype) mt;
 		MPT_STRUCT(message) msg;
 		size_t part;
+		int len;
 		
 		msg = *ev->msg;
 		if (!(part = mpt_message_read(&msg, sizeof(mt), &mt))) {
@@ -41,7 +43,11 @@ extern MPT_INTERFACE(iterator) *mpt_event_command(const MPT_STRUCT(event) *ev)
 		if (part < sizeof(mt)) {
 			mt.arg = 0;
 		}
-		arg = mpt_message_iterator(&msg, mt.arg);
+		if ((len = mpt_array_message(&a, &msg, mt.arg)) < 0) {
+			return 0;
+		}
+		arg = mpt_meta_arguments(&a);
+		mpt_array_clone(&a, 0);
 	}
 	if (!arg) {
 		mpt_context_reply(ev->reply, MPT_ERROR(BadArgument), MPT_tr("no command content"));

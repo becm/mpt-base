@@ -25,35 +25,58 @@ struct _iter_fdata
 	uint8_t val[16];
 };
 
-static void iterUnref(MPT_INTERFACE(reference) *ref)
+/* reference interface */
+static void fileUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct _iter_fdata *d = (void *) (ref + 1);
+	struct _iter_fdata *d = (void *) (ref + 2);
 	fclose(d->fd);
 	free(ref);
 }
-static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t fileRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 0;
 }
-static int iterGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
+/* metatype interface */
+static int fileConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	MPT_INTERFACE(iterator) *it = (void *) (mt + 1);
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeFile) };
+		if (ptr) *((const char **) ptr) = fmt;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((void **) ptr) = it;
+		return MPT_ENUM(TypeFile);
+	}
+	if (type == MPT_ENUM(TypeFile)) {
+		struct _iter_fdata *d = (void *) (it + 1);
+		if (ptr) *((void **) ptr) = d->fd;
+		return MPT_ENUM(TypeIterator);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* iterator interface */
+static int fileGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct _iter_fdata *d = (void *) (it + 1);
 	const void *src;
 	int ret;
 	
-	if (!t) {
-		MPT_STRUCT(value) *val;
-		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
-		if ((val = ptr)) {
-			val->fmt = fmt;
-			val->ptr = d;
-		}
-		return 0;
+	if (!type) {
+		static const char fmt[] = "dftxuiqnybc";
+		if (ptr) *((const char **) ptr) = fmt;
+		return d->type;
 	}
 	if (!d->type) {
 		size_t len;
-		switch (t) {
+		switch (type) {
 		  case 'd': ret = fscanf(d->fd, "%lf",      (double *)   d->val); len = sizeof(double);   break;
 		  case 'f': ret = fscanf(d->fd, "%f",       (float *)    d->val); len = sizeof(float);    break;
 		  case 't': ret = fscanf(d->fd, "%" SCNu64, (uint64_t *) d->val); len = sizeof(uint64_t); break;
@@ -79,19 +102,19 @@ static int iterGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
 		if (ptr) {
 			memcpy(ptr, d->val, len);
 		}
-		d->type = t;
+		d->type = type;
 		return MPT_ENUM(TypeFile);
 	}
 	else if (d->type < 0) {
 		return 0;
 	}
 	src = d->val;
-	if ((ret = mpt_data_convert(&src, d->type, ptr, t)) < 0) {
+	if ((ret = mpt_data_convert(&src, d->type, ptr, type)) < 0) {
 		return ret;
 	}
 	return d->type;
 }
-static int iterAdvance(MPT_INTERFACE(iterator) *it)
+static int fileAdvance(MPT_INTERFACE(iterator) *it)
 {
 	struct _iter_fdata *d = (void *) (it + 1);
 	if (d->type < 0) {
@@ -99,7 +122,7 @@ static int iterAdvance(MPT_INTERFACE(iterator) *it)
 	}
 	if (!d->type) {
 		int ret;
-		if ((ret = iterGet(it, 'd', 0)) < 0) {
+		if ((ret = fileGet(it, 'd', 0)) < 0) {
 			return ret;
 		}
 		return 0;
@@ -107,19 +130,13 @@ static int iterAdvance(MPT_INTERFACE(iterator) *it)
 	d->type = 0;
 	return MPT_ENUM(TypeFile);
 }
-static int iterReset(MPT_INTERFACE(iterator) *it)
+static int fileReset(MPT_INTERFACE(iterator) *it)
 {
 	struct _iter_fdata *d = (void *) (it + 1);
 	rewind(d->fd);
 	d->type = 0;
 	return 0;
 }
-static const MPT_INTERFACE_VPTR(iterator) iteratorFile = {
-	{ iterUnref, iterRef },
-	iterGet,
-	iterAdvance,
-	iterReset
-};
 
 /*!
  * \ingroup mptValues
@@ -131,23 +148,36 @@ static const MPT_INTERFACE_VPTR(iterator) iteratorFile = {
  * 
  * \return file iterator
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_file(int fd)
+extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 {
-	MPT_INTERFACE(iterator) *iter;
+	static const MPT_INTERFACE_VPTR(metatype) fileMeta = {
+		{ fileUnref, fileRef },
+		fileConv,
+		fileClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) fileIter = {
+		fileGet,
+		fileAdvance,
+		fileReset
+	};
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(iterator) *it;
 	struct _iter_fdata *data;
 	FILE *file;
 	
-	if ((file = fdopen(fd, "r"))) {
+	if (!(file = fdopen(fd, "r"))) {
 		return 0;
 	}
-	if (!(iter = malloc(sizeof(*iter) + sizeof(*data)))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*data)))) {
 		return 0;
 	}
-	data = (void *) (iter + 1);
-	iter->_vptr = &iteratorFile;
+	mt->_vptr = &fileMeta;
+	it = (void *) (mt + 1);
+	it->_vptr = &fileIter;
+	data = (void *) (it + 1);
 	data->fd = file;
 	data->type = 0;
 	
-	return iter;
+	return mt;
 }
 

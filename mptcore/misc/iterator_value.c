@@ -16,7 +16,7 @@
 
 
 struct valSource {
-	MPT_INTERFACE(iterator) ctl;
+	MPT_INTERFACE(iterator) _it;
 	MPT_STRUCT(value) val, save;
 };
 
@@ -93,16 +93,8 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 	}
 	return 's';
 }
-static void valError(MPT_INTERFACE(reference) *ctl)
-{
-	mpt_log(0, "mpt::iterator::value", MPT_LOG(Critical), "%s (%" PRIxPTR ")",
-	        MPT_tr("tried to unref temporary iterator"), ctl);
-}
-static uintptr_t valRef(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-	return 0;
-}
+
+/* iterator operations */
 static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 {
 	struct valSource *it = (void *) ctl;
@@ -187,6 +179,11 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
 	it->val = it->save;
 	return strlen(it->val.fmt);
 }
+static const MPT_INTERFACE_VPTR(iterator) _vptr_iterator_value = {
+	valGet,
+	valAdvance,
+	valReset
+};
 
 
 /*!
@@ -204,39 +201,62 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
  */
 extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
 {
-	static const MPT_INTERFACE_VPTR(iterator) ctl = {
-		{ valError, valRef },
-		valGet,
-		valAdvance,
-		valReset
-	};
 	struct valSource it;
 	int ret;
 	
 	if (!proc) {
 		return MPT_ERROR(BadArgument);
 	}
-	it.ctl._vptr = &ctl;
+	it._it._vptr = &_vptr_iterator_value;
 	it.val = *val;
 	it.save = *val;
 	
-	if ((ret = proc(ctx, &it.ctl)) >= 0) {
+	if ((ret = proc(ctx, &it._it)) >= 0) {
 		*val = it.val;
 	}
 	return ret;
 }
 
+/* reference interface */
 static void valUnref(MPT_INTERFACE(reference) *ctl)
 {
 	free(ctl);
 }
-static const MPT_INTERFACE_VPTR(iterator) _val_vptr = {
-	{ valUnref, valRef },
-	valGet,
-	valAdvance,
-	valReset
-};
-
+static uintptr_t valRef(MPT_INTERFACE(reference) *ctl)
+{
+	(void) ctl;
+	return 0;
+}
+/* metatype interface */
+static int valConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
+{
+	struct valSource *it = (void *) (mt + 1);
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue) };
+		if (dest) {
+			*((const char **) dest) = fmt;
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (dest) {
+			*((void **) dest) = &it->_it;
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeValue)) {
+		if (dest) {
+			*((MPT_STRUCT(value) *) dest) = it->save;
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *valClone(const MPT_INTERFACE(metatype) *mt)
+{
+	struct valSource *it = (void *) (mt + 1);
+	return mpt_iterator_value(it->save, it->val.fmt - it->save.fmt);
+}
 /*!
  * \ingroup mptObject
  * \brief create iterator from value
@@ -249,8 +269,14 @@ static const MPT_INTERFACE_VPTR(iterator) _val_vptr = {
  * 
  * \return new iterator representating value
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int pos)
+extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value) val, int pos)
 {
+	static const MPT_INTERFACE_VPTR(metatype) valMeta = {
+		{ valUnref, valRef },
+		valConv,
+		valClone
+	};
+	MPT_INTERFACE(metatype) *mt;
 	struct valSource *it;
 	const char *fmt;
 	char *data;
@@ -263,13 +289,15 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	}
 	/* shallow copy of value metadata */
 	if (pos < 0) {
-		if (!(it = malloc(sizeof(*it)))) {
+		if (!(mt = malloc(sizeof(*mt) + sizeof(*it)))) {
 			return 0;
 		}
-		it->ctl._vptr = &_val_vptr;
+		mt->_vptr = &valMeta;
+		it = (void *) (mt + 1);
+		it->_it._vptr = &_vptr_iterator_value;
 		it->val = val;
 		it->save = val;
-		return &it->ctl;
+		return mt;
 	}
 	vlen = 0;
 	flen = 0;
@@ -291,10 +319,12 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 		vlen += type;
 	}
 	/* create iterator with local format and data */
-	if (!(it = malloc(sizeof(*it) + flen + vlen))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + flen + vlen))) {
 		return 0;
 	}
-	it->ctl._vptr = &_val_vptr;
+	mt->_vptr = &valMeta;
+	it = (void *) (mt + 1);
+	it->_it._vptr = &_vptr_iterator_value;
 	
 	/* save base and current format info */
 	data = memcpy(it + 1, val.fmt, flen);
@@ -306,5 +336,5 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	it->save.ptr = data;
 	it->val.ptr = data + vpos;
 	
-	return &it->ctl;
+	return mt;
 }

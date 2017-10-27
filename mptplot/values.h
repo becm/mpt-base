@@ -203,21 +203,21 @@ extern long mpt_values_iter(long , double *, long , MPT_INTERFACE(iterator) *);
 extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *, long);
 
 /* create profile for grid */
-extern MPT_INTERFACE(iterator) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *, const char *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *, const char *);
 
 /* create iterators for input */
-extern MPT_INTERFACE(iterator) *mpt_iterator_linear(uint32_t , double , double);
-extern MPT_INTERFACE(iterator) *mpt_iterator_boundary(uint32_t , double , double , double);
-extern MPT_INTERFACE(iterator) *mpt_iterator_poly(const char *, const _MPT_ARRAY_TYPE(double) *);
-extern MPT_INTERFACE(iterator) *mpt_iterator_file(int);
-extern MPT_INTERFACE(iterator) *mpt_iterator_values(const char *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_linear(uint32_t , double , double);
+extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t , double , double , double);
+extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *, const _MPT_ARRAY_TYPE(double) *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_file(int);
+extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *);
 
 /* create iterator (descr. includes type info) */
-extern MPT_INTERFACE(iterator) *mpt_iterator_create(const char *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *);
 /* create specific iterator */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_range (MPT_STRUCT(value) *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_linear(MPT_STRUCT(value) *);
-extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_range (MPT_STRUCT(value) *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *);
+extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *);
 
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 /* set solver matrix via file */

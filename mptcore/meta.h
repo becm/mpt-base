@@ -58,7 +58,7 @@ MPT_INTERFACE_VPTR(metatype)
 
 /*! generic iterator interface */
 #ifdef __cplusplus
-MPT_INTERFACE(iterator) : public reference
+MPT_INTERFACE(iterator)
 {
 protected:
 	inline ~iterator() {}
@@ -73,7 +73,6 @@ public:
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
 {
-	MPT_INTERFACE_VPTR(reference) ref;
 	int (*get)(MPT_INTERFACE(iterator) *, int , void *);
 	int (*advance)(MPT_INTERFACE(iterator) *);
 	int (*reset)(MPT_INTERFACE(iterator) *);
@@ -99,7 +98,6 @@ public:
 	Basic(size_t post);
 	
 	void unref() __MPT_OVERRIDE;
-	
 	int conv(int , void *) const __MPT_OVERRIDE;
 	Basic *clone() const __MPT_OVERRIDE;
 	
@@ -112,15 +110,6 @@ public:
 template <> inline const char *metatype::cast<const char>() const
 {
 	return string();
-}
-/* special copy for metatype */
-template <> inline Reference<metatype> & Reference<metatype>::operator= (Reference<metatype> const &ref)
-{
-	metatype *r = ref._ref;
-	if (r) r = r->clone();
-	if (_ref) _ref->unref();
-	_ref = r;
-	return *this;
 }
 /* generic implementation for metatype */
 template <typename T>
@@ -164,12 +153,6 @@ public:
 	{ }
 	virtual ~Source()
 	{ }
-	
-	void unref() __MPT_OVERRIDE
-	{
-		delete this;
-	}
-	
 	int get(int type, void *dest) __MPT_OVERRIDE
 	{
 		int fmt = this->content();
@@ -227,17 +210,14 @@ extern int _mpt_geninfo_init(void *, size_t);
 extern int _mpt_geninfo_set(void *, const char *, int __MPT_DEFPAR(-1));
 extern int _mpt_geninfo_flags(const void *, int);
 extern int _mpt_geninfo_conv(const void *, int , void *);
-/* create new metatype with data */
+/* clone geninfo content */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 
 /* assign to value via iterator */
 extern int mpt_process_value(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
 extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern MPT_INTERFACE(iterator) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_DEFPAR(-1));
-extern MPT_INTERFACE(iterator) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
-
-/* create metatype for iterator instance */
-extern MPT_INTERFACE(metatype) *mpt_iterator_meta(MPT_INTERFACE(iterator) *);
+extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_DEFPAR(-1));
+extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

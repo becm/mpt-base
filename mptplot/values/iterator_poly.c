@@ -21,10 +21,11 @@ struct iterPoly
 	int coeff;
 };
 
+/* reference interface */
 static void iterPolyUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct iterPoly *ip = (void *) ref;
-	mpt_array_clone(&ip->grid, 0);
+	struct iterPoly *p = (void *) (ref + 1);
+	mpt_array_clone(&p->grid, 0);
 	free(ref);
 }
 static uintptr_t iterPolyRef(MPT_INTERFACE(reference) *ref)
@@ -32,6 +33,28 @@ static uintptr_t iterPolyRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
+/* metatype interface */
+static int iterPolyConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	const struct iterPoly *p = (void *) (mt + 1);
+	
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator) };
+		if (ptr) *((const char **) ptr) = fmt;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((const void **) ptr) = &p->_it;
+		return MPT_ENUM(TypeIterator);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *iterPolyClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* iterator interface */
 static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *dest)
 {
 	struct iterPoly *p = (void *) it;
@@ -127,14 +150,19 @@ static int iterPolyReset(MPT_INTERFACE(iterator) *it)
  * 
  * \return zero on success
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_poly(const char *desc, const _MPT_ARRAY_TYPE(double) *base)
+extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_ARRAY_TYPE(double) *base)
 {
-	static const MPT_INTERFACE_VPTR(iterator) polyIterCtl = {
+	static const MPT_INTERFACE_VPTR(metatype) polyMeta = {
 		{ iterPolyUnref, iterPolyRef },
+		iterPolyConv,
+		iterPolyClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) polyIter = {
 		iterPolyGet,
 		iterPolyAdvance,
 		iterPolyReset
 	};
+	MPT_INTERFACE(metatype) *mt;
 	struct iterPoly *ip;
 	struct {
 		double shift, mult;
@@ -174,15 +202,19 @@ extern MPT_INTERFACE(iterator) *mpt_iterator_poly(const char *desc, const _MPT_A
 	for ( ; ns < nc; ++ns) {
 		coeff[ns].shift = 0;
 	}
-	if (!(ip = malloc(sizeof(*ip) + nc * sizeof(*coeff)))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*ip) + nc * sizeof(*coeff)))) {
 		return 0;
 	}
-	ip->_it._vptr = &polyIterCtl;
+	mt->_vptr = &polyMeta;
+	
+	ip = (void *) (mt + 1);
+	ip->_it._vptr = &polyIter;
+	
 	ip->grid._buf = (base && base->_buf && mpt_refcount_raise(&base->_buf->_ref)) ? base->_buf : 0;
 	ip->pos = 0;
 	ip->coeff = nc;
 	memcpy(ip + 1, coeff, nc * sizeof(*coeff));
 	
-	return &ip->_it;
+	return mt;
 }
 

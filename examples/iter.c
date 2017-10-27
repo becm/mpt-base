@@ -14,15 +14,16 @@ extern int main(int argc, char *argv[])
 	int i;
 	
 	for (i = 1; i < argc; ++i) {
+		MPT_INTERFACE(metatype) *src;
 		MPT_INTERFACE(iterator) *it;
-		
-		if (!(it = mpt_iterator_create(argv[i]))) {
+		if (!(src = mpt_iterator_create(argv[i]))) {
 			fputs("bad format <", stderr);
 			fputs(argv[i], stderr);
 			fputc('>', stderr);
 			fputc('\n', stderr);
 			continue;
 		}
+		src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it);
 		while (1) {
 			double val;
 			int res;
@@ -44,7 +45,7 @@ extern int main(int argc, char *argv[])
 				break;
 			}
 		}
-		it->_vptr->ref.unref((void *) it);
+		src->_vptr->ref.unref((void *) src);
 		fputc('\n', stdout);
 	}
 	return 0;

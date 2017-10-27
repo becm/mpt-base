@@ -15,13 +15,14 @@
 
 struct _iter_bdata
 {
-	double   left,  /* current/base value */
-	         inter,  /* advance step size */
-	         right;  /* advance step size */
+	double   left,  /* left boundary value */
+	         inter, /* non-bounday value */
+	         right; /* right boundary value */
 	uint32_t elem,  /* number of elements */
 	         pos;
 };
 
+/* reference interface */
 static void iterBoundaryUnref(MPT_INTERFACE(reference) *ref)
 {
 	free(ref);
@@ -31,22 +32,54 @@ static uintptr_t iterBoundaryRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
-static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
+/* metatype interface */
+static int iterBoundaryConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((void **) ptr) = (void *) (mt + 1);
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeValue)) {
+		MPT_STRUCT(value) *val;
+		if ((val = ptr)) {
+			static const char fmt[] = { 'd', 'd', 'd', 'u', 0 };
+			val->fmt = fmt;
+			val->ptr = (void *) (mt + 2);
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *iterBoundaryClone(const MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_bdata *d = (void *) (mt + 2);
+	MPT_INTERFACE(metatype) *ptr;
+	
+	if ((ptr = mpt_iterator_boundary(d->elem, d->left, d->inter, d->right))) {
+		uint32_t pos = d->pos;
+		d = (void *) (ptr + 2);
+		d->pos = pos;
+	}
+	return ptr;
+}
+/* iterator interface */
+static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct _iter_bdata *d = (void *) (it + 1);
-	if (!t) {
-		MPT_STRUCT(value) *val;
-		static const char fmt[] = { 'd', 'd', 'd', 'u', 0 };
-		if ((val = ptr)) {
-			val->fmt = fmt;
-			val->ptr = d;
-		}
+	if (!type) {
+		static const char fmt[] = { 'd', 'f', 0 };
+		if (ptr) *((const char **) ptr) = fmt;
 		return d->pos;
 	}
 	if (d->pos >= d->elem) {
 		return MPT_ERROR(MissingData);
 	}
-	if (t == 'd') {
+	if (type == 'd') {
 		if (ptr) {
 			if (!d->pos) {
 				*((double *) ptr) = d->left;
@@ -59,7 +92,7 @@ static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int t, void *ptr)
 		}
 		return 'd';
 	}
-	if (t == 'f') {
+	if (type == 'f') {
 		if (ptr) {
 			if (!d->pos) {
 				*((float *) ptr) = d->left;
@@ -91,12 +124,6 @@ static int iterBoundaryReset(MPT_INTERFACE(iterator) *it)
 	d->pos = 0;
 	return d->elem;
 }
-static const MPT_INTERFACE_VPTR(iterator) iteratorBoundary = {
-	{ iterBoundaryUnref, iterBoundaryRef },
-	iterBoundaryGet,
-	iterBoundaryAdvance,
-	iterBoundaryReset
-};
 
 /*!
  * \ingroup mptValues
@@ -110,26 +137,40 @@ static const MPT_INTERFACE_VPTR(iterator) iteratorBoundary = {
  * 
  * \return linear iterator
  */
-extern MPT_INTERFACE(iterator) *mpt_iterator_boundary(uint32_t len, double left, double inter, double right)
+extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t len, double left, double inter, double right)
 {
-	MPT_INTERFACE(iterator) *iter;
+	static const MPT_INTERFACE_VPTR(metatype) boundaryMeta = {
+		{ iterBoundaryUnref, iterBoundaryRef },
+		iterBoundaryConv,
+		iterBoundaryClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) boundaryIter = {
+		iterBoundaryGet,
+		iterBoundaryAdvance,
+		iterBoundaryReset
+	};
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(iterator) *it;
 	struct _iter_bdata *data;
 	if (len < 2) {
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(iter = malloc(sizeof(*iter) + sizeof(*data)))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*data)))) {
 		return 0;
 	}
-	iter->_vptr = &iteratorBoundary;
-	data = (void *) (iter + 1);
+	mt->_vptr = &boundaryMeta;
 	
+	it = (void *) (mt + 1);
+	it->_vptr = &boundaryIter;
+	
+	data = (void *) (it + 1);
 	data->left = left;
 	data->inter = inter;
 	data->right = right;
 	data->elem = len;
 	data->pos  = 0;
 	
-	return iter;
+	return mt;
 }
 

@@ -19,17 +19,7 @@ MPT_STRUCT(metaBuffer) {
 	MPT_STRUCT(slice) s;
 };
 
-static void bufferIterUnref(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _it);
-	mpt_array_clone(&m->s._a, 0);
-	free(m);
-}
-static uintptr_t bufferIterRef(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-	return 0;
-}
+/* iterator interface */
 static int bufferGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
@@ -50,38 +40,31 @@ static int bufferReset(MPT_INTERFACE(iterator) *it)
 	m->s._len = buf ? buf->_used : 0;
 	return 0;
 }
-
-static const MPT_INTERFACE_VPTR(iterator) _vptr_iter_buffer = {
-	{ bufferIterUnref, bufferIterRef },
-	bufferGet,
-	bufferReset,
-	bufferAdvance
-};
-
-static void bufferMetaUnref(MPT_INTERFACE(reference) *ref)
+/* reference interface */
+static void bufferUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _mt);
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
 }
-static uintptr_t bufferMetaRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t bufferRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 0;
 }
-static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
+/* metatype interface */
+static int bufferConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	const MPT_STRUCT(metaBuffer) *m = (void *) meta;
-	void **dest = ptr;
+	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
 	
 	if (!type) {
-		static const char types[] = { MPT_ENUM(TypeIterator), MPT_value_toVector('c'), 's', 0 };
-		if (dest) *dest = (void *) types;
+		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_value_toVector('c'), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
 		return 0;
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (dest) *dest = (void *) &m->_it;
-		return MPT_ENUM(TypeIterator);
+		if (ptr) *((const void **) ptr) = &m->_it;
+		return MPT_ENUM(TypeArray);
 	}
 	if (type == MPT_value_toVector('c')
 	    || type == MPT_ENUM(TypeVector)) {
@@ -100,35 +83,23 @@ static int bufferConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	}
 	return MPT_ERROR(BadType);
 }
-static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer;
-static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *meta)
+static MPT_INTERFACE(metatype) *bufferCopy(MPT_INTERFACE(metatype) *(*copy)(const MPT_STRUCT(array) *), const MPT_STRUCT(slice) *sl)
 {
-	const MPT_STRUCT(metaBuffer) *old = (void *) meta;
-	MPT_STRUCT(metaBuffer) *m;
-	
-	if (!(m = malloc(sizeof(*m)))) {
+	MPT_STRUCT(metaBuffer) *ptr;
+	MPT_INTERFACE(metatype) *res;
+	if (!(res = copy(&sl->_a))) {
 		return 0;
 	}
-	m->_mt._vptr = &_vptr_meta_buffer;
-	m->_it._vptr = &_vptr_iter_buffer;
-	m->s._a._buf = 0;
-	m->s._len = 0;
-	m->s._off = 0;
-	
-	if (old) {
-		mpt_array_clone(&m->s._a, &old->s._a);
-		if (m->s._a._buf) {
-			m->s._len = old->s._len;
-			m->s._off = old->s._off;
-		}
-	}
-	return &m->_mt;
+	ptr = (void *) res;
+	ptr->s._len = sl->_len;
+	ptr->s._off = sl->_off;
+	return res;
 }
-static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer = {
-	{ bufferMetaUnref, bufferMetaRef },
-	bufferConv,
-	bufferClone
-};
+static MPT_INTERFACE(metatype) *bufferClone(const MPT_INTERFACE(metatype) *mt)
+{
+	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
+	return bufferCopy(mpt_meta_buffer, &m->s);
+}
 
 /*!
  * \ingroup mptArray
@@ -138,17 +109,117 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_meta_buffer = {
  * 
  * \param a  array data to use for iterator
  * 
- * \return new iterator
+ * \return new iterator metatype
  */
 extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 {
+	static const MPT_INTERFACE_VPTR(metatype) metaBuffer = {
+		{ bufferUnref, bufferRef },
+		bufferConv,
+		bufferClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) iterBuffer = {
+		bufferGet,
+		bufferReset,
+		bufferAdvance
+	};
 	MPT_STRUCT(metaBuffer) *m;
 	
-	if (!(m = (void *) bufferClone(0))) {
+	if (!(m = malloc(sizeof(*m)))) {
 		return 0;
 	}
+	m->_mt._vptr = 0;
+	m->_it._vptr = 0;
+	m->s._a._buf = 0;
+	m->s._len = 0;
+	m->s._off = 0;
+	m->_mt._vptr = &metaBuffer;
+	m->_it._vptr = &iterBuffer;
+	
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
 	}
+	return &m->_mt;
+}
+/* return first argument as string content */
+static int bufferResetArgs(MPT_INTERFACE(iterator) *it)
+{
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
+	
+	m->s._off = 0;
+	m->s._len = 0;
+	mpt_slice_advance(&m->s);
+	return 0;
+}
+static int bufferConvArgs(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
+	
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return 0;
+	}
+	if (type == 's') {
+		if (ptr) {
+			MPT_STRUCT(buffer) *buf = m->s._a._buf;
+			if (buf && m->s._off) {
+				++buf;
+			}
+			*((const void **) ptr) = buf;
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((const void **) ptr) = &m->_it;
+		return MPT_ENUM(TypeArray);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *bufferCloneArgs(const MPT_INTERFACE(metatype) *mt)
+{
+	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
+	MPT_STRUCT(metaBuffer) *ptr;
+	MPT_INTERFACE(metatype) *copy;
+	if (!(copy = mpt_meta_arguments(&m->s._a))) {
+		return 0;
+	}
+	ptr = (void *) copy;
+	ptr->s._len = m->s._len;
+	ptr->s._off = m->s._off;
+	return copy;
+}
+/*!
+ * \ingroup mptArray
+ * \brief create argument iterator
+ * 
+ * Use first string segment as metatype value.
+ * Supply text iterator for subsequent elements.
+ * 
+ * \param a  array data to use for iterator
+ * 
+ * \return new iterator metatype
+ */
+extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
+{
+	static const MPT_INTERFACE_VPTR(metatype) metaBuffer = {
+		{ bufferUnref, bufferRef },
+		bufferConvArgs,
+		bufferCloneArgs
+	};
+	static const MPT_INTERFACE_VPTR(iterator) iterBuffer = {
+		bufferGet,
+		bufferResetArgs,
+		bufferAdvance
+	};
+	MPT_INTERFACE(metaBuffer) *m;
+	
+	if (!(m = (void *) mpt_meta_buffer(a))) {
+		return 0;
+	}
+	m->_mt._vptr = &metaBuffer;
+	m->_it._vptr = &iterBuffer;
+	mpt_slice_advance(&m->s);
+	
 	return &m->_mt;
 }

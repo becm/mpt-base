@@ -22,7 +22,8 @@
  */
 extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(iterator) *src;
+	MPT_INTERFACE(metatype) *src;
+	MPT_INTERFACE(iterator) *it;
 	int res;
 	
 	if (!ev) {
@@ -52,9 +53,14 @@ extern int mpt_cevent_init(MPT_INTERFACE(client) *cl, MPT_STRUCT(event) *ev)
 		}
 	}
 	/* initialize and bind solver */
-	res = cl->_vptr->init(cl, src);
-	if (src) src->_vptr->ref.unref((void *) src);
-	
+	it = 0;
+	if (src) {
+		src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it);
+	}
+	res = cl->_vptr->init(cl, it);
+	if (src) {
+		src->_vptr->ref.unref((void *) src);
+	}
 	if (res < 0) {
 		return MPT_event_fail(ev, res, MPT_tr("unable to initialize client data"));
 	}

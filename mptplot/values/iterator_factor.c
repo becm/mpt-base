@@ -23,17 +23,53 @@ struct _iter_fdata
 	         pos;   /* iteration position */
 	double   curr;  /* current value */
 };
-
-static void iterUnref(MPT_INTERFACE(reference) *mt)
+/* reference interface */
+static void iterFactorUnref(MPT_INTERFACE(reference) *ref)
 {
-	free(mt);
+	free(ref);
 }
-static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterFactorRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 0;
 }
-static int iterGet(MPT_INTERFACE(iterator) *mt, int type, void *ptr)
+/* metatype interface */
+static int iterFactorConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	if (!type) {
+		static const char fmt[] = { 'd', 'f' };
+		if (ptr) *((const char **) ptr) = fmt;
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeValue)) {
+		MPT_STRUCT(value) *val;
+		if ((val = ptr)) {
+			static const char fmt[] = { 'd', 'd', 'd', 'u' };
+			val->fmt = fmt;
+			val->ptr = mt + 2;
+		}
+		return MPT_ENUM(TypeIterator);
+	}
+	if (type == MPT_ENUM(TypeIterator)) {
+		if (ptr) *((const void **) ptr) = mt + 1;
+		return MPT_ENUM(TypeIterator);
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *iterFactorClone(const MPT_INTERFACE(metatype) *mt)
+{
+	MPT_INTERFACE(metatype) *ptr;
+	
+	if ((ptr = _mpt_iterator_factor(0))) {
+		struct _iter_fdata *val, *d;
+		val = (void *) (ptr + 2);
+		d   = (void *) (mt  + 2);
+		*val = *d;
+	}
+	return ptr;
+}
+/* iterator interface */
+static int iterFactorGet(MPT_INTERFACE(iterator) *mt, int type, void *ptr)
 {
 	struct _iter_fdata *it = (void *) (mt + 1);
 	if (!type) {
@@ -49,20 +85,16 @@ static int iterGet(MPT_INTERFACE(iterator) *mt, int type, void *ptr)
 		return 0;
 	}
 	if (type == 'd') {
-		if (ptr) {
-			*((double *) ptr) = it->curr;
-		}
+		if (ptr) *((double *) ptr) = it->curr;
 		return 'd';
 	}
 	if (type == 'f') {
-		if (ptr) {
-			*((float *) ptr) = it->curr;
-		}
+		if (ptr) *((float *) ptr) = it->curr;
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
 }
-static int iterAdvance(MPT_INTERFACE(iterator) *ptr)
+static int iterFactorAdvance(MPT_INTERFACE(iterator) *ptr)
 {
 	struct _iter_fdata *it = (void *) (ptr + 1);
 	
@@ -79,20 +111,13 @@ static int iterAdvance(MPT_INTERFACE(iterator) *ptr)
 	}
 	return 'd';
 }
-static int iterReset(MPT_INTERFACE(iterator) *ptr)
+static int iterFactorReset(MPT_INTERFACE(iterator) *ptr)
 {
 	struct _iter_fdata *it = (void *) (ptr + 1);
 	it->pos = 0;
 	it->curr = it->init;
 	return it->elem;
 }
-
-static MPT_INTERFACE_VPTR(iterator) iteratorFactor = {
-	{ iterUnref, iterRef },
-	iterGet,
-	iterAdvance,
-	iterReset
-};
 
 /*!
  * \ingroup mptValues
@@ -108,10 +133,22 @@ static MPT_INTERFACE_VPTR(iterator) iteratorFactor = {
  * 
  * \return factor iterator metatype
  */
-extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
+extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 {
-	MPT_INTERFACE(iterator) *iter;
-	struct _iter_fdata it = { 10.0, 10.0, 0.0, 10, 0, 0.0 };
+
+	static const MPT_INTERFACE_VPTR(metatype) factorMeta = {
+		{ iterFactorUnref, iterFactorRef },
+		iterFactorConv,
+		iterFactorClone
+	};
+	static const MPT_INTERFACE_VPTR(iterator) factorIter = {
+		iterFactorGet,
+		iterFactorAdvance,
+		iterFactorReset
+	};
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(iterator) *it;
+	struct _iter_fdata fd = { 10.0, 10.0, 0.0, 10, 0, 0.0 };
 	int len;
 	
 	if (val) {
@@ -128,14 +165,14 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 				return 0;
 			}
 			if (cont < 2) {
-				if (it.base < DBL_MIN) {
+				if (fd.base < DBL_MIN) {
 					errno = EINVAL;
 					return 0;
 				}
-				it.fact = it.base;
+				fd.fact = fd.base;
 			}
 			len += cont;
-			it.elem = iter + 1;
+			fd.elem = iter + 1;
 		}
 		else if ((str = val->ptr)) {
 			int c;
@@ -147,11 +184,11 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 				errno = EINVAL;
 				return 0;
 			}
-			it.elem = iter + 1;
+			fd.elem = iter + 1;
 			str += c + 1;
 			/* base value for multiplication */
 			if ((c = mpt_string_nextvis(&str)) == ':') {
-				if ((c = mpt_cdouble(&it.base, str + 1, 0)) < 0) {
+				if ((c = mpt_cdouble(&fd.base, str + 1, 0)) < 0) {
 					errno = EINVAL;
 					return 0;
 				}
@@ -160,34 +197,34 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 			/* set factor, default to base */
 			if ((c = mpt_string_nextvis(&str)) == ':') {
 				if (str[1] == ':') {
-					if (it.base < DBL_MIN) {
+					if (fd.base < DBL_MIN) {
 						errno = EINVAL;
 						return 0;
 					} else {
-						it.fact = it.base;
+						fd.fact = fd.base;
 					}
 					c = 0;
 				}
-				else if ((c = mpt_cdouble(&it.fact, str + 1, 0)) < 0
-				      || it.fact < DBL_MIN) {
+				else if ((c = mpt_cdouble(&fd.fact, str + 1, 0)) < 0
+				      || fd.fact < DBL_MIN) {
 					errno = EINVAL;
 					return 0;
 				}
 				str += c + 1;
 				/* initial iterator value */
 				if ((c = mpt_string_nextvis(&str)) == ':') {
-					if ((c = mpt_cdouble(&it.init, str + 1, 0)) < 0) {
+					if ((c = mpt_cdouble(&fd.init, str + 1, 0)) < 0) {
 						errno = EINVAL;
 						return 0;
 					}
 					str += c + 1;
 				}
 			}
-			else if (it.base < DBL_MIN) {
+			else if (fd.base < DBL_MIN) {
 				errno = EINVAL;
 				return 0;
 			} else {
-				it.fact = it.base;
+				fd.fact = fd.base;
 			}
 			if ((c = mpt_string_nextvis(&str)) != ')') {
 				errno = EINVAL;
@@ -195,13 +232,17 @@ extern MPT_INTERFACE(iterator) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 			}
 		}
 	}
-	if (!(iter = malloc(sizeof(*iter) + sizeof(it)))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(fd)))) {
 		return 0;
 	}
-	iter->_vptr = &iteratorFactor;
-	it.curr = it.init;
-	memcpy(iter + 1, &it, sizeof(it));
+	mt->_vptr = &factorMeta;
 	
-	return iter;
+	it = (void *) (mt + 1);
+	it->_vptr = &factorIter;
+	
+	fd.curr = fd.init;
+	memcpy(it + 1, &fd, sizeof(fd));
+	
+	return mt;
 }
 
