@@ -109,7 +109,7 @@ extern int mpt_proxy_typeid(const char *, const char **);
 /* dynamic binding with metatype proxy instance */
 extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *, int);
 /* open library handle as metatype */
-extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_library_bind(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* clear proxy references */
 extern void mpt_proxy_fini(MPT_STRUCT(proxy) *);

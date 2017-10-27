@@ -22,7 +22,7 @@
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern MPT_INTERFACE(metatype) *mpt_library_bind(const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
 	MPT_INTERFACE(metatype) *m;
 	MPT_INTERFACE(object) *obj;
@@ -31,27 +31,37 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(uint8_t def, const char *conf, 
 	int type;
 	
 	if (!conf) {
-		if (out) mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
+		if (out) {
+			mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
+		}
 		return 0;
 	}
 	if ((type = mpt_proxy_typeid(conf, &conf)) < 0) {
-		if (!def && out) {
+		if (out) {
 			mpt_log(out, __func__, MPT_LOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
 		}
-		type = def;
-	}
-	if ((err = mpt_library_assign(&lh, conf, path))) {
-		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
-			if (out) mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
-		}
 		return 0;
+	}
+	/* load from special location */
+	if ((err = mpt_library_assign(&lh, conf, path))) {
+		/* fallback to default library locations */
+		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
+			if (out) {
+				mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+			}
+			return 0;
+		}
 	}
 	/* create new proxy */
 	if (!(m = mpt_library_meta(&lh, type))) {
 		mpt_library_close(&lh);
 		return 0;
 	}
+	if (!out) {
+		return m;
+	}
 	/* created object type */
+	obj = 0;
 	if (m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj) >= 0 && obj) {
 		const char *name;
 		if (!(name = mpt_object_typename(obj))) {
