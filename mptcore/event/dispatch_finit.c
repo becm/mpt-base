@@ -15,9 +15,6 @@ static int unknownEvent(void *arg, MPT_STRUCT(event) *ev)
 	MPT_INTERFACE(logger) *log = arg;
 	
 	if (!ev) {
-		if (log) {
-			log->_vptr->ref.unref((void*) log);
-		}
 		return 0;
 	}
 	/* bad event id */

@@ -856,7 +856,7 @@ public:
 	}
 };
 
-class LogStore : public logger, public Reference<logger>
+class LogStore : public logger, public Reference<metatype>
 {
 public:
 	enum {
@@ -873,12 +873,11 @@ public:
 		
 		FlowNormal  = PassUnsaved | PassSaved | PassFile
 	};
-	LogStore(logger * = logger::defaultInstance());
+	LogStore(metatype * = 0);
 	virtual ~LogStore();
 	
 	class Entry;
 	
-	void unref() __MPT_OVERRIDE;
 	int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
 	
 	virtual const Entry *nextEntry();
@@ -903,7 +902,7 @@ protected:
 class LogStore::Entry : array
 {
 public:
-	int type() const;
+	logger::LogType type() const;
 	const char *source() const;
 	Slice<const char> data(int part = 0) const;
 	int set(const char *, int, const char *, va_list);

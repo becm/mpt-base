@@ -19,16 +19,6 @@
 static int logSkip  = MPT_LOG(Info);
 static int logFlags = MPT_ENUM(LogPretty);
 
-static void loggerUnref(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-}
-static uintptr_t loggerRef(MPT_INTERFACE(reference) *ref)
-{
-	(void) ref;
-	return 1;
-}
-
 static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, const char *fmt, va_list ap)
 {
 	const char *ansi = 0;
@@ -65,9 +55,6 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 	return ret;
 }
 
-static MPT_INTERFACE_VPTR(logger) _defaultLoggerVptr = { { loggerUnref, loggerRef }, loggerLog};
-static MPT_INTERFACE(logger) defaultLogger = { &_defaultLoggerVptr };
-
 /*!
  * \ingroup mptLog
  * \brief default log instance
@@ -78,6 +65,8 @@ static MPT_INTERFACE(logger) defaultLogger = { &_defaultLoggerVptr };
  */
 extern MPT_INTERFACE(logger) *mpt_log_default()
 {
+	static MPT_INTERFACE_VPTR(logger) _defaultLoggerVptr = { loggerLog};
+	static MPT_INTERFACE(logger) defaultLogger = { &_defaultLoggerVptr };
 	return &defaultLogger;
 }
 /*!

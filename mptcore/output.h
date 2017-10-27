@@ -241,9 +241,6 @@ extern MPT_INTERFACE(input) *mpt_output_remote(void);
 /* create local output instance */
 extern MPT_INTERFACE(output) *mpt_output_local(void);
 
-/* create logging interface with output reference */
-extern MPT_INTERFACE(logger) *mpt_output_logger(MPT_INTERFACE(output) *);
-
 __MPT_EXTDECL_END
 
 __MPT_NAMESPACE_END

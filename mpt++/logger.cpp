@@ -7,9 +7,9 @@
 
 #include <unistd.h>
 
+#include "meta.h"
 #include "array.h"
-
-#include "object.h"
+#include "output.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -82,21 +82,21 @@ int logger::message(const char *from, int err, const char *fmt, ...)
 }
 
 // logging store entry
-int LogStore::Entry::type() const
+logger::LogType LogStore::Entry::type() const
 {
     Header *h;
 
     if (length() < sizeof(*h)) {
-        return -2;
+        return logger::Message;
     }
     h = (Header *) base();
-    return h->type;
+    return (logger::LogType) h->type;
 }
 const char *LogStore::Entry::source() const
 {
     Header *h;
 
-    if (length() < (sizeof(*h)+1)) {
+    if (length() < (sizeof(*h) + 1)) {
         return 0;
     }
     h = (Header *) base();
@@ -104,7 +104,7 @@ const char *LogStore::Entry::source() const
     if (!h->from) {
         return 0;
     }
-    return (const char *) (h+1);
+    return (const char *) (h + 1);
 }
 Slice<const char> LogStore::Entry::data(int part) const
 {
@@ -188,13 +188,27 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     return length();
 }
 
-LogStore::LogStore(logger *next) : Reference<logger>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
+LogStore::LogStore(metatype *next) : Reference<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
 LogStore::~LogStore()
 { }
-void LogStore::unref()
+static int logMeta(const metatype *mt, const char *from, int type, const char *fmt, va_list arg)
 {
-    delete this;
+    logger *l;
+    if (!mt) {
+        if (!(l = mpt_log_default())) {
+            return 0;
+        }
+        return l->log(from, type, fmt, arg);
+    }
+    if ((l = mt->cast<logger>())) {
+        return l->log(from, type, fmt, arg);
+    }
+    output *o;
+    if ((o = mt->cast<output>())) {
+        return mpt_output_vlog(o, from, type, fmt, arg);
+    }
+    return BadType;
 }
 int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
 {
@@ -214,17 +228,19 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     if (type & File) {
         pass |= _flags & PassFile;
     }
-    logger *l = pointer();
+    metatype *mt = pointer();
+    // fast-track without argument list copy
     if (!save) {
-        if (l && pass) {
-            return l->log(from, type, fmt, arg);
+        if (mt && pass) {
+            return logMeta(mt, from, type, fmt, arg);
         }
         return 0;
     }
-    if (l && pass) {
+    if (mt && pass) {
         va_list tmp;
+        // use copy to keep data for storage operation
         va_copy(tmp, arg);
-        l->log(from, type, fmt, tmp);
+        return logMeta(mt, from, type, fmt, arg);
         va_end(tmp);
     }
     Entry m;

@@ -514,7 +514,7 @@ protected:
 
 /*! interface to send data */
 #ifdef __cplusplus
-MPT_INTERFACE(logger) : public reference
+MPT_INTERFACE(logger)
 {
 protected:
 	inline ~logger() {}
@@ -526,13 +526,11 @@ public:
 	static logger *defaultInstance();
 	
 	virtual int log(const char *, int, const char *, va_list) = 0;
-	
-	enum {
 # define MPT_LOG(x) x
 #else
 # define MPT_LOG(x) MPT_ENUM(Log##x)
-enum MPT_ENUM(LogType) {
 #endif
+enum MPT_ENUM(LogType) {
 	MPT_LOG(Message)   = 0x0,   /* user (terminal) messages */
 	MPT_LOG(Fatal)     = 0x1,
 	MPT_LOG(Critical)  = 0x2,
@@ -558,7 +556,6 @@ enum MPT_ENUM(LogFlags)
 #else
 MPT_INTERFACE(logger);
 MPT_INTERFACE_VPTR(logger) {
-	MPT_INTERFACE_VPTR(reference) ref;
 	int (*log)(MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
 }; MPT_INTERFACE(logger) {
 	const MPT_INTERFACE_VPTR(logger) *_vptr;

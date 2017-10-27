@@ -30,16 +30,17 @@ extern int main(int , char * const [])
 	delete n;
 	
 	Stream *out = new Stream;
-	logger *log = mpt_output_logger(out);
+	logger *log = out->cast<logger>();
 	
 	out->open("/dev/stdout", "w");
 	
-	log->message(__func__, log->Error, "%s", "hallo");
+	if (log) {
+		log->message(__func__, log->Error, "%s", "hallo");
+	}
 	mpt_output_log(out, __FUNCTION__, logger::Warning, "%s", "hallo");
 	
 	out->sync();
-	
-	log->unref();
+	out->unref();
 	
 	return 0;
 }
