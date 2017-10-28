@@ -144,12 +144,6 @@ bool object::Property::set(const value &val)
     if (_obj.property(&_prop) < 0) _prop.name = 0;
     return true;
 }
-
-// create storage
-Object::Object(Object &other) : _obj(other._obj)
-{ }
-Object::Object(object &from) : _obj(from)
-{ }
 // get property by name/position
 object::Property Object::operator [](const char *name)
 {
@@ -190,10 +184,6 @@ const node *Object::getProperties(const node *head, PropertyHandler proc, void *
         }
     } while ((head = head->next));
     return 0;
-}
-int Object::type()
-{
-    return _obj.type();
 }
 
 __MPT_NAMESPACE_END

@@ -44,7 +44,7 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
-template<> inline int typeIdentifier<object>() { return object::Type; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<object>() { return object::Type; }
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
@@ -229,17 +229,20 @@ class Object
 {
 public:
 	/* create storage */
-	Object(Object &);
-	Object(object &);
+	inline Object(Object &from) : _obj(from._obj)
+	{ }
+	inline Object(object &from) : _obj(from)
+	{ }
 	
-	/* get/replace meta pointer */
-	inline object *pointer() const
+	inline operator object *() const
 	{ return &_obj; }
+	
+	inline int type()
+	{ return _obj.type(); }
 	
 	/* get property by name/position */
 	object::Property operator [](const char *);
 	object::Property operator [](int);
-	int type();
 	
 	/* get properties from node list */
 	const node *getProperties(const node *, PropertyHandler , void *) const;

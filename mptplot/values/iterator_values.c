@@ -84,15 +84,11 @@ static int iterValueGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 		return MPT_ERROR(BadValue);
 	}
 	if (type == 'd') {
-		if (ptr) {
-			*((double *) ptr) = d->curr;
-		}
+		if (ptr) *((double *) ptr) = d->curr;
 		return 's';
 	}
 	if (type == 'f') {
-		if (ptr) {
-			*((float *) ptr) = d->curr;
-		}
+		if (ptr) *((float *) ptr) = d->curr;
 		return 's';
 	}
 	return MPT_ERROR(BadType);

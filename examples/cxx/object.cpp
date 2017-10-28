@@ -99,9 +99,9 @@ extern int main(int , char * const [])
 	}
 	
 	mpt::object *obj;
-	obj = ao.pointer();
+	obj = ao;
 	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
-	obj = lo.pointer();
+	obj = lo;
 	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
 	mpt::object::Property prop = lo["x1"];

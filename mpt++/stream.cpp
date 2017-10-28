@@ -82,10 +82,6 @@ void Stream::unref()
     if (_srm) delete _srm;
     delete this;
 }
-uintptr_t Stream::addref()
-{
-    return 0;
-}
 // metatype interface
 int Stream::conv(int type, void *ptr) const
 {
