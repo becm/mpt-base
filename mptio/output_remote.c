@@ -68,7 +68,9 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
 	int me = mpt_input_type_identifier();
-	
+	if (me < 0) {
+		me = MPT_ENUM(TypeMeta);
+	}
 	if (!type) {
 		static const char fmt[] = {
 			MPT_ENUM(TypeMeta),
@@ -80,17 +82,12 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
-	if (type == me) {
-		if (ptr) *((const void **) ptr) = &od->_in;
-		return MPT_ENUM(TypeObject);
-	}
-	if (type == me || type == MPT_ENUM(TypeMeta)) {
+	if (type == MPT_ENUM(TypeMeta)) {
 		if (ptr) *((const void **) ptr) = &od->_in;
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		int fd = remoteInfile(od);
-		if (ptr) *((int *) ptr) = fd;
+		if (ptr) *((int *) ptr) = remoteInfile(od);
 		return me;
 	}
 	if (type == MPT_ENUM(TypeObject)) {
@@ -104,6 +101,10 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	if (type == MPT_ENUM(TypeLogger)) {
 		if (ptr) *((const void **) ptr) = &od->_log;
 		return me;
+	}
+	if (type == me) {
+		if (ptr) *((const void **) ptr) = &od->_in;
+		return MPT_ENUM(TypeSocket);
 	}
 	return MPT_ERROR(BadType);
 }
@@ -180,16 +181,6 @@ static int remoteDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 	return mpt_connection_dispatch(&od->con, cmd, arg);
 }
 /* object interface */
-static void remoteObjectUnref(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _obj);
-	remoteUnref((void *) &od->_in);
-}
-static uintptr_t remoteObjectRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _obj);
-	return mpt_refcount_raise(&od->_ref);
-}
 static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *pr)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _obj);
@@ -342,7 +333,7 @@ static int remoteAwait(MPT_INTERFACE(output) *out, int (*ctl)(void *, const MPT_
 static int remoteLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list arg)
 {
 	MPT_INTERFACE(output) *out = &MPT_baseaddr(out_data, log, _log)->_out;
-	return mpt_output_log(out, from, type, fmt, arg);
+	return mpt_output_vlog(out, from, type, fmt, arg);
 }
 
 /*!
@@ -366,7 +357,6 @@ extern MPT_INTERFACE(input) *mpt_output_remote()
 		remoteDispatch
 	};
 	static const MPT_INTERFACE_VPTR(object) remoteObject = {
-		{ remoteObjectUnref, remoteObjectRef },
 		remoteProperty,
 		remoteSetProperty
 	};

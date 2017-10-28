@@ -88,8 +88,8 @@ extern int main(int , char * const [])
 		std::cout << "next type: " << typeid(*mt).name() << std::endl;
 	}
 	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
-	mpt::Object lo(li), ao(new mpt::Axis);
-	mpt::Object op, *opt;
+	mpt::Axis *ax = new mpt::Reference<mpt::Axis>::instance;
+	mpt::Object lo(*li), ao(*ax);
 	
 	std::cout << "ao: " << ao.type() << std::endl;
 	std::cout << "lo: " << lo.type() << std::endl;
@@ -104,16 +104,6 @@ extern int main(int , char * const [])
 	obj = lo.pointer();
 	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
-	mpt::Axis *na = new mpt::Axis;
-	
-	mpt::Object nao(na);
-	
-	std::cout << "type(na): " << typeid(*na).name() << std::endl;;
-	
-	nao.setName("axis");
-	
-	std::cout << "nao.name() = " << nao.name() << std::endl;
-	
 	mpt::object::Property prop = lo["x1"];
 	mpt::line *l = li;
 	
@@ -121,18 +111,9 @@ extern int main(int , char * const [])
 	prop = "10";
 	std::cout << l->from.x << std::endl;
 	
-	lo["x2"] = 4;
+	lo["x2"] = 4.6;
+	std::cout << lo["x2"] << std::endl;
 	lo["color"] = "#6666";
-	
-	op = lo;
-	
-	// failing assignments for empty/same metatype
-	op.setPointer(0);
-	op.setPointer(lo.pointer());
-	opt = &lo;
-	opt->setPointer(lo.pointer());
-	opt = &op;
-	opt->setPointer(lo.pointer());
 	
 	return 0;
 }

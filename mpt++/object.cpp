@@ -9,15 +9,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template<> int Item<object>::type()
-{
-    static int id = 0;
-    if (!id) {
-        id = makeItemId(object::Type);
-    }
-    return id;
-}
-
 bool object::const_iterator::select(uintptr_t pos)
 {
     _prop.name = 0;
@@ -105,23 +96,19 @@ bool object::setProperties(const object &from, logger *out)
 }
 
 // class extension for basic property
-object::Property::Property(const Reference<object> &from) : Reference<object>(from)
-{ }
-object::Property::Property(object *obj) : Reference<object>(obj)
-{ }
-object::Property::~Property()
+object::Property::Property(object &obj) : _obj(obj)
 { }
 // assignment operation for metatypes
 object::Property & object::Property::operator= (const metatype &meta)
 {
-    if (_ref && _prop.name && !set(meta)) {
+    if (_prop.name && !set(meta)) {
         _prop.name = 0;
     }
     return *this;
 }
 object::Property & object::Property::operator= (const char *val)
 {
-    if (_ref && _prop.name && mpt_object_set_string(_ref, _prop.name, val, 0) < 0) {
+    if (_prop.name && mpt_object_set_string(&_obj, _prop.name, val, 0) < 0) {
         _prop.name = 0;
     }
     return *this;
@@ -129,125 +116,65 @@ object::Property & object::Property::operator= (const char *val)
 
 bool object::Property::select(const char *name)
 {
-    if (!_ref) return false;
     struct property pr(name);
-    if (_ref->property(&pr) < 0) return false;
+    if (_obj.property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
 bool object::Property::select(int pos)
 {
-    if (!_ref || pos <= 0) return false;
+    if (pos < 0) return false;
     struct property pr(pos);
-    if (_ref->property(&pr) < 0) return false;
+    if (_obj.property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
 bool object::Property::set(const metatype &src)
 {
-    if (!_ref || !_prop.name) return false;
-    if (_ref->setProperty(_prop.name, &src) < 0) return false;
-    if (_ref->property(&_prop) < 0) _prop.name = 0;
+    if (!_prop.name) return false;
+    if (_obj.setProperty(_prop.name, &src) < 0) return false;
+    if (_obj.property(&_prop) < 0) _prop.name = 0;
     return false;
 }
 bool object::Property::set(const value &val)
 {
-    if (!_ref || !_prop.name) return false;
+    if (!_prop.name) return false;
     struct value tmp = val;
-    if (mpt_object_set_value(_ref, _prop.name, &tmp) < 0) return false;
-    if (_ref->property(&_prop) < 0) _prop.name = 0;
+    if (mpt_object_set_value(&_obj, _prop.name, &tmp) < 0) return false;
+    if (_obj.property(&_prop) < 0) _prop.name = 0;
     return true;
 }
 
 // create storage
-Object::Object(Object &other) : Item<object>(0), _hash(0)
-{
-    Reference<object>::operator=(other.ref());
-    identifier::operator=(other);
-    Slice<const char> d = nameData();
-    _hash = mpt_hash(d.base(), d.length());
-}
-Object::Object(object *from) : Item<object>(from), _hash(0)
+Object::Object(Object &other) : _obj(other._obj)
 { }
-Object::Object(const Reference<object> &from) : Item<object>(0), _hash(0)
-{
-    Reference<object> ref = from;
-    _ref = ref.detach();
-}
-
-// clear reference to storage
-Object::~Object()
+Object::Object(object &from) : _obj(from)
 { }
-
-const Reference<object> &Object::ref()
-{ return *this; }
-
-// replace existing store
-bool Object::setPointer(object *o)
-{
-    if (!o || o == _ref) return false;
-    if (_ref) _ref->unref();
-    _ref = o;
-    return true;
-}
-Object & Object::operator =(Reference<object> const & from)
-{
-    Reference<object> ref(from);
-    object *obj = ref.pointer();
-    if (obj && setPointer(obj)) ref.detach();
-    return *this;
-}
-Object & Object::operator =(Object & other)
-{
-    Reference<object> ref(other.ref());
-    object *obj = ref.pointer();
-    if (obj && setPointer(obj)) {
-        ref.detach();
-        identifier::operator=(other);
-        Slice<const char> d = nameData();
-        _hash = mpt_hash(d.base(), d.length());
-    }
-    return *this;
-}
-
-// set identifier
-bool Object::setName(const char *name, int len)
-{
-    if (!identifier::setName(name, len)) {
-        return false;
-    }
-    Slice<const char> d = nameData();
-
-    _hash = mpt_hash(d.base(), d.length());
-
-    return true;
-}
-
 // get property by name/position
 object::Property Object::operator [](const char *name)
 {
-    object::Property prop(ref());
+    object::Property prop(_obj);
     prop.select(name);
     return prop;
 }
 object::Property Object::operator [](int pos)
 {
-    object::Property prop(ref());
+    object::Property prop(_obj);
     prop.select(pos);
     return prop;
 }
 const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
 {
-    if (!_ref || !head) return 0;
+    if (!head) return 0;
     do {
-        if (mpt_object_set_node(_ref, head, TraverseNonLeafs) < 0) {
+        if (mpt_object_set_node(&_obj, head, TraverseNonLeafs) < 0) {
             return head;
         }
         if (!proc) {
             return head;
         }
         property pr(head->ident.name());
-        _ref->property(&pr);
+        _obj.property(&pr);
         const metatype *mt;
         static const char metafmt[] = { metatype::Type };
         pr.val.fmt = metafmt;
@@ -266,7 +193,7 @@ const node *Object::getProperties(const node *head, PropertyHandler proc, void *
 }
 int Object::type()
 {
-    return _ref ? _ref->type() : 0;
+    return _obj.type();
 }
 
 __MPT_NAMESPACE_END

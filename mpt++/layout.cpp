@@ -33,7 +33,7 @@ Line::~Line()
 { }
 int Line::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id) {
         id = mpt_valtype_meta_new(0);
     }
@@ -42,10 +42,6 @@ int Line::typeIdentifier()
 void Line::unref()
 {
     delete this;
-}
-uintptr_t Line::addref()
-{
-    return 0;
 }
 int Line::conv(int type, void *ptr) const
 {
@@ -118,7 +114,7 @@ Text::~Text()
 { }
 int Text::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id) {
         id = mpt_valtype_meta_new(0);
     }
@@ -127,10 +123,6 @@ int Text::typeIdentifier()
 void Text::unref()
 {
     delete this;
-}
-uintptr_t Text::addref()
-{
-    return 0;
 }
 int Text::conv(int type, void *ptr) const
 {
@@ -193,7 +185,7 @@ Axis::~Axis()
 { }
 int Axis::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id) {
         id = mpt_valtype_meta_new(0);
     }
@@ -202,10 +194,6 @@ int Axis::typeIdentifier()
 void Axis::unref()
 {
     delete this;
-}
-uintptr_t Axis::addref()
-{
-    return 0;
 }
 int Axis::conv(int type, void *ptr) const
 {
@@ -273,7 +261,7 @@ World::~World()
 { }
 int World::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id) {
         id = mpt_valtype_meta_new(0);
     }
@@ -282,10 +270,6 @@ int World::typeIdentifier()
 void World::unref()
 {
     delete this;
-}
-uintptr_t World::addref()
-{
-    return 0;
 }
 int World::conv(int type, void *ptr) const
 {
@@ -351,20 +335,11 @@ Graph::~Graph()
 { }
 int Graph::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id && (id = mpt_valtype_meta_new("graph")) < 0) {
         id = mpt_valtype_meta_new(0);
     }
     return id;
-}
-// reference interface
-void Graph::unref()
-{
-    delete this;
-}
-uintptr_t Graph::addref()
-{
-    return 0;
 }
 // metatype interface
 int Graph::conv(int type, void *ptr) const
@@ -723,20 +698,11 @@ Layout::~Layout()
 }
 int Layout::typeIdentifier()
 {
-    static int id;
+    static int id = 0;
     if (!id && (id = mpt_valtype_meta_new("layout")) < 0) {
         id = mpt_valtype_meta_new(0);
     }
     return id;
-}
-// reference interface
-void Layout::unref()
-{
-    delete this;
-}
-uintptr_t Layout::addref()
-{
-    return 0;
 }
 // object interface
 int Layout::property(struct property *pr) const
@@ -919,4 +885,3 @@ fpoint Layout::minScale() const
 }
 
 __MPT_NAMESPACE_END
-

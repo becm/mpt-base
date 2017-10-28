@@ -102,7 +102,7 @@ int main(int argc, char * const argv[])
     const mpt::object *o;
     if ((o = c.cast<mpt::object>())) {
         for (auto p : *o) {
-            std::cout << p << std::endl;
+            std::cout << p.name << " = " << p.val << std::endl;
         }
     }
     n.loop();

@@ -28,8 +28,9 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(output) *out;
 	out = 0;
-	if ((mt = lo->pass)) {
-		mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out);
+	if (!(mt = lo->pass)
+	    || mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out) < 0) {
+		return 0;
 	}
 	return out;
 }
@@ -60,33 +61,25 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	MPT_STRUCT(local_output) *lo = (void *) mt;
 	
 	if (!type) {
-		if (ptr) {
-			static const char fmt[] = {
-				MPT_ENUM(TypeObject),
-				MPT_ENUM(TypeOutput),
-				MPT_ENUM(TypeFile),
-				0
-			};
-			*((const char **) ptr) = fmt;
-		}
+		static const char fmt[] = {
+			MPT_ENUM(TypeObject),
+			MPT_ENUM(TypeOutput),
+			MPT_ENUM(TypeFile),
+			0
+		};
+		if (ptr) *((const char **) ptr) = fmt;
 		return MPT_ENUM(TypeObject);
 	}
 	if (type == MPT_ENUM(TypeObject)) {
-		if (ptr) {
-			*((void **) ptr) = &lo->_obj;
-		}
+		if (ptr) *((void **) ptr) = &lo->_obj;
 		return MPT_ENUM(TypeOutput);
 	}
 	if (type == MPT_ENUM(TypeOutput)) {
-		if (ptr) {
-			*((void **) ptr) = &lo->_out;
-		}
+		if (ptr) *((void **) ptr) = &lo->_out;
 		return MPT_ENUM(TypeObject);
 	}
 	if (type == MPT_ENUM(TypeFile)) {
-		if (ptr) {
-			*((void **) ptr) = lo->hist.info.file;
-		}
+		if (ptr) *((void **) ptr) = lo->hist.info.file;
 		return MPT_ENUM(TypeOutput);
 	}
 	return MPT_ERROR(BadType);
@@ -97,16 +90,6 @@ static MPT_INTERFACE(metatype) *localClone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* object interface */
-static void localObjectUnref(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, ref, _obj);
-	localUnref((void *) &lo->_mt);
-}
-static uintptr_t localObjectRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, ref, _obj);
-	return mpt_refcount_raise(&lo->ref);
-}
 static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 {
 	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, obj, _obj);
@@ -255,7 +238,6 @@ extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 		localClone
 	};
 	static const MPT_INTERFACE_VPTR(object) localObject = {
-		{ localObjectUnref, localObjectRef },
 		localGet,
 		localSet
 	};

@@ -16,7 +16,7 @@ MPT_STRUCT(node);
 
 /*! generic object interface */
 #ifdef __cplusplus
-MPT_INTERFACE(object) : public reference
+MPT_INTERFACE(object)
 {
 protected:
 	inline ~object() {}
@@ -48,7 +48,6 @@ template<> inline int typeIdentifier<object>() { return object::Type; }
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
-	MPT_INTERFACE_VPTR(reference) ref;
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
 	int (*setProperty)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
@@ -78,8 +77,6 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *, const MPT_STRUCT(node) *
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-template<> int Item<object>::type();
-
 class object::const_iterator
 {
 public:
@@ -184,12 +181,10 @@ inline object::const_iterator object::end() const
 	return const_end();
 }
 
-class object::Property : Reference<object>
+class object::Property
 {
 public:
-	Property(const Reference<object> &);
-	Property(object * = 0);
-	~Property();
+	Property(object &);
 	
 	inline operator const struct property&() const
 	{ return _prop; }
@@ -210,7 +205,6 @@ public:
 	inline Property & operator= (const value &v)
 	{ if (!set(v)) _prop.name = 0; return *this; }
 	
-	
 	template <typename T>
 	Property & operator= (const T &v)
 	{
@@ -224,57 +218,28 @@ public:
 	}
 protected:
 	struct property _prop;
+	object &_obj;
 	friend class Object;
 private:
 	Property & operator= (const Property &);
 };
 
 struct node;
-class Object : protected Item<object>
+class Object
 {
 public:
 	/* create storage */
 	Object(Object &);
-	Object(object * = 0);
-	Object(const Reference<object> &);
-	virtual ~Object();
-	
-	/* get/replace meta pointer */
-	Object & operator=(Object &);
-	Object & operator=(Reference<object> const &);
-	
-	/* convert from other object type */
-	template <typename T>
-	Object & operator=(Reference<T> const from)
-	{
-		Reference<T> ref = from;
-		T *ptr = ref.pointer();
-		if (ptr && setPointer(ptr)) ref.detach();
-		return *this;
-	}
+	Object(object &);
 	
 	/* get/replace meta pointer */
 	inline object *pointer() const
-	{ return _ref; }
-	virtual const Reference<object> &ref();
-	virtual bool setPointer(object *);
-	
-	/* object store identifier */
-	inline const char *name() const
-	{ return Item<object>::name(); }
-	virtual bool setName(const char *, int = -1);
+	{ return &_obj; }
 	
 	/* get property by name/position */
 	object::Property operator [](const char *);
 	object::Property operator [](int);
 	int type();
-	
-	/* object name hash */
-	inline uintptr_t hash() const
-	{ return _hash; }
-	/* name and object data printable */
-	inline bool printable() const
-	{ return name() && (!_ref || _ref->type() == 's'); }
 	
 	/* get properties from node list */
 	const node *getProperties(const node *, PropertyHandler , void *) const;
@@ -286,7 +251,7 @@ public:
 	node *getDefault(const node *) const;
 	node *getAlien(const node *) const;
 protected:
-	uintptr_t _hash;
+	object &_obj;
 };
 
 struct node;

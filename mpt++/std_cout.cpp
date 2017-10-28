@@ -19,14 +19,6 @@ std::ostream &operator<<(std::ostream &o, const mpt::value &v)
     if (*v.fmt) mpt_tostring(&v, writeOutStream, &o);
     return o;
 }
-std::ostream &operator<<(std::ostream &o, const mpt::property &p)
-{
-    if (!p.name) return o;
-    o << p.name;
-    o << " = ";
-    o << p.val;
-    return o;
-}
 template <> std::ostream &operator<< <char>(std::ostream &o, mpt::Slice<char> p)
 {
     writeOutStream(&o, p.base(), p.length());

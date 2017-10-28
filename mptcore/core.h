@@ -810,7 +810,6 @@ __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
 std::ostream &operator<<(std::ostream &, const mpt::value &);
-std::ostream &operator<<(std::ostream &, const mpt::property &);
 
 template <typename T>
 std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)

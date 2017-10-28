@@ -305,7 +305,6 @@ public:
 	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -321,7 +320,6 @@ public:
 	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -338,7 +336,6 @@ public:
 	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -355,7 +352,6 @@ public:
 	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -424,8 +420,6 @@ public:
 	
 	static int typeIdentifier();
 	
-	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -464,9 +458,6 @@ public:
 	virtual ~Layout();
 	
 	static int typeIdentifier();
-	
-	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
 	
 	int property(struct property *pr) const __MPT_OVERRIDE;
 	int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;
