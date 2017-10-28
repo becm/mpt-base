@@ -1,6 +1,6 @@
 # Makefile: MPT core library example programs
 #
-TESTS = coding ident environ
+TESTS = coding config ident environ
 PROGS = parse ${TESTS}
 
 LDLIBS = -lmptcore
@@ -17,3 +17,4 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 test_ident : ARGS=1020 1021
 test_environ : ARGS='mpt_*'
 test_coding : ARGS=cobs
+test_config : ARGS=${MPT_PREFIX}

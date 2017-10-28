@@ -1,5 +1,6 @@
 # exclude basic example binaries
 coding
+config
 environ
 ident
 parse

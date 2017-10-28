@@ -27,11 +27,11 @@ static uintptr_t configRef(MPT_INTERFACE(reference) *ref)
 	return 0;
 }
 /* special operations for static global instance */
-static void configNoUnref(MPT_INTERFACE(reference) *ref)
+static void configTopUnref(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 }
-static uintptr_t configNoRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t configTopRef(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 1;
@@ -40,16 +40,17 @@ static uintptr_t configNoRef(MPT_INTERFACE(reference) *ref)
 static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	if (!type) {
-		if (ptr) {
-			static const char fmt[] = { MPT_ENUM(TypeConfig) };
-			*((const char **) ptr) = fmt;
-		}
+		static const char fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
 		return MPT_ENUM(TypeConfig);
 	}
 	if (type == MPT_ENUM(TypeConfig)) {
-		if (ptr) {
-			*((void **) ptr) = (void *) (mt + 1);
-		}
+		if (ptr) *((const void **) ptr) = mt + 1;
+		return MPT_ENUM(TypeNode);
+	}
+	if (type == MPT_ENUM(TypeNode)) {
+		MPT_STRUCT(configRoot) *c = (void *) mt;
+		if (ptr) *((void **) ptr) = mpt_config_node(&c->base);
 		return MPT_ENUM(TypeConfig);
 	}
 	return MPT_ERROR(BadType);
@@ -216,7 +217,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	
 	if (!path) {
 		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
-			{ configNoUnref, configNoRef },
+			{ configTopUnref, configTopRef },
 			configConv,
 			configClone,
 		};
