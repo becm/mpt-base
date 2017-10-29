@@ -5,7 +5,6 @@ src = files(
   'geninfo.c',
   'geninfo_clone.c',
   'identifier.c',
-  'iterator_meta.c',
   'iterator_string.c',
   'iterator_value.c',
   'meta_data.c',

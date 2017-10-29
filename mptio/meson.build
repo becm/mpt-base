@@ -5,6 +5,7 @@
 io_src = files(
   'connect.c',
   'init.c',
+  'input_type_identifier.c',
   'output_local.c',
   'output_remote.c'
 )

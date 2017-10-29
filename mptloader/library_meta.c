@@ -58,9 +58,9 @@ static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 		if (ptr) *((void **) ptr) = mp->ptr;
 		return mp->fmt[0];
 	}
-	if (type == MPT_ENUM(TypeObject)) {
+	if (type == MPT_ENUM(TypeMeta)) {
 		int mt = mp->type;
-		if (!MPT_value_isObject(mt)) {
+		if (!MPT_value_isMetatype(mt)) {
 			return MPT_ERROR(BadType);
 		}
 		if (ptr) *((void **) ptr) = mp->ptr;

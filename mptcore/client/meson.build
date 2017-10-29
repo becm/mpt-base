@@ -4,6 +4,7 @@ src = files(
   'cevent_init.c',
   'cevent_step.c',
   'client_events.c',
+  'client_typeid.c',
   'proxy_fini.c',
   'proxy_log.c',
   'proxy_typeid.c',

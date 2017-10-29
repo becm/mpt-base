@@ -3,15 +3,17 @@ cmake_minimum_required(VERSION 2.6)
 
 set(sources
   array.cpp
+  buffer.cpp
   config.cpp client.cpp
   event.cpp
   logger.cpp
-  message.cpp meta.cpp meta_new.cpp meta_buffer.cpp
+  message.cpp
+  meta_basic.cpp meta_buffer.cpp meta_create.cpp meta_new.cpp meta_typed.cpp 
   node_new.cpp
   object.cpp
   parse.cpp proxy.cpp
   queue.cpp
-  reference_wrap.cpp
+  refcount_wrap.cpp
   std_cout.cpp
   value.cpp
 )

@@ -30,6 +30,8 @@ public:
 	static class config &config();
 	
 	enum { LogStatus = logger::Debug2 };
+protected:
+	inline ~client() { }
 };
 #else
 # define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)

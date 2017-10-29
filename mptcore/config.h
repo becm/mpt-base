@@ -169,8 +169,6 @@ public:
 	Config();
 	virtual ~Config();
 	
-	virtual void unref();
-	
 	const metatype *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;

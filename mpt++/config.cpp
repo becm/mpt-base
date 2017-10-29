@@ -114,10 +114,6 @@ Config::Config()
 { }
 Config::~Config()
 { }
-void Config::unref()
-{
-    delete this;
-}
 // private element access
 Config::Element *Config::getElement(const UniqueArray<Config::Element> &arr, path &p)
 {

@@ -89,21 +89,16 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeReplyData) = 0xd,   /* CR */
 	MPT_ENUM(TypeNode)      = 0xe,   /* SO */
 	
-	/* reference types */
-	MPT_ENUM(TypeConfig)    = 0x10,  /* DLE */
-	MPT_ENUM(TypeLogger)    = 0x13,  /* DC3 */
-	/* typed content data */
-	MPT_ENUM(TypeReply)     = 0x14,  /* DC4 */
-	MPT_ENUM(TypeIterator)  = 0x15,  /* NAK */
-	MPT_ENUM(TypeRawData)   = 0x17,  /* ETB */
-#define MPT_value_isInterface(v) ((v) >= MPT_ENUM(TypeConfig) \
-                               && (v) < MPT_ENUM(TypeSpecial))
-	/* object types */
-	MPT_ENUM(TypeObject)    = 0x18,  /* CAN */
-	MPT_ENUM(TypeSolver)    = 0x19,  /* EM */
-	MPT_ENUM(TypeOutput)    = 0x1b,  /* ESC */
-#define MPT_value_isObject(v)  ((v) >= MPT_ENUM(TypeObject) \
-                             && (v) < MPT_ENUM(TypeSpecial))
+	/* config interface types */
+	MPT_ENUM(TypeObject)    = 0x10,  /* DLE */
+	MPT_ENUM(TypeConfig)    = 0x11,  /* DC1 */
+	/* input interface types */
+	MPT_ENUM(TypeIterator)  = 0x14,  /* DC4 */
+	/* output interfaces */
+	MPT_ENUM(TypeLogger)    = 0x18,  /* CAN */
+	MPT_ENUM(TypeReply)     = 0x19,  /* EM */
+	MPT_ENUM(TypeOutput)    = 0x1a,  /* SUB */
+#define MPT_value_isInterface(v)  ((v) >= 0x10 && (v) < 0x20)
 	
 	/* special/format types (0x20..0x2f) */
 	MPT_ENUM(TypeSpecial)   = ' ',   /* SPACE */
