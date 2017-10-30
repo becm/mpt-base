@@ -331,7 +331,7 @@ MPT_STRUCT(value)
 MPT_STRUCT(property)
 {
 #ifdef __cplusplus
-    public:
+public:
 	enum { Type = TypeProperty };
 	
 	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
@@ -394,6 +394,8 @@ inline uintptr_t reference::addref()
 extern int convert(const void **, int , void *, int);
 
 extern int makeId();
+extern int toReferenceId(int);
+extern int toItemId(int);
 
 template<typename T>
 int typeIdentifier() {
@@ -501,8 +503,15 @@ public:
 		_ref = 0;
 		return ref;
 	}
+	static int typeIdentifier() {
+		static int id = 0;
+		if (!id) {
+			id = toReferenceId(::mpt::typeIdentifier<T>());
+		}
+		return id;
+	}
 protected:
-    T *_ref;
+	T *_ref;
 };
 #endif
 
@@ -605,50 +614,48 @@ protected:
 };
 
 #ifdef __cplusplus
-int makeItemId(int);
-
 template<typename T>
 class Item : public Reference<T>, public identifier
 {
 public:
-    Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
-    { }
-    static int type() {
-        static int id = 0;
-        if (!id) {
-            id = makeItemId(typeIdentifier<T>());
-        }
-        return id;
-    }
+	Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
+	{ }
+	static int typeIdentifier() {
+		static int id = 0;
+		if (!id) {
+			id = toItemId(::mpt::typeIdentifier<T>());
+		}
+		return id;
+	}
 protected:
-    char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
+	char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
 };
 
 template <typename T>
-inline int typeIdentifier(Item<T>)
-{ return Item<T>::type(); }
+inline int typeIdentifier(Item<T> &)
+{ return Item<T>::typeIdentifier(); }
 template <typename T>
-inline int typeIdentifier(Item<const T>)
-{ return Item<const T>::type(); }
+inline int typeIdentifier(const Item<T> &)
+{ return Item<T>::typeIdentifier(); }
 
 /* auto-create wrapped reference */
 template <typename T>
 class Container : protected Reference<T>
 {
 public:
-    inline Container(T *ref = 0) : Reference<T>(ref)
-    { }
-    inline Container(const Reference<T> &ref) : Reference<T>(ref)
-    { }
-    virtual ~Container()
-    { }
-    virtual const Reference<T> &ref()
-    {
-        if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
-        return *this;
-    }
-    inline T *pointer() const
-    { return Reference<T>::pointer(); }
+	inline Container(T *ref = 0) : Reference<T>(ref)
+	{ }
+	inline Container(const Reference<T> &ref) : Reference<T>(ref)
+	{ }
+	virtual ~Container()
+	{ }
+	virtual const Reference<T> &ref()
+	{
+		if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
+		return *this;
+	}
+	inline T *pointer() const
+	{ return Reference<T>::pointer(); }
 };
 #endif /* C++ */
 
@@ -714,26 +721,26 @@ class Stream;
 class Socket : public socket
 {
 public:
-    Socket(socket * = 0);
-    virtual ~Socket();
-    
-    enum { Type = socket::Type };
-    
-    int assign(const value *);
-    
-    virtual Reference<class Stream> accept();
+	Socket(socket * = 0);
+	virtual ~Socket();
+	
+	enum { Type = socket::Type };
+	
+	int assign(const value *);
+	
+	virtual Reference<class Stream> accept();
 };
 
 /*! interface to search objects in tree */
 class Relation
 {
 public:
-    inline Relation(const Relation *p = 0) : _parent(p)
-    { }
-    virtual metatype *find(int , const char *, int = -1) const;
+	inline Relation(const Relation *p = 0) : _parent(p)
+	{ }
+	virtual metatype *find(int , const char *, int = -1) const;
 protected:
-    virtual ~Relation() {}
-    const Relation *_parent;
+	virtual ~Relation() {}
+	const Relation *_parent;
 };
 inline metatype *Relation::find(int type, const char *name, int nlen) const
 { return _parent ? _parent->find(type, name, nlen) : 0; }
@@ -809,11 +816,11 @@ std::ostream &operator<<(std::ostream &, const mpt::value &);
 template <typename T>
 std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)
 {
-    typename mpt::Slice<T>::iterator begin = d.begin(), end = d.end();
-    if (begin == end) return o;
-    o << *(begin++);
-    while (begin != end) o << ' ' << *(begin++);
-    return o;
+	typename mpt::Slice<T>::iterator begin = d.begin(), end = d.end();
+	if (begin == end) return o;
+	o << *(begin++);
+	while (begin != end) o << ' ' << *(begin++);
+	return o;
 }
 template <> std::ostream &operator<<(std::ostream &, mpt::Slice<char>);
 template <> std::ostream &operator<<(std::ostream &, mpt::Slice<const char>);

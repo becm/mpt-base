@@ -4,51 +4,64 @@
 
 #include "core.h"
 
-enum {
-	TypeAuto    = 0x10000,
-	ItemStatic  = 2 * TypeAuto,
-	ItemDynamic = 3 * TypeAuto,
-	ItemLimit   = 4 * TypeAuto - 1
-};
-
 __MPT_NAMESPACE_BEGIN
 
 /*!
  * \ingroup mptCore
  * \brief create type id
  * 
- * Convert or create type code for item element.
+ * Convert type code for reference element.
  * 
- * \param type  base type
+ * \param from  base type
  * 
- * \return item type code
+ * \retval <0 conversion error
+ * \retval >0 item type code
  */
-extern int makeItemId(int from)
+extern int toReferenceId(int from)
 {
     if (from < 0) {
-        static int id = 0;
-        if (id >= ItemLimit) {
-            return BadValue;
-        }
-        return ItemDynamic + id++;
+        return BadValue;
     }
-    if (from >= ItemStatic) {
+    if (from > _TypeGenericMax) {
         return BadType;
     }
-    return ItemStatic + from;
+    return _TypeReferenceBase + from;
 }
 /*!
  * \ingroup mptCore
  * \brief create type id
  * 
- * Convert or create type code for item element.
+ * Convert type code for item element.
  * 
- * \return item type code
+ * \param from  base type
+ * 
+ * \retval <0 conversion error
+ * \retval >0 item type code
+ */
+extern int toItemId(int from)
+{
+    if (from < 0) {
+        return BadValue;
+    }
+    if (from > _TypeGenericMax) {
+        return BadType;
+    }
+    return _TypeItemBase + from;
+}
+/*!
+ * \ingroup mptCore
+ * \brief create type code
+ * 
+ * Create new type code in dynamic extended range.
+ * To register explicit metatype, interface or
+ * dynamic base type use supplied special functions.
+ * 
+ * \return new type code
  */
 extern int makeId()
 {
-    static int id = TypeAuto;
-    if (id >= ItemStatic) {
+    static int id = _TypeGenericBase;
+    if (id >= _TypeGenericMax) {
         return BadValue;
     }
     return id++;

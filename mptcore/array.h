@@ -450,7 +450,7 @@ public:
 	}
 	inline int content() const __MPT_OVERRIDE
 	{
-		return typeIdentifier<T>();
+		return typeIdentifier(*data());
 	}
 	static Content *create(long len = -1)
 	{
