@@ -8,11 +8,9 @@
 
 #include "array.h"
 
-#ifdef __cplusplus
-# include "meta.h"
-#endif
-
 __MPT_NAMESPACE_BEGIN
+
+MPT_INTERFACE(metatype);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
@@ -21,19 +19,19 @@ class Transform;
 template<typename T>
 struct point
 {
-    inline point(T _x = 0, T _y = 0) : x(_x), y(_y)
-    { }
-    inline point(const point &from) : x(from.x), y(from.y)
-    { }
-    inline bool operator ==(const point &p) const
-    { return x == p.x && y == p.y; }
-
-    inline point & operator +=(const point &p) const
-    { return x += p.x; y += p.y; return *this; }
-    inline point & operator -=(const point &p) const
-    { return x -= p.x; y -= p.y; return *this; }
-
-    T x, y;
+	inline point(T _x = 0, T _y = 0) : x(_x), y(_y)
+	{ }
+	inline point(const point &from) : x(from.x), y(from.y)
+	{ }
+	inline bool operator ==(const point &p) const
+	{ return x == p.x && y == p.y; }
+	
+	inline point & operator +=(const point &p) const
+	{ return x += p.x; y += p.y; return *this; }
+	inline point & operator -=(const point &p) const
+	{ return x -= p.x; y -= p.y; return *this; }
+	
+	T x, y;
 };
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
@@ -114,9 +112,9 @@ MPT_STRUCT(rawdata_stage)
 
 /* part of MPT world */
 #ifdef __cplusplus
-MPT_INTERFACE(rawdata) : public reference
+MPT_INTERFACE(rawdata)
 {
-    public:
+public:
 	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
 	virtual int advance() = 0;
 	
@@ -124,16 +122,13 @@ MPT_INTERFACE(rawdata) : public reference
 	virtual int dimensions(int = -1) const = 0;
 	virtual int stages() const = 0;
 	
-	static int type();
-    protected:
+	static int typeIdentifier();
+protected:
 	inline ~rawdata() { }
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<rawdata>();
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
-	MPT_INTERFACE_VPTR(reference) ref;
-	
 	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , size_t , int);
 	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
@@ -158,8 +153,6 @@ MPT_STRUCT(linepart)
 	
 	bool setTrim(float);
 	bool setCut(float);
-	
-	static int type();
 	
 	class array : public Array<linepart>
 	{
@@ -186,6 +179,8 @@ MPT_STRUCT(mapping)
 	{ }
 	inline bool valid() const
 	{ return src.state != 0; }
+	
+	static int typeIdentifier();
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
 #endif
@@ -236,8 +231,8 @@ extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
 
 /* create cycle interface with default data parts */
-extern MPT_INTERFACE(rawdata) *mpt_rawdata_create(size_t);
-
+extern MPT_INTERFACE(metatype) *mpt_rawdata_create(size_t);
+extern int mpt_rawdata_typeid(void);
 
 /* create linear part in range */
 extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(range) *);
@@ -274,16 +269,16 @@ inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr
 inline void *typed_array::reserve(size_t off, size_t len)
 { return mpt_array_slice(&_d, off, len); }
 
-class Transform : public reference
+class Transform
 {
 public:
-    virtual int dimensions() const = 0;
-    
-    virtual linepart part(unsigned , const double *, int) const;
-    virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
-    virtual point<double> zero() const;
+	virtual int dimensions() const = 0;
+	
+	virtual linepart part(unsigned , const double *, int) const;
+	virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
+	virtual point<double> zero() const;
 protected:
-    inline ~Transform() { }
+	inline ~Transform() { }
 };
 
 extern int applyLineData(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
@@ -291,151 +286,153 @@ class Polyline
 {
 public:
 # if __cplusplus >= 201103L
-    using Point = point<double>;
+	using Point = point<double>;
 # else
-    struct Point : public point<double>
-    {
-    public:
-        inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
-        { }
-        static inline int type()
-        { return typeIdentifier<point<double> >(); }
-    };
+	struct Point : public point<double>
+	{
+	public:
+		inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
+		{ }
+	};
 # endif
-    class Part
-    {
-    public:
-        Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
-        { }
-        Slice<const Point> line() const;
-        Slice<const Point> points() const;
-    protected:
-        linepart _part;
-        const Point *_pts;
-    };
-    class iterator
-    {
-    public:
-        iterator(Slice<const linepart> l, const Point *p) : _parts(l), _points(p)
-        { }
-        Part operator *() const;
-        iterator & operator++ ();
-        
-        bool operator== (const iterator &it) const
-        { return _points == it._points; }
-        inline bool operator!= (const iterator &it) const
-        { return !operator==(it); }
-    protected:
-        Slice<const linepart> _parts;
-        const Point *_points;
-    };
-    bool set(const Transform &, const rawdata &, int = -1);
-    bool set(const Transform &, Slice<const typed_array>);
-
-    iterator begin() const;
-    iterator end() const;
-    
-    inline void clear()
-    { _vis.set(0); _values.resize(0); }
-    
-    Slice<const linepart> parts() const
-    { return _vis.slice(); }
-    Slice<const Point> points() const
-    { return _values.slice(); }
-    
-    static int type();
+	class Part
+	{
+	public:
+		Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
+		{ }
+		Slice<const Point> line() const;
+		Slice<const Point> points() const;
+	protected:
+		linepart _part;
+		const Point *_pts;
+	};
+	class iterator
+	{
+	public:
+		iterator(Slice<const linepart> l, const Point *p) : _parts(l), _points(p)
+		{ }
+		Part operator *() const;
+		iterator & operator++ ();
+		
+		bool operator== (const iterator &it) const
+		{ return _points == it._points; }
+		inline bool operator!= (const iterator &it) const
+		{ return !operator==(it); }
+	protected:
+		Slice<const linepart> _parts;
+		const Point *_points;
+	};
+	bool set(const Transform &, const rawdata &, int = -1);
+	bool set(const Transform &, Slice<const typed_array>);
+	
+	iterator begin() const;
+	iterator end() const;
+	
+	inline void clear()
+	{ _vis.set(0); _values.resize(0); }
+	
+	Slice<const linepart> parts() const
+	{ return _vis.slice(); }
+	Slice<const Point> points() const
+	{ return _values.slice(); }
 protected:
-    linepart::array _vis;
-    Array<Point> _values;
+	linepart::array _vis;
+	Array<Point> _values;
 };
 template<> inline int typeIdentifier<Polyline::Point>()
 {
-    return typeIdentifier<point<double> >();
+	return typeIdentifier<point<double> >();
 }
 
-class Cycle : public rawdata
+class Cycle : public reference, public rawdata
 {
 public:
-    enum Flags {
-        LimitStages = 1
-    };
-    Cycle();
-    
-    class Stage : public rawdata_stage
-    {
-    public:
-        inline const Polyline &values() const
-        { return _values; }
-        inline void invalidate()
-        { _values.clear(); }
-        bool transform(const Transform &);
-    protected:
-        Polyline _values;
-    };
-    /* add for extensions */
-    virtual uintptr_t addref();
-    
-    /* basic raw data interface */
-    void unref() __MPT_OVERRIDE;
-    
-    int modify(unsigned , int , const void *, size_t , size_t, int = -1) __MPT_OVERRIDE;
-    int advance() __MPT_OVERRIDE;
-    
-    int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
-    int dimensions(int = -1) const __MPT_OVERRIDE;
-    int stages() const __MPT_OVERRIDE;
-    
-    virtual void limitDimensions(uint8_t);
-    virtual bool limitStages(size_t);
-    
-    inline Stage *begin()
-    { return _stages.begin(); }
-    inline Stage *end()
-    { return _stages.end(); }
-    
-    Slice<const Stage> slice() const
-    { return _stages.slice(); }
+	enum Flags {
+		LimitStages = 1
+	};
+	Cycle();
+	
+	class Stage : public rawdata_stage
+	{
+	public:
+		inline const Polyline &values() const
+		{ return _values; }
+		inline void invalidate()
+		{ _values.clear(); }
+		bool transform(const Transform &);
+	protected:
+		Polyline _values;
+	};
+	/* reference interface */
+	virtual uintptr_t addref();
+	void unref() __MPT_OVERRIDE;
+	
+	/* basic raw data interface */
+	int modify(unsigned , int , const void *, size_t , size_t, int = -1) __MPT_OVERRIDE;
+	int advance() __MPT_OVERRIDE;
+	
+	int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
+	int dimensions(int = -1) const __MPT_OVERRIDE;
+	int stages() const __MPT_OVERRIDE;
+	
+	virtual void limitDimensions(uint8_t);
+	virtual bool limitStages(size_t);
+	
+	inline Stage *begin()
+	{ return _stages.begin(); }
+	inline Stage *end()
+	{ return _stages.end(); }
+	
+	Slice<const Stage> slice() const
+	{ return _stages.slice(); }
 protected:
-    virtual ~Cycle();
-    Array<Stage> _stages;
-    uint16_t _act;
-    uint8_t _maxDimensions;
-    uint8_t _flags;
-};template <typename T, typename S>
+	virtual ~Cycle();
+	Array<Stage> _stages;
+	uint16_t _act;
+	uint8_t _maxDimensions;
+	uint8_t _flags;
+};
+
+template <typename T, typename S>
 void apply(T *d, const linepart &pt, const S *src, const T &scale, S fcn(S))
 {
-    size_t j = 0, len = pt.usr;
-    double sx(scale.x), sy(scale.y), part;
-
-    if ((part = pt.cut())) {
-        S s1, s2;
-        ++j;
-        s1 = fcn(src[0]);
-        s2 = fcn(src[1]);
-        part = s1 + part * (s2-s1);
-
-        d->x += sx * part;
-        d->y += sy * part;
-    }
-    if ((part = pt.trim())) {
-        S s1, s2;
-        --len;
-        s1 = fcn(src[len-1]);
-        s2 = fcn(src[len]);
-        part = s2 + part * (s1-s2);
-
-        d[len].x += sx * part;
-        d[len].y += sy * part;
-    }
-    for ( ; j < len ; j++ ) {
-        d[j].x += sx * fcn(src[j]);
-        d[j].y += sy * fcn(src[j]);
-    }
+	size_t j = 0, len = pt.usr;
+	double sx(scale.x), sy(scale.y), part;
+	
+	if ((part = pt.cut())) {
+		S s1, s2;
+		++j;
+		s1 = fcn(src[0]);
+		s2 = fcn(src[1]);
+		part = s1 + part * (s2-s1);
+		
+		d->x += sx * part;
+		d->y += sy * part;
+	}
+	if ((part = pt.trim())) {
+		S s1, s2;
+		--len;
+		s1 = fcn(src[len-1]);
+		s2 = fcn(src[len]);
+		part = s2 + part * (s1-s2);
+		
+		d[len].x += sx * part;
+		d[len].y += sy * part;
+	}
+	for ( ; j < len ; j++ ) {
+		d[j].x += sx * fcn(src[j]);
+		d[j].y += sy * fcn(src[j]);
+	}
 }
 template <typename S>
 inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale, S fcn(S))
 {
-    return apply<point<S>, S>(d, pt, src, scale, fcn);
+	return apply<point<S>, S>(d, pt, src, scale, fcn);
+}
+
+template<> inline int typeIdentifier<rawdata>()
+{
+	return rawdata::typeIdentifier();
 }
 
 #endif

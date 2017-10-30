@@ -7,6 +7,7 @@
 #define _MPT_LAYOUT_H  @INTERFACE_VERSION@
 
 #ifdef __cplusplus
+# include "meta.h"
 # include "object.h"
 #endif
 
@@ -377,7 +378,7 @@ protected:
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
-class Transform3 : public Transform
+class Transform3 : public reference, public Transform
 {
 public:
 	Transform3();
@@ -416,7 +417,7 @@ public:
 		Reference<class Cycle> cycle;
 	};
 	Graph(const graph * = 0);
-	virtual ~Graph();
+	~Graph();
 	
 	static int typeIdentifier();
 	
@@ -455,7 +456,7 @@ class Layout : public Collection
 {
 public:
 	Layout();
-	virtual ~Layout();
+	~Layout();
 	
 	static int typeIdentifier();
 	

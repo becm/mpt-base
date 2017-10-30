@@ -7,18 +7,21 @@
 
 #include <sys/uio.h>
 
+#include "meta.h"
+
 #include "values.h"
 
-struct RawData
-{
-	MPT_INTERFACE(rawdata) gen;
+MPT_STRUCT(RawData) {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(rawdata)  _rd;
 	_MPT_ARRAY_TYPE(rawdata_stage) st;
 	size_t act, max;
 };
-
-static void rdUnref(MPT_INTERFACE(reference) *ptr)
+ 
+/* reference interface */
+static void rdUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct RawData *rd = (void *) ptr;
+	MPT_STRUCT(RawData) *rd = (void *) ref;
 	MPT_STRUCT(buffer) *buf;
 	
 	if ((buf = rd->st._buf)) {
@@ -30,7 +33,8 @@ static void rdUnref(MPT_INTERFACE(reference) *ptr)
 		}
 		mpt_array_clone(&rd->st, 0);
 	}
-	rd->gen._vptr = 0;
+	rd->_mt._vptr = 0;
+	rd->_rd._vptr = 0;
 	free(rd);
 }
 static uintptr_t rdRef(MPT_INTERFACE(reference) *ref)
@@ -38,9 +42,43 @@ static uintptr_t rdRef(MPT_INTERFACE(reference) *ref)
 	(void) ref;
 	return 0;
 }
+/* metatype interface */
+static int rdConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+{
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, mt, _mt);
+	int me = mpt_rawdata_typeid();
+	
+	if (me < 0) {
+		me = MPT_ENUM(TypeMeta);
+	}
+	if (!type) {
+		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeArray), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
+		return me;
+	}
+	if (type == MPT_ENUM(TypeMeta)) {
+		if (ptr) *((const void **) ptr) = &rd->_mt;
+		return me;
+	}
+	if (type == me) {
+		if (ptr) *((const void **) ptr) = &rd->_rd;
+		return MPT_ENUM(TypeMeta);
+	}
+	if (type == MPT_ENUM(TypeArray)) {
+		if (ptr) *((const void **) ptr) = &rd->st;
+		return me;
+	}
+	return MPT_ERROR(BadType);
+}
+static MPT_INTERFACE(metatype) *rdClone(const MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
+/* raw data interface */
 static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t pos, size_t len, int nc)
 {
-	struct RawData *rd = (void *) ptr;
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(typed_array) *arr;
@@ -85,7 +123,7 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 }
 static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 {
-	struct RawData *rd = (void *) ptr;
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
 	size_t act;
 	
@@ -108,7 +146,7 @@ static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 
 static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iovec *vec, int nc)
 {
-	const struct RawData *rd = (void *) ptr;
+	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	const MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	const MPT_STRUCT(typed_array) *arr;
@@ -146,7 +184,7 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 
 static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 {
-	const struct RawData *rd = (void *) ptr;
+	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	const MPT_STRUCT(buffer) *buf;
 	const MPT_STRUCT(rawdata_stage) *st;
 	int max;
@@ -171,7 +209,7 @@ static int rdDimensions(const MPT_INTERFACE(rawdata) *ptr, int part)
 
 static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 {
-	const struct RawData *rd = (void *) ptr;
+	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	const MPT_STRUCT(buffer) *buf;
 	
 	if (!(buf = rd->st._buf)) {
@@ -180,14 +218,8 @@ static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 	return buf->_used / sizeof(MPT_STRUCT(rawdata_stage));
 }
 
-static const MPT_INTERFACE_VPTR(rawdata) _vptr = {
-	{ rdUnref, rdRef },
-	rdModify, rdAdvance,
-	rdValues, rdDimensions, rdStages
-};
-
 /*!
- * \ingroup mptPlot
+ * \ingroup mptValues
  * \brief raw data store
  * 
  * Create raw data storage with cycle instances
@@ -196,17 +228,30 @@ static const MPT_INTERFACE_VPTR(rawdata) _vptr = {
  * 
  * \return new raw data buffer instance
  */
-extern MPT_INTERFACE(rawdata) *mpt_cycle_create(size_t max)
+extern MPT_INTERFACE(metatype) *mpt_cycle_create(size_t max)
 {
-	struct RawData *rd;
+	static const MPT_INTERFACE_VPTR(metatype) rawMeta = {
+		{ rdUnref, rdRef },
+		rdConv,
+		rdClone
+	};
+	static const MPT_INTERFACE_VPTR(rawdata) rawData = {
+		rdModify,
+		rdAdvance,
+		rdValues,
+		rdDimensions,
+		rdStages
+	};
+	MPT_STRUCT(RawData) *rd;
 	
 	if (!(rd = malloc(sizeof(*rd)))) {
 		return 0;
 	}
-	rd->gen._vptr = &_vptr;
+	rd->_mt._vptr = &rawMeta;
+	rd->_rd._vptr = &rawData;
 	rd->st._buf = 0;
 	rd->act = 0;
 	rd->max = max;
 	
-	return &rd->gen;
+	return &rd->_mt;
 }
