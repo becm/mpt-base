@@ -14,6 +14,7 @@ src = files(
   'linepart_linear.c',
   'range_set.c',
   'rawdata_create.c',
+  'rawdata_typeid.c',
   'stage_data.c',
   'stage_fini.c',
   'values_bound.c',

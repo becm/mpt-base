@@ -47,7 +47,7 @@ int Buffer::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char types[] = { metatype::Type, MPT_value_toVector('c'), 's', 0 };
+        static const char types[] = { metatype::Type, iterator::Type, MPT_value_toVector('c'), 's', 0 };
         if (ptr) *((const char **) ptr) = types;
         return me;
     }
@@ -55,13 +55,25 @@ int Buffer::conv(int type, void *ptr) const
         if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
+    if (type == iterator::Type) {
+        if (ptr) *static_cast<const iterator **>(ptr) = this;
+        return me;
+    }
     if (type == MPT_value_toVector('c')) {
         struct iovec *vec;
         if ((vec = static_cast<struct iovec *>(ptr))) {
             Slice<uint8_t> d = data();
-            vec->iov_base = d.begin();
+            vec->iov_base = d.base();
             vec->iov_len = d.length();
         }
+        return me;
+    }
+    if (type == 's') {
+        Slice<uint8_t> d = data();
+        if (!memchr(d.begin(), 0, d.length())) {
+            return BadValue;
+        }
+        if (ptr) *static_cast<const uint8_t **>(ptr) = d.begin();
         return me;
     }
     return BadType;
@@ -70,7 +82,12 @@ int Buffer::conv(int type, void *ptr) const
 int Buffer::get(int type, void *ptr)
 {
     if (!type) {
-        return conv(type, ptr);
+        int me;
+        if ((me = IODevice::typeIdentifier()) < 0) {
+            me = array::Type;
+        }
+        mpt_slice_get(0, type, ptr);
+        return me;
     }
     if (_state.scratch) {
         return MessageInProgress;
@@ -81,17 +98,26 @@ int Buffer::get(int type, void *ptr)
     if ((type = mpt_slice_get(&s, type, ptr)) < 0) {
         return type;
     }
-    s.shift(s.data().length() - _state.done);
     int me = IODevice::typeIdentifier();
     return me < 0 ? metatype::Type : me;
 }
 int Buffer::advance()
 {
-    return MissingData;
+    if (!_state.done) {
+        return MissingData;
+    }
+    Slice<uint8_t> d = data();
+    uint8_t *end;
+    if (!(end = (uint8_t *) memchr(d.base(), 0, d.length()))) {
+        return BadValue;
+    }
+    shift((end + 1) - d.base());
+    return _state.done ? 's' : 0;
 }
 int Buffer::reset()
 {
-    return BadOperation;
+    _state.done = _d.length() - _state.scratch;
+    return _state.done;
 }
 
 // I/O device interface
@@ -138,7 +164,7 @@ ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
         from = ((uint8_t *) from) + esze;
         --nblk;
     }
-    return nblk - left;
+    return left - nblk;
 
 }
 int64_t Buffer::pos()

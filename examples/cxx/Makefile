@@ -30,6 +30,7 @@ types : LDLIBS+=-lmptcore
 
 # special test arguments
 test_layout : ARGS=layout.lay
+test_buffer : ARGS=1 2 3
 
 # default to C++11 standard
 $(CXX11_TARGETS:%=%.o) : CPPFLAGS+=-std=c++11

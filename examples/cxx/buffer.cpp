@@ -44,7 +44,7 @@ const char *MyQueue::string()
 
 const char txt[] = "fdsgfdgm dfkhndn djgkh d hdfhsjdfgh df gh dir";
 
-extern int main(int , char * const [])
+extern int main(int argc, char * const argv[])
 {
 	mtrace();
 	
@@ -56,7 +56,7 @@ extern int main(int , char * const [])
 	mpt::Pipe<mpt::Buffer> cqp;
 	mpt::Queue *raw = &qu;
 	
-	buf.write(1, txt, strlen(txt));
+	std::cout << mpt::typeIdentifier(buf) << std::endl;
 	
 	d.insert(3, 4);
 	d.set(2, 1);
@@ -72,21 +72,23 @@ extern int main(int , char * const [])
 	cqp.shift();
 	
 	
-	buf.shift(2);
-	mpt::Slice<uint8_t> data = buf.data();
-	
-	fwrite(data.base(), data.length(), 1, stdout);
-	fputc('\n', stdout);
-	
 	qu.prepare(456);
 	/*
 	mpt::array tst;
 	
 	tst += buf;
 	*/
-	raw->push(txt, sizeof(txt)-1);
-	
-	//puts(buf.string());
+	raw->push(txt, sizeof(txt) - 1);
+	for (int i = 0; i < argc; ++i) {
+		buf.write(1, argv[i], strlen(argv[i]) + 1);
+	}
+	buf.shift(2);
+	char *v;
+	while (buf.get(mpt::typeIdentifier(v), &v) > 0) {
+		fputs(v, stdout);
+		fputc('\n', stdout);
+		buf.advance();
+	}
 	
 	qu.pushString("hallo");
 	qu.append('t');

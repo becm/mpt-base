@@ -654,6 +654,8 @@ public:
 protected:
 	Reference<Content<T> > _ref;
 };
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const UniqueArray<T> &) { return array::Type; }
 
 template <typename T>
 class Array : public UniqueArray<T>
@@ -717,6 +719,8 @@ public:
 		return true;
 	}
 };
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const Array<T> &) { return array::Type; }
 
 /*! typed array with standard operations */
 template <typename T>
@@ -762,6 +766,8 @@ public:
 		return true;
 	}
 };
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const ItemArray<T> &) { return array::Type; }
 
 /*! basic pointer array */
 template <typename T>
@@ -799,6 +805,8 @@ protected:
 		return Slice<void *>(this->begin(), this->length());
 	}
 };
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const PointerArray<T> &) { return array::Type; }
 
 /*! extendable array for reference types */
 template <typename T>
@@ -855,6 +863,8 @@ public:
 		::mpt::compact(Slice<void *>(reinterpret_cast<void **>(this->begin()), this->length()));
 	}
 };
+template<typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(const RefArray<T> &) { return array::Type; }
 
 class LogStore : public logger, public Reference<metatype>
 {

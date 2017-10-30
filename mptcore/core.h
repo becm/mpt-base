@@ -400,8 +400,8 @@ extern int toItemId(int);
 template<typename T>
 int typeIdentifier() {
 	static int id = 0;
-	if (!id && !(id = makeId())) {
-		id = BadType;
+	if (!id) {
+		id = makeId();
 	}
 	return id;
 }
@@ -424,15 +424,25 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; 
 template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
 /* string data */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<char>() { return 'c'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<char *>() { return 's'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<const char *>() { return 's'; }
 /* builtin types */
 template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
 template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return property::Type; }
 
 /* vector-type auto-cast for constant base types */
 template<typename T>
-inline __MPT_CONST_EXPR unsigned char vectorIdentifier()
+inline int vectorIdentifier()
 {
-	return MPT_value_toVector(typeIdentifier<T>());
+	static int id = 0;
+	if (!id) {
+		id = typeIdentifier<T>();
+		id = MPT_value_toVector(id);
+		if (id <= 0) {
+			id = makeId();
+		}
+	}
+	return id;
 }
 
 /*! container for reference type pointer */
@@ -574,10 +584,10 @@ int debug(const char *, const char *, ... );
 int println(const char *, ... );
 
 template <typename T>
-inline __MPT_CONST_EXPR unsigned char typeIdentifier(Slice<T>)
+inline __MPT_CONST_EXPR unsigned int typeIdentifier(Slice<T>)
 { return vectorIdentifier<T>(); }
 template <typename T>
-inline __MPT_CONST_EXPR unsigned char typeIdentifier(Slice<const T>)
+inline __MPT_CONST_EXPR unsigned int typeIdentifier(Slice<const T>)
 { return vectorIdentifier<T>(); }
 #endif
 

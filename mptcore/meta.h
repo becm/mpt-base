@@ -44,6 +44,7 @@ public:
 	inline int type() const
 	{ return conv(0, 0); }
 };
+template <> inline __MPT_CONST_EXPR int typeIdentifier<metatype>() { return metatype::Type; }
 #else
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
