@@ -26,7 +26,6 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	MPT_STRUCT(path) where = MPT_PATH_INIT;
 	MPT_STRUCT(value) d;
 	
-	
 	if (!conf) {
 		MPT_INTERFACE(metatype) *gl;;
 		if (!(gl = mpt_config_global(0))

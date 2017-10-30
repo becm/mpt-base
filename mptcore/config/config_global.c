@@ -39,17 +39,17 @@ static uintptr_t configTopRef(MPT_INTERFACE(reference) *ref)
 /* metatype interface */
 static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
+	const MPT_STRUCT(configRoot) *c = (void *) mt;
 	if (!type) {
 		static const char fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return MPT_ENUM(TypeConfig);
 	}
 	if (type == MPT_ENUM(TypeConfig)) {
-		if (ptr) *((const void **) ptr) = mt + 1;
+		if (ptr) *((const void **) ptr) = &c->_cfg;
 		return MPT_ENUM(TypeNode);
 	}
 	if (type == MPT_ENUM(TypeNode)) {
-		MPT_STRUCT(configRoot) *c = (void *) mt;
 		if (ptr) *((void **) ptr) = mpt_config_node(&c->base);
 		return MPT_ENUM(TypeConfig);
 	}
@@ -73,7 +73,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 		return 0;
 	}
 	if (!path) {
-		return 0;
+		return &c->_mt;
 	}
 	if (c->base.len) {
 		p = c->base;

@@ -108,11 +108,12 @@ const struct iovec *value::vector(int type) const
     if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
         return 0;
     }
-    if (!MPT_value_isVector(from)) {
+    /* bad source type */
+    if ((from = MPT_value_fromVector(from)) < 0) {
         return 0;
     }
-    /* type out of range */
-    if (type && from != !MPT_value_toVector(type)) {
+    /* invald content type */
+    if (type && type != from) {
         return 0;
     }
     return reinterpret_cast<const struct iovec *>(ptr);

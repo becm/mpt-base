@@ -202,7 +202,8 @@ public:
 	public:
 		void unref()
 		{
-			if (!_ref.lower()) delete this;
+			if (_ref.lower()) return;
+			delete this;
 		}
 	};
 	Pipe(const T &v, size_t len)

@@ -130,7 +130,7 @@ enum MPT_ENUM(Types)
                                : 0)
 #define MPT_value_fromVector(v) (MPT_value_isVector(v) \
                                ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeMeta) \
-                               : -1)
+                               : MPT_ERROR(BadType))
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeBaseDynamic)   = 0x80,
