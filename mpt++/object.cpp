@@ -159,9 +159,10 @@ object::Property Object::operator [](int pos)
 }
 const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
 {
+    const int traverse = TraverseAll | TraverseChange;
     if (!head) return 0;
     do {
-        if (mpt_object_set_node(&_obj, head, TraverseNonLeafs) < 0) {
+        if (mpt_object_set_node(&_obj, head, traverse) < 0) {
             return head;
         }
         if (!proc) {

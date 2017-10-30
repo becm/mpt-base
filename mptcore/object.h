@@ -10,9 +10,9 @@
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_INTERFACE(metatype);
-
 MPT_STRUCT(node);
+
+MPT_INTERFACE(metatype);
 
 /*! generic object interface */
 #ifdef __cplusplus
@@ -60,7 +60,7 @@ __MPT_EXTDECL_BEGIN
 /* get object type name */
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 
-/* loop trough metatype/generic properties */
+/* loop trough object properties */
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 /* set object property to match argument */

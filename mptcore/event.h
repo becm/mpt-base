@@ -12,7 +12,6 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(message);
 
-MPT_INTERFACE(output);
 MPT_INTERFACE(iterator);
 
 MPT_STRUCT(reply_data)

@@ -170,13 +170,13 @@ enum MPT_ENUM(TraverseFlags) {
 	MPT_ENUM(TraverseLeafs)       = 0x00000001,
 	MPT_ENUM(TraverseNonLeafs)    = 0x00000002,
 	MPT_ENUM(TraverseAll)         = 0x00000003,
-	MPT_ENUM(TraverseFlags)       = 0x00000003,
 	/* node traverse order */
 	MPT_ENUM(TraversePostOrder)   = 0x00000000,
 	MPT_ENUM(TraversePreOrder)    = 0x00000004,
 	MPT_ENUM(TraverseInOrder)     = 0x00000008,
 	MPT_ENUM(TraverseLevelOrder)  = 0x0000000C,
 	MPT_ENUM(TraverseOrders)      = 0x0000000C,
+	MPT_ENUM(TraverseModes)       = 0x0000000f,
 	/* property traverse flags */
 	MPT_ENUM(TraverseChange)      = 0x00000010,
 	MPT_ENUM(TraverseDefault)     = 0x00000020,
@@ -398,7 +398,8 @@ extern int toReferenceId(int);
 extern int toItemId(int);
 
 template<typename T>
-int typeIdentifier() {
+int typeIdentifier()
+{
 	static int id = 0;
 	if (!id) {
 		id = makeId();
@@ -432,7 +433,7 @@ template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return prope
 
 /* vector-type auto-cast for constant base types */
 template<typename T>
-inline int vectorIdentifier()
+int vectorIdentifier()
 {
 	static int id = 0;
 	if (!id) {
@@ -443,6 +444,16 @@ inline int vectorIdentifier()
 		}
 	}
 	return id;
+}
+template <typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(Slice<T>)
+{
+	return vectorIdentifier<T>();
+}
+template <typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(Slice<const T>)
+{
+	return vectorIdentifier<T>();
 }
 
 /*! container for reference type pointer */
@@ -582,13 +593,6 @@ int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
 int println(const char *, ... );
-
-template <typename T>
-inline __MPT_CONST_EXPR unsigned int typeIdentifier(Slice<T>)
-{ return vectorIdentifier<T>(); }
-template <typename T>
-inline __MPT_CONST_EXPR unsigned int typeIdentifier(Slice<const T>)
-{ return vectorIdentifier<T>(); }
 #endif
 
 /* text identifier for entity */
