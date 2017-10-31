@@ -397,6 +397,8 @@ extern int makeId();
 extern int toReferenceId(int);
 extern int toItemId(int);
 
+extern bool isPointer(int);
+
 template<typename T>
 int typeIdentifier()
 {

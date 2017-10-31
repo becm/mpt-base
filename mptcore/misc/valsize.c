@@ -27,7 +27,7 @@ static const struct {
 	{ MPT_ENUM(TypeNode),     0 },
 	{ MPT_ENUM(TypeCommand),  0 },
 	
-	/* skip reference and object data types */
+	/* skip interface data types */
 	
 	/* layout types (0x30 - 0x39) */
 	{ MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr)) },
@@ -37,6 +37,9 @@ static const struct {
 	{ MPT_ENUM(TypeAxis),     0 },
 	{ MPT_ENUM(TypeWorld),    0 },
 	{ MPT_ENUM(TypeGraph),    0 },
+	
+	/* generic metatype */
+	{ MPT_ENUM(TypeMeta),     0 },
 	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
@@ -95,10 +98,6 @@ extern ssize_t mpt_valsize(int type)
 		if (MPT_value_isInterface(type)) {
 			return 0;
 		}
-		/* generic reference type */
-		if (MPT_value_isMetatype(type)) {
-			return 0;
-		}
 		/* generic/typed vector */
 		if (MPT_value_isVector(type)) {
 			return sizeof(struct iovec);
@@ -110,6 +109,11 @@ extern ssize_t mpt_valsize(int type)
 			}
 		}
 		return MPT_ERROR(BadType);
+	}
+	/* dynamic interface or metatypes */
+	if (type >= MPT_ENUM(_TypeInterfaceBase)
+	    && type <= MPT_ENUM(_TypeInterfaceMax)) {
+		return 0;
 	}
 	type -= MPT_ENUM(_TypeBaseDynamic);
 	/* user generics */

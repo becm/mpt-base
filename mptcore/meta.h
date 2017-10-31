@@ -27,7 +27,9 @@ public:
 	inline T *cast() const
 	{
 		static const int t = typeIdentifier<T>();
-		if (mpt_valsize(t)) return 0;
+		if (!isPointer(t)) {
+			return 0;
+		}
 		T *ptr;
 		if (conv(t, &ptr) < 0) return 0;
 		return ptr;
