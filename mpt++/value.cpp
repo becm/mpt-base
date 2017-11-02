@@ -11,21 +11,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-// check if type is registered pointer
-bool isPointer(int type)
-{
-    if (type >= _TypeInterfaceBase && type <= _TypeInterfaceMax) {
-        return true;
-    }
-    if (type >= _TypeMetaBase && type <= _TypeMetaMax) {
-        return true;
-    }
-    if (type >= _TypePointerBase && type <= (_TypePointerBase + _TypeGenericMax)) {
-        return true;
-    }
-    return mpt_valsize(type) == 0;
-}
-
 // conversion wrapper
 int convert(const void **val, int fmt, void *dest, int type)
 {
@@ -112,7 +97,8 @@ void *value::pointer(int type) const
     if (type && type != from) {
         return 0;
     }
-    if (isPointer(type)) {
+    if (from <= _TypeDynamicMax
+        && mpt_valsize(from) != 0) {
         return 0;
     }
     return *reinterpret_cast<void * const *>(ptr);
