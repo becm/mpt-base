@@ -28,29 +28,20 @@ static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 }
 static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
-	struct wrapIter *wr = (void *) mt;
-	MPT_INTERFACE(iterator) *it;
+	const struct wrapIter *wr = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
-		if (dest) {
-			*((const char **) dest) = fmt;
-		}
+		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeIterator), 0 };
+		if (dest) *((const char **) dest) = fmt;
 		return *fmt;
 	}
+	if (type == MPT_ENUM(TypeMeta)) {
+		if (dest) *((const void **) dest) = &wr->_ctl;
+		return MPT_ENUM(TypeIterator);
+	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (dest) {
-			*((const void **) dest) = wr->it;
-		}
-		return MPT_ENUM(TypeValue);
+		if (dest) *((const void **) dest) = wr->it;
+		return MPT_ENUM(TypeMeta);
 	}
-	if (!(it = wr->it)) {
-		return MPT_ERROR(BadType);
-	}
-	return it->_vptr->get(it, type, dest);
+	return MPT_ERROR(BadType);
 }
-static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
-	{ metaIterUnref, metaIterRef },
-	metaIterConv,
-	metaIterClone
-};

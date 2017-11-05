@@ -19,6 +19,11 @@
  */
 extern int mpt_object_set_iterator(MPT_INTERFACE(object) *obj, const char *prop, MPT_INTERFACE(iterator) *it)
 {
+	static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
+		{ metaIterUnref, metaIterRef },
+		metaIterConv,
+		metaIterClone
+	};
 	struct wrapIter mt;
 	
 	mt._ctl._vptr = &metaIterCtl;
