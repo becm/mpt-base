@@ -72,6 +72,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value) val)
 		return mt;
 	}
 	if (!(mt = mpt_meta_geninfo(len))
+	    || !src
 	    || _mpt_geninfo_set(mt + 1, src, len) >= 0) {
 		return mt;
 	}

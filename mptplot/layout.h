@@ -417,7 +417,7 @@ public:
 		Reference<class Cycle> cycle;
 	};
 	Graph(const graph * = 0);
-	~Graph();
+	~Graph() __MPT_OVERRIDE;
 	
 	static int typeIdentifier();
 	
@@ -456,7 +456,7 @@ class Layout : public Collection
 {
 public:
 	Layout();
-	~Layout();
+	~Layout() __MPT_OVERRIDE;
 	
 	static int typeIdentifier();
 	

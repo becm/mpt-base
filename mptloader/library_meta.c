@@ -43,12 +43,10 @@ static uintptr_t mpRef(MPT_INTERFACE(reference) *ref)
 static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
+	int mt = mp->type;
 	
 	if (!(m = mp->ptr)) {
 		return MPT_ERROR(BadArgument);
-	}
-	if (type & ~0xff) {
-		return MPT_ERROR(BadValue);
 	}
 	if (!type) {
 		if (ptr) *((void **) ptr) = (char *) mp->fmt;
@@ -59,14 +57,13 @@ static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 		return mp->fmt[0];
 	}
 	if (type == MPT_ENUM(TypeMeta)) {
-		int mt = mp->type;
 		if (!MPT_value_isMetatype(mt)) {
 			return MPT_ERROR(BadType);
 		}
 		if (ptr) *((void **) ptr) = mp->ptr;
 		return mt;
 	}
-	if (mp->type == MPT_ENUM(TypeMeta)) {
+	if (MPT_value_isMetatype(mt)) {
 		return m->_vptr->conv(m, type, ptr);
 	}
 	return MPT_ERROR(BadType);

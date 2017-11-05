@@ -97,7 +97,7 @@ extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
 /* execute get/dispatch in loop */
 extern int mpt_loop(MPT_STRUCT(notify) *);
 
-/* id for registratioon for input */
+/* id for registered input metatype */
 extern int mpt_input_type_identifier(void);
 
 __MPT_EXTDECL_END

@@ -70,6 +70,10 @@ extern MPT_INTERFACE(metatype) *mpt_library_bind(const char *conf, const char *p
 			mpt_log(out, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
 		}
 	}
+	/* named instance */
+	else if ((err = mpt_valtype_name(type))) {
+		mpt_log(out, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("created proxy instance"), err);
+	}
 	/* generic instance */
 	else {
 		mpt_log(out, __func__, MPT_LOG(Debug), "%s: %02x", MPT_tr("created proxy instance"), type);
