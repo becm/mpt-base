@@ -26,7 +26,9 @@ static int loadModule(lua_State *L, const char *mod)
 	else {
 		int len;
 		char buf[MPT_MAX_LUA_BUF];
-#if LUA_VERSION_NUM < 502
+#ifdef __MPT_BUILD_LUA_PATH
+		snprintf(buf, sizeof(buf), "%s/%s.%s", __MPT_BUILD_LUA_PATH, mod, "lua");
+#elif LUA_VERSION_NUM < 502
 		const char *version = LUA_VERSION;
 		snprintf(buf, sizeof(buf), "%s/%s/%s/%s.%s",
 		         prefix, "share/lua", version + 4, mod, "lua");

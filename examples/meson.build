@@ -54,6 +54,8 @@ endif
 
 if with_lua
   test('lua interpreter',
-    executable('interp', join_paths('lua', 'main.c'), dependencies: lua),
+    executable('interp', join_paths('lua', 'main.c'),
+      c_args: test_defines + [ '-D__MPT_BUILD_LUA_PATH="' + join_paths(meson.source_root(), 'lua') + '"' ],
+      dependencies: lua),
     args: [ join_paths(meson.current_source_dir(), 'lua', 'user.lua')])
 endif

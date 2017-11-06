@@ -39,11 +39,11 @@ static : ${LIB_FULLNAME}.a
 devel : install header
 
 ${LIB_FULLNAME}.a : ${STATIC_OBJS} ${LIB_FULLNAME}.a(${STATIC_OBJS})
-	${AR} s '${@}'
+	${AR} sU '${@}'
 
 ${LIB_FULLNAME}.a(%.o) : %.o
 	install -d '${@D}'
-	${AR} S${ARFLAGS} '${@}' $?
+	${AR} SU${ARFLAGS} '${@}' $?
 
 ${LIB_FULLNAME}.so : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
 	cd '${@D}'; ln -fs '${@F}.${SHLIB_MAJOR}' '${@F}'
