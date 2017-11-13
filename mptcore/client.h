@@ -11,10 +11,6 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(event);
-MPT_STRUCT(dispatch);
-
-MPT_INTERFACE(config);
-MPT_INTERFACE(object);
 
 #ifdef __cplusplus
 MPT_INTERFACE(client) : public metatype
@@ -24,8 +20,7 @@ public:
 	int conv(int , void *) const __MPT_OVERRIDE;
 	
 	/* client extensions */
-	virtual int init(iterator * = 0);
-	virtual int step(iterator * = 0) = 0;
+	virtual int process(event * = 0) = 0;
 	
 	static class config &config();
 	
@@ -39,8 +34,7 @@ MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
 	MPT_INTERFACE_VPTR(metatype) meta;
-	int  (*init) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
-	int  (*step) (MPT_INTERFACE(client) *, MPT_INTERFACE(iterator) *);
+	int (*process)(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
 }; MPT_INTERFACE(client) {
 	const MPT_INTERFACE_VPTR(client) *_vptr;
 };
@@ -87,17 +81,8 @@ __MPT_EXTDECL_BEGIN
 /* get input from user */
 extern char *mpt_readline(const char *);
 
-/* initialize/preprare solver, execute solver step */
-extern int mpt_cevent_init(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
-extern int mpt_cevent_step(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
-/* clear config elements */
-extern int mpt_cevent_clear(MPT_INTERFACE(config) *, MPT_STRUCT(event) *);
-
-/* register events on notifier */
-extern int mpt_client_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(client) *);
 /* get client id */
 extern int mpt_client_typeid();
-
 
 /* open/close library descriptor */
 extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *, const char *);
@@ -126,8 +111,6 @@ inline libhandle::~libhandle()
 {
     mpt_library_close(this);
 }
-inline int client::init(iterator *)
-{ return 0; }
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

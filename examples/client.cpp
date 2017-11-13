@@ -31,8 +31,7 @@ public:
     virtual ~MyClient() { }
     
     void unref() __MPT_OVERRIDE;
-    int init(mpt::iterator * = 0) __MPT_OVERRIDE;
-    int step(mpt::iterator *) __MPT_OVERRIDE;
+    int process(mpt::event * = 0) __MPT_OVERRIDE;
     
     template<typename T>
     T *cast()
@@ -46,8 +45,7 @@ MyClient::MyClient(const char *e) : enc(0)
 {
     if (e) enc = strdup(e);
 }
-
-int MyClient::init(mpt::iterator *)
+int MyClient::process(mpt::event *)
 {
     _ref = mpt::mpt_output_remote();
 
@@ -59,9 +57,6 @@ int MyClient::init(mpt::iterator *)
     }
     return 0;
 }
-int MyClient::step(mpt::iterator *)
-{ return 0; }
-
 void MyClient::unref()
 {
     if (enc) free(enc);
@@ -92,18 +87,13 @@ int main(int argc, char * const argv[])
     in->open("/dev/stdin");
     mpt_notify_add(&n, -1, in);
 
-    MyClient c(argv[pos]);
-    c.init();
+    MyClient *c = new MyClient(argv[pos]);
+    c->process();
 
+    mpt::mpt_meta_events(&d, c);
     d.set(mpt::MessageCommand, doCommand, 0);
 
-    c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
-    const mpt::object *o;
-    if ((o = c.cast<mpt::object>())) {
-        for (auto p : *o) {
-            std::cout << p.name << " = " << p.val << std::endl;
-        }
-    }
     n.loop();
 }

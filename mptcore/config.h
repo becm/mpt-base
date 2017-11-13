@@ -107,7 +107,8 @@ extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, i
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
 /* set configuration from arguments */
-extern int mpt_config_args(MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *);
+extern int mpt_config_args (MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
+extern int mpt_config_clear(MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
 
 /* get global config node */
 extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *);

@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'config_args.c',
+  'config_clear.c',
   'config_environ.c',
   'config_get.c',
   'config_global.c',

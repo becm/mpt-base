@@ -25,14 +25,19 @@ extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *disp, uintptr_t id, MPT_TYPE(E
 	
 	/* clear registration */
 	if (!cmd) {
+		int pos;
 		if (!dst) {
-			return -2;
+			return MPT_ERROR(BadArgument);
 		}
-		return dst - ((MPT_STRUCT(command) *) (disp->_d._buf + 1));
+		pos = dst - ((MPT_STRUCT(command) *) (disp->_d._buf + 1));
+		dst->cmd(dst->arg, 0);
+		dst->cmd = 0;
+		dst->arg = 0;
+		return pos;
 	}
 	/* id already used */
 	if (dst) {
-		return -2;
+		return MPT_ERROR(BadArgument);
 	}
 	/* register command */
 	else {

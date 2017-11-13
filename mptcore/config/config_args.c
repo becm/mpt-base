@@ -25,7 +25,7 @@
  * 
  * \return string describing error
  */
-extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *args)
+extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *args, MPT_INTERFACE(logger) *log)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
@@ -60,12 +60,16 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			mpt_path_set(&p, pr.name, -1);
 		}
 		if (cfg->_vptr->assign(cfg, &p, &pr.val) < 0) {
+			if (log) {
+				mpt_log(log, __func__, MPT_LOG(Warning), "%s: %s",
+				        MPT_tr("failed to set config element"), pr.name);
+			}
 			return count ? count : MPT_ERROR(BadValue);
 		}
 		/* assign config */
 		++count;
 	} while ((res = args->_vptr->advance(args)) >= 0);
 	
-	return 0;
+	return res;
 }
 

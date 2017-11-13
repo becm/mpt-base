@@ -10,6 +10,7 @@ src = files(
   'dispatch_hash.c',
   'dispatch_set.c',
   'event_command.c',
+  'meta_events.c',
   'reply_deferrable.c',
   'reply_set.c',
 )

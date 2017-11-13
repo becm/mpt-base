@@ -212,6 +212,9 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
+/* register events on notifier */
+extern int mpt_meta_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(metatype) *);
+
 /* register dispatch output control operations */
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *, MPT_INTERFACE(metatype) *);
 
