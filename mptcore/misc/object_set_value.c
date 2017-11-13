@@ -3,6 +3,7 @@
  */
 
 #include "object.h"
+#include "convert.h"
 
 #include "meta_wrap.h"
 
@@ -15,17 +16,28 @@ struct objectParam
 
 static int metaIterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
+	const struct wrapIter *base = (void *) mt;
+	const MPT_STRUCT(value) *val = (void *) (base + 1);
+	int ret;
+	
 	if (!type) {
 		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return MPT_ENUM(TypeMeta);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
-		const struct wrapIter *base = (void *) mt;
-		if (ptr) *((MPT_STRUCT(value) *) ptr) = *((MPT_STRUCT(value) *) (base + 1));
+		if (ptr) *((MPT_STRUCT(value) *) ptr) = *val;
 		return MPT_ENUM(TypeIterator);
 	}
-	return metaIterConv(mt, type, ptr);
+	if ((ret = metaIterConv(mt, type, ptr)) >= 0) {
+		return ret;
+	}
+	if (!val->fmt || !val->ptr || !val->fmt[0] || val->fmt[1]) {
+		return MPT_ERROR(BadValue);
+	} else {
+		const void *from = val->ptr;
+		return mpt_data_convert(&from, val->fmt[0], ptr, type);
+	}
 }
 static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
 {

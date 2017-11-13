@@ -4,8 +4,6 @@
 
 #include "meta.h"
 
-#include "object.h"
-
 struct wrapIter
 {
 	MPT_INTERFACE(metatype) _ctl;
@@ -31,9 +29,9 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	const struct wrapIter *wr = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeIterator), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
 		if (dest) *((const char **) dest) = fmt;
-		return *fmt;
+		return MPT_ENUM(TypeMeta);
 	}
 	if (type == MPT_ENUM(TypeMeta)) {
 		if (dest) *((const void **) dest) = &wr->_ctl;
