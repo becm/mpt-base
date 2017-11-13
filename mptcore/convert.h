@@ -6,6 +6,8 @@
 #ifndef _MPT_CONVERT_H
 #define _MPT_CONVERT_H  @INTERFACE_VERSION@
 
+#include <sys/uio.h>
+
 #include "core.h"
 
 #if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
@@ -40,6 +42,36 @@ public:
 protected:
 #endif
 	uint8_t _d[10];
+};
+
+MPT_STRUCT(scalar)
+{
+#ifdef __cplusplus
+	inline scalar() : len(0), type(0)
+	{}
+#endif
+	int len;
+	int type;
+	union {
+		int8_t   b;
+		uint8_t   y;
+		int16_t n;
+		uint16_t q;
+		int32_t i;
+		uint32_t u;
+		int64_t x;
+		uint64_t t;
+		
+		long l;
+		
+		float f;
+		double d;
+#ifdef _MPT_FLOAT_EXTENDED_H
+		long double e;
+#endif
+		void *p;
+		struct iovec v;
+	} val;
 };
 
 /* value output format */
@@ -102,6 +134,9 @@ extern void mpt_bswap_80(size_t , MPT_STRUCT(float80) *);
 extern void mpt_bswap_64(size_t , uint64_t *);
 extern void mpt_bswap_32(size_t , uint32_t *);
 extern void mpt_bswap_16(size_t , uint16_t *);
+
+/* set scalar to next argument */
+extern int mpt_scalar_argv(MPT_STRUCT(scalar) *, int , va_list);
 
 /* get data from pointer and description */
 extern int mpt_data_convert(const void **, int , void *, int );
@@ -194,7 +229,7 @@ extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, const MPT_INTERFACE(metatyp
 extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(valfmt) *, MPT_STRUCT(valfmt));
 #endif
 
-/* type identifier for '(unsigned) long' data type */
+/* type identifier for (unsigned) integer types */
 extern char mpt_type_int(size_t);
 extern char mpt_type_uint(size_t);
 

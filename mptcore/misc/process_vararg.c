@@ -9,8 +9,6 @@
 # include <string.h>
 #endif
 
-#include <sys/uio.h>
-
 #include "convert.h"
 
 #include "meta.h"
@@ -20,102 +18,43 @@ struct iteratorVararg
 	MPT_INTERFACE(iterator) _it;
 	const char *fmt;
 	va_list arg;
-	size_t len;
-	union {
-		int8_t   b;
-		uint8_t   y;
-		int16_t n;
-		uint16_t q;
-		int32_t i;
-		uint32_t u;
-		int64_t x;
-		uint64_t t;
-		
-		long l;
-		
-		float f;
-		double d;
-#ifdef _MPT_FLOAT_EXTENDED_H
-		long double e;
-#endif
-		void *p;
-		struct iovec v;
-	} val;
+	MPT_STRUCT(scalar) s;
 };
 
-static int nextArgument(struct iteratorVararg *va)
-{
-	int fmt, len;
-	if (!va->fmt) {
-		return MPT_ERROR(BadOperation);
-	}
-	if (!(fmt = *va->fmt)) {
-		va->fmt = 0;
-		return 0;
-	}
-	if (MPT_value_isVector(fmt)) {
-		va->val.v = va_arg(va->arg, struct iovec);
-		va->len = sizeof(struct iovec);
-		return fmt;
-	}
-	switch (fmt) {
-		case 'b': va->val.b = va_arg(va->arg, int);          len = sizeof(int8_t);   break;
-		case 'y': va->val.y = va_arg(va->arg, unsigned int); len = sizeof(uint8_t);  break;
-		case 'n': va->val.n = va_arg(va->arg, int);          len = sizeof(int16_t);  break;
-		case 'q': va->val.q = va_arg(va->arg, unsigned int); len = sizeof(uint16_t); break;
-		case 'i': va->val.i = va_arg(va->arg, int32_t);  len = sizeof(int32_t);  break;
-		case 'u': va->val.u = va_arg(va->arg, uint32_t); len = sizeof(uint32_t); break;
-		case 'x': va->val.x = va_arg(va->arg, int64_t);  len = sizeof(int64_t);  break;
-		case 't': va->val.t = va_arg(va->arg, uint64_t); len = sizeof(uint64_t); break;
-		
-		case 'l': va->val.l = va_arg(va->arg, long); len = sizeof(long); break;
-		
-		case 'f': va->val.f = va_arg(va->arg, double); len = sizeof(float);  break;
-		case 'd': va->val.d = va_arg(va->arg, double); len = sizeof(double); break;
-#ifdef _MPT_FLOAT_EXTENDED_H
-		case 'e': va->val.e = va_arg(va->arg, long double); len = sizeof(long double); break;
-#endif
-		case 's':
-		case 'k':
-		case 'o': va->val.p = va_arg(va->arg, void *); len = sizeof(void *); break;
-		default:
-			va->len = 0;
-			return MPT_ERROR(BadType);
-	}
-	va->len = len;
-	return fmt;
-}
 static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
-	struct iteratorVararg *va = (void *) it;
-	const void *val;
-	int fmt;
-	if (!va->fmt || !(fmt = *va->fmt)) {
+	const struct iteratorVararg *va = (void *) it;
+	const void *val = &va->s.val;
+	if (!va->s.len) {
 		return 0;
 	}
-	val = &va->val;
 #ifdef MPT_NO_CONVERT
-	if (type == fmt) {
-		val = &va->val;
-		if (ptr) {
-			memcpy(ptr, val, va->len);
-		}
+	if (va->s.type == fmt) {
+		if (ptr) memcpy(ptr, val, va->len);
 		return fmt;
 	}
 	return MPT_ERROR(BadType);
 #else
-	return mpt_data_convert(&val, *va->fmt, ptr, type);
+	return mpt_data_convert(&val, va->s.type, ptr, type);
 #endif
 }
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 {
 	struct iteratorVararg *va = (void *) it;
-	if (!va->fmt || !*va->fmt) {
+	int ret;
+	if (!va->fmt) {
+		return MPT_ERROR(MissingData);
+	}
+	if (!(ret = *va->fmt)) {
 		va->fmt = 0;
-		return MPT_ERROR(BadOperation);
+		va->s.len = 0;
+		return 0;
+	}
+	if ((ret = mpt_scalar_argv(&va->s, ret, va->arg)) < 0) {
+		return ret;
 	}
 	++va->fmt;
-	return nextArgument(va);
+	return va->s.type;
 }
 static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 {
@@ -150,12 +89,14 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 		return MPT_ERROR(BadArgument);
 	}
 	va._it._vptr = &ctl;
-	va.fmt = fmt;
-	va_copy(va.arg, arg);
-	va.len = 0;
-	if (fmt && (ret = nextArgument(&va)) < 0) {
+	va.s.len = 0;
+	if (!(va.fmt = fmt) || !(ret = *fmt)) {
+		return proc(ctx, &va._it);
+	}
+	if ((ret = mpt_scalar_argv(&va.s, ret, va.arg)) < 0) {
 		return ret;
 	}
+	va_copy(va.arg, arg);
 	ret = proc(ctx, &va._it);
 	va_end(va.arg);
 	return ret;
