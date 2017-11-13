@@ -32,9 +32,15 @@ int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type,
 	MPT_INTERFACE(output) *out;
 	MPT_INTERFACE(logger) *log;
 	
+	if (!mt) {
+		if (!(log  = mpt_log_default())) {
+			return 0;
+		}
+		return log->_vptr->log(log, src, type, fmt, va);
+	}
 	log = 0;
 	if (mt->_vptr->conv(mt, MPT_ENUM(TypeLogger), &log) > 0) {
-		if (!log && !(log = mpt_log_default())) {
+		if (!log) {
 			return 0;
 		}
 		return log->_vptr->log(log, src, type, fmt, va);

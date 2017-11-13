@@ -55,12 +55,17 @@ class reply_context
 public:
 	enum { Type = TypeReply };
 	
+	enum {
+		MaxSize = 0x100
+	};
+	
 	virtual int reply(const struct message *) = 0;
 	virtual reply_context_detached *defer();
 protected:
 	inline ~reply_context()
 	{ }
 };
+
 #else
 MPT_INTERFACE(reply_context);
 MPT_INTERFACE_VPTR(reply_context) {
@@ -84,7 +89,7 @@ MPT_STRUCT(event)
 	int fail(const char *, int = -1);
 # define MPT_EVENTFLAG(x) x
 #else
-# define MPT_EVENTFLAG(x) MPT_ENUM(Event##x)
+# define MPT_EVENTFLAG(x) MPT_ENUM(Event_##x)
 
 #define MPT_event_good(ev,txt) \
 	(mpt_context_reply(ev->reply, 0, "%s", txt), \

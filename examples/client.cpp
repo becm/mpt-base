@@ -31,7 +31,7 @@ public:
     virtual ~MyClient() { }
     
     void unref() __MPT_OVERRIDE;
-    int process(mpt::event * = 0) __MPT_OVERRIDE;
+    int process(uintptr_t , mpt::iterator *) __MPT_OVERRIDE;
     
     template<typename T>
     T *cast()
@@ -45,7 +45,7 @@ MyClient::MyClient(const char *e) : enc(0)
 {
     if (e) enc = strdup(e);
 }
-int MyClient::process(mpt::event *)
+int MyClient::process(uintptr_t , mpt::iterator *)
 {
     _ref = mpt::mpt_output_remote();
 
@@ -53,9 +53,8 @@ int MyClient::process(mpt::event *)
     if ((o = proxy::cast<mpt::object>())) {
         o->set(0, "w:client.out");
         if (enc) o->set("encoding", enc);
-        return 1;
     }
-    return 0;
+    return mpt::event::Terminate;
 }
 void MyClient::unref()
 {
@@ -63,9 +62,15 @@ void MyClient::unref()
     delete this;
 }
 
-static int doCommand(void *, mpt::event *ev)
+static int doCommand(void *ptr, mpt::event *ev)
 {
-    if (!ev || !ev->msg) return 0;
+    auto *c = static_cast<mpt::client *>(ptr);
+    if (!ev) {
+        return 0;
+    }
+    if (!ev->msg) {
+        return c->dispatch(ev);
+    }
     std::cout << ev->msg->length() << std::endl;
     return 0;
 }
@@ -87,13 +92,12 @@ int main(int argc, char * const argv[])
     in->open("/dev/stdin");
     mpt_notify_add(&n, -1, in);
 
-    MyClient *c = new MyClient(argv[pos]);
-    c->process();
+    MyClient c(argv[pos]);
 
-    mpt::mpt_meta_events(&d, c);
-    d.set(mpt::MessageCommand, doCommand, 0);
-
-    c->log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    d.set(mpt::MessageCommand, doCommand, &c);
+    d.setDefault(mpt::MessageCommand);
 
     n.loop();
+    
+    c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
 }

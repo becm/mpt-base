@@ -25,10 +25,7 @@ extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *
 	MPT_INTERFACE(metatype) *mt;
 	int len;
 	
-	if (!ptr) {
-		return 0;
-	}
-	if ((len = mpt_array_message(&a, ptr, asep)) < 0) {
+	if (ptr && (len = mpt_array_message(&a, ptr, asep)) < 0) {
 		return 0;
 	}
 	mt = mpt_meta_buffer(&a);

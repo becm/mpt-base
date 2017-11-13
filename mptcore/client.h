@@ -11,6 +11,7 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(event);
+MPT_STRUCT(message);
 
 #ifdef __cplusplus
 MPT_INTERFACE(client) : public metatype
@@ -20,7 +21,8 @@ public:
 	int conv(int , void *) const __MPT_OVERRIDE;
 	
 	/* client extensions */
-	virtual int process(event * = 0) = 0;
+	virtual int dispatch(event * = 0);
+	virtual int process(uintptr_t , iterator * = 0) = 0;
 	
 	static class config &config();
 	
@@ -34,7 +36,8 @@ MPT_INTERFACE(client);
 MPT_INTERFACE_VPTR(client)
 {
 	MPT_INTERFACE_VPTR(metatype) meta;
-	int (*process)(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
+	int (*dispatch)(MPT_INTERFACE(client) *, MPT_STRUCT(event) *);
+	int (*process)(MPT_INTERFACE(client) *, uintptr_t , MPT_INTERFACE(iterator) *);
 }; MPT_INTERFACE(client) {
 	const MPT_INTERFACE_VPTR(client) *_vptr;
 };
@@ -83,6 +86,9 @@ extern char *mpt_readline(const char *);
 
 /* get client id */
 extern int mpt_client_typeid();
+
+/* process command message */
+extern int mpt_client_command(MPT_INTERFACE(client) *, const MPT_STRUCT(message) *, int);
 
 /* open/close library descriptor */
 extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *, const char *);
