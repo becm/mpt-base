@@ -78,7 +78,7 @@ MPT_STRUCT(msgtype)
 # define MPT_MESGTYPE(x) MPT_ENUM(Message_##x)
 # define MPT_MESGVAL(x)  MPT_ENUM(MesgVal_##x)
 # define MPT_MESGGRF(x)  MPT_ENUM(MesgGrf_##x)
-# define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MSGVAL(f) | MPT_MESGVAL(ByteOrderNative))
+# define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MESGVAL(f) | MPT_MESGVAL(ByteOrderNative))
 #endif
 enum MPT_MESGTYPE(Type) {
 	/* data interaction */
