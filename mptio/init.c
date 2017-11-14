@@ -54,32 +54,48 @@ static void setEnviron(const char *match)
 	}
 	mpt_config_environ(0, match, '_', 0);
 }
-static int loadConfig(const char *fname)
+/* save config elements */
+static int saveGlobal(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
 {
-	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
-	MPT_STRUCT(node) *root, *old;
+	MPT_INTERFACE(config) *cfg = ptr;
+	
+	if ((curr & 0x3) != MPT_PARSEFLAG(Option)) {
+		return 0;
+	}
+	if ((last = cfg->_vptr->assign(cfg, p, val)) < 0) {
+		mpt_log(0, "mpt_init::TypeConfig", MPT_LOG(Error), "%s",
+		        MPT_tr("failed to set global config element"));
+		return last;
+	}
+	return 0;
+}
+static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
+{
+	MPT_STRUCT(parse) p = MPT_PARSE_INIT;
+	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
 	int ret;
 	
-	if (!(parse.src.arg = fopen(fname, "r"))) {
-		mpt_log(0, "mpt_init::load", MPT_LOG(Error), "%s",
-		        MPT_tr("failed to set global config element"));
+	if (!cfg) {
+		MPT_INTERFACE(metatype) *mt = mpt_config_global(0);
+		mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg);
+	}
+	if (!(p.src.arg = fopen(fname, "r"))) {
+		mpt_log(0, "mpt_init::config", MPT_LOG(Error), "%s: %s",
+		        MPT_tr("failed to open config file"), fname);
 		return MPT_ERROR(BadArgument);
 	}
-	if (!(root = mpt_config_node(0))) {
-		return MPT_ERROR(BadOperation);
+	if (!(p.src.arg = fopen(fname, "r"))) {
+		return 0;
 	}
-	old = root->children;
-	root->children = 0;
-	
-	parse.src.getc = (int (*)()) mpt_getchar_stdio;
-	ret = mpt_parse_node(root, &parse, 0);
-	fclose(parse.src.arg);
+	p.src.getc = (int (*)(void *))  mpt_getchar_stdio;
+	p.src.line = 1;
+	ret = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, &p, saveGlobal, cfg);
+	fclose(p.src.arg);
 	if (ret < 0) {
-		root->children = old;
-	} else {
-		MPT_STRUCT(node) tmp = MPT_NODE_INIT;
-		tmp.children = old;
-		mpt_node_clear(&tmp);
+		int line = p.src.line;
+		mpt_log(0, "mpt_init::config", MPT_LOG(Error), "%s %d (line %d): %s",
+		        MPT_tr("parse error"), ret, line, fname);
+		return MPT_ERROR(BadArgument);
 	}
 	return ret;
 }
@@ -95,7 +111,10 @@ static int loadConfig(const char *fname)
  */
 extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 {
+	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	const MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(metatype) *top;
+	MPT_INTERFACE(config) *cfg;
 	const char *ctl = 0, *src = 0, *debug, *flags;
 	int lv = 0;
 	
@@ -110,8 +129,15 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 		}
 		setDebug(dbg + 1);
 	}
-	/* load mpt config from `etc` directory */
-	mpt_config_load(getenv("MPT_PREFIX"), mpt_log_default(), 0);
+	/* use global mpt config section */
+	mpt_path_set(&p, "mpt", -1);
+	if (!(top = mpt_config_global(&p))) {
+		return MPT_ERROR(BadOperation);
+	}
+	top->_vptr->conv(top, MPT_ENUM(TypeConfig), &cfg);
+	
+	/* load configs in `etc` subdirectory */
+	mpt_config_load(cfg, getenv("MPT_PREFIX"), mpt_log_default());
 	
 	/* additional flags from enfironment */
 	if ((flags = getenv("MPT_FLAGS"))) {
@@ -142,25 +168,29 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 			argc = 0;
 			continue;
 		    case 'f':
-			if ((c = loadConfig(optarg)) < 0) {
-				return c;
+			if ((c = loadConfig(0, optarg)) < 0) {
+				break;
 			}
 			continue;
 		    case 'c':
 			if (ctl) {
-				return MPT_ERROR(BadArgument);
+				c = MPT_ERROR(BadArgument);
+				break;
 			}
 			if (!no) {
-				return MPT_ERROR(BadOperation);
+				c = MPT_ERROR(BadOperation);
+				break;
 			}
 			ctl = optarg;
 			continue;
 		    case 'l':
 			if (src) {
-				return MPT_ERROR(BadArgument);
+				c = MPT_ERROR(BadArgument);
+				break;
 			}
 			if (!no) {
-				return MPT_ERROR(BadOperation);
+				c = MPT_ERROR(BadOperation);
+				break;
 			}
 			src = optarg;
 			continue;
@@ -171,19 +201,25 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 			setEnviron(optarg);
 			continue;
 		    default:
-			return MPT_ERROR(BadArgument);
+			c = MPT_ERROR(BadArgument);
+		}
+		if (c < 0) {
+			top->_vptr->ref.unref((void *) top);
+			return c;
 		}
 	}
 	/* set executable name */
-	mpt_config_set(0, "mpt", argv[0], 0, 0);
+	mpt_config_set(cfg, 0, argv[0], 0, 0);
 	
 	/* get listen/connect target from configuration */
-	if (!src && (mt = mpt_config_get(0, "mpt.listen", '.', 0))) {
+	if (!src && (mt = mpt_config_get(cfg, "listen", '.', 0))) {
 		mt->_vptr->conv(mt, 's', &src);
 	}
-	if (!ctl && (mt = mpt_config_get(0, "mpt.connect", '.', 0))) {
+	if (!ctl && (mt = mpt_config_get(cfg, "connect", '.', 0))) {
 		mt->_vptr->conv(mt, 's', &ctl);
 	}
+	top->_vptr->ref.unref((void *) top);
+	
 	/* wait for connection to activate input */
 	if (src && (lv = mpt_notify_bind(no, src, 0)) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",

@@ -110,8 +110,9 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_D
 extern int mpt_config_args (MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
 extern int mpt_config_clear(MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
 
-/* get global config node */
-extern MPT_STRUCT(node) *mpt_config_node(const MPT_STRUCT(path) *);
+/* load configuration from in (alternate) root */
+extern int mpt_config_load(MPT_INTERFACE(config) *, const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+
 /* get config of global (sub-)tree */
 extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *);
 

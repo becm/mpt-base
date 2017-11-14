@@ -15,8 +15,8 @@
  * Check for path.len to determine if returned element
  * is final:
 \code
-node = mpt_node_query(conf, path, 5);
-if (path->len) node = mpt_node_get(node, path);
+node = mpt_node_query(conf, path, val);
+if (path->len) node = mpt_node_query(node, path, 0);
 \endcode
  * 
  * \param conf  configuration root

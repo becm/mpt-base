@@ -173,11 +173,8 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, M
 /* save config tree to node children */
 extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parse) *, const char *);
 
-#if _POSIX_C_SOURCE >= 200809L
-/* load configuration file/path */
-extern int _mpt_config_load(const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0), MPT_TYPE(PathHandler)__MPT_DEFPAR(0), void *__MPT_DEFPAR(0));
-extern int mpt_config_load (const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0), const MPT_STRUCT(path) *__MPT_DEFPAR(0));
-#endif
+/* load configuration folder */
+extern int mpt_parse_folder(int , MPT_TYPE(PathHandler) , void *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 extern int mpt_string_nextvis(const char **);
 
