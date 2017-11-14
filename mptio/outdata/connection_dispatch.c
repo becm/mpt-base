@@ -136,7 +136,7 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 		/* generic reply to failed command */
 		if (rc && rd->len) {
 			MPT_STRUCT(msgtype) hdr;
-			hdr.cmd = MPT_ENUM(MessageAnswer);
+			hdr.cmd = MPT_MESGTYPE(Answer);
 			hdr.arg = ret;
 			tmp.base = &hdr;
 			tmp.used = sizeof(hdr);
@@ -284,7 +284,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		
 		if (rc && rd->len) {
 			MPT_STRUCT(msgtype) hdr;
-			hdr.cmd = MPT_ENUM(MessageAnswer);
+			hdr.cmd = MPT_MESGTYPE(Answer);
 			hdr.arg = ret;
 			msg.base = &hdr;
 			msg.used = sizeof(hdr);

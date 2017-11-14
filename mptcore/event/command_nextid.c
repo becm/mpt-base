@@ -28,7 +28,7 @@ static int logReply(void *out, void *arg)
 		        MPT_tr("zero length reply"), out);
 		return 0;
 	}
-	if (mt.cmd == MPT_ENUM(MessageAnswer)) {
+	if (mt.cmd == MPT_MESGTYPE(Answer)) {
 		int type = MPT_LOG(Debug);
 		if (len < 2) {
 			mt.arg = 0;
@@ -40,7 +40,7 @@ static int logReply(void *out, void *arg)
 		mpt_log(0, _func, type, "%s (" PRIxPTR "): %s = %02x",
 		        MPT_tr("answer message"), out, MPT_tr("code"), mt.arg);
 	}
-	else if (mt.cmd == MPT_ENUM(MessageOutput)) {
+	else if (mt.cmd == MPT_MESGTYPE(Output)) {
 		if (len < 2) {
 			mt.arg = MPT_LOG(Debug);
 		}

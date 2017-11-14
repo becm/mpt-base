@@ -44,11 +44,11 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 	
 	str.change = 3;
 	
-	mt.cmd = MPT_ENUM(MessageGraphic);
-	mt.arg = MPT_ENUM(BindingAdd);
+	mt.cmd = MPT_MESGTYPE(Graphic);
+	mt.arg = MPT_MESGGRF(BindingAdd);
 	
 	if (!descr) {
-		mt.arg = MPT_ENUM(BindingClear);
+		mt.arg = MPT_MESGGRF(BindingClear);
 		if (out->_vptr->await(out, 0, 0) < 0) {
 			return -2;
 		}

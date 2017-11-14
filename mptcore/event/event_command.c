@@ -36,7 +36,7 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *ev)
 			mpt_context_reply(ev->reply, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 			return 0;
 		}
-		if (mt.cmd != MPT_ENUM(MessageCommand)) {
+		if (mt.cmd != MPT_MESGTYPE(Command)) {
 			mpt_context_reply(ev->reply, MPT_ERROR(BadType), MPT_tr("bad message type"));
 			return 0;
 		}

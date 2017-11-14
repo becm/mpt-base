@@ -29,13 +29,16 @@ static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 		return 0;
 	}
 #ifdef MPT_NO_CONVERT
-	if (va->s.type == fmt) {
+	if (va->s.type == type) {
 		if (ptr) memcpy(ptr, val, va->len);
 		return fmt;
 	}
 	return MPT_ERROR(BadType);
 #else
-	return mpt_data_convert(&val, va->s.type, ptr, type);
+	if ((type = mpt_data_convert(&val, va->s.type, ptr, type)) < 0) {
+		return type;
+	}
+	return MPT_ENUM(TypeIterator);
 #endif
 }
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
@@ -93,11 +96,11 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 	if (!(va.fmt = fmt) || !(ret = *fmt)) {
 		return proc(ctx, &va._it);
 	}
-	if ((ret = mpt_scalar_argv(&va.s, ret, va.arg)) < 0) {
-		return ret;
-	}
 	va_copy(va.arg, arg);
-	ret = proc(ctx, &va._it);
+	if ((ret = mpt_scalar_argv(&va.s, ret, va.arg)) >= 0) {
+		++va.fmt;
+		ret = proc(ctx, &va._it);
+	}
 	va_end(va.arg);
 	return ret;
 }

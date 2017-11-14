@@ -46,7 +46,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 		if (len) return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message header"));
 	}
-	if (mt.cmd != MPT_ENUM(MessageCommand)) {
+	if (mt.cmd != MPT_MESGTYPE(Command)) {
 		mt.arg = 0;
 	}
 	/* get message command (string) */

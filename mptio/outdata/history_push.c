@@ -59,7 +59,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 	}
 	mt = src;
 	/* use inline or prefix format info */
-	if (mt->cmd == MPT_ENUM(MessageValFmt)) {
+	if (mt->cmd == MPT_MESGTYPE(ValueFmt)) {
 		hist->info.state |= MPT_OUTFLAG(Active);
 		if (!hist->info.file) {
 			return 0;
@@ -72,7 +72,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		return ret + 1;
 	}
 	/* convert history to printable output */
-	if (mt->cmd == MPT_ENUM(MessageValRaw)) {
+	if (mt->cmd == MPT_MESGTYPE(ValueRaw)) {
 		const MPT_STRUCT(msgbind) *mb = (const void *) (mt + 1);
 		static const size_t min = sizeof(*mt) + sizeof(*mb);
 		
@@ -84,7 +84,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 			return MPT_ERROR(BadValue);
 		}
 		hist->info.state |= MPT_OUTFLAG(Active);
-		hist->info.mode = MPT_ENUM(MessageValRaw);
+		hist->info.mode = MPT_MESGTYPE(ValueRaw);
 		if (!hist->info.file) {
 			return len;
 		}

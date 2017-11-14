@@ -139,17 +139,6 @@ static int hashEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	return mpt_dispatch_hash(ptr, ev);
 }
-static int clientCommand(void *ptr, void *arg)
-{
-	MPT_INTERFACE(client) *cl = ptr;
-	MPT_STRUCT(event) *ev = arg;
-	if (!ev) {
-		cl->_vptr->meta.ref.unref((void *) cl);
-		return 0;
-	}
-	ev->id = 0;
-	return cl->_vptr->dispatch(cl, ev);
-}
 static int clientEvent(void *ptr, MPT_STRUCT(event) *ev)
 {
 	MPT_INTERFACE(client) *cl = ptr;
@@ -181,25 +170,15 @@ extern int mpt_meta_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *m
 		return MPT_ERROR(BadArgument);
 	}
 	/* enable client dispatch */
-	id = MPT_ENUM(MessageCommand);
+	id = MPT_MESGTYPE(Command);
 	cl = 0;
 	if (mt->_vptr->conv(mt, mpt_client_typeid(), &cl) >= 0
 	    && cl) {
-		MPT_STRUCT(command) *ctl;
-		/* mapping of command type messages */
-		if ((ctl = mpt_command_get(&dsp->_d, id))
-		    && cl->_vptr->meta.ref.addref((void *) cl)) {
-			if (ctl->cmd(ctl->arg, 0) < 0) {
-				return MPT_ERROR(BadOperation);
-			}
-			ctl->cmd = clientCommand;
-			ctl->arg = cl;
+		if (mpt_dispatch_set(dsp, id, clientEvent, cl) < 0) {
+			mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)\n",
+			        MPT_tr("error registering handler id"), id, "stop");
+			
 		}
-		if (dsp->_err.cmd) {
-			dsp->_err.cmd(dsp->_err.arg, 0);
-		}
-		dsp->_err.cmd = clientEvent;
-		dsp->_err.arg = cl;
 		return 0;
 	}
 	/* mapping of command type messages */

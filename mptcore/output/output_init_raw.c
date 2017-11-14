@@ -27,7 +27,7 @@ extern int mpt_output_init_raw(MPT_INTERFACE(output) *out, uint8_t fmt)
 	} hdr;
 	int ret;
 	
-	hdr.mt.cmd = MPT_ENUM(MessageValRaw);
+	hdr.mt.cmd = MPT_MESGTYPE(ValueRaw);
 	hdr.mt.arg = fmt;
 	
 	hdr.bnd.dim = 0;

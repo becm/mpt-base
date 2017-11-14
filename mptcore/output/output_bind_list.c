@@ -44,8 +44,8 @@ extern int mpt_output_bind_list(MPT_INTERFACE(output) *out, const MPT_STRUCT(nod
 		if (!(meta = conf->_meta) || !(src = mpt_meta_data(meta, 0))) {
 			continue;
 		}
-		mt.cmd = MPT_ENUM(MessageGraphic);
-		mt.arg = MPT_ENUM(BindingAdd) | MPT_ENUM(BindingParse);
+		mt.cmd = MPT_MESGTYPE(Graphic);
+		mt.arg = MPT_MESGGRF(BindingAdd) | MPT_MESGGRF(BindingParse);
 		
 		if ((len = out->_vptr->await(out, 0, 0)) < 0) {
 			return nbind ? nbind : -1;

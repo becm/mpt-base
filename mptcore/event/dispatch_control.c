@@ -2,8 +2,6 @@
  * graphic event for dispatch output
  */
 
-#include <string.h>
-
 #include "array.h"
 #include "meta.h"
 #include "output.h"
@@ -28,7 +26,7 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
 		if ((part = mpt_message_read(&msg, sizeof(hdr), &hdr)) < (ssize_t) sizeof(hdr)) {
 			return MPT_event_fail(ev, MPT_ERROR(MissingData), MPT_tr("missing message type"));
 		}
-		if (hdr.cmd != MPT_ENUM(MessageCommand)) {
+		if (hdr.cmd != MPT_MESGTYPE(Command)) {
 			return MPT_event_fail(ev, MPT_ERROR(BadArgument), MPT_tr("bad message type"));
 		}
 		/* consume command */
@@ -67,15 +65,8 @@ static int clientOutput(void *ptr, MPT_STRUCT(event) *ev)
  * \retval 0  success
  * \retval <0 assignment error
  */
-extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, const char *name, MPT_INTERFACE(metatype) *mt)
+extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, uintptr_t id, MPT_INTERFACE(metatype) *mt)
 {
-	uintptr_t id;
-	
-	if (!dsp || !name) {
-		return MPT_ERROR(BadArgument);
-	}
-	id = mpt_hash(name, strlen(name));
-	
 	if (!mt) {
 		return mpt_dispatch_set(dsp, id, 0, 0);
 	}

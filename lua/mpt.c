@@ -236,7 +236,7 @@ static int streamPush(lua_State *L)
 			const char *d;
 			size_t l;
 			
-			if ((s->mt.cmd == MPT_ENUM(MessageCommand))
+			if ((s->mt.cmd == MPT_MESGTYPE(Command))
 			    && mpt_stream_push(&s->srm, 1, &s->mt.arg) < 0) {
 				mpt_stream_push(&s->srm, 1, 0);
 				lua_pushfstring(L, "%s\t%s", streamClassString, MPT_tr("unable to push separator"));

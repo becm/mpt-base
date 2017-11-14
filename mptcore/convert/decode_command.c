@@ -24,7 +24,7 @@
  */
 extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
 {
-	static MPT_STRUCT(msgtype) mt = { MPT_ENUM(MessageCommand), ' ' };
+	static MPT_STRUCT(msgtype) mt = { MPT_MESGTYPE(Command), ' ' };
 	MPT_STRUCT(message) from;
 	size_t off, len, pos;
 	uint8_t *end;

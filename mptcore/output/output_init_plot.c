@@ -29,7 +29,7 @@ extern int mpt_output_init_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(msgdest) 
 	wld = (void *) (hdr + sizeof(*type) + sizeof(dest));
 	type = (void *) (hdr);
 	
-	type->cmd = MPT_ENUM(MessageDest);
+	type->cmd = MPT_MESGTYPE(Destination);
 	type->arg = (int8_t) fmt;
 	memcpy(hdr+sizeof(*type), &dest, sizeof(dest));
 	

@@ -94,8 +94,8 @@ int main(int argc, char * const argv[])
 
     MyClient c(argv[pos]);
 
-    d.set(mpt::MessageCommand, doCommand, &c);
-    d.setDefault(mpt::MessageCommand);
+    d.set(mpt::msgtype::Command, doCommand, &c);
+    d.setDefault(mpt::msgtype::Command);
 
     n.loop();
     

@@ -38,7 +38,7 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int
 	if ((con->out.state & MPT_OUTFLAG(Active))) {
 		return MPT_ERROR(MessageInProgress);
 	}
-	hdr[0] = MPT_ENUM(MessageOutput);
+	hdr[0] = MPT_MESGTYPE(Output);
 	hdr[1] = type & 0x7f;
 	
 	len = 2;

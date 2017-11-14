@@ -174,7 +174,7 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 		/* generic reply to failed command */
 		if (rc && srm->rd.len) {
 			MPT_STRUCT(msgtype) hdr;
-			hdr.cmd = MPT_ENUM(MessageAnswer);
+			hdr.cmd = MPT_MESGTYPE(Answer);
 			hdr.arg = ret < 0 ? ret : 0;
 			tmp.base = &hdr;
 			tmp.used = sizeof(hdr);

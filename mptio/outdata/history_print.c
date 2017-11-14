@@ -149,13 +149,13 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	hist->state &= ~0x7;
 	hist->mode = 0;
 	
-	if (mt->cmd == MPT_ENUM(MessageOutput)) {
+	if (mt->cmd == MPT_MESGTYPE(Output)) {
 		type = mt->arg;
 		hist->mode = type & ~0x60; /* no continuation and function flags */
 		type &= 0x7f;
 	}
 	/* setup answer output */
-	else if (mt->cmd == MPT_ENUM(MessageAnswer)) {
+	else if (mt->cmd == MPT_MESGTYPE(Answer)) {
 		if (mt->arg < 0) {
 			type = MPT_LOG(Error);
 		} else {
@@ -200,7 +200,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		prefix = 0;
 	}
 	/* mark answer message */
-	if (mt->cmd == MPT_ENUM(MessageAnswer)) {
+	if (mt->cmd == MPT_MESGTYPE(Answer)) {
 		if (prefix) {
 			fputs(prefix, fd);
 		}

@@ -78,7 +78,7 @@ extern int mpt_context_reply(MPT_INTERFACE(reply_context) *rc, int code, const c
 		MPT_STRUCT(msgtype) mt;
 		int ret;
 		
-		mt.cmd = MPT_ENUM(MessageAnswer);
+		mt.cmd = MPT_MESGTYPE(Answer);
 		mt.arg = code;
 		
 		msg.base = &mt;

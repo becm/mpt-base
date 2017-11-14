@@ -315,7 +315,7 @@ public:
         ev.reply = rc;
         ret = cmd(arg, &ev);
         if (rc && rd && rd->active()) {
-            struct msgtype mt(MessageAnswer, ret);
+            struct msgtype mt(msgtype::Answer, ret);
             struct message msg(&mt, sizeof(mt));
             rc->reply(&msg);
         }

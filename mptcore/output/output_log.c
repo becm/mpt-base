@@ -31,7 +31,7 @@ extern int mpt_output_vlog(MPT_INTERFACE(output) *out, const char *from, int typ
 	int8_t hdr[4];
 	int ret, len, flen;
 	
-	hdr[0] = MPT_ENUM(MessageOutput);
+	hdr[0] = MPT_MESGTYPE(Output);
 	hdr[1] = type & 0x7f;
 	len = 2;
 	ret = MPT_OUTPUT_LOGMSG_MAX;

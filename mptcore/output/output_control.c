@@ -134,7 +134,7 @@ extern int mpt_output_control(MPT_INTERFACE(metatype) *mt, int sep, const MPT_ST
 	/* prefix command header */
 	else {
 		MPT_STRUCT(msgtype) hdr = MPT_MSGTYPE_INIT;
-		hdr.cmd = MPT_ENUM(MessageCommand);
+		hdr.cmd = MPT_MESGTYPE(Command);
 		hdr.arg = sep;
 		if ((part = out->_vptr->push(out, sizeof(hdr), &hdr)) < 0) {
 			return part;

@@ -23,8 +23,8 @@ static int setLayout(void *ln, const MPT_STRUCT(message) *cmsg)
 	if (mpt_message_read(&msg, sizeof(info), &info) < mlen) {
 		return -1;
 	}
-	if ((info.mt.cmd == MPT_ENUM(MessageGraphic))
-	    && (info.mt.arg == (int8_t) (MPT_ENUM(LayoutOpen)))) {
+	if ((info.mt.cmd == MPT_MESGTYPE(Graphic))
+	    && (info.mt.arg == (int8_t) (MPT_MESGGRF(LayoutOpen)))) {
 		*(int *) ln = info.d.lay;
 		return 0;
 	}
@@ -52,21 +52,21 @@ extern int mpt_layout_open(MPT_INTERFACE(output) *out, const char *desc, const c
 	ssize_t len;
 	int err;
 	
-	mt.cmd = MPT_ENUM(MessageGraphic);
-	mt.arg = MPT_ENUM(LayoutOpen);
+	mt.cmd = MPT_MESGTYPE(Graphic);
+	mt.arg = MPT_MESGGRF(LayoutOpen);
 	
 	lid = -1;
 	
 	/* specify generator mode */
 	if (gen) {
 		if (!strcasecmp("file", gen)) {
-			mt.arg = MPT_ENUM(LayoutOpen);
+			mt.arg = MPT_MESGGRF(LayoutOpen);
 		}
 		else if (!strcasecmp("lay", gen) || !strcasecmp("layout", gen)) {
-			mt.arg = MPT_ENUM(LayoutParse);
+			mt.arg = MPT_MESGGRF(LayoutParse);
 		}
 		else if (!strcasecmp("gen", gen) || !strcasecmp("generate", gen) || !strcasecmp("create", gen)) {
-			mt.arg = MPT_ENUM(LayoutCreate);
+			mt.arg = MPT_MESGGRF(LayoutCreate);
 		}
 		else {
 			return -1;

@@ -76,55 +76,6 @@ int client::conv(int type, void *ptr) const
     return BadType;
 }
 
-class eventLogger : public logger
-{
-public:
-    eventLogger(reply_context * = 0);
-    int log(const char *, int , const char *, va_list) __MPT_OVERRIDE;
-protected:
-    reply_context *_ctx;
-};
-eventLogger::eventLogger(reply_context *rc) : _ctx(rc)
-{ }
-int eventLogger::log(const char *from, int type, const char *fmt, va_list va)
-{
-    if (!_ctx) {
-        logger *def = logger::defaultInstance();
-        if (!def) {
-            return 0;
-        }
-        return def->log(from, type, fmt, va);
-    }
-    struct message msg;
-    msgtype mt(MessageOutput, type & 0x7f);
-    
-    msg.base = &mt;
-    msg.used = sizeof(mt);
-    
-    struct iovec data[2];
-    if (from) {
-        data[0].iov_len = strlen(from) + 1;
-    } else {
-        data[0].iov_len = 1;
-        from = "";
-    }
-    data[0].iov_base = const_cast<char *>(from);
-    msg.cont = data;
-    msg.clen = 2;
-    
-    char buf[reply_context::MaxSize];
-    int ret, len = sizeof(buf) - data[0].iov_len - msg.used;
-    if (!fmt || (ret = snprintf(buf, len, fmt, va)) < 0) {
-        ret = 0;
-        msg.clen = 1;
-    } else if (ret > len) {
-        ret = len;
-    }
-    data[1].iov_base = buf;
-    data[1].iov_len  = len;
-    
-    return _ctx->reply(&msg);
-}
 /*!
  * \ingroup mptClient
  * \brief convert from client
@@ -148,19 +99,21 @@ int client::dispatch(event *ev)
     
     msgtype mt;
     if (msg.read(sizeof(mt), &mt) > 0
-        && mt.cmd != MessageCommand) {
+        && mt.cmd != msgtype::Command) {
         mpt_context_reply(ev->reply, MPT_ERROR(BadType), "%s (%02x)", MPT_tr("bad message type"), mt.cmd);
         ev->id = 0;
         return ev->Fail | ev->Default;
     }
-    eventLogger el(ev->reply);
-    int ret = mpt_client_command(this, &msg, mt.arg, &el);
+    int ret = mpt_client_command(this, &msg, mt.arg);
     if (ret < 0) {
+        mpt_context_reply(ev->reply, ret, "%s", MPT_tr("command message dispatch failed"));
         ev->id = 0;
         return ev->Fail | ev->Default;
-    } else {
-        return ev->None;
     }
+    if (ev->reply) {
+        mpt_context_reply(ev->reply, 0, "%s", MPT_tr("command message dispatched"));
+    }
+    return ev->None;
 }
 
 __MPT_NAMESPACE_END

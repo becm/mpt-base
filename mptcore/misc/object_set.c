@@ -78,7 +78,11 @@ static int processObjectFormat(MPT_INTERFACE(object) *obj, const char *prop, con
 		    cloneScalar
 		};
 		struct metaScalar s;
-		if ((ret = mpt_scalar_argv(&s.val, ret, va)) < 0) {
+		va_list cpy;
+		va_copy(cpy, va);
+		ret = mpt_scalar_argv(&s.val, *fmt, cpy);
+		va_end(cpy);
+		if (ret < 0) {
 			return ret;
 		}
 		s._mt._vptr = &metaValCtl;

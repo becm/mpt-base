@@ -83,7 +83,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 		if (!(hist->fmt.pos = *curr)) {
 			hist->info.mode = 0x80;
 		}
-		hist->info.mode |= MPT_ENUM(MessageValFmt);
+		hist->info.mode |= MPT_MESGTYPE(ValueFmt);
 		src = curr + 1;
 		++done;
 		if (!--len) {
@@ -163,11 +163,11 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			return done ? done : MPT_ERROR(MissingData);
 		}
 		if ((adv > 1)
-		    && ((cfmt & MPT_ENUM(ByteOrderLittle)) != MPT_ENUM(ByteOrderNative))) {
+		    && ((cfmt & MPT_MESGVAL(ByteOrderLittle)) != MPT_MESGVAL(ByteOrderNative))) {
 			int i;
 			for (i = 0; i < adv; ++i) buf[adv-i] = curr[i];
 			curr = buf;
-			cfmt = (cfmt & ~MPT_ENUM(ByteOrderLittle)) | MPT_ENUM(ByteOrderNative);
+			cfmt = (cfmt & ~MPT_MESGVAL(ByteOrderLittle)) | MPT_MESGVAL(ByteOrderNative);
 		}
 		if ((cfmt = mpt_msgvalfmt_type(cfmt)) < 0) {
 			return done ? done : cfmt;

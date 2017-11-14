@@ -44,52 +44,6 @@ MPT_STRUCT(node);
 
 MPT_INTERFACE(output);
 
-enum MPT_ENUM(MessageType) {
-	/* data interaction */
-	MPT_ENUM(MessageOutput)     = 0x0,   /* send notification */
-	MPT_ENUM(MessageAnswer)     = 0x1,   /* answer to message */
-	
-	/* commands and settings */
-	MPT_ENUM(MessageCommand)    = 0x4,   /* data is simple string command */
-	MPT_ENUM(MessageParamGet)   = 0x5,   /* path delimited by argument */
-	MPT_ENUM(MessageParamSet)   = 0x6,   /* zero-terminated path, argument is depth, remaining is value */
-	MPT_ENUM(MessageParamCond)  = 0x7,   /* set parameter if unset/default */
-	
-	/* additional headers in message data */
-	MPT_ENUM(MessageValRaw)     = 0x8,   /* values with type header */
-	MPT_ENUM(MessageValFmt)     = 0x9,   /* variable length format information */
-	MPT_ENUM(MessageGraphic)    = 0xc,   /* graphic operation */
-	MPT_ENUM(MessageDest)       = 0xd,   /* laydest and msgworld header */
-	
-	/* extended data transfer */
-	MPT_ENUM(MessageUserMin)    = 0x10,  /* start/end number of available types */
-	MPT_ENUM(MessageUserMax)    = 0xff,
-	
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-	MPT_ENUM(ByteOrderNative)   = 0x80,
-#else
-	MPT_ENUM(ByteOrderNative)   = 0x0,
-#endif
-	MPT_ENUM(ByteOrderLittle)   = 0x80
-};
-
-enum MPT_ENUM(CommandType) {
-	MPT_ENUM(GraphicFlush)    = 0x0,   /* display deferred changes */
-	MPT_ENUM(GraphicRescale)  = 0x1,   /* rescale operation */
-	MPT_ENUM(GraphicRedraw)   = 0x2,   /* redraw operation */
-	
-	MPT_ENUM(CycleAdvance)    = 0x10,  /* advance/reset active cycle */
-	
-	MPT_ENUM(LayoutOpen)      = 0x20,  /* open layout file */
-	MPT_ENUM(LayoutParse)     = 0x21,  /* parse layout string */
-	MPT_ENUM(LayoutCreate)    = 0x22,  /* create layout */
-	MPT_ENUM(LayoutClose)     = 0x2f,  /* remove layout */
-	
-	MPT_ENUM(BindingAdd)      = 0x30,  /* add binding */
-	MPT_ENUM(BindingClear)    = 0x31,  /* clear binding */
-	MPT_ENUM(BindingParse)    = 0x32   /* binding in text format */
-};
-
 /* message data */
 #ifdef __cplusplus
 MPT_STRUCT(message)
@@ -98,19 +52,9 @@ MPT_STRUCT(message)
 	{ }
 	size_t read(size_t len, void * = 0);
 	size_t length() const;
-# define MPT_MSGVAL(x) x
 #else
-# define MPT_MSGVAL(x) MPT_ENUM(Value##x)
-# define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MSGVAL(f) | MPT_ENUM(ByteOrderNative))
+# define MPT_MSGVAL(x) MPT_ENUM(Value_##x)
 #endif
-enum MPT_MSGVAL(Types) {
-	MPT_MSGVAL(Unsigned)  = 0x20,  /* unsigned integer data */
-	MPT_MSGVAL(Float)     = 0x40,  /* floating point data */
-	MPT_MSGVAL(Integer)   = 0x60,  /* signed integer data */
-	MPT_MSGVAL(Normal)    = 0x60,  /* size = (val&0x1f)+1, unset for big numbers */
-	
-	MPT_MSGVAL(BigAtom)   = 0x40   /* size = ((val&0x1f)+1) * ValuesBigAtom */
-};
 #ifndef __cplusplus
 MPT_STRUCT(message)
 {
@@ -123,12 +67,78 @@ MPT_STRUCT(message)
 };
 
 /* interactive message header */
+#ifdef __cplusplus
 MPT_STRUCT(msgtype)
 {
-#ifdef __cplusplus
-	inline msgtype(int type = MessageOutput, int a = 0) : cmd(type), arg(a) { }
+# define MPT_MESGTYPE(x) x
+# define MPT_MESGVAL(x)  x
+# define MPT_MESGGRF(x)  x
+	inline msgtype(int type = Output, int a = 0) : cmd(type), arg(a) { }
 #else
-# define MPT_MSGTYPE_INIT { MPT_ENUM(MessageOutput), 0 }
+# define MPT_MESGTYPE(x) MPT_ENUM(Message_##x)
+# define MPT_MESGVAL(x)  MPT_ENUM(MesgVal_##x)
+# define MPT_MESGGRF(x)  MPT_ENUM(MesgGrf_##x)
+# define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MSGVAL(f) | MPT_MESGVAL(ByteOrderNative))
+#endif
+enum MPT_MESGTYPE(Type) {
+	/* data interaction */
+	MPT_MESGTYPE(Output)      = 0x00,  /* send notification */
+	MPT_MESGTYPE(Answer)      = 0x01,  /* answer to message */
+	
+	/* commands and settings */
+	MPT_MESGTYPE(Command)     = 0x04,  /* data is simple string command */
+	MPT_MESGTYPE(ParamGet)    = 0x05,  /* path delimited by argument */
+	MPT_MESGTYPE(ParamSet)    = 0x06,  /* zero-terminated path, argument is depth, remaining is value */
+	MPT_MESGTYPE(ParamCond)   = 0x07,  /* set parameter if unset/default */
+	
+	/* additional headers in message data */
+	MPT_MESGTYPE(ValueRaw)    = 0x08,  /* values with type header */
+	MPT_MESGTYPE(ValueFmt)    = 0x09,  /* variable length format information */
+	MPT_MESGTYPE(Graphic)     = 0x0c,  /* graphic operation */
+	MPT_MESGTYPE(Destination) = 0x0d,  /* laydest and msgworld header */
+	
+	/* extended data transfer */
+	MPT_MESGTYPE(UserMin)     = 0x10,  /* start/end number of available types */
+	MPT_MESGTYPE(UserMax)     = 0xff,
+};
+
+enum MPT_MESGTYPE(Value) {
+	MPT_MESGVAL(Unsigned)     = 0x20,  /* unsigned integer data */
+	MPT_MESGVAL(Float)        = 0x40,  /* floating point data */
+	MPT_MESGVAL(Integer)      = 0x60,  /* signed integer data */
+	MPT_MESGVAL(Normal)       = 0x60,  /* size =  (val & 0x1f) + 1, unset for big numbers */
+	
+	MPT_MESGVAL(BigAtom)      = 0x40,  /* size = ((val & 0x1f) + 1) * ValuesBigAtom */
+	
+	/* explicit little endian and native byte order flag */
+	MPT_MESGVAL(ByteOrderLittle) = 0x80,
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	MPT_MESGVAL(ByteOrderNative) = 0x80
+#else
+	MPT_MESGVAL(ByteOrderNative) = 0x00
+#endif
+};
+
+enum MPT_MESGTYPE(Graphic) {
+	MPT_MESGGRF(Flush)        = 0x00,  /* display deferred changes */
+	MPT_MESGGRF(Rescale)      = 0x01,  /* rescale operation */
+	MPT_MESGGRF(Redraw)       = 0x02,  /* redraw operation */
+	
+	MPT_MESGGRF(CycleAdvance) = 0x10,  /* advance/reset active cycle */
+	
+	MPT_MESGGRF(LayoutOpen)   = 0x20,  /* open layout file */
+	MPT_MESGGRF(LayoutParse)  = 0x21,  /* parse layout string */
+	MPT_MESGGRF(LayoutCreate) = 0x22,  /* create layout */
+	MPT_MESGGRF(LayoutClose)  = 0x2f,  /* remove layout */
+	
+	MPT_MESGGRF(BindingAdd)   = 0x30,  /* add binding */
+	MPT_MESGGRF(BindingClear) = 0x31,  /* clear binding */
+	MPT_MESGGRF(BindingParse) = 0x32   /* binding in text format */
+};
+#ifndef __cplusplus
+MPT_STRUCT(msgtype)
+{
+# define MPT_MSGTYPE_INIT { MPT_MESGTYPE(Output), 0 }
 #endif
 	uint8_t  cmd;  /* message command */
 	int8_t   arg;  /* command argument */
@@ -150,7 +160,7 @@ MPT_STRUCT(msgbind)
 #define MPT_DATASTATE(x)  x
 #else
 enum MPT_ENUM(DataStates) {
-#define MPT_DATASTATE(x)  MPT_ENUM(DataState##x)
+#define MPT_DATASTATE(x)  MPT_ENUM(DataState_##x)
 #endif
 	MPT_DATASTATE(Init)  = 0x1,   /* data states */
 	MPT_DATASTATE(Step)  = 0x2,
