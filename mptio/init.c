@@ -1,5 +1,5 @@
 /*!
- * create control connection/socket
+ * apply initial settings
  */
 
 #ifndef _POSIX_C_SOURCE
@@ -109,12 +109,14 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
  * \param argc argument count
  * \param argv command line arguments
  */
-extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
+extern int mpt_init(int argc, char * const argv[])
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	const MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(metatype) *top;
+	MPT_INTERFACE(metatype) *top, *old;
+	MPT_INTERFACE(input) *in;
 	MPT_INTERFACE(config) *cfg;
+	MPT_STRUCT(node) *mpt, *c;
 	const char *ctl = 0, *src = 0, *debug, *flags;
 	int lv = 0;
 	
@@ -177,10 +179,6 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 				c = MPT_ERROR(BadArgument);
 				break;
 			}
-			if (!no) {
-				c = MPT_ERROR(BadOperation);
-				break;
-			}
 			ctl = optarg;
 			continue;
 		    case 'l':
@@ -188,11 +186,10 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 				c = MPT_ERROR(BadArgument);
 				break;
 			}
-			if (!no) {
-				c = MPT_ERROR(BadOperation);
+			src = optarg;
+			if ((c = mpt_config_set(cfg, "listen", src, 0, 0)) < 0) {
 				break;
 			}
-			src = optarg;
 			continue;
 		    case 'v':
 			setDebug(++lv);
@@ -211,55 +208,36 @@ extern int mpt_init(MPT_STRUCT(notify) *no, int argc, char * const argv[])
 	/* set executable name */
 	mpt_config_set(cfg, 0, argv[0], 0, 0);
 	
-	/* get listen/connect target from configuration */
-	if (!src && (mt = mpt_config_get(cfg, "listen", '.', 0))) {
-		mt->_vptr->conv(mt, 's', &src);
-	}
+	/* get connect target from configuration */
 	if (!ctl && (mt = mpt_config_get(cfg, "connect", '.', 0))) {
 		mt->_vptr->conv(mt, 's', &ctl);
 	}
-	top->_vptr->ref.unref((void *) top);
-	
-	/* wait for connection to activate input */
-	if (src && (lv = mpt_notify_bind(no, src, 0)) < 0) {
-		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("unable to create source"), src);
-		return lv;
-	}
-	/* no control channel */
+	/* assign control input */
 	if (!ctl) {
+		top->_vptr->ref.unref((void *) top);
 		return optind;
 	}
-	/* use stdin as command source */
-	if (ctl[0] == '-' && !ctl[1]) {
-		static const int mode = MPT_STREAMFLAG(Read) | MPT_STREAMFLAG(Buffer);
-		MPT_INTERFACE(input) *in;
-		MPT_STRUCT(socket) sock;
-		/* detach stdin */
-		sock._id  = dup(STDIN_FILENO);
-		
-		if (!(in = mpt_stream_input(&sock, mode, MPT_ENUM(EncodingCommand), 0))) {
-			mpt_notify_fini(no);
-			close(sock._id);
-			return MPT_ERROR(BadOperation);
-		}
-		else if ((lv = mpt_notify_add(no, POLLIN, in)) < 0) {
-			mpt_notify_fini(no);
+	mpt = 0;
+	if (top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt) < 0
+	    || !mpt
+	    || !(in = mpt_input_create(ctl))) {
+		top->_vptr->ref.unref((void *) top);
+		return MPT_ERROR(BadArgument);
+	}
+	if (!(c = mpt_node_find(mpt, "input", -1))) {
+		if (!(c = mpt_node_new(8))) {
 			in->_vptr->meta.ref.unref((void *) in);
-			return lv;
+			top->_vptr->ref.unref((void *) top);
+			return MPT_ERROR(BadArgument);
 		}
-		/* detach regular input to avoid confusion */
-		else {
-			close(STDIN_FILENO);
-		}
+		mpt_identifier_set(&c->ident, "input", -1);
+		mpt_node_insert(mpt, 1, c);
 	}
-	/* add command source */
-	else if ((lv = mpt_notify_connect(no, ctl)) < 0) {
-		mpt_log(0, __func__, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("unable to connect to control"), ctl);
-		mpt_notify_fini(no);
-		return lv;
+	else if ((old = c->_meta)) {
+		old->_vptr->ref.unref((void *) old);
 	}
+	c->_meta = (void *) in;
+	
 	return optind;
 }
 

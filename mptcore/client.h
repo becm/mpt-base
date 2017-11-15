@@ -113,6 +113,8 @@ extern int mpt_proxy_log(const MPT_INTERFACE(metatype) *, const char *, int , co
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+template <> int typeIdentifier<client>();
+
 inline libhandle::~libhandle()
 {
     mpt_library_close(this);

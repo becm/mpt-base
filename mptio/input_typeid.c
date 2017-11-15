@@ -13,7 +13,7 @@
  * 
  * \return input id
  */
-extern int mpt_input_type_identifier(void)
+extern int mpt_input_typeid(void)
 {
 	static int id = 0;
 	

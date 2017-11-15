@@ -67,7 +67,8 @@ static uintptr_t remoteRef(MPT_INTERFACE(reference) *ref)
 static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
-	int me = mpt_input_type_identifier();
+	int me = mpt_input_typeid();
+	
 	if (me < 0) {
 		me = MPT_ENUM(TypeMeta);
 	}

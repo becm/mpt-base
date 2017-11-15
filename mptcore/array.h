@@ -150,6 +150,8 @@ protected:
 
 
 #ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<array>() { return array::Type; }
+
 /*! reference to buffer segment */
 struct slice : array
 {
@@ -349,8 +351,6 @@ inline array &array::operator+= (array const& from)
 { append(from.length(), from.base()); return *this; }
 inline array &array::operator+= (slice const& from)
 { Slice<uint8_t> d = from.data(); append(d.length(), d.base()); return *this; }
-
-template<> inline __MPT_CONST_EXPR int typeIdentifier<array>() { return array::Type; }
 
 inline slice::slice(array const& a) : array(a), _off(0)
 { _len = length(); }

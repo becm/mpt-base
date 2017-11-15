@@ -85,9 +85,9 @@ void Stream::unref()
 // metatype interface
 int Stream::conv(int type, void *ptr) const
 {
-    int me;
+    int me = mpt_input_typeid();
     
-    if ((me = mpt_input_type_identifier()) < 0) {
+    if (me < 0) {
         me = output::Type;
     }
     if (!type) {
@@ -116,8 +116,9 @@ int Stream::conv(int type, void *ptr) const
 // object interface
 int Stream::property(struct property *pr) const
 {
-    int me;
-    if ((me = mpt_input_type_identifier()) < 0) {
+    int me = mpt_input_typeid();
+    
+    if (me < 0) {
         me = output::Type;
     }
     if (!pr) {

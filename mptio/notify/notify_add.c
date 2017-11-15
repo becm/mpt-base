@@ -9,6 +9,7 @@
 
 #include "meta.h"
 #include "array.h"
+#include "config.h"
 
 #include "notify.h"
 
@@ -58,7 +59,7 @@ static MPT_STRUCT(buffer) *notifyDataDetach(MPT_STRUCT(buffer) *buf, long len)
 static int notifyDataType(const MPT_STRUCT(buffer) *buf)
 {
 	(void) buf;
-	return mpt_input_type_identifier();
+	return mpt_input_typeid();
 }
 static MPT_INTERFACE_VPTR(buffer) notifyDataCtl = {
 	{ notifyDataUnref, notifyDataRef },

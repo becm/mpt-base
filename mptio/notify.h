@@ -22,6 +22,10 @@ public:
 protected:
 	inline ~input() { }
 };
+template<> inline int typeIdentifier<input>()
+{
+	return input::typeIdentifier(); 
+}
 # else
 MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
@@ -41,7 +45,6 @@ public:
 	notify();
 	~notify();
 	
-	bool init(int , char * const []);
 	bool add(input *);
 	size_t used() const { return _fdused; }
 	
@@ -69,7 +72,7 @@ protected:
 __MPT_EXTDECL_BEGIN
 
 /* open connections to controller or standalone run */
-extern int mpt_init(MPT_STRUCT(notify) *, int , char * const []);
+extern int mpt_init(int , char * const []);
 
 /* initialize/clear poll compound data */
 extern void mpt_notify_fini(MPT_STRUCT(notify) *);
@@ -98,7 +101,10 @@ extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
 extern int mpt_loop(MPT_STRUCT(notify) *);
 
 /* id for registered input metatype */
-extern int mpt_input_type_identifier(void);
+extern int mpt_input_typeid(void);
+
+/* create input for connect string */
+extern MPT_INTERFACE(input) *mpt_input_create(const char *);
 
 __MPT_EXTDECL_END
 

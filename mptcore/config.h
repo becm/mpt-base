@@ -87,6 +87,7 @@ public:
 protected:
 	inline ~config() { }
 };
+template<> inline __MPT_CONST_EXPR int typeIdentifier<config>() { return config::Type; }
 #else
 MPT_INTERFACE(config);
 MPT_INTERFACE_VPTR(config) {

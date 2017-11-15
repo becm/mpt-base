@@ -256,6 +256,41 @@ extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+extern int makeId();
+extern int toReferenceId(int);
+extern int toItemId(int);
+
+template<typename T>
+int typeIdentifier()
+{
+	static int id = 0;
+	if (!id) {
+		id = makeId();
+	}
+	return id;
+}
+template<typename T>
+inline int typeIdentifier(const T &) { return typeIdentifier<T>(); }
+
+/* floating point values */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<double>()      { return 'd'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>() { return 'e'; }
+/* integer values */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
+/* unsigned values */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+/* string data */
+template<> inline __MPT_CONST_EXPR int typeIdentifier<char>() { return 'c'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<char *>() { return 's'; }
+template<> inline __MPT_CONST_EXPR int typeIdentifier<const char *>() { return 's'; }
+
 /*! reduced slice with type but no data reference */
 template <typename T>
 class Slice
@@ -299,6 +334,31 @@ protected:
 	T *_base;
 	size_t _len;
 };
+
+/* vector-type auto-cast for constant base types */
+template<typename T>
+int vectorIdentifier()
+{
+	static int id = 0;
+	if (!id) {
+		id = typeIdentifier<T>();
+		id = MPT_value_toVector(id);
+		if (id <= 0) {
+			id = makeId();
+		}
+	}
+	return id;
+}
+template <typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(Slice<T>)
+{
+	return vectorIdentifier<T>();
+}
+template <typename T>
+inline __MPT_CONST_EXPR int typeIdentifier(Slice<const T>)
+{
+	return vectorIdentifier<T>();
+}
 #endif
 
 /*! generic data type and offset */
@@ -326,6 +386,9 @@ MPT_STRUCT(value)
 	const char *fmt;  /* data format */
 	const void *ptr;  /* formated data */
 };
+#ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
+#endif
 
 /*! single property information */
 MPT_STRUCT(property)
@@ -349,6 +412,9 @@ public:
 	const char *desc;      /* property [index->]description */
 	MPT_STRUCT(value) val; /* element value */
 };
+#ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return property::Type; }
+#endif
 typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
 
 /*! wrapper for reference count */
@@ -392,69 +458,6 @@ inline uintptr_t reference::addref()
 { return 0; }
 
 extern int convert(const void **, int , void *, int);
-
-extern int makeId();
-extern int toReferenceId(int);
-extern int toItemId(int);
-
-template<typename T>
-int typeIdentifier()
-{
-	static int id = 0;
-	if (!id) {
-		id = makeId();
-	}
-	return id;
-}
-template<typename T>
-inline int typeIdentifier(const T &) { return typeIdentifier<T>(); }
-
-/* floating point values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<double>()      { return 'd'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>() { return 'e'; }
-/* integer values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
-/* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
-/* string data */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<char>() { return 'c'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<char *>() { return 's'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<const char *>() { return 's'; }
-/* builtin types */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return property::Type; }
-
-/* vector-type auto-cast for constant base types */
-template<typename T>
-int vectorIdentifier()
-{
-	static int id = 0;
-	if (!id) {
-		id = typeIdentifier<T>();
-		id = MPT_value_toVector(id);
-		if (id <= 0) {
-			id = makeId();
-		}
-	}
-	return id;
-}
-template <typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(Slice<T>)
-{
-	return vectorIdentifier<T>();
-}
-template <typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(Slice<const T>)
-{
-	return vectorIdentifier<T>();
-}
 
 /*! container for reference type pointer */
 template<typename T>
@@ -577,6 +580,7 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
+template<> inline __MPT_CONST_EXPR int typeIdentifier<logger>() { return logger::Type; }
 #else
 MPT_INTERFACE(logger);
 MPT_INTERFACE_VPTR(logger) {
@@ -731,6 +735,8 @@ MPT_STRUCT(socket)
 	int32_t  _id;     /* socket descriptor */
 };
 #ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<socket>() { return socket::Type; }
+
 class Stream;
 class Socket : public socket
 {

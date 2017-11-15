@@ -8,15 +8,10 @@
 
 #include <iostream>
 
-#include MPT_INCLUDE(output.h)
-#include MPT_INCLUDE(message.h)
-#include MPT_INCLUDE(object.h)
-
+#include MPT_INCLUDE(config.h)
 #include MPT_INCLUDE(client.h)
 
 #include MPT_INCLUDE(stream.h)
-
-#include MPT_INCLUDE(notify.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -78,25 +73,29 @@ int main(int argc, char * const argv[])
 {
     mtrace();
 
-    mpt::notify n;
-    mpt::dispatch d;
 
     int pos;
-    if ((pos = mpt_init(&n, argc, argv)) < 0) {
+    if ((pos = mpt::mpt_init(argc, argv)) < 0) {
         perror("mpt init");
         return 1;
     }
-    n.setDispatch(&d);
-
-    mpt::Stream *in = new mpt::Stream();
-    in->open("/dev/stdin");
-    mpt_notify_add(&n, -1, in);
-
+    mpt::notify n;
+    mpt::dispatch d;
+    
     MyClient c(argv[pos]);
-
     d.set(mpt::msgtype::Command, doCommand, &c);
-    d.setDefault(mpt::msgtype::Command);
+    
+    const mpt::metatype *mt = mpt::mpt_config_get(0, "mpt.input", '.', 0);
+    mpt::input *in;
+    if (mt
+        && (in = mt->cast<mpt::input>())
+        && in->addref()) {
+        n.add(in);
+    } else {
+        d.setDefault(mpt::msgtype::Command);
+    }
 
+    n.setDispatch(&d);
     n.loop();
     
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);

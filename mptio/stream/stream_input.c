@@ -20,7 +20,10 @@
 
 MPT_STRUCT(streamInput) {
 	MPT_INTERFACE(input) _in;
+	MPT_STRUCT(refcount)  ref;
+	
 	MPT_STRUCT(stream) data;
+	
 	MPT_INTERFACE(reply_context) _rc;
 	MPT_STRUCT(reply_data) rd;
 };
@@ -58,38 +61,38 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 static void streamUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) ref;
+	if (mpt_refcount_lower(&srm->ref)) {
+		return;
+	}
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
 }
 static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
 {
-	(void) ref;
-	return 0;
+	MPT_STRUCT(streamInput) *srm = (void *) ref;
+	return mpt_refcount_raise(&srm->ref);
 }
 /* metatype interface */
 static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) mt;
-	int me = mpt_input_type_identifier();
+	int me = mpt_input_typeid();
 	
+	if (me < 0) {
+		me = MPT_ENUM(TypeMeta);
+	}
 	if (!type) {
-		if (ptr) {
-			static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
-			*((const char **) ptr) = fmt;
-		}
+		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
+		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
 	if (type == MPT_ENUM(TypeMeta)
 	    || type == me) {
-		if (ptr) {
-			*((void **) ptr) = &srm->_in;
-		}
+		if (ptr) *((void **) ptr) = &srm->_in;
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) {
-			*((int *) ptr) = _mpt_stream_fread(&srm->data._info);
-		}
+		if (ptr) *((int *) ptr) = _mpt_stream_fread(&srm->data._info);
 		return me;
 	}
 	return MPT_ERROR(BadType);
@@ -270,8 +273,11 @@ extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, in
 		return 0;
 	}
 	srm->_in._vptr = &streamInput;
-	srm->_rc._vptr = &streamContext;
+	srm->ref._val = 1;
+	
 	srm->data = tmp;
+	
+	srm->_rc._vptr = &streamContext;
 	srm->rd._max = idlen;
 	srm->rd.len = 0;
 	

@@ -65,7 +65,7 @@ protected:
 	inline ~reply_context()
 	{ }
 };
-
+template<> inline __MPT_CONST_EXPR int typeIdentifier<reply_context>() { return reply_context::Type; }
 #else
 MPT_INTERFACE(reply_context);
 MPT_INTERFACE_VPTR(reply_context) {

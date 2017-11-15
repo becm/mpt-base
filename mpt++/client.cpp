@@ -16,6 +16,10 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
+template <> int typeIdentifier<client>()
+{
+    return mpt_client_typeid();
+}
 static void unrefConfig()
 {
     if (cfg) {

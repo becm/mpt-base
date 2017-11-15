@@ -75,6 +75,7 @@ public:
 	virtual int advance();
 	virtual int reset();
 };
+template <> inline __MPT_CONST_EXPR int typeIdentifier<iterator>() { return iterator::Type; }
 #else
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
@@ -95,6 +96,12 @@ inline int iterator::advance()
 inline int iterator::reset()
 { return 0; }
 
+/* specialize metatype string cast */
+template <> inline const char *metatype::cast<const char>() const
+{
+	return string();
+}
+
 /* basic metatype to support typeinfo */
 class metatype::Basic : public metatype
 {
@@ -111,12 +118,6 @@ public:
 	
 	static Basic *create(const char *, int);
 };
-
-/* specialize metatype string cast */
-template <> inline const char *metatype::cast<const char>() const
-{
-	return string();
-}
 /* generic implementation for metatype */
 template <typename T>
 class Metatype : public metatype

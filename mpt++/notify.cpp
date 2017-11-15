@@ -20,6 +20,10 @@ int input::dispatch(EventHandler cmd, void *arg)
     event ev;
     return cmd(arg, &ev);
 }
+int input::typeIdentifier()
+{
+    return mpt_input_typeid();
+}
 
 // notifier operations
 notify::notify() : _sysfd(-1), _fdused(0)
@@ -35,11 +39,6 @@ notify::~notify()
 bool notify::add(input *in)
 {
     return mpt_notify_add(this, POLLIN, in) >= 0;
-}
-bool notify::init(int argc, char * const argv[])
-{
-    int take = mpt_init(this, argc, argv);
-    return take == argc;
 }
 
 static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)

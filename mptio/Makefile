@@ -8,7 +8,10 @@ INC = . .. ../mptcore
 HEADER = notify.h stream.h
 #
 # source summary
-sources = connect.c init.c input_type_identifier.c output_local.c output_remote.c
+sources = \
+	connect.c init.c \
+	input_create.c input_typeid.c \
+	output_local.c output_remote.c
 SRCS := $(wildcard */*.c) ${sources}
 #
 # shared library options
