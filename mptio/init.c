@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <string.h>
 
 #include <unistd.h>
 #include <poll.h>
@@ -99,6 +99,45 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 	}
 	return ret;
 }
+static int saveArgs(MPT_STRUCT(node) *mpt, int argc, char * const argv[])
+{
+	MPT_STRUCT(array) a = MPT_ARRAY_INIT;
+	MPT_INTERFACE(metatype) *b, *old;
+	MPT_STRUCT(node) *c;
+	
+	while (argc-- > 0) {
+		const char *curr = *argv++;
+		if (!curr) {
+			curr = mpt_array_append(&a, 1, 0);
+		} else {
+			curr = mpt_array_append(&a, strlen(curr) + 1, curr);
+		}
+		if (!curr) {
+			mpt_array_clone(&a, 0);
+			return MPT_ERROR(BadOperation);
+		}
+	}
+	b = mpt_meta_buffer(&a);
+	mpt_array_clone(&a, 0);
+	
+	if (!b) {
+		return MPT_ERROR(BadOperation);
+	}
+	if (!(c = mpt_node_find(mpt, "args", -1))) {
+		if (!(c = mpt_node_new(5))) {
+			b->_vptr->ref.unref((void *) b);
+			return MPT_ERROR(BadArgument);
+		}
+		mpt_identifier_set(&c->ident, "args", -1);
+		mpt_node_insert(mpt, 1, c);
+	}
+	else if ((old = c->_meta)) {
+		old->_vptr->ref.unref((void *) old);
+	}
+	c->_meta = (void *) b;
+	
+	return 0;
+}
 /*!
  * \ingroup mptNotify
  * \brief initialize MPT environment
@@ -162,11 +201,18 @@ extern int mpt_init(int argc, char * const argv[])
 			}
 		}
 	}
+	/* get top config gnode */
+	mpt = 0;
+	top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt);
+	
 	while (argc) {
 		int c;
 		
 		switch (c = getopt(argc, argv, "+f:c:l:e:v")) {
 		    case -1:
+			if ((c = saveArgs(mpt, argc - optind, argv + optind)) < 0) {
+				break;
+			}
 			argc = 0;
 			continue;
 		    case 'f':
@@ -217,10 +263,7 @@ extern int mpt_init(int argc, char * const argv[])
 		top->_vptr->ref.unref((void *) top);
 		return optind;
 	}
-	mpt = 0;
-	if (top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt) < 0
-	    || !mpt
-	    || !(in = mpt_input_create(ctl))) {
+	if (!mpt || !(in = mpt_input_create(ctl))) {
 		top->_vptr->ref.unref((void *) top);
 		return MPT_ERROR(BadArgument);
 	}

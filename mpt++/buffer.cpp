@@ -19,6 +19,7 @@ __MPT_NAMESPACE_BEGIN
 Buffer::Buffer(array const &a)
 {
     _d = a;
+    _state.done = _d.length();
 }
 Buffer::~Buffer()
 { }
@@ -32,8 +33,8 @@ Buffer *Buffer::clone() const
 {
     if (_enc) {
         if (_state.scratch || _state._ctx) {
-	    return 0;
-	}
+            return 0;
+        }
     }
     Buffer *b = new Buffer(_d);
     b->_state = _state;

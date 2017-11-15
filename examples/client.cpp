@@ -22,7 +22,7 @@
 class MyClient : public mpt::client, public mpt::proxy
 {
 public:
-    MyClient(const char *);
+    MyClient();
     virtual ~MyClient() { }
     
     void unref() __MPT_OVERRIDE;
@@ -33,27 +33,22 @@ public:
     {
         return proxy::cast<T>();
     }
-protected:
-    char *enc;
 };
-MyClient::MyClient(const char *e) : enc(0)
-{
-    if (e) enc = strdup(e);
-}
-int MyClient::process(uintptr_t , mpt::iterator *)
+MyClient::MyClient()
 {
     _ref = mpt::mpt_output_remote();
 
     mpt::object *o;
     if ((o = proxy::cast<mpt::object>())) {
         o->set(0, "w:client.out");
-        if (enc) o->set("encoding", enc);
     }
+}
+int MyClient::process(uintptr_t , mpt::iterator *)
+{
     return mpt::event::Terminate;
 }
 void MyClient::unref()
 {
-    if (enc) free(enc);
     delete this;
 }
 
@@ -82,7 +77,7 @@ int main(int argc, char * const argv[])
     mpt::notify n;
     mpt::dispatch d;
     
-    MyClient c(argv[pos]);
+    MyClient c;
     d.set(mpt::msgtype::Command, doCommand, &c);
     
     const mpt::metatype *mt = mpt::mpt_config_get(0, "mpt.input", '.', 0);
@@ -102,4 +97,16 @@ int main(int argc, char * const argv[])
     n.loop();
     
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    
+    mpt::iterator *it;
+    if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))
+        && (it = mt->cast<mpt::iterator>())) {
+        const char *arg;
+        while (it->get('s', &arg) > 0) {
+            std::cerr << arg << std::endl;
+            if (it->advance() <= 0) {
+                break;
+            }
+        }
+    }
 }
