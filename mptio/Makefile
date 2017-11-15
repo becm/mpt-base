@@ -9,7 +9,7 @@ HEADER = notify.h stream.h
 #
 # source summary
 sources = \
-	connect.c init.c \
+	connect.c \
 	input_create.c input_typeid.c \
 	output_local.c output_remote.c
 SRCS := $(wildcard */*.c) ${sources}

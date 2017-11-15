@@ -29,7 +29,7 @@ comp : LDLIBS+=-lmptio
 types : LDLIBS+=-lmptcore
 
 # special test arguments
-test_config : ARGS=mpt_* xdg_*
+test_config : ARGS=${MPT_PREFIX}
 test_layout : ARGS=layout.lay
 test_buffer : ARGS=1 2 3
 

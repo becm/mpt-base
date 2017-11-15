@@ -27,6 +27,7 @@ src = files(
   'hash_smdb.c',
   'newline_string.c',
   'number_print.c',
+  'scalar_argv.c',
   'tostring.c',
   'type_int.c',
   'valfmt_add.c',

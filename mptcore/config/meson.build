@@ -5,7 +5,7 @@ src = files(
   'config_environ.c',
   'config_get.c',
   'config_global.c',
-  'config_node.c',
+  'config_load.c',
   'config_set.c',
   'node_assign.c',
   'node_query.c',

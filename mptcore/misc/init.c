@@ -13,16 +13,13 @@
 #include <unistd.h>
 #include <poll.h>
 
+#include "array.h"
 #include "meta.h"
 #include "config.h"
 #include "convert.h"
+
 #include "parse.h"
 #include "node.h"
-
-#include "stream.h"
-#include "notify.h"
-
-#include "client.h"
 
 static void setDebug(int lv)
 {
@@ -99,12 +96,17 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 	}
 	return ret;
 }
-static int saveArgs(MPT_STRUCT(node) *mpt, int argc, char * const argv[])
+static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
 {
 	MPT_STRUCT(array) a = MPT_ARRAY_INIT;
 	MPT_INTERFACE(metatype) *b, *old;
-	MPT_STRUCT(node) *c;
+	MPT_STRUCT(node) *mpt, *c;
 	
+	mpt = 0;
+	top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt);
+	if (!mpt) {
+		return MPT_ERROR(BadType);
+	}
 	while (argc-- > 0) {
 		const char *curr = *argv++;
 		if (!curr) {
@@ -151,13 +153,10 @@ static int saveArgs(MPT_STRUCT(node) *mpt, int argc, char * const argv[])
 extern int mpt_init(int argc, char * const argv[])
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
-	const MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(metatype) *top, *old;
-	MPT_INTERFACE(input) *in;
+	MPT_INTERFACE(metatype) *top;
 	MPT_INTERFACE(config) *cfg;
-	MPT_STRUCT(node) *mpt, *c;
 	const char *ctl = 0, *src = 0, *debug, *flags;
-	int lv = 0;
+	int lv = 0, ret;
 	
 	if ((debug = getenv("MPT_DEBUG"))) {
 		int dbg = 0;
@@ -201,39 +200,37 @@ extern int mpt_init(int argc, char * const argv[])
 			}
 		}
 	}
-	/* get top config gnode */
-	mpt = 0;
-	top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt);
+	/* set executable name */
+	mpt_config_set(cfg, 0, argv[0], 0, 0);
 	
-	while (argc) {
-		int c;
-		
-		switch (c = getopt(argc, argv, "+f:c:l:e:v")) {
+	ret = 0;
+	while (optind < argc) {
+		switch (ret = getopt(argc, argv, "+f:c:l:e:v")) {
 		    case -1:
-			if ((c = saveArgs(mpt, argc - optind, argv + optind)) < 0) {
-				break;
-			}
-			argc = 0;
-			continue;
+			ret = saveArgs(top, argc - optind, argv + optind);
+			break;
 		    case 'f':
-			if ((c = loadConfig(0, optarg)) < 0) {
+			if ((ret = loadConfig(0, optarg)) < 0) {
 				break;
 			}
 			continue;
 		    case 'c':
 			if (ctl) {
-				c = MPT_ERROR(BadArgument);
+				ret = MPT_ERROR(BadArgument);
 				break;
 			}
 			ctl = optarg;
+			if ((ret = mpt_config_set(cfg, "connect", ctl, 0, 0)) < 0) {
+				break;
+			}
 			continue;
 		    case 'l':
 			if (src) {
-				c = MPT_ERROR(BadArgument);
+				ret = MPT_ERROR(BadArgument);
 				break;
 			}
 			src = optarg;
-			if ((c = mpt_config_set(cfg, "listen", src, 0, 0)) < 0) {
+			if ((ret = mpt_config_set(cfg, "listen", src, 0, 0)) < 0) {
 				break;
 			}
 			continue;
@@ -244,43 +241,12 @@ extern int mpt_init(int argc, char * const argv[])
 			setEnviron(optarg);
 			continue;
 		    default:
-			c = MPT_ERROR(BadArgument);
+			ret = MPT_ERROR(BadArgument);
 		}
-		if (c < 0) {
-			top->_vptr->ref.unref((void *) top);
-			return c;
-		}
+		break;
 	}
-	/* set executable name */
-	mpt_config_set(cfg, 0, argv[0], 0, 0);
+	top->_vptr->ref.unref((void *) top);
 	
-	/* get connect target from configuration */
-	if (!ctl && (mt = mpt_config_get(cfg, "connect", '.', 0))) {
-		mt->_vptr->conv(mt, 's', &ctl);
-	}
-	/* assign control input */
-	if (!ctl) {
-		top->_vptr->ref.unref((void *) top);
-		return optind;
-	}
-	if (!mpt || !(in = mpt_input_create(ctl))) {
-		top->_vptr->ref.unref((void *) top);
-		return MPT_ERROR(BadArgument);
-	}
-	if (!(c = mpt_node_find(mpt, "input", -1))) {
-		if (!(c = mpt_node_new(8))) {
-			in->_vptr->meta.ref.unref((void *) in);
-			top->_vptr->ref.unref((void *) top);
-			return MPT_ERROR(BadArgument);
-		}
-		mpt_identifier_set(&c->ident, "input", -1);
-		mpt_node_insert(mpt, 1, c);
-	}
-	else if ((old = c->_meta)) {
-		old->_vptr->ref.unref((void *) old);
-	}
-	c->_meta = (void *) in;
-	
-	return optind;
+	return ret < 0 ? ret : optind;
 }
 

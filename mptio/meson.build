@@ -4,8 +4,7 @@
 # collect source files
 io_src = files(
   'connect.c',
-  'init.c',
-  'input_type_identifier.c',
+  'input_typeid.c',
   'output_local.c',
   'output_remote.c'
 )

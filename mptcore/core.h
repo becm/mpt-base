@@ -229,6 +229,9 @@ typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(decode_state) *, const struc
 
 __MPT_EXTDECL_BEGIN
 
+/* set config from environment, files and arguments */
+extern int mpt_init(int , char * const []);
+
 /* get type position from data description */
 extern int mpt_position(const char *, int);
 /* get position offset from data description */

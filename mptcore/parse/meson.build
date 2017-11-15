@@ -1,7 +1,5 @@
 # meson.build.gen: *.c
 src = files(
-  'config_load.c',
-  'config_load_gen.c',
   'getchar_file.c',
   'getchar_stdio.c',
   'node_append.c',
@@ -10,6 +8,7 @@ src = files(
   'parse_config.c',
   'parse_data.c',
   'parse_endline.c',
+  'parse_folder.c',
   'parse_format.c',
   'parse_format_enc.c',
   'parse_format_pre.c',

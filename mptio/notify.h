@@ -71,9 +71,6 @@ protected:
 
 __MPT_EXTDECL_BEGIN
 
-/* open connections to controller or standalone run */
-extern int mpt_init(int , char * const []);
-
 /* initialize/clear poll compound data */
 extern void mpt_notify_fini(MPT_STRUCT(notify) *);
 

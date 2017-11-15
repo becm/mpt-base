@@ -41,15 +41,15 @@ extern int main(int argc, char * const argv[])
 	
 	mtrace();
 	
-	for (int i = 1; i < argc; ++i) {
-		conf.environ(argv[i]);
-	}
-	if (conf.set("mpt.text", "Der täĸẞŦ")
-	    && (m = conf.get("mpt.text"))) {
+	if (conf.set("a.value.text", "Der täĸẞŦ")
+	    && (m = conf.get("a.value.text"))) {
 		name = *m;
 		std::cout << typeid(*m).name() << " -> " << name << std::endl;
 	}
-	conf.set("mpt*text", "anderer", '*');
+	for (int i = 1; i < argc; ++i) {
+		mpt::mpt_config_load(&conf, argv[i]);
+	}
+	conf.set("a*value*text", "anderer", '*');
 	
 	printCfg(0, conf.elements());
 	
