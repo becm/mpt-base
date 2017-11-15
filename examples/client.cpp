@@ -87,14 +87,17 @@ int main(int argc, char * const argv[])
     
     const mpt::metatype *mt = mpt::mpt_config_get(0, "mpt.input", '.', 0);
     mpt::input *in;
-    if (mt
-        && (in = mt->cast<mpt::input>())
-        && in->addref()) {
-        n.add(in);
-    } else {
+    if (!mt) {
         d.setDefault(mpt::msgtype::Command);
     }
-
+    else if (!(in = mt->cast<mpt::input>()) || !in->addref()) {
+        std::cerr << "input reference" << std::endl;
+        return 1;
+    }
+    else if (!n.add(in)) {
+        perror("notify add");
+        return 2;
+    }
     n.setDispatch(&d);
     n.loop();
     

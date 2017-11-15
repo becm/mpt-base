@@ -125,7 +125,20 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	}
 #if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {
-		no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
+		const MPT_INTERFACE(metatype) *mt;
+		const char *val = 0;
+		int32_t flg = 1;
+		if (!(mt = mpt_config_get(0, "mpt.notify.epoll", '.', 0))) {
+			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
+		}
+		else if (mt->_vptr->conv(mt, 'i', &flg) > 0) {
+			if (flg) no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
+		}
+		else if (mt->_vptr->conv(mt, 's', &val) < 0
+		         || !val
+		         || strcmp(val, "false")) {
+			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
+		}
 	}
 	if (no->_sysfd >= 0) {
 		struct epoll_event ev;
