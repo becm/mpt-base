@@ -106,8 +106,8 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 		if (!(n = mpt_node_query(n, &p, 0))) {
 			return 0;
 		}
-		if (!n->_meta) {
-			mt = mpt_metatype_default();
+		if (n->_meta) {
+			mt = n->_meta;
 		}
 	}
 	return mt;

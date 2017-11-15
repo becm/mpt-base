@@ -21,8 +21,7 @@ static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node
 	/* get requested position */
 	if (start && (pos != 0 || pos != 1)) {
 		tmp = getnode(start, pos, node);
-	}
-	else {
+	} else {
 		tmp = start;
 	}
 	/* swap insertion order and set position (first/last) if not found */
@@ -35,7 +34,6 @@ static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node
 			tmp = mpt_gnode_pos(first, pos = 0);
 		}
 	}
-	
 	/* insert node on requested position */
 	if (pos < 1) {
 		mpt_gnode_after(tmp, node);
@@ -80,13 +78,11 @@ extern int mpt_gnode_insert(MPT_STRUCT(node) *parent, int pos, MPT_STRUCT(node) 
 		errno = EFAULT;
 		return -1;
 	}
-	
 	if (!parent->children) {
 		parent->children = node;
 		node->parent = parent;
 		return 0;
 	}
-	
 	node_insert(parent->children, pos, node, (MPT_STRUCT(node) *(*)()) mpt_gnode_pos);
 	
 	return 0;
@@ -95,17 +91,15 @@ extern int mpt_gnode_insert(MPT_STRUCT(node) *parent, int pos, MPT_STRUCT(node) 
 /* insert node on relative position in tree */
 extern int mpt_node_insert(MPT_STRUCT(node) *parent, int pos, MPT_STRUCT(node) *node)
 {
-	if (!node || !node->_meta) {
+	if (!node) {
 		errno = EFAULT;
 		return -1;
 	}
-	
 	if (!parent->children) {
 		parent->children = node;
 		node->parent = parent;
 		return 0;
 	}
-	
 	node_insert(parent->children, pos, node, node_locate);
 	
 	return 0;
