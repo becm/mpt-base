@@ -17,7 +17,23 @@
 # define mtrace()
 #endif
 
-extern int main(int , char * const [])
+static void printCfg(int depth, const mpt::Slice<const mpt::Config::Element> list)
+{
+	for (auto &a : list) {
+		for (int i = 0; i < depth; ++i) std::cout << '.';
+		std::cout << a.name();
+		mpt::metatype *mt = a.pointer();
+		if (mt) {
+			std::cout << " = ";
+			const char *content = *mt;
+			if (content) std::cout << content;
+		}
+		std::cout << std::endl;
+		printCfg(depth + 1, a.slice());
+	}
+}
+
+extern int main(int argc, char * const argv[])
 {
 	mpt::Config conf;
 	const mpt::metatype *m;
@@ -25,24 +41,17 @@ extern int main(int , char * const [])
 	
 	mtrace();
 	
-	conf.environ("*");
-	
-	if ((m = conf.get("desktop.session"))) {
-		name = *m;
-		std::cout << name << std::endl;
+	for (int i = 1; i < argc; ++i) {
+		conf.environ(argv[i]);
 	}
-	
-	if (conf.set("hallo.ich bin.text", "Der täĸẞŦ")
-	    && (m = conf.get("hallo.ich bin.text"))) {
+	if (conf.set("mpt.text", "Der täĸẞŦ")
+	    && (m = conf.get("mpt.text"))) {
 		name = *m;
-		std::cout << typeid(*m).name() << "=" << name << std::endl;
+		std::cout << typeid(*m).name() << " -> " << name << std::endl;
 	}
-	conf.set("hallo*ich bin*text", "anderer", '*');
-	mpt::path p('/', 0, "hallo/ich bin/text");
+	conf.set("mpt*text", "anderer", '*');
 	
-	if ((m = conf.query(&p))) {
-		name = *m;
-		std::cout << " -> " << name << std::endl;
-	}
+	printCfg(0, conf.elements());
+	
 	return 0;
 }

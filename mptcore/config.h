@@ -175,7 +175,12 @@ public:
 	const metatype *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
+	
 	class Element;
+	inline Slice<const Element> elements() const
+	{
+		return _sub.slice();
+	}
 protected:
 	static Element *getElement(const UniqueArray<Element> &, path &);
 	static Element *makeElement(UniqueArray<Element> &, path &);

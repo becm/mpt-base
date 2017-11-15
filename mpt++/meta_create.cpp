@@ -51,8 +51,15 @@ metatype *metatype::create(value val)
         if (m) return m;
     }
     // create buffer-backed text metatype
-    Buffer *b = new mpt::Buffer;
-    b->push(len, src);
+    Buffer *b;
+    if ((b = new mpt::Buffer)) {
+        if (b->push(len, src) < 0) {
+            b->unref();
+            return 0;
+        }
+        b->push(1, "\0"); // terminate string
+        b->push(0, 0);    // mark content finished
+    }
     return b;
 }
 

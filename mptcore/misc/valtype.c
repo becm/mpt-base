@@ -259,8 +259,11 @@ extern int mpt_valtype_interface_new(const char *name)
 		}
 		return MPT_ERROR(BadOperation);
 	}
-	if (strlen(name) < 4 || mpt_valtype_id(name, -1) >= 0) {
+	if (!name[0] || !name[1]) {
 		return MPT_ERROR(BadValue);
+	}
+	if (mpt_valtype_id(name, -1) >= 0) {
+		return MPT_ERROR(BadEncoding);
 	}
 	count += MPT_ENUM(_TypeInterfaceBase);
 	if (count >= interface_limit) {
