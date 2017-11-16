@@ -60,6 +60,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 	static const char _file[] = "etc/mpt.conf";
 	static const char _dir[]  = "etc/mpt.conf.d";
 	
+	MPT_INTERFACE(metatype) *mt;
 	struct loadCtx ctx;
 	int dir, fd, ret;
 	
@@ -67,11 +68,26 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		root = "/";
 	}
 	if ((dir = open(root, O_RDONLY | O_DIRECTORY)) < 0) {
-		if (log) {
-			mpt_log(log, __func__, MPT_LOG(Error), "%s: %s",
-			        MPT_tr("failed to open config root"), root);
-		}
+		mpt_log(log, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("failed to open config root"), root);
 		return MPT_ERROR(MissingData);
+	}
+	mt = 0;
+	if (!cfg) {
+		MPT_STRUCT(path) p = MPT_PATH_INIT;
+		mpt_path_set(&p, "mpt", -1);
+		if (!(mt = mpt_config_global(&p))) {
+			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
+			        MPT_tr("failed to access mpt config"));
+			return MPT_ERROR(BadOperation);
+		}
+		if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg)) < 0
+		    || !cfg) {
+			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
+			        MPT_tr("bad global config element"));
+			mt->_vptr->ref.unref((void *) mt);
+			return MPT_ERROR(BadType);
+		}
 	}
 	ctx.cfg = cfg;
 	ctx.fcn = __func__;
@@ -85,6 +101,10 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		if (mpt_parse_folder(fd, cfgSet, &ctx, log) >= 0) {
 			ret |= 2;
 		}
+		if (log) {
+			mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
+			        MPT_tr("finished config directory"), root, _dir);
+		}
 		close(fd);
 	}
 	if ((fd = openat(dir, _file, O_RDONLY)) >= 0) {
@@ -92,6 +112,9 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
 		int err;
 		if (!(src.src.arg = fdopen(fd, "r"))) {
+			if (mt) {
+				mt->_vptr->ref.unref((void *) mt);
+			}
 			return 0;
 		}
 		if (log) {
@@ -103,15 +126,19 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		err = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, &src, cfgSet, &ctx);
 		if (err >= 0) ret |= 1;
 		fclose(src.src.arg);
-		if (log) {
-			if (err < 0) {
-				mpt_log(log, __func__, MPT_LOG(Info), "%s: %s/%s",
-				        MPT_tr("failed reading config file"), root, _file);
-			} else {
-				mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
-				        MPT_tr("finished config file"), root, _file);
-			}
+		
+		if (err < 0) {
+			int line = src.src.line;
+			mpt_log(log, __func__, MPT_LOG(Info), "%s [%d] (line = %d): %s/%s",
+			        MPT_tr("config file error"), err, line, root, _file);
 		}
+		else if (log) {
+			mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
+			        MPT_tr("finished config file"), root, _file);
+		}
+	}
+	if (mt) {
+		mt->_vptr->ref.unref((void *) mt);
 	}
 	close(dir);
 	return ret;
