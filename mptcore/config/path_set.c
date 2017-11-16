@@ -27,7 +27,7 @@ extern size_t mpt_path_set(MPT_STRUCT(path) *path, const char *val, int len)
 	if (!val) {
 		vlen = add = 0;
 	} else {
-		vlen = (len < 0) ? strlen(val) : (size_t) len;
+		vlen = (len < 0) ? strlen(val) + 1 : (size_t) len;
 	}
 	
 	while (plen < vlen) {
@@ -40,15 +40,15 @@ extern size_t mpt_path_set(MPT_STRUCT(path) *path, const char *val, int len)
 			break;
 		}
 		/* separator found, save length of first part */
-		if ((curr == sep) && !elem++)
+		if ((curr == sep) && !elem++) {
 			first = plen - 1;
+		}
 	}
 	mpt_path_fini(path);
 	
 	path->base = val;
-	
-	path->off   = 0;
-	path->len   = plen + add;
+	path->off  = 0;
+	path->len  = plen + add;
 	
 	path->first  = (first > UINT8_MAX) ? 0 : first;
 	path->sep    = sep;

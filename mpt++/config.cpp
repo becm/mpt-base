@@ -18,7 +18,7 @@ array::Data *path::array() const
 	}
 	return reinterpret_cast<array::Data *>(const_cast<char *>(base)) - 1;
 }
-path::path(int s, int a, const char *path) : base(0), off(0), len(0)
+path::path(const char *path, int s, int a) : base(0), off(0), len(0)
 {
     sep = s;
     assign = a;
@@ -79,7 +79,7 @@ bool path::next()
 // default implementation for config
 bool config::set(const char *p, const char *val, int sep)
 {
-    path where(sep, 0, p);
+    path where(p, sep, 0);
 
     if (!val) {
         return (remove(&where) < 0) ? false : true;

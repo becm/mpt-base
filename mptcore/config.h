@@ -31,7 +31,7 @@ enum MPT_PATHFLAG(Flags) {
 	MPT_PATHFLAG(SepBinary) = 0x80
 };
 #if defined(__cplusplus)
-	path(int sep = '.', int assign = '=', const char *path = 0);
+	path(const char * = 0, int = '.', int = 0);
 	path(path const &);
 	~path();
 	
@@ -55,7 +55,7 @@ protected:
 #else
 MPT_STRUCT(path)
 {
-# define MPT_PATH_INIT  { 0,  0, 0,  0, 0,  '.', '=' }
+# define MPT_PATH_INIT  { 0,  0, 0,  0, 0,  '.', 0 }
 #endif
 	const char *base;   /* path data */
 	
