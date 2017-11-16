@@ -18,43 +18,51 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	static const char defFmt[] = "no default configuration state";
 	
 	MPT_INTERFACE(metatype) *mt = ptr;
-	MPT_INTERFACE(logger) *log = 0;
 	MPT_INTERFACE(config) *cfg = 0;
+	MPT_INTERFACE(iterator) *it;
 	int err;
 	
 	if (!ev) {
 		return 0;
 	}
-	if ((err = mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg)) < 0) {
+	if ((err = mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg)) < 0
+	    || !cfg) {
 		return MPT_event_fail(ev, err, MPT_tr("no config element"));
 	}
-	mt->_vptr->conv(mt, MPT_ENUM(TypeLogger), &log);
 	
 	if (!ev->msg) {
-		if ((err = mpt_config_args(cfg, 0, log)) < 0) {
+		if ((err = mpt_config_args(cfg, 0)) < 0) {
 			return MPT_event_fail(ev, err, MPT_tr(defFmt));
 		}
+		return MPT_event_good(ev, MPT_tr("assigned default config state"));
 	}
-	else {
-		MPT_INTERFACE(iterator) *it;
-		
-		if (!(mt = mpt_event_command(ev))
-		    || mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it) < 0
-		    || !it) {
-			ev->id = 0;
-			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
+	if (!(mt = mpt_event_command(ev))
+	    || mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it) < 0
+	    || !it) {
+		ev->id = 0;
+		return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
+	}
+	/* process config arguments */
+	err = mpt_config_args(cfg, it);
+	mt->_vptr->ref.unref((void *) mt);
+	
+	if (err < 0) {
+		return MPT_event_fail(ev, err, MPT_tr("bad config element"));
+	}
+	if (err) {
+		static const char _fcn[] = "mpt::config::dispatch";
+		MPT_INTERFACE(logger) *log = 0;
+		const char *val = 0;
+		it->_vptr->get(it, 's', &val);
+		mt->_vptr->conv(mt, MPT_ENUM(TypeLogger), &log);
+		if (val) {
+			mpt_log(log, _fcn, MPT_LOG(Warning), "%s: %d", MPT_tr("incompatible argument"), err);
+		} else {
+			mpt_log(log, _fcn, MPT_LOG(Warning), "%s: %d", MPT_tr("incompatible argument"), err);
 		}
-		/* process config arguments */
-		err = mpt_config_args(cfg, it, log);
-		mt->_vptr->ref.unref((void *) mt);
-		
-		if (err < 0) {
-			return MPT_event_fail(ev, err, MPT_tr("bad config element"));
-		}
-		if (err) {
-			mpt_context_reply(ev->reply, 0, "%s: %d", MPT_tr("compatible argument count"), err);
-			return MPT_EVENTFLAG(None);
-		}
+		mpt_context_reply(ev->reply, err, "%s", MPT_tr("incomplete assignment"));
+		ev->id = 0;
+		return MPT_EVENTFLAG(Default);
 	}
 	return MPT_event_good(ev, MPT_tr("arguments applied to configuration"));
 }
@@ -63,6 +71,7 @@ static int delEvent(void *ptr, MPT_STRUCT(event) *ev)
 	static const char defFmt[] = "no default configuration state";
 	
 	MPT_INTERFACE(metatype) *mt = ptr;
+		MPT_INTERFACE(iterator) *it;
 	MPT_INTERFACE(logger) *log = 0;
 	MPT_INTERFACE(config) *cfg = 0;
 	int err;
@@ -80,27 +89,24 @@ static int delEvent(void *ptr, MPT_STRUCT(event) *ev)
 		if ((err = mpt_config_clear(cfg, 0, log)) < 0) {
 			return MPT_event_fail(ev, err, MPT_tr(defFmt));
 		}
+		return MPT_event_good(ev, MPT_tr("configuration cleared"));
 	}
-	else {
-		MPT_INTERFACE(iterator) *it;
-		
-		if (!(mt = mpt_event_command(ev))
-		    || mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it) < 0
-		    || !it) {
-			ev->id = 0;
-			return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
-		}
-		/* process config arguments */
-		err = mpt_config_clear(cfg, it, log);
-		mt->_vptr->ref.unref((void *) mt);
-		
-		if (err < 0) {
-			return MPT_event_fail(ev, err, MPT_tr("bad config element"));
-		}
-		if (err) {
-			mpt_context_reply(ev->reply, 0, "%s: %d", MPT_tr("compatible argument count"), err);
-			return MPT_EVENTFLAG(None);
-		}
+	if (!(mt = mpt_event_command(ev))
+	    || mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &it) < 0
+	    || !it) {
+		ev->id = 0;
+		return MPT_EVENTFLAG(Fail) | MPT_EVENTFLAG(Default);
+	}
+	/* process config arguments */
+	err = mpt_config_clear(cfg, it, log);
+	mt->_vptr->ref.unref((void *) mt);
+	
+	if (err < 0) {
+		return MPT_event_fail(ev, err, MPT_tr("bad config element"));
+	}
+	if (err) {
+		mpt_context_reply(ev->reply, 0, "%s: %d", MPT_tr("compatible argument count"), err);
+		return MPT_EVENTFLAG(None);
 	}
 	return MPT_event_good(ev, MPT_tr("arguments removed from configuration"));
 }

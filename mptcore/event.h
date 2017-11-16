@@ -17,8 +17,7 @@ MPT_INTERFACE(iterator);
 MPT_STRUCT(reply_data)
 {
 #ifdef __cplusplus
-	inline static int typeIdentifier()
-	{ return TypeReplyData; }
+	enum { Type = TypeReplyData };
 	
 	reply_data(size_t len);
 	
@@ -33,6 +32,8 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
+template<> inline __MPT_CONST_EXPR int typeIdentifier<reply_data>() { return reply_data::Type; }
+
 class reply_context_detached
 {
 public:

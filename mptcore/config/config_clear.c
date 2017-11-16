@@ -28,9 +28,6 @@ extern int mpt_config_clear(MPT_INTERFACE(config) *cl, MPT_INTERFACE(iterator) *
 	if (!it) {
 		return cl->_vptr->remove(cl, 0);
 	}
-	if (!cl) {
-		MPT_ABORT("missing client descriptor");
-	}
 	do {
 		const char *arg = 0;
 		if ((ret = it->_vptr->get(it, 's', &arg)) < 0) {

@@ -101,6 +101,9 @@ MPT_INTERFACE_VPTR(config) {
 
 __MPT_EXTDECL_BEGIN
 
+/* assign config from saved arguments */
+extern int mpt_client_config(MPT_INTERFACE(config) *);
+
 /* get/set config element */
 extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
 extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, int __MPT_DEFPAR('.'), int __MPT_DEFPAR(0));
@@ -108,7 +111,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *, const char *, const char *, i
 extern int mpt_config_environ(MPT_INTERFACE(config) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
 /* set configuration from arguments */
-extern int mpt_config_args (MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
+extern int mpt_config_args (MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *);
 extern int mpt_config_clear(MPT_INTERFACE(config) *, MPT_INTERFACE(iterator) *, MPT_INTERFACE(logger) *);
 
 /* load configuration from in (alternate) root */

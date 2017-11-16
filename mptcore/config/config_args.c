@@ -2,30 +2,24 @@
  * read basic and specific configuration from files.
  */
 
-#include "client.h"
-
-#include <stdio.h>
 #include <string.h>
 
-#include "node.h"
-#include "message.h"
 #include "meta.h"
 
 #include "config.h"
 
 /*!
  * \ingroup mptClient
- * \brief read client configuration
+ * \brief set config elements
  * 
- * Try to get client and solver configuration files from message,
- * fall back to values in client configuration and read files.
+ * Assign config to properties or strings from iterator.
  * 
  * \param cfg   configuration target
  * \param args  source for files to read
  * 
- * \return string describing error
+ * \return error or offset of first failed element
  */
-extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *args, MPT_INTERFACE(logger) *log)
+extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *args)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
@@ -60,10 +54,6 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			mpt_path_set(&p, pr.name, -1);
 		}
 		if (cfg->_vptr->assign(cfg, &p, &pr.val) < 0) {
-			if (log) {
-				mpt_log(log, __func__, MPT_LOG(Warning), "%s: %s",
-				        MPT_tr("failed to set config element"), pr.name);
-			}
 			return count ? count : MPT_ERROR(BadValue);
 		}
 		/* assign config */
