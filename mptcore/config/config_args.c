@@ -50,7 +50,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			}
 			mpt_path_set(&p, pr.name, end - pr.name);
 			pr.val.fmt = 0;
-			pr.val.ptr = end;
+			pr.val.ptr = end + 1;
 		}
 		/* only single top level assign */
 		else if (!pr.name) {
@@ -68,8 +68,8 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 		}
 		/* assign config */
 		++count;
-	} while ((res = args->_vptr->advance(args)) >= 0);
+	} while ((res = args->_vptr->advance(args)) > 0);
 	
-	return res;
+	return res ? count : 0;
 }
 
