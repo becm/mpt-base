@@ -13,6 +13,7 @@
 
 #include "client.h"
 
+/* config events */
 static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 {
 	static const char defFmt[] = "no default configuration state";
@@ -110,17 +111,7 @@ static int delEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	return MPT_event_good(ev, MPT_tr("arguments removed from configuration"));
 }
-
-static int closeEvent(void *ptr, MPT_STRUCT(event) *ev)
-{
-	MPT_INTERFACE(reference) *ref = ptr;
-	if (!ev) {
-		ref->_vptr->unref(ref);
-		return 0;
-	}
-	return MPT_event_term(ev, MPT_tr("terminate event loop"));
-}
-
+/* dispatcher events */
 static int stopEvent(void *ptr, MPT_STRUCT(event) *ev)
 {
 	MPT_STRUCT(dispatch) *d = ptr;
@@ -137,7 +128,6 @@ static int stopEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	return MPT_EVENTFLAG(Default);
 }
-
 static int hashEvent(void *ptr, MPT_STRUCT(event) *ev)
 {
 	if (!ev) {
@@ -145,14 +135,15 @@ static int hashEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	return mpt_dispatch_hash(ptr, ev);
 }
-static int clientEvent(void *ptr, MPT_STRUCT(event) *ev)
+/* termination event */
+static int closeEvent(void *ptr, MPT_STRUCT(event) *ev)
 {
-	MPT_INTERFACE(client) *cl = ptr;
+	MPT_INTERFACE(reference) *ref = ptr;
 	if (!ev) {
-		cl->_vptr->meta.ref.unref((void *) cl);
+		ref->_vptr->unref(ref);
 		return 0;
 	}
-	return cl->_vptr->dispatch(cl, ev);
+	return MPT_event_term(ev, MPT_tr("terminate event loop"));
 }
 
 /*!
@@ -165,29 +156,15 @@ static int clientEvent(void *ptr, MPT_STRUCT(event) *ev)
  * \param meta target metatype
  * 
  * \retval 0  success
- * \retval -1 missing descriptor pointer
+ * \retval <0 failed to register reference
  */
 extern int mpt_meta_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *mt)
 {
-	MPT_INTERFACE(client) *cl;
 	uintptr_t id;
 	
 	if (!dsp || !mt) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* enable client dispatch */
-	id = MPT_MESGTYPE(Command);
-	cl = 0;
-	if (mt->_vptr->conv(mt, mpt_client_typeid(), &cl) >= 0
-	    && cl) {
-		if (mpt_dispatch_set(dsp, id, clientEvent, cl) < 0) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)\n",
-			        MPT_tr("error registering handler id"), id, "stop");
-			
-		}
-		return 0;
-	}
-	/* mapping of command type messages */
 	/* terminate loop */
 	id = mpt_hash("close", 5);
 	if (mpt_dispatch_set(dsp, id, closeEvent, mt) < 0) {
@@ -195,9 +172,18 @@ extern int mpt_meta_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *m
 		        MPT_tr("error registering handler id"), id, "close");
 		return MPT_ERROR(BadOperation);
 	}
-	if (mpt_dispatch_set(dsp, id, hashEvent, dsp) < 0) {
+	if (mpt_dispatch_set(dsp, MPT_MESGTYPE(Command), hashEvent, dsp) < 0) {
+		MPT_STRUCT(command) *cmd;
+		cmd = mpt_command_get(&dsp->_d, id);
+		if (!cmd) {
+			MPT_ABORT("lost command with registered reference");
+		}
 		mpt_log(0, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("unable to set string command handler"));
+		/* invalidate 'close' command without metatype deref */
+		cmd->cmd = 0;
+		cmd->arg = 0;
+		return MPT_ERROR(BadOperation);
 	}
 	/* disable default event */
 	id = mpt_hash("stop", 4);

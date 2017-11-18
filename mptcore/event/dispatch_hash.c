@@ -32,7 +32,7 @@ extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	MPT_STRUCT(message) msg;
 	MPT_STRUCT(msgtype) mt = MPT_MSGTYPE_INIT;
 	MPT_STRUCT(command) *cmd;
-	ssize_t	len;
+	ssize_t len;
 	
 	if (!ev) {
 		return 0;
