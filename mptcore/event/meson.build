@@ -8,9 +8,10 @@ src = files(
   'dispatch_emit.c',
   'dispatch_finit.c',
   'dispatch_hash.c',
+  'dispatch_meta.c',
   'dispatch_set.c',
   'event_command.c',
-  'meta_events.c',
+  'notify_dispatch.c',
   'reply_deferrable.c',
   'reply_set.c',
 )

@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "notify.h"
+#include "../mptio/notify.h"
+
+#include "event.h"
 
 static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 {
@@ -30,14 +32,15 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
 	return mpt_dispatch_emit(disp, ev);
 }
 /*!
- * \ingroup mptNotify
- * \brief set notify dispatcher
+ * \ingroup mptEvent
+ * \brief new notify dispatcher
  * 
- * Assign dispatcher to notification descriptor.
- * Dispatcher is finalized on controller change.
+ * Assign new dispatcher to notification descriptor.
+ * Dispatch controller adheres to finalize convention.
  * 
  * \param no   notification descriptor
- * \param disp event dispatch bindings
+ * 
+ * \return event dispatch instance
  */
 extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *no)
 {

@@ -148,17 +148,17 @@ static int closeEvent(void *ptr, MPT_STRUCT(event) *ev)
 
 /*!
  * \ingroup mptClient
- * \brief register client events
+ * \brief register generic events
  * 
- * Set event handlers in dispatch descriptor.
+ * Set compatible event handlers in dispatch descriptor.
  * 
  * \param dsp  dispatch descriptor
- * \param meta target metatype
+ * \param mt   target metatype
  * 
  * \retval 0  success
  * \retval <0 failed to register reference
  */
-extern int mpt_meta_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *mt)
+extern int mpt_dispatch_meta(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *mt)
 {
 	uintptr_t id;
 	
@@ -176,7 +176,7 @@ extern int mpt_meta_events(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype) *m
 		MPT_STRUCT(command) *cmd;
 		cmd = mpt_command_get(&dsp->_d, id);
 		if (!cmd) {
-			MPT_ABORT("lost command with registered reference");
+			MPT_ABORT("lost command with metatype reference");
 		}
 		mpt_log(0, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("unable to set string command handler"));

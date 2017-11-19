@@ -11,6 +11,7 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(message);
+MPT_STRUCT(notify);
 
 MPT_INTERFACE(iterator);
 
@@ -218,8 +219,11 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
-/* register events on notifier */
-extern int mpt_meta_events(MPT_STRUCT(dispatch) *, MPT_INTERFACE(metatype) *);
+/* register generic events on notifier */
+extern int mpt_dispatch_meta(MPT_STRUCT(dispatch) *, MPT_INTERFACE(metatype) *);
+
+/* create event dispatcher for notifier */
+extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
 
 /* register dispatch output control operations */
 extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, uintptr_t , MPT_INTERFACE(metatype) *);

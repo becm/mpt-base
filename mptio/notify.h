@@ -91,9 +91,6 @@ int mpt_notify_bind(MPT_STRUCT(notify) *, const char *, int __MPT_DEFPAR(2));
 /* add input connected to destination */
 int mpt_notify_connect(MPT_STRUCT(notify) *, const char *);
 
-/* create event dispatcher for notifier */
-extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
-
 /* execute get/dispatch in loop */
 extern int mpt_loop(MPT_STRUCT(notify) *);
 
