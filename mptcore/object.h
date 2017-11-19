@@ -70,6 +70,9 @@ extern int mpt_object_set_value(MPT_INTERFACE(object) *, const char *, MPT_STRUC
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
 
+/* set properties from iterator elements */
+extern int mpt_object_args(MPT_INTERFACE(object) *, MPT_INTERFACE(iterator) *);
+
 /* set properties matching node identifiers to node values */
 extern int mpt_object_set_node(MPT_INTERFACE(object) *, const MPT_STRUCT(node) *, int);
 

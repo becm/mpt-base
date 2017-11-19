@@ -6,43 +6,43 @@
 
 #include "meta.h"
 
-#include "config.h"
+#include "object.h"
 
 /*!
- * \ingroup mptClient
- * \brief set config elements
+ * \ingroup mptObject
+ * \brief set object properties
  * 
- * Assign config to properties or strings from iterator.
+ * Assign object properties to iterator arguments.
  * 
- * \param cfg   configuration target
- * \param args  elements to set
+ * \param obj   object interface
+ * \param args  source for properties to set
  * 
  * \return error or offset of first failed element
  */
-extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *args)
+extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *args)
 {
-	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(property) pr;
 	int res, count;
 	
-	if (!args) {
-		res = cfg->_vptr->assign(cfg, &p, 0);
-		return res < 0 ? res : 0;
-	}
-	count = 0;
-	p.assign = '=';
 	do {
+		char name[256];
 		/* get assign target */
 		if ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr)) < 0) {
 			const char *end;
-			res = args->_vptr->get(args, 's', &pr.name);
+			size_t len;
+			res = args->_vptr->get(args, 's', &end);
 			if (res < 0) {
 				return (res && count) ? count : res;
 			}
-			if (!(end = pr.name) || !(end = strchr(end, '='))) {
+			if (!(pr.name = end) || !(end = strchr(end, '='))) {
 				return count ? count : MPT_ERROR(BadValue);
 			}
-			mpt_path_set(&p, pr.name, end - pr.name);
+			len = end - pr.name;
+			if (len >= sizeof(name)) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			name[len++] = 0;
+			pr.name = memcpy(name, pr.name, len);
 			pr.val.fmt = 0;
 			pr.val.ptr = end + 1;
 		}
@@ -50,10 +50,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 		else if (!pr.name) {
 			return count ? count : MPT_ERROR(BadType);
 		}
-		else {
-			mpt_path_set(&p, pr.name, -1);
-		}
-		if (cfg->_vptr->assign(cfg, &p, &pr.val) < 0) {
+		if (mpt_object_set_value(obj, pr.name, &pr.val) < 0) {
 			return count ? count : MPT_ERROR(BadValue);
 		}
 		/* assign config */

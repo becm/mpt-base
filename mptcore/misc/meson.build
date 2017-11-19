@@ -13,6 +13,7 @@ src = files(
   'meta_new.c',
   'metatype_default.c',
   'mode_parse.c',
+  'object_args.c',
   'object_foreach.c',
   'object_set.c',
   'object_set_iterator.c',
