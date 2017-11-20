@@ -1,7 +1,7 @@
 # create MPT core library
 cmake_minimum_required(VERSION 2.6)
 
-set(headers core.h meta.h object.h output.h)
+set(headers core.h)
 
 set(subdirs
   array
@@ -10,7 +10,10 @@ set(subdirs
   convert
   event
   message
+  meta
   node
+  object
+  output
   parse
   queue
 )
