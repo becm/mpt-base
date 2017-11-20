@@ -120,8 +120,8 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	};
 	static const MPT_INTERFACE_VPTR(iterator) iterBuffer = {
 		bufferGet,
-		bufferReset,
-		bufferAdvance
+		bufferAdvance,
+		bufferReset
 	};
 	MPT_STRUCT(metaBuffer) *m;
 	
@@ -209,8 +209,8 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 	};
 	static const MPT_INTERFACE_VPTR(iterator) iterBuffer = {
 		bufferGet,
-		bufferResetArgs,
-		bufferAdvance
+		bufferAdvance,
+		bufferResetArgs
 	};
 	MPT_INTERFACE(metaBuffer) *m;
 	
