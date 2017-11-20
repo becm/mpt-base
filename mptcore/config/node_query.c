@@ -89,8 +89,16 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 		}
 		return match;
 	}
-	if (val && match && !match->_meta) {
-		match->_meta = mpt_meta_new(*val);
+	/* create/replace node data */
+	if (val && match) {
+		MPT_INTERFACE(metatype) *old, *mt;
+		if (!(mt = mpt_meta_new(*val))) {
+			return 0;
+		}
+		if ((old = match->_meta)) {
+			old->_vptr->ref.unref((void *) old);
+		}
+		match->_meta = mt;
 	}
 	return match;
 }
