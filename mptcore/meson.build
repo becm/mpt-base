@@ -12,8 +12,10 @@ foreach d : [
   'event',
   'log',
   'message',
+  'meta',
   'misc',
   'node',
+  'object',
   'output',
   'parse',
   'queue'
