@@ -5,10 +5,6 @@
 #include <stdarg.h>
 #include <inttypes.h>
 
-#ifdef MPT_NO_CONVERT
-# include <string.h>
-#endif
-
 #include "convert.h"
 
 #include "meta.h"
