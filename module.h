@@ -33,7 +33,7 @@ MPT_STRUCT(module_generic)
 __MPT_EXTDECL_BEGIN
 
 /* module header type conversion */
-extern int mpt_module_header_conv(const MPT_STRUCT(module_generic) *, int , void *);
+extern int mpt_module_generic_conv(const MPT_STRUCT(module_generic) *, int , void *);
 
 /* get value and advance source */
 extern int mpt_module_value_init(MPT_STRUCT(module_value) *, const MPT_INTERFACE(metatype) *);
