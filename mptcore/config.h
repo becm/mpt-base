@@ -120,9 +120,11 @@ extern int mpt_config_load(MPT_INTERFACE(config) *, const char *__MPT_DEFPAR(0),
 /* get config of global (sub-)tree */
 extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *);
 
+/* get log target from config */
+extern MPT_INTERFACE(logger) *mpt_config_logger(const MPT_INTERFACE(config) *);
+
+/* get or create node for path */
 extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
-/* use node to store environment */
-extern int mpt_node_environ(MPT_STRUCT(node) *, const char *, int __MPT_DEFPAR('_'), char * const [] __MPT_DEFPAR(0));
 
 /* set path data */
 extern size_t mpt_path_set(MPT_STRUCT(path) *, const char *, int __MPT_DEFPAR(-1));
