@@ -20,6 +20,8 @@ mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
 lua : mptio
 #
+CLEAR_FILES += ${DIR_LIB}/libmpt.a
+CLEAN_FILES += module_value.o module_generic_conv.o
 # dispatch target to subdirectories
 sub_% :
 	@for m in ${SUB}; do \
@@ -36,10 +38,13 @@ static++ :
 examples_% :
 	${MAKE} -C examples $(@:examples_%=%)
 #
-# combined static library
+clear :
+	${RM} "${CLEAR_FILES}"
+
 clear :
 	${RM} "${DIR_LIB}/libmpt.a"
 
+# combined static library
 "${DIR_LIB}/libmpt.a" :
 	@for m in ${MERGE}; do \
 		if ! ${MAKE} -C "$${m}" static LIB=mpt "DIR_LIB=${DIR_LIB}"; then exit 1; fi; \

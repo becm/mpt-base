@@ -1,6 +1,7 @@
 # mpt.example.mk: template for examples
 #
 # include global configuration
+DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # preprocessor/compiler flags
@@ -47,3 +48,5 @@ sub_% :
 static : ${STATIC} sub_static
 %_static : %.o
 	${CC} -static ${LDFLAGS} -o ${@} $^ ${LDLIBS}
+	
+${DIR_BASE}mod_value.o ${DIR_BASE}module_generic_conv.o : ${DIR_BASE}module.h

@@ -3,7 +3,7 @@
 
 DIRS = core io cxx lua
 TESTS = client graph axis iter gen libassign
-PROGS = readline graphic ${TESTS}
+PROGS = readline graphic module ${TESTS}
 STATIC = libassign_static
 
 client_static : CC=${CXX}
@@ -15,6 +15,8 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 libassign : libassign.o
 libassign : LDLIBS=-lmptloader -lmptcore
 libassign_static : LDLIBS=-lmpt -ldl
+
+module : module.o ${DIR_BASE}module_value.o ${DIR_BASE}module_generic_conv.o
 
 # library config
 graph : LDLIBS=-lmpt++ -lmptcore
