@@ -12,6 +12,8 @@ MPT_STRUCT(module_value)
 	inline module_value() : _it(0)
 	{ }
 protected:
+#else
+# define MPT_MODULE_VALUE_INIT { 0, MPT_VALUE_INIT }
 #endif
 	MPT_INTERFACE(iterator) *_it;
 	MPT_STRUCT(value) _val;
