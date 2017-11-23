@@ -70,12 +70,20 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		if (ptr) *((const char **) ptr) = fmt;
 		return MPT_ENUM(TypeObject);
 	}
+	if (type == MPT_ENUM(TypeMeta)) {
+		if (ptr) *((void **) ptr) = lo->pass;
+		return MPT_ENUM(TypeOutput);
+	}
 	if (type == MPT_ENUM(TypeObject)) {
 		if (ptr) *((void **) ptr) = &lo->_obj;
 		return MPT_ENUM(TypeOutput);
 	}
 	if (type == MPT_ENUM(TypeOutput)) {
 		if (ptr) *((void **) ptr) = &lo->_out;
+		return MPT_ENUM(TypeObject);
+	}
+	if (type == MPT_ENUM(TypeLogger)) {
+		if (ptr) *((void **) ptr) = &lo->_log;
 		return MPT_ENUM(TypeObject);
 	}
 	if (type == MPT_ENUM(TypeFile)) {
@@ -99,12 +107,12 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutput);
 	}
 	if ((name = pr->name) && !*name) {
-		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
 		pr->name = "history";
-		pr->desc = MPT_tr("local output filter");
+		pr->desc = MPT_tr("local data output");
 		pr->val.fmt = fmt;
-		pr->val.ptr = &lo->pass;
-		return lo->pass ? 1 : 0;
+		pr->val.ptr = &lo->hist.info.file;
+		return lo->hist.info.file ? 1 : 0;
 	}
 	return mpt_history_get(&lo->hist, pr);
 }
@@ -117,26 +125,35 @@ static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTE
 		return mpt_history_set(&lo->hist, name, src);
 	}
 	if (!*name) {
-		MPT_INTERFACE(metatype) *mt;
+		MPT_INTERFACE(metatype) *mt, *old;
 		MPT_INTERFACE(output) *out;
 		int ret;
 		if (!src) {
 			return MPT_ERROR(BadValue);
 		}
-		out = 0;
-		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeOutput), &out)) < 0) {
+		/* get modifyable instance pointer */
+		mt = 0;
+		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeMeta), &mt)) < 0) {
 			return ret;
 		}
+		if (!mt) {
+			return MPT_ERROR(BadValue);
+		}
+		out = 0;
+		if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out)) < 0) {
+			return ret;
+		}
+		/* avoid circular redirection */
 		if (!out || out == &lo->_out) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!src->_vptr->ref.addref((void *) src)) {
+		if (!mt->_vptr->ref.addref((void *) mt)) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((mt = lo->pass)) {
-			mt->_vptr->ref.unref((void *) mt);
+		if ((old = lo->pass)) {
+			old->_vptr->ref.unref((void *) old);
 		}
-		lo->pass = (void *) src;
+		lo->pass = mt;
 		return ret;
 	}
 	if ((ret = mpt_history_set(&lo->hist, name, src)) >= 0) {
@@ -216,19 +233,13 @@ static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, cons
 
 /*!
  * \ingroup mptOutput
- * \brief create output
+ * \brief create local output
  * 
- * New local output descriptor.
+ * Create instance of object metatype adhering to
+ * generic module interface as well as output
+ * and logger interfaces.
  * 
- * If existing output descriptor is supplied
- * incompatible or explicit remote messages
- * are redirected.
- * 
- * Created instance takes ownership of passed reference.
- * 
- * \param pass  chained output descriptor
- * 
- * \return output descriptor
+ * \return output metatype
  */
 extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 {
@@ -250,7 +261,8 @@ extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 		localLog
 	};
 	static const MPT_STRUCT(local_output) defOut = {
-		{ &localMeta }, { &localObject }, { &localOutput }, { &localLogger },
+		{ &localMeta },
+		{ &localObject }, { &localOutput }, { &localLogger },
 		{ 1 }, 0, MPT_HISTORY_INIT
 	};
 	MPT_STRUCT(local_output) *od;
@@ -266,4 +278,3 @@ extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 	
 	return &od->_mt;
 }
-
