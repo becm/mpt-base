@@ -98,15 +98,11 @@ int main(int argc, char * const argv[])
     
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
     
-    mpt::iterator *it;
-    if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))
-        && (it = mt->cast<mpt::iterator>())) {
+    if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))) {
+        mpt::consumable v(*mt);
         const char *arg;
-        while (it->get('s', &arg) > 0) {
+        while (v.consume(arg)) {
             std::cerr << arg << std::endl;
-            if (it->advance() <= 0) {
-                break;
-            }
         }
     }
 }

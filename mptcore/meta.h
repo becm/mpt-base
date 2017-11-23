@@ -92,11 +92,48 @@ MPT_INTERFACE_VPTR(iterator)
 MPT_STRUCT(consumable)
 {
 #ifdef __cplusplus
-	inline consumable() : _it(0)
-	{ }
+	inline consumable(const metatype &mt)
+	{
+	    if ((_it = mt.cast<iterator>())) return;
+	    mt.conv(_val.Type, &_val);
+	}
+	template <typename T>
+	bool consume(T &val)
+	{
+		int type = typeIdentifier(val);
+		if (_it) {
+			T tmp;
+			if (_it->get(type, &tmp) <= 0) {
+				return false;
+			}
+			if (_it->advance() < 0) {
+				return false;
+			}
+			val = tmp;
+			return true;
+		}
+		if (_val.fmt) {
+			const T *ptr;
+			if (!*_val.fmt
+			    || type != *_val.fmt
+			    || !(ptr = static_cast<const T *>(_val.ptr))) {
+				return false;
+			}
+			val = *ptr;
+			++_val.fmt;
+			_val.ptr = ptr + 1;
+			return true;
+		}
+		if (type == 's') {
+			val = static_cast<const char *>(_val.ptr);
+			_val.ptr = 0;
+			return true;
+		}
+		return BadType;
+	}
 protected:
 #else
-# define MPT_MODULE_VALUE_INIT { 0, MPT_VALUE_INIT }
+# define MPT_CONSUMABLE_INIT { 0, MPT_VALUE_INIT }
 #endif
 	MPT_INTERFACE(iterator) *_it;
 	MPT_STRUCT(value) _val;
