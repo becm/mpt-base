@@ -6,6 +6,7 @@ src = files(
   'config_get.c',
   'config_global.c',
   'config_load.c',
+  'config_logger.c',
   'config_set.c',
   'node_assign.c',
   'node_query.c',

@@ -16,9 +16,6 @@ libassign : libassign.o
 libassign : LDLIBS=-lmptloader -lmptcore
 libassign_static : LDLIBS=-lmpt -ldl
 
-module : module.o ${DIR_BASE}module_value.o ${DIR_BASE}module_generic_conv.o
-module : LDLIBS=-lmptloader
-
 # library config
 graph : LDLIBS=-lmpt++ -lmptcore
 client : LDLIBS=-lmpt++ -lmptio -lmptloader -lmptcore

@@ -1,54 +1,13 @@
 /*!
- * MPT solver module helper function
+ * MPT conversion helper function
  *   unify value/iterator value conversion/advance
  */
 
 #include <string.h>
 
-#include <sys/uio.h>
+#include "meta.h"
 
-#include "module.h"
-
-/*!
- * \ingroup mptModule
- * \brief set solver value
- * 
- * Convert metatype to module value source type.
- * 
- * \param val  module value data
- * \param mt   source metatype
- * 
- * \return conversion result
- */
-extern int mpt_module_value_init(MPT_STRUCT(module_value) *val, const MPT_INTERFACE(metatype) *mt)
-{
-	MPT_STRUCT(value) tmp;
-	int ret;
-	
-	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeIterator), &val->_it)) >= 0) {
-		val->_val.fmt = 0;
-		val->_val.ptr = 0;
-		if (!val->_it) {
-			return 0;
-		}
-		return MPT_ENUM(TypeIterator);
-	}
-	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeValue), &tmp)) >= 0) {
-		if (tmp.fmt && !tmp.ptr) {
-			return MPT_ERROR(BadValue);
-		}
-		val->_it = 0;
-		val->_val = tmp;
-		return MPT_ENUM(TypeValue);
-	}
-	if ((ret = mt->_vptr->conv(mt, 's', &val->_val.ptr)) >= 0) {
-		val->_it = 0;
-		val->_val.fmt = 0;
-		return 's';
-	}
-	return MPT_ERROR(BadType);
-}
-static int solverNext(MPT_STRUCT(module_value) *val, void *dest, int type, size_t len)
+static int solverNext(MPT_STRUCT(consumable) *val, void *dest, int type, size_t len)
 {
 	MPT_INTERFACE(iterator) *it;
 	int ret;
@@ -95,6 +54,15 @@ static int solverNext(MPT_STRUCT(module_value) *val, void *dest, int type, size_
 		val->_val.ptr = ((uint8_t *) val->_val.ptr) + len;
 		return fmt;
 	}
+	if (type == 's'
+	    || type == 'k') {
+		if (!val->_val.ptr) {
+			return 0;
+		}
+		if (dest) *((const char **) dest) = val->_val.ptr;
+		val->_val.ptr = 0;
+		return MPT_ENUM(TypeValue);
+	}
 	return MPT_ERROR(BadType);
 }
 
@@ -109,7 +77,7 @@ static int solverNext(MPT_STRUCT(module_value) *val, void *dest, int type, size_
  * 
  * \return conversion result
  */
-extern int mpt_module_value_double(MPT_STRUCT(module_value) *val, double *ptr)
+extern int mpt_consume_double(MPT_STRUCT(consumable) *val, double *ptr)
 {
 	return solverNext(val, ptr, 'd', sizeof(*ptr));
 }
@@ -124,7 +92,7 @@ extern int mpt_module_value_double(MPT_STRUCT(module_value) *val, double *ptr)
  * 
  * \return conversion result
  */
-extern int mpt_module_value_key(MPT_STRUCT(module_value) *val, const char **ptr)
+extern int mpt_consume_key(MPT_STRUCT(consumable) *val, const char **ptr)
 {
 	return solverNext(val, ptr, 'k', sizeof(*ptr));
 }
@@ -139,7 +107,7 @@ extern int mpt_module_value_key(MPT_STRUCT(module_value) *val, const char **ptr)
  * 
  * \return conversion result
  */
-extern int mpt_module_value_uint(MPT_STRUCT(module_value) *val, uint32_t *ptr)
+extern int mpt_consume_uint(MPT_STRUCT(consumable) *val, uint32_t *ptr)
 {
 	return solverNext(val, ptr, 'u', sizeof(*ptr));
 }
@@ -154,7 +122,7 @@ extern int mpt_module_value_uint(MPT_STRUCT(module_value) *val, uint32_t *ptr)
  * 
  * \return conversion result
  */
-extern int mpt_module_value_int(MPT_STRUCT(module_value) *val, int32_t *ptr)
+extern int mpt_consume_int(MPT_STRUCT(consumable) *val, int32_t *ptr)
 {
 	return solverNext(val, ptr, 'i', sizeof(*ptr));
 }

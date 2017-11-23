@@ -6,7 +6,6 @@ graph
 graphic
 iter
 libassign
-module
 readline
 
 # exclude static binaries
