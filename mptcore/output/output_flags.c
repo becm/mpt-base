@@ -1,6 +1,4 @@
 
-#include <stdio.h>
-
 #include "output.h"
 
 /*!
@@ -15,7 +13,7 @@
  * 
  * \return outdata print state
  */
-extern int mpt_output_type(uint8_t arg, int max)
+extern int mpt_output_flags(uint8_t arg, int max)
 {
 	if (!arg) {
 		return MPT_OUTFLAG(PrintNormal);

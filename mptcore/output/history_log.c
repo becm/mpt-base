@@ -1,26 +1,18 @@
 /*!
- * finalize connection data
+ * log to file
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
 
-#include "event.h"
-#include "message.h"
-#include "array.h"
-
-#include "stream.h"
 #include "convert.h"
 
 #include "output.h"
 
 /*!
  * \ingroup mptOutput
- * \brief push to history
+ * \brief log to history
  * 
- * Append data to history descriptor or pass to next output.
+ * Print log message to history.
  * 
  * \param hist  history descriptor
  * \param from  log data origin

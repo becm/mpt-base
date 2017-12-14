@@ -8,11 +8,9 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 
 #include <unistd.h>
 
-#include "array.h"
 #include "message.h"
 #include "convert.h"
 
@@ -165,7 +163,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	else {
 		return MPT_ERROR(BadType);
 	}
-	flags = mpt_output_type(type, hist->ignore);
+	flags = mpt_output_flags(type, hist->ignore);
 	
 	hist->state |= MPT_OUTFLAG(Active);
 	switch (flags & 0x3) {

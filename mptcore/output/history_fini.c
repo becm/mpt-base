@@ -4,8 +4,6 @@
 
 #include <stdio.h>
 
-#include "array.h"
-
 #include "output.h"
 
 /*!

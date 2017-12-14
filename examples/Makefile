@@ -3,7 +3,7 @@
 
 DIRS = core io cxx lua
 TESTS = client graph axis iter gen libassign
-PROGS = readline graphic module ${TESTS}
+PROGS = readline graphic ${TESTS}
 STATIC = libassign_static
 
 client_static : CC=${CXX}

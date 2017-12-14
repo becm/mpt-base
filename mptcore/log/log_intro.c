@@ -11,8 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "core.h"
-
+#include "output.h"
 
 /*!
  * \ingroup mptLog

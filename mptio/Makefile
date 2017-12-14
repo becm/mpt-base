@@ -11,7 +11,7 @@ HEADER = notify.h stream.h
 sources = \
 	connect.c \
 	input_create.c input_typeid.c \
-	output_local.c output_remote.c
+	output_remote.c
 SRCS := $(wildcard */*.c) ${sources}
 #
 # shared library options

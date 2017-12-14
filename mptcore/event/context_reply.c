@@ -14,6 +14,8 @@
 #include <sys/uio.h>
 
 #include "message.h"
+#include "output.h"
+
 #include "event.h"
 
 /*!
@@ -24,7 +26,7 @@
  * 
  * \param ev   event data
  * \param code message type
- * \param data message text
+ * \param fmt  format string
  * 
  * \return result of send operation
  */

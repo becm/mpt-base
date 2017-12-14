@@ -1,6 +1,5 @@
 # meson.build.gen: *.c
 src = files(
-  'ansi_code.c',
   'memchr.c',
   'memcpy.c',
   'memfcn.c',

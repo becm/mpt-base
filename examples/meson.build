@@ -43,7 +43,7 @@ if with_io
       executable('libassign', 'libassign.c',
         c_args: test_defines,
         dependencies: load),
-      env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptio') ])
+      env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptplot') ])
   endif
   test('I/O pipe',
     executable('pipe', join_paths('io', 'pipe.c'),

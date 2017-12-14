@@ -8,6 +8,8 @@
 #include <string.h>
 #include <strings.h> /* for strcasecmp() */
 
+#include <unistd.h>
+
 #include "meta.h"
 #include "array.h"
 
@@ -18,37 +20,40 @@
 static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype) *src)
 {
 	const char *where = 0;
-	int len = 0;
 	FILE *fd;
+	int len, file = -1;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
 	}
-	if (src && (len = src->_vptr->conv(src, 's', &where)) < 0) {
-		return len;
-	}
-	
-	if (!where) {
+	/* default output */
+	if (!src) {
 		fd = stdout;
-	} else if (!*where) {
-		fd = 0;
-	} else {
-		MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
-		int mode;
-		
-		/* try to use argument as connect string */
-		if ((mode = mpt_connect(&sock, where, 0)) >= 0) {
-			if (!(mode & MPT_SOCKETFLAG(Stream))
-			    || !(mode & MPT_SOCKETFLAG(Write))
-			    || !(fd = fdopen(sock._id, "w"))) {
-				mpt_connect(&sock, 0, 0);
-				return -1;
-			}
+		len = 0;
+	}
+	/* use file descriptor */
+	else if ((len = src->_vptr->conv(src, MPT_ENUM(TypeFile), &file)) >= 0) {
+		if (file < 0) {
+			fd = 0;
 		}
+		else if ((file = dup(file)) < 0) {
+			return MPT_ERROR(BadOperation);
+		}
+		else if (!(fd = fdopen(file, "w"))) {
+			close(file);
+			return MPT_ERROR(BadArgument);
+		}
+	}
+	/* use file path */
+	else if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
+		len = 1;
 		/* regular file path */
-		else if (!(fd = fopen(where, "w"))) {
-			return -1;
+		if (where && !(fd = fopen(where, "w"))) {
+			return MPT_ERROR(BadArgument);
 		}
+	}
+	else {
+		return MPT_ERROR(BadType);
 	}
 	if (hist->file && (hist->file != stdout) && (hist->file != stderr)) {
 		fclose(hist->file);

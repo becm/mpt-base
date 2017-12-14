@@ -4,14 +4,14 @@
 #include "message.h"
 
 /*!
- * \ingroup mptMessage
- * \brief message type colour
+ * \ingroup mptOutput
+ * \brief ansi colour code
  * 
- * Determine ANSI colour for message of specified severity.
+ * Determine ANSI colour for log entry of specified severity.
  * 
- * \param type type of message
+ * \param type type of log entry
  * 
- * \return ANSI display attribute string
+ * \return ANSI attribute string
  */
 extern const char *mpt_ansi_code(uint8_t type)
 {
@@ -27,12 +27,12 @@ extern const char *mpt_ansi_code(uint8_t type)
 }
 
 /*!
- * \ingroup mptMessage
- * \brief display restore code
+ * \ingroup mptOutput
+ * \brief ansi restore code
  * 
  * Get ANSI code to restore default display attributes
  * 
- * \return ANSI display attribute string
+ * \return ANSI reset string
  */
 extern const char *mpt_ansi_reset(void)
 {

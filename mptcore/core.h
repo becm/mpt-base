@@ -249,10 +249,6 @@ extern int mpt_valtype_id(const char *, int);
 extern int mpt_valtype_meta_new(const char *);
 extern int mpt_valtype_interface_new(const char *);
 
-/* determine message ANSI color code */
-extern const char *mpt_ansi_code(uint8_t);
-extern const char *mpt_ansi_reset(void);
-
 /* calculate environment-depending hash for data */
 extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
 

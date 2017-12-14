@@ -11,8 +11,6 @@
 #include "convert.h"
 #include "meta.h"
 
-#include "stream.h"
-
 #include "output.h"
 
 /*!

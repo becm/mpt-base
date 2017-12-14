@@ -28,7 +28,6 @@
 extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 {
 	MPT_INTERFACE(input) *in;
-	MPT_INTERFACE(object) *obj;
 	int fd = -1;
 	
 	/* use stdin */
@@ -45,8 +44,9 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 			errno = EINVAL;
 			return 0;
 		}
-		if (!MPT_stream_writable(sm.stream)
-		    && (fd = open(ctl + pos, O_RDONLY)) < 0) {
+		if (!sm.family
+		    && !MPT_stream_writable(sm.stream)
+		    && (fd = open(ctl + pos, sm.param.file.open)) < 0) {
 			return 0;
 		}
 	}
@@ -60,21 +60,17 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 		}
 		return in;
 	}
-	obj = 0;
-	if (!(in = mpt_output_remote())) {
-		return 0;
-	}
-	if (in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeObject), &obj) < 0
-	    || !obj) {
-		errno = EINVAL;
-		in->_vptr->meta.ref.unref((void *) in);
-		return 0;
-	}
-	else {
+	if ((in = mpt_output_remote())) {
 		MPT_STRUCT(value) val = MPT_VALUE_INIT;
+		MPT_INTERFACE(object) *obj = 0;
+		
 		val.ptr = ctl;
-		if (mpt_object_set_value(obj, 0, &val) < 0) {
+		
+		if (in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeObject), &obj) < 0
+		    || !obj
+		    || mpt_object_set_value(obj, 0, &val) < 0) {
 			in->_vptr->meta.ref.unref((void *) in);
+			errno = EINVAL;
 			return 0;
 		}
 	}

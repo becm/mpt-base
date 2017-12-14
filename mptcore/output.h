@@ -186,8 +186,12 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *, size_t , const void *);
 /* print to history channel */
 extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *, size_t , const void *);
 
-/* determine output print type */
-extern int mpt_output_type(uint8_t arg, int min);
+/* determine output print flags */
+extern int mpt_output_flags(uint8_t arg, int min);
+
+/* determine message ANSI color code */
+extern const char *mpt_ansi_code(uint8_t);
+extern const char *mpt_ansi_reset(void);
 
 /* close outdata connection and buffer */
 extern void mpt_outdata_close(MPT_STRUCT(outdata) *);

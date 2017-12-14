@@ -69,11 +69,11 @@ extern int _mpt_geninfo_set(void *raw, const char *src, int len)
 		return MPT_ERROR(MissingBuffer);
 	}
 	if (!src) {
-		memset(info+1, 0, len);
+		memset(info + 1, 0, len);
 	} else {
-		memcpy(info+1, src, len);
+		memcpy(info + 1, src, len);
 	}
-	((char *) (info+1))[len] = 0;
+	((char *) (info + 1))[len] = 0;
 	info->used = len + 1;
 	
 	return 0;

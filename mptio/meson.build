@@ -5,7 +5,6 @@
 io_src = files(
   'connect.c',
   'input_typeid.c',
-  'output_local.c',
   'output_remote.c'
 )
 foreach d : [ 'notify', 'outdata', 'stream' ]

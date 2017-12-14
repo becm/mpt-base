@@ -8,7 +8,11 @@ INC = . .. ../mptcore
 HEADER = layout.h values.h
 #
 # source summary
-SRCS := mapping.c $(wildcard */*.c)
+SRCS := \
+	history_push.c history_values.c \
+	mapping.c \
+	output_local.c \
+	$(wildcard */*.c)
 #
 # library options
 SHLIB_MAJOR = 1

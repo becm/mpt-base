@@ -24,7 +24,7 @@ int main()
 	mtrace();
 	
 	/* load I/O library and assign symbol */
-	if ((str = mpt_library_assign(&lh, "mpt_output_local@libmptio.so.1", getenv("MPT_PREFIX_LIB")))) {
+	if ((str = mpt_library_assign(&lh, "mpt_output_local@libmptplot.so.1", getenv("MPT_PREFIX_LIB")))) {
 		fputs(str, stderr);
 		return 1;
 	}
