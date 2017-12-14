@@ -127,8 +127,13 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	/* get/create config base node */
 	if (c->base.len) {
 		MPT_STRUCT(path) p = c->base;
-		if (!(n = mpt_node_assign(b, &p, 0))) {
-			return val ? MPT_ERROR(BadOperation) : 0;
+		if (!(n = mpt_node_query(n, &p, 0))) {
+			if (!val) {
+				return 0;
+			}
+			if (!(n = mpt_node_assign(b, &c->base, 0))) {
+				return MPT_ERROR(BadOperation);
+			}
 		}
 		b = &n->children;
 	}
