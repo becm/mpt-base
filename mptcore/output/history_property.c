@@ -21,7 +21,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 {
 	const char *where = 0;
 	FILE *fd;
-	int len, file = -1;
+	int len, sock = -1;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
@@ -31,16 +31,16 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 		fd = stdout;
 		len = 0;
 	}
-	/* use file descriptor */
-	else if ((len = src->_vptr->conv(src, MPT_ENUM(TypeFile), &file)) >= 0) {
-		if (file < 0) {
+	/* use socket descriptor */
+	else if ((len = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0) {
+		if (sock < 0) {
 			fd = 0;
 		}
-		else if ((file = dup(file)) < 0) {
+		else if ((sock = dup(sock)) < 0) {
 			return MPT_ERROR(BadOperation);
 		}
-		else if (!(fd = fdopen(file, "w"))) {
-			close(file);
+		else if (!(fd = fdopen(sock, "w"))) {
+			close(sock);
 			return MPT_ERROR(BadArgument);
 		}
 	}
@@ -81,7 +81,7 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, const MP
 		return setHistfile(&hist->info, src);
 	}
 	if (!*name) {
-		return setHistfile(&hist->info, src);
+		return MPT_ERROR(BadArgument);
 	}
 	if (!strcasecmp(name, "file")) {
 		return setHistfile(&hist->info, src);
@@ -140,7 +140,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const char fmt[] = { MPT_ENUM(TypeOutput), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("output values and messages");
 		pr->val.fmt = fmt;
@@ -159,15 +159,17 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 	if (name ? (!strcasecmp(name, "format") || !strcasecmp(name, "histfmt") || !strcasecmp(name, "fmt")) :  pos == id++) {
 		static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
 		MPT_STRUCT(buffer) *buf;
+		int len;
 		pr->name = "format";
 		pr->desc = MPT_tr("history data output format");
 		pr->val.fmt = fmt;
 		pr->val.ptr = 0;
-		if (!(buf = hist->fmt._fmt._buf)) {
+		if (!(buf = hist->fmt._fmt._buf)
+		    || !(len = buf->_used / sizeof(MPT_STRUCT(valfmt)))) {
 			return 0;
 		}
 		pr->val.ptr = buf + 1;
-		return buf->_used / sizeof(MPT_STRUCT(valfmt));
+		return len;
 	}
 	if (name ? !strcasecmp(name, "ignore") : pos == id++) {
 		pr->name = "ignore";

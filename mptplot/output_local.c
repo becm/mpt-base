@@ -107,12 +107,12 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutput);
 	}
 	if ((name = pr->name) && !*name) {
-		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeMeta), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("local data output");
 		pr->val.fmt = fmt;
-		pr->val.ptr = &lo->hist.info.file;
-		return lo->hist.info.file ? 1 : 0;
+		pr->val.ptr = &lo->pass;
+		return lo->pass ? 1 : 0;
 	}
 	return mpt_history_get(&lo->hist, pr);
 }
