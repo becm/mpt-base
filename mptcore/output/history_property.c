@@ -78,7 +78,12 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, const MP
 {
 	int ret;
 	if (!name) {
-		return setHistfile(&hist->info, src);
+		if (src) {
+			return setHistfile(&hist->info, src);
+		}
+		mpt_history_fini(hist);
+		hist->info.file = stdout;
+		return 0;
 	}
 	if (!*name) {
 		return MPT_ERROR(BadArgument);

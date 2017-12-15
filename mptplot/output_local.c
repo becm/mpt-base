@@ -215,7 +215,7 @@ static int localSync(MPT_INTERFACE(output) *out, int timeout)
 	if (!(out = localPassOutput(MPT_baseaddr(local_output, out, _out)))) {
 		return MPT_ERROR(BadOperation);
 	}
-	return out ? out->_vptr->sync(out, timeout) : 0;
+	return out->_vptr->sync(out, timeout);
 }
 /* logger interface */
 static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, const char *fmt, va_list arg)
