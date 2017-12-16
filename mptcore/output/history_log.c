@@ -27,6 +27,11 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 	const char *reset, *newline;
 	FILE *fd;
 	
+	/* discard lower priority log message */
+	if (hist->ignore
+	    && (type & 0x1f) >= hist->ignore) {
+		return 0;
+	}
 	/* message being composed */
 	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
@@ -39,6 +44,10 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 	else {
 		fd = (type & ~MPT_LOG(File)) ? stderr : stdout;
 		newline = mpt_newline_string(0);
+		/* force color for terminal output */
+		if ((hist->state & MPT_OUTFLAG(PrintColor))) {
+			type |= MPT_ENUM(LogPretty);
+		}
 	}
 	/* write intro */
 	reset = mpt_log_intro(fd, type);
