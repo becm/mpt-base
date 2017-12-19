@@ -37,7 +37,7 @@ extern int mpt_stream_sockflags(int flg)
 	  case MPT_SOCKETFLAG(Write):
 		return MPT_STREAMFLAG(Write) | MPT_STREAMFLAG(WriteBuf);
 	  case MPT_SOCKETFLAG(RdWr):
-		return MPT_STREAMFLAG(RdWr)  | MPT_STREAMFLAG(ReadBuf);
+		return MPT_STREAMFLAG(RdWr)  | MPT_STREAMFLAG(Buffer);
 	  default:
 		return 0;
 	}

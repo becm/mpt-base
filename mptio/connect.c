@@ -186,7 +186,7 @@ extern int mpt_bind(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRUCT(
 				return res;
 			}
 		}
-		if ((sock = open(where, info.param.file.open, info.param.file.perm)) < 0) {
+		if ((sock = open(where + sock, info.param.file.open, info.param.file.perm)) < 0) {
 			if (res >= 0) {
 				unlink(where);
 			}
@@ -267,7 +267,7 @@ extern int mpt_connect(MPT_STRUCT(socket) *sd, const char *where, const MPT_STRU
 		info.stream  = (info.param.file.open & O_WRONLY) ? MPT_SOCKETFLAG(Write) : MPT_SOCKETFLAG(Read);
 		info.stream |= MPT_SOCKETFLAG(Stream);
 	}
-	else if ((sock = socketSet(where, &info, connect)) < 0) {
+	else if ((sock = socketSet(where + type, &info, connect)) < 0) {
 		return sock;
 	}
 	if (sd->_id >= 0) {
