@@ -171,7 +171,14 @@ static int bufferConvArgs(const MPT_INTERFACE(metatype) *mt, int type, void *ptr
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (ptr) *((const void **) ptr) = &m->_it;
+		if (ptr) {
+			MPT_STRUCT(buffer) *buf = m->s._a._buf;
+			if (buf && m->s._off < buf->_used) {
+				*((const void **) ptr) = &m->_it;
+			} else {
+				*((const void **) ptr) = 0;
+			}
+		}
 		return MPT_ENUM(TypeArray);
 	}
 	return MPT_ERROR(BadType);

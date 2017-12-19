@@ -34,12 +34,13 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 		if (data) *((const char **) data) = types;
 		return 0;
 	}
-	if (!(buf = s->_a._buf)) {
+	/* no remaining data */
+	if (!(buf = s->_a._buf)
+	    || (len = buf->_used - s->_off) <= 0) {
 		return 0;
 	}
-	/* available space */
+	/* element base address */
 	base = ((char *) (s->_a._buf + 1)) + s->_off;
-	len = buf->_used - s->_off;
 	
 	if (type == MPT_value_toVector('c')
 	    || type == MPT_ENUM(TypeVector)) {
@@ -57,9 +58,6 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 	
 	if (type == 's') {
 		if (data) {
-			if (!end) {
-				return MPT_ERROR(BadValue);
-			}
 			*((const char **) data) = base;
 		}
 		s->_len = len;
@@ -81,7 +79,7 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 		if (data) {
 			*((const char **) data) = key;
 		}
-		s->_len = end - base;
+		s->_len = len;
 		return MPT_value_toVector('c');
 	}
 	if ((len = mpt_convert_string(base, type, data)) <= 0) {
