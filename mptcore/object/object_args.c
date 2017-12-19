@@ -24,29 +24,40 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 	MPT_STRUCT(property) pr;
 	int res, count;
 	
-	do {
+	count = 0;
+	while ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr))) {
 		char name[256];
-		/* get assign target */
-		if ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr)) < 0) {
+		/* use string property */
+		if (res < 0) {
 			const char *end;
-			size_t len;
-			res = args->_vptr->get(args, 's', &end);
-			if (res < 0) {
-				return (res && count) ? count : res;
+			
+			/* string on iterator */
+			if ((res = args->_vptr->get(args, 's', &end)) < 0) {
+				return count ? count : res;
 			}
-			if (!(pr.name = end) || !(end = strchr(end, '='))) {
+			else if (!res) {
+				return count;
+			}
+			/* split property name */
+			if (!(pr.name = end)) {
 				return count ? count : MPT_ERROR(BadValue);
 			}
-			len = end - pr.name;
-			if (len >= sizeof(name)) {
-				return MPT_ERROR(MissingBuffer);
-			}
-			name[len++] = 0;
-			pr.name = memcpy(name, pr.name, len);
+			/* set non-assign options to default value */
 			pr.val.fmt = 0;
-			pr.val.ptr = end + 1;
+			if (!(end = strchr(end, '='))) {
+				pr.val.ptr = 0;
+			} else {
+				size_t len;
+				pr.val.ptr = end + 1;
+				len = end - pr.name;
+				if (len >= sizeof(name)) {
+					return count ? count : MPT_ERROR(MissingBuffer);
+				}
+				name[len++] = 0;
+				pr.name = memcpy(name, pr.name, len);
+			}
 		}
-		/* only single top level assign */
+		/* no top level assign */
 		else if (!pr.name) {
 			return count ? count : MPT_ERROR(BadType);
 		}
@@ -55,8 +66,10 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 		}
 		/* assign config */
 		++count;
-	} while ((res = args->_vptr->advance(args)) > 0);
-	
-	return res ? count : 0;
+		if ((res = args->_vptr->advance(args)) < 0) {
+			return count;
+		}
+	};
+	return count;
 }
 
