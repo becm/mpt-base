@@ -68,36 +68,25 @@ int main(int argc, char * const argv[])
 {
     mtrace();
 
-
     int pos;
     if ((pos = mpt::mpt_init(argc, argv)) < 0) {
         perror("mpt init");
         return 1;
     }
     mpt::notify n;
-    mpt::dispatch d;
-    
-    MyClient c;
-    d.set(mpt::msgtype::Command, doCommand, &c);
-    
-    const mpt::metatype *mt = mpt::mpt_config_get(0, "mpt.input", '.', 0);
-    mpt::input *in;
-    if (!mt) {
-        d.setDefault(mpt::msgtype::Command);
-    }
-    else if (!(in = mt->cast<mpt::input>()) || !in->addref()) {
-        std::cerr << "input reference" << std::endl;
-        return 1;
-    }
-    else if (!n.add(in)) {
-        perror("notify add");
+    if (mpt::mpt_notify_config(&n, 0) < 0) {
         return 2;
     }
+    MyClient c;
+    mpt::dispatch d;
+    d.set(mpt::msgtype::Command, doCommand, &c);
     n.setDispatch(&d);
+
     n.loop();
-    
+
     c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
-    
+
+    const mpt::metatype *mt;
     if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))) {
         mpt::consumable v(*mt);
         const char *arg;

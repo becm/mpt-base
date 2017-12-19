@@ -11,6 +11,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_INTERFACE(config);
+
 #ifdef __cplusplus
 MPT_INTERFACE(input) : public metatype
 {
@@ -99,6 +101,10 @@ extern int mpt_input_typeid(void);
 
 /* create input for connect string */
 extern MPT_INTERFACE(input) *mpt_input_create(const char *);
+
+/* set connect/listen elements from config */
+extern int mpt_notify_config(MPT_STRUCT(notify) *, const MPT_INTERFACE(config) *);
+
 
 __MPT_EXTDECL_END
 
