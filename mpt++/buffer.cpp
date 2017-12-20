@@ -96,7 +96,7 @@ int Buffer::get(int type, void *ptr)
     size_t off = _d.length() - _state.done;
     slice s(_d);
     s.shift(off);
-    if ((type = mpt_slice_get(&s, type, ptr)) < 0) {
+    if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
         return type;
     }
     int me = IODevice::typeIdentifier();
