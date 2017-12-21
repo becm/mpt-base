@@ -12,8 +12,7 @@
 MPT_STRUCT(configRoot) {
 	MPT_INTERFACE(metatype) _mt;
 	MPT_INTERFACE(config)   _cfg;
-	MPT_INTERFACE(metatype) *me;
-	MPT_STRUCT(path)  base;
+	MPT_STRUCT(path) base;
 };
 static MPT_STRUCT(node) *nodeGlobal = 0;
 
@@ -21,11 +20,7 @@ static MPT_STRUCT(node) *nodeGlobal = 0;
 static void configUnref(MPT_INTERFACE(reference) *ref)
 {
 	MPT_STRUCT(configRoot) *c = (void *) ref;
-	MPT_INTERFACE(metatype) *mt;
 	mpt_path_fini(&c->base);
-	if ((mt = c->me)) {
-		mt->_vptr->ref.unref((void *) mt);
-	}
 	free(c);
 }
 static uintptr_t configRef(MPT_INTERFACE(reference) *ref)
@@ -76,7 +71,7 @@ static MPT_INTERFACE(metatype) *configClone(const MPT_INTERFACE(metatype) *mt)
 /* config interface */
 static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
-	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
+	const MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_INTERFACE(metatype) *mt;
 	MPT_STRUCT(node) *n;
 	
@@ -86,9 +81,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 	if (!(n = nodeGlobal)) {
 		return 0;
 	}
-	if (!(mt = c->me)) {
-		mt = mpt_metatype_default();
-	}
+	mt = 0;
 	if (c->base.len) {
 		MPT_STRUCT(path) p = c->base;
 		if (!(n = mpt_node_query(n, &p, 0))) {
@@ -97,20 +90,16 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 		if (!(n = n->children)) {
 			return 0;
 		}
-		if (n->_meta) {
-			mt = n->_meta;
-		}
+		mt = n->_meta;
 	}
 	if (path->len) {
 		MPT_STRUCT(path) p = *path;
 		if (!(n = mpt_node_query(n, &p, 0))) {
 			return 0;
 		}
-		if (n->_meta) {
-			mt = n->_meta;
-		}
+		mt = n->_meta;
 	}
-	return mt;
+	return mt ? mt : mpt_metatype_default();
 }
 static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
@@ -140,22 +129,21 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	/* top level element */
 	if (!path->len) {
 		MPT_INTERFACE(metatype) *old;
-		if (!val) {
-			mt = mpt_metatype_default();
-		}
-		else if (!(mt = mpt_meta_new(*val))) {
+		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}
-		if (c->base.len) {
-			old = n->_meta;
-			n->_meta = mt;
+		if (!val) {
+			mt = mpt_metatype_default();
 		} else {
-			old = c->me;
-			c->me = mt;
+			mt = mpt_meta_new(*val);
 		}
-		if (old) {
+		if (!mt) {
+			return MPT_ERROR(BadValue);
+		}
+		if ((old = n->_meta)) {
 			old->_vptr->ref.unref((void *) old);
 		}
+		n->_meta = mt;
 		return mt->_vptr->conv(mt, 0, 0);
 	}
 	/* set subelement */
@@ -186,6 +174,13 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 			mpt_node_clear(b);
 			return 0;
 		}
+		if (!path->len) {
+			MPT_INTERFACE(metatype) *mt;
+			if ((mt = b->_meta)) {
+				mt->_vptr->ref.unref((void *) mt);
+			}
+			return 0;
+		}
 		b = b->children;
 	}
 	/* clear global config */
@@ -196,15 +191,8 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 		nodeGlobal = 0;
 		return 0;
 	}
-	if (!path->len) {
-		MPT_INTERFACE(metatype) *mt;
-		if (!(mt = c->me)) {
-			return MPT_ERROR(MissingData);
-		} else {
-			c->me = 0;
-			mt->_vptr->ref.unref((void *) mt);
-			return 0;
-		}
+	else if (!path->len) {
+		return MPT_ERROR(BadOperation);
 	}
 	p = *path;
 	if (!(b = mpt_node_query(b, &p, 0))) {
@@ -255,7 +243,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 		static MPT_STRUCT(configRoot) global = {
 			{ &configMeta },
 			{ &configCfg },
-			0, MPT_PATH_INIT
+			MPT_PATH_INIT
 		};
 		return &global._mt;
 	}
@@ -275,13 +263,18 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	if (!(c = malloc(sizeof(*c) + path->len))) {
 		return 0;
 	}
+	p = *path;
+	p.flags &= ~MPT_PATHFLAG(HasArray);
+	p.base += p.off;
+	p.off = 0;
+	
 	c->_mt._vptr  = &configMeta;
 	c->_cfg._vptr = &configCfg;
-	memcpy(&c->base, path, sizeof(c->base));
-	memcpy(c + 1, path->base + path->off, path->len);
-	
+	c->base = p;
 	c->base.base  = (char *) (c + 1);
 	c->base.off   = 0;
+	
+	memcpy(c + 1, p.base, p.len);
 	
 	return &c->_mt;
 }
