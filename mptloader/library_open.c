@@ -50,25 +50,28 @@ extern const char *mpt_library_close(MPT_STRUCT(libhandle) *handle)
  * 
  * \return dynamic loader error message
  */
-extern const char *mpt_library_open(MPT_STRUCT(libhandle) *handle, const char *lib, const char *lpath)
+extern void *mpt_library_open(const char *lib, const char *lpath)
 {
-	static const char dlopen_err[] = "unknown dlopen() failure";
 	void *newlib;
 	
 	if (!lib) {
-		static const char lib_err[] = "bad library path";
-		return lib_err;
+		dlerror();
+		errno = EINVAL;
+		return 0;
 	}
 	/* no resolution if path absolute */
-	if (lpath && *lib != '/') {
+	if (!lpath || *lib == '/') {
+		return dlopen(lib, RTLD_NOW);
+	}
+	else {
 		char buf[1024];
 		size_t left, len;
 		
 		/* set library path */
 		if ((len = strlen(lpath)) >= sizeof(buf)) {
-			static const char prefix_err[] = "prefix exceeds buffer";
+			dlerror();
 			errno = ERANGE;
-			return prefix_err;
+			return 0;
 		}
 		left = sizeof(buf) - len;
 		buf[len] = '/';
@@ -77,23 +80,14 @@ extern const char *mpt_library_open(MPT_STRUCT(libhandle) *handle, const char *l
 		
 		/* buffer too small */
 		if (--left <= (len = strlen(lib))) {
-			static const char err[] = "path exceeds buffer";
+			dlerror();
 			errno = ERANGE;
-			return err;
+			return 0;
 		}
 		/* append library name to path */
-		memcpy(newlib, lib, len+1);
+		memcpy(newlib, lib, len + 1);
 		
-		if (!(newlib = dlopen(buf, RTLD_NOW))) {
-			return (newlib = dlerror()) ? newlib : dlopen_err;
-		}
+		return dlopen(buf, RTLD_NOW);
 	}
-	else if (!(newlib = dlopen(lib, RTLD_NOW))) {
-		return (newlib = dlerror()) ? newlib : dlopen_err;
-	}
-	mpt_library_close(handle);
-	handle->lib = newlib;
-	
-	return 0;
 }
 

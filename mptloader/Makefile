@@ -5,7 +5,8 @@ LIB = mptloader
 INC = .. ../mptcore
 #
 # source summary
-SRCS := library_assign.c library_bind.c library_open.c \
+SRCS := library_bind.c \
+	library_open.c library_symbol.c \
 	library_meta.c \
 	readline.c
 #

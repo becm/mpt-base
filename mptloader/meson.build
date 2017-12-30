@@ -2,10 +2,10 @@
 # create loader library
 
 load_src = files(
-  'library_assign.c',
   'library_bind.c',
   'library_meta.c',
   'library_open.c',
+  'library_symbol.c',
   'readline.c'
 )
 # need explicit dynamic loader library

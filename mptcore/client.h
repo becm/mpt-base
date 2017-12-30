@@ -50,33 +50,12 @@ MPT_STRUCT(libhandle)
 	{ }
 	~libhandle();
 #else
-# define MPT_LIBHANDLE_INIT { 0, 0 }
+# define MPT_LIBHANDLE_INIT { 0, 0, 0, 0 }
 #endif
 	void *lib;           /* library handle */
 	void *(*create)();   /* new/unique instance */
-};
-
-/* combined references to interface types */
-#ifdef __cplusplus
-MPT_STRUCT(proxy) : public Reference<metatype>
-{
-	inline proxy() : _hash(0)
-	{ }
-	int log(const char *, int , const char *, ...) const;
-	
-	template <typename T>
-	inline T *cast()
-	{
-		return _ref ? _ref->cast<T>() : 0;
-	}
-protected:
-#else /* __cplusplus */
-MPT_STRUCT(proxy)
-{
-	MPT_INTERFACE(metatype) *_ref;
-# define MPT_PROXY_INIT { 0, 0 }
-#endif /* __cplusplus */
-	uintptr_t _hash;
+	uintptr_t hash;      /* symbol alias */
+	int type;            /* creator return type */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -91,21 +70,22 @@ extern int mpt_client_typeid();
 extern int mpt_client_command(MPT_INTERFACE(client) *, const MPT_STRUCT(message) *, int);
 
 /* open/close library descriptor */
-extern const char *mpt_library_open(MPT_STRUCT(libhandle) *, const char *, const char *);
-extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
+extern void *mpt_library_open(const char *, const char *);
 /* replace binding if necessary */
-extern const char *mpt_library_assign(MPT_STRUCT(libhandle) *, const char *, const char *);
+extern void *(*mpt_library_symbol(void *, const char *))(void);
+/* close library and reset members */
+extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
+/* open library handle */
+extern int mpt_library_bind(MPT_STRUCT(libhandle) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* interpret type part of library symbol */
 extern int mpt_proxy_typeid(const char *, const char **);
+/* library handle identifier */
+extern int mpt_libhandle_typeid(void);
 
-/* dynamic binding with metatype proxy instance */
-extern MPT_INTERFACE(metatype) *mpt_library_meta(const MPT_STRUCT(libhandle) *, int);
-/* open library handle as metatype */
-extern MPT_INTERFACE(metatype) *mpt_library_bind(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+/* instance with embedded library handle */
+extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
-/* clear proxy references */
-extern void mpt_proxy_fini(MPT_STRUCT(proxy) *);
 /* try to log to proxy metatype */
 extern int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);
 extern int mpt_proxy_log(const MPT_INTERFACE(metatype) *, const char *, int , const char *, ... );

@@ -19,7 +19,7 @@
 # define mtrace()
 #endif
 
-class MyClient : public mpt::client, public mpt::proxy
+class MyClient : public mpt::client
 {
 public:
     MyClient();
@@ -28,18 +28,17 @@ public:
     void unref() __MPT_OVERRIDE;
     int process(uintptr_t , mpt::iterator *) __MPT_OVERRIDE;
     
-    template<typename T>
-    T *cast()
-    {
-        return proxy::cast<T>();
-    }
+    int conv(int , void *) const __MPT_OVERRIDE;
+protected:
+    metatype *mt;
 };
 MyClient::MyClient()
 {
-    _ref = mpt::mpt_output_remote();
-
+    if (!(mt = mpt::mpt_library_meta("mpt_output_remote", 0, 0))) {
+        return;
+    }
     mpt::object *o;
-    if ((o = proxy::cast<mpt::object>())) {
+    if (mt && (o = mt->cast<mpt::object>())) {
         o->set(0, "w:client.out");
     }
 }
@@ -50,6 +49,14 @@ int MyClient::process(uintptr_t , mpt::iterator *)
 void MyClient::unref()
 {
     delete this;
+}
+int MyClient::conv(int type, void *ptr) const
+{
+    int ret;
+    if (mt && (ret = mt->conv(type, ptr)) > 0) {
+        return Type;
+    }
+    return client::conv(type, ptr);
 }
 
 static int doCommand(void *ptr, mpt::event *ev)
@@ -84,7 +91,7 @@ int main(int argc, char * const argv[])
 
     n.loop();
 
-    c.log(__func__, mpt::logger::Debug, "%s = %i", "value", 5);
+    mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     const mpt::metatype *mt;
     if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))) {

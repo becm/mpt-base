@@ -19,13 +19,12 @@ int main()
 {
 	struct mpt_libhandle lh = MPT_LIBHANDLE_INIT;
 	struct mpt_metatype *mt;
-	const char *str;
 	
 	mtrace();
 	
 	/* load I/O library and assign symbol */
-	if ((str = mpt_library_assign(&lh, "mpt_output_local@libmptplot.so.1", getenv("MPT_PREFIX_LIB")))) {
-		fputs(str, stderr);
+	lh.type = MPT_ENUM(TypeMeta);
+	if (mpt_library_bind(&lh, "mpt_output_local@libmptplot.so.1", getenv("MPT_PREFIX_LIB"), 0) < 0) {
 		return 1;
 	}
 	/* create reference with loaded function */

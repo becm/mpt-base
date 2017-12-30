@@ -596,6 +596,8 @@ int warning(const char *, const char *, ... );
 int debug(const char *, const char *, ... );
 
 int println(const char *, ... );
+
+int log(const metatype *, const char *, int , const char *, ... );
 #endif
 
 /* text identifier for entity */

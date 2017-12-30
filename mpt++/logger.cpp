@@ -10,10 +10,41 @@
 #include "meta.h"
 #include "array.h"
 #include "output.h"
+#include "client.h"
 
 __MPT_NAMESPACE_BEGIN
 
 // logger interfaces
+/*!
+ * \ingroup mptMeta
+ * \brief log to metatype
+ * 
+ * Select and use log interface for message.
+ * 
+ * \param mt   target log metatype
+ * \param fcn  originating location
+ * \param type message type and flags
+ * \param fmt  log arguments format string
+ * 
+ * \return lor operation result
+ */
+int log(const metatype *mt, const char *fcn, int type, const char *fmt, ...)
+{
+    logger *log;
+    if (!mt && !(log = logger::defaultInstance())) {
+        return 0;
+    }
+    va_list va;
+    int ret;
+    va_start(va, fmt);
+    if (mt) {
+        ret = mpt_proxy_vlog(mt, fcn, type | logger::LogFunction, fmt, va);
+    } else {
+        ret = log->log(fcn, type | logger::LogFunction, fmt, va);
+    }
+    va_end(va);
+    return ret;
+}
 int debug(const char *from, const char *fmt, ... )
 {
     logger *log = logger::defaultInstance();

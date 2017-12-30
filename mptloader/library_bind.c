@@ -22,61 +22,56 @@
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern MPT_INTERFACE(metatype) *mpt_library_bind(const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
-	MPT_INTERFACE(metatype) *m;
-	MPT_INTERFACE(object) *obj;
-	MPT_STRUCT(libhandle) lh = MPT_LIBHANDLE_INIT;
-	const char *err;
-	int type;
+	const char *libname, *sname;
+	void *(*sym)(void);
+	void *lib;
+	int ret = 0;
 	
-	if (!conf) {
+	if (!(sname = conf)) {
 		if (out) {
 			mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
 		}
-		return 0;
+		return MPT_ERROR(BadArgument);
 	}
-	if ((type = mpt_proxy_typeid(conf, &conf)) < 0) {
+	if (lh->type < 0) {
 		if (out) {
 			mpt_log(out, __func__, MPT_LOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
 		}
-		return 0;
+		return MPT_ERROR(BadType);
 	}
-	/* load from special location */
-	if ((err = mpt_library_assign(&lh, conf, path))) {
-		/* fallback to default library locations */
-		if (!path || (err = mpt_library_open(&lh, conf, 0))) {
-			if (out) {
-				mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+	lib = 0;
+	if ((libname = strchr(sname, '@'))) {
+		ret = 1;
+		/* load from special or default location */
+		if (!(lib = mpt_library_open(libname + 1, path))) {
+			/* fallback to default library locations */
+			if (!path || (lib = mpt_library_open(libname + 1, 0))) {
+				if (out) {
+					sname = dlerror();
+					mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
+				}
+				return MPT_ERROR(BadValue);
 			}
-			return 0;
+			ret = 2;
 		}
 	}
-	/* create new proxy */
-	if (!(m = mpt_library_meta(&lh, type))) {
-		mpt_library_close(&lh);
-		return 0;
-	}
-	if (!out) {
-		return m;
-	}
-	/* created object type */
-	obj = 0;
-	if (m->_vptr->conv(m, MPT_ENUM(TypeObject), &obj) >= 0 && obj) {
-		const char *name;
-		if (!(name = mpt_object_typename(obj))) {
-			mpt_log(out, __func__, MPT_LOG(Debug), "%s", MPT_tr("created proxy object"));
-		} else {
-			mpt_log(out, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("created proxy object"), name);
+	if (!(sym = mpt_library_symbol(lib, sname))) {
+		if (out) {
+			sname = dlerror();
+			mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
 		}
+		if (lib) {
+			dlclose(lib);
+		}
+		return MPT_ERROR(BadValue);
 	}
-	/* named instance */
-	else if ((err = mpt_valtype_name(type))) {
-		mpt_log(out, __func__, MPT_LOG(Debug), "%s: %s", MPT_tr("created proxy instance"), err);
-	}
-	/* generic instance */
-	else {
-		mpt_log(out, __func__, MPT_LOG(Debug), "%s: %02x", MPT_tr("created proxy instance"), type);
-	}
-	return m;
+	mpt_library_close(lh);
+	
+	lh->lib = lib;
+	lh->create = sym;
+	lh->hash = mpt_hash(sname, strlen(sname));
+	
+	return ret;
 }
