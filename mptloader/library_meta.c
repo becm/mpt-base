@@ -114,12 +114,11 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
  * 
  * \return metatype proxy pointer
  */
-extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *desc, const char *path, MPT_INTERFACE(logger) *info)
+extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, const char *path, MPT_INTERFACE(logger) *info)
 {
 	MPT_STRUCT(libhandle) lh = MPT_LIBHANDLE_INIT;
 	struct _mpt_metaProxy *mp;
 	MPT_INTERFACE(metatype) *mt;
-	const char *sym;
 	size_t len;
 	int ret;
 	
@@ -130,18 +129,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *desc, const char *p
 		}
 		return 0;
 	}
-	if (!(sym = strchr(desc, ':'))) {
-		ret = MPT_ENUM(TypeMeta);
-		sym = desc;
-	}
-	else if ((ret = mpt_proxy_typeid(desc, &sym)) < 0) {
-		if (info) {
-			mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-			        MPT_tr("bad type description"), desc);
-		}
-		return 0;
-	}
-	if ((len = strlen(sym)) > UINT16_MAX) {
+	if ((len = strlen(desc)) > UINT16_MAX) {
 		if (info) {
 			ret = len;
 			mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
@@ -149,8 +137,8 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *desc, const char *p
 		}
 		return 0;
 	}
-	lh.type = ret;
-	if ((ret = mpt_library_bind(&lh, sym, path, info)) < 0) {
+	lh.type = type;
+	if ((ret = mpt_library_bind(&lh, desc, path, info)) < 0) {
 		return 0;
 	}
 	if (!(mt = lh.create())) {
@@ -171,24 +159,24 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *desc, const char *p
 	mp->fmt[0] = (lh.type >= 0 && lh.type <= 0xff) ? lh.type : 0;
 	mp->fmt[1] = 0;
 	
-	sym = memcpy(mp + 1, sym, len + 1);
+	desc = memcpy(mp + 1, desc, len + 1);
 	
 	if (info) {
 		MPT_INTERFACE(object) *obj = 0;
 		if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
 		    && obj) {
-			if (!(sym = mpt_object_typename(obj))) {
+			if (!(desc = mpt_object_typename(obj))) {
 				mpt_log(info, __func__, MPT_LOG(Debug), "%s",
 				        MPT_tr("created proxy object"));
 			} else {
 				mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-				        MPT_tr("created proxy object"), sym);
+				        MPT_tr("created proxy object"), desc);
 			}
 		}
 		/* named instance */
-		else if ((sym = mpt_valtype_name(lh.type))) {
+		else if ((desc = mpt_valtype_name(lh.type))) {
 			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-			        MPT_tr("created proxy instance"), sym);
+			        MPT_tr("created proxy instance"), desc);
 		}
 		/* generic instance */
 		else {

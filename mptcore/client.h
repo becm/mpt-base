@@ -84,7 +84,7 @@ extern int mpt_proxy_typeid(const char *, const char **);
 extern int mpt_libhandle_typeid(void);
 
 /* instance with embedded library handle */
-extern MPT_INTERFACE(metatype) *mpt_library_meta(const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern MPT_INTERFACE(metatype) *mpt_library_meta(int , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* try to log to proxy metatype */
 extern int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);

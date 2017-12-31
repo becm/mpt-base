@@ -34,7 +34,7 @@ protected:
 };
 MyClient::MyClient()
 {
-    if (!(mt = mpt::mpt_library_meta("mpt_output_remote", 0, 0))) {
+    if (!(mt = mpt::mpt_library_meta(mpt::metatype::Type, "mpt_output_remote", 0, 0))) {
         return;
     }
     mpt::object *o;
