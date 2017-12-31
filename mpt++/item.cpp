@@ -70,7 +70,8 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                 m.detach();
                 it->setName(head->ident.name());
             } else {
-                if (out) out->message(_func, out->Warning, "%s %p: %s", MPT_tr("group"), this, MPT_tr("failed to add object"));
+                if (out) out->message(_func, out->Warning, "%s %p: %s",
+                                      MPT_tr("group"), this, MPT_tr("failed to add object"));
             }
             continue;
         }
@@ -78,19 +79,18 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         const char *name;
 
         if (!(name = mpt_node_ident(head))) {
-            if (out) out->message(_func, out->Error, "%s %p: %s", MPT_tr("node"), head, MPT_tr("bad element name"));
+            if (out) out->message(_func, out->Error, "%s %p: %s",
+                                  MPT_tr("node"), head, MPT_tr("bad element name"));
             return false;
         }
         // set property
         value val;
         if (from && (val.ptr = mpt_meta_data(from))) {
-            object *obj;
-            if ((obj = from->cast<object>())) {
-                val.fmt = 0;
-                obj->set(name, val, out);
+            if (set(name, val, out)) {
                 continue;
             }
-            if (out) out->message(_func, out->Warning, "%s (%p): %s", name, from, MPT_tr("parent not an object"));
+            if (out) out->message(_func, out->Warning, "%s (%p): %s",
+                                  name, from, MPT_tr("parent not an object"));
             continue;
         }
         // get item type
@@ -99,25 +99,29 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         val.fmt = pos = name;
         name = mpt_convert_key(&pos, 0, &len);
         if (!name || name != val.fmt || !*name) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("bad element name"), val.fmt);
+            if (out) out->message(_func, out->Warning, "%s: %s",
+                                  MPT_tr("bad element name"), val.fmt);
             continue;
         }
         // create item
         if (!(from = create(name, len))) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("invalid item type"), std::string(name, len).c_str());
+            if (out) out->message(_func, out->Warning, "%s: %s",
+                                  MPT_tr("invalid item type"), std::string(name, len).c_str());
             continue;
         }
         // get item name
         name = mpt_convert_key(&pos, ":", &len);
 
         if (!name || !len) {
-            if (out) out->message(_func, out->Warning, "%s", MPT_tr("empty item name"));
+            if (out) out->message(_func, out->Warning, "%s",
+                                  MPT_tr("empty item name"));
             from->unref();
             continue;
         }
         // name conflict on same level
         if (GroupRelation(*this).find(from->type(), name, len)) {
-            if (out) out->message(_func, out->Warning, "%s: %s", MPT_tr("conflicting item name"), std::string(name, len).c_str());
+            if (out) out->message(_func, out->Warning, "%s: %s",
+                                  MPT_tr("conflicting item name"), std::string(name, len).c_str());
             from->unref();
             continue;
         }
@@ -134,6 +138,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                 obj->setProperties(*src, out);
                 continue;
             }
+            from->unref();
             if (out) out->message(_func, out->Error, "%s: %s: %s",
                                   MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
             return false;
@@ -142,7 +147,8 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         Item<metatype> *ni = append(from);
         if (!ni) {
             from->unref();
-            if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("unable add item"), std::string(ident, ilen).c_str());
+            if (out) out->message(_func, out->Error, "%s: %s",
+                                  MPT_tr("unable add item"), std::string(ident, ilen).c_str());
             continue;
         }
         ni->setName(ident, ilen);
@@ -189,7 +195,8 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
                     continue;
                 }
             }
-            if (out) out->message(_func, out->Warning, "%s: %s: %s", MPT_tr("bad value type"), ni->name(), name);
+            if (out) out->message(_func, out->Warning, "%s: %s: %s",
+                                  MPT_tr("bad value type"), ni->name(), name);
         }
     }
     return true;
@@ -252,7 +259,7 @@ int Collection::conv(int type, void *ptr) const
         return me;
     }
     if (type == object::Type) {
-        if (ptr) *static_cast<const metatype **>(ptr) = this;
+        if (ptr) *static_cast<const object **>(ptr) = this;
         return me;
     }
     if (type == me) {
