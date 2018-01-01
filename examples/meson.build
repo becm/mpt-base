@@ -7,13 +7,13 @@ if with_core
   subdir('core')
 endif
 
-if with_cxx
+if with_cxx and with_loader
   subdir('cxx')
   if with_io
     test('client instance',
       executable('client', 'client.cpp',
         cpp_args: test_defines,
-        dependencies: cxx))
+        dependencies: [ cxx, load ]))
   endif
 endif
 

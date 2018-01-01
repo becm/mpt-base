@@ -13,7 +13,7 @@ cxx_src = files(
   'node.cpp',
   'object.cpp',
   'output.cpp',
-  'proxy.cpp', 'parse.cpp',
+  'parse.cpp',
   'queue.cpp',
   'refcount_wrap.cpp',
   'std_cout.cpp',
