@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "meta.h"
-#include "node.h"
 
 #include "object.h"
 
@@ -16,26 +15,23 @@
  * Set object properties from node list.
  * 
  * \param obj    object interface descriptor
- * \param node   data node
  * \param match  traverse flags
+ * \param id     property identifier
+ * \param val    new property value
+ * 
+ * \return error code, skip reason or success
  */
-extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node) *val, int match)
+extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const MPT_STRUCT(identifier) *id, const MPT_INTERFACE(metatype) *val)
 {
-	const MPT_INTERFACE(metatype) *curr;
 	const char *name;
-	int flag, ret;
+	int ret;
 	
-	/* skip masked types */
-	flag = val->children ? MPT_ENUM(TraverseNonLeafs) : MPT_ENUM(TraverseLeafs);
-	if (!(flag & match)) {
-		return flag;
-	}
 	/* get current identifier */
-	if (mpt_identifier_len(&val->ident) > 0) {
-		if (val->ident._type) {
+	if (id && mpt_identifier_len(id) > 0) {
+		if (id->_type) {
 			return MPT_ERROR(BadEncoding);
 		}
-		if (!(name = mpt_identifier_data(&val->ident))) {
+		if (!(name = mpt_identifier_data(id))) {
 			return MPT_ERROR(MissingData);
 		}
 	} else {
@@ -46,17 +42,17 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 		name = 0;
 	}
 	/* get data from current metatype */
-	if ((curr = val->_meta)) {
+	if (val) {
 		const char *str;
 		/* skip non-default values */
 		if (!(match & MPT_ENUM(TraverseChange))) {
 			return MPT_ENUM(TraverseChange);
 		}
 		/* use text parser for string content */
-		if ((ret = curr->_vptr->conv(curr, 's', &str)) >= 0) {
+		if ((ret = val->_vptr->conv(val, 's', &str)) >= 0) {
 			ret = mpt_object_set_string(obj, name, ret ? str : 0, 0);
 		} else {
-			ret = obj->_vptr->setProperty(obj, name, curr);
+			ret = obj->_vptr->setProperty(obj, name, val);
 		}
 	}
 	/* no property value */
@@ -67,7 +63,7 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 		ret = obj->_vptr->setProperty(obj, name, 0);
 	}
 	if (ret == MPT_ERROR(BadArgument)) {
-		if (!(flag & MPT_ENUM(TraverseUnknown))) {
+		if (!(match & MPT_ENUM(TraverseUnknown))) {
 			return ret;
 		}
 		return MPT_ENUM(TraverseUnknown);

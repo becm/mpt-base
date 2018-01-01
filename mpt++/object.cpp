@@ -162,11 +162,12 @@ const node *Object::getProperties(const node *head, PropertyHandler proc, void *
     const int traverse = TraverseAll | TraverseChange;
     if (!head) return 0;
     do {
-        if (mpt_object_set_node(&_obj, head, traverse) < 0) {
+        int ret = mpt_object_set_property(&_obj, traverse, &head->ident, head->meta().pointer());
+        if (ret) {
             return head;
         }
         if (!proc) {
-            return head;
+            continue;
         }
         property pr(head->ident.name());
         _obj.property(&pr);
