@@ -28,18 +28,21 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 	/* skip masked types */
 	flag = val->children ? MPT_ENUM(TraverseNonLeafs) : MPT_ENUM(TraverseLeafs);
 	if (!(flag & match)) {
-		return 0;
+		return flag;
 	}
 	/* get current identifier */
 	if (mpt_identifier_len(&val->ident) > 0) {
-		name = mpt_identifier_data(&val->ident);
+		if (val->ident._type) {
+			return MPT_ERROR(BadEncoding);
+		}
+		if (!(name = mpt_identifier_data(&val->ident))) {
+			return MPT_ERROR(MissingData);
+		}
 	} else {
 		/* avoid empty property */
 		if (!(match & MPT_ENUM(TraverseEmpty))) {
-			return 0;
+			return MPT_ENUM(TraverseEmpty);
 		}
-		/* allow only single base assignment */
-		match &= MPT_ENUM(TraverseEmpty);
 		name = 0;
 	}
 	/* get data from current metatype */
@@ -47,7 +50,7 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 		const char *str;
 		/* skip non-default values */
 		if (!(match & MPT_ENUM(TraverseChange))) {
-			return 0;
+			return MPT_ENUM(TraverseChange);
 		}
 		/* use text parser for string content */
 		if ((ret = curr->_vptr->conv(curr, 's', &str)) >= 0) {
@@ -59,7 +62,7 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 	/* no property value */
 	else {
 		if (!(match & MPT_ENUM(TraverseDefault))) {
-			return 0;
+			return MPT_ENUM(TraverseDefault);
 		}
 		ret = obj->_vptr->setProperty(obj, name, 0);
 	}
@@ -67,8 +70,8 @@ extern int mpt_object_set_node(MPT_INTERFACE(object) *obj, const MPT_STRUCT(node
 		if (!(flag & MPT_ENUM(TraverseUnknown))) {
 			return ret;
 		}
-		return 0;
+		return MPT_ENUM(TraverseUnknown);
 	}
-	return ret;
+	return ret < 0 ? ret : 0;
 }
 
