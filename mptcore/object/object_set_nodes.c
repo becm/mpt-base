@@ -36,7 +36,7 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 	pr.name = "";
 	pr.desc = 0;
 	if (obj->_vptr->property(obj, &pr) < 0 || !pr.name) {
-		pr.name = "solver";
+		pr.name = "object";
 	}
 	do {
 		const char *name;
