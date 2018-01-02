@@ -96,23 +96,22 @@ static int getArrayId(const MPT_STRUCT(array) *arr, const char *name, int len)
 	struct Element *elem;
 	size_t i, max;
 	
-	if (!(buf = arr->_buf)) {
+	if (!name) {
 		return MPT_ERROR(MissingData);
+	}
+	if (!(buf = arr->_buf)) {
+		return MPT_ERROR(MissingBuffer);
 	}
 	elem = (void *) (buf + 1);
 	max = buf->_used / sizeof(*elem);
-	if (len >= 0) {
-		++len;
-		for (i = 0; i < max; ++i) {
-			if (elem->id._len == len
-			    && !memcmp(name, elem->id._val, len)) {
-				return i;
-			}
-		}
-		return MPT_ERROR(BadValue);
+	if (len < 0) {
+		len = strlen(name);
 	}
 	for (i = 0; i < max; ++i) {
-		if (!strcmp(name, elem->id._val)) {
+		if (elem[i].id._len != len + 1) {
+			continue;
+		}
+		if (!memcmp(name, elem[i].id._val, len)) {
 			return i;
 		}
 	}
