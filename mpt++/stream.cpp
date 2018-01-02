@@ -91,8 +91,8 @@ int Stream::conv(int type, void *ptr) const
         me = output::Type;
     }
     if (!type) {
-        static const char fmt[] = { output::Type, socket::Type, 0 };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        static const uint8_t fmt[] = { output::Type, socket::Type, 0 };
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == socket::Type) {
@@ -135,7 +135,7 @@ int Stream::property(struct property *pr) const
     else {
         // get stream interface types
         if (!*name) {
-            static const char fmt[] = { output::Type, input::Type, 0 };
+            static const uint8_t fmt[] = { output::Type, input::Type, 0 };
             pr->name = "stream";
             pr->desc = "interfaces to stream data";
             pr->val.fmt = fmt;
@@ -145,9 +145,10 @@ int Stream::property(struct property *pr) const
     }
     intptr_t id = 0;
     if (name ? !strcasecmp(name, "idlen") : (pos == id++)) {
+        static const uint8_t fmt[] = "y";
         pr->name = "idlen";
         pr->desc = "message id length";
-        pr->val.fmt = "y";
+        pr->val.fmt = fmt;
         pr->val.ptr = &_idlen;
         return id;
     }
@@ -422,5 +423,3 @@ int Stream::getchar()
 }
 
 __MPT_NAMESPACE_END
-
-

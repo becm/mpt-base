@@ -24,7 +24,7 @@ extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(par
 	
 	/* accuire next path element */
 	while ((ret = next(npar, parse, &path)) > 0) {
-		static const char fmt[] = { MPT_value_toVector('c'), 0 };
+		static const uint8_t fmt[] = { MPT_value_toVector('c'), 0 };
 		MPT_STRUCT(value) val;
 		struct iovec vec;
 		

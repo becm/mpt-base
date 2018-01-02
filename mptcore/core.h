@@ -89,73 +89,72 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeReplyData) = 0xd,   /* CR */
 	MPT_ENUM(TypeNode)      = 0xe,   /* SO */
 	
-	/* config interface types */
-	MPT_ENUM(TypeObject)    = 0x10,  /* DLE */
-	MPT_ENUM(TypeConfig)    = 0x11,  /* DC1 */
-	/* input interface types */
-	MPT_ENUM(TypeIterator)  = 0x14,  /* DC4 */
-	/* output interfaces */
-	MPT_ENUM(TypeLogger)    = 0x18,  /* CAN */
-	MPT_ENUM(TypeReply)     = 0x19,  /* EM */
-	MPT_ENUM(TypeOutput)    = 0x1a,  /* SUB */
-#define MPT_value_isInterface(v)  ((v) >= 0x10 && (v) < 0x20)
+	/* reserve range for layout types */
+#define MPT_value_isLayout(v)  ((v) >= 0x10 && (v) <= 0x1f)
 	
-	/* special/format types (0x20..0x2f) */
-	MPT_ENUM(TypeSpecial)   = ' ',   /* SPACE */
+	/* reserve ranges for special/format types */
+#define MPT_value_isSpecial(v)  (((v) >= 0x20 && (v) <= 0x3f) \
+                              || ((v) >= 0x5b && (v) <= 0x5f) \
+                              || ((v) >= 0x7b && (v) <= 0x7f))
+	/* range for generic base types */
+	MPT_ENUM(_TypeVectorBase)    = 0x40,
+#define MPT_value_isVector(v)   (MPT_value_fromVector(v) >= 0)
+	MPT_ENUM(TypeVector)         = '@',   /* 0x40: generic data */
+#define MPT_value_toVector(v)   (MPT_value_isScalar(v) \
+                               ? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
+                               : 0)
+	MPT_ENUM(_TypeScalarBase)    = 0x60,
+	MPT_ENUM(_TypeScalarMax)     = 0x7a,
+	MPT_ENUM(_TypeScalarSize)    = MPT_ENUM(_TypeScalarBase) - MPT_ENUM(_TypeVectorBase),
+#define MPT_value_isScalar(v)   ((v) & MPT_ENUM(_TypeDynamic) \
+                               ? ((v) >= (MPT_ENUM(_TypeDynamic) + MPT_ENUM(_TypeScalarBase)) && (v) < 0x100) \
+                               : ((v) > MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax)))
 	
-	/* reserved range for layout types (0x30..0x39) */
-#define MPT_value_isLayout(v)  ((v) >= 0x30 && (v) <= 0x39)
+	MPT_ENUM(TypeMeta)           = '`',   /* 0x60: generic type */
+	/* scalar types ('a'..'z') */
+	MPT_ENUM(TypeArray)          = 'a',   /* array content */
+#define MPT_value_fromVector(v) (((v) == MPT_ENUM(TypeVector)) \
+                               ? 0 \
+                               : (MPT_value_isScalar((v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase)) \
+                                ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
+                                : MPT_ERROR(BadType)))
 	
-	/* array types ('@'..'Z') */
-	MPT_ENUM(TypeVector)    = '@',   /* 0x40: generic data */
-#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) || MPT_value_isVector(v) \
+#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) \
+                            || MPT_value_isVector(v) \
                             || MPT_value_isLayout(v))
 	
-	/* generic type on non-array position */
-	MPT_ENUM(TypeMeta)      = '`',   /* 0x60: generic type */
-#define MPT_value_isMetatype(v)  ((v) == MPT_ENUM(TypeMeta) \
-                                || ((v) >= MPT_ENUM(_TypeMetaBase) \
-                                    && (v) <= (MPT_ENUM(_TypeMetaBase)) + MPT_ENUM(_TypeDynamicMax)))
-	/* scalar types ('a'..'z'..0x7f) */
-	MPT_ENUM(TypeArray)     = 'a',   /* array content */
-	
-	/* type range checks */
-#define MPT_value_isVector(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeVector) \
-                              && ((v) & ~MPT_ENUM(_TypeBaseDynamic)) <  MPT_ENUM(TypeMeta))
-#define MPT_value_isScalar(v)   (((v) & ~MPT_ENUM(_TypeBaseDynamic)) >= MPT_ENUM(TypeMeta) \
-                              && (v) < MPT_ENUM(_TypeDynamicMax))
-
-#define MPT_value_toVector(v)   (MPT_value_isScalar(v) \
-                               ? (v) - MPT_ENUM(TypeMeta) + MPT_ENUM(TypeVector) \
-                               : 0)
-#define MPT_value_fromVector(v) (MPT_value_isVector(v) \
-                               ? (v) - MPT_ENUM(TypeVector) + MPT_ENUM(TypeMeta) \
-                               : MPT_ERROR(BadType))
-	
 	/* range for type allocations */
-	MPT_ENUM(_TypeBaseDynamic)   = 0x80,
-	MPT_ENUM(_TypeDynamicMax)    = 0xff,
+	MPT_ENUM(_TypeDynamic)       = 0x80,
 	
+	/* config interface types */
+	MPT_ENUM(TypeObject)         = 0x80,
+	MPT_ENUM(TypeConfig)         = 0x81,
+	/* input interface types */
+	MPT_ENUM(TypeIterator)       = 0x82,
+	MPT_ENUM(TypeSolver)         = 0x83,
+	/* output interfaces */
+	MPT_ENUM(TypeLogger)         = 0x84,
+	MPT_ENUM(TypeReply)          = 0x85,
+	MPT_ENUM(TypeOutput)         = 0x86,
 	/* range for dynamic interfaces */
-	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeBaseDynamic),
-	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeInterfaceBase) + 0x3f,
+	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeDynamic) + 0x10,
+	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeDynamic) + 0x3f,
+#define MPT_value_isInterface(v)  ((v) >= MPT_ENUM(_TypeDynamic) \
+                                && (v) < MPT_ENUM(_TypeInterfaceMax))
 	
-	/* range for dynamic base types */
-	MPT_ENUM(_TypeScalarBase)    = MPT_ENUM(_TypeBaseDynamic) + MPT_ENUM(TypeMeta),
-	MPT_ENUM(_TypeScalarMax)     = MPT_ENUM(_TypeScalarBase) + 0x1f,
-	
-	/* range for explicit metatypes */
+	/* range for metatype extensions */
 	MPT_ENUM(_TypeMetaBase)      = 0x0100,
 	MPT_ENUM(_TypeMetaMax)       = 0x01ff,
+#define MPT_value_isMetatype(v)  (((v) == MPT_ENUM(TypeMeta)) \
+                               || ((v) >= MPT_ENUM(_TypeMetaBase) && (v) <= (MPT_ENUM(_TypeMetaMax))))
 	
-	/* range for generic types */
+	/* range for generic type extensions */
 	MPT_ENUM(_TypeGenericBase)   = 0x0200,
 	MPT_ENUM(_TypeGenericMax)    = 0x0fff,
 	
 	/* automatic range types */
-	MPT_ENUM(_TypePointerBase)   = 0x1000,
-	MPT_ENUM(_TypeReferenceBase) = 0x2000,
-	MPT_ENUM(_TypeItemBase)      = 0x3000,
+	MPT_ENUM(_TypeReferenceBase) = 0x1000,
+	MPT_ENUM(_TypeItemBase)      = 0x2000,
 	
 	/* range for map element types */
 	MPT_ENUM(_TypeMapBase)       = 0x4000,
@@ -233,19 +232,21 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_init(int , char * const []);
 
 /* get type position from data description */
-extern int mpt_position(const char *, int);
+extern int mpt_position(const uint8_t *, int);
 /* get position offset from data description */
-extern int mpt_offset(const char *, int);
+extern int mpt_offset(const uint8_t *, int);
 /* get size for registered types */
 extern ssize_t mpt_valsize(int);
 
 /* add user scalar or pointer type */
 extern int mpt_valtype_add(size_t);
 
-/* add/check registered reference type */
-extern const char *mpt_valtype_name(int);
+/* id for registered named type */
 extern int mpt_valtype_id(const char *, int);
-/* add/check registered object type */
+/* get name registered type */
+extern const char *mpt_meta_typename(int);
+extern const char *mpt_interface_typename(int);
+/* registered object type */
 extern int mpt_valtype_meta_new(const char *);
 extern int mpt_valtype_interface_new(const char *);
 
@@ -369,7 +370,24 @@ MPT_STRUCT(value)
 	inline value(const char *v = 0) : fmt(0), ptr(v)
 	{ }
 	
-	bool set(const char *, const void *);
+	struct format
+	{
+	public:
+		inline format()
+		{ set(0); }
+		
+		bool set(int);
+		
+		inline bool valid() const
+		{ return _fmt[0] != 0; }
+		
+		inline operator const uint8_t *() const
+		{ return _fmt; }
+	protected:
+		uint8_t _fmt[8];
+	};
+	
+	bool set(const uint8_t *, const void *);
 	value &operator =(const char *);
 	
 	const char *string() const;
@@ -382,8 +400,8 @@ MPT_STRUCT(value)
 #else
 # define MPT_VALUE_INIT { 0, 0 }
 #endif
-	const char *fmt;  /* data format */
-	const void *ptr;  /* formated data */
+	const uint8_t *fmt;  /* data format */
+	const void    *ptr;  /* formated data */
 };
 #ifdef __cplusplus
 template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
@@ -398,7 +416,7 @@ public:
 	
 	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
 	{ }
-	inline property(const char *n, const char *f, const void *d) : name(n), desc(0)
+	inline property(const char *n, const uint8_t *f, const void *d) : name(n), desc(0)
 	{
 		val.set(f, d);
 	}
@@ -623,7 +641,8 @@ MPT_STRUCT(identifier)
 	{ return 4 + _max; }
 protected:
 #else
-# define MPT_IDENTIFIER_INIT { 0, 0, 0, { 0 }, 0 }
+# define MPT_IDENTIFIER_INIT   { 0, 0, 0, { 0 }, 0 }
+# define MPT_IDENTIFIER_HSIZE  4
 #endif
 	uint16_t _len;
 	uint8_t  _type;

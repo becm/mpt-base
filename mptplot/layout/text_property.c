@@ -188,21 +188,21 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
  */
 extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 {
-	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",  "text color",     { cfmt, (void *) MPT_offset(text,color) } },
-		{"pos",    "text position",  { "ff", (void *) MPT_offset(text, pos) } },
-		{"size",   "text size",      { "y",  (void *) MPT_offset(text,size) } },
-		{"align",  "text alignment", { "c",  (void *) MPT_offset(text,align) } },
-		{"angle",  "text angle",     { "d",  (void *) MPT_offset(text,angle) } },
-		{"value",  "text data",      { "s",  (void *) MPT_offset(text,_value) } },
-		{"font",   "text font",      { "s",  (void *) MPT_offset(text,_font) } },
+		{"color",  "text color",     { cfmt,             (void *) MPT_offset(text,color) } },
+		{"pos",    "text position",  { (uint8_t *) "ff", (void *) MPT_offset(text, pos) } },
+		{"size",   "text size",      { (uint8_t *) "y",  (void *) MPT_offset(text,size) } },
+		{"align",  "text alignment", { (uint8_t *) "c",  (void *) MPT_offset(text,align) } },
+		{"angle",  "text angle",     { (uint8_t *) "d",  (void *) MPT_offset(text,angle) } },
+		{"value",  "text data",      { (uint8_t *) "s",  (void *) MPT_offset(text,_value) } },
+		{"font",   "text font",      { (uint8_t *) "s",  (void *) MPT_offset(text,_font) } },
 	};
 	static const MPT_STRUCT(property) elem_xy[] = {
-		{"x",  "x start position",  { "f", (void *) MPT_offset(text, pos.x)} },
-		{"y",  "y start position",  { "f", (void *) MPT_offset(text, pos.y)} }
+		{"x",  "x start position",  { (uint8_t *) "f", (void *) MPT_offset(text, pos.x)} },
+		{"y",  "y start position",  { (uint8_t *) "f", (void *) MPT_offset(text, pos.y)} }
 	};
-	static const char format[] = {
+	static const uint8_t format[] = {
 		's', 's',       /* value, font */
 		MPT_ENUM(TypeColor),
 		'y', 'y', 'y',  /* font style, weight, size, */

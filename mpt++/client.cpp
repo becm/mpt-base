@@ -58,23 +58,23 @@ int client::conv(int type, void *ptr) const
 {
     int me = mpt_client_typeid();
     if (me < 0) {
-        me = Type;
+        me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = { metatype::Type, config::Type, 0 };
-    if (ptr) *static_cast<const char **>(ptr) = fmt;
+        static const uint8_t fmt[] = { metatype::Type, config::Type, 0 };
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == config::Type) {
         if (ptr) *static_cast<class config **>(ptr) = clientConfig();
         return me;
     }
-    if (type == me) {
-        if (ptr) *static_cast<const client **>(ptr) = this;
+    if (type == metatype::Type) {
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
         return config::Type;
     }
-    if (type == Type) {
-        if (ptr) *static_cast<const metatype **>(ptr) = this;
+    if (type == me) {
+        if (ptr) *static_cast<const client **>(ptr) = this;
         return config::Type;
     }
     return BadType;

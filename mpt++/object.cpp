@@ -172,7 +172,7 @@ const node *Object::getProperties(const node *head, PropertyHandler proc, void *
         property pr(head->ident.name());
         _obj.property(&pr);
         const metatype *mt;
-        static const char metafmt[] = { metatype::Type };
+        static const uint8_t metafmt[] = { metatype::Type, 0 };
         pr.val.fmt = metafmt;
         pr.val.ptr = &mt;
         if ((mt = head->_meta)) {

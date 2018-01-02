@@ -212,8 +212,9 @@ public:
 	template <typename T>
 	Property & operator= (const T &v)
 	{
-		static const char fmt[2] = { static_cast<char>(typeIdentifier<T>()) };
+		value::format fmt;
 		value val;
+		fmt.set(typeIdentifier(v));
 		val.set(fmt, &v);
 		if (!set(val)) {
 			_prop.name = 0;

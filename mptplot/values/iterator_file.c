@@ -22,6 +22,7 @@ struct _iter_fdata
 {
 	FILE *fd;
 	int type;
+	int count;
 	uint8_t val[16];
 };
 
@@ -40,18 +41,20 @@ static uintptr_t fileRef(MPT_INTERFACE(reference) *ref)
 /* metatype interface */
 static int fileConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	MPT_INTERFACE(iterator) *it = (void *) (mt + 1);
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeFile) };
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeFile) };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 0;
+		}
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (ptr) *((void **) ptr) = it;
+		if (ptr) *((const void **) ptr) = mt + 1;
 		return MPT_ENUM(TypeFile);
 	}
 	if (type == MPT_ENUM(TypeFile)) {
-		struct _iter_fdata *d = (void *) (it + 1);
+		struct _iter_fdata *d = (void *) (mt + 2);
 		if (ptr) *((void **) ptr) = d->fd;
 		return MPT_ENUM(TypeIterator);
 	}
@@ -70,9 +73,12 @@ static int fileGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 	int ret;
 	
 	if (!type) {
-		static const char fmt[] = "dftxuiqnybc";
-		if (ptr) *((const char **) ptr) = fmt;
-		return d->type;
+		static const uint8_t fmt[] = "dftxuiqnybc";
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return d->type;
+		}
+		return d->count;
 	}
 	if (!d->type) {
 		size_t len;
@@ -125,6 +131,7 @@ static int fileAdvance(MPT_INTERFACE(iterator) *it)
 		if ((ret = fileGet(it, 'd', 0)) < 0) {
 			return ret;
 		}
+		++d->count;
 		return 0;
 	}
 	d->type = 0;
@@ -135,6 +142,7 @@ static int fileReset(MPT_INTERFACE(iterator) *it)
 	struct _iter_fdata *d = (void *) (it + 1);
 	rewind(d->fd);
 	d->type = 0;
+	d->count = 0;
 	return 0;
 }
 
@@ -177,6 +185,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 	data = (void *) (it + 1);
 	data->fd = file;
 	data->type = 0;
+	data->count = 0;
 	
 	return mt;
 }

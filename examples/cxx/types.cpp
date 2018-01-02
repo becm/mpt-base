@@ -16,19 +16,34 @@
 # define mtrace()
 #endif
 
+struct Value : public mpt::value, public mpt::value::format
+{
+	template <typename T>
+	bool set(const T *t)
+	{
+		if (!t || !value::format::set(mpt::typeIdentifier(*t))) {
+			return false;
+		}
+		return value::set(*this, t);
+	}
+	int type() const
+	{
+		return _fmt[0];
+	}
+};
+
 extern int main(int, char *[])
 {
 	mtrace();
-	mpt::value v;
+	Value v;
 	
 	long l = -5;
-	v.set("l", &l);
-	std::cout << "long(" << mpt::typeIdentifier(l) << ") = " << v << std::endl;
+	v.set(&l);
+	std::cout << "long(" << v.type() << ") = " << v << std::endl;
 	
 	unsigned long u = 5;
-	char ufmt[] = { static_cast<char>(mpt::typeIdentifier(l)), 0 };
-	v.set(ufmt, &u);
-	std::cout << "ulong(" << mpt::typeIdentifier(u) << ") = " << v << std::endl;
+	v.set(&u);
+	std::cout << "ulong(" << v.type() << ") = " << v << std::endl;
 	
 	float f(5);
 	std::cout << "float(" << mpt::typeIdentifier(f) << ") = " << f << std::endl;
@@ -40,8 +55,7 @@ extern int main(int, char *[])
 	std::cout << "long double(" << mpt::typeIdentifier(e) << ") = " << e << std::endl;
 	
 	mpt::Slice<double> t(&d, 1);
-	char dFmt[] = { static_cast<char>(mpt::typeIdentifier(t)), 0 };
 	std::cout << "Slice<" << mpt::typeIdentifier(d) <<">(" << mpt::typeIdentifier(t) << ") = " << t << std::endl;
-	v.set(dFmt, &t);
-	std::cout << "value(<" << dFmt << ">) = " << v << std::endl;
+	v.set(&t);
+	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 }

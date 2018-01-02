@@ -13,9 +13,8 @@
 
 #include "values.h"
 
-struct iterPoly
+struct _iter_poly
 {
-	MPT_INTERFACE(iterator) _it;
 	_MPT_ARRAY_TYPE(double) grid;
 	long pos;
 	int coeff;
@@ -24,8 +23,8 @@ struct iterPoly
 /* reference interface */
 static void iterPolyUnref(MPT_INTERFACE(reference) *ref)
 {
-	struct iterPoly *p = (void *) (ref + 1);
-	mpt_array_clone(&p->grid, 0);
+	struct _iter_poly *d = (void *) (ref + 2);
+	mpt_array_clone(&d->grid, 0);
 	free(ref);
 }
 static uintptr_t iterPolyRef(MPT_INTERFACE(reference) *ref)
@@ -36,15 +35,16 @@ static uintptr_t iterPolyRef(MPT_INTERFACE(reference) *ref)
 /* metatype interface */
 static int iterPolyConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	const struct iterPoly *p = (void *) (mt + 1);
-	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator) };
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator) };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 'd';
+		}
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (ptr) *((const void **) ptr) = &p->_it;
+		if (ptr) *((const void **) ptr) = mt + 1;
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
@@ -55,37 +55,45 @@ static MPT_INTERFACE(metatype) *iterPolyClone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* iterator interface */
-static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *dest)
+static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
-	struct iterPoly *p = (void *) it;
+	struct _iter_poly *d = (void *) (it + 1);
 	MPT_STRUCT(buffer) *buf;
 	struct {
 		double shift, mult;
-	} *coeff = (void *) (p + 1);
+	} *coeff = (void *) (d + 1);
 	double sum, val;
 	long max, j;
 	
+	if (!type) {
+		static const uint8_t fmt[] = "d";
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+		}
+		return d->pos;
+	}
 	if (type != 'd') {
 		return MPT_ERROR(BadType);
 	}
-	if ((buf = p->grid._buf)) {
+	if ((buf = d->grid._buf)) {
 		const double *src = (void *) (buf + 1);
 		max = buf->_used / sizeof(double);
-		if (p->pos >= max) {
+		if (d->pos >= max) {
 			return 0;
 		}
-		val = src[p->pos];
+		val = src[d->pos];
 	}
-	else if (p->pos >= UINT_MAX) {
+	else if (d->pos >= UINT_MAX) {
 		return 0;
 	}
 	else {
-		val = p->pos;
+		val = d->pos;
 	}
-	if (!(max = p->coeff)) {
-		if (dest) {
-			*((double *) dest) = val;
-		}
+	if (!ptr) {
+		return 'd';
+	}
+	if (!(max = d->coeff)) {
+		*((double *) ptr) = val;
 		return 'd';
 	}
 	for (j = 0, sum = 0.0; j < max; j++) {
@@ -99,39 +107,39 @@ static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *dest)
 		}
 		sum += prod;
 	}
-	if (dest) {
-		*((double *) dest) = sum;
-	}
+	*((double *) ptr) = sum;
+	
 	return 'd';
 }
 static int iterPolyAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct iterPoly *ip = (void *) it;
+	struct _iter_poly *d = (void *) (it + 1);
 	MPT_STRUCT(buffer) *buf;
-	if ((buf = ip->grid._buf)) {
+	
+	if ((buf = d->grid._buf)) {
 		long max = buf->_used / sizeof(double);
-		if (ip->pos >= max) {
+		if (d->pos >= max) {
 			return MPT_ERROR(BadOperation);
 		}
-		if (++ip->pos == max) {
+		if (++d->pos == max) {
 			return 0;
 		}
 		return 'd';
 	}
-	if (ip->pos >= UINT_MAX) {
+	if (d->pos >= UINT_MAX) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (++ip->pos == UINT_MAX) {
+	if (++d->pos == UINT_MAX) {
 		return 0;
 	}
 	return 'd';
 }
 static int iterPolyReset(MPT_INTERFACE(iterator) *it)
 {
-	struct iterPoly *ip = (void *) it;
+	struct _iter_poly *d = (void *) (it + 1);
 	MPT_STRUCT(buffer) *buf;
-	ip->pos = 0;
-	if ((buf = ip->grid._buf)) {
+	d->pos = 0;
+	if ((buf = d->grid._buf)) {
 		return buf->_used / sizeof(double);
 	}
 	return 0;
@@ -163,7 +171,8 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 		iterPolyReset
 	};
 	MPT_INTERFACE(metatype) *mt;
-	struct iterPoly *ip;
+	MPT_INTERFACE(iterator) *it;
+	struct _iter_poly *d;
 	struct {
 		double shift, mult;
 	} coeff[128];
@@ -202,19 +211,19 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	for ( ; ns < nc; ++ns) {
 		coeff[ns].shift = 0;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*ip) + nc * sizeof(*coeff)))) {
+	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + nc * sizeof(*coeff)))) {
 		return 0;
 	}
 	mt->_vptr = &polyMeta;
 	
-	ip = (void *) (mt + 1);
-	ip->_it._vptr = &polyIter;
+	it = (void *) (mt + 1);
+	it->_vptr = &polyIter;
 	
-	ip->grid._buf = (base && base->_buf && mpt_refcount_raise(&base->_buf->_ref)) ? base->_buf : 0;
-	ip->pos = 0;
-	ip->coeff = nc;
-	memcpy(ip + 1, coeff, nc * sizeof(*coeff));
+	d = (void *) (it + 1);
+	d->grid._buf = (base && base->_buf && mpt_refcount_raise(&base->_buf->_ref)) ? base->_buf : 0;
+	d->pos = 0;
+	d->coeff = nc;
+	memcpy(d + 1, coeff, nc * sizeof(*coeff));
 	
 	return mt;
 }
-

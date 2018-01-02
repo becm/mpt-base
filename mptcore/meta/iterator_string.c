@@ -157,11 +157,12 @@ static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	struct parseIterator *it = (void *) (mt + 1);
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 's' };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
 		if (dest) {
-			*((const char **) dest) = fmt;
+			*((const uint8_t **) dest) = fmt;
+			return 0;
 		}
-		return 's';
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == 's') {
 		*((const char **) dest) = (char *) (it + 1);
@@ -181,9 +182,7 @@ static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		return 's';
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (dest) {
-			*((void **) dest) = it;
-		}
+		if (dest) *((void **) dest) = it;
 		return 's';
 	}
 	return MPT_ERROR(BadType);

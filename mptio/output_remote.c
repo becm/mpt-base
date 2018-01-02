@@ -73,14 +73,16 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		me = MPT_ENUM(TypeMeta);
 	}
 	if (!type) {
-		static const char fmt[] = {
+		static const uint8_t fmt[] = {
 			MPT_ENUM(TypeMeta),
 			MPT_ENUM(TypeObject),
 			MPT_ENUM(TypeOutput),
 			MPT_ENUM(TypeLogger),
 			0
 		};
-		if (ptr) *((const char **) ptr) = fmt;
+		if (ptr) {
+			*((const uint8_t **) ptr) = (me == MPT_ENUM(TypeMeta)) ? fmt + 1 : fmt;
+		}
 		return me;
 	}
 	if (type == MPT_ENUM(TypeMeta)) {
@@ -190,10 +192,10 @@ static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 		return MPT_ENUM(TypeOutput);
 	}
 	if (pr->name && !*pr->name) {
-		static const char sock[] = { MPT_ENUM(TypeSocket), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeSocket), 0 };
 		pr->name = "output";
 		pr->desc = "generic output interface";
-		pr->val.fmt = sock;
+		pr->val.fmt = fmt;
 		pr->val.ptr = &od->con.out.sock;
 		
 		return 0;

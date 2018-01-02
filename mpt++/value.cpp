@@ -47,7 +47,16 @@ long double float80::value() const
     return v;
 }
 
-bool value::set(const char *f, const void *d)
+bool value::format::set(int type)
+{
+    if (type < 0 || type > 0xff) {
+        return false;
+    }
+    _fmt[0] = type;
+    memset(_fmt + 1, 0, sizeof(_fmt) - 1);
+    return true;
+} 
+bool value::set(const uint8_t *f, const void *d)
 {
     if (!f || !d) {
         return false;
@@ -56,10 +65,8 @@ bool value::set(const char *f, const void *d)
     ptr = d;
     return true;
 }
-
 const char *value::string() const
 {
-    
     if (!fmt) {
         return static_cast<const char *>(ptr);
     }
@@ -81,8 +88,7 @@ const void *value::scalar(int type) const
         return 0;
     }
     /* regular and user scalar type */
-    if (type > _TypeDynamicMax
-        || mpt_valsize(from) <= 0) {
+    if (mpt_valsize(from) <= 0) {
           return 0;
     }
     return ptr;
@@ -97,8 +103,7 @@ void *value::pointer(int type) const
     if (type && type != from) {
         return 0;
     }
-    if (from <= _TypeDynamicMax
-        && mpt_valsize(from) != 0) {
+    if (mpt_valsize(from) != 0) {
         return 0;
     }
     return *reinterpret_cast<void * const *>(ptr);

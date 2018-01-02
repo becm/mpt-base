@@ -42,15 +42,15 @@ enum MPT_ENUM(TextFlags) {
 
 enum MPT_ENUM(LayoutTypes) {
 	/* layout data types */
-	MPT_ENUM(TypeColor)     = 0x30,  /* '0' */
-	MPT_ENUM(TypeLineAttr)  = 0x31,  /* '1' */
-	MPT_ENUM(TypeLine)      = 0x32,  /* '2' */
+	MPT_ENUM(TypeColor)     = 0x10,  /* DLE */
+	MPT_ENUM(TypeLineAttr)  = 0x11,  /* DC1 */
+	MPT_ENUM(TypeLine)      = 0x12,  /* DC2 */
 	
 	/* layout pointer types */
-	MPT_ENUM(TypeText)      = 0x34,  /* '4' */
-	MPT_ENUM(TypeAxis)      = 0x35,  /* '5' */
-	MPT_ENUM(TypeWorld)     = 0x36,  /* '6' */
-	MPT_ENUM(TypeGraph)     = 0x37   /* '7' */
+	MPT_ENUM(TypeText)      = 0x14,  /* DC4 */
+	MPT_ENUM(TypeAxis)      = 0x15,  /* NAK */
+	MPT_ENUM(TypeWorld)     = 0x16,  /* SYN */
+	MPT_ENUM(TypeGraph)     = 0x17   /* ETB */
 };
 
 /* argb standard color */

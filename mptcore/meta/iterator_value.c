@@ -18,6 +18,7 @@
 struct valSource {
 	MPT_INTERFACE(iterator) _it;
 	MPT_STRUCT(value) val, save;
+	uint8_t fmt[2];
 };
 
 static int stringConvert(const char *from, int type, void *dest)
@@ -98,12 +99,13 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 {
 	struct valSource *it = (void *) ctl;
-	int len;
-	uint8_t ftype;
+	int ftype;
 	
 	if (!type) {
 		if (dest) {
-			*((MPT_STRUCT(value) *) dest) = it->save;
+			*((const uint8_t **) dest) = it->fmt;
+			it->fmt[0] = *it->val.fmt;
+			it->fmt[1] = 0;
 		}
 		return it->val.fmt - it->save.fmt;
 	}
@@ -133,6 +135,7 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	/* copy scalar or untracked pointer data */
 	if (type == ftype
 	 && MPT_value_isBasic(ftype)) {
+		int len;
 		if ((len = mpt_valsize(ftype)) < 0) {
 			return MPT_ERROR(BadArgument);
 		}
@@ -177,7 +180,7 @@ static int valReset(MPT_INTERFACE(iterator) *ctl)
 {
 	struct valSource *it = (void *) ctl;
 	it->val = it->save;
-	return strlen(it->val.fmt);
+	return mpt_position(it->val.fmt, -1);
 }
 static const MPT_INTERFACE_VPTR(iterator) _vptr_iterator_value = {
 	valGet,
@@ -232,22 +235,19 @@ static int valConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
 	struct valSource *it = (void *) (mt + 1);
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue) };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
 		if (dest) {
-			*((const char **) dest) = fmt;
+			*((const uint8_t **) dest) = fmt;
+			return 0;
 		}
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
-		if (dest) {
-			*((void **) dest) = &it->_it;
-		}
+		if (dest) *((void **) dest) = &it->_it;
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
-		if (dest) {
-			*((MPT_STRUCT(value) *) dest) = it->save;
-		}
+		if (dest) *((MPT_STRUCT(value) *) dest) = it->save;
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
@@ -278,8 +278,8 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	};
 	MPT_INTERFACE(metatype) *mt;
 	struct valSource *it;
-	const char *fmt;
-	char *data;
+	const uint8_t *fmt;
+	uint8_t *data;
 	size_t vlen, flen, vpos;
 	int type, curr;
 	

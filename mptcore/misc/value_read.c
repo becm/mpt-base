@@ -20,9 +20,9 @@
  */
 extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 {
-	const char *src, *desc;
-	uint8_t curr;
-	int len;
+	const char *src;
+	const uint8_t *desc;
+	int curr, len;
 	
 	if (!fmt) {
 		return MPT_ERROR(BadArgument);
@@ -35,7 +35,6 @@ extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 	}
 	len = 0;
 	if (!(desc = val->fmt)) {
-		int curr;
 		while (*fmt && (curr = mpt_convert_string(src, *fmt, dest)) > 0) {
 			++fmt;
 			++len;

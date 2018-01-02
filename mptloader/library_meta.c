@@ -173,10 +173,15 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 				        MPT_tr("created proxy object"), desc);
 			}
 		}
-		/* named instance */
-		else if ((desc = mpt_valtype_name(lh.type))) {
+		/* metatype instance */
+		else if ((desc = mpt_meta_typename(lh.type))) {
 			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-			        MPT_tr("created proxy instance"), desc);
+			        MPT_tr("created metatype proxy"), desc);
+		}
+		/* interface instance */
+		else if ((desc = mpt_interface_typename(lh.type))) {
+			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
+			        MPT_tr("created interface proxy"), desc);
 		}
 		/* generic instance */
 		else {

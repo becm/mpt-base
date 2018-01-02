@@ -25,10 +25,7 @@ extern int mpt_value_compare(const MPT_STRUCT(value) *val, const void *cmp)
 	if (!val->fmt) {
 		pos = strcmp(val->ptr, cmp);
 	}
-	else if (!(pos = strlen(val->fmt))) {
-		return pos;
-	}
-	else if ((pos = mpt_offset(val->fmt, pos)) < 0) {
+	else if ((pos = mpt_offset(val->fmt, -1)) <= 0) {
 		return pos;
 	}
 	else if (!(pos = memcmp(val->ptr, cmp, pos))) {

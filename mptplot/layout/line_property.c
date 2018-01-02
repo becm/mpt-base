@@ -139,19 +139,19 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERF
  */
 extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 {
-	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",  "line color",     { cfmt, (void *) MPT_offset(line,color)} },
-		{"x1",     "line start",     { "f",  (void *) MPT_offset(line,from.x)} },
-		{"x2",     "line end (x)",   { "f",  (void *) MPT_offset(line,to.x)} },
-		{"y1",     "line start (y)", { "f",  (void *) MPT_offset(line,from.y)} },
-		{"y2",     "line end (y)",   { "f",  (void *) MPT_offset(line,to.y)} },
-		{"width",  "line width",     { "y",  (void *) MPT_offset(line,attr.width)} }, /* pass line::attr to setter */
-		{"style",  "line style",     { "y",  (void *) MPT_offset(line,attr.style)} },
-		{"symbol", "symbol type",    { "y",  (void *) MPT_offset(line,attr.symbol)} },
-		{"size",   "symbol size",    { "y",  (void *) MPT_offset(line,attr.size)} }
+		{"color",  "line color",     { cfmt,             (void *) MPT_offset(line,color)} },
+		{"x1",     "line start",     { (uint8_t *) "f",  (void *) MPT_offset(line,from.x)} },
+		{"x2",     "line end (x)",   { (uint8_t *) "f",  (void *) MPT_offset(line,to.x)} },
+		{"y1",     "line start (y)", { (uint8_t *) "f",  (void *) MPT_offset(line,from.y)} },
+		{"y2",     "line end (y)",   { (uint8_t *) "f",  (void *) MPT_offset(line,to.y)} },
+		{"width",  "line width",     { (uint8_t *) "y",  (void *) MPT_offset(line,attr.width)} }, /* pass line::attr to setter */
+		{"style",  "line style",     { (uint8_t *) "y",  (void *) MPT_offset(line,attr.style)} },
+		{"symbol", "symbol type",    { (uint8_t *) "y",  (void *) MPT_offset(line,attr.symbol)} },
+		{"size",   "symbol size",    { (uint8_t *) "y",  (void *) MPT_offset(line,attr.size)} }
 	};
-	static const char format[] = {
+	static const uint8_t format[] = {
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeLineAttr),
 		'f', 'f', /* line start */

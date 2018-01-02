@@ -31,11 +31,12 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 {
 	struct wrapIter *it = (void *) mt;
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
 		if (dest) {
-			*((const char **) dest) = fmt;
+			*((const uint8_t **) dest) = fmt;
+			return 0;
 		}
-		return *fmt;
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		if (dest) {

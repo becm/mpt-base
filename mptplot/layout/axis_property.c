@@ -224,18 +224,18 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 {
 	static const MPT_STRUCT(property) elem[] = {
-		{"title",     "axis title",              { "s",  (void *) MPT_offset(axis, _title)} },
-		{"begin",     "axis start value",        { "d",  (void *) MPT_offset(axis, begin)} },
-		{"end",       "axis end value",          { "d",  (void *) MPT_offset(axis, end)} },
-		{"tlen",      "relative tick length ",   { "f",  (void *) MPT_offset(axis, tlen)} },
-		{"exponent",  "label exponent",          { "n",  (void *) MPT_offset(axis, exp)} },
-		{"intervals", "intervals between ticks", { "y",  (void *) MPT_offset(axis, intv)} },
-		{"subtick",   "intermediate ticks",      { "y",  (void *) MPT_offset(axis, sub)} },
-		{"decimals",  "decimal places",          { "y",  (void *) MPT_offset(axis, dec)} },
-		{"lpos",      "label direction",         { "c",  (void *) MPT_offset(axis, lpos)} },
-		{"tpos",      "title direction",         { "c",  (void *) MPT_offset(axis, tpos)} },
+		{"title",     "axis title",              { (uint8_t *) "s",  (void *) MPT_offset(axis, _title)} },
+		{"begin",     "axis start value",        { (uint8_t *) "d",  (void *) MPT_offset(axis, begin)} },
+		{"end",       "axis end value",          { (uint8_t *) "d",  (void *) MPT_offset(axis, end)} },
+		{"tlen",      "relative tick length ",   { (uint8_t *) "f",  (void *) MPT_offset(axis, tlen)} },
+		{"exponent",  "label exponent",          { (uint8_t *) "n",  (void *) MPT_offset(axis, exp)} },
+		{"intervals", "intervals between ticks", { (uint8_t *) "y",  (void *) MPT_offset(axis, intv)} },
+		{"subtick",   "intermediate ticks",      { (uint8_t *) "y",  (void *) MPT_offset(axis, sub)} },
+		{"decimals",  "decimal places",          { (uint8_t *) "y",  (void *) MPT_offset(axis, dec)} },
+		{"lpos",      "label direction",         { (uint8_t *) "c",  (void *) MPT_offset(axis, lpos)} },
+		{"tpos",      "title direction",         { (uint8_t *) "c",  (void *) MPT_offset(axis, tpos)} },
 	};
-	static const char format[] = {
+	static const uint8_t format[] = {
 		's',
 		'd', 'd', /* axis range values */
 		'f',      /* relative tick length */

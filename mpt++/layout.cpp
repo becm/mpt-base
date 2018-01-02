@@ -50,11 +50,11 @@ int Line::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = {
+        static const uint8_t fmt[] = {
             metatype::Type, object::Type,
             line::Type, color::Type, lineattr::Type, 0
         };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == object::Type) {
@@ -66,7 +66,7 @@ int Line::conv(int type, void *ptr) const
         return object::Type;
     }
     if (type == color::Type) {
-        if (ptr) *static_cast<const class color **>(ptr) = &color;
+        if (ptr) *static_cast<const struct color **>(ptr) = &color;
         return me;
     }
     if (type == lineattr::Type) {
@@ -131,11 +131,11 @@ int Text::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = {
+        static const uint8_t fmt[] = {
             metatype::Type, object::Type,
             text::Type, color::Type, 0
         };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == object::Type) {
@@ -202,11 +202,11 @@ int Axis::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = {
+        static const uint8_t fmt[] = {
             metatype::Type, object::Type,
             text::Type, color::Type, 0
         };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == metatype::Type) {
@@ -278,11 +278,11 @@ int World::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = {
+        static const uint8_t fmt[] = {
             metatype::Type, object::Type,
             world::Type, color::Type, 0
         };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == metatype::Type) {
@@ -349,12 +349,16 @@ int Graph::conv(int type, void *ptr) const
         me = metatype::Type;
     }
     if (!type) {
-        static const char fmt[] = { metatype::Type, object::Type, graph::Type, color::Type, 0 };
-        if (ptr) *static_cast<const char **>(ptr) = fmt;
+        static const uint8_t fmt[] = {
+            metatype::Type, object::Type,
+            graph::Type, color::Type, 0
+            
+        };
+        if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
     if (type == metatype::Type) {
-        if (ptr) *static_cast<const Graph **>(ptr) = this;
+        if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
     if (type == object::Type) {

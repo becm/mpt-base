@@ -36,21 +36,15 @@ static uintptr_t iterBoundaryRef(MPT_INTERFACE(reference) *ref)
 static int iterBoundaryConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 'd';
+		}
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		if (ptr) *((void **) ptr) = (void *) (mt + 1);
-		return MPT_ENUM(TypeIterator);
-	}
-	if (type == MPT_ENUM(TypeValue)) {
-		MPT_STRUCT(value) *val;
-		if ((val = ptr)) {
-			static const char fmt[] = { 'd', 'd', 'd', 'u', 0 };
-			val->fmt = fmt;
-			val->ptr = (void *) (mt + 2);
-		}
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
@@ -71,38 +65,36 @@ static MPT_INTERFACE(metatype) *iterBoundaryClone(const MPT_INTERFACE(metatype) 
 static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct _iter_bdata *d = (void *) (it + 1);
+	double val;
+	
 	if (!type) {
-		static const char fmt[] = { 'd', 'f', 0 };
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = "df";
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+		}
 		return d->pos;
 	}
-	if (d->pos >= d->elem) {
+	if (d->pos > d->elem) {
 		return MPT_ERROR(MissingData);
 	}
+	if (d->pos == d->elem) {
+		return 0;
+	}
+	if (!d->pos) {
+		val = d->left;
+	}
+	else if (d->pos < (d->elem - 1)) {
+		val = d->inter;
+	}
+	else {
+		val = d->right;
+	}
 	if (type == 'd') {
-		if (ptr) {
-			if (!d->pos) {
-				*((double *) ptr) = d->left;
-			}
-			else if (d->pos < (d->elem - 1)) {
-				*((double *) ptr) = d->inter;
-			} else {
-				*((double *) ptr) = d->right;
-			}
-		}
+		if (ptr) *((double *) ptr) = val;
 		return 'd';
 	}
 	if (type == 'f') {
-		if (ptr) {
-			if (!d->pos) {
-				*((float *) ptr) = d->left;
-			}
-			else if (d->pos < (d->elem - 1)) {
-				*((float *) ptr) = d->inter;
-			} else {
-				*((float *) ptr) = d->right;
-			}
-		}
+		if (ptr) *((float *) ptr) = val;
 		return 'd';
 	}
 	return MPT_ERROR(BadType);

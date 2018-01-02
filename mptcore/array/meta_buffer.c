@@ -58,9 +58,12 @@ static int bufferConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_value_toVector('c'), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
-		return 0;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_value_toVector('c'), 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return MPT_ENUM(TypeArray);
+		}
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		if (ptr) *((const void **) ptr) = &m->_it;
@@ -156,9 +159,12 @@ static int bufferConvArgs(const MPT_INTERFACE(metatype) *mt, int type, void *ptr
 	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
-		if (ptr) *((const char **) ptr) = fmt;
-		return 0;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return MPT_ENUM(TypeArray);
+		}
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == 's') {
 		if (ptr) {

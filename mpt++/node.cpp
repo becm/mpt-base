@@ -17,10 +17,6 @@
 __MPT_NAMESPACE_BEGIN
 
 // basic metatype
-const char *metatype::string() const
-{
-    return mpt_meta_data(this, 0);
-}
 int metatype::conv(int type, void *ptr) const
 {
     void **dest = (void **) ptr;

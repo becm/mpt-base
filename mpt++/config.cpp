@@ -48,14 +48,14 @@ path &path::operator =(const path &from)
 
 Slice<const char> path::data() const
 {
-    struct array::Data *d = array();
+    array::Data *d = array();
     size_t skip, max;
     if (!d || (skip = off + len) > (max = d->length())) return Slice<const char>(0, 0);
     return Slice<const char>(static_cast<char *>(d->data()) + skip, max - skip);
 }
 bool path::clearData()
 {
-    struct array::Data *d = array();
+    array::Data *d = array();
     return d ? d->setLength(off + len) : true;
 }
 

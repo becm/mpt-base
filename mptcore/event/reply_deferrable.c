@@ -95,22 +95,19 @@ static int contextConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, mt, _mt);
 	
 	if (!type) {
+		static const uint8_t fmt[] = { MPT_ENUM(TypeReply), MPT_ENUM(TypeReplyData), 0 };
 		if (ptr) {
-			static const char fmt[] = { MPT_ENUM(TypeReply), MPT_ENUM(TypeReplyData) };
-			*((const char **) ptr) = fmt;
+			*((const uint8_t **) ptr) = fmt;
+			return 0;
 		}
 		return MPT_ENUM(TypeReply);
 	}
 	if (type == MPT_ENUM(TypeReply)) {
-		if (ptr) {
-			*((void **) ptr) = &ctx->_ctx;
-		}
+		if (ptr) *((void **) ptr) = &ctx->_ctx;
 		return MPT_ENUM(TypeReplyData);
 	}
 	if (type == MPT_ENUM(TypeReplyData)) {
-		if (ptr) {
-			*((void **) ptr) = &ctx->_ctx;
-		}
+		if (ptr) *((void **) ptr) = &ctx->_ctx;
 		return MPT_ENUM(TypeReply);
 	}
 	return MPT_ERROR(BadType);

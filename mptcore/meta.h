@@ -22,20 +22,17 @@ public:
 	class Basic;
 	
 	const char *string() const;
+	void *pointer(int) const;
 	
+	inline const uint8_t *types() const
+	{
+		uint8_t *t = 0;
+		return (conv(0, &t) < 0) ? 0 : t;
+	}
 	template <typename T>
 	inline T *cast() const
 	{
-		static const int t = typeIdentifier<T>();
-		if (t <= _TypeDynamicMax
-		    && mpt_valsize(t) != 0) {
-			return 0;
-		}
-		T *ptr;
-		if (conv(t, &ptr) < 0) {
-			return 0;
-		}
-		return ptr;
+		return static_cast<T *>(pointer(typeIdentifier<T>()));
 	}
 	inline operator const char *() const
 	{ return string(); }

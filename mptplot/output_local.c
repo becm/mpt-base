@@ -61,13 +61,16 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	MPT_STRUCT(local_output) *lo = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = {
+		static const uint8_t fmt[] = {
 			MPT_ENUM(TypeObject),
 			MPT_ENUM(TypeOutput),
 			MPT_ENUM(TypeFile),
 			0
 		};
-		if (ptr) *((const char **) ptr) = fmt;
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 0;
+		}
 		return MPT_ENUM(TypeObject);
 	}
 	if (type == MPT_ENUM(TypeMeta)) {
@@ -107,7 +110,7 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutput);
 	}
 	if ((name = pr->name) && !*name) {
-		static const char fmt[] = { MPT_ENUM(TypeMeta), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeMeta), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("local data output");
 		pr->val.fmt = fmt;

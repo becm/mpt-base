@@ -201,13 +201,13 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->desc = "interface to output data";
 		/* socket is active */
 		if (MPT_socket_active(&con->out.sock)) {
-			static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
+			static const uint8_t fmt[] = { MPT_ENUM(TypeSocket), 0 };
 			pr->val.fmt = fmt;
 			pr->val.ptr = &con->out.sock;
 			return 1;
 		}
 		if (con->out.buf._buf) {
-			pr->val.fmt = "";
+			pr->val.fmt = (uint8_t *) "";
 			pr->val.ptr = con->out.buf._buf;
 			return 1;
 		}

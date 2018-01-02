@@ -25,7 +25,7 @@
  */
 extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, const char *, size_t), void *dest)
 {
-	const char *fmt = val->fmt;
+	const uint8_t *fmt = val->fmt;
 	const void *data = val->ptr;
 	int cont = 0;
 	

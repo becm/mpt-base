@@ -10,27 +10,44 @@
  * \ingroup mptConvert
  * \brief data offset
  * 
- * Get offset for data position
+ * Get offset for data position.
+ * Use  `match = \<0` to get total size and
+ * `match = 0` to get invalid data offset.
  * 
  * \param fmt data format description
  * \param pos position of element
  * 
  * \return data offset for element position
  */
-extern int mpt_offset(const char *fmt, int pos)
+extern int mpt_offset(const uint8_t *fmt, int pos)
 {
 	size_t off = 0;
+	int curr;
 	
-	if (pos < 0) return -2;
-	
-	while (pos--) {
-		int	curr;
+	while ((curr = *fmt++)) {
+		int len;
 		
-		if ((curr = mpt_valsize(*fmt)) > 0) off += curr;
-		else if (!curr) off += sizeof(void *);
-		else if (!isspace(*fmt)) return -1;
-		++fmt;
+		if (isspace(curr)) {
+			continue;
+		}
+		if ((len = mpt_valsize(curr)) < 0) {
+			if (!pos) {
+				return off;
+			}
+			return curr;
+		}
+		if (!len) {
+			off += sizeof(void *);
+		} else {
+			off += len;
+		}
+		if (pos > 0 && !--pos) {
+			return off;
+		}
 	}
-	return off;
+	if (pos < 0) {
+		return off;
+	}
+	return MPT_ERROR(BadValue);
 }
 

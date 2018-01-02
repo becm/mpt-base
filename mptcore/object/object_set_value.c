@@ -21,9 +21,12 @@ static int metaIterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *
 	int ret;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
-		return MPT_ENUM(TypeMeta);
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 0;
+		}
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
 		if (ptr) *((MPT_STRUCT(value) *) ptr) = *val;

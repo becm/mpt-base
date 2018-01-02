@@ -43,13 +43,13 @@ Buffer *Buffer::clone() const
 }
 int Buffer::conv(int type, void *ptr) const
 {
-    int me;
-    if ((me = IODevice::typeIdentifier()) < 0) {
+    int me = IODevice::typeIdentifier();
+    if (me < 0) {
         me = metatype::Type;
     }
     if (!type) {
-        static const char types[] = { metatype::Type, iterator::Type, MPT_value_toVector('c'), 's', 0 };
-        if (ptr) *((const char **) ptr) = types;
+        static const uint8_t types[] = { metatype::Type, iterator::Type, MPT_value_toVector('c'), 's', 0 };
+        if (ptr) *static_cast<const uint8_t **>(ptr) = types;
         return me;
     }
     if (type == metatype::Type) {
@@ -77,18 +77,19 @@ int Buffer::conv(int type, void *ptr) const
         if (ptr) *static_cast<const uint8_t **>(ptr) = d.begin();
         return me;
     }
+    if (type == me) {
+        if (ptr) *static_cast<const IODevice **>(ptr) = this;
+        return me;
+    }
     return BadType;
 }
 // iterator interface
 int Buffer::get(int type, void *ptr)
 {
     if (!type) {
-        int me;
-        if ((me = IODevice::typeIdentifier()) < 0) {
-            me = array::Type;
-        }
+        int me = IODevice::typeIdentifier();
         mpt_slice_get(0, type, ptr);
-        return me;
+        return me < 0 ? array::Type : me;
     }
     if (_state.scratch) {
         return MessageInProgress;

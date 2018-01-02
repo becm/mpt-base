@@ -15,7 +15,7 @@
 #include "convert.h"
 
 static MPT_STRUCT(array) interface_names = MPT_ARRAY_INIT;
-static MPT_STRUCT(array) metatype_names = MPT_ARRAY_INIT;
+static MPT_STRUCT(array) metatype_names  = MPT_ARRAY_INIT;
 
 static int interface_limit = MPT_ENUM(_TypeInterfaceMax);
 static int metatype_limit  = MPT_ENUM(_TypeMetaMax);
@@ -25,73 +25,145 @@ static void clearArrays(void)
 	mpt_array_clone(&interface_names, 0);
 	mpt_array_clone(&metatype_names, 0);
 }
+struct Element
+{
+	MPT_STRUCT(identifier) id;
+	uint8_t data[48 - sizeof(MPT_STRUCT(identifier))];
+};
 
 static const struct {
 	int type;
 	const char name[28];
 } static_types[] = {
-	/* interface types */
-	{ MPT_ENUM(TypeLogger),  "logger"   },
-	{ MPT_ENUM(TypeObject),  "object"   },
-	{ MPT_ENUM(TypeOutput),  "output"   },
-	{ MPT_ENUM(TypeConfig),  "config"   }
+	/* modify interface types */
+	{ MPT_ENUM(TypeObject),   "object"   },
+	{ MPT_ENUM(TypeConfig),   "config"   },
+	/* input interface types */
+	{ MPT_ENUM(TypeIterator), "iterator" },
+	{ MPT_ENUM(TypeSolver),   "solver",  },
+	/* output interfaces */
+	{ MPT_ENUM(TypeLogger),   "logger"   },
+	{ MPT_ENUM(TypeReply),    "reply"    },
+	{ MPT_ENUM(TypeOutput),   "output"   },
 };
 
 static int addArrayIdentifier(MPT_STRUCT(array) *arr, const char *name)
 {
-	MPT_STRUCT(identifier) *id;
+	struct Element *elem;
+	static size_t size = sizeof(*elem) - MPT_IDENTIFIER_HSIZE;
 	static int reg = 0;
+	size_t len;
 	
 	if (!reg) {
 		atexit(clearArrays);
 		++reg;
 	}
-	if (!(id = mpt_array_append(arr, sizeof(*id), 0))) {
-		return MPT_ERROR(BadOperation);
+	if (!name) {
+		len = 0;
 	}
-	id->_max = sizeof(id->_val) + sizeof(id->_base);
-	if (!mpt_identifier_set(id, name, -1)) {
-		arr->_buf->_used -= sizeof(*id);
+	else if ((len = strlen(name)) >= size) {
 		return MPT_ERROR(BadValue);
 	}
-	return 0;
+	if (!(elem = mpt_array_append(arr, sizeof(*elem), 0))) {
+		return MPT_ERROR(BadOperation);
+	}
+	elem->id._max = size;
+	if (name) {
+		memcpy(elem->id._val, name, len);
+		elem->id._len = len + 1;
+	}
+	return (arr->_buf->_used / sizeof(*elem)) - 1;
 }
-static const char *getArrayName(MPT_STRUCT(array) *arr, int pos)
+static const char *getArrayName(const MPT_STRUCT(array) *arr, int pos)
 {
-	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(identifier) *id;
+	const MPT_STRUCT(buffer) *buf;
+	struct Element *elem;
 	int count;
 	
 	count = 0;
 	if ((buf = arr->_buf)) {
-		count = buf->_used / sizeof(*id);
+		count = buf->_used / sizeof(*elem);
 	}
 	if (count <= pos) {
 		return 0;
 	}
-	id = (void *) (buf + 1);
-	return mpt_identifier_data(id + pos);
+	elem = (void *) (buf + 1);
+	return elem->id._val;
+}
+static int getArrayId(const MPT_STRUCT(array) *arr, const char *name, int len)
+{
+	const MPT_STRUCT(buffer) *buf;
+	struct Element *elem;
+	size_t i, max;
+	
+	if (!(buf = arr->_buf)) {
+		return MPT_ERROR(MissingData);
+	}
+	elem = (void *) (buf + 1);
+	max = buf->_used / sizeof(*elem);
+	if (len >= 0) {
+		++len;
+		for (i = 0; i < max; ++i) {
+			if (elem->id._len == len
+			    && !memcmp(name, elem->id._val, len)) {
+				return i;
+			}
+		}
+		return MPT_ERROR(BadValue);
+	}
+	for (i = 0; i < max; ++i) {
+		if (!strcmp(name, elem->id._val)) {
+			return i;
+		}
+	}
+	return MPT_ERROR(BadValue);
 }
 
 
 /*!
  * \ingroup mptConvert
- * \brief get type name
+ * \brief get metatype name
  * 
- * Get name for previously registered type name.
+ * Get name for previously registered metatype.
  * 
- * \return name for type ID
+ * \return name for metatype ID
  */
-extern const char *mpt_valtype_name(int type)
+extern const char *mpt_meta_typename(int type)
 {
-	int i, max;
+	const char *name;
 	
-	if (type > interface_limit
-	    && type <= MPT_ENUM(_TypeInterfaceMax)) {
+	if (type > MPT_ENUM(_TypeMetaMax)
+	    || type < MPT_ENUM(_TypeMetaBase)) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (type > metatype_limit) {
 		return "";
 	}
-	if (type > metatype_limit
-	    && type <= MPT_ENUM(_TypeMetaMax)) {
+	if (!(name = getArrayName(&metatype_names, type - MPT_ENUM(_TypeMetaBase)))) {
+		errno = EAGAIN;
+	}
+	return name;
+}
+/*!
+ * \ingroup mptConvert
+ * \brief get interface name
+ * 
+ * Get name for builtin or previously registered interface.
+ * 
+ * \return name for interface ID
+ */
+extern const char *mpt_interface_typename(int type)
+{
+	const char *name;
+	int i, max;
+	
+	if (type > MPT_ENUM(_TypeInterfaceMax)
+	    || type < MPT_ENUM(_TypeInterfaceBase)) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (type > interface_limit) {
 		return "";
 	}
 	for (i = 0, max = MPT_arrsize(static_types); i < max; ++i) {
@@ -99,16 +171,10 @@ extern const char *mpt_valtype_name(int type)
 			return static_types[i].name;
 		}
 	}
-	if (type >= MPT_ENUM(_TypeMetaBase)
-	    && type <= MPT_ENUM(_TypeMetaMax)) {
-		return getArrayName(&metatype_names, max - MPT_ENUM(_TypeMetaBase));
+	if (!(name = getArrayName(&interface_names, type - MPT_ENUM(_TypeInterfaceBase)))) {
+		errno = EAGAIN;
 	}
-	if (type >= MPT_ENUM(_TypeInterfaceBase)
-	    && type <= MPT_ENUM(_TypeInterfaceMax)) {
-		return getArrayName(&interface_names, type - MPT_ENUM(_TypeInterfaceBase));
-	}
-	errno = EINVAL;
-	return 0;
+	return name;
 }
 
 /*!
@@ -116,19 +182,23 @@ extern const char *mpt_valtype_name(int type)
  * \brief get type name
  * 
  * Get name for previously registered type name.
+ * Metatype entries take precedence over interfaces.
  * 
- * \return name for type ID
+ * \return type ID for registered name
  */
 extern int mpt_valtype_id(const char *name, int len)
 {
-	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(identifier) *id;
 	size_t i, max;
+	int pos;
 	
 	if (!name || !len || !*name) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* exact length match for type name */
+	/* prefere metatype registrations */
+	if ((pos = getArrayId(&metatype_names, name, len)) >= 0) {
+		return pos + MPT_ENUM(_TypeMetaBase);
+	}
+	/* exact length match for interface name */
 	if (len >= 0) {
 		for (i = 0, max = MPT_arrsize(static_types); i < max; ++i) {
 			if (len == (int) strlen(static_types[i].name)
@@ -136,33 +206,17 @@ extern int mpt_valtype_id(const char *name, int len)
 				return static_types[i].type;
 			}
 		}
-		if ((buf = interface_names._buf)) {
-			id = (void *) (buf + 1);
-			for (i = 0, max = buf->_used / sizeof(*id); i < max; ++i) {
-				const char *curr;
-				if ((curr = mpt_identifier_data(id++))
-				    && len == (int) strlen(curr)
-				    && !strncmp(name, curr, len)) {
-					return i + MPT_ENUM(_TypeBaseDynamic);
-				}
-			}
+		if ((pos = getArrayId(&interface_names, name, len)) >= 0) {
+			return pos + MPT_ENUM(_TypeInterfaceBase);
 		}
-		if ((buf = metatype_names._buf)) {
-			id = (void *) (buf + 1);
-			for (i = 0, max = buf->_used / sizeof(*id); i < max; ++i) {
-				const char *curr;
-				if ((curr = mpt_identifier_data(id++))
-				    && len == (int) strlen(curr)
-				    && !strncmp(name, curr, len)) {
-					return i + MPT_ENUM(_TypeMetaBase);
-				}
-			}
-		}
-		return MPT_ERROR(BadType);
+		return MPT_ERROR(BadValue);
 	}
 	/* shortnames */
 	if (!strcmp(name, "log")) {
 		return MPT_ENUM(TypeLogger);
+	}
+	if (!strcmp(name, "iter")) {
+		return MPT_ENUM(TypeIterator);
 	}
 	if (!strcmp(name, "out")) {
 		return MPT_ENUM(TypeOutput);
@@ -176,27 +230,10 @@ extern int mpt_valtype_id(const char *name, int len)
 			return static_types[i].type;
 		}
 	}
-	if ((buf = interface_names._buf)) {
-		id = (void *) (buf + 1);
-		for (i = 0, max = buf->_used / sizeof(*id); i < max; ++i) {
-			const char *curr;
-			if ((curr = mpt_identifier_data(id++))
-			    && !strcmp(name, curr)) {
-				return i + MPT_ENUM(_TypeBaseDynamic);
-			}
-		}
+	if ((pos = getArrayId(&interface_names, name, len)) >= 0) {
+		return pos + MPT_ENUM(_TypeInterfaceBase);
 	}
-	if ((buf = metatype_names._buf)) {
-		id = (void *) (buf + 1);
-		for (i = 0, max = buf->_used / sizeof(*id); i < max; ++i) {
-			const char *curr;
-			if ((curr = mpt_identifier_data(id++))
-			    && !strcmp(name, curr)) {
-				return i + MPT_ENUM(_TypeMetaBase);
-			}
-		}
-	}
-	return MPT_ERROR(BadType);
+	return MPT_ERROR(BadValue);
 	
 }
 
@@ -204,36 +241,35 @@ extern int mpt_valtype_id(const char *name, int len)
  * \ingroup mptConvert
  * \brief register metatype
  * 
- * Register new global metatype.
+ * Register name for new global metatype.
  * 
- * \return type code of new object type
+ * \return unique type code
  */
 extern int mpt_valtype_meta_new(const char *name)
 {
 	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(identifier) *id;
-	int count, err;
+	int id, err;
 	
-	count = 0;
+	id = MPT_ENUM(_TypeMetaBase);
 	if ((buf = metatype_names._buf)) {
-		count = buf->_used / sizeof(*id);
+		id += buf->_used / sizeof(struct Element);
+	}
+	if (id > metatype_limit) {
+		return MPT_ERROR(MissingBuffer);
 	}
 	if (!name) {
-		if (metatype_limit > count) {
-			return metatype_limit--;
-		}
-		return MPT_ERROR(BadOperation);
+		return metatype_limit--;
 	}
-	if (strlen(name) < 4 || mpt_valtype_id(name, -1) >= 0) {
+	if (strlen(name) < 4) {
 		return MPT_ERROR(BadValue);
 	}
-	if (count >= MPT_ENUM(_TypeDynamicMax)) {
-		return MPT_ERROR(MissingBuffer);
+	if (getArrayId(&metatype_names, name, -1) >= 0) {
+		return MPT_ERROR(BadType);
 	}
 	if ((err = addArrayIdentifier(&metatype_names, name)) < 0) {
 		return err;
 	}
-	return MPT_ENUM(_TypeMetaBase) + count;
+	return id;
 }
 /*!
  * \ingroup mptConvert
@@ -247,30 +283,26 @@ extern int mpt_valtype_meta_new(const char *name)
 extern int mpt_valtype_interface_new(const char *name)
 {
 	MPT_STRUCT(buffer) *buf;
-	int count, err;
+	int id, err;
 	
-	count = 0;
+	id = MPT_ENUM(_TypeInterfaceBase);
 	if ((buf = interface_names._buf)) {
-		count = buf->_used / sizeof(MPT_STRUCT(identifier));
+		id += buf->_used / sizeof(struct Element);
+	}
+	if (id >= interface_limit) {
+		return MPT_ERROR(MissingBuffer);
 	}
 	if (!name) {
-		if (interface_limit > count) {
-			return interface_limit--;
-		}
-		return MPT_ERROR(BadOperation);
+		return interface_limit--;
 	}
 	if (!name[0] || !name[1]) {
 		return MPT_ERROR(BadValue);
 	}
-	if (mpt_valtype_id(name, -1) >= 0) {
-		return MPT_ERROR(BadEncoding);
-	}
-	count += MPT_ENUM(_TypeInterfaceBase);
-	if (count >= interface_limit) {
-		return MPT_ERROR(MissingBuffer);
+	if (getArrayId(&interface_names, name, -1) >= 0) {
+		return MPT_ERROR(BadType);
 	}
 	if ((err = addArrayIdentifier(&interface_names, name)) < 0) {
 		return err;
 	}
-	return count;
+	return id;
 }

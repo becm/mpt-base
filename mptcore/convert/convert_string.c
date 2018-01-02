@@ -22,6 +22,14 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 {
 	int len = 0;
 	
+	if (!type) {
+		static const uint8_t fmt[] = { 's', 0 };
+		if (dest) {
+			*((const uint8_t **) dest) = fmt;
+			return 0;
+		}
+		return 's';
+	}
 	if (type == MPT_ENUM(TypeValue)) {
 		MPT_STRUCT(value) *val;
 		

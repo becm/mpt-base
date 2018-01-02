@@ -29,9 +29,12 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	const struct wrapIter *wr = (void *) mt;
 	
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
-		if (dest) *((const char **) dest) = fmt;
-		return MPT_ENUM(TypeMeta);
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		if (dest) {
+			*((const uint8_t **) dest) = fmt;
+			return 0;
+		}
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeMeta)) {
 		if (dest) *((const void **) dest) = &wr->_ctl;

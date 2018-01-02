@@ -257,24 +257,24 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
  */
 extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 {
-	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
 	static const MPT_STRUCT(property) elem[] = {
-		{"axes",       "axis names to bind",  { "s",  (void *) MPT_offset(graph,_axes)} },
-		{"worlds",     "world names to bind", { "s",  (void *) MPT_offset(graph,_worlds)} },
+		{"axes",       "axis names to bind",  { (uint8_t *) "s",  (void *) MPT_offset(graph,_axes)} },
+		{"worlds",     "world names to bind", { (uint8_t *) "s",  (void *) MPT_offset(graph,_worlds)} },
 		
-		{"foreground", "foreground color",    { cfmt, (void *) MPT_offset(graph,fg)} },
-		{"background", "background color",    { cfmt, (void *) MPT_offset(graph,bg)} },
+		{"foreground", "foreground color",    { cfmt,             (void *) MPT_offset(graph,fg)} },
+		{"background", "background color",    { cfmt,             (void *) MPT_offset(graph,bg)} },
 		
-		{"pos",        "origin point",        { "ff", (void *) MPT_offset(graph,pos)} },
-		{"scale",      "scale factor",        { "ff", (void *) MPT_offset(graph,scale)} },
+		{"pos",        "origin point",        { (uint8_t *) "ff", (void *) MPT_offset(graph,pos)} },
+		{"scale",      "scale factor",        { (uint8_t *) "ff", (void *) MPT_offset(graph,scale)} },
 		
-		{"grid",       "grid type",           { "y",  (void *) MPT_offset(graph,grid)} },
-		{"align",      "axis alignment",      { "y",  (void *) MPT_offset(graph,align)} },
-		{"clip",       "clip data display",   { "y",  (void *) MPT_offset(graph,clip)} },
+		{"grid",       "grid type",           { (uint8_t *) "y",  (void *) MPT_offset(graph,grid)} },
+		{"align",      "axis alignment",      { (uint8_t *) "y",  (void *) MPT_offset(graph,align)} },
+		{"clip",       "clip data display",   { (uint8_t *) "y",  (void *) MPT_offset(graph,clip)} },
 		
-		{"lpos",       "legend position",     { "c",  (void *) MPT_offset(graph,lpos)} }
+		{"lpos",       "legend position",     { (uint8_t *) "c",  (void *) MPT_offset(graph,lpos)} }
 	};
-	static const char format[] = {
+	static const uint8_t format[] = {
 		's', 's',
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeColor),
@@ -314,7 +314,7 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	}
 	if (!gr) {
 		*pr = elem[pos];
-		pr->val.fmt = "";
+		pr->val.fmt = (uint8_t *) "";
 		return pos;
 	}
 	pr->name = elem[pos].name;

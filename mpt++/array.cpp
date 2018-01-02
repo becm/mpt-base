@@ -228,7 +228,8 @@ int array::set(metatype &src)
 }
 int array::set(value val)
 {
-    const char *fmt, *base;
+    const uint8_t *fmt;
+    const char *base;
     size_t len;
     if (!(fmt = val.fmt)) {
         if (!(base = (const char *) val.ptr)) {

@@ -33,9 +33,12 @@ static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	const struct _iter_sdata *d = (void *) (mt + 2);
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeIterator), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
-		return 's';
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 'd';
+		}
+		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_ENUM(TypeIterator)) {
 		if (ptr) *((const void **) ptr) = mt + 1;
@@ -43,14 +46,6 @@ static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	}
 	if (type == 's') {
 		if (ptr) *((const char **) ptr) = (char *) d + 1;
-		return MPT_ENUM(TypeIterator);
-	}
-	if (type == MPT_ENUM(TypeValue)) {
-		MPT_STRUCT(value) *val;
-		if ((val = ptr)) {
-			val->fmt = 0;
-			val->ptr = (char *) (d + 1);
-		}
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
@@ -73,8 +68,10 @@ static int iterValueGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct _iter_sdata *d = (void *) (it + 1);
 	if (!type) {
-		static const char fmt[] = "df";
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = "df";
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+		}
 		return d->next - (char *) (d + 1);
 	}
 	if (!d->next) {

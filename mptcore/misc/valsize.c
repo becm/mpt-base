@@ -69,7 +69,7 @@ static const struct {
 	{ 'o', 0 },  /* D-Bus object path */
 };
 
-static size_t types[MPT_ENUM(_TypeBaseDynamic) / 4];
+static size_t types[MPT_ENUM(_TypeScalarSize)];
 static int types_count = 0;
 
 /*!
@@ -86,12 +86,11 @@ static int types_count = 0;
 extern ssize_t mpt_valsize(int type)
 {
 	/* bad type value */
-	if (type < 0
-	    || type > MPT_ENUM(_TypeDynamicMax)) {
+	if (type < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* builtin types */
-	if (type < MPT_ENUM(_TypeBaseDynamic)) {
+	if (type < MPT_ENUM(_TypeDynamic)) {
 		uint8_t i;
 		
 		/* generic interface type */
@@ -99,7 +98,8 @@ extern ssize_t mpt_valsize(int type)
 			return 0;
 		}
 		/* generic/typed vector */
-		if (MPT_value_isVector(type)) {
+		if (type == MPT_ENUM(TypeVector)
+		    || MPT_value_isVector(type)) {
 			return sizeof(struct iovec);
 		}
 		/* basic type */
@@ -110,30 +110,29 @@ extern ssize_t mpt_valsize(int type)
 		}
 		return MPT_ERROR(BadType);
 	}
-	/* dynamic interface or metatypes */
-	if (type >= MPT_ENUM(_TypeInterfaceBase)
-	    && type <= MPT_ENUM(_TypeInterfaceMax)) {
+	/* static or dynamic interface */
+	if (MPT_value_isInterface(type)) {
 		return 0;
 	}
-	type -= MPT_ENUM(_TypeBaseDynamic);
+	type -= MPT_ENUM(_TypeDynamic);
 	/* user generics */
 	if (!types_count) {
 		return MPT_ERROR(BadValue);
 	}
 	/* invalid basic type value */
-	if (type < MPT_ENUM(TypeVector)) {
+	if (type < MPT_ENUM(_TypeVectorBase)) {
 		return MPT_ERROR(BadType);
 	}
-	/* vector for valid user type */
-	if (type < MPT_ENUM(TypeMeta)) {
-		type -= MPT_ENUM(TypeVector);
+	/* vector for valid scalar type */
+	if (type < MPT_ENUM(_TypeScalarBase)) {
+		type -= MPT_ENUM(_TypeVectorBase);
 		if (type < types_count) {
 			return MPT_ERROR(BadValue);
 		}
 		return sizeof(struct iovec);
 	}
 	/* scalar user type range */
-	type -= MPT_ENUM(TypeMeta);
+	type -= MPT_ENUM(_TypeScalarBase);
 	if (type < types_count) {
 		return types[type];
 	}
@@ -159,7 +158,8 @@ extern int mpt_valtype_add(size_t csize)
 		return MPT_ERROR(BadArgument);
 	}
 	types[types_count] = csize;
+	csize = MPT_ENUM(_TypeScalarBase) + types_count++;
 	
-	return MPT_ENUM(_TypeBaseDynamic) + MPT_ENUM(TypeMeta) + types_count++;
+	return csize + MPT_ENUM(_TypeDynamic);
 }
 

@@ -1,21 +1,4 @@
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include "queue.h"
-#include "stream.h"
-
-#include "array.h"
-#include "message.h"
-
-#include "meta.h"
-#include "convert.h"
 
 #include "output.h"
 
@@ -36,7 +19,7 @@ extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *
 		return MPT_ENUM(TypeSocket);
 	}
 	if ((name = pr->name) && !*name) {
-		static const char fmt[2] = { MPT_ENUM(TypeSocket), 0 };
+		static const uint8_t fmt[2] = { MPT_ENUM(TypeSocket), 0 };
 		
 		pr->name = "outdata";
 		pr->desc = "output data context";

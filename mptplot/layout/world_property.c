@@ -171,17 +171,17 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
  */
 extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 {
-	static const char cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",   "world color",   { cfmt, (void *) MPT_offset(world,color) } },
-		{"cycles",  "cycle count",   { "u",  (void *) MPT_offset(world,cyc) } },
-		{"width",   "line width",    { "y",  (void *) MPT_offset(world,attr.width) } },
-		{"style",   "line style",    { "y",  (void *) MPT_offset(world,attr.style) } },
-		{"symbol",  "symbol type",   { "y",  (void *) MPT_offset(world,attr.symbol) } },
-		{"size",    "symbol size",   { "y",  (void *) MPT_offset(world,attr.size) } },
-		{"alias",   "display name",  { "s",  (void *) MPT_offset(world,_alias) } },
+		{"color",   "world color",   { cfmt,             (void *) MPT_offset(world,color) } },
+		{"cycles",  "cycle count",   { (uint8_t *) "u",  (void *) MPT_offset(world,cyc) } },
+		{"width",   "line width",    { (uint8_t *) "y",  (void *) MPT_offset(world,attr.width) } },
+		{"style",   "line style",    { (uint8_t *) "y",  (void *) MPT_offset(world,attr.style) } },
+		{"symbol",  "symbol type",   { (uint8_t *) "y",  (void *) MPT_offset(world,attr.symbol) } },
+		{"size",    "symbol size",   { (uint8_t *) "y",  (void *) MPT_offset(world,attr.size) } },
+		{"alias",   "display name",  { (uint8_t *) "s",  (void *) MPT_offset(world,_alias) } },
 	};
-	static const char format[] = {
+	static const uint8_t format[] = {
 		's',
 		MPT_ENUM(TypeColor),
 		MPT_ENUM(TypeLineAttr),

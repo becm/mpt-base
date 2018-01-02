@@ -43,8 +43,11 @@ static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	const MPT_STRUCT(configRoot) *c = (void *) mt;
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
-		if (ptr) *((const char **) ptr) = fmt;
+		static const uint8_t fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
+		if (ptr) {
+			*((const uint8_t **) ptr) = fmt;
+			return 0;
+		}
 		return MPT_ENUM(TypeConfig);
 	}
 	if (type == MPT_ENUM(TypeConfig)) {
