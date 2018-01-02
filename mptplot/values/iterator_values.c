@@ -172,7 +172,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 	it->_vptr = &valueIter;
 	
 	d = (void *) (it + 1);
-	memcpy(d + 1, val, len);
+	val = memcpy(d + 1, val, len);
 	d->next = val + adv;
 	d->curr = flt;
 	
