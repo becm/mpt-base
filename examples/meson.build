@@ -7,13 +7,13 @@ if with_core
   subdir('core')
 endif
 
-if with_cxx and with_loader
+if with_cxx
   subdir('cxx')
   if with_io
     test('client instance',
       executable('client', 'client.cpp',
         cpp_args: test_defines,
-        dependencies: [ cxx, load ]))
+        dependencies: cxx))
   endif
 endif
 
@@ -37,14 +37,15 @@ if with_plot
     args: [ '9', 'poly 1 0 0 : -4', 'lin 1 0' ])
 endif
 
+if with_shared and with_loader
+  test('loader',
+    executable('libassign', 'libassign.c',
+      c_args: test_defines,
+      dependencies: load),
+    env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptplot') ])
+endif
+
 if with_io
-  if with_shared and with_loader
-    test('loader',
-      executable('libassign', 'libassign.c',
-        c_args: test_defines,
-        dependencies: load),
-      env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptplot') ])
-  endif
   test('I/O pipe',
     executable('pipe', join_paths('io', 'pipe.c'),
       c_args: test_defines,

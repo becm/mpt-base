@@ -66,7 +66,6 @@ extern int main(int argc, char * const argv[])
 	
 	cq.push('b');
 	std::cout << cq.data() << std::endl;
-	puts(cq.data().base());
 	
 	cqp.push(buf);
 	cqp.shift();

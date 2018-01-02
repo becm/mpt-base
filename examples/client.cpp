@@ -30,17 +30,16 @@ public:
     
     int conv(int , void *) const __MPT_OVERRIDE;
 protected:
-    metatype *mt;
+    mpt::Reference<mpt::metatype> _mt;
 };
 MyClient::MyClient()
 {
-    if (!(mt = mpt::mpt_library_meta(mpt::metatype::Type, "mpt_output_remote", 0, 0))) {
-        return;
-    }
+    mpt::metatype *mt = mpt::mpt_output_remote();
     mpt::object *o;
     if (mt && (o = mt->cast<mpt::object>())) {
         o->set(0, "w:client.out");
     }
+    _mt.setPointer(mt);
 }
 int MyClient::process(uintptr_t , mpt::iterator *)
 {
@@ -52,8 +51,9 @@ void MyClient::unref()
 }
 int MyClient::conv(int type, void *ptr) const
 {
+    metatype *mt;
     int ret;
-    if (mt && (ret = mt->conv(type, ptr)) > 0) {
+    if ((mt = _mt.pointer()) && (ret = mt->conv(type, ptr)) > 0) {
         return Type;
     }
     return client::conv(type, ptr);
@@ -94,7 +94,7 @@ int main(int argc, char * const argv[])
     mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 
     const mpt::metatype *mt;
-    if ((mt = mpt::mpt_config_get(0, "mpt.args", '.', 0))) {
+    if ((mt = mpt::config::global()->cast<mpt::config>()->get("mpt.args"))) {
         mpt::consumable v(*mt);
         const char *arg;
         while (v.consume(arg)) {
