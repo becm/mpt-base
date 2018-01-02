@@ -115,7 +115,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeArray)          = 'a',   /* array content */
 #define MPT_value_fromVector(v) (((v) == MPT_ENUM(TypeVector)) \
                                ? 0 \
-                               : (MPT_value_isScalar((v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase)) \
+                               : (MPT_value_isScalar((v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase)) \
                                 ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
                                 : MPT_ERROR(BadType)))
 	
