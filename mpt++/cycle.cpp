@@ -50,10 +50,6 @@ void Cycle::unref()
 {
     delete this;
 }
-uintptr_t Cycle::addref()
-{
-    return 0;
-}
 
 int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t len, int nc)
 {

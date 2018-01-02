@@ -364,7 +364,6 @@ public:
 		Polyline _values;
 	};
 	/* reference interface */
-	virtual uintptr_t addref();
 	void unref() __MPT_OVERRIDE;
 	
 	/* basic raw data interface */

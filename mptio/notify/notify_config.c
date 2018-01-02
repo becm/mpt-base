@@ -18,6 +18,8 @@
  */
 extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config) *cfg)
 {
+	static const char con[] = "mpt.connect";
+	static const char bind[] = "mpt.listen";
 	const MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(input) *in;
 	const char *ctl;
@@ -26,7 +28,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 	off = cfg ? 4 : 0;
 	
 	ncon = 0;
-	if ((mt = mpt_config_get(cfg, "mpt.connect" + off, '.', 0))) {
+	if ((mt = mpt_config_get(cfg, con + off, '.', 0))) {
 		in = 0;
 		ctl = 0;
 		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {
@@ -54,7 +56,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 			}
 		}
 	}
-	if ((mt = mpt_config_get(cfg, "mpt.listen" + off, '.', 0))) {
+	if ((mt = mpt_config_get(cfg, bind + off, '.', 0))) {
 		in = 0;
 		ctl = 0;
 		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {

@@ -99,7 +99,7 @@ enum MPT_MESGTYPE(Type) {
 	
 	/* extended data transfer */
 	MPT_MESGTYPE(UserMin)     = 0x10,  /* start/end number of available types */
-	MPT_MESGTYPE(UserMax)     = 0xff,
+	MPT_MESGTYPE(UserMax)     = 0xff
 };
 
 enum MPT_MESGTYPE(Value) {

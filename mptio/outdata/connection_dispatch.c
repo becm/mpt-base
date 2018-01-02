@@ -240,7 +240,7 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHa
 		return 0;
 	}
 	else {
-		MPT_INTERFACE(metatype) *ctx;
+		MPT_INTERFACE(metatype) *ctx = 0;
 		MPT_INTERFACE(reply_context) *rc;
 		MPT_STRUCT(reply_data) *rd;
 		int ret;
