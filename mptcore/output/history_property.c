@@ -21,7 +21,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 {
 	const char *where = 0;
 	FILE *fd;
-	int len, sock = -1;
+	int sock = -1;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(MessageInProgress);
@@ -29,10 +29,9 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 	/* default output */
 	if (!src) {
 		fd = stdout;
-		len = 0;
 	}
 	/* use socket descriptor */
-	else if ((len = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0) {
+	else if (src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock) >= 0) {
 		if (sock < 0) {
 			fd = 0;
 		}
@@ -45,8 +44,8 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 		}
 	}
 	/* use file path */
-	else if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
-		len = 1;
+	else if (src->_vptr->conv(src, 's', &where) >= 0) {
+		fd = 0;
 		/* regular file path */
 		if (where && !(fd = fopen(where, "w"))) {
 			return MPT_ERROR(BadArgument);
@@ -60,7 +59,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 	}
 	hist->file = fd;
 	
-	return len;
+	return 0;
 }
 /*!
  * \ingroup mptOutput
@@ -145,7 +144,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeFile), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("output values and messages");
 		pr->val.fmt = fmt;
@@ -154,7 +153,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 	}
 	id = 0;
 	if (name ? (!strcasecmp(name, "file") || !strcasecmp(name, "history") || !strcasecmp(name, "histfile")) : pos == id++) {
-		static const char fmt[] = { MPT_ENUM(TypeFile), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeFile), 0 };
 		pr->name = "file";
 		pr->desc = MPT_tr("history data output file");
 		pr->val.fmt = fmt;
@@ -162,7 +161,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		return hist->info.file ? 1 : 0;
 	}
 	if (name ? (!strcasecmp(name, "format") || !strcasecmp(name, "histfmt") || !strcasecmp(name, "fmt")) :  pos == id++) {
-		static const char fmt[] = { MPT_ENUM(TypeValFmt), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeValFmt), 0 };
 		MPT_STRUCT(buffer) *buf;
 		int len;
 		pr->name = "format";
@@ -179,7 +178,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 	if (name ? !strcasecmp(name, "ignore") : pos == id++) {
 		pr->name = "ignore";
 		pr->desc = MPT_tr("output message filter");
-		pr->val.fmt = "y";
+		pr->val.fmt = (uint8_t *) "y";
 		pr->val.ptr = &hist->info.ignore;
 		return hist->info.ignore != MPT_LOG(Info) ? 1 : 0;
 	}
