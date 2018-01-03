@@ -21,6 +21,22 @@
 #include "parse.h"
 #include "node.h"
 
+static void clearConfig(void)
+{
+	MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(config) *cfg;
+	
+	if (!(mt = mpt_config_global(0))) {
+		return;
+	}
+	cfg = 0;
+	if (mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg) < 0
+	    || !cfg) {
+		return;
+	}
+	cfg->_vptr->remove(cfg, 0);
+}
+
 static void setDebug(int lv)
 {
 	static int old = 0;
@@ -246,6 +262,7 @@ extern int mpt_init(int argc, char * const argv[])
 		break;
 	}
 	top->_vptr->ref.unref((void *) top);
+	atexit(clearConfig);
 	
 	return ret < 0 ? ret : optind;
 }
