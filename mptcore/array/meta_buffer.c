@@ -126,18 +126,15 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 		bufferAdvance,
 		bufferReset
 	};
+	static const MPT_STRUCT(slice) s = MPT_SLICE_INIT;
 	MPT_STRUCT(metaBuffer) *m;
 	
 	if (!(m = malloc(sizeof(*m)))) {
 		return 0;
 	}
-	m->_mt._vptr = 0;
-	m->_it._vptr = 0;
-	m->s._a._buf = 0;
-	m->s._len = 0;
-	m->s._off = 0;
 	m->_mt._vptr = &metaBuffer;
 	m->_it._vptr = &iterBuffer;
+	m->s = s;
 	
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
@@ -193,14 +190,14 @@ static MPT_INTERFACE(metatype) *bufferCloneArgs(const MPT_INTERFACE(metatype) *m
 {
 	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
 	MPT_STRUCT(metaBuffer) *ptr;
-	MPT_INTERFACE(metatype) *copy;
+	void *copy;
 	if (!(copy = mpt_meta_arguments(&m->s._a))) {
 		return 0;
 	}
-	ptr = (void *) copy;
+	ptr = copy;
 	ptr->s._len = m->s._len;
 	ptr->s._off = m->s._off;
-	return copy;
+	return &ptr->_mt;
 }
 /*!
  * \ingroup mptArray
@@ -225,14 +222,20 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 		bufferAdvance,
 		bufferResetArgs
 	};
+	static const MPT_STRUCT(slice) s = MPT_SLICE_INIT;
 	MPT_INTERFACE(metaBuffer) *m;
 	
-	if (!(m = (void *) mpt_meta_buffer(a))) {
+	if (!(m = malloc(sizeof(*m)))) {
 		return 0;
 	}
 	m->_mt._vptr = &metaBuffer;
 	m->_it._vptr = &iterBuffer;
-	mpt_slice_advance(&m->s);
+	m->s = s;
+	
+	if (a) {
+		mpt_array_clone(&m->s._a, a);
+		mpt_slice_advance(&m->s);
+	}
 	
 	return &m->_mt;
 }
