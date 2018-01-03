@@ -30,15 +30,6 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 		}
 		return 's';
 	}
-	if (type == MPT_ENUM(TypeValue)) {
-		MPT_STRUCT(value) *val;
-		
-		if ((val = dest)) {
-			val->fmt = 0;
-			val->ptr = from;
-		}
-		return from ? strlen(from) : 0;
-	}
 	if (type == 'k') {
 		const char *key, *txt = from;
 		size_t klen;
