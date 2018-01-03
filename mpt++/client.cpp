@@ -29,11 +29,11 @@ static void unrefConfig()
 }
 static config *clientConfig()
 {
-    static const char dest[] = "mpt.client\0";
-    path p;
     
-    p.set(dest);
     if (!cfg) {
+        static const char dest[] = "mpt.client\0";
+        path p;
+        p.set(dest);
         atexit(unrefConfig);
         cfg = config::global(&p);
     }
