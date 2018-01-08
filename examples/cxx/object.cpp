@@ -89,31 +89,31 @@ extern int main(int , char * const [])
 	}
 	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
 	mpt::Axis *ax = new mpt::Reference<mpt::Axis>::instance;
-	mpt::Object lo(*li), ao(*ax);
 	
-	std::cout << "ao: " << ao.type() << std::endl;
-	std::cout << "lo: " << lo.type() << std::endl;
+	std::cout << "ao: " << ax->type() << std::endl;
+	std::cout << "lo: " << li->type() << std::endl;
 	
 	for (auto &i : *static_cast<const mpt::object *>(li)) {
 		std::cout << "  " << i.name << " = " << i.val << std::endl;
 	}
 	
 	mpt::object *obj;
-	obj = ao;
+	obj = ax;
 	std::cout << "type(ao): " << typeid(*obj).name() << std::endl;
-	obj = lo;
+	obj = li;
 	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
-	mpt::object::Property prop = lo["x1"];
+	mpt::object &lr = *li;
+	mpt::object::Property prop = lr["x1"];
 	mpt::line *l = li;
 	
-	std::cout << l->from.x << std::endl;
+	int old = l->from.x;
 	prop = "10";
-	std::cout << l->from.x << std::endl;
+	std::cout << old << " -> " << l->from.x << std::endl;
 	
-	lo["x2"] = 4.6;
-	std::cout << lo["x2"] << std::endl;
-	lo["color"] = "#6666";
+	lr["x2"] = 4.6;
+	std::cout << lr["x2"] << std::endl;
+	lr["color"] = "#6666";
 	
 	return 0;
 }

@@ -71,21 +71,21 @@ MPT_STRUCT(path)
 #if defined(__cplusplus)
 MPT_INTERFACE(config)
 {
+protected:
+	inline ~config() { }
 public:
 	enum { Type = TypeConfig };
 	
-	virtual const metatype *query(const path *) const = 0;
-	virtual int assign(const path *, const value * = 0) = 0;
-	virtual int remove(const path *) = 0;
-	
-	int environ(const char *filter = "mpt_*", int sep = '_', char * const env[] = 0);
+	int environ(const char *match = "mpt_*", int sep = '_', char * const env[] = 0);
 	void del(const char *path, int sep = '.', int len = -1);
 	bool set(const char *path, const char *value = 0, int sep = '.');
 	const metatype *get(const char *path, int sep = '.', int len = -1);
 	
 	static metatype *global(const path * = 0);
-protected:
-	inline ~config() { }
+	
+	virtual const metatype *query(const path *) const = 0;
+	virtual int assign(const path *, const value * = 0) = 0;
+	virtual int remove(const path *) = 0;
 };
 template<> inline __MPT_CONST_EXPR int typeIdentifier<config>() { return config::Type; }
 #else

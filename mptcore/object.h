@@ -38,8 +38,19 @@ public:
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
 	bool setProperties(const object &, logger * = logger::defaultInstance());
 	
-	inline int type() const
-	{ return property(0); }
+	/* get property by name/position */
+	object::Property operator [](const char *);
+	object::Property operator [](int);
+	
+	/* get properties from node list */
+	const node *getProperties(const node *, PropertyHandler , void *);
+	/* set non-default/all child entrys */
+	int setProperties(node *) const;
+	int setAllProperties(node *) const;
+	
+	/* get next node with default/unknown property */
+	node *getDefault(const node *) const;
+	node *getAlien(const node *) const;
 	
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
@@ -227,39 +238,6 @@ protected:
 	friend class Object;
 private:
 	Property & operator= (const Property &);
-};
-
-struct node;
-class Object
-{
-public:
-	/* create storage */
-	inline Object(Object &from) : _obj(from._obj)
-	{ }
-	inline Object(object &from) : _obj(from)
-	{ }
-	
-	inline operator object *() const
-	{ return &_obj; }
-	
-	inline int type()
-	{ return _obj.type(); }
-	
-	/* get property by name/position */
-	object::Property operator [](const char *);
-	object::Property operator [](int);
-	
-	/* get properties from node list */
-	const node *getProperties(const node *, PropertyHandler , void *) const;
-	/* set non-default/all child entrys */
-	int setProperties(node *) const;
-	int setAllProperties(node *) const;
-	
-	/* get next node with default/unknown property */
-	node *getDefault(const node *) const;
-	node *getAlien(const node *) const;
-protected:
-	object &_obj;
 };
 
 struct node;

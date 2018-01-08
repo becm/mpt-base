@@ -145,32 +145,32 @@ bool object::Property::set(const value &val)
     return true;
 }
 // get property by name/position
-object::Property Object::operator [](const char *name)
+object::Property object::operator [](const char *name)
 {
-    object::Property prop(_obj);
+    object::Property prop(*this);
     prop.select(name);
     return prop;
 }
-object::Property Object::operator [](int pos)
+object::Property object::operator [](int pos)
 {
-    object::Property prop(_obj);
+    object::Property prop(*this);
     prop.select(pos);
     return prop;
 }
-const node *Object::getProperties(const node *head, PropertyHandler proc, void *pdata) const
+const node *object::getProperties(const node *head, PropertyHandler proc, void *pdata)
 {
     const int traverse = TraverseAll | TraverseChange;
     if (!head) return 0;
     do {
-        int ret = mpt_object_set_property(&_obj, traverse, &head->ident, head->meta().pointer());
+        int ret = mpt_object_set_property(this, traverse, &head->ident, head->meta().pointer());
         if (ret) {
             return head;
         }
         if (!proc) {
             continue;
         }
-        property pr(head->ident.name());
-        _obj.property(&pr);
+        struct property pr(head->ident.name());
+        this->property(&pr);
         const metatype *mt;
         static const uint8_t metafmt[] = { metatype::Type, 0 };
         pr.val.fmt = metafmt;
