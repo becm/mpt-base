@@ -2,7 +2,6 @@
  * initialize solver from shared library.
  */
 
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,6 +16,7 @@ struct _mpt_metaProxy
 	MPT_INTERFACE(metatype) _mt;
 	void *ptr;
 	MPT_STRUCT(libhandle) lh;
+	MPT_STRUCT(refcount) _ref;
 	uint16_t len;
 	char fmt[2];
 };
@@ -25,11 +25,14 @@ static void mpUnref(MPT_INTERFACE(reference) *m)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
+	if (mpt_refcount_lower(&mp->_ref)) {
+		return;
+	}
 	if ((m = mp->ptr)) {
-		if (mp->lh.type) {
+		int type = mp->lh.type;
+		
+		if (MPT_value_isMetatype(type)) {
 			m->_vptr->unref(m);
-		} else {
-			free(m);
 		}
 	}
 	mpt_library_close(&mp->lh);
@@ -37,8 +40,8 @@ static void mpUnref(MPT_INTERFACE(reference) *m)
 }
 static uintptr_t mpRef(MPT_INTERFACE(reference) *ref)
 {
-	(void) ref;
-	return 0;
+	struct _mpt_metaProxy *mp = (void *) ref;
+	return mpt_refcount_raise(&mp->_ref);
 }
 static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
@@ -89,8 +92,6 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	}
 	*n = *mp;
 	n->ptr = ptr;
-	n->fmt[0] = mp->fmt[0];
-	n->fmt[1] = 0;
 	
 	memcpy(n + 1, mp + 1, mp->len + 1);
 	
@@ -108,9 +109,10 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
  * 
  * Create metatype proxy to library instance.
  * 
+ * \param type  type of instance to create
  * \param desc  library symbol and name
  * \param path  alternate path for library
- * \param type  type of instance to create
+ * \param info  log/error output instance
  * 
  * \return metatype proxy pointer
  */
@@ -133,7 +135,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 		if (info) {
 			ret = len;
 			mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
-			        MPT_tr("symbol nam too big"), len);
+			        MPT_tr("symbol name too big"), len);
 		}
 		return 0;
 	}
