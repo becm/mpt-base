@@ -9,7 +9,6 @@ src = files(
   'layout_open.c',
   'output_bind_list.c',
   'output_bind_string.c',
-  'output_control.c',
   'output_flags.c',
   'output_init_plot.c',
   'output_init_raw.c',

@@ -90,15 +90,10 @@ extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path)
 		return match;
 	}
 	/* create/replace node data */
-	if (val && match) {
-		MPT_INTERFACE(metatype) *old, *mt;
-		if (!(mt = mpt_meta_new(*val))) {
-			return 0;
-		}
-		if ((old = match->_meta)) {
-			old->_vptr->ref.unref((void *) old);
-		}
-		match->_meta = mt;
+	if (val
+	    && match
+	    && (clen = mpt_node_set(match, val))) {
+		return 0;
 	}
 	return match;
 }

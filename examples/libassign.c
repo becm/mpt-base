@@ -35,24 +35,25 @@ int main(int argc, const char *argv[])
 		}
 		/* create reference with loaded function */
 		if ((mt = lh.create())) {
+			FILE *out = stdout;
 			const uint8_t *types = 0;
 			struct mpt_object *obj = 0;
 			int err;
 			
 			if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
 			    && obj) {
-				printf("%s", mpt_object_typename(obj));
+				fputs(mpt_object_typename(obj), out);
 			}
 			if ((err = mt->_vptr->conv(mt, 0, &types)) >= 0) {
-				printf(": 0x%02x", err);
+				fprintf(out, ": 0x%02x", err);
 				if (types) {
-					fputs(" >", stdout);
+					fputs(" >", out);
 				}
 				while (*types) {
-					printf(" 0x%02x", *types++);
+					fprintf(out, " 0x%02x", *types++);
 				}
 			}
-			fputs(mpt_newline_string(0), stdout);
+			fputs(mpt_newline_string(0), out);
 			mt->_vptr->ref.unref((void *) mt);
 		}
 		sym = *(++argv);
