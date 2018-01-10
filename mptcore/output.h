@@ -229,9 +229,6 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandl
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
 
 
-/* apply command argument to output */
-extern int mpt_output_control(MPT_INTERFACE(metatype) *, int , const MPT_STRUCT(message) *, MPT_INTERFACE(logger) * __MPT_DEFPAR(0));
-
 /* create remote output instance */
 extern MPT_INTERFACE(input) *mpt_output_remote(void);
 /* create local output instance */

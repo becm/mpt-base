@@ -21,13 +21,16 @@ from tempfile import gettempdir
 from subprocess import Popen, PIPE
 
 MESSAGE_OUTPUT = 0x0
-MESSAGE_VALUES = 0x2
+
 MESSAGE_COMMAND = 0x4
+MESSAGE_SET = 0x6
+
+MESSAGE_VALUES = 0x8
 MESSAGE_DEST = 0xd
 
-VALUES_INTEGER = 0x20
+VALUES_UNSIGNED = 0x20
 VALUES_FLOAT = 0x40
-VALUES_UNSIGNED = 0x60
+VALUES_INTEGER = 0x60
 
 if sys.byteorder == "little":
     VALUES_NATIVE = -0x80
@@ -211,11 +214,11 @@ def message(msg, dest=None, messageID=None):
     """ create serialized message elements """
     if isinstance(msg, array):
         if 'df'.find(msg.typecode) >= 0:
-            arg = VALUES_NATIVE + VALUES_FLOAT + msg.itemsize
+            arg = VALUES_NATIVE + VALUES_FLOAT + (msg.itemsize - 1)
         elif 'LIHBC'.find(msg.typecode) >= 0:
-            arg = VALUES_NATIVE + VALUES_UNSIGNED + msg.itemsize
+            arg = VALUES_NATIVE + VALUES_UNSIGNED + (msg.itemsize - 1)
         elif 'lihbc'.find(msg.typecode) >= 0:
-            arg = VALUES_NATIVE + VALUES_INTEGER + msg.itemsize
+            arg = VALUES_NATIVE + VALUES_INTEGER + (msg.itemsize - 1)
         else:
             raise TypeError("invalid value type")
         hdr = header(MESSAGE_DEST, arg, messageID)
@@ -225,7 +228,7 @@ def message(msg, dest=None, messageID=None):
         return (header(MESSAGE_COMMAND, ord(" "), messageID), msg)
     if isinstance(msg, bytes):
         if dest:
-            fmt = VALUES_NATIVE + VALUES_FLOAT + 8
+            fmt = VALUES_NATIVE + VALUES_FLOAT + (8 - 1)
             hdr = header(MESSAGE_VALUES, fmt, messageID)
         else:
             hdr = header(MESSAGE_OUTPUT, ord(" "), messageID)
@@ -521,7 +524,7 @@ class Shell(cmd.Cmd):
         return os.system(args)
     
     def complete_shell(self, text, line, begidx, endidx):
-        return glob.glob(text + '*')
+        return glob(text + '*')
     
     def default(self, line=""):
         """ default error message """
@@ -586,8 +589,9 @@ class Shell(cmd.Cmd):
         # connect clients to graphic
         if hasattr(self, 'control') and hasattr(self, 'graphic'):
             cmd = bytearray()
-            for d in message('graphic open ' + self.graphic.name):
-                cmd = cmd + d
+            cmd = cmd + header(MESSAGE_SET, 2)
+            cmd = cmd + bytearray("mpt\x00graphic\x00", 'utf-8')
+            cmd = cmd + bytearray(self.graphic.name, 'utf-8')
             cmd = encodeCobs(cmd)
             for p in self.control:
                 p.write(cmd)

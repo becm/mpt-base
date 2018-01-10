@@ -195,7 +195,7 @@ MPT_STRUCT(msgdest)
 		MatchDimension = 8,
 		MatchAll       = -1
 	};
-	bool match(msgdest dst, int = MatchAll);
+	bool match(msgdest dst, int = MatchAll) const;
 	
 	inline bool operator ==(const msgdest &cmp)
 	{ return match(cmp); }
@@ -227,7 +227,7 @@ extern size_t mpt_message_read(MPT_STRUCT(message) *, size_t , void *);
 extern size_t mpt_message_length(const MPT_STRUCT(message) *);
 
 /* apply property from message text argument */
-extern int mpt_message_pset(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
+extern int mpt_message_property(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
 
 /* create metatype from message text arguments */
 extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *, int);

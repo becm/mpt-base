@@ -15,7 +15,11 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
+MPT_STRUCT(array);
+MPT_STRUCT(message);
+
 MPT_INTERFACE(iterator);
+MPT_INTERFACE(reply_context);
 
 /*! (un)structured element path */
 #if defined(__cplusplus)
@@ -157,6 +161,14 @@ extern int mpt_path_valid(MPT_STRUCT(path) *);
 extern int mpt_path_fputs(const MPT_STRUCT(path) *, FILE *, const char *);
 #endif
 
+/* process config element */
+extern int mpt_message_assign(const MPT_STRUCT(message) *, int , int (*)(void *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *), void *);
+/* query config element */
+extern const MPT_INTERFACE(metatype) *mpt_config_message_next(const MPT_INTERFACE(config) *, int , MPT_STRUCT(message) *);
+/* query config data */
+extern int mpt_config_reply(MPT_INTERFACE(reply_context) *, const MPT_INTERFACE(config) *, int , const MPT_STRUCT(message) *);
+
+/* assign value in node tree (top level is list) */
 extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 
 __MPT_EXTDECL_END

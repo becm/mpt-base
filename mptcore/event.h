@@ -13,8 +13,6 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(message);
 MPT_STRUCT(notify);
 
-MPT_INTERFACE(iterator);
-
 MPT_STRUCT(reply_data)
 {
 #ifdef __cplusplus
@@ -219,14 +217,11 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */
 extern int mpt_dispatch_hash(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 
-/* register generic events on notifier */
-extern int mpt_dispatch_meta(MPT_STRUCT(dispatch) *, MPT_INTERFACE(metatype) *);
+/* register config handler on dispatcher */
+extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *, MPT_INTERFACE(metatype) * __MPT_DEFPAR(0));
 
 /* create event dispatcher for notifier */
 extern MPT_STRUCT(dispatch) *mpt_notify_dispatch(MPT_STRUCT(notify) *);
-
-/* register dispatch output control operations */
-extern int mpt_dispatch_control(MPT_STRUCT(dispatch) *dsp, uintptr_t , MPT_INTERFACE(metatype) *);
 
 /* create deferrable reply context */
 extern MPT_INTERFACE(metatype) *mpt_reply_deferrable(size_t, int (*)(void *, const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *), void *);

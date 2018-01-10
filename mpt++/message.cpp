@@ -13,7 +13,7 @@ size_t message::read(size_t len, void *base)
 size_t message::length() const
 { return mpt_message_length(this); }
 
-bool msgdest::match(msgdest dst, int flg)
+bool msgdest::match(msgdest dst, int flg) const
 {
     if (flg & MatchLayout
      && dst.lay != lay) {

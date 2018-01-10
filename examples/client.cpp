@@ -88,6 +88,7 @@ int main(int argc, char * const argv[])
     mpt::dispatch d;
     d.set(mpt::msgtype::Command, doCommand, &c);
     n.setDispatch(&d);
+    mpt::mpt_dispatch_param(&d);
 
     n.loop();
 
