@@ -143,7 +143,29 @@ linepart Transform3::part(unsigned dim, const double *val, int len) const
     return lp;
 }
 
-template void apply<double>(point<double> *, const linepart &, const double *, const point<double> &, double (*)(double));
+template void apply<point<double>, double>(point<double> *, const linepart &, const double *, const point<double> &);
+
+extern void apply_log(point<double> *dest, const linepart &pt, const double *from, const point<double> &fact)
+{
+    linepart all = pt;
+    while (all.usr) {
+        double tmp[32];
+        linepart curr = all;
+        if (curr.usr > 32) {
+            curr.usr = 32;
+            curr._trim = 0;
+        }
+        for (uint16_t i = 0; i < curr.usr; ++i) {
+            tmp[i] = log10(from[i]);
+        }
+        ::mpt::apply<double>(dest, curr, tmp, fact);
+        from += curr.usr;
+        dest += curr.usr;
+        all.usr -= curr.usr;
+        all.raw -= curr.usr;
+        all._cut = 0;
+    }
+}
 
 bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
 {
@@ -165,12 +187,12 @@ bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, co
     if (!(len = pt.usr)) return true;
 
     // apply point data
+    point<double> fact(scale->x, scale->y);
     if (!log) {
-        dpoint d(scale->x, scale->y);
-        mpt_apply_linear(reinterpret_cast<dpoint *>(dest), &pt, from, &d);
+        ::mpt::apply<double>(dest, pt, from, fact);
     }
     else {
-        ::mpt::apply<double>(dest, pt, from, point<double>(scale->x, scale->y), log10);
+        apply_log(dest, pt, from, fact);
         if (zx) zx = log10(zx);
     }
     // remove difference to axis start

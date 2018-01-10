@@ -165,7 +165,7 @@ long linepart::array::rawLength()
     return len;
 }
 
-int applyLineData(point<double> *dest, const linepart *lp, int plen, const Transform &tr, Slice<const typed_array> st)
+int apply_data(point<double> *dest, const linepart *lp, int plen, const Transform &tr, Slice<const typed_array> st)
 {
     int dim, proc = 0;
 
@@ -247,7 +247,7 @@ bool Polyline::set(const Transform &tr, Slice<const typed_array> src)
     copy(max, &z, 0, pts, 1);
 
     // modify according to transformation
-    applyLineData(pts, _vis.begin(), _vis.length(), tr, src);
+    apply_data(pts, _vis.begin(), _vis.length(), tr, src);
 
     return true;
 }

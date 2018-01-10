@@ -242,9 +242,6 @@ extern double mpt_linepart_real(int val);
 /* join parts if allowed by size and no userdata in second */
 extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT_STRUCT(linepart));
 
-/* apply raw to user data using scale parameter and (transform function) */
-extern void mpt_apply_linear(MPT_STRUCT(dpoint) *, const MPT_STRUCT(linepart) *, const double *, const MPT_STRUCT(dpoint) *);
-
 /* set point data */
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
@@ -281,7 +278,8 @@ protected:
 	inline ~Transform() { }
 };
 
-extern int applyLineData(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
+extern void apply_log(point<double> *, const linepart &, const double *, const point<double> &);
+extern int apply_data(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
 class Polyline
 {
 public:
@@ -393,41 +391,46 @@ protected:
 };
 
 template <typename T, typename S>
-void apply(T *d, const linepart &pt, const S *src, const T &scale, S fcn(S))
+void apply(T *d, const linepart &pt, const S *src, const T &scale)
 {
 	size_t j = 0, len = pt.usr;
-	double sx(scale.x), sy(scale.y), part;
+	S sx(scale.x), sy(scale.y), part;
 	
 	if ((part = pt.cut())) {
-		S s1, s2;
+		if (pt.raw < 2) {
+			return;
+		}
 		++j;
-		s1 = fcn(src[0]);
-		s2 = fcn(src[1]);
-		part = s1 + part * (s2-s1);
+		S s1 = src[0];
+		S s2 = src[1];
+		part = s1 + part * (s2 - s1);
 		
 		d->x += sx * part;
 		d->y += sy * part;
 	}
 	if ((part = pt.trim())) {
-		S s1, s2;
+		if (pt.raw < 2) {
+			return;
+		}
 		--len;
-		s1 = fcn(src[len-1]);
-		s2 = fcn(src[len]);
-		part = s2 + part * (s1-s2);
+		S s1 = src[len - 1];
+		S s2 = src[len];
+		part = s2 + part * (s1 - s2);
 		
 		d[len].x += sx * part;
 		d[len].y += sy * part;
 	}
 	for ( ; j < len ; j++ ) {
-		d[j].x += sx * fcn(src[j]);
-		d[j].y += sy * fcn(src[j]);
+		d[j].x += sx * src[j];
+		d[j].y += sy * src[j];
 	}
 }
 template <typename S>
-inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale, S fcn(S))
+inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale)
 {
-	return apply<point<S>, S>(d, pt, src, scale, fcn);
+	return apply<point<S>, S>(d, pt, src, scale);
 }
+
 
 template<> inline int typeIdentifier<rawdata>()
 {

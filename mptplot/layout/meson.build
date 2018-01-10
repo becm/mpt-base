@@ -1,6 +1,5 @@
 # meson.build.gen: *.c
 src = files(
-  'apply_linear.c',
   'axis_property.c',
   'color_html.c',
   'color_parse.c',
