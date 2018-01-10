@@ -21,8 +21,8 @@ __MPT_NAMESPACE_BEGIN
 int Group::typeIdentifier()
 {
     static int id = 0;
-    if (!id && (id = mpt_valtype_meta_new("group")) < 0) {
-        id = mpt_valtype_meta_new(0);
+    if (!id && (id = mpt_valtype_interface_new("group")) < 0) {
+        id = mpt_valtype_interface_new(0);
     }
     return id;
 }
