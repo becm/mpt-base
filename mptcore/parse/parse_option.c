@@ -50,6 +50,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 				}
 				/* clear trailing path data */
 				mpt_path_invalidate(path);
+				parse->valid = 0;
 				
 				if ((curr = mpt_parse_data(fmt, parse, path)) < 0) {
 					return curr;
@@ -75,6 +76,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *
 			}
 			/* clear trailing path data */
 			mpt_path_invalidate(path);
+			parse->valid = 0;
 			
 			if ((curr = mpt_parse_data(fmt, parse, path)) < 0) {
 				return curr;

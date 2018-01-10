@@ -68,6 +68,7 @@ extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(pars
 			}
 			/* clear trailing path data */
 			mpt_path_invalidate(path);
+			parse->valid = 0;
 			
 			if ((curr = mpt_parse_data(fmt, parse, path)) < 0) {
 				return curr;
