@@ -50,7 +50,7 @@ extern int toItemId(int from)
 }
 /*!
  * \ingroup mptCore
- * \brief create type code
+ * \brief new generic type
  * 
  * Create new type code in dynamic extended range.
  * To register explicit metatype, interface or
@@ -65,6 +65,19 @@ extern int makeId()
         return BadValue;
     }
     return id++;
+}
+/*!
+ * \ingroup mptCore
+ * \brief new vector type
+ * 
+ * Create new vector type code in dynamic extended range.
+ * 
+ * \return new type code
+ */
+extern int makeVectorId()
+{
+    // redirect to generic registration
+    return makeId();
 }
 
 __MPT_NAMESPACE_END
