@@ -47,21 +47,17 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 		/* load from special or default location */
 		if (!(lib = mpt_library_open(libname + 1, path))) {
 			/* fallback to default library locations */
-			if (!path || (lib = mpt_library_open(libname + 1, 0))) {
-				if (out) {
-					sname = dlerror();
-					mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
-				}
+			if (!path || !(lib = mpt_library_open(libname + 1, 0))) {
+				sname = dlerror();
+				mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
 				return MPT_ERROR(BadValue);
 			}
 			ret = 2;
 		}
 	}
 	if (!(sym = mpt_library_symbol(lib, sname))) {
-		if (out) {
-			sname = dlerror();
-			mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
-		}
+		sname = dlerror();
+		mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
 		if (lib) {
 			dlclose(lib);
 		}

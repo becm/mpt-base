@@ -125,18 +125,14 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 	int ret;
 	
 	if (!desc) {
-		if (info) {
-			mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-			        MPT_tr("no proxy description"));
-		}
+		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("no proxy description"));
 		return 0;
 	}
 	if ((len = strlen(desc)) > UINT16_MAX) {
-		if (info) {
-			ret = len;
-			mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
-			        MPT_tr("symbol name too big"), len);
-		}
+		ret = len;
+		mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
+		        MPT_tr("symbol name too big"), ret);
 		return 0;
 	}
 	lh.type = type;
@@ -144,11 +140,10 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 		return 0;
 	}
 	if (!(mt = lh.create())) {
-		if (info) {
-			mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-			        MPT_tr("unable to create instance"), desc);
-		}
+		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("unable to create instance"), desc);
 		mpt_library_close(&lh);
+		return 0;
 	}
 	if (!(mp = malloc(sizeof(*mp) + len + 1))) {
 		return 0;
