@@ -6,9 +6,6 @@
 #ifndef _MPT_PARSE_H
 #define _MPT_PARSE_H  @INTERFACE_VERSION@
 
-#include <ctype.h>
-#include <limits.h>
-
 #include "core.h"
 
 struct iovec;

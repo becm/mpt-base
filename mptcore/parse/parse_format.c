@@ -2,8 +2,8 @@
  * set format according to string parameter.
  */
 
-#include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "parse.h"
 

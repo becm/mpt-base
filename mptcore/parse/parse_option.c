@@ -1,6 +1,6 @@
 
-#include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "config.h"
 #include "parse.h"
