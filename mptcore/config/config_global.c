@@ -131,23 +131,10 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	}
 	/* top level element */
 	if (!path->len) {
-		MPT_INTERFACE(metatype) *old;
 		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!val) {
-			mt = mpt_metatype_default();
-		} else {
-			mt = mpt_meta_new(*val);
-		}
-		if (!mt) {
-			return MPT_ERROR(BadValue);
-		}
-		if ((old = n->_meta)) {
-			old->_vptr->ref.unref((void *) old);
-		}
-		n->_meta = mt;
-		return mt->_vptr->conv(mt, 0, 0);
+		return mpt_node_set(n, val);
 	}
 	/* set subelement */
 	if (!(n = mpt_node_assign(b, path, val))) {

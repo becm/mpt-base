@@ -17,7 +17,7 @@
  * 
  * \return error or failed config assignment position
  */
-extern int mpt_client_config(MPT_INTERFACE(config) *cfg)
+extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *info)
 {
 	const MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(iterator) *it;
@@ -31,15 +31,24 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg)
 		return 0;
 	}
 	/* set config file */
-	if ((ret = it->_vptr->get(it, 's', &val)) <= 0) {
+	val = 0;
+	if ((ret = it->_vptr->get(it, 's', &val)) <= 0
+	    || !val) {
+		mpt_log(info, __func__, MPT_LOG(Error), "%s",
+		        MPT_tr("bad client config filename"));
 		return ret;
 	}
 	if ((ret = mpt_config_set(cfg, 0, val, 0, 0)) < 0) {
+		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
+		        MPT_tr("failed to set client config"), val);
 		return ret;
+	}
+	if (!info) {
+		info = mpt_log_default();
 	}
 	/* apply config settings */
 	if ((ret = it->_vptr->advance(it)) > 0
-	    && (ret = mpt_config_args(cfg, it))) {
+	    && (ret = mpt_config_args(cfg, it, info))) {
 		if (ret >= 0) {
 			++ret;
 		}
