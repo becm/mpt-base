@@ -44,6 +44,9 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		}
 		if (!len) {
 			hist->info.state &= ~MPT_OUTFLAG(Active);
+			if (hist->info.file) {
+				fflush(hist->info.file);
+			}
 		}
 		return ret;
 	}
