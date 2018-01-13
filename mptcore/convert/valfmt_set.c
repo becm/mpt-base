@@ -40,31 +40,40 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	}
 	/* get elements from iterator */
 	it = 0;
-	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) > 0) {
+	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) > 0
+	    && it
+	    && (curr  = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
+		if (!curr) {
+			mpt_array_clone(arr, 0);
+			return 0;
+		}
 		ret = 0;
-		while ((curr = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) > 0) {
-			if (it->_vptr->advance(it) < 0) {
+		do {
+			if ((curr = it->_vptr->advance(it)) < 0) {
 				break;
 			}
 			if (mpt_valfmt_add(&tmp, fmt) < 0) {
 				mpt_array_clone(&tmp, 0);
 				return MPT_ERROR(BadOperation);
 			}
+			if (!curr) {
+				break;
+			}
 			++ret;
+			curr = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt);
 		}
-		if (ret) {
-			return ret;
-		}
+		while (curr > 0);
 	}
 	/* get elements from value */
-	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) < 0) {
-		const char *from;
+	else if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) < 0) {
+		const char *from = 0;
 		if ((ret = src->_vptr->conv(src, 's', &from)) < 0) {
 			return ret;
 		}
-		if (ret && (ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
+		if (ret && (ret = mpt_valfmt_parse(&tmp, from)) < 0) {
 			return ret;
 		}
+		ret = 0;
 	}
 	/* get elements from value elements */
 	else if (val.fmt) {
@@ -72,7 +81,6 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 		if (!val.ptr) {
 			return MPT_ERROR(BadValue);
 		}
-		ret = 0;
 		while ((curr = mpt_value_read(&val, valfmt, &fmt))) {
 			if (curr < 0) {
 				mpt_array_clone(&tmp, 0);
@@ -82,18 +90,17 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 				mpt_array_clone(&tmp, 0);
 				return MPT_ERROR(BadOperation);
 			}
-			++ret;
 		}
+		ret = 0;
 	}
 	/* get elements from string value */
-	if (ret && val.ptr && (ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
-		return ret;
+	else if (val.ptr) {
+		if ((ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
+			return ret;
+		}
+		ret = 0;
 	}
-	if (!ret) {
-		mpt_array_clone(arr, 0);
-	} else {
-		mpt_array_clone(arr, &tmp);
-	}
+	mpt_array_clone(arr, &tmp);
 	mpt_array_clone(&tmp, 0);
 	return ret;
 }
