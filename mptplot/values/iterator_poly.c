@@ -13,6 +13,10 @@
 
 #include "values.h"
 
+struct coeff_poly {
+	double shift, mult;
+};
+
 struct _iter_poly
 {
 	_MPT_ARRAY_TYPE(double) grid;
@@ -59,9 +63,7 @@ static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 {
 	struct _iter_poly *d = (void *) (it + 1);
 	MPT_STRUCT(buffer) *buf;
-	struct {
-		double shift, mult;
-	} *coeff = (void *) (d + 1);
+	const struct coeff_poly *coeff = (void *) (d + 1);
 	double sum, val;
 	long max, j;
 	
@@ -173,9 +175,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(iterator) *it;
 	struct _iter_poly *d;
-	struct {
-		double shift, mult;
-	} coeff[128];
+	struct coeff_poly coeff[128];
 	int nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
 	
 	/* polynom coefficients */
