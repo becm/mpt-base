@@ -150,6 +150,7 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 	}
 	mp->_mt._vptr = &_mpt_metaProxyCtl;
 	mp->lh = lh;
+	mp->_ref._val = 1;
 	mp->ptr = mt;
 	
 	mp->len = len;
