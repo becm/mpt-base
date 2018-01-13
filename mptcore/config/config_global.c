@@ -16,6 +16,15 @@ MPT_STRUCT(configRoot) {
 };
 static MPT_STRUCT(node) *nodeGlobal = 0;
 
+static void clearGlobal(void)
+{
+	MPT_STRUCT(node) tmp = MPT_NODE_INIT;
+	if (!(tmp.children = nodeGlobal)) {
+		return;
+	}
+	mpt_node_clear(&tmp);
+	nodeGlobal = 0;
+}
 /* reference interface */
 static void configUnref(MPT_INTERFACE(reference) *ref)
 {
@@ -223,6 +232,12 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	MPT_STRUCT(configRoot) *c;
 	MPT_STRUCT(path) p;
 	MPT_STRUCT(node) *n;
+	static int firstrun = 1;
+	
+	if (firstrun) {
+		atexit(clearGlobal);
+		firstrun = 0;
+	}
 	
 	if (!path) {
 		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
