@@ -95,10 +95,13 @@ int Graphic::addLayout(Layout *lay, bool reuse)
     }
     // insert layout on vacant position
     if (reuse) {
-        for (Reference<Layout> *b = _layouts.begin(), *e = _layouts.end(); b < e; ++b) {
-            if (b->pointer()) continue;
-            b->setPointer(lay);
-            return b - e;
+        Reference<Layout> *b, *e;
+        b = _layouts.begin();
+        e = _layouts.end();
+        for (Reference<Layout> *c = b; c < e; ++c) {
+            if (c->pointer()) continue;
+            c->setPointer(lay);
+            return c - b;
         }
     }
     // append layout
@@ -122,7 +125,7 @@ int Graphic::removeLayout(const Layout *lay)
         r[i].setPointer(0);
         return i;
     }
-    return -2;
+    return MissingData;
 }
 // number of layouts
 int Graphic::layoutCount() const
