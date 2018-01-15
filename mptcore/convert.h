@@ -179,13 +179,6 @@ extern int mpt_culong(unsigned long *, const char *, int , const unsigned long [
 /* decode (multibyte) utf8 character */
 extern int mpt_cutf8(const char **, size_t);
 
-/* calculate smdb-hash for data */
-extern uintptr_t mpt_hash_smdb(const void *, size_t);
-/* calculate djb2-hash for data */
-extern uintptr_t mpt_hash_djb2(const void *, size_t);
-/* set hash type */
-extern int _mpt_hash_set(const char *);
-
 /* en/decoder selection */
 extern MPT_TYPE(DataEncoder) mpt_message_encoder(int);
 extern MPT_TYPE(DataDecoder) mpt_message_decoder(int);

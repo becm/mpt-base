@@ -251,7 +251,13 @@ extern int mpt_valtype_meta_new(const char *);
 extern int mpt_valtype_interface_new(const char *);
 
 /* calculate environment-depending hash for data */
-extern uintptr_t mpt_hash(const void *, size_t __MPT_DEFPAR(0));
+extern uintptr_t mpt_hash(const void *, int __MPT_DEFPAR(-1));
+/* calculate smdb-hash for data */
+extern uintptr_t mpt_hash_smdb(const void *, int);
+/* calculate djb2-hash for data */
+extern uintptr_t mpt_hash_djb2(const void *, int);
+/* set hash type */
+extern int _mpt_hash_set(const char *);
 
 __MPT_EXTDECL_END
 

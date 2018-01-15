@@ -7,25 +7,24 @@
  *	hash(i) = hash(i - 1) * 33 + str[i]
  */
 
-#include "convert.h"
+#include "core.h"
 
-extern uintptr_t mpt_hash_djb2(const void *data, size_t len)
+extern uintptr_t mpt_hash_djb2(const void *data, int len)
 {
-	const char *str = data;
+	const char *str;
 	uintptr_t hash = 5381;
 	
-	if (!str) {
+	if (!(str = data)) {
 		return 0;
 	}
-	else if (len) {
-		while (len--) {
-			hash = hash * 33 ^ *str++;
-		}
-	}
-	else {
+	if (len < 0) {
 		while (*str) {
-			hash = hash * 33 ^ *str++;
+			hash = (hash * 33) ^ *str++;
 		}
+		return hash;
+	}
+	while (len--) {
+		hash = (hash * 33) ^ *str++;
 	}
 	return hash;
 }
