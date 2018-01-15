@@ -19,6 +19,8 @@ SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 SHLIB_OBJS = libinfo.o ${OBJS}
+# avoid runtime path extension
+LDFLAGS = '-hlib${LIB}.so.${SHLIB_MAJOR}'
 #
 # import library creation settings
 DIR_TOP = ${MPT_PREFIX}
