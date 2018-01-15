@@ -335,8 +335,8 @@ inline size_t array::left() const
 }
 inline bool array::shared() const
 {
-	buffer *b = _buf.pointer();
-	return b && b->shared();
+	Data *d = _buf.pointer();
+	return d && d->shared();
 }
 inline const array::Data *array::data() const
 {
@@ -743,10 +743,18 @@ public:
 		this->resize(pos);
 		return 0;
 	}
+	long count() const
+	{
+		long len = 0;
+		for (Item<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+			if (pos->pointer()) ++len;
+		}
+		return len;
+	}
 	bool compact()
 	{
 		Item<T> *space = 0;
-		size_t len = 0;
+		long len = 0;
 		for (Item<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
 			T *c = pos->pointer();
 			if (!c) {
@@ -757,9 +765,7 @@ public:
 			if (!space) continue;
 			memcpy(space, pos, sizeof(*space));
 			memset(pos, 0, sizeof(*pos));
-			do {
-				++space;
-			} while ((c = space->pointer()) && space < pos);
+			++space;
 		}
 		if (!space) return false;
 		this->_ref.pointer()->setLength(len);
@@ -857,6 +863,14 @@ public:
 			++elem;
 		}
 		return elem;
+	}
+	long count() const
+	{
+		long len = 0;
+		for (Reference<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+			if (pos->pointer()) ++len;
+		}
+		return len;
 	}
 	void compact()
 	{

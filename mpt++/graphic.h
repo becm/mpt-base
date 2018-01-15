@@ -146,7 +146,7 @@ public:
     // layout (de)registration
     virtual int addLayout(Layout *, bool = true);
     virtual int removeLayout(const Layout *);
-    int layoutCount() const;
+    long layoutCount() const;
 
     // create new layout
     virtual Layout *createLayout();

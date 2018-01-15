@@ -128,14 +128,9 @@ int Graphic::removeLayout(const Layout *lay)
     return MissingData;
 }
 // number of layouts
-int Graphic::layoutCount() const
+long Graphic::layoutCount() const
 {
-    int lay = 0;
-    for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
-        if (!_layouts.get(i)) continue;
-        ++lay;
-    }
-    return lay;
+    return _layouts.count();
 }
 // layout creation
 Layout *Graphic::createLayout()
