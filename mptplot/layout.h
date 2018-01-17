@@ -303,8 +303,6 @@ public:
 	Line(const line *from = 0);
 	virtual ~Line();
 	
-	static int typeIdentifier();
-	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
@@ -317,8 +315,6 @@ class Text : public metatype, public object, public text
 public:
 	Text(const text *from = 0);
 	virtual ~Text();
-	
-	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
@@ -334,8 +330,6 @@ public:
 	Axis(AxisFlags type);
 	virtual ~Axis();
 	
-	static int typeIdentifier();
-	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
@@ -349,8 +343,6 @@ public:
 	World(int = 0);
 	World(const world *);
 	virtual ~World();
-	
-	static int typeIdentifier();
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
@@ -411,15 +403,11 @@ public:
 		
 		void unref() __MPT_OVERRIDE;
 		
-		static int typeIdentifier();
-		
 		Reference<class World> world;
 		Reference<class Cycle> cycle;
 	};
 	Graph(const graph * = 0);
 	~Graph() __MPT_OVERRIDE;
-	
-	static int typeIdentifier();
 	
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
@@ -457,8 +445,6 @@ class Layout : public Collection
 public:
 	Layout();
 	~Layout() __MPT_OVERRIDE;
-	
-	static int typeIdentifier();
 	
 	int property(struct property *pr) const __MPT_OVERRIDE;
 	int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;

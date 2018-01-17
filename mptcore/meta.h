@@ -32,7 +32,11 @@ public:
 	template <typename T>
 	inline T *cast() const
 	{
-		return static_cast<T *>(pointer(typeIdentifier<T>()));
+		void *ptr = 0;
+		if (conv(typeinfo<T *>::id(), &ptr) < 0) {
+			return 0;
+		}
+		return static_cast<T *>(ptr);
 	}
 	inline operator const char *() const
 	{ return string(); }
@@ -46,7 +50,12 @@ public:
 	inline int type() const
 	{ return conv(0, 0); }
 };
-template <> inline __MPT_CONST_EXPR int typeIdentifier<metatype>() { return metatype::Type; }
+template <> inline __MPT_CONST_EXPR int typeinfo<metatype *>::id() {
+	return metatype::Type;
+}
+template <> inline __MPT_CONST_EXPR int typeinfo<Reference <metatype> >::id() {
+	return typeinfo<metatype *>::id();
+}
 #else
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
@@ -72,7 +81,9 @@ public:
 	virtual int advance();
 	virtual int reset();
 };
-template <> inline __MPT_CONST_EXPR int typeIdentifier<iterator>() { return iterator::Type; }
+template <> inline __MPT_CONST_EXPR int typeinfo<iterator *>::id() {
+	return iterator::Type;
+}
 #else
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
@@ -97,7 +108,7 @@ MPT_STRUCT(consumable)
 	template <typename T>
 	bool consume(T &val)
 	{
-		int type = typeIdentifier(val);
+		int type = typeinfo<T>::id();
 		if (_it) {
 			T tmp;
 			if (_it->get(type, &tmp) <= 0) {
@@ -183,14 +194,14 @@ public:
 	}
 	int conv(int type, void *dest) const
 	{
-		static const int fmt = typeIdentifier<T>();
+		static const int me = typeinfo<T>::id();
 		if (!type) {
 		if (dest) *static_cast<const char **>(dest) = 0;
-		return fmt;
+		return me;
 		}
-		if (type != fmt) return BadType;
+		if (type != me) return BadType;
 		if (dest) *static_cast<T *>(dest) = _val;
-		return fmt;
+		return me;
 	}
 	metatype *clone() const
 	{
@@ -198,6 +209,17 @@ public:
 	}
 protected:
 	T _val;
+};
+template <typename T>
+class typeinfo<Metatype<T> >
+{
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return metatype::Type;
+	}
 };
 
 template <typename T>
@@ -232,17 +254,23 @@ public:
 	}
 	inline static int content()
 	{
-		return typeIdentifier<T>();
+		return typeinfo<T>::id();
 	}
 protected:
 	Slice<const T> _d;
 	int _pos;
 };
 template <typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const Source<T> &)
+class typeinfo<Source<T> >
 {
-	return iterator::Type;
-}
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return iterator::Type;
+	}
+};
 #endif
 
 __MPT_EXTDECL_BEGIN

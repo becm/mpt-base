@@ -155,8 +155,6 @@ protected:
 class IODevice
 {
 public:
-	static int typeIdentifier();
-	
 	virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
 	virtual ssize_t read(size_t , void *, size_t = 1) = 0;
 	

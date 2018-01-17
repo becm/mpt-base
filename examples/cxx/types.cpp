@@ -6,6 +6,8 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include MPT_INCLUDE(meta.h)
+#include MPT_INCLUDE(array.h)
 #include MPT_INCLUDE(convert.h)
 
 #include <iostream>
@@ -16,26 +18,49 @@
 # define mtrace()
 #endif
 
-struct Value : public mpt::value, public mpt::value::format
+ struct Value : public mpt::value, public mpt::value::format
 {
 	template <typename T>
 	bool set(const T *t)
 	{
-		if (!t || !value::format::set(mpt::typeIdentifier(*t))) {
+		if (!t || !value::format::set(mpt::basetype(mpt::typeinfo<T>::id()))) {
 			return false;
 		}
 		return value::set(*this, t);
 	}
-	int type() const
+	uint8_t type() const
 	{
 		return _fmt[0];
 	}
 };
 
+template <typename T>
+void print()
+{
+	int sid = mpt::typeinfo<mpt::Slice <T> >::id();
+	std::cout << mpt::typeinfo<T>::id() << ' ';
+	std::cout << '<' << mpt::basetype(sid) << '>' << ' ';
+	std::cout << sid << std::endl;
+}
+template <typename T>
+uint8_t type(const T &)
+{
+	return mpt::basetype(mpt::typeinfo<T>::id());
+}
+
 extern int main(int, char *[])
 {
+	static const uint8_t fmt[] = { mpt::basetype(mpt::typeinfo<mpt::array>::id()), 0 };
 	mtrace();
 	Value v;
+	
+	std::cout << fmt << std::endl;
+	
+	print<int>();
+	print<float>();
+	print<mpt::array>();
+	print<mpt::metatype *>();
+	print<mpt::Reference<mpt::metatype>>();
 	
 	long l = -5;
 	v.set(&l);
@@ -46,16 +71,16 @@ extern int main(int, char *[])
 	std::cout << "ulong(" << v.type() << ") = " << v << std::endl;
 	
 	float f(5);
-	std::cout << "float(" << mpt::typeIdentifier(f) << ") = " << f << std::endl;
+	std::cout << "float(" << type(f) << ") = " << f << std::endl;
 	double d(5);
-	std::cout << "double(" << mpt::typeIdentifier(d) << ") = " << d << std::endl;
-	mpt::float80 r = d;
-	std::cout << "float80(" << mpt::typeIdentifier(r) << ") = " << r << std::endl;
+	std::cout << "double(" << type(d) << ") = " << d << std::endl;
+// 	mpt::float80 r = d;
+// 	std::cout << "float80(" << type(r) << ") = " << r << std::endl;
 	long double e = 5;
-	std::cout << "long double(" << mpt::typeIdentifier(e) << ") = " << e << std::endl;
+	std::cout << "long double(" << type(e) << ") = " << e << std::endl;
 	
 	mpt::Slice<double> t(&d, 1);
-	std::cout << "Slice<" << mpt::typeIdentifier(d) <<">(" << mpt::typeIdentifier(t) << ") = " << t << std::endl;
+	std::cout << "Slice<" << type(d) <<">(" << type(t) << ") = " << t << std::endl;
 	v.set(&t);
 	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 }

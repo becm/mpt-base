@@ -13,6 +13,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<Stream *>::id()
+{
+    static int id;
+    if (!id && (id = mpt_valtype_meta_new("stream")) < 0) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+
 // streaminfo access
 streaminfo::~streaminfo()
 {

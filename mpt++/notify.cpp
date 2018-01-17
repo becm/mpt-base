@@ -9,6 +9,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<input *>::id()
+{
+    return mpt_input_typeid();
+}
+
 // input operations
 int input::next(int)
 {
@@ -19,10 +24,6 @@ int input::dispatch(EventHandler cmd, void *arg)
     if (!cmd) return -1;
     event ev;
     return cmd(arg, &ev);
-}
-int input::typeIdentifier()
-{
-    return mpt_input_typeid();
 }
 
 // notifier operations

@@ -1,9 +1,10 @@
 # Makefile: MPT C++ library example programs
 #
-CXX11_TARGETS = buffer config map object
+CXX11_TARGETS = config map object
 TESTS = \
 	${CXX11_TARGETS} \
 	array \
+	buffer \
 	layout \
 	output \
 	queue \

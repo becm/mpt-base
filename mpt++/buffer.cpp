@@ -43,7 +43,7 @@ Buffer *Buffer::clone() const
 }
 int Buffer::conv(int type, void *ptr) const
 {
-    int me = IODevice::typeIdentifier();
+    int me = typeinfo<IODevice *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -87,7 +87,7 @@ int Buffer::conv(int type, void *ptr) const
 int Buffer::get(int type, void *ptr)
 {
     if (!type) {
-        int me = IODevice::typeIdentifier();
+        int me = typeinfo<IODevice *>::id();
         mpt_slice_get(0, type, ptr);
         return me < 0 ? array::Type : me;
     }
@@ -100,7 +100,7 @@ int Buffer::get(int type, void *ptr)
     if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
         return type;
     }
-    int me = IODevice::typeIdentifier();
+    int me = typeinfo<IODevice *>::id();
     return me < 0 ? metatype::Type : me;
 }
 int Buffer::advance()

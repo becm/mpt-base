@@ -42,6 +42,12 @@ const char *MyQueue::string()
 	return base;
 }
 
+template <typename T>
+uint8_t type(const T &)
+{
+	return mpt::basetype(mpt::typeinfo<T>::id());
+}
+
 const char txt[] = "fdsgfdgm dfkhndn djgkh d hdfhsjdfgh df gh dir";
 
 extern int main(int argc, char * const argv[])
@@ -56,13 +62,10 @@ extern int main(int argc, char * const argv[])
 	mpt::Pipe<mpt::Buffer> cqp;
 	mpt::Queue *raw = &qu;
 	
-	std::cout << mpt::typeIdentifier(buf) << std::endl;
-	
 	d.insert(3, 4);
 	d.set(2, 1);
-	std::cout << mpt::typeIdentifier(d) << '>';
-	std::cout << mpt::typeIdentifier(d.slice()) << ": ";
-	std::cout << d.slice() << std::endl;
+	std::cout << type(d) << '>' << type(d.slice());
+	std::cout << ": " << d.slice() << std::endl;
 	
 	cq.push('b');
 	std::cout << cq.data() << std::endl;
@@ -83,7 +86,7 @@ extern int main(int argc, char * const argv[])
 	}
 	buf.shift(2);
 	char *v;
-	while (buf.get(mpt::typeIdentifier(v), &v) > 0) {
+	while (buf.get(type(v), &v) > 0) {
 		fputs(v, stdout);
 		fputc('\n', stdout);
 		buf.advance();

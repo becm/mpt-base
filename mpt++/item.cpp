@@ -18,7 +18,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-int Group::typeIdentifier()
+template <> int typeinfo<Group *>::id()
 {
     static int id = 0;
     if (!id && (id = mpt_valtype_interface_new("group")) < 0) {
@@ -30,7 +30,7 @@ int Group::typeIdentifier()
 int Group::property(struct property *pr) const
 {
     if (!pr) {
-        return typeIdentifier();
+        return typeinfo<Group *>::id();
     }
     if (!pr->name || *pr->name) {
         return BadArgument;
@@ -92,10 +92,6 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             if (set(name, val, out)) {
                 continue;
             }
-            if (out) {
-                out->message(_func, out->Warning, "%s (%p): %s",
-                             name, from, MPT_tr("parent not an object"));
-	    }
             continue;
         }
         // get item type
@@ -190,6 +186,10 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         }
         object *obj;
         if (!(obj = from->cast<object>())) {
+            if (out && head->children) {
+                out->message(_func, out->Warning, "%s (%p): %s",
+                             name, from, MPT_tr("element not an object"));
+            }
             continue;
         }
         // load item properties
@@ -277,7 +277,7 @@ void Collection::unref()
 }
 int Collection::conv(int type, void *ptr) const
 {
-    int me = Group::typeIdentifier();
+    int me = typeinfo<Group *>::id();
     if (me < 0) {
         me = object::Type;
     }

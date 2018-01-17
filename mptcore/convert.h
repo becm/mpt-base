@@ -117,7 +117,9 @@ MPT_STRUCT(valfmt)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<valfmt>() { return valfmt::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<valfmt>::id() {
+	return valfmt::Type;
+}
 
 float swapOrder(float);
 double swapOrder(double);

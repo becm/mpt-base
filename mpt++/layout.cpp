@@ -20,6 +20,63 @@ template class Reference<Axis>;
 template class Reference<World>;
 template class Reference<Graph>;
 
+template <> int typeinfo<Line *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+template <> int typeinfo<Text *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+template <> int typeinfo<Axis *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+template <> int typeinfo<World *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+template <> int typeinfo<Graph *>::id()
+{
+    static int id = 0;
+    if (!id && (id = mpt_valtype_meta_new("graph")) < 0) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+template <> int typeinfo<Graph::Data *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+template <> int typeinfo<Layout *>::id()
+{
+    static int id = 0;
+    if (!id && (id = mpt_valtype_meta_new("layout")) < 0) {
+        id = mpt_valtype_meta_new(0);
+    }
+    return id;
+}
+
 // line data operations
 line::line()
 { mpt_line_init(this); }
@@ -31,21 +88,13 @@ Line::Line(const line *from)
 }
 Line::~Line()
 { }
-int Line::typeIdentifier()
-{
-    static int id = 0;
-    if (!id) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 void Line::unref()
 {
     delete this;
 }
 int Line::conv(int type, void *ptr) const
 {
-    int me = typeIdentifier();
+    int me = typeinfo<Line *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -112,21 +161,13 @@ Text::Text(const text *from) : text(from)
 { }
 Text::~Text()
 { }
-int Text::typeIdentifier()
-{
-    static int id = 0;
-    if (!id) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 void Text::unref()
 {
     delete this;
 }
 int Text::conv(int type, void *ptr) const
 {
-    int me = typeIdentifier();
+    int me = typeinfo<Text *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -183,21 +224,13 @@ Axis::Axis(AxisFlags type) : axis(type)
 { }
 Axis::~Axis()
 { }
-int Axis::typeIdentifier()
-{
-    static int id = 0;
-    if (!id) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 void Axis::unref()
 {
     delete this;
 }
 int Axis::conv(int type, void *ptr) const
 {
-    int me = typeIdentifier();
+    int me = typeinfo<Axis *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -259,21 +292,13 @@ World::World(int c)
 }
 World::~World()
 { }
-int World::typeIdentifier()
-{
-    static int id = 0;
-    if (!id) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 void World::unref()
 {
     delete this;
 }
 int World::conv(int type, void *ptr) const
 {
-    int me = typeIdentifier();
+    int me = typeinfo<World *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -333,18 +358,10 @@ Graph::Graph(const graph *from)
 }
 Graph::~Graph()
 { }
-int Graph::typeIdentifier()
-{
-    static int id = 0;
-    if (!id && (id = mpt_valtype_meta_new("graph")) < 0) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 // metatype interface
 int Graph::conv(int type, void *ptr) const
 {
-    int me = typeIdentifier();
+    int me = typeinfo<Graph *>::id();
     if (me < 0) {
         me = metatype::Type;
     }
@@ -357,13 +374,9 @@ int Graph::conv(int type, void *ptr) const
         if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
-    if (type == metatype::Type) {
-        if (ptr) *static_cast<const metatype **>(ptr) = this;
+    if (type == me) {
+        if (ptr) *static_cast<const Graph **>(ptr) = this;
         return me;
-    }
-    if (type == object::Type) {
-        if (ptr) *static_cast<const object **>(ptr) = this;
-        return graph::Type;
     }
     if (type == graph::Type) {
         if (ptr) *static_cast<const graph **>(ptr) = this;
@@ -373,17 +386,13 @@ int Graph::conv(int type, void *ptr) const
         if (ptr) *static_cast<const color **>(ptr) = &fg;
         return me;
     }
-    if (type == me) {
-        if (ptr) *static_cast<const Graph **>(ptr) = this;
-        return me;
-    }
-    return BadType;
+    return Collection::conv(type, ptr);
 }
 // object interface
 int Graph::property(struct property *prop) const
 {
     if (!prop) {
-        return typeIdentifier();
+        return typeinfo<Graph *>::id();
     }
     return mpt_graph_get(this, prop);
 }
@@ -700,19 +709,11 @@ Layout::~Layout()
     mpt_string_set(&_alias, 0, 0);
     delete _parse;
 }
-int Layout::typeIdentifier()
-{
-    static int id = 0;
-    if (!id && (id = mpt_valtype_meta_new("layout")) < 0) {
-        id = mpt_valtype_meta_new(0);
-    }
-    return id;
-}
 // object interface
 int Layout::property(struct property *pr) const
 {
     if (!pr) {
-        return typeIdentifier();
+        return typeinfo<Layout *>::id();
     }
     const char *name = pr->name;
     int pos = -1;

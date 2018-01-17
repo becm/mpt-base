@@ -57,7 +57,7 @@ metatype *metatype::create(int type, const void *ptr)
 {
     switch (type) {
       // integer types
-      case typeIdentifier<uint8_t>(): return new Metatype<uint8_t>(static_cast<const uint8_t *>(ptr));
+	case typeinfo<uint8_t>::id(): return new Metatype<uint8_t>(static_cast<const uint8_t *>(ptr));
       default: return 0;
     }
 }

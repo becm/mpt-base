@@ -17,7 +17,7 @@ __MPT_NAMESPACE_BEGIN
  * \retval <0 conversion error
  * \retval >0 item type code
  */
-extern int toReferenceId(int from)
+extern int to_reference_id(int from)
 {
     if (from < 0) {
         return BadValue;
@@ -38,7 +38,7 @@ extern int toReferenceId(int from)
  * \retval <0 conversion error
  * \retval >0 item type code
  */
-extern int toItemId(int from)
+extern int to_item_id(int from)
 {
     if (from < 0) {
         return BadValue;
@@ -58,7 +58,7 @@ extern int toItemId(int from)
  * 
  * \return new type code
  */
-extern int makeId()
+extern int make_id()
 {
     static int id = _TypeGenericBase;
     if (id >= _TypeGenericMax) {
@@ -74,10 +74,10 @@ extern int makeId()
  * 
  * \return new type code
  */
-extern int makeVectorId()
+extern int make_vector_id()
 {
     // redirect to generic registration
-    return makeId();
+    return make_id();
 }
 
 __MPT_NAMESPACE_END

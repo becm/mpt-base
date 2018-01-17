@@ -404,7 +404,7 @@ metatype *Graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
-    int type = Group::typeIdentifier();
+    int type = typeinfo<Group *>::id();
     
     Reference<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {

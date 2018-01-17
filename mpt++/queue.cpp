@@ -13,7 +13,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-int IODevice::typeIdentifier()
+template <> int typeinfo<IODevice *>::id()
 {
     static int id = 0;
     if (!id) {

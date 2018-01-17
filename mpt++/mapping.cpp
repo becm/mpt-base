@@ -15,6 +15,31 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<Map<msgdest, Reference<Cycle> >::Element>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+template <> int typeinfo<mapping>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+template <> int typeinfo<msgdest>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+
 // add data mapping
 int Mapping::add(msgbind src, msgdest dst, int client)
 {

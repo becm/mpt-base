@@ -91,7 +91,9 @@ public:
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<config>() { return config::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<config *>::id() {
+	return config::Type;
+}
 #else
 MPT_INTERFACE(config);
 MPT_INTERFACE_VPTR(config) {

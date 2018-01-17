@@ -83,11 +83,11 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeValFmt)    = 0x8,   /* BS '\b' */
 	MPT_ENUM(TypeValue)     = 0x9,   /* HT '\t' */
 	MPT_ENUM(TypeProperty)  = 0xa,   /* LF '\n' */
+	MPT_ENUM(TypeCommand)   = 0xb,   /* FF '\v' */
 	
 	/* special pointer types */
-	MPT_ENUM(TypeCommand)   = 0xc,   /* FF '\f' */
-	MPT_ENUM(TypeReplyData) = 0xd,   /* CR */
-	MPT_ENUM(TypeNode)      = 0xe,   /* SO */
+	MPT_ENUM(TypeNode)      = 0xc,   /* FF '\f' */
+	MPT_ENUM(TypeReplyData) = 0xd,   /* CR '\r' */
 	
 	/* reserve range for layout types */
 #define MPT_value_isLayout(v)  ((v) >= 0x10 && (v) <= 0x1f)
@@ -262,40 +262,44 @@ extern int _mpt_hash_set(const char *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-extern int makeId();
-extern int toReferenceId(int);
-extern int toItemId(int);
+extern int make_id();
+extern int make_vector_id();
+extern int make_map_id();
+extern int to_reference_id(int);
+extern int to_item_id(int);
 
-template<typename T>
-int typeIdentifier()
+inline __MPT_CONST_EXPR uint8_t basetype(int id)
 {
-	static int id = 0;
-	if (!id) {
-		id = makeId();
-	}
-	return id;
+	return (MPT_value_isMetatype(id)) ? TypeMeta
+	  : ((id < 0 || id > 0xff) ? 0 : id);
 }
-template<typename T>
-inline int typeIdentifier(const T &) { return typeIdentifier<T>(); }
+template <typename T>
+class typeinfo
+{
+protected:
+	typeinfo();
+public:
+	static int id();
+};
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<float>()       { return 'f'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<double>()      { return 'd'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<long double>() { return 'e'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<float>::id()       { return 'f'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<double>::id()      { return 'd'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<long double>::id() { return 'e'; }
 /* integer values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int8_t>()  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int16_t>() { return 'n'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int32_t>() { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<int64_t>() { return 'x'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<int8_t>::id()  { return 'b'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<int16_t>::id() { return 'n'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<int32_t>::id() { return 'i'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<int64_t>::id() { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint8_t>()  { return 'y'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint16_t>() { return 'q'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint32_t>() { return 'u'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<uint64_t>() { return 't'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<uint8_t>::id()  { return 'y'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<uint16_t>::id() { return 'q'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<uint32_t>::id() { return 'u'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<uint64_t>::id() { return 't'; }
 /* string data */
-template<> inline __MPT_CONST_EXPR int typeIdentifier<char>() { return 'c'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<char *>() { return 's'; }
-template<> inline __MPT_CONST_EXPR int typeIdentifier<const char *>() { return 's'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<char>::id() { return 'c'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<char *>::id() { return 's'; }
+template<> inline __MPT_CONST_EXPR int typeinfo<const char *>::id() { return 's'; }
 
 /*! reduced slice with type but no data reference */
 template <typename T>
@@ -342,29 +346,37 @@ protected:
 };
 
 /* vector-type auto-cast for constant base types */
-template<typename T>
-int vectorIdentifier()
+template <typename T>
+class typeinfo<Slice<T> >
 {
-	static int id = 0;
-	if (!id) {
-		id = typeIdentifier<T>();
-		id = MPT_value_toVector(id);
-		if (id <= 0) {
-			id = makeId();
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		static int _id;
+		if (!_id) {
+			int c = typeinfo<T>::id();
+			if (c > 0 && (c = MPT_value_toVector(c)) > 0) {
+				_id = c;
+			} else {
+				_id = make_vector_id();
+			}
 		}
+		return _id;
 	}
-	return id;
-}
+};
 template <typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(Slice<T>)
+class typeinfo<Slice<const T> >
 {
-	return vectorIdentifier<T>();
-}
-template <typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(Slice<const T>)
-{
-	return vectorIdentifier<T>();
-}
+protected:
+	typeinfo();
+public:
+	inline static int id()
+	{
+		return typeinfo<Slice<T> >::id();
+	}
+};
 #endif
 
 /*! generic data type and offset */
@@ -410,7 +422,9 @@ MPT_STRUCT(value)
 	const void    *ptr;  /* formated data */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<value>() { return value::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<value>::id() {
+	return value::Type;
+}
 #endif
 
 /*! single property information */
@@ -436,7 +450,9 @@ public:
 	MPT_STRUCT(value) val; /* element value */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<property>() { return property::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<property>::id() {
+	return property::Type;
+}
 #endif
 typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
 
@@ -550,16 +566,21 @@ public:
 		_ref = 0;
 		return ref;
 	}
-	static int typeIdentifier() {
-		static int id = 0;
-		if (!id) {
-			id = toReferenceId(::mpt::typeIdentifier<T>());
-		}
-		return id;
-	}
 protected:
 	T *_ref;
 };
+template <typename T>
+class typeinfo<Reference<T> >
+{
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return to_reference_id(typeinfo<T *>::id());
+	}
+};
+template <> __MPT_CONST_EXPR int typeinfo<Reference <metatype> >::id();
 #endif
 
 /*! interface to send data */
@@ -603,7 +624,9 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<logger>() { return logger::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<logger *>::id() {
+	return logger::Type;
+}
 #else
 MPT_INTERFACE(logger);
 MPT_INTERFACE_VPTR(logger) {
@@ -664,23 +687,31 @@ class Item : public Reference<T>, public identifier
 public:
 	Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
 	{ }
-	static int typeIdentifier() {
-		static int id = 0;
-		if (!id) {
-			id = toItemId(::mpt::typeIdentifier<T>());
-		}
-		return id;
-	}
 protected:
 	char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
 };
-
 template <typename T>
-inline int typeIdentifier(Item<T> &)
-{ return Item<T>::typeIdentifier(); }
+class typeinfo<Item<T> >
+{
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return to_item_id(typeinfo<T *>::id());
+	}
+};
 template <typename T>
-inline int typeIdentifier(const Item<T> &)
-{ return Item<T>::typeIdentifier(); }
+class typeinfo<Item<const T> >
+{
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return to_item_id(typeinfo<const T *>::id());
+	}
+};
 
 /* auto-create wrapped reference */
 template <typename T>
@@ -761,7 +792,9 @@ MPT_STRUCT(socket)
 	int32_t  _id;     /* socket descriptor */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<socket>() { return socket::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<socket>::id() {
+	return socket::Type;
+}
 
 class Stream;
 class Socket : public socket
@@ -769,8 +802,6 @@ class Socket : public socket
 public:
 	Socket(socket * = 0);
 	virtual ~Socket();
-	
-	enum { Type = socket::Type };
 	
 	int assign(const value *);
 	

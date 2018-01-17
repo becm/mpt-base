@@ -46,8 +46,9 @@ MPT_STRUCT(node)
 };
 
 #if defined(__cplusplus)
-template<> inline __MPT_CONST_EXPR int typeIdentifier<node>() { return node::Type; }
-
+template<> inline __MPT_CONST_EXPR int typeinfo<node *>::id() {
+	return node::Type;
+}
 
 /*! Relation implemetation using node as current element */
 class NodeRelation : public Relation

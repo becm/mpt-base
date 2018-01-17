@@ -11,6 +11,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<linepart>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+
 linepart *linepart::join(const linepart lp)
 { return mpt_linepart_join(this, lp); }
 
@@ -179,7 +188,7 @@ int apply_data(point<double> *dest, const linepart *lp, int plen, const Transfor
         }
         const double *from = 0;
         int max;
-        if (arr->type() != typeIdentifier<double>()) {
+        if (arr->type() != typeinfo<double>::id()) {
             continue;
         };
         from = static_cast<__decltype(from)>(arr->base());
@@ -221,13 +230,13 @@ int apply_data(point<double> *dest, const linepart *lp, int plen, const Transfor
 bool Polyline::set(const Transform &tr, Slice<const typed_array> src)
 {
     // generate parts data
-    long max = maxsize(src, typeIdentifier<double>());
+    long max = maxsize(src, typeinfo<double>::id());
     if (!max || !_vis.set(max)) {
         return false;
     }
     const typed_array *arr = src.base();
     for (long i = 0, max = src.length(); i < max; ++i) {
-        if (arr->type() != typeIdentifier<double>()) {
+        if (arr->type() != typeinfo<double>::id()) {
             continue;
         }
         _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->elements()));

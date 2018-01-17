@@ -35,9 +35,6 @@ struct point
 };
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
-
-template<> int typeIdentifier<point<double> >();
-template<> int typeIdentifier<point<float> >();
 #else
 MPT_STRUCT(dpoint) { double x, y; };
 MPT_STRUCT(fpoint) { float x, y; };
@@ -121,8 +118,6 @@ public:
 	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
 	virtual int dimensions(int = -1) const = 0;
 	virtual int stages() const = 0;
-	
-	static int typeIdentifier();
 protected:
 	inline ~rawdata() { }
 };
@@ -179,8 +174,6 @@ MPT_STRUCT(mapping)
 	{ }
 	inline bool valid() const
 	{ return src.state != 0; }
-	
-	static int typeIdentifier();
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
 #endif
@@ -337,9 +330,9 @@ protected:
 	linepart::array _vis;
 	Array<Point> _values;
 };
-template<> inline int typeIdentifier<Polyline::Point>()
+template<> inline int typeinfo<Polyline::Point>::id()
 {
-	return typeIdentifier<point<double> >();
+	return typeinfo<point<double> >::id();
 }
 
 class Cycle : public reference, public rawdata
@@ -429,12 +422,6 @@ template <typename S>
 inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale)
 {
 	return apply<point<S>, S>(d, pt, src, scale);
-}
-
-
-template<> inline int typeIdentifier<rawdata>()
-{
-	return rawdata::typeIdentifier();
 }
 
 #endif

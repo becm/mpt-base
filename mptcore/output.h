@@ -51,7 +51,9 @@ enum MPT_OUTFLAG(Flags) {
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<output>() { return output::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<output *>::id() {
+	return output::Type;
+}
 #else
 MPT_INTERFACE(output);
 MPT_INTERFACE_VPTR(output)

@@ -16,7 +16,7 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int typeIdentifier<client>()
+template <> int typeinfo<client *>::id()
 {
     return mpt_client_typeid();
 }

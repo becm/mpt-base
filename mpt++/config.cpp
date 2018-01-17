@@ -10,6 +10,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<Config::Element>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+
 // non-trivial path operations
 array::Data *path::array() const
 {

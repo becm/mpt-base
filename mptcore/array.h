@@ -150,7 +150,9 @@ protected:
 
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeIdentifier<array>() { return array::Type; }
+template <> inline __MPT_CONST_EXPR int typeinfo<array>::id() {
+	return array::Type;
+}
 
 /*! reference to buffer segment */
 struct slice : array
@@ -450,7 +452,7 @@ public:
 	}
 	inline int content() const __MPT_OVERRIDE
 	{
-		return typeIdentifier(*data());
+		return typeinfo<T>::id();
 	}
 	static Content *create(long len = -1)
 	{
@@ -655,7 +657,16 @@ protected:
 	Reference<Content<T> > _ref;
 };
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const UniqueArray<T> &) { return array::Type; }
+class typeinfo<UniqueArray<T> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
+};
 
 template <typename T>
 class Array : public UniqueArray<T>
@@ -720,7 +731,16 @@ public:
 	}
 };
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const Array<T> &) { return array::Type; }
+class typeinfo<Array<T> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
+};
 
 /*! typed array with standard operations */
 template <typename T>
@@ -773,7 +793,16 @@ public:
 	}
 };
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const ItemArray<T> &) { return array::Type; }
+class typeinfo<ItemArray<T> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
+};
 
 /*! basic pointer array */
 template <typename T>
@@ -812,7 +841,16 @@ protected:
 	}
 };
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const PointerArray<T> &) { return array::Type; }
+class typeinfo<PointerArray<T> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
+};
 
 /*! extendable array for reference types */
 template <typename T>
@@ -878,7 +916,16 @@ public:
 	}
 };
 template<typename T>
-inline __MPT_CONST_EXPR int typeIdentifier(const RefArray<T> &) { return array::Type; }
+class typeinfo<RefArray<T> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
+};
 
 class LogStore : public logger, public Reference<metatype>
 {
@@ -939,8 +986,8 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<LogStore::Entry>() {
-	return typeIdentifier<array>();
+template<> inline __MPT_CONST_EXPR int typeinfo<LogStore::Entry>::id() {
+	return typeinfo<array>::id();
 }
 
 /*! linear search map type */
@@ -999,6 +1046,17 @@ public:
 	}
 protected:
 	Array<Element> _d;
+};
+template<typename K, typename V>
+class typeinfo<Map<K, V> >
+{
+protected:
+	typeinfo();
+public:
+	static inline __MPT_CONST_EXPR int id()
+	{
+		return array::Type;
+	}
 };
 
 #endif /* __cplusplus */

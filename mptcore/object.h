@@ -55,7 +55,9 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
-template<> inline __MPT_CONST_EXPR int typeIdentifier<object>() { return object::Type; }
+template<> inline __MPT_CONST_EXPR int typeinfo<object *>::id() {
+	return object::Type;
+}
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
@@ -225,7 +227,7 @@ public:
 	{
 		value::format fmt;
 		value val;
-		fmt.set(typeIdentifier(v));
+		fmt.set(typeinfo<T>::id());
 		val.set(fmt, &v);
 		if (!set(val)) {
 			_prop.name = 0;
@@ -245,8 +247,6 @@ struct node;
 class Group : public object
 {
 public:
-	static int typeIdentifier();
-	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
 	
@@ -260,7 +260,6 @@ protected:
 	inline ~Group() {}
 	virtual metatype *create(const char *, int = -1);
 };
-template<> inline int typeIdentifier<Group>() { return Group::typeIdentifier(); } 
 
 /*! Relation implemetation using Group as current element */
 class GroupRelation : public Relation

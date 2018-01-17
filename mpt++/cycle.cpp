@@ -14,6 +14,31 @@ __MPT_NAMESPACE_BEGIN
 template class Reference<Cycle>;
 template class RefArray<Cycle>;
 
+template <> int typeinfo<Cycle *>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+template <> int typeinfo<Cycle::Stage>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+template <> int typeinfo<typed_array>::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+
 int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t off, size_t len)
 {
     typed_array *arr;

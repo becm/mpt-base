@@ -17,17 +17,11 @@ MPT_INTERFACE(config);
 MPT_INTERFACE(input) : public metatype
 {
 public:
-	static int typeIdentifier();
-	
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
 protected:
 	inline ~input() { }
 };
-template<> inline int typeIdentifier<input>()
-{
-	return input::typeIdentifier(); 
-}
 # else
 MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
