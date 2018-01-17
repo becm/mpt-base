@@ -117,7 +117,7 @@ MPT_STRUCT(valfmt)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<valfmt>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<valfmt>::id() {
 	return valfmt::Type;
 }
 

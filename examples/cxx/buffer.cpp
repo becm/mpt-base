@@ -87,8 +87,7 @@ extern int main(int argc, char * const argv[])
 	buf.shift(2);
 	char *v;
 	while (buf.get(type(v), &v) > 0) {
-		fputs(v, stdout);
-		fputc('\n', stdout);
+		std::cout << v << std::endl;
 		buf.advance();
 	}
 	
@@ -97,7 +96,7 @@ extern int main(int argc, char * const argv[])
 	qu.shift(0, 1);
 	qu.shift(0, 1);
 	
-	puts(qu.string());
+	std::cout << qu.string() << std::endl;
 	
 	return 0;
 }

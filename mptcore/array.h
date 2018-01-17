@@ -150,7 +150,7 @@ protected:
 
 
 #ifdef __cplusplus
-template <> inline __MPT_CONST_EXPR int typeinfo<array>::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<array>::id() {
 	return array::Type;
 }
 
@@ -986,7 +986,7 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_EXPR int typeinfo<LogStore::Entry>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<LogStore::Entry>::id() {
 	return typeinfo<array>::id();
 }
 

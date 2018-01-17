@@ -31,7 +31,7 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<reply_data *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<reply_data *>::id() {
 	return reply_data::Type;
 }
 
@@ -67,7 +67,7 @@ protected:
 	inline ~reply_context()
 	{ }
 };
-template<> inline __MPT_CONST_EXPR int typeinfo<reply_context *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<reply_context *>::id() {
 	return reply_context::Type;
 }
 #else
@@ -238,7 +238,7 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<command>::id()  {
+template<> inline __MPT_CONST_TYPE int typeinfo<command>::id()  {
 	return command::Type;
 }
 

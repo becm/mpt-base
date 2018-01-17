@@ -31,6 +31,12 @@
 #  define __MPT_OVERRIDE
 # endif
 
+# if defined(__GNU__) && !defined(__clang__)
+#  define __MPT_CONST_TYPE __MPT_CONST_EXPR
+# else
+#  define __MPT_CONST_TYPE
+# endif
+
 # define __MPT_NAMESPACE_BEGIN namespace mpt {
 # define __MPT_NAMESPACE_END   }
 # define __MPT_EXTDECL_BEGIN   extern "C" {
@@ -283,23 +289,23 @@ public:
 };
 
 /* floating point values */
-template<> inline __MPT_CONST_EXPR int typeinfo<float>::id()       { return 'f'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<double>::id()      { return 'd'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<long double>::id() { return 'e'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<float>::id()       { return 'f'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<double>::id()      { return 'd'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<long double>::id() { return 'e'; }
 /* integer values */
-template<> inline __MPT_CONST_EXPR int typeinfo<int8_t>::id()  { return 'b'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<int16_t>::id() { return 'n'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<int32_t>::id() { return 'i'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<int64_t>::id() { return 'x'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<int8_t>::id()  { return 'b'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<int16_t>::id() { return 'n'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<int32_t>::id() { return 'i'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<int64_t>::id() { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_EXPR int typeinfo<uint8_t>::id()  { return 'y'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<uint16_t>::id() { return 'q'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<uint32_t>::id() { return 'u'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<uint64_t>::id() { return 't'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<uint8_t>::id()  { return 'y'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<uint16_t>::id() { return 'q'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<uint32_t>::id() { return 'u'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<uint64_t>::id() { return 't'; }
 /* string data */
-template<> inline __MPT_CONST_EXPR int typeinfo<char>::id() { return 'c'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<char *>::id() { return 's'; }
-template<> inline __MPT_CONST_EXPR int typeinfo<const char *>::id() { return 's'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<char>::id() { return 'c'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<char *>::id() { return 's'; }
+template<> inline __MPT_CONST_TYPE int typeinfo<const char *>::id() { return 's'; }
 
 /*! reduced slice with type but no data reference */
 template <typename T>
@@ -422,7 +428,7 @@ MPT_STRUCT(value)
 	const void    *ptr;  /* formated data */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<value>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<value>::id() {
 	return value::Type;
 }
 #endif
@@ -450,7 +456,7 @@ public:
 	MPT_STRUCT(value) val; /* element value */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<property>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<property>::id() {
 	return property::Type;
 }
 #endif
@@ -580,7 +586,7 @@ public:
 		return to_reference_id(typeinfo<T *>::id());
 	}
 };
-template <> __MPT_CONST_EXPR int typeinfo<Reference <metatype> >::id();
+template <> __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id();
 #endif
 
 /*! interface to send data */
@@ -624,7 +630,7 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_EXPR int typeinfo<logger *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<logger *>::id() {
 	return logger::Type;
 }
 #else
@@ -792,7 +798,7 @@ MPT_STRUCT(socket)
 	int32_t  _id;     /* socket descriptor */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_EXPR int typeinfo<socket>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<socket>::id() {
 	return socket::Type;
 }
 

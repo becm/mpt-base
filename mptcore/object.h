@@ -55,7 +55,7 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int setProperty(const char *, const metatype * = 0) = 0;
 };
-template<> inline __MPT_CONST_EXPR int typeinfo<object *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 	return object::Type;
 }
 #else

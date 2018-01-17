@@ -60,7 +60,7 @@ extern int main(int, char *[])
 	print<float>();
 	print<mpt::array>();
 	print<mpt::metatype *>();
-	print<mpt::Reference<mpt::metatype>>();
+	print<mpt::Reference<mpt::metatype> >();
 	
 	long l = -5;
 	v.set(&l);

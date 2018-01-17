@@ -50,10 +50,10 @@ public:
 	inline int type() const
 	{ return conv(0, 0); }
 };
-template <> inline __MPT_CONST_EXPR int typeinfo<metatype *>::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<metatype *>::id() {
 	return metatype::Type;
 }
-template <> inline __MPT_CONST_EXPR int typeinfo<Reference <metatype> >::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id() {
 	return typeinfo<metatype *>::id();
 }
 #else
@@ -81,7 +81,7 @@ public:
 	virtual int advance();
 	virtual int reset();
 };
-template <> inline __MPT_CONST_EXPR int typeinfo<iterator *>::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<iterator *>::id() {
 	return iterator::Type;
 }
 #else
