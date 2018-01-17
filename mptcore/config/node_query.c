@@ -11,90 +11,61 @@
  * \ingroup mptConfig
  * \brief query config element
  * 
- * Find/create element in configuration tree.
- * Check for path.len to determine if returned element
- * is final:
+ * Find element in configuration tree.
+ * Check for path.len to determine
+ * if returned element is final.
+ * 
 \code
-node = mpt_node_query(conf, path, val);
-if (path->len) node = mpt_node_query(node, path, 0);
+node = mpt_node_query(conf, path);
+if (path->len) {
+    // more elements in path
+    …
+}
 \endcode
  * 
  * \param conf  configuration root
  * \param path  element position
- * \param vlen  required value length
  * 
- * \return root of created elements
+ * \return element matching consumed path
  */
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
+extern MPT_STRUCT(node) *mpt_node_query(const MPT_STRUCT(node) *conf, MPT_STRUCT(path) *path)
 {
-	MPT_STRUCT(node) *match, *parent;
-	const char *base, *curr;
+	MPT_STRUCT(node) *pre;
+	const char *curr;
+	size_t len, off;
 	int clen;
 	
 	/* missing path information */
-	if (!path->len) {
-		if (val) {
-			errno = EINVAL;
-		}
+	if (!conf || !path->len) {
 		return 0;
 	}
-	parent = 0;
-	match = 0;
-	
-	base = path->base;
-	curr = base + path->off;
+	/* start of first path segment */
+	curr = path->base + path->off;
+	/* initial valid path */
+	pre = 0;
+	off = path->off;
+	len = path->len;
 	
 	/* get next path element */
 	while ((clen = mpt_path_next(path)) >= 0) {
-		/* path element found */
-		if ((match = mpt_node_locate(conf, 1, curr, clen, -1))) {
-			parent = match; conf = match->children;
-			curr = base + path->off;
-			continue;
+		/* path element missing */
+		if (!(conf = mpt_node_locate(conf, 1, curr, clen, -1))) {
+			/* restore previous path parameters */
+			path->off = off;
+			path->len = len;
+			return pre;
 		}
-		if (!val) {
-			return 0;
+		/* use new base nodes */
+		pre = (MPT_STRUCT(node) *) conf;
+		if (!(conf = conf->children)) {
+			return pre;
 		}
-		/* create node for current path element */
-		if (!(match = mpt_node_new(clen))) {
-			return 0;
-		}
-		if (clen && !mpt_identifier_set(&match->ident, curr, clen)) {
-			mpt_node_destroy(match);
-			return 0;
-		}
-		/* create subelements for current path */
-		if (path->len) {
-			MPT_STRUCT(path) tmp = *path;
-			MPT_STRUCT(node) *sub;
-			
-			if (!(sub = mpt_node_query(0, &tmp, val))) {
-				mpt_node_destroy(match);
-				return 0;
-			}
-			match->children = sub;
-			sub->parent = match;
-		}
-		else if (!(match->_meta = mpt_meta_new(*val))) {
-			mpt_node_destroy(match);
-			return 0;
-		}
-		/* append/insert created path element */
-		if (conf) {
-			mpt_gnode_add(conf, 0, match);
-		}
-		else if (parent) {
-			match->parent = parent;
-			parent->children = match;
-		}
-		return match;
+		/* start for next path segment */
+		curr = path->base + path->off;
+		/* save valid path state */
+		off = path->off;
+		len = path->len;
 	}
-	/* create/replace node data */
-	if (val
-	    && match
-	    && (clen = mpt_node_set(match, val))) {
-		return 0;
-	}
-	return match;
+	return pre;
 }
 

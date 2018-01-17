@@ -16,7 +16,7 @@ MPT_STRUCT(configRoot) {
 };
 static MPT_STRUCT(node) *nodeGlobal = 0;
 
-static void clearGlobal(void)
+static void clear_global(void)
 {
 	MPT_STRUCT(node) tmp = MPT_NODE_INIT;
 	if (!(tmp.children = nodeGlobal)) {
@@ -25,6 +25,33 @@ static void clearGlobal(void)
 	mpt_node_clear(&tmp);
 	nodeGlobal = 0;
 }
+static MPT_STRUCT(node) *make_global(const MPT_STRUCT(path) *dest)
+{
+	static int endreg = 0;
+	
+	MPT_STRUCT(path) p = *dest;
+	MPT_STRUCT(node) *n;
+	
+	if (!endreg) {
+		atexit(clear_global);
+		endreg = 1;
+	}
+	
+	if (!(n = mpt_node_query(nodeGlobal, &p))) {
+		return mpt_node_assign(&nodeGlobal, dest, 0);
+	}
+	if (p.len) {
+		MPT_STRUCT(node) *t = n->children ? 0 : n;
+		if (!(n = mpt_node_assign(&n->children, &p, 0))) {
+			return 0;
+		}
+		if (t) {
+			t->children->parent = t;
+		}
+	}
+	return n;
+}
+
 /* reference interface */
 static void configUnref(MPT_INTERFACE(reference) *ref)
 {
@@ -64,12 +91,11 @@ static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeNode);
 	}
 	if (type == MPT_ENUM(TypeNode)) {
-		if (!nodeGlobal || !c->base.len) {
+		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}
 		if (ptr) {
-			MPT_STRUCT(path) p = c->base;
-			*((void **) ptr) = mpt_node_query(nodeGlobal, &p, 0);
+			*((void **) ptr) = make_global(&c->base);
 		}
 		return MPT_ENUM(TypeConfig);
 	}
@@ -96,17 +122,17 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 	mt = 0;
 	if (c->base.len) {
 		MPT_STRUCT(path) p = c->base;
-		if (!(n = mpt_node_query(n, &p, 0))) {
-			return 0;
-		}
-		if (!(n = n->children)) {
+		if (!(n = mpt_node_query(n, &p))
+		    || p.len) {
 			return 0;
 		}
 		mt = n->_meta;
+		n = n->children;
 	}
 	if (path->len) {
 		MPT_STRUCT(path) p = *path;
-		if (!(n = mpt_node_query(n, &p, 0))) {
+		if (!(n = mpt_node_query(n, &p))
+		    || p.len) {
 			return 0;
 		}
 		mt = n->_meta;
@@ -117,25 +143,21 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 {
 	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_INTERFACE(metatype) *mt;
-	MPT_STRUCT(node) **b, *n;
+	MPT_STRUCT(node) **b, *n, *t;
 	
 	if (!path) {
 		return MPT_ERROR(BadArgument);
 	}
 	n = nodeGlobal;
 	b = &nodeGlobal;
+	t = 0;
 	
 	/* get/create config base node */
 	if (c->base.len) {
-		MPT_STRUCT(path) p = c->base;
-		if (!(n = mpt_node_query(n, &p, 0))) {
-			if (!val) {
-				return 0;
-			}
-			if (!(n = mpt_node_assign(b, &c->base, 0))) {
-				return MPT_ERROR(BadOperation);
-			}
+		if (!(n = make_global(&c->base))) {
+			return MPT_ERROR(BadOperation);
 		}
+		t = n->children ? 0 : n;
 		b = &n->children;
 	}
 	/* top level element */
@@ -148,6 +170,9 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	/* set subelement */
 	if (!(n = mpt_node_assign(b, path, val))) {
 		return val ? MPT_ERROR(BadOperation) : 0;
+	}
+	if (t) {
+		t->children->parent = t;
 	}
 	mt = n->_meta;
 	
@@ -166,35 +191,36 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	/* get top level node */
 	if (c->base.len) {
 		p = c->base;
-		if (!(b = mpt_node_query(b, &p, 0))) {
+		if (!(b = mpt_node_query(b, &p))
+		    || p.len) {
 			return 0;
 		}
 		if (!path) {
-			mpt_node_clear(b);
-			return 0;
-		}
-		if (!path->len) {
 			MPT_INTERFACE(metatype) *mt;
 			if ((mt = b->_meta)) {
 				mt->_vptr->ref.unref((void *) mt);
+				b->_meta = 0;
 			}
+			return 0;
+		}
+		if (!path->len) {
+			mpt_node_clear(b);
 			return 0;
 		}
 		b = b->children;
 	}
-	/* clear global config */
+	/* no generic top element */
 	else if (!path) {
-		MPT_STRUCT(node) tmp = MPT_NODE_INIT;
-		tmp.children = b;
-		mpt_node_clear(&tmp);
-		nodeGlobal = 0;
-		return 0;
-	}
-	else if (!path->len) {
 		return MPT_ERROR(BadOperation);
 	}
+	/* clear global config */
+	else if (!path->len) {
+		clear_global();
+		return 0;
+	}
 	p = *path;
-	if (!(b = mpt_node_query(b, &p, 0))) {
+	if (!(b = mpt_node_query(b, &p))
+	    || p.len) {
 		return 0;
 	}
 	if (b == nodeGlobal) {
@@ -231,13 +257,6 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	};
 	MPT_STRUCT(configRoot) *c;
 	MPT_STRUCT(path) p;
-	MPT_STRUCT(node) *n;
-	static int firstrun = 1;
-	
-	if (firstrun) {
-		atexit(clearGlobal);
-		firstrun = 0;
-	}
 	
 	if (!path) {
 		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
@@ -260,11 +279,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	p = *path;
 	p.flags &= ~MPT_PATHFLAG(HasArray);
 	
-	if (!(n = mpt_node_query(nodeGlobal, &p, 0))) {
-		if (!(n = mpt_node_assign(&nodeGlobal, path, 0))) {
-			return 0;
-		}
-	}
+	/* new global config target */
 	if (!(c = malloc(sizeof(*c) + path->len))) {
 		return 0;
 	}
@@ -276,10 +291,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	c->_mt._vptr  = &configMeta;
 	c->_cfg._vptr = &configCfg;
 	c->base = p;
-	c->base.base  = (char *) (c + 1);
-	c->base.off   = 0;
-	
-	memcpy(c + 1, p.base, p.len);
+	c->base.base = memcpy(c + 1, p.base, p.len);
 	
 	return &c->_mt;
 }

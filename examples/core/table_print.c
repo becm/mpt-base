@@ -16,6 +16,7 @@
 
 #include MPT_INCLUDE(node.h)
 #include MPT_INCLUDE(meta.h)
+#include MPT_INCLUDE(convert.h)
 
 extern int table_print(struct mpt_node *node, void *file, size_t depth)
 {
@@ -31,6 +32,6 @@ extern int table_print(struct mpt_node *node, void *file, size_t depth)
 			fputs(id, file);
 		}
 	}
-	fputc('\n', file);
+	fputs(mpt_newline_string(0), file);
 	return 0;
 }

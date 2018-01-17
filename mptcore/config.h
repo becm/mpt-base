@@ -128,7 +128,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *);
 extern MPT_INTERFACE(logger) *mpt_config_logger(const MPT_INTERFACE(config) *);
 
 /* get or create node for path */
-extern MPT_STRUCT(node) *mpt_node_query(MPT_STRUCT(node) *, MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
+extern MPT_STRUCT(node) *mpt_node_query(const MPT_STRUCT(node) *, MPT_STRUCT(path) *);
 
 /* set path data */
 extern size_t mpt_path_set(MPT_STRUCT(path) *, const char *, int __MPT_DEFPAR(-1));

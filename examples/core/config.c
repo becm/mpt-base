@@ -29,7 +29,8 @@ extern int main(int argc, char *argv[])
 	mt->_vptr->conv(mt, MPT_ENUM(TypeNode), &n);
 	mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	
-	cfg->_vptr->remove(cfg, 0);
+	mpt_path_set(&p, 0, 0);
+	cfg->_vptr->remove(cfg, &p);
 	mt->_vptr->ref.unref((void *) mt);
 	
 	return 0;
