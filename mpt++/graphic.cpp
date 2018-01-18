@@ -9,9 +9,6 @@
 
 #include <sys/uio.h>
 
-#include "message.h"
-#include "output.h"
-
 #include "layout.h"
 
 #include "graphic.h"

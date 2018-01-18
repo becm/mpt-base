@@ -32,7 +32,6 @@ public:
 	virtual int content() const = 0;
 	
 	bool shared() const;
-	size_t left() const;
 protected:
 	buffer(size_t);
 	inline ~buffer()
@@ -49,8 +48,8 @@ MPT_INTERFACE_VPTR(buffer)
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
 #endif
 	MPT_STRUCT(refcount) _ref;
-	uintptr_t _size;
-	uintptr_t _used;
+	size_t _size;
+	size_t _used;
 };
 
 /*! reference to buffer data */
@@ -369,7 +368,7 @@ bool swap(Slice<void *>, long , long);
 long offset(Slice<void *>, const void *);
 
 template <typename T>
-void move(T *v, size_t from, size_t to)
+void move(T *v, long from, long to)
 {
 	if (from == to) return;
 	/* save data to anonymous store */
@@ -431,10 +430,6 @@ public:
 	}
 	Content *detach(long len = -1) __MPT_OVERRIDE
 	{
-		/* detach requires new instance */
-		if (shared()) {
-			return 0;
-		}
 		/* keep current size */
 		if (len < 0) {
 			return this;
@@ -535,7 +530,9 @@ public:
 	};
 	inline UniqueArray(long len = 0)
 	{
-		if (len) _ref.setPointer(Data::create(len));
+		if (len) {
+			_ref.setPointer(Data::create(len));
+		}
 	}
 	inline iterator begin() const
 	{
@@ -766,7 +763,7 @@ public:
 	long count() const
 	{
 		long len = 0;
-		for (Item<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+		for (Item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
 			if (pos->pointer()) ++len;
 		}
 		return len;
@@ -775,7 +772,7 @@ public:
 	{
 		Item<T> *space = 0;
 		long len = 0;
-		for (Item<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+		for (Item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
 			T *c = pos->pointer();
 			if (!c) {
 				if (!space) space = pos;
@@ -783,6 +780,7 @@ public:
 			}
 			++len;
 			if (!space) continue;
+			space->~Item<T>();
 			memcpy(space, pos, sizeof(*space));
 			memset(pos, 0, sizeof(*pos));
 			++space;

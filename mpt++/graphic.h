@@ -9,8 +9,6 @@
 #include "array.h"
 #include "message.h"
 
-#include "output.h"
-
 __MPT_NAMESPACE_BEGIN
 
 class Cycle;
@@ -132,7 +130,10 @@ public:
                 }
             }
         }
-        set(len * sizeof(*c));
+        Data *d;
+        if ((d = _buf.pointer())) {
+            d->setLength(len * sizeof(*c));
+        }
     }
 };
 

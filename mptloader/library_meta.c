@@ -14,9 +14,9 @@
 struct _mpt_metaProxy
 {
 	MPT_INTERFACE(metatype) _mt;
+	MPT_STRUCT(refcount) _ref;
 	void *ptr;
 	MPT_STRUCT(libhandle) lh;
-	MPT_STRUCT(refcount) _ref;
 	uint16_t len;
 	char fmt[2];
 };

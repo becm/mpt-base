@@ -9,7 +9,6 @@
 #include "message.h"
 
 #include "layout.h"
-#include "output.h"
 
 #include "graphic.h"
 

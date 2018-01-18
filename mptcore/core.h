@@ -31,10 +31,10 @@
 #  define __MPT_OVERRIDE
 # endif
 
-# if defined(__GNU__) && !defined(__clang__)
-#  define __MPT_CONST_TYPE __MPT_CONST_EXPR
-# else
+# if defined(__clang__)
 #  define __MPT_CONST_TYPE
+# else
+#  define __MPT_CONST_TYPE __MPT_CONST_EXPR
 # endif
 
 # define __MPT_NAMESPACE_BEGIN namespace mpt {
@@ -705,17 +705,6 @@ public:
 	static int id()
 	{
 		return to_item_id(typeinfo<T *>::id());
-	}
-};
-template <typename T>
-class typeinfo<Item<const T> >
-{
-protected:
-	typeinfo();
-public:
-	static int id()
-	{
-		return to_item_id(typeinfo<const T *>::id());
 	}
 };
 

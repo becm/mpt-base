@@ -27,7 +27,7 @@ int main()
     l->set("name", "lay");
     
     int pos = g.addLayout(l);
-    g.registerUpdate(static_cast<mpt::metatype *>(l), mpt::UpdateHint(pos));
+    g.registerUpdate(l, mpt::UpdateHint(pos));
     
     g.removeLayout(l);
 }
