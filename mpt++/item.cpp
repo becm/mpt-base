@@ -142,6 +142,14 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             metatype *curr;
             if (relation) curr = relation->find(from->type(), name, len);
             else curr = GroupRelation(*this).find(from->type(), name, len);
+            if (!curr) {
+                if (out) {
+                    out->message(_func, out->Error, "%s: '%s': %s",
+                                 MPT_tr("unable to get parent"), head->ident.name(), std::string(name, len).c_str());
+                }
+                from->unref();
+                return false;
+            }
             object *obj, *src;
             if ((src = curr->cast<object>()) && (obj = from->cast<object>())) {
                 obj->setProperties(*src, out);
@@ -149,7 +157,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             }
             from->unref();
             if (out) {
-                out->message(_func, out->Error, "%s: %s: %s",
+                out->message(_func, out->Error, "%s: '%s': %s",
                              MPT_tr("unable to get inheritance"), head->ident.name(), std::string(name, len).c_str());
             }
             return false;
@@ -360,23 +368,46 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
 
     if (nlen < 0) nlen = name ? strlen(name) : 0;
 
-    if (_sep && (sep = (char *) memchr(name, _sep, nlen))) {
+    if (_sep && name && (sep = (char *) memchr(name, _sep, nlen))) {
         size_t plen = sep - name;
         for (int i = 0; (c = _curr.item(i)); ++i) {
             metatype *m = c->pointer();
-            if (!m || !c->equal(name, plen)) continue;
+            if (!m || !c->equal(name, plen)) {
+                continue;
+            }
             const Group *g;
-            if (!(g = m->cast<Group>())) continue;
-            if ((m = GroupRelation(*g, this).find(type, sep+1, nlen-plen-1))) {
+            if (!(g = m->cast<Group>())) {
+                continue;
+            }
+            if ((m = GroupRelation(*g, this).find(type, sep + 1, nlen - plen - 1))) {
                 return m;
             }
         }
     }
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
-            metatype *m = c->pointer();
-            if (!m || (type && m->type() != type)) continue;
-            if (!c->equal(name, nlen)) continue;
+            metatype *m;
+            if (!(m = c->pointer())) {
+                continue;
+            }
+            if (name && !c->equal(name, nlen)) {
+                continue;
+            }
+            if (type < 0) {
+                return m;
+            }
+            int val;
+            if ((val = m->type()) < 0) {
+                continue;
+            }
+            if (type) {
+                if (type && type != val && (val = m->conv(type, 0)) < 0) {
+                    continue;
+                }
+            }
+            else if (!val) {
+                continue;
+            }
             return m;
         }
     }
@@ -391,8 +422,27 @@ metatype *NodeRelation::find(int type, const char *name, int nlen) const
 
     for (const node *c = _curr->children; c; c = c->next) {
         metatype *m;
-        if (!(m = c->_meta) || !c->ident.equal(name, nlen)) continue;
-        if (type && m->type() != type) continue;
+        if (!(m = c->_meta)) {
+	    continue;
+	}
+	if (name && !c->ident.equal(name, nlen)) {
+	    continue;
+	}
+        if (type < 0) {
+            return m;
+        }
+        int val;
+        if ((val = m->type()) < 0) {
+            continue;
+        }
+        if (type) {
+            if (type && type != val && (val = m->conv(type, 0)) < 0) {
+                continue;
+            }
+        }
+        else if (!val) {
+            continue;
+        }
         return m;
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
