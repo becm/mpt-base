@@ -137,17 +137,24 @@ int Line::setProperty(const char *name, const metatype *src)
     return mpt_line_set(this, name, src);
 }
 // text data operations
-text::text(const text *tx)
-{ mpt_text_init(this, tx); }
-text::~text()
-{ mpt_text_fini(this); }
+text::text()
+{
+    mpt_text_init(this);
+}
+text::text(const text &tx)
+{
+    mpt_text_init(this, &tx);
+}
 text & text::operator= (const text & tx)
 {
     mpt_text_fini(this);
     mpt_text_init(this, &tx);
     return *this;
 }
-
+text::~text()
+{
+    mpt_text_fini(this);
+}
 bool text::setValue(const char *v)
 { return mpt_string_set(&_value, v); }
 
@@ -157,8 +164,11 @@ bool text::setFont(const char *v)
 int text::set(metatype &src)
 { return mpt_string_pset(&_value, &src); }
 
-Text::Text(const text *from) : text(from)
-{ }
+Text::Text(const text *from)
+{
+    if (!from) return;
+    *static_cast<text *>(this) = *from;
+}
 Text::~Text()
 { }
 void Text::unref()
@@ -211,6 +221,16 @@ axis::axis(AxisFlags type)
     mpt_axis_init(this);
     format = type & 0x3;
 }
+axis::axis(const axis & ax)
+{
+    mpt_axis_init(this, &ax);
+}
+axis & axis::operator= (const axis & ax)
+{
+    mpt_axis_fini(this);
+    mpt_axis_init(this, &ax);
+    return *this;
+}
 axis::~axis()
 {
     mpt_axis_fini(this);
@@ -218,7 +238,7 @@ axis::~axis()
 Axis::Axis(const axis *from)
 {
     if (!from) return;
-    axis *ax = this; *ax = *from;
+    *static_cast<axis *>(this) = *from;
 }
 Axis::Axis(AxisFlags type) : axis(type)
 { }
@@ -273,6 +293,16 @@ world::world()
 {
     mpt_world_init(this);
 }
+world::world(const world & wld)
+{
+    mpt_world_init(this, &wld);
+}
+world & world::operator= (const world & wld)
+{
+    mpt_world_fini(this);
+    mpt_world_init(this, &wld);
+    return *this;
+}
 world::~world()
 {
     mpt_world_fini(this);
@@ -284,7 +314,7 @@ bool world::setAlias(const char *name, int len)
 World::World(const world *from)
 {
     if (!from) return;
-    world *w = this; *w = *from;
+    *static_cast<world *>(this) = *from;
 }
 World::World(int c)
 {
@@ -346,15 +376,28 @@ int World::setProperty(const char *prop, const metatype *src)
 }
 // graph data operations
 graph::graph()
-{ mpt_graph_init(this); }
-
+{
+    mpt_graph_init(this);
+}
+graph::graph(const graph & gr)
+{
+    mpt_graph_init(this, &gr);
+}
+graph & graph::operator= (const graph & gr)
+{
+    mpt_graph_fini(this);
+    mpt_graph_init(this, &gr);
+    return *this;
+}
 graph::~graph()
-{ mpt_graph_fini(this); }
+{
+    mpt_graph_fini(this);
+}
 
 Graph::Graph(const graph *from)
 {
     if (!from) return;
-    graph *g = this; *g = *from;
+    *static_cast<graph *>(this) = *from;
 }
 Graph::~Graph()
 { }

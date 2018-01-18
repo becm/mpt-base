@@ -108,6 +108,8 @@ MPT_STRUCT(axis)
 {
 #ifdef __cplusplus
 	axis(AxisFlags type = AxisStyleGen);
+	axis & operator= (axis const &);
+	axis(axis const &);
 	~axis();
 	
 	enum { Type = TypeAxis };
@@ -137,6 +139,8 @@ MPT_STRUCT(world)
 {
 #ifdef __cplusplus
 	world();
+	world & operator= (world const &);
+	world(world const &);
 	~world();
 	
 	enum { Type = TypeWorld };
@@ -159,6 +163,8 @@ MPT_STRUCT(graph)
 {
 #ifdef __cplusplus
 	graph();
+	graph & operator= (graph const &);
+	graph(graph const &);
 	~graph();
 	
 	enum { Type = TypeGraph };
@@ -190,8 +196,9 @@ public:
 MPT_STRUCT(text)
 {
 #ifdef __cplusplus
-	text(const text *t = 0);
-	text & operator= (const text & tx);
+	text();
+	text & operator= (text const &);
+	text(const text &);
 	~text();
 	
 	enum { Type = TypeText };
