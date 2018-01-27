@@ -120,18 +120,18 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		return MPT_ERROR(BadType);
 	}
 	if (!strcmp(name, "fg") || !strcasecmp(name, "foreground")) {
-		if (!src || !(len = mpt_color_pset(&gr->fg, src))) {
+		if (!src) {
 			gr->fg = def_graph.fg;
 			return 0;
 		}
-		return len < 0 ? len : 0;
+		return mpt_color_pset(&gr->fg, src);
 	}
 	if (!strcmp(name, "bg") || !strcasecmp(name, "background")) {
-		if (!src || !(len = mpt_color_pset(&gr->bg, src))) {
+		if (!src) {
 			gr->bg = def_graph.bg;
 			return 0;
 		}
-		return len < 0 ? len : 0;
+		return mpt_color_pset(&gr->bg, src);
 	}
 	if (!strcmp(name, "pos") || !strcasecmp(name, "position")) {
 		static const MPT_STRUCT(range) r = { 0.0, 1.0 };
