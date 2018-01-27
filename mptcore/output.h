@@ -15,6 +15,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_STRUCT(property);
 MPT_STRUCT(node);
 MPT_STRUCT(array);
 MPT_STRUCT(notify);

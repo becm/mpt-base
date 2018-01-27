@@ -11,8 +11,38 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
+MPT_STRUCT(message);
 
 MPT_INTERFACE(metatype);
+
+/*! single property information */
+MPT_STRUCT(property)
+{
+#ifdef __cplusplus
+public:
+	enum { Type = TypeProperty };
+	
+	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
+	{ }
+	inline property(const char *n, const uint8_t *f, const void *d) : name(n), desc(0)
+	{
+		val.set(f, d);
+	}
+	inline property(size_t pos) : name(0), desc((char *) pos)
+	{ }
+#else
+# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT }
+#endif
+	const char *name;      /* property name */
+	const char *desc;      /* property [index->]description */
+	MPT_STRUCT(value) val; /* element value */
+};
+#ifdef __cplusplus
+template<> inline __MPT_CONST_TYPE int typeinfo<property>::id() {
+	return property::Type;
+}
+#endif
+typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
 
 /*! generic object interface */
 #ifdef __cplusplus
@@ -90,6 +120,16 @@ extern int mpt_object_args(MPT_INTERFACE(object) *, MPT_INTERFACE(iterator) *);
 extern int mpt_object_set_property(MPT_INTERFACE(object) *, int , const MPT_STRUCT(identifier) *, const MPT_INTERFACE(metatype) *);
 extern int mpt_object_set_nodes(MPT_INTERFACE(object) *, int , const MPT_STRUCT(node) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
+/* get matching property by name */
+extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
+/* process properties according to mask */
+extern int mpt_properties_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
+
+/* apply property from message text argument */
+extern int mpt_message_properties(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
+
+/* query and print all properties */
+extern int mpt_properties_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

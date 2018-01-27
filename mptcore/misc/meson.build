@@ -1,7 +1,6 @@
 # meson.build.gen: *.c
 src = files(
   'abort.c',
-  'generic_foreach.c',
   'geninfo.c',
   'geninfo_clone.c',
   'hash.c',
@@ -13,7 +12,6 @@ src = files(
   'offset.c',
   'position.c',
   'process_vararg.c',
-  'property_match.c',
   'refcount.c',
   'valsize.c',
   'valtype.c',

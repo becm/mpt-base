@@ -12,6 +12,7 @@
 
 #include "meta.h"
 #include "array.h"
+#include "object.h"
 
 #include "convert.h"
 

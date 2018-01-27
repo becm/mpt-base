@@ -25,5 +25,5 @@ static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
  */
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
 {
-	return mpt_generic_foreach(getProperty, (void *) obj, proc, data, match);
+	return mpt_properties_foreach(getProperty, (void *) obj, proc, data, match);
 }

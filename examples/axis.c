@@ -6,7 +6,7 @@
 #endif
 
 #include MPT_INCLUDE(convert.h)
-#include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(object.h)
 #include MPT_INCLUDE(meta.h)
 
 #include MPT_INCLUDE(layout.h)
@@ -32,7 +32,7 @@ static uintptr_t addref(MPT_INTERFACE(reference) *src)
 }
 static int convert(const MPT_INTERFACE(metatype) *src, int type, void *dest)
 {
-	return mpt_convert_string(*((char **) (src+1)), type, dest);
+	return mpt_convert_string(*((char **) (src + 1)), type, dest);
 }
 static MPT_INTERFACE(metatype) *clone(const MPT_INTERFACE(metatype) *src)
 {
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	mpt_generic_print(getter, &obj, printm, stdout, -1);
+	mpt_properties_print(getter, &obj, printm, stdout, -1);
 	
 	return 0;
 }

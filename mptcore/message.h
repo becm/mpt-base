@@ -226,9 +226,6 @@ extern size_t mpt_message_read(MPT_STRUCT(message) *, size_t , void *);
 /* get message length */
 extern size_t mpt_message_length(const MPT_STRUCT(message) *);
 
-/* apply property from message text argument */
-extern int mpt_message_property(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
-
 /* create metatype from message text arguments */
 extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *, int);
 

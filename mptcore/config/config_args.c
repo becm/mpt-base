@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "meta.h"
+#include "object.h"
 
 #include "config.h"
 

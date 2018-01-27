@@ -10,6 +10,7 @@
 
 #include "convert.h"
 #include "meta.h"
+#include "object.h"
 
 #include "stream.h"
 

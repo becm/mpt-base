@@ -208,9 +208,6 @@ extern ssize_t mpt_encode_string(MPT_STRUCT(encode_state) *, const struct iovec 
 extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
 
-/* print all properties */
-extern int mpt_generic_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
-
 /* convert structured data to string */
 extern int mpt_number_print(char *, size_t , MPT_STRUCT(valfmt) , int , const void *);
 /* output data */

@@ -1,5 +1,7 @@
 
 
+#include "object.h"
+
 #include "output.h"
 
 /*!

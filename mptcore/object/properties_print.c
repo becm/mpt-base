@@ -7,6 +7,8 @@
 
 #include "convert.h"
 
+#include "object.h"
+
 struct outData
 {
 	MPT_TYPE(PropertyHandler) h;
@@ -58,12 +60,26 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
 	return par->h(par->p, &pr);
 }
 
-extern int mpt_generic_print(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+/*!
+ * \ingroup mptObject
+ * \brief print properties
+ * 
+ * Process object properties matching traverse types.
+ * 
+ * \param get   property query operation
+ * \param obj   property source
+ * \param proc  process string/unprintable property
+ * \param data  argument for property processing
+ * \param match properties to process
+ * 
+ * \return index of requested property
+ */
+extern int mpt_properties_print(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
 {
 	struct outData par;
 	
 	par.h = proc;
 	par.p = data;
 	
-	return mpt_generic_foreach(get, obj, mprint, &par, mask);
+	return mpt_properties_foreach(get, obj, mprint, &par, mask);
 }

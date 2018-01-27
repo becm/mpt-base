@@ -2,7 +2,7 @@
 #include <string.h>
 #include <strings.h>
 
-#include "core.h"
+#include "object.h"
 
 /*!
  * \ingroup mptCore

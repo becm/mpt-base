@@ -6,8 +6,9 @@
 
 #include <string.h>
 
-#include "config.h"
 #include "message.h"
+
+#include "object.h"
 
 /*!
  * \ingroup mptMessage

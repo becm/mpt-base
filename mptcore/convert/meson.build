@@ -21,7 +21,6 @@ src = files(
   'encoder.c',
   'encoding.c',
   'float80.c',
-  'generic_print.c',
   'newline_string.c',
   'number_print.c',
   'scalar_argv.c',

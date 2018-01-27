@@ -17,6 +17,8 @@ struct iovec;
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_STRUCT(property);
+
 enum MPT_ENUM(AxisFlags) {
 	MPT_ENUM(AxisStyleGen)  = 0,
 	

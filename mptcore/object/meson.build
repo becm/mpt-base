@@ -1,5 +1,6 @@
 # meson.build.gen: *.c
 src = files(
+  'message_properties.c',
   'object_args.c',
   'object_foreach.c',
   'object_set.c',
@@ -9,4 +10,7 @@ src = files(
   'object_set_string.c',
   'object_set_value.c',
   'object_typename.c',
+  'properties_foreach.c',
+  'properties_print.c',
+  'property_match.c',
 )

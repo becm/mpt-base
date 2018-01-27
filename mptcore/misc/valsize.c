@@ -6,6 +6,7 @@
 #include "../mptplot/layout.h"
 
 #include "convert.h"
+#include "object.h"
 #include "array.h"
 #include "event.h"
 

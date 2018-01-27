@@ -2,7 +2,7 @@
  * call function for all object/metatype properties
  */
 
-#include "core.h"
+#include "object.h"
 
 /*!
  * \ingroup mptCore
@@ -19,7 +19,7 @@
  * 
  * \return index of requested property
  */
-extern int mpt_generic_foreach(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
+extern int mpt_properties_foreach(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
 {
 	MPT_STRUCT(property) prop;
 	uintptr_t pos = 0;

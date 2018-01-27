@@ -6,6 +6,7 @@
 #include <strings.h> /* for strcasecmp() */
 
 #include "meta.h"
+#include "object.h"
 
 #include "layout.h"
 

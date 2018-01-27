@@ -433,35 +433,6 @@ template<> inline __MPT_CONST_TYPE int typeinfo<value>::id() {
 }
 #endif
 
-/*! single property information */
-MPT_STRUCT(property)
-{
-#ifdef __cplusplus
-public:
-	enum { Type = TypeProperty };
-	
-	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
-	{ }
-	inline property(const char *n, const uint8_t *f, const void *d) : name(n), desc(0)
-	{
-		val.set(f, d);
-	}
-	inline property(size_t pos) : name(0), desc((char *) pos)
-	{ }
-#else
-# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT }
-#endif
-	const char *name;      /* property name */
-	const char *desc;      /* property [index->]description */
-	MPT_STRUCT(value) val; /* element value */
-};
-#ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<property>::id() {
-	return property::Type;
-}
-#endif
-typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
-
 /*! wrapper for reference count */
 MPT_STRUCT(refcount)
 {
@@ -848,11 +819,6 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUC
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
 /* read from value */
 extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
-
-/* get matching property by name */
-extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
-/* process properties according to mask */
-extern int mpt_generic_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
 
 
 /* push log message */
