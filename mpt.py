@@ -44,17 +44,15 @@ SEARCH_TERMINAL = [
 ]
 
 
-TMPDIR = os.getenv('MPT_TMP')
-DEFAULT_FLAGS = ''
-
-if not TMPDIR:
+rundir = os.getenv('MPT_TMP')
+if not rundir:
     if os.name != 'posix':
-        TMPDIR = os.path.join(gettempdir(), 'mpt')
+        rundir = os.path.join(gettempdir(), 'mpt')
     else:
-        TMPDIR = os.path.join(gettempdir(), 'mpt-' + str(os.getuid()))
+        rundir = os.path.join(gettempdir(), 'mpt-' + str(os.getuid()))
 
 
-def encodeCommand(msg):
+def encode_command(msg):
     if isinstance(msg, str):
         msg = bytearray(msg, 'utf-8')
     
@@ -67,7 +65,7 @@ def encodeCommand(msg):
     return msg + b"\x00"
 
 
-def encodeCobs(msg):
+def encode_cobs(msg):
     """ simple COBS encoder """
     code = 0x1
     ret = bytearray()
@@ -100,7 +98,7 @@ def encodeCobs(msg):
 
 class Output(object):
     """ output buffer """
-    _encode = encodeCommand
+    _encode = encode_command
     _buf = None
     
     def __init__(self, name=None):
@@ -150,14 +148,14 @@ class Output(object):
         return ret
 
 
-def header(cmd=MESSAGE_COMMAND, arg=0, _id=None):
+def make_header(cmd=MESSAGE_COMMAND, arg=0, _id=None):
     """ serialize header """
     if _id is None:
         return pack('>bb', cmd, arg)
     return pack('>Hbb', _id, cmd, arg)
 
 
-def destination(dest):
+def make_destination(dest):
     """ serialize destination encoding """
     lay = grf = wld = dim = cyc = off = None
     
@@ -210,7 +208,7 @@ def destination(dest):
     return pack('>BBBBII', lay, grf, wld, dim, cyc, off)
 
 
-def message(msg, dest=None, messageID=None):
+def make_message(msg, dest=None, messageID=None):
     """ create serialized message elements """
     if isinstance(msg, array):
         if 'df'.find(msg.typecode) >= 0:
@@ -221,20 +219,18 @@ def message(msg, dest=None, messageID=None):
             arg = VALUES_NATIVE + VALUES_INTEGER + (msg.itemsize - 1)
         else:
             raise TypeError("invalid value type")
-        hdr = header(MESSAGE_DEST, arg, messageID)
-        return (hdr + destination(dest), msg.tostring())
+        hdr = make_header(MESSAGE_DEST, arg, messageID)
+        return (hdr + make_destination(dest), msg.tostring())
     if isinstance(msg, str):
         msg = bytes(bytearray(msg, 'utf-8'))
-        return (header(MESSAGE_COMMAND, ord(" "), messageID), msg)
+        return (make_header(MESSAGE_COMMAND, ord(" "), messageID), msg)
     if isinstance(msg, bytes):
         if dest:
             fmt = VALUES_NATIVE + VALUES_FLOAT + (8 - 1)
-            hdr = header(MESSAGE_VALUES, fmt, messageID)
+            hdr = make_header(MESSAGE_VALUES, fmt, messageID)
         else:
-            hdr = header(MESSAGE_OUTPUT, ord(" "), messageID)
+            hdr = make_header(MESSAGE_OUTPUT, ord(" "), messageID)
         return (hdr, msg)
-    else:
-        return None
 
 
 class Graphic(Output):
@@ -249,7 +245,7 @@ class Graphic(Output):
     def __init__(self, dest=None, exe='mptplot'):
         """ create or connect to graphic process """
         super(Graphic, self).__init__()
-        self._encode = encodeCobs
+        self._encode = encode_cobs
         
         if isinstance(dest, tuple):
             port = Graphic.DEFAULT_PORT
@@ -301,7 +297,7 @@ class Graphic(Output):
             raise TypeError("invalid destination")
         
         # new environment for graphic process
-        environ = os.environ
+        environ = os.environ.copy()
         environ['MPT_GRAPHIC_PIPE'] = 'cobs'
         
         # start new graphic process
@@ -326,7 +322,7 @@ class Graphic(Output):
         """ send message data to graphic process """
         if onreturn:
             onreturn(None)
-        self.push(message(msg, dest, self.nextID()))
+        self.push(make_message(msg, dest, self.nextID()))
         self.flush()
 
 
@@ -385,7 +381,7 @@ def getterm():
 def setup(process, wpath='', cpath=None):
     """ setup MPT environment """
     control = []
-    env = os.environ
+    env = os.environ.copy()
     if not cpath:
         cpath = os.getcwd()
     env['MPT_CWD'] = cpath
@@ -409,7 +405,7 @@ def setup(process, wpath='', cpath=None):
 
 
 def cleanup(control):
-    """ close all control pipes """
+    """ delete control pipes """
     for c in control:
         if not c:
             continue
@@ -425,7 +421,7 @@ def close(control):
         if not c or c.closed:
             continue
         try:
-            c.write(encodeCommand(b'close'))
+            c.write(encode_command(b'close'))
             c.flush()
             c.close()
         except IOError:
@@ -483,7 +479,7 @@ class Shell(cmd.Cmd):
         return self.send('step ' + args)
     
     def do_set(self, args):
-        """ send prepare command to first user process """
+        """ send assignment command to first user process """
         return self.send('set ' + args)
     
     def do_clear(self, args):
@@ -492,7 +488,9 @@ class Shell(cmd.Cmd):
     
     def do_graphic(self, args):
         """ graphic command for first user process """
-        return self.send('graphic ' + args)
+        if hasattr(self, 'graphic') and hasattr(self.graphic, 'send'):
+            return self.graphic.send(args)
+        self.error('no graphic connection')
     
     def do_close(self, args):
         """ close shell and user processes """
@@ -547,9 +545,9 @@ class Shell(cmd.Cmd):
         
         try:
             m = bytearray()
-            for d in message(args):
+            for d in make_message(args):
                 m = m + d
-            c.write(encodeCobs(m))
+            c.write(encode_cobs(m))
             c.flush()
         except:
             c.close()
@@ -574,7 +572,7 @@ class Shell(cmd.Cmd):
         }
         self.process = self.process + [proc]
     
-    def run(self, wpath=TMPDIR):
+    def run(self, wpath=rundir):
         """ setup and run shell interpreter """
         
         if wpath != '':
@@ -589,10 +587,10 @@ class Shell(cmd.Cmd):
         # connect clients to graphic
         if hasattr(self, 'control') and hasattr(self, 'graphic'):
             cmd = bytearray()
-            cmd = cmd + header(MESSAGE_SET, 2)
+            cmd = cmd + make_header(MESSAGE_SET, 2)
             cmd = cmd + bytearray("mpt\x00graphic\x00", 'utf-8')
             cmd = cmd + bytearray(self.graphic.name, 'utf-8')
-            cmd = encodeCobs(cmd)
+            cmd = encode_cobs(cmd)
             for p in self.control:
                 p.write(cmd)
                 p.flush()
@@ -657,7 +655,7 @@ def run(args):
     i = Shell()
     for arg in args:
         i.add(arg)
-    g = os.path.join(TMPDIR, 'mpt.' + str(os.getpid()) + '.graphic')
+    g = os.path.join(rundir, 'mpt.' + str(os.getpid()) + '.graphic')
     i.graphic = Graphic(dest=g)
     i.run()
 
