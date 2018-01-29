@@ -46,6 +46,10 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 		ret = 1;
 		/* load from special or default location */
 		if (!(lib = mpt_library_open(libname + 1, path))) {
+			sname = dlerror();
+			if (sname && out) {
+				mpt_log(out, __func__, MPT_LOG(Warning), "%s", sname);
+			}
 			/* fallback to default library locations */
 			if (!path || !(lib = mpt_library_open(libname + 1, 0))) {
 				sname = dlerror();
