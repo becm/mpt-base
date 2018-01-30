@@ -90,7 +90,7 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 		mpt_message_read(&msg, idlen, buf);
 		/* no return type message */
 		if (!(buf[0] & 0x80)) {
-			return MPT_ERROR(MessageInput);
+			return MPT_MESGERR(ActiveInput);
 		}
 		buf[0] &= 0x7f;
 		ret = mpt_message_buf2id(buf, idlen, &id);

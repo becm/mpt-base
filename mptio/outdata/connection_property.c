@@ -8,9 +8,10 @@
 
 #include <ctype.h> /* for isupper() */
 
-#include "convert.h"
 #include "meta.h"
 #include "object.h"
+#include "convert.h"
+#include "message.h"
 
 #include "stream.h"
 
@@ -98,11 +99,11 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(m
 	}
 	/* check if state is consistent */
 	if (srm->_rd._state.scratch) {
-		return MPT_ERROR(MessageInput);
+		return MPT_MESGERR(ActiveInput);
 	}
 	val = mpt_stream_flags(&srm->_info);
 	if (val & MPT_STREAMFLAG(MesgActive)) {
-		return MPT_ERROR(MessageInProgress);
+		return MPT_MESGERR(InProgress);
 	}
 	/* clear existing coding state contexts */
 	if (srm->_rd._dec) {

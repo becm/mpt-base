@@ -92,7 +92,7 @@ int Buffer::get(int type, void *ptr)
         return me < 0 ? array::Type : me;
     }
     if (_state.scratch) {
-        return MessageInProgress;
+        return message::InProgress;
     }
     size_t off = _d.length() - _state.done;
     slice s(_d);

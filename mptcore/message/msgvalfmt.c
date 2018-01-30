@@ -8,14 +8,14 @@
 
 /*!
  * \ingroup mptMessage
- * \brief element size
+ * \brief get element size
  * 
  * Calculate total element bytes
  * for transport format code.
  * 
  * \param fmt  message content format code
  * 
- * \return total element size
+ * \return single element size
  */
 extern size_t mpt_msgvalfmt_size(uint8_t fmt)
 {
@@ -27,7 +27,7 @@ extern size_t mpt_msgvalfmt_size(uint8_t fmt)
 }
 /*!
  * \ingroup mptMessage
- * \brief native type
+ * \brief get native type
  * 
  * Native type for transport format code.
  * Fail when byte orders diverge or
@@ -35,9 +35,9 @@ extern size_t mpt_msgvalfmt_size(uint8_t fmt)
  * 
  * \param fmt  message value format
  * 
- * \return local type representation
+ * \return local type code
  */
-extern int mpt_msgvalfmt_type(uint8_t fmt)
+extern int mpt_msgvalfmt_typeid(uint8_t fmt)
 {
 	ssize_t size;
 	/* value in wrong byte order */

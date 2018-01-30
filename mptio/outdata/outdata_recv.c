@@ -40,7 +40,7 @@ extern int mpt_outdata_recv(MPT_STRUCT(outdata) *out)
 		return MPT_ERROR(BadArgument);
 	}
 	if (out->state & MPT_OUTFLAG(Active)) {
-		return MPT_ERROR(MessageInProgress);
+		return MPT_MESGERR(InProgress);
 	}
 	out->state &= ~MPT_OUTFLAG(Received);
 	

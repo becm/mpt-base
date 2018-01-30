@@ -167,7 +167,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			curr = buf;
 			cfmt = (cfmt & ~MPT_MESGVAL(ByteOrderLittle)) | MPT_MESGVAL(ByteOrderNative);
 		}
-		if ((cfmt = mpt_msgvalfmt_type(cfmt)) < 0) {
+		if ((cfmt = mpt_msgvalfmt_typeid(cfmt)) < 0) {
 			return done ? done : cfmt;
 		}
 		/* determine output format */

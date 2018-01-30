@@ -15,6 +15,7 @@
 #include "object.h"
 
 #include "convert.h"
+#include "message.h"
 
 #include "output.h"
 
@@ -25,7 +26,7 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 	int sock = -1;
 	
 	if (hist->state & MPT_OUTFLAG(Active)) {
-		return MPT_ERROR(MessageInProgress);
+		return MPT_MESGERR(InProgress);
 	}
 	/* default output */
 	if (!src) {

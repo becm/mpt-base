@@ -36,7 +36,7 @@ extern int mpt_connection_log(MPT_STRUCT(connection) *con, const char *from, int
 	
 	/* send log entry to contact */
 	if ((con->out.state & MPT_OUTFLAG(Active))) {
-		return MPT_ERROR(MessageInProgress);
+		return MPT_MESGERR(InProgress);
 	}
 	hdr[0] = MPT_MESGTYPE(Output);
 	hdr[1] = type & 0x7f;

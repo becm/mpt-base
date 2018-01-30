@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "convert.h"
+#include "message.h"
 
 #include "output.h"
 
@@ -34,7 +35,7 @@ extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int typ
 	}
 	/* message being composed */
 	if (hist->state & MPT_OUTFLAG(Active)) {
-		return MPT_ERROR(MessageInProgress);
+		return MPT_MESGERR(InProgress);
 	}
 	/* use log file */
 	if ((type & MPT_LOG(File)) && (fd = hist->file)) {

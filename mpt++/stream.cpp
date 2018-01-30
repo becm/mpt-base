@@ -364,7 +364,7 @@ ssize_t Stream::push(size_t len, const void *src)
         return BadArgument;
     }
     ssize_t curr;
-    if (_idlen && !(_srm->flags() & MessageInProgress)) {
+    if (_idlen && !(_srm->flags() & stream::MesgActive)) {
         uint8_t id[__UINT8_MAX__];
         mpt_message_id2buf(_cid, id, _idlen);
         if (mpt_stream_push(_srm, _idlen, id) < _idlen) {
@@ -401,7 +401,7 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
     struct command *cmd;
 
     if (mpt_stream_flags(&_srm->_info) & _srm->MesgActive) {
-        return MessageInProgress;
+        return message::InProgress;
     }
     if (!rctl) {
         return 0;

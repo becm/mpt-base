@@ -36,7 +36,7 @@ extern ssize_t mpt_outdata_push(MPT_STRUCT(outdata) *od, size_t len, const void 
 	
 	/* existing new data */
 	if (od->state & MPT_OUTFLAG(Received)) {
-		return MPT_ERROR(MessageInput);
+		return MPT_MESGERR(ActiveInput);
 	}
 	if (len) {
 		/* reset outpu data */

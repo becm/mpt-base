@@ -52,9 +52,15 @@ MPT_STRUCT(message)
 	{ }
 	size_t read(size_t len, void * = 0);
 	size_t length() const;
+# define MPT_MESGERR(x) x
 #else
-# define MPT_MSGVAL(x) MPT_ENUM(Value_##x)
+# define MPT_MESGERR(x) MPT_ERROR(Message_##x)
 #endif
+enum MPT_ERROR(Message)
+{
+	MPT_MESGERR(ActiveInput) = -0x20,
+	MPT_MESGERR(InProgress)  = -0x21
+};
 #ifndef __cplusplus
 MPT_STRUCT(message)
 {
@@ -71,13 +77,13 @@ MPT_STRUCT(message)
 MPT_STRUCT(msgtype)
 {
 # define MPT_MESGTYPE(x) x
-# define MPT_MESGVAL(x)  x
-# define MPT_MESGGRF(x)  x
+# define MPT_MESGVAL(x)  Value##x
+# define MPT_MESGGRF(x)  Graphic##x
 	inline msgtype(int type = Output, int a = 0) : cmd(type), arg(a) { }
 #else
-# define MPT_MESGTYPE(x) MPT_ENUM(Message_##x)
-# define MPT_MESGVAL(x)  MPT_ENUM(MesgVal_##x)
-# define MPT_MESGGRF(x)  MPT_ENUM(MesgGrf_##x)
+# define MPT_MESGTYPE(x) MPT_ENUM(Message##x)
+# define MPT_MESGVAL(x)  MPT_ENUM(MesgVal##x)
+# define MPT_MESGGRF(x)  MPT_ENUM(MesgGrf##x)
 # define MPT_message_value(f,v)  ((sizeof(v) - 1) | MPT_MESGVAL(f) | MPT_MESGVAL(ByteOrderNative))
 #endif
 enum MPT_MESGTYPE(Type) {
@@ -108,7 +114,7 @@ enum MPT_MESGTYPE(Value) {
 	MPT_MESGVAL(Integer)      = 0x60,  /* signed integer data */
 	MPT_MESGVAL(Normal)       = 0x60,  /* size =  (val & 0x1f) + 1, unset for big numbers */
 	
-	MPT_MESGVAL(BigAtom)      = 0x40,  /* size = ((val & 0x1f) + 1) * ValuesBigAtom */
+	MPT_MESGVAL(BigAtom)      = 0x40,  /* size = ((val & 0x1f) + 1) * BigAtom */
 	
 	/* explicit little endian and native byte order flag */
 	MPT_MESGVAL(ByteOrderLittle) = 0x80,
@@ -160,7 +166,7 @@ MPT_STRUCT(msgbind)
 #define MPT_DATASTATE(x)  x
 #else
 enum MPT_ENUM(DataStates) {
-#define MPT_DATASTATE(x)  MPT_ENUM(DataState_##x)
+#define MPT_DATASTATE(x)  MPT_ENUM(DataState##x)
 #endif
 	MPT_DATASTATE(Init)  = 0x1,   /* data states */
 	MPT_DATASTATE(Step)  = 0x2,
@@ -286,7 +292,7 @@ extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
 
 /* get size/type from message value format type */
 size_t mpt_msgvalfmt_size(uint8_t);
-int mpt_msgvalfmt_type(uint8_t);
+int mpt_msgvalfmt_typeid(uint8_t);
 
 __MPT_EXTDECL_END
 

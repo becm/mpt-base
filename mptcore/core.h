@@ -197,10 +197,7 @@ enum MPT_ENUM(TypeErrors) {
 	MPT_ERROR(BadOperation)   = -0x4,
 	MPT_ERROR(BadEncoding)    = -0x8,
 	MPT_ERROR(MissingData)    = -0x10,
-	MPT_ERROR(MissingBuffer)  = -0x11,
-	
-	MPT_ERROR(MessageInput)      = -0x20,
-	MPT_ERROR(MessageInProgress) = -0x21
+	MPT_ERROR(MissingBuffer)  = -0x11
 };
 
 MPT_STRUCT(encode_state)
