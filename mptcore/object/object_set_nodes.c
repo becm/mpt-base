@@ -75,10 +75,10 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 		}
 		if (val == MPT_ERROR(BadArgument)) {
 			if (name) {
-				mpt_log(info, __func__, MPT_LOG(Error), "%s: %s: %s",
+				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %s: %s",
 				        pr.name, MPT_tr("bad property name"), name);
 			} else {
-				mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
+				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %s",
 				        pr.name, MPT_tr("bad object assignment"));
 			}
 			continue;
@@ -93,7 +93,7 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 			}
 			continue;
 		}
-		if (val == MPT_ERROR(BadValue)) {
+		if (val == MPT_ERROR(BadType)) {
 			const MPT_INTERFACE(metatype) *mt = conf->_meta;
 			val = mt ? mt->_vptr->conv(mt, 0, 0) : 0;
 			if (name) {
@@ -133,12 +133,13 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 			continue;
 		}
 		if (val & MPT_ENUM(TraverseAll)) {
+			const char *type = conf->children ? "non-leaf" : "leaf";
 			if (name) {
-				mpt_log(info, __func__, MPT_LOG(Debug), "%s.%s: %s",
-				        pr.name, name, MPT_tr("skip node type"));
+				mpt_log(info, __func__, MPT_LOG(Info), "%s.%s: %s (%s)",
+				        pr.name, name, MPT_tr("skip node type"), MPT_tr(type));
 			} else {
-				mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-				        pr.name, MPT_tr("skip node type"));
+				mpt_log(info, __func__, MPT_LOG(Info), "%s: %s (%s)",
+				        pr.name, MPT_tr("skip node type"), MPT_tr(type));
 			}
 			continue;
 		}
