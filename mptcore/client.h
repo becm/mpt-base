@@ -46,7 +46,7 @@ MPT_INTERFACE_VPTR(client)
 MPT_STRUCT(libhandle)
 {
 #ifdef __cplusplus
-	inline libhandle() : lib(0), create(0)
+	inline libhandle() : lib(0), create(0), hash(0), type(0)
 	{ }
 	~libhandle();
 #else

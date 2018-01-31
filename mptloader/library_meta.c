@@ -18,7 +18,7 @@ struct _mpt_metaProxy
 	void *ptr;
 	MPT_STRUCT(libhandle) lh;
 	uint16_t len;
-	char fmt[2];
+	uint8_t fmt[2];
 };
 
 static void mpUnref(MPT_INTERFACE(reference) *m)
@@ -129,13 +129,17 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 		        MPT_tr("no proxy description"));
 		return 0;
 	}
+	if ((lh.type = type) < 0) {
+		mpt_log(info, __func__, MPT_LOG(Debug2), "%s: %s",
+		        MPT_tr("unknown instance type"), desc);
+		return 0;
+	}
 	if ((len = strlen(desc)) > UINT16_MAX) {
 		ret = len;
 		mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
 		        MPT_tr("symbol name too big"), ret);
 		return 0;
 	}
-	lh.type = type;
 	if ((ret = mpt_library_bind(&lh, desc, path, info)) < 0) {
 		return 0;
 	}
@@ -149,12 +153,12 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 		return 0;
 	}
 	mp->_mt._vptr = &_mpt_metaProxyCtl;
-	mp->lh = lh;
 	mp->_ref._val = 1;
 	mp->ptr = mt;
+	mp->lh = lh;
 	
 	mp->len = len;
-	mp->fmt[0] = (lh.type >= 0 && lh.type <= 0xff) ? lh.type : 0;
+	mp->fmt[0] = (type >= 0 && type <= 0xff) ? type : 0;
 	mp->fmt[1] = 0;
 	
 	desc = memcpy(mp + 1, desc, len + 1);

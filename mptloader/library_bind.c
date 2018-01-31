@@ -24,44 +24,41 @@
  */
 extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
-	const char *libname, *sname;
+	const char *libname;
 	void *(*sym)(void);
 	void *lib;
 	int ret = 0;
 	
-	if (!(sname = conf)) {
+	if (!conf) {
 		if (out) {
 			mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
 		}
 		return MPT_ERROR(BadArgument);
 	}
-	if (lh->type < 0) {
-		if (out) {
-			mpt_log(out, __func__, MPT_LOG(Debug2), "%s: %s", MPT_tr("unknown instance type"), conf);
-		}
-		return MPT_ERROR(BadType);
-	}
 	lib = 0;
-	if ((libname = strchr(sname, '@'))) {
+	if ((libname = strchr(conf, '@'))) {
 		ret = 1;
 		/* load from special or default location */
 		if (!(lib = mpt_library_open(libname + 1, path))) {
-			sname = dlerror();
-			if (sname && out) {
-				mpt_log(out, __func__, MPT_LOG(Warning), "%s", sname);
+			const char *err;
+			if (out && (err = dlerror())) {
+				mpt_log(out, __func__, MPT_LOG(Warning), "%s", err);
 			}
 			/* fallback to default library locations */
 			if (!path || !(lib = mpt_library_open(libname + 1, 0))) {
-				sname = dlerror();
-				mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
+				if (out && (err = dlerror())) {
+					mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+				}
 				return MPT_ERROR(BadValue);
 			}
 			ret = 2;
 		}
 	}
-	if (!(sym = mpt_library_symbol(lib, sname))) {
-		sname = dlerror();
-		mpt_log(out, __func__, MPT_LOG(Error), "%s", sname);
+	if (!(sym = mpt_library_symbol(lib, conf))) {
+		const char *err;
+		if (out && (err = dlerror())) {
+			mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+		}
 		if (lib) {
 			dlclose(lib);
 		}
@@ -71,7 +68,7 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 	
 	lh->lib = lib;
 	lh->create = sym;
-	lh->hash = mpt_hash(sname, strlen(sname));
+	lh->hash = mpt_hash(conf, strlen(conf));
 	
 	return ret;
 }
