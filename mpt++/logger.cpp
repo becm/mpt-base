@@ -14,6 +14,24 @@
 
 __MPT_NAMESPACE_BEGIN
 
+static int print_message(const char *fcn, int type, const char *fmt, va_list va)
+{
+    logger *log;
+    if ((log = logger::defaultInstance())) {
+        return log->log(fcn, type | logger::LogFunction, fmt, va);
+    }
+    FILE *fd = (type & 0xff) ? stderr : stdout;
+    if (fcn) {
+        std::fputs(fcn, fd);
+        std::fputs("(): ", fd);
+    }
+    if (fmt) {
+        std::vfprintf(fd, fmt, va);
+    }
+    std::fputs(mpt_newline_string(0), fd);
+    return 0;
+}
+
 // logger interfaces
 /*!
  * \ingroup mptMeta
@@ -30,58 +48,46 @@ __MPT_NAMESPACE_BEGIN
  */
 int log(const metatype *mt, const char *fcn, int type, const char *fmt, ...)
 {
-    logger *log;
-    if (!mt && !(log = logger::defaultInstance())) {
-        return 0;
-    }
     va_list va;
+    if (fmt) va_start(va, fmt);
     int ret;
-    va_start(va, fmt);
     if (mt) {
         ret = mpt_proxy_vlog(mt, fcn, type | logger::LogFunction, fmt, va);
     } else {
-        ret = log->log(fcn, type | logger::LogFunction, fmt, va);
+        ret = print_message(fcn, type, fmt, va);
     }
-    va_end(va);
+    if (fmt) va_end(va);
     return ret;
 }
 int debug(const char *from, const char *fmt, ... )
 {
-    logger *log = logger::defaultInstance();
-    if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Debug | log->LogFunction, fmt, va);
+    int ret = print_message(from, logger::Debug, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
 int warning(const char *from, const char *fmt, ... )
 {
-    logger *log = logger::defaultInstance();
-    if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Warning | log->LogFunction, fmt, va);
+    int ret = print_message(from, logger::Warning, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
 int error(const char *from, const char *fmt, ... )
 {
-    logger *log = logger::defaultInstance();
-    if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Error | log->LogFunction, fmt, va);
+    int ret = print_message(from, logger::Error, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
 int critical(const char *from, const char *fmt, ... )
 {
-    logger *log = logger::defaultInstance();
-    if (!log) return 0;
     va_list va;
     if (fmt) va_start(va, fmt);
-    int ret = log->log(from, log->Critical | log->LogFunction, fmt, va);
+    int ret = print_message(from, logger::Critical, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
@@ -89,13 +95,7 @@ int println(const char *fmt, ... )
 {
     va_list va;
     if (fmt) va_start(va, fmt);
-    logger *log;
-    int ret = 0;
-    if ((log = logger::defaultInstance())) {
-        ret = log->log(0, log->Message | log->LogSelect, fmt, va);
-    } else if (fmt) {
-        ret = std::vprintf(fmt, va);
-    }
+    int ret = print_message(0, 0, fmt, va);
     if (fmt) va_end(va);
     return ret;
 }
