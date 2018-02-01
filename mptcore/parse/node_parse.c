@@ -104,20 +104,8 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	if (fname) {
 		fclose(parse.src.arg);
 	}
-	/* restore old config state */
-	if (res < 0) {
-		if (fname) {
-			(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u: %s",
-			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line, fname);
-		} else {
-			(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u",
-			               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
-		}
-		conf->children = old;
-		return res;
-	}
-	/* delete old config nodes */
-	else {
+	/* replace tree content */
+	if (res >= 0) {
 		MPT_STRUCT(node) root = MPT_NODE_INIT;
 		MPT_STRUCT(value) val = MPT_VALUE_INIT;
 		root.children = old;
@@ -128,4 +116,18 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		}
 		return len;
 	}
+	/* restore old subtree base */
+	conf->children = old;
+	
+	if (!log) {
+		return res;
+	}
+	if (fname) {
+		(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u: %s",
+		               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line, fname);
+	} else {
+		(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u",
+		               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
+	}
+	return res;
 }

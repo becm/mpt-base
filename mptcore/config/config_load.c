@@ -94,18 +94,25 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 	ctx.log = log;
 	ret = 0;
 	if ((fd = openat(dir, _dir, O_RDONLY | O_DIRECTORY)) >= 0) {
+		DIR *dirp;
 		if (log) {
 			mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
 			        MPT_tr("process config directory"), root, _dir);
 		}
-		if (mpt_parse_folder(fd, cfgSet, &ctx, log) >= 0) {
+		if (!(dirp = fdopendir(fd))) {
+			close(fd);
 			ret |= 2;
+		}
+		else {
+			if (mpt_parse_folder(dirp, cfgSet, &ctx, log) >= 0) {
+				ret |= 2;
+			}
+			closedir(dirp);
 		}
 		if (log) {
 			mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
 			        MPT_tr("finished config directory"), root, _dir);
 		}
-		close(fd);
 	}
 	if ((fd = openat(dir, _file, O_RDONLY)) >= 0) {
 		MPT_STRUCT(parse) src = MPT_PARSE_INIT;

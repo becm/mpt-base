@@ -34,19 +34,18 @@
  * 
  * \return solver creator library description
  */
-extern int mpt_parse_folder(int cdir, MPT_TYPE(PathHandler) save, void *ctx, MPT_INTERFACE(logger) *log)
+extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(PathHandler) save, void *ctx, MPT_INTERFACE(logger) *log)
 {
 	MPT_STRUCT(parse) src = MPT_PARSE_INIT;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
-	DIR *cfg;
 	struct dirent *dent;
 	int res = 0;
 	
 	if (!save) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (!(cfg = fdopendir(cdir))) {
+	if (!cfg) {
 		return MPT_ERROR(MissingData);
 	}
 	src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
@@ -89,6 +88,5 @@ extern int mpt_parse_folder(int cdir, MPT_TYPE(PathHandler) save, void *ctx, MPT
 		}
 		res = 1;
 	}
-	closedir(cfg);
 	return res;
 }
