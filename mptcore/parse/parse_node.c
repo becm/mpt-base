@@ -19,28 +19,13 @@ static int saveAppend(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(val
 	}
 	return MPT_ERROR(BadOperation);
 }
-static int saveInsert(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(value) *val, int last, int curr)
-{
-	MPT_STRUCT(node) *next, **base = ctx;
-	(void) last;
-	
-	/* no data operation */
-	if (curr == MPT_PARSEFLAG(SectEnd)) {
-		return 0;
-	}
-	if (!(next = mpt_node_assign(base, p, val))) {
-		return MPT_ERROR(BadOperation);
-	}
-	return 0;
-}
 /*!
- * \ingroup mptConfig
+ * \ingroup mptParse
  * \brief parse config file
  * 
  * Parse config file with specific format description.
  * 
- * \param next  function to get next element
- * \param npar  context for 'next' function
+ * \param root  target for new elements
  * \param parse parse context
  * \param node  configuration target
  * 
@@ -60,10 +45,11 @@ extern int mpt_parse_node(MPT_STRUCT(node) *root, MPT_STRUCT(parse) *parse, cons
 	if (!(next = mpt_parse_next_fcn(err))) {
 		return MPT_ERROR(BadType);
 	}
+	parse->prev = MPT_PARSEFLAG(Section);
+	
 	/* create new nodes */
 	if (!(root->children)) {
 		MPT_STRUCT(node) *curr = root;
-		parse->prev = MPT_PARSEFLAG(Section);
 		err = mpt_parse_config(next, &pfmt, parse, saveAppend, &curr);
 		
 		/* clear created nodes on error */
@@ -74,8 +60,8 @@ extern int mpt_parse_node(MPT_STRUCT(node) *root, MPT_STRUCT(parse) *parse, cons
 	/* add to existing */
 	else {
 		MPT_STRUCT(node) conf = MPT_NODE_INIT;
-		parse->prev = 0;
-		err = mpt_parse_config(next, &pfmt, parse, saveInsert, &conf.children);
+		MPT_STRUCT(node) *curr = &conf;
+		err = mpt_parse_config(next, &pfmt, parse, saveAppend, &curr);
 		
 		/* clear created nodes on error */
 		if (err < 0) {
