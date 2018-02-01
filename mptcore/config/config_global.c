@@ -165,7 +165,7 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}
-		return mpt_node_set(n, val);
+		return mpt_meta_set(&n->_meta, val);
 	}
 	/* set subelement */
 	if (!(n = mpt_node_assign(b, path, val))) {

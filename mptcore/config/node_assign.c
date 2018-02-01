@@ -28,7 +28,7 @@ extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRU
 	
 	if ((conf = mpt_node_query(*base, &path))) {
 		if (!path.len) {
-			if (mpt_node_set(conf, val) < 0) {
+			if (mpt_meta_set(&conf->_meta, val) < 0) {
 				return 0;
 			}
 			return conf;

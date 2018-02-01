@@ -70,6 +70,9 @@ __MPT_EXTDECL_BEGIN
 
 /* create new MPT storage node */
 extern MPT_STRUCT(node) *mpt_node_new(size_t);
+/* get node identifier */
+extern const char *mpt_node_ident(const MPT_STRUCT(node) *);
+extern const char *mpt_node_data(const MPT_STRUCT(node) *, size_t *);
 
 /* remove edges from and to node */
 extern MPT_STRUCT(node) *mpt_node_unlink(MPT_STRUCT(node) *);
@@ -115,13 +118,6 @@ extern MPT_STRUCT(node) *mpt_node_next(const MPT_STRUCT(node) *, const char *);
 
 /* find node with ascii identifier in sublevel */
 extern MPT_STRUCT(node) *mpt_node_find(const MPT_STRUCT(node) *, const char *, int);
-
-
-/* get node identifier */
-extern const char *mpt_node_ident(const MPT_STRUCT(node) *);
-extern const char *mpt_node_data(const MPT_STRUCT(node) *, size_t *);
-/* set (zero-terminated string) node data */
-extern int mpt_node_set(MPT_STRUCT(node) *, const MPT_STRUCT(value) *);
 
 /* restore links of node (current and all children) */
 extern void mpt_gnode_relink(MPT_STRUCT(node) *);

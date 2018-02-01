@@ -277,6 +277,8 @@ __MPT_EXTDECL_BEGIN
 
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
+/* set (zero-terminated string) node data */
+extern int mpt_meta_set(MPT_INTERFACE(metatype) **, const MPT_STRUCT(value) *);
 
 /* creat basic text small metatype */
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);

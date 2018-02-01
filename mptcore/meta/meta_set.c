@@ -2,35 +2,38 @@
  * set MPT node metatype data.
  */
 
-#include "meta.h"
 #include "object.h"
+#include "config.h"
 
-#include "node.h"
+#include "meta.h"
 
 /*!
- * \ingroup mptNode
- * \brief set node data
+ * \ingroup mptMeta
+ * \brief set metatype data
  * 
- * Set node data to text value.
+ * Assign new value to compatible metatype
+ * or create new element.
  * 
- * \param node  node data
+ * \param mptr  metatype pointer reference
  * \param val   value to assign
  * 
  * \return type of created meta element
  */
-extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
+extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) *val)
 {
 	
 	MPT_INTERFACE(metatype) *old, *mt;
 	int ret = 0;
 	
-	if ((old = node->_meta)) {
+	if ((old = *mptr)) {
 		/* try assign existing data */
-		MPT_INTERFACE(object) *obj = 0;
+		MPT_INTERFACE(object) *obj;
+		MPT_INTERFACE(config) *cfg;
 		
 		if ((ret = old->_vptr->conv(old, 0, 0)) < 0) {
 			ret = 0;
 		}
+		obj = 0;
 		if ((old->_vptr->conv(old, MPT_ENUM(TypeObject), &obj)) >= 0
 	            && obj) {
 			int err;
@@ -44,6 +47,12 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 			if ((err = obj->_vptr->setProperty(obj, 0, 0)) >= 0) {
 				return ret;
 			}
+		}
+		cfg = 0;
+		if ((old->_vptr->conv(old, MPT_ENUM(TypeConfig), &cfg)) >= 0
+		    && cfg
+		    && (ret = cfg->_vptr->assign(cfg, 0, val)) >= 0) {
+			return ret;
 		}
 	}
 	/* default config data */
@@ -69,7 +78,7 @@ extern int mpt_node_set(MPT_STRUCT(node) *node, const MPT_STRUCT(value) *val)
 	if (old) {
 		old->_vptr->ref.unref((void *) old);
 	}
-	node->_meta = mt;
+	*mptr = mt;
 	return ret;
 }
 

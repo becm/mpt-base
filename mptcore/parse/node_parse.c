@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 
+#include "meta.h"
 #include "node.h"
 
 #include "parse.h"
@@ -123,7 +124,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		mpt_node_clear(&root);
 		
 		if ((val.ptr = fname)) {
-			mpt_node_set(conf, &val);
+			mpt_meta_set(&conf->_meta, &val);
 		}
 		return len;
 	}
