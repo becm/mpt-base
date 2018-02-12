@@ -24,6 +24,7 @@ src = files(
   'newline_string.c',
   'number_print.c',
   'scalar_argv.c',
+  'string_dest.c',
   'tostring.c',
   'type_int.c',
   'valfmt_add.c',

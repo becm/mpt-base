@@ -149,15 +149,6 @@ MPT_STRUCT(msgtype)
 	uint8_t  cmd;  /* message command */
 	int8_t   arg;  /* command argument */
 };
-/* world position */
-MPT_STRUCT(msgworld)
-{
-#ifdef __cplusplus
-	inline msgworld() : cycle(0), offset(0) { }
-#endif
-	int32_t cycle,   /* target cycle (<0: offset from current) */
-	        offset;  /* data offset (<0: append) */
-};
 /* source data type */
 #ifdef __cplusplus
 MPT_STRUCT(msgbind)
@@ -184,40 +175,6 @@ MPT_STRUCT(msgbind)
 #endif
 	uint8_t dim,    /* source dimension */
 	        state;  /* context of data */
-};
-
-/* layout destination */
-MPT_STRUCT(msgdest)
-{
-#ifdef __cplusplus
-	inline msgdest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
-		lay(l), grf(g), wld(w), dim(d)
-	{ }
-	enum {
-		MatchLayout    = 1,
-		MatchGraph     = 2,
-		MatchWorld     = 4,
-		MatchPath      = MatchLayout | MatchGraph | MatchWorld,
-		MatchDimension = 8,
-		MatchAll       = -1
-	};
-	bool match(msgdest dst, int = MatchAll) const;
-	
-	inline bool operator ==(const msgdest &cmp)
-	{ return match(cmp); }
-#else
-# define MPT_MSGDEST_INIT { 0, 0, 0, 0 }
-#endif
-	uint8_t lay,  /* target layout */
-	        grf,  /* target graph */
-	        wld,  /* target world */
-	        dim;  /* target dimension */
-};
-
-MPT_STRUCT(strdest)
-{
-	uint8_t change,  /* positions which were changed */
-	        val[7];  /* values before/after reading */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -266,13 +223,8 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 extern int mpt_message_id2buf(uint64_t, void *, size_t);
 extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
 
-
 /* parse graphic binding */
 extern int mpt_msgbind_set(MPT_STRUCT(msgbind) *, const char *);
-/* push bindings to output */
-extern int mpt_output_bind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
-extern int mpt_output_bind_string(MPT_INTERFACE(output) *, const char *);
-
 
 /* push (error) message to output */
 extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
@@ -280,15 +232,8 @@ extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const cha
 
 /* push raw value header to output */
 extern int mpt_output_init_raw(MPT_INTERFACE(output) *, uint8_t);
-/* push message value type and destination header to output */
-extern int mpt_output_init_plot(MPT_INTERFACE(output) *, MPT_STRUCT(msgdest), uint8_t , const MPT_STRUCT(msgworld) * __MPT_DEFPAR(0));
 /* push double values to output */
 extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
-/* send layout open command */
-extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
-
-/* parse character separated values */
-extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
 
 /* get size/type from message value format type */
 size_t mpt_msgvalfmt_size(uint8_t);

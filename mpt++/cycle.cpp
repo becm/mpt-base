@@ -7,6 +7,8 @@
 
 #include <sys/uio.h>
 
+#include "message.h"
+
 #include "values.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -39,32 +41,28 @@ template <> int typeinfo<typed_array>::id()
     return id;
 }
 
-int rawdata_stage::modify(unsigned int dim, int type, const void *src, size_t off, size_t len)
+typed_array *rawdata_stage::values(int dim, int type)
 {
+    if (dim < 0) {
+        errno = EINVAL;
+        return 0;
+    }
     typed_array *arr;
-    int curr;
-
+    if ((arr = _d.get(dim))) {
+        if (type >= 0 && type != arr->type()) {
+            errno = EINVAL;
+            return 0;
+        }
+        return arr;
+    }
     if (!(arr = mpt_stage_data(this, dim))) {
-        return BadValue;
+        return 0;
     }
-    if (!(curr = arr->type())) {
-        if (!arr->setType(type)) {
-            return BadType;
-        }
+    if (!arr->setType(type)) {
+        errno = EINVAL;
+        return 0;
     }
-    else if (type != curr) {
-        return BadType;
-    }
-    if (len) {
-        void *dest;
-        if (!(dest = arr->reserve(off, len))) {
-            return BadOperation;
-        }
-        arr->setModified();
-        if (src) memcpy(dest, src, len);
-        else memset(dest, 0, len);
-    }
-    return arr->flags();
+    return arr;
 }
 
 Cycle::Cycle() : _act(0), _maxDimensions(0), _flags(0)
@@ -76,12 +74,13 @@ void Cycle::unref()
     delete this;
 }
 
-int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t len, int nc)
+int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
 {
+    int nc;
     if (_maxDimensions && dim >= _maxDimensions) {
         return BadArgument;
     }
-    if (nc < 0) {
+    if (!vd || !(nc = vd->cycle)) {
         nc = _act;
     }
     Stage *st;
@@ -94,13 +93,24 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t off, size_t le
             return BadOperation;
         }
     }
-    int code = st->modify(dim, type, src, off, len);
-    if (code < 0) {
-        return code;
+    typed_array *a = st->rawdata_stage::values(dim, type);
+    if (!a) {
+        return BadValue;
+    }
+    long off = vd ? vd->offset : 0;
+    void *ptr;
+    if (!(ptr = a->reserve(len, off))) {
+        return BadOperation;
+    }
+    a->setModified();
+    if (src) {
+        memcpy(ptr, src, len);
+    } else {
+        memset(ptr, 0, len);
     }
     // invalidate view
     st->invalidate();
-    return code;
+    return a->flags();
 }
 int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
 {

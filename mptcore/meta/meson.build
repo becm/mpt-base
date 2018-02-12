@@ -7,5 +7,6 @@ src = files(
   'meta_data.c',
   'meta_geninfo.c',
   'meta_new.c',
+  'meta_set.c',
   'metatype_default.c',
 )

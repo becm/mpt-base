@@ -18,9 +18,9 @@ __MPT_NAMESPACE_BEGIN
 // update registration
 UpdateHint::UpdateHint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
 {
-    if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= msgdest::MatchLayout; }
-    if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= msgdest::MatchGraph; }
-    if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= msgdest::MatchWorld; }
+    if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= laydest::MatchLayout; }
+    if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= laydest::MatchGraph; }
+    if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= laydest::MatchWorld; }
 }
 // update reduction
 bool UpdateHint::merge(const UpdateHint &with, int mask)
@@ -34,27 +34,27 @@ bool UpdateHint::merge(const UpdateHint &with, int mask)
         return true;
     }
     // need same layout
-    if (lay != with.lay && !(mask & msgdest::MatchLayout)) {
+    if (lay != with.lay && !(mask & laydest::MatchLayout)) {
         return false;
     }
     // match layout
-    if (match == msgdest::MatchLayout) {
+    if (match == laydest::MatchLayout) {
         return true;
     }
-    if (with.match == msgdest::MatchLayout) {
-        match = msgdest::MatchLayout;
+    if (with.match == laydest::MatchLayout) {
+        match = laydest::MatchLayout;
         return true;
     }
     // need same graph
-    if (grf != with.grf && !(mask & msgdest::MatchGraph)) {
+    if (grf != with.grf && !(mask & laydest::MatchGraph)) {
         return false;
     }
     // match graph
-    if (match == (msgdest::MatchLayout | msgdest::MatchGraph)) {
+    if (match == (laydest::MatchLayout | laydest::MatchGraph)) {
         return true;
     }
-    if (!(with.match & msgdest::MatchWorld) || !(mask & msgdest::MatchWorld)) {
-        match = msgdest::MatchLayout | msgdest::MatchGraph;
+    if (!(with.match & laydest::MatchWorld) || !(mask & laydest::MatchWorld)) {
+        match = laydest::MatchLayout | laydest::MatchGraph;
         return true;
     }
     // need same world
@@ -64,9 +64,9 @@ bool UpdateHint::merge(const UpdateHint &with, int mask)
     return false;
 }
 // update target
-bool UpdateHint::destination(msgdest *dst)
+bool UpdateHint::destination(laydest *dst)
 {
-    if (match != msgdest::MatchPath) {
+    if (match != laydest::MatchPath) {
         return false;
     }
     if (dst) {
@@ -177,10 +177,10 @@ static Graph::Data *graphData(Slice<const Item<Graph::Data> > gd, int pos)
     return it->pointer();
 }
 
-int Graphic::target(msgdest &old, message &msg, size_t len) const
+int Graphic::target(laydest &old, message &msg, size_t len) const
 {
     message tmp;
-    msgdest dst = old;
+    laydest dst = old;
     ssize_t part;
     char *end, buf[128];
     int match = 0;
@@ -225,7 +225,7 @@ int Graphic::target(msgdest &old, message &msg, size_t len) const
                 const char *id;
                 if (l && (id = l->alias()) && part == (ssize_t) strlen(id) && !memcmp(id, buf, part)) {
                     dst.lay = i + 1;
-                    match |= msgdest::MatchLayout;
+                    match |= dst.MatchLayout;
                     lay = l;
                     break;
                 }

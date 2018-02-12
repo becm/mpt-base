@@ -11,7 +11,7 @@ static int setLayout(void *ln, const MPT_STRUCT(message) *cmsg)
 	MPT_STRUCT(message) msg;
 	struct {
 		MPT_STRUCT(msgtype) mt;
-		MPT_STRUCT(msgdest) d;
+		MPT_STRUCT(laydest) d;
 	} info;
 	size_t mlen = sizeof(info.mt) + sizeof(info.d.lay);
 	

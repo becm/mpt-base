@@ -7,9 +7,11 @@
 
 #include <sys/uio.h>
 
-#include "message.h"
-
 #include "output.h"
+#include "message.h"
+#include "convert.h"
+
+#include "values.h"
 
 /*!
  * \ingroup mptOutput
@@ -28,7 +30,7 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 	MPT_STRUCT(msgtype) mt;
 	struct {
 		MPT_STRUCT(msgbind) src;
-		MPT_STRUCT(msgdest) dst;
+		MPT_STRUCT(laydest) dst;
 	} bnd;
 	int len, dim = 1;
 	
@@ -52,7 +54,14 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 		if (out->_vptr->await(out, 0, 0) < 0) {
 			return -2;
 		}
-		return out->_vptr->push(out, sizeof(mt), &mt);
+		if ((len = out->_vptr->push(out, sizeof(mt), &mt)) < 0) {
+			return len;
+		}
+		if ((len = out->_vptr->push(out, 0, 0)) < 0) {
+			out->_vptr->push(out, 1, 0);
+			return len;
+		}
+		return 0;
 	}
 	/* read binding description string */
 	while ((len = mpt_string_dest(&str, ':', descr))) {

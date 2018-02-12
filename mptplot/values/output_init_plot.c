@@ -5,8 +5,9 @@
 #include <string.h>
 
 #include "output.h"
-
 #include "message.h"
+
+#include "values.h"
 
 /*!
  * \ingroup mptMessage
@@ -19,14 +20,14 @@
  * \param fmt   message value format
  * \param pos   cycle index and offset
  */
-extern int mpt_output_init_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(msgdest) dest, uint8_t fmt, const MPT_STRUCT(msgworld) *pos)
+extern int mpt_output_init_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(laydest) dest, uint8_t fmt, const MPT_STRUCT(valdest) *pos)
 {
 	MPT_STRUCT(msgtype) *type;
-	MPT_STRUCT(msgworld) *wld;
-	uint8_t hdr[sizeof(*type) + sizeof(dest) + sizeof(*wld)];
+	MPT_STRUCT(valdest) *vd;
+	uint8_t hdr[sizeof(*type) + sizeof(dest) + sizeof(*vd)];
 	ssize_t ret;
 	
-	wld = (void *) (hdr + sizeof(*type) + sizeof(dest));
+	vd = (void *) (hdr + sizeof(*type) + sizeof(dest));
 	type = (void *) (hdr);
 	
 	type->cmd = MPT_MESGTYPE(Destination);
@@ -34,10 +35,10 @@ extern int mpt_output_init_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(msgdest) 
 	memcpy(hdr+sizeof(*type), &dest, sizeof(dest));
 	
 	if (pos) {
-		memcpy(wld, pos, sizeof(*wld));
+		memcpy(vd, pos, sizeof(*vd));
 	} else {
-		wld->cycle = 0;
-		wld->offset = 0;
+		vd->cycle = -1;
+		vd->offset = 0;
 	}
 	ret = out->_vptr->push(out, sizeof(hdr), &hdr);
 	

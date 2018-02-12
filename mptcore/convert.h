@@ -116,6 +116,12 @@ MPT_STRUCT(valfmt)
 	uint8_t _pad;
 };
 
+MPT_STRUCT(strdest)
+{
+	uint8_t change,  /* positions which were changed */
+	        val[7];  /* values before/after reading */
+};
+
 #ifdef __cplusplus
 template<> inline __MPT_CONST_TYPE int typeinfo<valfmt>::id() {
 	return valfmt::Type;
@@ -220,6 +226,9 @@ extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
 extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, const MPT_INTERFACE(metatype) *);
 extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(valfmt) *, MPT_STRUCT(valfmt));
 #endif
+
+/* parse character separated values */
+extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
 
 /* type identifier for (unsigned) integer types */
 extern char mpt_type_int(size_t);

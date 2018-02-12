@@ -8,10 +8,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(message.h)
-
-#include MPT_INCLUDE(output.h)
-#include MPT_INCLUDE(layout.h)
+#include MPT_INCLUDE(values.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -25,13 +22,13 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	Map<msgdest, Reference<Cycle> > p;
+	Map<laydest, Reference<Cycle> > p;
 	Reference<Cycle> c(new Reference<Cycle>::instance);
 	
-	p.set(msgdest(1,2,3), c);
-	p.set(msgdest(1,4,3), c);
+	p.set(laydest(1,2,3), c);
+	p.set(laydest(1,4,3), c);
 	
-	Reference<Cycle> *cp = p.get(msgdest(1,2,3));
+	Reference<Cycle> *cp = p.get(laydest(1,2,3));
 	
 	if (!cp) {
 		std::cerr << "missing destination" << std::endl;
@@ -45,7 +42,7 @@ extern int main(int , char * const [])
 		std::cout << m->stages() << std::endl;
 	}
 	
-	r = p.values(msgdest(1,4,3));
+	r = p.values(laydest(1,4,3));
 	
 	return 0;
 }

@@ -31,6 +31,7 @@ cxx = [ core ]
 if with_plot
   cxx_src += files(
     'cycle.cpp',
+    'destination.cpp',
     'graphic.cpp',
     'item.cpp',
     'layout.cpp',

@@ -9,6 +9,8 @@
 #include "array.h"
 #include "message.h"
 
+#include "values.h"
+
 __MPT_NAMESPACE_BEGIN
 
 class Cycle;
@@ -23,25 +25,25 @@ public:
     UpdateHint(int = -1, int = -1, int = -1);
 
     bool merge(const UpdateHint &, int = 0);
-    bool destination(msgdest * = 0);
+    bool destination(laydest *);
 
     uint8_t match;
     uint8_t lay, grf, wld;
 };
 
-class Mapping : Map<msgdest, Reference<Cycle> >
+class Mapping : Map<laydest, Reference<Cycle> >
 {
 public:
-    int add(msgbind , msgdest , int = 0);
-    int del(const msgbind *, const msgdest * = 0, int = 0) const;
-    Array<msgdest> destinations(msgbind , int = 0) const;
+    int add(msgbind , laydest , int = 0);
+    int del(const msgbind *, const laydest * = 0, int = 0) const;
+    Array<laydest> destinations(msgbind , int = 0) const;
 
-    inline const Map<msgdest, Reference<Cycle> > &targets() const
+    inline const Map<laydest, Reference<Cycle> > &targets() const
     { return *this; }
 
     // direct cycle access
-    const Reference<Cycle> *cycle(msgdest) const;
-    bool setCycle(msgdest, Cycle *);
+    const Reference<Cycle> *cycle(laydest) const;
+    bool setCycle(laydest, Cycle *);
 
     // modify target elements
     int setCycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
@@ -153,7 +155,7 @@ public:
     virtual Layout *createLayout();
 
     // mapping helpers
-    int target(msgdest &, message &, size_t = 0) const;
+    int target(laydest &, message &, size_t = 0) const;
     metatype *item(message &, size_t = 0) const;
 
     // untracked reference to shedule update

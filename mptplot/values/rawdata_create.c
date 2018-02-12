@@ -8,6 +8,7 @@
 #include <sys/uio.h>
 
 #include "meta.h"
+#include "message.h"
 
 #include "values.h"
 
@@ -76,14 +77,15 @@ static MPT_INTERFACE(metatype) *rdClone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* raw data interface */
-static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t pos, size_t len, int nc)
+static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(typed_array) *arr;
+	int nc;
 	
-	if (nc < 0) {
+	if (!vd || !(nc = vd->cycle)) {
 		nc = rd->act;
 	}
 	if (!(buf = rd->st._buf)
@@ -103,11 +105,24 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 	if (!(arr = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (arr->_type && fmt != arr->_type) {
+	if (!arr->_type) {
+		int esze;
+		if (fmt > 0xff || (esze = mpt_valsize(fmt)) <= 0) {
+			return MPT_ERROR(BadType);
+		}
+		arr->_type = fmt;
+		arr->_esize = esze;
+	}
+	else if (fmt != arr->_type) {
 		return MPT_ERROR(BadType);
 	}
 	if (len) {
 		void *dest;
+		size_t pos = 0;
+		
+		if (vd) {
+			pos = vd->offset * arr->_esize;
+		}
 		if (!(dest = mpt_array_slice(&arr->_d, pos, len))) {
 			return MPT_ERROR(BadOperation);
 		}
@@ -116,7 +131,6 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		} else {
 			memset(dest, 0, len);
 		}
-		arr->_type = fmt;
 		arr->_flags |= 0x1;
 	}
 	return arr->_flags;

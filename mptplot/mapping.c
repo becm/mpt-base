@@ -70,7 +70,7 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
  * \param dst  layout target
  * \param cli  source client
  */
-extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, const MPT_STRUCT(msgdest) *dst, int cli)
+extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, const MPT_STRUCT(laydest) *dst, int cli)
 {
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(mapping) *map;
@@ -80,7 +80,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 		return 0;
 	}
 	len = buf->_used / sizeof(*map);
-	map = (void *) (buf+1);
+	map = (void *) (buf + 1);
 	
 	/* binding matches existing */
 	for (i = 0; i < len; ++i) {

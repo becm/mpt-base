@@ -11,6 +11,9 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
+MPT_INTERFACE(output);
+
+MPT_STRUCT(node);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
@@ -51,6 +54,46 @@ MPT_STRUCT(range)
 	double min, max;
 };
 
+/*! layout destination */
+MPT_STRUCT(laydest)
+{
+#ifdef __cplusplus
+	inline laydest(uint8_t l = 0, uint8_t g = 0, uint8_t w = 0, uint8_t d = 0) :
+		lay(l), grf(g), wld(w), dim(d)
+	{ }
+	enum {
+		MatchLayout    = 1,
+		MatchGraph     = 2,
+		MatchWorld     = 4,
+		MatchPath      = MatchLayout | MatchGraph | MatchWorld,
+		MatchDimension = 8,
+		MatchAll       = -1
+	};
+	bool match(laydest dst, int = MatchAll) const;
+	
+	inline bool operator ==(const laydest &cmp)
+	{ return match(cmp); }
+#else
+# define MPT_LAYDEST_INIT { 0, 0, 0, 0 }
+#endif
+	uint8_t lay,  /* target layout */
+	        grf,  /* target graph */
+	        wld,  /* target world */
+	        dim;  /* target dimension */
+};
+
+/*! value destination */
+MPT_STRUCT(valdest)
+{
+#ifdef __cplusplus
+	inline valdest() : cycle(0), offset(0) { }
+#else
+# define MPT_VALDEST_INIT { 0, 0 }
+#endif
+	uint32_t cycle,   /* target cycle */
+	         offset;  /* data offset */
+};
+
 /*! information about containing data */
 MPT_STRUCT(typed_array)
 {
@@ -62,7 +105,7 @@ public:
 	inline typed_array() : _flags(0), _type(0), _esize(0)
 	{ }
 	bool setType(int);
-	void *reserve(size_t , size_t);
+	void *reserve(size_t, long = 0);
 	
 	inline int flags() const
 	{ return _flags; }
@@ -90,11 +133,9 @@ MPT_STRUCT(rawdata_stage)
 {
 #ifdef __cplusplus
     public:
-	int modify(unsigned , int , const void *, size_t , size_t);
 	int clearModified(int = -1);
 	
-	inline const typed_array *values(int dim) const
-	{ return dim < 0 ? 0 : _d.get(dim); }
+	inline typed_array *values(int dim, int fmt = -1);
 	inline Slice<const typed_array> values() const
 	{ return _d.slice(); }
 	inline int dimensions() const
@@ -112,7 +153,7 @@ MPT_STRUCT(rawdata_stage)
 MPT_INTERFACE(rawdata)
 {
 public:
-	virtual int modify(unsigned , int , const void *, size_t , size_t, int = -1) = 0;
+	virtual int modify(unsigned , int , const void *, size_t , const valdest * = 0) = 0;
 	virtual int advance() = 0;
 	
 	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
@@ -124,7 +165,7 @@ protected:
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
-	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , size_t , int);
+	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , const MPT_STRUCT(valdest) *);
 	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
 	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
@@ -169,7 +210,7 @@ MPT_STRUCT(mapping)
 #ifdef _MPT_MESSAGE_H
 {
 #ifdef __cplusplus
-	inline mapping(const msgbind &m = msgbind(0), const msgdest &d = msgdest(), int c = 0) :
+	inline mapping(const msgbind &m = msgbind(0), const laydest &d = laydest(), int c = 0) :
 		src(m), client(c), dest(d)
 	{ }
 	inline bool valid() const
@@ -179,7 +220,7 @@ MPT_STRUCT(mapping)
 #endif
 	MPT_STRUCT(msgbind) src;
 	uint16_t            client;
-	MPT_STRUCT(msgdest) dest;
+	MPT_STRUCT(laydest) dest;
 }
 #endif
 ;
@@ -244,9 +285,19 @@ extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);
 #ifdef _MPT_MESSAGE_H
 /* data mapping operations */
 extern int mpt_mapping_add(_MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(mapping) *);
-extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(msgdest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
+extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(laydest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
 extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
 #endif
+
+/* push bindings to output */
+extern int mpt_output_bind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);
+extern int mpt_output_bind_string(MPT_INTERFACE(output) *, const char *);
+
+/* push message value type and destination header to output */
+extern int mpt_output_init_plot(MPT_INTERFACE(output) *, MPT_STRUCT(laydest), uint8_t , const MPT_STRUCT(valdest) * __MPT_DEFPAR(0));
+
+/* send layout open command */
+extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 
 __MPT_EXTDECL_END
 
@@ -255,9 +306,6 @@ size_t maxsize(Slice<const typed_array>, int = -1);
 
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
-
-inline void *typed_array::reserve(size_t off, size_t len)
-{ return mpt_array_slice(&_d, off, len); }
 
 class Transform
 {
@@ -358,7 +406,7 @@ public:
 	void unref() __MPT_OVERRIDE;
 	
 	/* basic raw data interface */
-	int modify(unsigned , int , const void *, size_t , size_t, int = -1) __MPT_OVERRIDE;
+	int modify(unsigned , int , const void *, size_t , const valdest * = 0) __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
 	
 	int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;

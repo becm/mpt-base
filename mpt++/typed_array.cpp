@@ -22,6 +22,28 @@ void typed_array::setModified(bool set)
     if (set) _flags |= ValueChange;
     else _flags &= ~ValueChange;
 }
+
+void *typed_array::reserve(size_t len, long off)
+{
+    if (!_esize) {
+        return 0;
+    }
+    // avoid incomplete element assignments
+    size_t match = len / _esize;
+    if (len != (match * _esize)) {
+        return 0;
+    }
+    off *= _esize;
+    // relative to data end
+    if (off < 0) {
+        off += _d.length();
+        if (off < 0) {
+            return 0;
+        }
+    }
+    return mpt_array_slice(&_d, off, len);
+    
+}
 size_t maxsize(Slice<const typed_array> sl, int type)
 {
     const typed_array *arr = sl.base();

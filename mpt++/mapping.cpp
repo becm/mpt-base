@@ -14,7 +14,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<Map<msgdest, Reference<Cycle> >::Element>::id()
+template <> int typeinfo<Map<laydest, Reference<Cycle> >::Element>::id()
 {
     static int id = 0;
     if (!id) {
@@ -30,7 +30,7 @@ template <> int typeinfo<mapping>::id()
     }
     return id;
 }
-template <> int typeinfo<msgdest>::id()
+template <> int typeinfo<laydest>::id()
 {
     static int id = 0;
     if (!id) {
@@ -40,7 +40,7 @@ template <> int typeinfo<msgdest>::id()
 }
 
 // add data mapping
-int Mapping::add(msgbind src, msgdest dst, int client)
+int Mapping::add(msgbind src, laydest dst, int client)
 {
     const Reference<Cycle> *r;
     if (!(r = cycle(dst))) {
@@ -50,14 +50,14 @@ int Mapping::add(msgbind src, msgdest dst, int client)
     return mpt_mapping_add(&_bind, &map);
 }
 // clear data mapping
-int Mapping::del(const msgbind *src, const msgdest *dest, int client) const
+int Mapping::del(const msgbind *src, const laydest *dest, int client) const
 {
     return mpt_mapping_del(&_bind, src, dest, client);
 }
 // get data mapping
-Array<msgdest> Mapping::destinations(msgbind src, int client) const
+Array<laydest> Mapping::destinations(msgbind src, int client) const
 {
-    Array<msgdest> arr;
+    Array<laydest> arr;
 
     for (auto &map : _bind.slice()) {
         if (mpt_mapping_cmp(&map, &src, client)) {
@@ -74,12 +74,12 @@ void Mapping::clear()
     _d = Array<Element>();
 }
 // get cycle reference
-const Reference<Cycle> *Mapping::cycle(msgdest dst) const
+const Reference<Cycle> *Mapping::cycle(laydest dst) const
 {
     // search matching destination
     for (auto &e : _d) {
         // match target cycle
-        if (!e.key.match(dst, msgdest::MatchPath)) {
+        if (!e.key.match(dst, laydest::MatchPath)) {
             continue;
         }
         // breach of mapping dimension limit
@@ -93,7 +93,7 @@ const Reference<Cycle> *Mapping::cycle(msgdest dst) const
     return 0;
 }
 // set cycle reference
-bool Mapping::setCycle(msgdest dst, Cycle *ref)
+bool Mapping::setCycle(laydest dst, Cycle *ref)
 {
     if (!set(dst, Reference<Cycle>())) {
         return false;
@@ -116,7 +116,7 @@ int Mapping::setCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
     for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->pointer();
         if (!lay) continue;
-        if (hint.match & msgdest::MatchLayout
+        if (hint.match & laydest::MatchLayout
          && hint.lay != i) {
             continue;
         }
@@ -124,7 +124,7 @@ int Mapping::setCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
         for (size_t j = 0, gmax = graphs.length(); j < gmax; ++j) {
             auto grf = graphs.nth(i)->pointer();
             if (!grf) continue;
-            if (hint.match & msgdest::MatchGraph
+            if (hint.match & laydest::MatchGraph
              && hint.grf != j) {
                 continue;
             }
@@ -132,11 +132,11 @@ int Mapping::setCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
             for (size_t k = 0, wmax = worlds.length(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->pointer();
                 if (!wld) continue;
-                if (hint.match & msgdest::MatchWorld
+                if (hint.match & laydest::MatchWorld
                  && hint.wld != k) {
                     continue;
                 }
-                if (!set(msgdest(i, j, k), wld->cycle)) {
+                if (!set(laydest(i, j, k), wld->cycle)) {
                     return total;
                 }
                 ++total;
@@ -152,7 +152,7 @@ int Mapping::getCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
     for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->pointer();
         if (!lay) continue;
-        if (hint.match & msgdest::MatchLayout
+        if (hint.match & laydest::MatchLayout
          && hint.lay != i) {
             continue;
         }
@@ -160,7 +160,7 @@ int Mapping::getCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
         for (size_t j = 0, gmax = graphs.length(); j < gmax; ++j) {
             auto grf = graphs.nth(i)->pointer();
             if (!grf) continue;
-            if (hint.match & msgdest::MatchGraph
+            if (hint.match & laydest::MatchGraph
              && hint.grf != j) {
                 continue;
             }
@@ -169,12 +169,12 @@ int Mapping::getCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
             for (size_t k = 0, wmax = worlds.length(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->pointer();
                 if (!wld) continue;
-                if (hint.match & msgdest::MatchWorld
+                if (hint.match & laydest::MatchWorld
                  && hint.wld != k) {
                     continue;
                 }
                 for (Element *b = _d.begin(), *e = _d.end(); b < e; ++b) {
-                    if (!b->key.match(msgdest(i, j, k), msgdest::MatchPath)) {
+                    if (!b->key.match(laydest(i, j, k), laydest::MatchPath)) {
                         continue;
                     }
                     if (!b->value.pointer()) {
@@ -194,9 +194,9 @@ int Mapping::clearCycles(UpdateHint hint) const
 {
     int clear = 0;
     for (auto &e : _d) {
-        if (hint.match & msgdest::MatchLayout && e.key.lay != hint.lay) continue;
-        if (hint.match & msgdest::MatchGraph  && e.key.grf != hint.grf) continue;
-        if (hint.match & msgdest::MatchWorld  && e.key.grf != hint.wld) continue;
+        if (hint.match & laydest::MatchLayout && e.key.lay != hint.lay) continue;
+        if (hint.match & laydest::MatchGraph  && e.key.grf != hint.grf) continue;
+        if (hint.match & laydest::MatchWorld  && e.key.grf != hint.wld) continue;
         if (e.value.pointer()) {
             e.value = Reference<Cycle>();
             ++clear;

@@ -17,7 +17,6 @@ src = files(
   'node_move.c',
   'node_new.c',
   'node_next.c',
-  'node_set.c',
   'node_unlink.c',
   'tree_clone.c',
 )

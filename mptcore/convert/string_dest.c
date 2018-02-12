@@ -8,18 +8,19 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "message.h"
+#include "convert.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConvert
  * \brief get destination
  * 
  * Parse destination elements in (0,255) range.
  * 
  * \param addr  parsed destination
- * \param sep   decoded message data
+ * \param sep   value saparator
+ * \param descr string to parse
  * 
- * \return total size of message data
+ * \return size of consumed data
  */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *addr, int sep, const char *descr)
 {
