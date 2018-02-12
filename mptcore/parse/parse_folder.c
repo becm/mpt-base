@@ -41,6 +41,7 @@ extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(PathHandler) save, void *ctx, MPT
 	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
 	struct dirent *dent;
 	int res = 0;
+	int cdir;
 	
 	if (!save) {
 		return MPT_ERROR(BadArgument);
@@ -48,24 +49,29 @@ extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(PathHandler) save, void *ctx, MPT
 	if (!cfg) {
 		return MPT_ERROR(MissingData);
 	}
-	src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
+	if ((cdir = dirfd(cfg)) < 0) {
+		return MPT_ERROR(BadArgument);
+	}
+	src.src.getc = (int (*)(void *)) mpt_getchar_stdio;
 	
 	while ((dent = readdir(cfg))) {
 		char buf[1024];
 		int cfile;
 		
-		
+		/* skip current/parent directory and invisible files */
 		if (dent->d_name[0] == '.') {
 			continue;
 		}
-		if ((cfile = openat(cdir, dent->d_name, O_RDONLY)) < 0) {
+		if ((cfile = openat(dirfd(cfg), dent->d_name, O_RDONLY)) < 0) {
 			mpt_log(log, __func__, MPT_LOG(Warning), "%s: %s", MPT_tr("unable to read file"), dent->d_name);
 			continue;
 		}
 		p.sep = 0;
 		mpt_path_set(&p, buf, -1);
 		p.len = p.off = 0;
-		if (save) save(ctx, &p, 0, 0, 0);
+		
+		/* indicate new config file start */
+		save(ctx, &p, 0, 0, 0);
 		
 		if (!(src.src.arg = fdopen(cfile, "r"))) {
 			mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("unable to allocate file"), dent->d_name);
