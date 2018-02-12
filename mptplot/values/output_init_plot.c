@@ -37,7 +37,7 @@ extern int mpt_output_init_plot(MPT_INTERFACE(output) *out, MPT_STRUCT(laydest) 
 	if (pos) {
 		memcpy(vd, pos, sizeof(*vd));
 	} else {
-		vd->cycle = -1;
+		vd->cycle  = 0;
 		vd->offset = 0;
 	}
 	ret = out->_vptr->push(out, sizeof(hdr), &hdr);

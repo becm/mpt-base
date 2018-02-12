@@ -2,9 +2,10 @@
 #include <string.h>
 #include <strings.h>
 
+#include "output.h"
 #include "message.h"
 
-#include "output.h"
+#include "values.h"
 
 static int setLayout(void *ln, const MPT_STRUCT(message) *cmsg)
 {
