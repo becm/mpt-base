@@ -6,10 +6,10 @@ plot_src = files(
   'history_push.c',
   'history_values.c',
   'mapping.c',
-  'layout_open.c',
-  'output_local.c'
+  'output_local.c',
+  'rawdata_typeid.c', 'rawdata_create.c'
 )
-foreach d : [ 'layout', 'values' ]
+foreach d : [ 'layout', 'values', 'output' ]
   subdir(d)
   plot_src += src
 endforeach

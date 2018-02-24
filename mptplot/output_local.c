@@ -235,7 +235,7 @@ static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, cons
 }
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief create local output
  * 
  * Create instance of object metatype adhering to

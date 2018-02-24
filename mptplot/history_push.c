@@ -9,13 +9,14 @@
 #include "event.h"
 #include "message.h"
 #include "array.h"
-
 #include "convert.h"
 
 #include "output.h"
 
+#include "values.h"
+
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief push to history
  * 
  * Append data to history descriptor or pass to next output.
@@ -76,7 +77,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 	}
 	/* convert history to printable output */
 	if (mt->cmd == MPT_MESGTYPE(ValueRaw)) {
-		const MPT_STRUCT(msgbind) *mb = (const void *) (mt + 1);
+		const MPT_STRUCT(valsrc) *mb = (const void *) (mt + 1);
 		static const size_t min = sizeof(*mt) + sizeof(*mb);
 		
 		/* require message type and binding */

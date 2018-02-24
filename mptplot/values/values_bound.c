@@ -2,8 +2,6 @@
  * set values according to boundary type parameters
  */
 
-#include <stdlib.h>
-
 #include "values.h"
 
 /*!
@@ -39,4 +37,3 @@ extern void mpt_values_bound(long points, double *target, long ld, double left, 
 	}
 	target[ld * end] = right;
 }
-

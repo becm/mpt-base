@@ -3,8 +3,6 @@
  */
 
 #include <stdio.h>
-#include <limits.h>
-#include <errno.h>
 
 #include "values.h"
 
@@ -14,7 +12,7 @@
  * 
  * Read double values from file.
  * 
- * Align in column order for len>0, row order for len<0.
+ * Align in column order for len > 0, row order for len < 0.
  * 
  * \param fd   input file
  * \param len  number of lines

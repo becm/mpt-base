@@ -98,10 +98,10 @@ enum MPT_MESGTYPE(Type) {
 	MPT_MESGTYPE(ParamCond)   = 0x07,  /* set parameter if unset/default */
 	
 	/* additional headers in message data */
-	MPT_MESGTYPE(ValueRaw)    = 0x08,  /* values with type header */
+	MPT_MESGTYPE(ValueRaw)    = 0x08,  /* values with value source header */
 	MPT_MESGTYPE(ValueFmt)    = 0x09,  /* variable length format information */
 	MPT_MESGTYPE(Graphic)     = 0x0c,  /* graphic operation */
-	MPT_MESGTYPE(Destination) = 0x0d,  /* laydest and msgworld header */
+	MPT_MESGTYPE(Destination) = 0x0d,  /* layout and value destination dest header */
 	
 	/* extended data transfer */
 	MPT_MESGTYPE(UserMin)     = 0x10,  /* start/end number of available types */
@@ -148,33 +148,6 @@ MPT_STRUCT(msgtype)
 #endif
 	uint8_t  cmd;  /* message command */
 	int8_t   arg;  /* command argument */
-};
-/* source data type */
-#ifdef __cplusplus
-MPT_STRUCT(msgbind)
-{
-	enum {
-#define MPT_DATASTATE(x)  x
-#else
-enum MPT_ENUM(DataStates) {
-#define MPT_DATASTATE(x)  MPT_ENUM(DataState##x)
-#endif
-	MPT_DATASTATE(Init)  = 0x1,   /* data states */
-	MPT_DATASTATE(Step)  = 0x2,
-	MPT_DATASTATE(Fini)  = 0x4,
-	MPT_DATASTATE(Fail)  = 0x8,
-	MPT_DATASTATE(All)   = 0x7
-};
-#ifdef __cplusplus
-	inline msgbind(int d, int s = Init | Step) : dim(d), state(s)
-	{ }
-#else
-MPT_STRUCT(msgbind)
-{
-# define MPT_MSGBIND_INIT { 0, (MPT_DATASTATE(Init) | MPT_DATASTATE(Step)) }
-#endif
-	uint8_t dim,    /* source dimension */
-	        state;  /* context of data */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -223,15 +196,10 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 extern int mpt_message_id2buf(uint64_t, void *, size_t);
 extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
 
-/* parse graphic binding */
-extern int mpt_msgbind_set(MPT_STRUCT(msgbind) *, const char *);
-
 /* push (error) message to output */
 extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
 
-/* push raw value header to output */
-extern int mpt_output_init_raw(MPT_INTERFACE(output) *, uint8_t);
 /* push double values to output */
 extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
 

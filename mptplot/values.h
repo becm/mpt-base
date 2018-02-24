@@ -94,6 +94,34 @@ MPT_STRUCT(valdest)
 	         offset;  /* data offset */
 };
 
+/*! value source */
+#ifdef __cplusplus
+MPT_STRUCT(valsrc)
+{
+	enum {
+#define MPT_DATASTATE(x)  x
+#else
+enum MPT_ENUM(DataStates) {
+#define MPT_DATASTATE(x)  MPT_ENUM(DataState##x)
+#endif
+	MPT_DATASTATE(Init)  = 0x1,   /* data states */
+	MPT_DATASTATE(Step)  = 0x2,
+	MPT_DATASTATE(Fini)  = 0x4,
+	MPT_DATASTATE(Fail)  = 0x8,
+	MPT_DATASTATE(All)   = 0x7
+};
+#ifdef __cplusplus
+	inline valsrc(int d, int s = Init | Step) : dim(d), state(s)
+	{ }
+#else
+MPT_STRUCT(valsrc)
+{
+# define MPT_VALSRC_INIT { 0, (MPT_DATASTATE(Init) | MPT_DATASTATE(Step)) }
+#endif
+	uint8_t dim,    /* source dimension */
+	        state;  /* context of data */
+};
+
 /*! information about containing data */
 MPT_STRUCT(typed_array)
 {
@@ -207,10 +235,9 @@ MPT_STRUCT(linepart)
 
 /* binding to layout mapping */
 MPT_STRUCT(mapping)
-#ifdef _MPT_MESSAGE_H
 {
 #ifdef __cplusplus
-	inline mapping(const msgbind &m = msgbind(0), const laydest &d = laydest(), int c = 0) :
+	inline mapping(const valsrc &m = valsrc(0), const laydest &d = laydest(), int c = 0) :
 		src(m), client(c), dest(d)
 	{ }
 	inline bool valid() const
@@ -218,12 +245,10 @@ MPT_STRUCT(mapping)
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
 #endif
-	MPT_STRUCT(msgbind) src;
+	MPT_STRUCT(valsrc)  src;
 	uint16_t            client;
 	MPT_STRUCT(laydest) dest;
-}
-#endif
-;
+};
 
 __MPT_EXTDECL_BEGIN
 
@@ -282,12 +307,13 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *,
 /* consume range data */
 extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);
 
-#ifdef _MPT_MESSAGE_H
 /* data mapping operations */
 extern int mpt_mapping_add(_MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(mapping) *);
-extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(msgbind) *, const MPT_STRUCT(laydest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
-extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(msgbind) *, int __MPT_DEFPAR(0));
-#endif
+extern int mpt_mapping_del(const _MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(valsrc) *, const MPT_STRUCT(laydest) * __MPT_DEFPAR(0), int __MPT_DEFPAR(0));
+extern int mpt_mapping_cmp(const MPT_STRUCT(mapping) *, const MPT_STRUCT(valsrc) *, int __MPT_DEFPAR(0));
+
+/* set value source state for description */
+extern int mpt_valsrc_state(MPT_STRUCT(valsrc) *, const char *);
 
 /* push bindings to output */
 extern int mpt_output_bind_list(MPT_INTERFACE(output) *, const MPT_STRUCT(node) *);

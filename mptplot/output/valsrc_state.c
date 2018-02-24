@@ -4,29 +4,38 @@
 
 #include <ctype.h>
 
-#include "convert.h"
-
-#include "message.h"
+#include "values.h"
 
 /*!
- * \ingroup mptMessage
+ * \ingroup mptPlot
  * \brief set binding source
  * 
  * Parse single binding source parameter.
  * Call in loop to get all sources for description.
  * 
- * \param[in,out] bnd  binding source
+ * \param[in,out] src  value source
  * \param         data text describing binding sources
  * 
  * \return length of consumed text
  */
-extern int mpt_msgbind_set(MPT_STRUCT(msgbind) *bnd, const char *data)
+extern int mpt_valsrc_state(MPT_STRUCT(valsrc) *src, const char *data)
 {
-	uint8_t val, state;
+	uint8_t state;
 	int curr;
 	
 	/* special validity for binding */
-	switch (data[0]) {
+	if (!data || !*data) {
+		src->state = MPT_DATASTATE(Step);
+		return 0;
+	}
+	if (!isalpha(*data)) {
+		src->state = MPT_DATASTATE(Step);
+		return 0;
+	}
+	if (isalpha(data[1])) {
+		return MPT_ERROR(BadValue);
+	}
+	switch (*data++) {
 		case 'i': state = MPT_DATASTATE(Init); break;
 		case 'I': state = MPT_DATASTATE(All) & ~MPT_DATASTATE(Init); break;
 		case 's': state = MPT_DATASTATE(Step); break;
@@ -34,25 +43,17 @@ extern int mpt_msgbind_set(MPT_STRUCT(msgbind) *bnd, const char *data)
 		case 'f': state = MPT_DATASTATE(Fini); break;
 		case 'F': state = MPT_DATASTATE(All) & ~MPT_DATASTATE(Fini); break;
 		case 'A': state = 0; break;
-		case 'a':
-		default:  state = MPT_DATASTATE(All);
+		case 'a': state = MPT_DATASTATE(All); break;
+		default:
+			src->state = MPT_DATASTATE(Step);
+			return 0;
 	}
-	if (isalpha(data[0])) {
-		++data;
-	}
-	if ((curr = mpt_cuint8(&val, data, 0, 0)) <= 0) {
-		return curr;
-	}
-	bnd->dim  = val;
-	bnd->state = state;
-	
-	data += curr;
-	/* consume whitespace and separator */
-	while (isspace(*data)) {
-		++curr;
-		++data;
-	}
-	if (*data == ':') {
+	src->state = state;
+	curr = 1;
+	while ((state = *(++data))) {
+		if (!isspace(state)) {
+			return curr;
+		}
 		++curr;
 	}
 	return curr;

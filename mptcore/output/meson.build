@@ -7,7 +7,6 @@ src = files(
   'history_print.c',
   'history_property.c',
   'output_flags.c',
-  'output_init_raw.c',
   'output_log.c',
   'output_values.c',
 )

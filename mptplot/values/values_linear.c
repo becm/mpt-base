@@ -2,8 +2,6 @@
  * set values according to linear type parameters
  */
 
-#include <errno.h>
-
 #include "values.h"
 
 /*!
@@ -37,4 +35,3 @@ extern void mpt_values_linear(long points, double *target, long ld, double min, 
 	}
 	target[len * ld] = max;
 }
-

@@ -7,7 +7,6 @@
 #define _MPT_GRAPHIC_H  @INTERFACE_VERSION@
 
 #include "array.h"
-#include "message.h"
 
 #include "values.h"
 
@@ -17,7 +16,7 @@ class Cycle;
 class Graph;
 class Layout;
 
-struct mapping;
+struct message;
 
 class UpdateHint
 {
@@ -34,9 +33,9 @@ public:
 class Mapping : Map<laydest, Reference<Cycle> >
 {
 public:
-    int add(msgbind , laydest , int = 0);
-    int del(const msgbind *, const laydest * = 0, int = 0) const;
-    Array<laydest> destinations(msgbind , int = 0) const;
+    int add(valsrc , laydest , int = 0);
+    int del(const valsrc *, const laydest * = 0, int = 0) const;
+    Array<laydest> destinations(valsrc , int = 0) const;
 
     inline const Map<laydest, Reference<Cycle> > &targets() const
     { return *this; }

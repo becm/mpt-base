@@ -10,7 +10,7 @@
 #include "values.h"
 
 /*!
- * \ingroup mptMessage
+ * \ingroup mptPlot
  * \brief push plot header
  * 
  * Push header for plot data with destination to output.

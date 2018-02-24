@@ -14,7 +14,7 @@
 #include "values.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief push bindings
  * 
  * Send data bindings in text data to output.
@@ -29,7 +29,7 @@ extern int mpt_output_bind_string(MPT_INTERFACE(output) *out, const char *descr)
 	MPT_STRUCT(strdest) str;
 	MPT_STRUCT(msgtype) mt;
 	struct {
-		MPT_STRUCT(msgbind) src;
+		MPT_STRUCT(valsrc)  src;
 		MPT_STRUCT(laydest) dst;
 	} bnd;
 	int len, dim = 1;

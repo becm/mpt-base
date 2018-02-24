@@ -10,9 +10,9 @@ HEADER = layout.h values.h
 # source summary
 SRCS := \
 	history_push.c history_values.c \
-	layout_open.c \
 	mapping.c \
 	output_local.c \
+	rawdata_typeid.c rawdata_create.c \
 	$(wildcard */*.c)
 #
 # library options

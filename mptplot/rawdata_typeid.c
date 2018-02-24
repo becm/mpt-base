@@ -5,7 +5,7 @@
 #include "values.h"
 
 /*!
- * \ingroup mptValues
+ * \ingroup mptPlot
  * \brief raw data interface
  * 
  * Get or register raw data interface type.

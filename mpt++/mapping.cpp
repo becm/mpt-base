@@ -40,7 +40,7 @@ template <> int typeinfo<laydest>::id()
 }
 
 // add data mapping
-int Mapping::add(msgbind src, laydest dst, int client)
+int Mapping::add(valsrc src, laydest dst, int client)
 {
     const Reference<Cycle> *r;
     if (!(r = cycle(dst))) {
@@ -50,12 +50,12 @@ int Mapping::add(msgbind src, laydest dst, int client)
     return mpt_mapping_add(&_bind, &map);
 }
 // clear data mapping
-int Mapping::del(const msgbind *src, const laydest *dest, int client) const
+int Mapping::del(const valsrc *src, const laydest *dest, int client) const
 {
     return mpt_mapping_del(&_bind, src, dest, client);
 }
 // get data mapping
-Array<laydest> Mapping::destinations(msgbind src, int client) const
+Array<laydest> Mapping::destinations(valsrc src, int client) const
 {
     Array<laydest> arr;
 

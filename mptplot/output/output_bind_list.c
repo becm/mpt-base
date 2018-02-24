@@ -15,7 +15,7 @@
 #include "output.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief assign data bindings
  * 
  * Send data bindings in node list to output.

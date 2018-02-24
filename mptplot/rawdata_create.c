@@ -26,7 +26,7 @@ static void rdUnref(MPT_INTERFACE(reference) *ref)
 	MPT_STRUCT(buffer) *buf;
 	
 	if ((buf = rd->st._buf)) {
-		MPT_STRUCT(rawdata_stage) *st = (void *) (buf+1);
+		MPT_STRUCT(rawdata_stage) *st = (void *) (buf + 1);
 		size_t i, len = buf->_used/sizeof(*st);
 		
 		for (i = 0; i < len; ++i) {
@@ -233,7 +233,7 @@ static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
 }
 
 /*!
- * \ingroup mptValues
+ * \ingroup mptPlot
  * \brief raw data store
  * 
  * Create raw data storage with cycle instances

@@ -37,7 +37,7 @@ static int setLayout(void *ln, const MPT_STRUCT(message) *cmsg)
 }
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief open layout
  * 
  * Send command to read layout.

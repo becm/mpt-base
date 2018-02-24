@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #include "array.h"
 #include "message.h"
@@ -14,12 +13,11 @@
 #include "output.h"
 
 /*!
- * \ingroup mptMessage
+ * \ingroup mptPlot
  * \brief print data to file
  * 
  * Print available data elements to file.
  * 
- * \param fd   file descriptor
  * \param hist history state information
  * \param len  length of data
  * \param src  start address of data

@@ -10,6 +10,5 @@ src = files(
   'message_get.c',
   'message_id.c',
   'message_read.c',
-  'msgbind_set.c',
   'msgvalfmt.c',
 )

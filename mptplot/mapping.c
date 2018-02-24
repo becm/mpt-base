@@ -5,18 +5,16 @@
 #include "array.h"
 #include "message.h"
 
-#include "layout.h"
+#include "values.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief add mapping
  * 
  * Register mapping to array.
  * 
  * \param arr  array descriptor
- * \param src  data source
- * \param dst  layout target
- * \param cli  source client
+ * \param add  map value
  * 
  * \retval -3  conflicting binding
  * \retval -1  append failed
@@ -60,7 +58,7 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
 	return 0;
 }
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief delete mapping
  * 
  * Unegister mapping in array.
@@ -70,7 +68,7 @@ extern int mpt_mapping_add(MPT_STRUCT(array) *arr, const MPT_STRUCT(mapping) *ad
  * \param dst  layout target
  * \param cli  source client
  */
-extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbind) *src, const MPT_STRUCT(laydest) *dst, int cli)
+extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(valsrc) *src, const MPT_STRUCT(laydest) *dst, int cli)
 {
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(mapping) *map;
@@ -137,7 +135,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
 	return del;
 }
 /*!
- * \ingroup mptOutput
+ * \ingroup mptPlot
  * \brief compare mapping
  * 
  * Check mapping for source data match.
@@ -146,7 +144,7 @@ extern int mpt_mapping_del(const MPT_STRUCT(array) *arr, const MPT_STRUCT(msgbin
  * \param src  data source
  * \param cli  source client
  */
-int mpt_mapping_cmp(const MPT_STRUCT(mapping) *map, const MPT_STRUCT(msgbind) *src, int cli)
+int mpt_mapping_cmp(const MPT_STRUCT(mapping) *map, const MPT_STRUCT(valsrc) *src, int cli)
 {
 	if (cli >= 0 && (map->client != cli)) {
 		return -1;
