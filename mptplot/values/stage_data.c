@@ -107,7 +107,6 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 {
 	MPT_STRUCT(buffer) *buf = st->_d._buf;
 	MPT_STRUCT(typed_array) *arr;
-	size_t len;
 	unsigned max = 0;
 	
 	if (buf) {
@@ -130,9 +129,11 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		errno = EINVAL;
 		return 0;
 	}
-	if (dim >= max) max = dim + 1;
-	len = max * sizeof(*arr);
+	if (dim >= max) {
+		max = dim + 1;
+	}
 	if (!buf) {
+		size_t len = max * sizeof(*arr);
 		if (!(buf = malloc(sizeof(*buf) + len))) {
 			return 0;
 		}
@@ -141,7 +142,7 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		buf->_size = len;
 		buf->_used = 0;
 	}
-	else if (!(buf = buf->_vptr->detach(buf, len))) {
+	else if (!(buf = buf->_vptr->detach(buf, max))) {
 		return 0;
 	}
 	st->_d._buf = buf;

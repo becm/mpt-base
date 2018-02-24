@@ -49,9 +49,18 @@ typed_array *rawdata_stage::values(int dim, int type)
     }
     typed_array *arr;
     if ((arr = _d.get(dim))) {
-        if (type >= 0 && type != arr->type()) {
-            errno = EINVAL;
-            return 0;
+        if (type >= 0) {
+            int old;
+            if (!(old = arr->type())) {
+                if (!arr->setType(type)) {
+                    errno = EINVAL;
+                    return 0;
+                }
+            }
+            else if (type != old) {
+                errno = EINVAL;
+                return 0;
+            }
         }
         return arr;
     }
@@ -153,7 +162,7 @@ int Cycle::advance()
     }
     // no advance if current stage not assigned
     if (!(st = _stages.get(_act))) {
-        return _act;
+        return BadArgument;
     }
     // no advance if current stage empty
     int dim = st->dimensions();
