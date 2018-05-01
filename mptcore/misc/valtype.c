@@ -88,7 +88,7 @@ static const char *getArrayName(const MPT_STRUCT(array) *arr, int pos)
 		return 0;
 	}
 	elem = (void *) (buf + 1);
-	return elem->id._val;
+	return elem[pos].id._val;
 }
 static int getArrayId(const MPT_STRUCT(array) *arr, const char *name, int len)
 {
