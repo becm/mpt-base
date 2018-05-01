@@ -20,8 +20,8 @@
  */
 void mpt_meta_info(const MPT_INTERFACE(metatype) *mt, const char *src, int mode, const char *action, MPT_INTERFACE(logger) *info)
 {
-	MPT_INTERFACE(object) *obj = 0;
 	const char *type, *desc;
+	int code;
 	
 	/* default value setup */
 	if (!src) {
@@ -30,38 +30,40 @@ void mpt_meta_info(const MPT_INTERFACE(metatype) *mt, const char *src, int mode,
 	if (mode < 0) {
 		mode = MPT_LOG(Info);
 	}
-	/* object specific name */
-	if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
-	    && obj) {
-		desc = mpt_object_typename(obj);
-		type = MPT_tr("object");
-	}
-	/* metatype instance */
-	else {
-		int code = mt->_vptr->conv(mt, 0, 0);
+	
+	code = mt->_vptr->conv(mt, 0, 0);
+	
+	/* interface instance */
+	if ((desc = mpt_interface_typename(code))) {
+		MPT_INTERFACE(object) *obj = 0;
 		
-		/* interface instance */
-		if ((desc = mpt_interface_typename(code))) {
-			type = MPT_tr("interface");
-			if (!desc) {
-				desc = 0;
-			}
+		if (!*desc) {
+			desc = 0;
 		}
-		/* generic instance */
-		else {
-			type = MPT_tr("metatype");
-			
-			/* no name for metatype */
-			if (!(desc = mpt_meta_typename(code)) || !*desc) {
-				if (action) {
-					mpt_log(info, src, mode, "%s: %s: %d",
-					        action, type, code);
-					return;
-				}
+		/* object specific name */
+		if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
+		    && obj
+		    && (type = mpt_object_typename(obj))) {
+			desc = type;
+			type = MPT_tr("object");
+		} else {
+			type = MPT_tr("interface");
+		}
+	}
+	/* generic instance */
+	else {
+		type = MPT_tr("metatype");
+		
+		/* output typecode */
+		if (!(desc = mpt_meta_typename(code)) || !*desc) {
+			if (action) {
+				mpt_log(info, src, mode, "%s: %s: %d",
+				        action, type, code);
+			} else {
 				mpt_log(info, src, mode, "%s: %d",
 				        type, code);
-				return;
 			}
+			return;
 		}
 	}
 	if (action) {
