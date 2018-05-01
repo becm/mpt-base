@@ -13,7 +13,7 @@ include ../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
 libassign : libassign.o
-libassign : LDLIBS=-lmptloader -lmptcore
+libassign : LDLIBS=-lmptloader
 libassign_static : LDLIBS=-lmpt -ldl
 
 # library config

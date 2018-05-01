@@ -6,15 +6,26 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(object.h)
-#include MPT_INCLUDE(convert.h)
-#include MPT_INCLUDE(client.h)
+
+#include MPT_INCLUDE(loader.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
 #else
 # define mtrace()
 #endif
+
+const char *object_name(MPT_INTERFACE(object) *obj)
+{
+	MPT_STRUCT(property) pr;
+	pr.name = "";
+	if (obj->_vptr->property(obj, &pr) < 0) {
+		return 0;
+	}
+	return pr.name;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -23,9 +34,6 @@ int main(int argc, const char *argv[])
 	const char *sym;
 	
 	mtrace();
-	
-	/* load I/O library and assign symbol */
-	lh.type = MPT_ENUM(TypeMeta);
 	
 	sym = "mpt_output_local@libmptplot.so.1";
 	
@@ -42,7 +50,7 @@ int main(int argc, const char *argv[])
 			
 			if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
 			    && obj) {
-				fputs(mpt_object_typename(obj), out);
+				fputs(object_name(obj), out);
 			}
 			if ((err = mt->_vptr->conv(mt, 0, &types)) >= 0) {
 				fprintf(out, ": 0x%02x", err);
@@ -53,7 +61,7 @@ int main(int argc, const char *argv[])
 					fprintf(out, " 0x%02x", *types++);
 				}
 			}
-			fputs(mpt_newline_string(0), out);
+			fputs("\n", out);
 			mt->_vptr->ref.unref((void *) mt);
 		}
 		sym = *(++argv);

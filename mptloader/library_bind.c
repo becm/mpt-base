@@ -6,10 +6,15 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "meta.h"
-#include "object.h"
+#include "loader.h"
 
-#include "client.h"
+static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )
+{
+	va_list va;
+	va_start(va, fmt);
+	info->_vptr->log(info, fcn, type, fmt, va);
+	va_end(va);
+}
 
 /*!
  * \ingroup mptLoader
@@ -31,7 +36,7 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 	
 	if (!conf) {
 		if (out) {
-			mpt_log(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
+			msg(out, __func__, MPT_LOG(Error), "%s", MPT_tr("missing initializer target"));
 		}
 		return MPT_ERROR(BadArgument);
 	}
@@ -42,12 +47,12 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 		if (!(lib = mpt_library_open(libname + 1, path))) {
 			const char *err;
 			if (out && (err = dlerror())) {
-				mpt_log(out, __func__, MPT_LOG(Warning), "%s", err);
+				msg(out, __func__, MPT_LOG(Warning), "%s", err);
 			}
 			/* fallback to default library locations */
 			if (!path || !(lib = mpt_library_open(libname + 1, 0))) {
 				if (out && (err = dlerror())) {
-					mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+					msg(out, __func__, MPT_LOG(Error), "%s", err);
 				}
 				return MPT_ERROR(BadValue);
 			}
@@ -57,7 +62,7 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 	if (!(sym = mpt_library_symbol(lib, conf))) {
 		const char *err;
 		if (out && (err = dlerror())) {
-			mpt_log(out, __func__, MPT_LOG(Error), "%s", err);
+			msg(out, __func__, MPT_LOG(Error), "%s", err);
 		}
 		if (lib) {
 			dlclose(lib);
@@ -68,7 +73,6 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 	
 	lh->lib = lib;
 	lh->create = sym;
-	lh->hash = mpt_hash(conf, strlen(conf));
 	
 	return ret;
 }

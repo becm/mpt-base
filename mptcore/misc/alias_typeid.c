@@ -3,23 +3,22 @@
  */
 
 #include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "client.h"
+#include "core.h"
 
 /*!
- * \ingroup mptLoader
+ * \ingroup mptCore
  * \brief proxy reference types
  * 
  * Create metatype proxy to library instance.
  * 
- * \param descr type description for type
+ * \param desc  description for symbol alias
  * \param end   extended description for type
  * 
  * \return type id for description
  */
-extern int mpt_proxy_typeid(const char *desc, const char **end)
+extern int mpt_alias_typeid(const char *desc, const char **end)
 {
 	const char *sep;
 	int type = -1;

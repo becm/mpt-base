@@ -262,6 +262,9 @@ extern uintptr_t mpt_hash_djb2(const void *, int);
 /* set hash type */
 extern int _mpt_hash_set(const char *);
 
+/* type alias for symbol description */
+extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus

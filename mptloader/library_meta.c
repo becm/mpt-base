@@ -6,10 +6,14 @@
 #include <string.h>
 
 #include "meta.h"
-
 #include "object.h"
 
-#include "client.h"
+#include "loader.h"
+
+/* local private copy for refcount */
+#define mpt_refcount_lower  __mpt_library_proxy_unref
+#define mpt_refcount_raise  __mpt_library_proxy_addref
+#include "misc/refcount.c"
 
 struct _mpt_metaProxy
 {
@@ -17,6 +21,7 @@ struct _mpt_metaProxy
 	MPT_STRUCT(refcount) _ref;
 	void *ptr;
 	MPT_STRUCT(libhandle) lh;
+	int type;
 	uint16_t len;
 	uint8_t fmt[2];
 };
@@ -25,11 +30,11 @@ static void mpUnref(MPT_INTERFACE(reference) *m)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
-	if (mpt_refcount_lower(&mp->_ref)) {
+	if (__mpt_library_proxy_unref(&mp->_ref)) {
 		return;
 	}
 	if ((m = mp->ptr)) {
-		int type = mp->lh.type;
+		int type = mp->type;
 		
 		if (MPT_value_isMetatype(type)) {
 			m->_vptr->unref(m);
@@ -41,19 +46,19 @@ static void mpUnref(MPT_INTERFACE(reference) *m)
 static uintptr_t mpRef(MPT_INTERFACE(reference) *ref)
 {
 	struct _mpt_metaProxy *mp = (void *) ref;
-	return mpt_refcount_raise(&mp->_ref);
+	return __mpt_library_proxy_addref(&mp->_ref);
 }
 static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
-	int mt = mp->lh.type;
+	int mt = mp->type;
 	
 	if (!(m = mp->ptr)) {
 		return MPT_ERROR(BadArgument);
 	}
 	if (!type) {
 		if (ptr) *((void **) ptr) = (char *) mp->fmt;
-		return mp->lh.type;
+		return mt;
 	}
 	if (type == mt) {
 		if (ptr) *((void **) ptr) = mp->ptr;
@@ -103,6 +108,17 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
 	mpClone
 };
 
+static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )
+{
+	va_list va;
+	if (!info) {
+		return;
+	}
+	va_start(va, fmt);
+	info->_vptr->log(info, fcn, type, fmt, va);
+	va_end(va);
+}
+
 /*!
  * \ingroup mptLoader
  * \brief metatype proxy
@@ -125,27 +141,27 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 	int ret;
 	
 	if (!desc) {
-		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("no proxy description"));
+		msg(info, __func__, MPT_LOG(Error), "%s: %s",
+		    MPT_tr("no proxy description"));
 		return 0;
 	}
-	if ((lh.type = type) < 0) {
-		mpt_log(info, __func__, MPT_LOG(Debug2), "%s: %s",
-		        MPT_tr("unknown instance type"), desc);
+	if (type < 0) {
+		msg(info, __func__, MPT_LOG(Debug2), "%s: %s",
+		    MPT_tr("unknown instance type"), desc);
 		return 0;
 	}
 	if ((len = strlen(desc)) > UINT16_MAX) {
 		ret = len;
-		mpt_log(info, __func__, MPT_LOG(Error), "%s (%d)",
-		        MPT_tr("symbol name too big"), ret);
+		msg(info, __func__, MPT_LOG(Error), "%s (%d)",
+		    MPT_tr("symbol name too big"), ret);
 		return 0;
 	}
 	if ((ret = mpt_library_bind(&lh, desc, path, info)) < 0) {
 		return 0;
 	}
 	if (!(mt = lh.create())) {
-		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("unable to create instance"), desc);
+		msg(info, __func__, MPT_LOG(Error), "%s: %s",
+		    MPT_tr("unable to create instance"), desc);
 		mpt_library_close(&lh);
 		return 0;
 	}
@@ -157,40 +173,21 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 	mp->ptr = mt;
 	mp->lh = lh;
 	
+	mp->type = type;
 	mp->len = len;
-	mp->fmt[0] = (type >= 0 && type <= 0xff) ? type : 0;
+	
+	if (MPT_value_isMetatype(type)) {
+		mp->fmt[0] = MPT_ENUM(TypeMeta);
+	}
+	else if (type >= 0 && type <= 0xff) {
+		mp->fmt[0] = type;
+	}
+	else {
+		mp->fmt[0] = 0;
+	}
 	mp->fmt[1] = 0;
 	
 	desc = memcpy(mp + 1, desc, len + 1);
 	
-	if (info) {
-		MPT_INTERFACE(object) *obj = 0;
-		if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
-		    && obj) {
-			if (!(desc = mpt_object_typename(obj))) {
-				mpt_log(info, __func__, MPT_LOG(Debug), "%s",
-				        MPT_tr("created proxy object"));
-			} else {
-				mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-				        MPT_tr("created proxy object"), desc);
-			}
-		}
-		/* metatype instance */
-		else if ((desc = mpt_meta_typename(lh.type))) {
-			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-			        MPT_tr("created metatype proxy"), desc);
-		}
-		/* interface instance */
-		else if ((desc = mpt_interface_typename(lh.type))) {
-			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s",
-			        MPT_tr("created interface proxy"), desc);
-		}
-		/* generic instance */
-		else {
-			ret = lh.type;
-			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %02x",
-			        MPT_tr("created proxy instance"), ret);
-		}
-	}
 	return &mp->_mt;
 }

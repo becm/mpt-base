@@ -8,7 +8,7 @@
 
 #include <dlfcn.h>
 
-#include "client.h"
+#include "loader.h"
 
 /*!
  * \ingroup mptLoader

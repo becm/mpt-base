@@ -275,6 +275,15 @@ public:
 
 __MPT_EXTDECL_BEGIN
 
+
+/* log metatype info */
+extern void mpt_meta_info(const MPT_INTERFACE(metatype) *, const char *, int __MPT_DEFPAR(logger::Info), const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+
+/* try to log to metatype instance */
+extern int mpt_meta_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);
+extern int mpt_meta_log(const MPT_INTERFACE(metatype) *, const char *, int , const char *, ... );
+
+
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
 /* set (zero-terminated string) node data */

@@ -14,7 +14,7 @@
 # include <stdlib.h>
 #endif
 
-#include "client.h"
+#include "loader.h"
 
 /*!
  * \ingroup mptLoader

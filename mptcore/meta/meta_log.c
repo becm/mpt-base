@@ -4,22 +4,20 @@
 
 #include <stdarg.h>
 
-#include "meta.h"
-
 #include "message.h"
 #include "output.h"
 
-#include "client.h"
+#include "meta.h"
 
 __MPT_NAMESPACE_BEGIN
 
 /*!
- * \ingroup mptClient
- * \brief log to proxy
+ * \ingroup mptMeta
+ * \brief log to metatype
  * 
- * Select and use log conversion of reference for message.
+ * Use conversion of metatype to log message.
  * 
- * \param pr   proxy descriptor
+ * \param mt   metatype instance
  * \param src  originating location
  * \param type message type and flags
  * \param fmt  log arguments format string
@@ -27,7 +25,7 @@ __MPT_NAMESPACE_BEGIN
  * 
  * \return lor operation result
  */
-int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type, const char *fmt, va_list va)
+int mpt_meta_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type, const char *fmt, va_list va)
 {
 	MPT_INTERFACE(output) *out;
 	MPT_INTERFACE(logger) *log;
@@ -55,12 +53,12 @@ int mpt_proxy_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type,
 	return MPT_ERROR(BadType);
 }
 /*!
- * \ingroup mptClient
- * \brief log to proxy
+ * \ingroup mptMeta
+ * \brief log to metatype
  * 
- * Select and use log interface for message.
+ * Use conversion of metatype to log message.
  * 
- * \param pr   proxy data
+ * \param mt   metatype instance
  * \param fcn  originating function
  * \param type message type and flags
  * \param fmt  log arguments format string
@@ -78,7 +76,7 @@ int mpt_proxy_log(const MPT_INTERFACE(metatype) *mt, const char *fcn, int type, 
 	}
 	va_start(va, fmt);
 	if (mt) {
-		ret = mpt_proxy_vlog(mt, fcn, type | MPT_ENUM(LogFunction) | MPT_ENUM(LogPretty), fmt, va);
+		ret = mpt_meta_vlog(mt, fcn, type | MPT_ENUM(LogFunction) | MPT_ENUM(LogPretty), fmt, va);
 	} else {
 		ret = log->_vptr->log(log, fcn, type, fmt, va);
 	}

@@ -44,7 +44,7 @@ static int print_message(const char *fcn, int type, const char *fmt, va_list va)
  * \param type message type and flags
  * \param fmt  log arguments format string
  * 
- * \return lor operation result
+ * \return log operation result
  */
 int log(const metatype *mt, const char *fcn, int type, const char *fmt, ...)
 {
@@ -52,7 +52,7 @@ int log(const metatype *mt, const char *fcn, int type, const char *fmt, ...)
     if (fmt) va_start(va, fmt);
     int ret;
     if (mt) {
-        ret = mpt_proxy_vlog(mt, fcn, type | logger::LogFunction, fmt, va);
+        ret = mpt_meta_vlog(mt, fcn, type | logger::LogFunction, fmt, va);
     } else {
         ret = print_message(fcn, type, fmt, va);
     }
