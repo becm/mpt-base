@@ -10,6 +10,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_STRUCT(property);
+
 /*! generic metatype interface */
 #ifdef __cplusplus
 MPT_INTERFACE(metatype) : public reference
@@ -277,7 +279,7 @@ __MPT_EXTDECL_BEGIN
 
 
 /* log metatype info */
-extern void mpt_meta_info(const MPT_INTERFACE(metatype) *, const char *, int __MPT_DEFPAR(logger::Info), const char *__MPT_DEFPAR(0), MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern int mpt_meta_info(const MPT_INTERFACE(metatype) *, MPT_STRUCT(property) *);
 
 /* try to log to metatype instance */
 extern int mpt_meta_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);
