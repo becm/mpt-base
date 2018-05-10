@@ -13,14 +13,28 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(libhandle)
 {
 #ifdef __cplusplus
-	inline libhandle() : lib(0), create(0)
+	inline libhandle() : _ref(0), lib(0)
 	{ }
 	~libhandle();
 #else
-# define MPT_LIBHANDLE_INIT { 0, 0 }
+# define MPT_LIBHANDLE_INIT { { 0 }, 0 }
 #endif
-	void *lib;           /* library handle */
-	void *(*create)();   /* new/unique instance */
+	MPT_STRUCT(refcount) _ref;
+	void *addr;
+};
+
+MPT_STRUCT(libsymbol)
+{
+#ifdef __cplusplus
+	inline libhandle() : lib(0), addr(0), type(0)
+	{ }
+	~libhandle();
+#else
+# define MPT_LIBSYMBOL_INIT { 0, 0, 0 }
+#endif
+	MPT_STRUCT(libhandle) *lib;
+	void *addr;   /* symbol address */
+	int   type;   /* symbol type */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -32,14 +46,15 @@ extern char *mpt_readline(const char *);
 /* instance with embedded library handle */
 extern MPT_INTERFACE(metatype) *mpt_library_meta(int , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
-/* open/close library descriptor */
-extern void *mpt_library_open(const char *, const char *);
+/* close library descriptor */
+extern int mpt_library_open(MPT_STRUCT(libhandle) **, const char *, const char *);
+/* reset/detach library */
+extern const char *mpt_library_detach(MPT_STRUCT(libhandle) **);
+
 /* replace binding if necessary */
-extern void *(*mpt_library_symbol(void *, const char *))(void);
-/* close library and reset members */
-extern const char *mpt_library_close(MPT_STRUCT(libhandle) *);
+extern int mpt_library_symbol(MPT_STRUCT(libsymbol) *, const char *);
 /* open library handle */
-extern int mpt_library_bind(MPT_STRUCT(libhandle) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern int mpt_library_bind(MPT_STRUCT(libsymbol) *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 

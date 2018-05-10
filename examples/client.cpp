@@ -35,7 +35,9 @@ protected:
 MyClient::MyClient()
 {
     mpt::metatype *mt = mpt::mpt_output_remote();
-    mpt::mpt_meta_info(mt, __func__);
+    mpt::property pr;
+    mpt::mpt_meta_info(mt, &pr);
+    mpt::warning(__func__, "%s: %s", pr.name, pr.desc);
     mpt::object *o;
     if (mt && (o = mt->cast<mpt::object>())) {
         o->set(0, "w:client.out");

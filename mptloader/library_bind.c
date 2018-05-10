@@ -6,13 +6,23 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "loader.h"
 
 static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )
 {
+	if (!info && type >= MPT_LOG(Warning)) {
+		return;
+	}
 	va_list va;
 	va_start(va, fmt);
-	info->_vptr->log(info, fcn, type, fmt, va);
+	if (info) {
+		info->_vptr->log(info, fcn, type, fmt, va);
+	} else {
+		vfprintf(stderr, fmt, va);
+	}
 	va_end(va);
 }
 
@@ -27,11 +37,10 @@ static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const ch
  * \param conf initializer function description
  * \param out  logging descriptor
  */
-extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
+	MPT_STRUCT(libsymbol) next = MPT_LIBSYMBOL_INIT;
 	const char *libname;
-	void *(*sym)(void);
-	void *lib;
 	int ret = 0;
 	
 	if (!conf) {
@@ -40,18 +49,19 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 		}
 		return MPT_ERROR(BadArgument);
 	}
-	lib = 0;
 	if ((libname = strchr(conf, '@'))) {
 		ret = 1;
+		++libname;
 		/* load from special or default location */
-		if (!(lib = mpt_library_open(libname + 1, path))) {
+		if (mpt_library_open(&next.lib, libname, path) < 0) {
 			const char *err;
-			if (out && (err = dlerror())) {
-				msg(out, __func__, MPT_LOG(Warning), "%s", err);
+			if ((err = dlerror())) {
+				ret = path ? MPT_LOG(Error) : MPT_LOG(Warning);
+				msg(out, __func__, ret, "%s", err);
 			}
 			/* fallback to default library locations */
-			if (!path || !(lib = mpt_library_open(libname + 1, 0))) {
-				if (out && (err = dlerror())) {
+			if (!path || mpt_library_open(&next.lib, libname, 0) < 0) {
+				if ((err = dlerror())) {
 					msg(out, __func__, MPT_LOG(Error), "%s", err);
 				}
 				return MPT_ERROR(BadValue);
@@ -59,20 +69,22 @@ extern int mpt_library_bind(MPT_STRUCT(libhandle) *lh, const char *conf, const c
 			ret = 2;
 		}
 	}
-	if (!(sym = mpt_library_symbol(lib, conf))) {
+	if (mpt_library_symbol(&next, conf) < 0) {
 		const char *err;
 		if (out && (err = dlerror())) {
 			msg(out, __func__, MPT_LOG(Error), "%s", err);
 		}
-		if (lib) {
-			dlclose(lib);
+		if ((err = mpt_library_detach(&next.lib))) {
+			if (!out) {
+				abort();
+			}
+			msg(out, __func__, MPT_LOG(Fatal), "%s", err);
 		}
 		return MPT_ERROR(BadValue);
 	}
-	mpt_library_close(lh);
+	mpt_library_detach(&lh->lib);
 	
-	lh->lib = lib;
-	lh->create = sym;
+	*lh = next;
 	
 	return ret;
 }

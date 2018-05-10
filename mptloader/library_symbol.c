@@ -4,7 +4,6 @@
 
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
 
 #include <dlfcn.h>
 
@@ -12,49 +11,53 @@
 
 /*!
  * \ingroup mptLoader
- * \brief assign library handle
+ * \brief assign library symbol
  * 
- * Connect file handle to symbol in library.
+ * Connect to symbol in library.
  * 
- * \param lib    library handle
- * \param descr  symbol (@lib) to open
+ * \param sym    library symbol descriptor
+ * \param descr  symbol (@lib) to bind
  * 
  * \return dynamic loader error message
  */
-extern void *(*mpt_library_symbol(void *lib, const char *descr))(void)
+extern int mpt_library_symbol(MPT_STRUCT(libsymbol) *sym, const char *descr)
 {
 	const char *libname;
-	union {
-		void *ptr;
-		void *(*fcn)(void);
-	} tmp;
+	void *addr = 0;
+	void *lib = 0;
 	
+	if (sym->lib) {
+		lib = sym->lib->addr;
+	}
 	if (!descr) {
 		dlerror();
-		errno = EINVAL;
-		return 0;
+		return MPT_ERROR(BadArgument);
 	}
 	if (!(libname = strchr(descr, '@'))
 	    || !*libname
 	    || isspace(*libname)) {
-		tmp.ptr = dlsym(lib, descr);
+		addr = dlsym(lib, descr);
 	}
 	else {
 		char buf[128];
 		size_t len;
 		if ((len = libname++ - descr) >= sizeof(buf)) {
 			dlerror();
-			errno = ERANGE;
-			return 0;
+			return MPT_ERROR(MissingBuffer);
 		}
 		if (!len) {
 			dlerror();
-			errno = EINVAL;
-			return 0;
+			return MPT_ERROR(MissingBuffer);
 		}
 		descr = memcpy(buf, descr, len);
 		buf[len] = '\0';
-		tmp.ptr = dlsym(lib, descr);
+		addr = dlsym(lib, descr);
 	}
-	return tmp.fcn;
+	if (!addr) {
+		return MPT_ERROR(BadValue);
+	}
+	sym->addr = addr;
+	sym->type = 0;
+	
+	return 0;
 }

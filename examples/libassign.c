@@ -29,20 +29,24 @@ const char *object_name(MPT_INTERFACE(object) *obj)
 
 int main(int argc, const char *argv[])
 {
-	struct mpt_libhandle lh = MPT_LIBHANDLE_INIT;
+	struct mpt_libsymbol ls = MPT_LIBSYMBOL_INIT;
 	struct mpt_metatype *mt;
 	const char *sym;
+	union {
+		void *addr;
+		void *(*fcn)(void);
+	} ptr;
 	
 	mtrace();
 	
 	sym = "mpt_output_local@libmptplot.so.1";
 	
 	do {
-		if (mpt_library_bind(&lh, sym, getenv("MPT_PREFIX_LIB"), 0) < 0) {
+		if (mpt_library_bind(&ls, sym, getenv("MPT_PREFIX_LIB"), 0) < 0) {
 			return 1;
 		}
 		/* create reference with loaded function */
-		if ((mt = lh.create())) {
+		if ((ptr.addr = ls.addr) && (mt = ptr.fcn())) {
 			FILE *out = stdout;
 			const uint8_t *types = 0;
 			struct mpt_object *obj = 0;
@@ -67,6 +71,6 @@ int main(int argc, const char *argv[])
 		sym = *(++argv);
 	}
 	while (--argc);
-	mpt_library_close(&lh);
+	mpt_library_detach(&ls.lib);
 	return 0;
 }

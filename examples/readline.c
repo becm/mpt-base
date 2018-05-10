@@ -5,7 +5,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(client.h)
+#include MPT_INCLUDE(loader.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
