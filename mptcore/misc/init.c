@@ -39,7 +39,7 @@ static void clearConfig(void)
 
 static void setDebug(int lv)
 {
-	static int old = 0;
+	static int old = -1;
 	
 	/* maximize log level */
 	if (old >= lv) {
@@ -47,7 +47,7 @@ static void setDebug(int lv)
 	}
 	old = lv;
 	/* set log skip begin */
-	lv = MPT_LOG(Debug) + (lv - 1) * (MPT_LOG(Debug2) - MPT_LOG(Debug));
+	lv = MPT_LOG(Debug) + lv * (MPT_LOG(Debug2) - MPT_LOG(Debug));
 	if (lv > MPT_LOG(File)) {
 		lv = MPT_LOG(File);
 	}
@@ -172,15 +172,14 @@ extern int mpt_init(int argc, char * const argv[])
 	int lv = 0, ret;
 	
 	if ((debug = getenv("MPT_DEBUG"))) {
-		int dbg = 0;
-		if (mpt_cint(&dbg, debug, 0, 0) < 0
-		    || dbg < 0) {
+		int dbg = 1;
+		if (mpt_cint(&dbg, debug, 0, 0) < 0) {
 			dbg = 1;
 		}
 		else if (dbg > 0xe) {
-			dbg = 0xe;
+			dbg = 0xf;
 		}
-		setDebug(dbg + 1);
+		setDebug(dbg);
 	}
 	/* use global mpt config section */
 	mpt_path_set(&p, "mpt", -1);
@@ -199,7 +198,7 @@ extern int mpt_init(int argc, char * const argv[])
 		while ((curr = *flags++)) {
 			switch (curr) {
 			  case 'v':
-				setDebug(++lv);
+				setDebug(lv++);
 				continue;
 			  case 'E':
 				/* global environment loading (masks granular) */
@@ -225,6 +224,7 @@ extern int mpt_init(int argc, char * const argv[])
 	mpt_config_set(cfg, 0, argv[0], 0, 0);
 	
 	ret = 0;
+	lv = 0; /* reset debug level */
 	while (optind < argc) {
 		switch (ret = getopt(argc, argv, "+f:c:l:Ee:v")) {
 		    case -1:
@@ -256,7 +256,7 @@ extern int mpt_init(int argc, char * const argv[])
 			}
 			continue;
 		    case 'v':
-			setDebug(++lv);
+			setDebug(lv++);
 			continue;
 		    case 'E':
 			setEnviron(0);
