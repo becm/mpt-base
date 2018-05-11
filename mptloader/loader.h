@@ -47,9 +47,10 @@ extern char *mpt_readline(const char *);
 extern MPT_INTERFACE(metatype) *mpt_library_meta(int , const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* close library descriptor */
-extern int mpt_library_open(MPT_STRUCT(libhandle) **, const char *, const char *);
-/* reset/detach library */
-extern const char *mpt_library_detach(MPT_STRUCT(libhandle) **);
+extern MPT_STRUCT(libhandle) *mpt_library_open(const char *, const char *);
+/* attach/detach library */
+extern MPT_STRUCT(libhandle) *mpt_library_attach(MPT_STRUCT(libhandle) *);
+extern int mpt_library_detach(MPT_STRUCT(libhandle) **);
 
 /* replace binding if necessary */
 extern int mpt_library_symbol(MPT_STRUCT(libsymbol) *, const char *);

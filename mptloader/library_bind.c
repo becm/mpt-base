@@ -13,16 +13,10 @@
 
 static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )
 {
-	if (!info && type >= MPT_LOG(Warning)) {
-		return;
-	}
 	va_list va;
 	va_start(va, fmt);
-	if (info) {
-		info->_vptr->log(info, fcn, type, fmt, va);
-	} else {
-		vfprintf(stderr, fmt, va);
-	}
+	info->_vptr->log(info, fcn, type, fmt, va);
+	vfprintf(stderr, fmt, va);
 	va_end(va);
 }
 
@@ -53,15 +47,15 @@ extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const c
 		ret = 1;
 		++libname;
 		/* load from special or default location */
-		if (mpt_library_open(&next.lib, libname, path) < 0) {
+		if (!(next.lib = mpt_library_open(libname, path))) {
 			const char *err;
-			if ((err = dlerror())) {
+			if (out && (err = dlerror())) {
 				ret = path ? MPT_LOG(Error) : MPT_LOG(Warning);
 				msg(out, __func__, ret, "%s", err);
 			}
 			/* fallback to default library locations */
-			if (!path || mpt_library_open(&next.lib, libname, 0) < 0) {
-				if ((err = dlerror())) {
+			if (!path || !(next.lib = mpt_library_open(libname, 0))) {
+				if (out && (err = dlerror())) {
 					msg(out, __func__, MPT_LOG(Error), "%s", err);
 				}
 				return MPT_ERROR(BadValue);
@@ -74,11 +68,14 @@ extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const c
 		if (out && (err = dlerror())) {
 			msg(out, __func__, MPT_LOG(Error), "%s", err);
 		}
-		if ((err = mpt_library_detach(&next.lib))) {
+		if ((ret = mpt_library_detach(&next.lib)) < 0) {
 			if (!out) {
 				abort();
 			}
-			msg(out, __func__, MPT_LOG(Fatal), "%s", err);
+			if ((err = dlerror())) {
+				msg(out, __func__, MPT_LOG(Fatal), "%s", err);
+			}
+			return ret;
 		}
 		return MPT_ERROR(BadValue);
 	}

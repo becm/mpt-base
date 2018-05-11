@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -17,6 +18,28 @@
 
 /*!
  * \ingroup mptLoader
+ * \brief attach handle
+ * 
+ * Add new reference to library handle.
+ * 
+ * \param handle library handle to reference
+ * 
+ * \return new reference for library handle
+ */
+extern MPT_STRUCT(libhandle) *mpt_library_attach(MPT_STRUCT(libhandle) *lh)
+{
+	if (!lh) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (!__mpt_library_proxy_addref(&lh->_ref)) {
+		errno = EAGAIN;
+		return 0;
+	}
+	return lh;
+}
+/*!
+ * \ingroup mptLoader
  * \brief close handle
  * 
  * Detach library reference referred to by handle.
@@ -25,7 +48,7 @@
  * 
  * \return dynamic loader error message
  */
-extern const char *mpt_library_detach(MPT_STRUCT(libhandle) **handle)
+extern int mpt_library_detach(MPT_STRUCT(libhandle) **handle)
 {
 	MPT_STRUCT(libhandle) *lh;
 	uintptr_t count;
@@ -38,10 +61,7 @@ extern const char *mpt_library_detach(MPT_STRUCT(libhandle) **handle)
 		return 0;
 	}
 	if (lh->addr && dlclose(lh->addr) < 0) {
-		const char *err;
-		if ((err = dlerror())) {
-			return err;
-		}
+		return MPT_ERROR(BadOperation);
 	}
 	if (count) {
 		free(lh);
@@ -61,13 +81,14 @@ extern const char *mpt_library_detach(MPT_STRUCT(libhandle) **handle)
  * 
  * \return library handle
  */
-extern int mpt_library_open(MPT_STRUCT(libhandle) **handle, const char *lib, const char *lpath)
+extern MPT_STRUCT(libhandle) *mpt_library_open(const char *lib, const char *lpath)
 {
 	MPT_STRUCT(libhandle) *lh;
 	void *newlib;
 	
 	if (!lib) {
-		return MPT_ERROR(BadArgument);
+		errno = EINVAL;
+		return 0;
 	}
 	/* no resolution if path absolute */
 	if (!lpath || *lib == '/') {
@@ -79,7 +100,8 @@ extern int mpt_library_open(MPT_STRUCT(libhandle) **handle, const char *lib, con
 		
 		/* set library path */
 		if ((len = strlen(lpath)) >= sizeof(buf)) {
-			return MPT_ERROR(MissingBuffer);
+			errno = ENOBUFS;
+			return 0;
 		}
 		left = sizeof(buf) - len;
 		buf[len] = '/';
@@ -88,25 +110,25 @@ extern int mpt_library_open(MPT_STRUCT(libhandle) **handle, const char *lib, con
 		
 		/* buffer too small */
 		if (--left <= (len = strlen(lib))) {
-			return MPT_ERROR(MissingBuffer);
+			errno = ENOBUFS;
+			return 0;
 		}
 		memcpy(newlib, lib, len + 1);
 		newlib = dlopen(buf, RTLD_NOW);
 	}
 	if (!newlib) {
-		return MPT_ERROR(BadValue);
+		errno = ENOENT;
+		return 0;
 	}
 	if (!(lh = malloc(sizeof(*lh)))) {
 		dlclose(newlib);
 		dlerror();
-		return MPT_ERROR(BadOperation);
+		errno = ENOMEM;
+		return 0;
 	}
 	lh->_ref._val = 1;
 	lh->addr = newlib;
 	
-	mpt_library_detach(handle);
-	*handle = lh;
-	
-	return 0;
+	return lh;
 }
 

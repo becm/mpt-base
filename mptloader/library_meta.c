@@ -80,6 +80,7 @@ static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl;
 static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
+	MPT_STRUCT(libhandle) *lh = 0;
 	struct _mpt_metaProxy *n;
 	union {
 		void *ptr;
@@ -90,16 +91,16 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	if (!(val.ptr = mp->sym.addr)) {
 		return 0;
 	}
+	if (mp->sym.lib && !(lh = mpt_library_attach(mp->sym.lib))) {
+		return 0;
+	}
 	size = sizeof(*n) + mp->len + 1;
 	if (!(n = malloc(size))) {
 		return 0;
 	}
-	if (mp->sym.lib && !__mpt_library_proxy_addref(&mp->sym.lib->_ref)) {
-		free(n);
-		return 0;
-	}
 	memcpy(n, mp, size);
 	n->_ref._val = 1;
+	n->sym.lib = lh;
 	
 	if (!(n->ptr = val.make())) {
 		mpUnref((MPT_INTERFACE(reference) *) n);
