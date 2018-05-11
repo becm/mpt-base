@@ -16,7 +16,6 @@ static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const ch
 	va_list va;
 	va_start(va, fmt);
 	info->_vptr->log(info, fcn, type, fmt, va);
-	vfprintf(stderr, fmt, va);
 	va_end(va);
 }
 
