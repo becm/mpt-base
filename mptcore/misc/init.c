@@ -55,15 +55,12 @@ static void setDebug(int lv)
 }
 static void setEnviron(const char *match)
 {
-	char buf[128];
-	
-	if (match) {
-		int len = snprintf(buf, sizeof(buf), "%s_*", match);
-		if (len < 0 || len > (int) sizeof(buf)) {
-			mpt_log(0, "mpt_init::environ", MPT_LOG(Error), "%s",
-			        MPT_tr("bad match format"));
-		}
-		match = buf;
+	static int global = 0;
+	if (global) {
+		return;
+	}
+	if (!match) {
+		global = 1;
 	}
 	mpt_config_environ(0, match, '_', 0);
 }
@@ -152,7 +149,7 @@ static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
 	else if ((old = c->_meta)) {
 		old->_vptr->ref.unref((void *) old);
 	}
-	c->_meta = (void *) b;
+	c->_meta = b;
 	
 	return 0;
 }
@@ -204,10 +201,18 @@ extern int mpt_init(int argc, char * const argv[])
 			  case 'v':
 				setDebug(++lv);
 				continue;
+			  case 'E':
+				/* global environment loading (masks granular) */
+				if (env) {
+					mpt_log(0, __func__, MPT_LOG(Warning), "%s",
+					        MPT_tr("global environamet load after specialized"));
+				}
+				setEnviron(0);
+				continue;
 			  case 'e':
-				/* environment arguments on first occurance only */
+				/* limited environment on first occurance only */
 				if (!env++) {
-					setEnviron(0);
+					setEnviron("mpt_*");
 				}
 				continue;
 			  default:
@@ -221,7 +226,7 @@ extern int mpt_init(int argc, char * const argv[])
 	
 	ret = 0;
 	while (optind < argc) {
-		switch (ret = getopt(argc, argv, "+f:c:l:e:v")) {
+		switch (ret = getopt(argc, argv, "+f:c:l:Ee:v")) {
 		    case -1:
 			ret = saveArgs(top, argc - optind, argv + optind);
 			break;
@@ -252,6 +257,9 @@ extern int mpt_init(int argc, char * const argv[])
 			continue;
 		    case 'v':
 			setDebug(++lv);
+			continue;
+		    case 'E':
+			setEnviron(0);
 			continue;
 		    case 'e':
 			setEnviron(optarg);
