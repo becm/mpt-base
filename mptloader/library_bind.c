@@ -22,16 +22,17 @@ static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const ch
 
 /*!
  * \ingroup mptLoader
- * \brief proxy binding
+ * \brief symbol binding
  * 
- * Bind instance from shared library or local program.
- * Replace old binding atomicaly.
+ * Bind symbol from shared library or local program.
+ * Replace old binding atomically.
  * 
- * \param px   pointer to metatype proxy data
- * \param conf initializer function description
- * \param out  logging descriptor
+ * \param sym   shared library symbol data
+ * \param conf  symbol location
+ * \param path  library path
+ * \param out   logging descriptor
  */
-extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
+extern int mpt_library_bind(MPT_STRUCT(libsymbol) *sym, const char *conf, const char *path, MPT_INTERFACE(logger) *out)
 {
 	MPT_STRUCT(libsymbol) next = MPT_LIBSYMBOL_INIT;
 	const char *libname;
@@ -53,8 +54,11 @@ extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const c
 				ret = path ? MPT_LOG(Error) : MPT_LOG(Warning);
 				msg(out, __func__, ret, "%s", err);
 			}
+			if (!path) {
+				return MPT_ERROR(BadValue);
+			}
 			/* fallback to default library locations */
-			if (!path || !(next.lib = mpt_library_open(libname, 0))) {
+			if (!(next.lib = mpt_library_open(libname, 0))) {
 				if (out && (err = dlerror())) {
 					msg(out, __func__, MPT_LOG(Error), "%s", err);
 				}
@@ -79,9 +83,9 @@ extern int mpt_library_bind(MPT_STRUCT(libsymbol) *lh, const char *conf, const c
 		}
 		return MPT_ERROR(BadValue);
 	}
-	mpt_library_detach(&lh->lib);
+	mpt_library_detach(&sym->lib);
 	
-	*lh = next;
+	*sym = next;
 	
 	return ret;
 }

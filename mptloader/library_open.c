@@ -92,20 +92,33 @@ extern MPT_STRUCT(libhandle) *mpt_library_open(const char *lib, const char *lpat
 	}
 	/* no resolution if path absolute */
 	if (!lpath || *lib == '/') {
-		newlib = dlopen(lib, RTLD_NOW);
+		if (!(newlib = dlopen(lib, RTLD_NOW))) {
+			errno = ENOENT;
+			return 0;
+		}
 	}
-	else {
+	else while (1) {
+		const char *sep;
 		char buf[1024];
 		size_t left, len;
 		
+		if (!lpath || !*lpath) {
+			errno = ENOENT;
+			return 0;
+		}
+		if ((sep = strchr(lpath, ':'))) {
+			len = sep++ - lpath;
+		} else {
+			len = strlen(lpath);
+		}
 		/* set library path */
-		if ((len = strlen(lpath)) >= sizeof(buf)) {
+		if (len >= sizeof(buf)) {
 			errno = ENOBUFS;
 			return 0;
 		}
 		left = sizeof(buf) - len;
-		buf[len] = '/';
-		memcpy(buf, lpath, len++);
+		memcpy(buf, lpath, len);
+		buf[len++] = '/';
 		newlib = buf + len;
 		
 		/* buffer too small */
@@ -114,11 +127,11 @@ extern MPT_STRUCT(libhandle) *mpt_library_open(const char *lib, const char *lpat
 			return 0;
 		}
 		memcpy(newlib, lib, len + 1);
-		newlib = dlopen(buf, RTLD_NOW);
-	}
-	if (!newlib) {
-		errno = ENOENT;
-		return 0;
+		
+		if ((newlib = dlopen(buf, RTLD_NOW))) {
+			break;
+		}
+		lpath = sep;
 	}
 	if (!(lh = malloc(sizeof(*lh)))) {
 		dlclose(newlib);
