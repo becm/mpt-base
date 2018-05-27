@@ -4,7 +4,6 @@
 
 #include <stdarg.h>
 
-#include "message.h"
 #include "output.h"
 
 #include "meta.h"
@@ -15,7 +14,7 @@ __MPT_NAMESPACE_BEGIN
  * \ingroup mptMeta
  * \brief log to metatype
  * 
- * Use conversion of metatype to log message.
+ * Use metatype as target for log message.
  * 
  * \param mt   metatype instance
  * \param src  originating location
@@ -56,16 +55,16 @@ int mpt_meta_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type, 
  * \ingroup mptMeta
  * \brief log to metatype
  * 
- * Use conversion of metatype to log message.
+ * Use metatype as target for log message.
  * 
  * \param mt   metatype instance
  * \param fcn  originating function
  * \param type message type and flags
  * \param fmt  log arguments format string
  * 
- * \return lor operation result
+ * \return log operation result
  */
-int mpt_proxy_log(const MPT_INTERFACE(metatype) *mt, const char *fcn, int type, const char *fmt, ...)
+int mpt_meta_log(const MPT_INTERFACE(metatype) *mt, const char *fcn, int type, const char *fmt, ...)
 {
 	va_list va;
 	MPT_INTERFACE(logger) *log = 0;

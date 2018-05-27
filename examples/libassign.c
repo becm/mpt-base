@@ -60,9 +60,9 @@ int main(int argc, const char *argv[])
 				fprintf(out, ": 0x%02x", err);
 				if (types) {
 					fputs(" >", out);
-				}
-				while (*types) {
-					fprintf(out, " 0x%02x", *types++);
+					while (*types) {
+						fprintf(out, " 0x%02x", *types++);
+					}
 				}
 			}
 			fputs("\n", out);

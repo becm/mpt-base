@@ -16,8 +16,6 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(property);
-MPT_STRUCT(node);
-MPT_STRUCT(array);
 MPT_STRUCT(notify);
 MPT_STRUCT(message);
 
@@ -162,9 +160,7 @@ protected:
 	Reference<metatype> _rctx;
 #else
 	MPT_INTERFACE(metatype) *_rctx;
-# define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT, \
-                               0, MPT_ARRAY_INIT, \
-                               0 }
+# define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT,  0, MPT_ARRAY_INIT,  0 }
 #endif
 };
 
@@ -230,6 +226,14 @@ extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
 extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandler) cmd, void *arg);
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
+
+
+/* push (error) message to output */
+extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
+extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
+
+/* push double values to output */
+extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
 
 
 /* create remote output instance */

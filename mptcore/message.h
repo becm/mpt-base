@@ -34,13 +34,10 @@
 # error bad byte order definition
 #endif
 
-struct sockaddr;
-
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(queue);
 MPT_STRUCT(array);
-MPT_STRUCT(node);
 
 MPT_INTERFACE(output);
 
@@ -156,7 +153,7 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_message_push(MPT_INTERFACE(output) *, const MPT_STRUCT(message) *);
 
 /* get next string parameter from message data */
-extern ssize_t mpt_message_argv(MPT_STRUCT(message) *, int );
+extern ssize_t mpt_message_argv(MPT_STRUCT(message) *, int);
 /* read data from message */
 extern size_t mpt_message_read(MPT_STRUCT(message) *, size_t , void *);
 /* get message length */
@@ -169,11 +166,11 @@ extern MPT_INTERFACE(metatype) *mpt_message_iterator(const MPT_STRUCT(message) *
 extern int mpt_array_message(MPT_STRUCT(array) *, const MPT_STRUCT(message) *, int);
 
 /* find position of first occurance */
-extern ssize_t mpt_memchr(const struct iovec *, size_t , int );
-extern ssize_t mpt_memstr(const struct iovec *, size_t , const void *, size_t );
+extern ssize_t mpt_memchr(const struct iovec *, size_t , int);
+extern ssize_t mpt_memstr(const struct iovec *, size_t , const void *, size_t);
 /* find position of last occurance */
-extern ssize_t mpt_memrchr(const struct iovec *, size_t , int );
-extern ssize_t mpt_memrstr(const struct iovec *, size_t , const void *, size_t );
+extern ssize_t mpt_memrchr(const struct iovec *, size_t , int);
+extern ssize_t mpt_memrstr(const struct iovec *, size_t , const void *, size_t);
 
 /* find position from offset accepted by matching function */
 extern ssize_t mpt_memfcn (const struct iovec *, size_t , int (*)(int, void *), void *);
@@ -183,7 +180,7 @@ extern ssize_t mpt_memrfcn(const struct iovec *, size_t , int (*)(int, void *), 
 extern ssize_t mpt_memtok(const struct iovec *, size_t , const char *, const char *, const char *);
 
 /* iovec copy operations */
-extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct iovec *, size_t );
+extern ssize_t mpt_memcpy(ssize_t , const struct iovec *, size_t , const struct iovec *, size_t);
 
 /* push message to connection */
 extern int mpt_message_append(MPT_STRUCT(array) *, const MPT_STRUCT(message) *);
@@ -195,13 +192,6 @@ extern int mpt_message_get(const MPT_STRUCT(queue) *, size_t , size_t , MPT_STRU
 /* convert message IDs */
 extern int mpt_message_id2buf(uint64_t, void *, size_t);
 extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
-
-/* push (error) message to output */
-extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
-extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
-
-/* push double values to output */
-extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
 
 /* get size/type from message value format type */
 size_t mpt_msgvalfmt_size(uint8_t);

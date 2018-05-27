@@ -10,10 +10,10 @@
  * \ingroup mptMeta
  * \brief metatype info
  * 
- * Get metatype information.
+ * Get metatype instance description.
  * 
  * \param mt  metatype instance
- * \param pr  logger interface
+ * \param pr  property data
  */
 int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 {
@@ -22,7 +22,7 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 	
 	code = mt->_vptr->conv(mt, 0, 0);
 	
-	if (!pr) {
+	if ((code < 0) || !pr) {
 		return code;
 	}
 	pr->val.fmt = 0;

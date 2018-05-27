@@ -63,6 +63,7 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			MPT_ENUM(TypeObject),
+			MPT_ENUM(TypeLogger),
 			MPT_ENUM(TypeOutput),
 			MPT_ENUM(TypeFile),
 			0
