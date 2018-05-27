@@ -5,7 +5,7 @@ LIB = mptio
 INC = . .. ../mptcore
 #
 # header to export
-HEADER = notify.h stream.h
+HEADER = connection.h notify.h stream.h
 #
 # source summary
 sources = \

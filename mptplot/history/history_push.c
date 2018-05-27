@@ -11,9 +11,9 @@
 #include "array.h"
 #include "convert.h"
 
-#include "output.h"
-
 #include "values.h"
+
+#include "history.h"
 
 /*!
  * \ingroup mptPlot
@@ -36,7 +36,7 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 	if (hist->info.state & MPT_OUTFLAG(Active)) {
 		/* local print condition */
 		if (hist->info.state & 0x7) {
-			return mpt_history_print(&hist->info, len, src);
+			return mpt_logfile_push(&hist->info, len, src);
 		}
 		/* history data output */
 		ret = mpt_history_values(hist, len, src);
@@ -99,5 +99,5 @@ extern ssize_t mpt_history_push(MPT_STRUCT(history) *hist, size_t len, const voi
 		}
 		return ret + min;
 	}
-	return mpt_history_print(&hist->info, len, src);
+	return mpt_logfile_push(&hist->info, len, src);
 }

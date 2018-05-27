@@ -17,6 +17,7 @@
 #include "meta.h"
 #include "config.h"
 #include "convert.h"
+#include "output.h"
 
 #include "parse.h"
 #include "node.h"

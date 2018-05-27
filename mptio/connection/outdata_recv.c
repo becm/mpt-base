@@ -1,5 +1,6 @@
 /*!
- * finalize connection data
+ * MPT I/O library
+ *   finalize connection data
  */
 
 #include <errno.h>
@@ -10,15 +11,15 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-#include "array.h"
 #include "message.h"
+#include "output.h"
 
 #include "stream.h"
 
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief get socket datagram
  * 
  * Save datagram source and id to reply context and

@@ -17,15 +17,15 @@
 #include "convert.h"
 #include "message.h"
 
-#include "output.h"
+#include "history.h"
 
-static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype) *src)
+static int setHistfile(MPT_STRUCT(logfile) *log, const MPT_INTERFACE(metatype) *src)
 {
 	const char *where = 0;
 	FILE *fd;
 	int sock = -1;
 	
-	if (hist->state & MPT_OUTFLAG(Active)) {
+	if (log->state & MPT_OUTFLAG(Active)) {
 		return MPT_MESGERR(InProgress);
 	}
 	/* default output */
@@ -56,15 +56,15 @@ static int setHistfile(MPT_STRUCT(histinfo) *hist, const MPT_INTERFACE(metatype)
 	else {
 		return MPT_ERROR(BadType);
 	}
-	if (hist->file && (hist->file != stdout) && (hist->file != stderr)) {
-		fclose(hist->file);
+	if (log->file && (log->file != stdout) && (log->file != stderr)) {
+		fclose(log->file);
 	}
-	hist->file = fd;
+	log->file = fd;
 	
 	return 0;
 }
 /*!
- * \ingroup mptOutput
+ * \ingroup mptHistory
  * \brief set history parameters
  * 
  * Change history settings.

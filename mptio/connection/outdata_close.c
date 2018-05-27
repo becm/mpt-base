@@ -1,18 +1,16 @@
+/*!
+ * MPT I/O library
+ *   clear output data
+ */
 
 #include <stdlib.h>
 
 #include <unistd.h>
 
-#include "array.h"
-#include "message.h"
-#include "event.h"
-
-#include "stream.h"
-
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief close outdata connection
  * 
  * Clear resources of outdata socket and

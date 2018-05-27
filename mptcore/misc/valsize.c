@@ -4,6 +4,7 @@
  */
 
 #include "../mptplot/layout.h"
+#include "../mptio/connection.h"
 
 #include "convert.h"
 #include "object.h"

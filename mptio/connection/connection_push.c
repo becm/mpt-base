@@ -7,6 +7,7 @@
 #include "stream.h"
 
 #include "message.h"
+#include "connection.h"
 
 #include "output.h"
 

@@ -1,7 +1,7 @@
 
 #include <unistd.h>
 
-#include "message.h"
+#include "output.h"
 
 /*!
  * \ingroup mptOutput

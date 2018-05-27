@@ -10,7 +10,6 @@ foreach d : [
   'config',
   'convert',
   'event',
-  'log',
   'message',
   'meta',
   'misc',

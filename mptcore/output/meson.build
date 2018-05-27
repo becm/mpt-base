@@ -1,11 +1,13 @@
 # meson.build.gen: *.c
 src = files(
   'ansi_code.c',
-  'histfmt_reset.c',
-  'history_fini.c',
-  'history_log.c',
-  'history_print.c',
-  'history_property.c',
+  'log.c',
+  'log_default.c',
+  'log_identifier.c',
+  'log_intro.c',
+  'log_level.c',
+  'logfile_log.c',
+  'logfile_push.c',
   'output_flags.c',
   'output_log.c',
   'output_values.c',

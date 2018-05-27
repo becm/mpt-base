@@ -15,6 +15,7 @@
 #include "meta.h"
 #include "convert.h"
 
+#include "connection.h"
 #include "stream.h"
 
 #include "notify.h"

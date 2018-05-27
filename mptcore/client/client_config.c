@@ -3,6 +3,7 @@
  */
 
 #include "meta.h"
+#include "output.h"
 
 #include "config.h"
 

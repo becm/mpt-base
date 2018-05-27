@@ -7,9 +7,9 @@
 #include <sys/uio.h>
 
 #include "meta.h"
-#include "array.h"
 #include "event.h"
 #include "message.h"
+#include "output.h"
 
 #include "config.h"
 

@@ -2,7 +2,7 @@
  * print arguments to output/error descriptors.
  */
 
-#include "core.h"
+#include "output.h"
 
 /*!
  * \ingroup mptLog

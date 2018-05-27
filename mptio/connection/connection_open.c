@@ -1,3 +1,7 @@
+/*!
+ * MPT I/O library
+ *   open connection to target
+ */
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,18 +9,16 @@
 #include <string.h>
 #include <strings.h>
 
-#include "queue.h"
-#include "stream.h"
-
-#include "array.h"
 #include "message.h"
-
 #include "convert.h"
-
 #include "output.h"
 
+#include "stream.h"
+
+#include "connection.h"
+
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief set connection target
  * 
  * Open target stream/socket and assign to connection.

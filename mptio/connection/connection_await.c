@@ -5,15 +5,14 @@
 #include <errno.h>
 
 #include "array.h"
-#include "queue.h"
-#include "event.h"
+#include "output.h"
 
 #include "message.h"
 
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief interactive message for connection
  * 
  * Register new interactive message on connection data.

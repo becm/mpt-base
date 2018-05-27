@@ -1,5 +1,6 @@
 /*!
- * set initial parameter for output descriptor
+ * MPT I/O library
+ *   set/get parameters of connetion
  */
 
 #include <stdio.h>
@@ -10,12 +11,13 @@
 
 #include "meta.h"
 #include "object.h"
+#include "output.h"
 #include "convert.h"
 #include "message.h"
 
 #include "stream.h"
 
-#include "output.h"
+#include "connection.h"
 
 
 static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
@@ -177,7 +179,7 @@ extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, con
 }
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief get connection property
  * 
  * Get property for connection or included outdata.

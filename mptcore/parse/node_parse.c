@@ -6,6 +6,7 @@
 
 #include "meta.h"
 #include "node.h"
+#include "output.h"
 
 #include "parse.h"
 

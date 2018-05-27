@@ -1,11 +1,14 @@
-
+/*!
+ * MPT I/O library
+ *   query parameters of output data
+ */
 
 #include "object.h"
 
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief query outdata properties
  * 
  * Get properties of outdata.

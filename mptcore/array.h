@@ -10,10 +10,10 @@
 # include <new>
 # include <cstring>
 # include <cstdlib>
-struct iovec;
+# include "output.h"
+#else
+# include "core.h"
 #endif
-
-#include "core.h"
 
 __MPT_NAMESPACE_BEGIN
 

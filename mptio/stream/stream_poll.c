@@ -7,6 +7,8 @@
 #include <poll.h>
 
 #include "queue.h"
+#include "output.h"
+
 #include "stream.h"
 
 /*!

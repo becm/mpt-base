@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-#include "output.h"
+#include "history.h"
 
 /*!
  * \ingroup mptOutput

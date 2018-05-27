@@ -11,9 +11,9 @@
 #include <errno.h>
 
 #include "event.h"
-#include "meta.h"
 #include "message.h"
 #include "convert.h"
+#include "output.h"
 
 #include "notify.h"
 #include "stream.h"

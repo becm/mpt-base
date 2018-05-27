@@ -18,6 +18,7 @@
 #include <ctype.h>
 
 #include "config.h"
+#include "output.h"
 
 #include "parse.h"
 

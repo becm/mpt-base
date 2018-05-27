@@ -7,6 +7,7 @@
 #define _MPT_CLIENT_H  @INTERFACE_VERSION@
 
 #include "meta.h"
+#include "output.h"
 
 __MPT_NAMESPACE_BEGIN
 

@@ -5,6 +5,7 @@
 #include <poll.h>
 
 #include "config.h"
+#include "output.h"
 
 #include "notify.h"
 

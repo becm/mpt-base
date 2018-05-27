@@ -4,18 +4,18 @@
 
 #include <stdio.h>
 
-#include "convert.h"
 #include "message.h"
+#include "convert.h"
 
 #include "output.h"
 
 /*!
  * \ingroup mptOutput
- * \brief log to history
+ * \brief log to file
  * 
- * Print log message to history.
+ * Print message to logfile.
  * 
- * \param hist  history descriptor
+ * \param log   logfile descriptor
  * \param from  log data origin
  * \param type  severity and display flags
  * \param fmt   argument format
@@ -23,30 +23,30 @@
  * 
  * \return error or written lines
  */
-extern int mpt_history_log(MPT_STRUCT(histinfo) *hist, const char *from, int type, const char *fmt, va_list args)
+extern int mpt_logfile_log(MPT_STRUCT(logfile) *log, const char *from, int type, const char *fmt, va_list args)
 {
 	const char *reset, *newline;
 	FILE *fd;
 	
 	/* discard lower priority log message */
-	if (hist->ignore
-	    && (type & 0x1f) >= hist->ignore) {
+	if (log->ignore
+	    && (type & 0x1f) >= log->ignore) {
 		return 0;
 	}
 	/* message being composed */
-	if (hist->state & MPT_OUTFLAG(Active)) {
+	if (log->state & MPT_OUTFLAG(Active)) {
 		return MPT_MESGERR(InProgress);
 	}
 	/* use log file */
-	if ((type & MPT_LOG(File)) && (fd = hist->file)) {
-		newline = mpt_newline_string(hist->lsep);
+	if ((type & MPT_LOG(File)) && (fd = log->file)) {
+		newline = mpt_newline_string(log->lsep);
 	}
 	/* select target file */
 	else {
 		fd = (type & ~MPT_LOG(File)) ? stderr : stdout;
 		newline = mpt_newline_string(0);
 		/* force color for terminal output */
-		if ((hist->state & MPT_OUTFLAG(PrintColor))) {
+		if ((log->state & MPT_OUTFLAG(PrintColor))) {
 			type |= MPT_ENUM(LogPretty);
 		}
 	}

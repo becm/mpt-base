@@ -5,12 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "array.h"
 #include "message.h"
 #include "convert.h"
 #include "meta.h"
 
-#include "output.h"
+#include "history.h"
 
 /*!
  * \ingroup mptPlot

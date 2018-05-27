@@ -6,6 +6,8 @@
 
 #include <sys/socket.h>
 
+#include "connection.h"
+
 #include "stream.h"
 
 /*!

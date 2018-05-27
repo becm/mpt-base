@@ -11,9 +11,9 @@
 #include "convert.h"
 
 #include "stream.h"
-#include "notify.h"
+#include "connection.h"
 
-#include "client.h"
+#include "notify.h"
 
 /*!
  * \ingroup mptNotify

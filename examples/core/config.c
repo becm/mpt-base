@@ -5,6 +5,7 @@
 
 #include "table_print.c"
 
+#include MPT_INCLUDE(output.h)
 #include MPT_INCLUDE(config.h)
 #include MPT_INCLUDE(parse.h)
 

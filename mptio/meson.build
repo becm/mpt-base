@@ -7,7 +7,7 @@ io_src = files(
   'input_typeid.c',
   'output_remote.c'
 )
-foreach d : [ 'notify', 'outdata', 'stream' ]
+foreach d : [ 'connection', 'notify', 'stream' ]
   subdir(d)
   io_src += src
 endforeach

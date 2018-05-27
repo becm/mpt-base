@@ -7,10 +7,10 @@
 #include "meta.h"
 #include "stream.h"
 
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief close connection
  * 
  * Clear connection related data elements.
@@ -38,7 +38,7 @@ extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 }
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief finalize connection data
  * 
  * Clear allocations and resources in connection data

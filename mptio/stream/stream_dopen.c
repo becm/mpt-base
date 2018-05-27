@@ -14,6 +14,8 @@
 
 #include "queue.h"
 
+#include "connection.h"
+
 #include "stream.h"
 
 /*!

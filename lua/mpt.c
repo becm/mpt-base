@@ -17,6 +17,7 @@
 #include "convert.h"
 #include "output.h"
 
+#include "connection.h"
 #include "stream.h"
 
 struct luaStream {

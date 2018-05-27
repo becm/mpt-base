@@ -25,6 +25,8 @@
 
 #include "message.h"
 
+#include "connection.h"
+
 static int socketSet(const char *where, MPT_STRUCT(fdmode) *mode, int (*operation)())
 {
 	int len, sock;

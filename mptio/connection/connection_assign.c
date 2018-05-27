@@ -1,5 +1,6 @@
 /*!
- * set initial parameter for output descriptor
+ * MPT I/O library
+ *   set socket for connection
  */
 
 #include <stdlib.h>
@@ -10,12 +11,14 @@
 
 #include <unistd.h>  /* dup() */
 
-#include "stream.h"
-
 #include "output.h"
 
+#include "stream.h"
+
+#include "connection.h"
+
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief set connection target
  * 
  * Set datagram or stream to clone of socket argument.

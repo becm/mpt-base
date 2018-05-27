@@ -4,11 +4,13 @@
 
 #include <inttypes.h>
 
+#include "meta.h"
 #include "message.h"
+#include "output.h"
 #include "config.h"
-#include "event.h"
 
-#include "client.h"
+
+#include "event.h"
 
 
 static int getArg(MPT_STRUCT(message) *msg, int cmd, const char *_func)

@@ -24,48 +24,48 @@
  * state for continous call.
  * 
  * \param state  output state flags
- * \param hist   history file
+ * \param log   logory file
  * \param len    size of new data
  * \param src    data to add
  * 
  * \return output file descriptor
  */
-extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const void *src)
+extern ssize_t mpt_logfile_push(MPT_STRUCT(logfile) *log, size_t len, const void *src)
 {
 	const MPT_STRUCT(msgtype) *mt;
 	FILE *fd;
 	const char *prefix, *curr;
 	int type, flags;
 	
-	if (hist->state & MPT_OUTFLAG(Active)) {
-		if (!(hist->state & 0x7)) {
+	if (log->state & MPT_OUTFLAG(Active)) {
+		if (!(log->state & 0x7)) {
 			return MPT_ERROR(BadArgument);
 		}
-		switch (hist->state & 0x3) {
+		switch (log->state & 0x3) {
 		  case MPT_OUTFLAG(PrintNormal):
 		    fd = stdout; break;
 		  case MPT_OUTFLAG(PrintError):
 		    fd = stderr; break;
 		  case MPT_OUTFLAG(PrintHistory):
-		    if (!(fd = hist->file)) fd = stderr;
+		    if (!(fd = log->file)) fd = stderr;
 		    break;
 		  default: fd = 0;
 		}
 		if (!len) {
 			if (fd) {
 				/* incomplete message */
-				if ((hist->mode & 0x80)
-				    && (hist->mode & 0xf)) {
+				if ((log->mode & 0x80)
+				    && (log->mode & 0xf)) {
 					static const char dots[] = "…";
 					fputs(dots, fd);
 				}
-				if (hist->state & MPT_OUTFLAG(PrintRestore)) {
+				if (log->state & MPT_OUTFLAG(PrintRestore)) {
 					fputs(mpt_ansi_reset(), fd);
-					hist->state &= ~MPT_OUTFLAG(PrintRestore);
+					log->state &= ~MPT_OUTFLAG(PrintRestore);
 				}
-				fputs(mpt_newline_string(hist->lsep), fd);
+				fputs(mpt_newline_string(log->lsep), fd);
 			}
-			hist->state &= ~(0x7 | MPT_OUTFLAG(Active));
+			log->state &= ~(0x7 | MPT_OUTFLAG(Active));
 			return 0;
 		}
 		if (!(curr = src)) {
@@ -75,7 +75,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			return len;
 		}
 		/* direct data write */
-		if (!(hist->mode & 0x80)) {
+		if (!(log->mode & 0x80)) {
 			return fwrite(src, len, 1, fd);
 		}
 		/* detect delimiters */
@@ -90,27 +90,27 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 				fputc(' ', fd);
 				continue;
 			  case 0x1: /* start of header */
-				if ((hist->state & MPT_OUTFLAG(PrintColor))) {
+				if ((log->state & MPT_OUTFLAG(PrintColor))) {
 					prefix = mpt_ansi_code(0);
 				}
-				val = hist->mode;
+				val = log->mode;
 				/* previous segment and function */
-				hist->mode = 0x80 | 0x40 | 0x20 | 0x1;
+				log->mode = 0x80 | 0x40 | 0x20 | 0x1;
 				break;
 			  case 0x2: /* start of normal text */
-				val = hist->mode;
+				val = log->mode;
 				/* previous segment and text */
-				hist->mode = 0x80 | 0x40 | 0x2;
+				log->mode = 0x80 | 0x40 | 0x2;
 				break;
 			  case 0x3: /* end of normal text */
 			  case 0x4: /* end of segment */
-				val = hist->mode & 0x8f;
+				val = log->mode & 0x8f;
 				/* previous segment */
-				hist->mode = 0x80 | 0x40;
+				log->mode = 0x80 | 0x40;
 				break;
 			  default:
 				/* mark as processed */
-				hist->mode |= 0x80 | 0x40;
+				log->mode |= 0x80 | 0x40;
 				fputc(val, fd);
 				continue;
 			}
@@ -121,9 +121,9 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			}
 			/* segment end restore */
 			if ((val & 0x80)
-			    && (hist->state & MPT_OUTFLAG(PrintRestore))) {
+			    && (log->state & MPT_OUTFLAG(PrintRestore))) {
 				fputs(mpt_ansi_reset(), fd);
-				hist->state &= ~MPT_OUTFLAG(PrintRestore);
+				log->state &= ~MPT_OUTFLAG(PrintRestore);
 			}
 			/* has previous segment */
 			if (val & 0x40) {
@@ -132,7 +132,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 			}
 			if (prefix &&(isatty(fileno(fd)) > 0)) {
 				fputs(prefix, fd);
-				hist->state |= MPT_OUTFLAG(PrintRestore);
+				log->state |= MPT_OUTFLAG(PrintRestore);
 			}
 		}
 		return curr - (const char *) src;
@@ -144,12 +144,12 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	if (len < 2) {
 		return MPT_ERROR(MissingData);
 	}
-	hist->state &= ~0x7;
-	hist->mode = 0;
+	log->state &= ~0x7;
+	log->mode = 0;
 	
 	if (mt->cmd == MPT_MESGTYPE(Output)) {
 		type = mt->arg;
-		hist->mode = type & ~0x60; /* no continuation and function flags */
+		log->mode = type & ~0x60; /* no continuation and function flags */
 		type &= 0x7f;
 	}
 	/* setup answer output */
@@ -163,12 +163,12 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	else {
 		return MPT_ERROR(BadType);
 	}
-	flags = mpt_output_flags(type, hist->ignore);
+	flags = mpt_output_flags(type, log->ignore);
 	
-	hist->state |= MPT_OUTFLAG(Active);
+	log->state |= MPT_OUTFLAG(Active);
 	switch (flags & 0x3) {
 	  default:
-		hist->state |= MPT_OUTFLAG(PrintRestore);
+		log->state |= MPT_OUTFLAG(PrintRestore);
 		return len;
 	  case MPT_OUTFLAG(PrintNormal):
 		fd = stdout;
@@ -177,7 +177,7 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		fd = stderr;
 		break;
 	  case MPT_OUTFLAG(PrintHistory):
-		if ((fd = hist->file)) {
+		if ((fd = log->file)) {
 			flags = MPT_OUTFLAG(PrintHistory);
 		} else {
 			flags = MPT_OUTFLAG(PrintError);
@@ -186,13 +186,13 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 		break;
 	}
 	/* discern log from regular output */
-	if (!hist->file || (fd == hist->file)) {
+	if (!log->file || (fd == log->file)) {
 		fputc('#', fd);
 		fputc(' ', fd);
 	}
 	/* set prefix string */
 	prefix = 0;
-	if ((hist->state & MPT_OUTFLAG(PrintColor))
+	if ((log->state & MPT_OUTFLAG(PrintColor))
 	    && (prefix = mpt_ansi_code(type & ~MPT_LOG(File)))
 	    && (isatty(fileno(fd)) <= 0)) {
 		prefix = 0;
@@ -226,9 +226,9 @@ extern ssize_t mpt_history_print(MPT_STRUCT(histinfo) *hist, size_t len, const v
 	if (prefix && (prefix = mpt_ansi_reset())) {
 		fputs(prefix, fd);
 	}
-	hist->state |= flags & 0x7;
+	log->state |= flags & 0x7;
 	if (len > 2) {
-		mpt_history_print(hist, len-2, mt+1);
+		mpt_logfile_push(log, len - 2, mt + 1);
 	}
 	return len;
 }

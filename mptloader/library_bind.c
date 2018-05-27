@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "output.h"
+
 #include "loader.h"
 
 static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )

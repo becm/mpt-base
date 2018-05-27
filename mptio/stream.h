@@ -21,6 +21,7 @@ struct sockaddr;
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(message);
+MPT_STRUCT(socket);
 
 MPT_INTERFACE(metatype);
 

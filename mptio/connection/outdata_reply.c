@@ -12,10 +12,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "output.h"
-
 #include "message.h"
+
 #include "stream.h"
+
+#include "connection.h"
 
 extern int mpt_outdata_reply(MPT_STRUCT(outdata) *out, size_t len, const void *hdr, const MPT_STRUCT(message) *src)
 {

@@ -9,15 +9,15 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "array.h"
 #include "message.h"
+#include "output.h"
 
 #include "stream.h"
 
-#include "output.h"
+#include "connection.h"
 
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief push to outdata
  * 
  * Append to outdata with specific encoding.

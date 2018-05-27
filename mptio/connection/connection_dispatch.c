@@ -14,9 +14,11 @@
 
 #include "meta.h"
 #include "output.h"
-
 #include "message.h"
+
 #include "stream.h"
+
+#include "connection.h"
 
 struct _streamWrapper
 {
@@ -148,7 +150,7 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 	}
 }
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief dispatch data on connection
  * 
  * Decode and process messages on connection input.

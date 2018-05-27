@@ -18,10 +18,10 @@ int output::message(const char *from, int type, const char *fmt, ... )
     va_end(va);
     return ret;
 }
-histinfo::histinfo() : file(0), state(0), mode(0), ignore(0), lsep(0)
+logfile::logfile() : file(0), state(0), mode(0), ignore(0), lsep(0)
 { }
 
-histinfo::~histinfo()
+logfile::~logfile()
 {
     if (!file
         || file == stdin

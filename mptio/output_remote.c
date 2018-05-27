@@ -22,6 +22,7 @@
 
 #include "stream.h"
 #include "notify.h"
+#include "connection.h"
 
 MPT_STRUCT(out_data) {
 	MPT_INTERFACE(input)  _in;

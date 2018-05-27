@@ -10,6 +10,7 @@
 
 #include MPT_INCLUDE(config.h)
 #include MPT_INCLUDE(client.h)
+#include MPT_INCLUDE(message.h)
 
 #include MPT_INCLUDE(stream.h)
 

@@ -15,6 +15,7 @@
 
 #include "meta.h"
 #include "config.h"
+#include "output.h"
 
 #include "parse.h"
 

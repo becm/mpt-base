@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "message.h"
+#include "output.h"
 
 #include "event.h"
 

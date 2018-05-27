@@ -1,20 +1,18 @@
 /*!
- * finalize connection data
+ * MPT I/O library
+ *   log to connection
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include "array.h"
-#include "queue.h"
-#include "event.h"
-
 #include "message.h"
-
 #include "output.h"
 
+#include "connection.h"
+
 /*!
- * \ingroup mptOutput
+ * \ingroup mptConnection
  * \brief log to connection
  * 
  * Push log message to connection or standard output

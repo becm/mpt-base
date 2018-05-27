@@ -69,6 +69,8 @@ struct iovec;
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_INTERFACE(logger);
+
 MPT_INTERFACE(metatype);
 MPT_INTERFACE(iterator);
 
@@ -561,70 +563,6 @@ public:
 template <> __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id();
 #endif
 
-/*! interface to send data */
-#ifdef __cplusplus
-MPT_INTERFACE(logger)
-{
-protected:
-	inline ~logger() {}
-public:
-	enum { Type = TypeLogger };
-	
-	int message(const char *, int , const char *, ...);
-	
-	static logger *defaultInstance();
-	
-	virtual int log(const char *, int, const char *, va_list) = 0;
-# define MPT_LOG(x) x
-#else
-# define MPT_LOG(x) MPT_ENUM(Log##x)
-#endif
-enum MPT_ENUM(LogType) {
-	MPT_LOG(Message)   = 0x0,   /* user (terminal) messages */
-	MPT_LOG(Fatal)     = 0x1,
-	MPT_LOG(Critical)  = 0x2,
-	MPT_LOG(Error)     = 0x3,
-	MPT_LOG(Warning)   = 0x4,
-	MPT_LOG(Info)      = 0x8,
-	MPT_LOG(Debug)     = 0x10,  /* debug level types */
-	MPT_LOG(Debug2)    = 0x14,
-	MPT_LOG(Debug3)    = 0x18,
-	MPT_LOG(File)      = 0x20   /* use log target */
-};
-enum MPT_ENUM(LogFlags)
-{
-	MPT_ENUM(LogPrefix)   = 0x100, /* add type prefix */
-	MPT_ENUM(LogSelect)   = 0x200, /* use ANSI colouring */
-	MPT_ENUM(LogPretty)   = MPT_ENUM(LogPrefix) | MPT_ENUM(LogSelect),
-	MPT_ENUM(LogANSIMore) = 0x400, /* no forced ANSI termination */
-	
-	MPT_ENUM(LogFunction) = 0x800  /* indicate source as function name */
-};
-#ifdef __cplusplus
-};
-template<> inline __MPT_CONST_TYPE int typeinfo<logger *>::id() {
-	return logger::Type;
-}
-#else
-MPT_INTERFACE(logger);
-MPT_INTERFACE_VPTR(logger) {
-	int (*log)(MPT_INTERFACE(logger) *, const char *, int , const char *, va_list);
-}; MPT_INTERFACE(logger) {
-	const MPT_INTERFACE_VPTR(logger) *_vptr;
-};
-#endif
-
-#ifdef __cplusplus
-int critical(const char *, const char *, ... );
-int error(const char *, const char *, ... );
-int warning(const char *, const char *, ... );
-int debug(const char *, const char *, ... );
-
-int println(const char *, ... );
-
-int log(const metatype *, const char *, int , const char *, ... );
-#endif
-
 /* text identifier for entity */
 MPT_STRUCT(identifier)
 {
@@ -699,6 +637,20 @@ public:
 	inline T *pointer() const
 	{ return Reference<T>::pointer(); }
 };
+
+/*! interface to search objects in tree */
+class Relation
+{
+public:
+	inline Relation(const Relation *p = 0) : _parent(p)
+	{ }
+	virtual metatype *find(int , const char *, int = -1) const;
+protected:
+	virtual ~Relation() {}
+	const Relation *_parent;
+};
+inline metatype *Relation::find(int type, const char *name, int nlen) const
+{ return _parent ? _parent->find(type, name, nlen) : 0; }
 #endif /* C++ */
 
 MPT_STRUCT(fdmode)
@@ -719,77 +671,6 @@ MPT_STRUCT(fdmode)
 	uint16_t stream; /* stream specific flags */
 };
 
-/* collection solver runtime data */
-#ifdef __cplusplus
-MPT_STRUCT(socket)
-{
-public:
-# define MPT_SOCKETFLAG(x) x
-#else
-# define MPT_SOCKETFLAG(x) MPT_ENUM(Socket##x)
-#endif
-enum MPT_ENUM(SocketFlags) {
-	MPT_SOCKETFLAG(Write)  = 0x1,
-	MPT_SOCKETFLAG(Read)   = 0x2,
-	MPT_SOCKETFLAG(RdWr)   = 0x3,
-	MPT_SOCKETFLAG(Stream) = 0x4
-};
-#ifdef __cplusplus
-	enum { Type = TypeSocket };
-	
-	inline socket(int fd = -1) : _id(fd)
-	{ }
-	~socket();
-	
-	inline bool active() const
-	{ return _id >= 0; }
-	
-	bool bind(const char *, int = 2);
-	bool open(const char *, const char *mode = "w");
-	
-	bool set(metatype &);
-	bool set(const value *);
-protected:
-#else
-MPT_STRUCT(socket)
-{
-# define MPT_SOCKET_INIT       { -1 }
-# define MPT_socket_active(s)  ((s)->_id >= 0)
-#endif
-	int32_t  _id;     /* socket descriptor */
-};
-#ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<socket>::id() {
-	return socket::Type;
-}
-
-class Stream;
-class Socket : public socket
-{
-public:
-	Socket(socket * = 0);
-	virtual ~Socket();
-	
-	int assign(const value *);
-	
-	virtual Reference<class Stream> accept();
-};
-
-/*! interface to search objects in tree */
-class Relation
-{
-public:
-	inline Relation(const Relation *p = 0) : _parent(p)
-	{ }
-	virtual metatype *find(int , const char *, int = -1) const;
-protected:
-	virtual ~Relation() {}
-	const Relation *_parent;
-};
-inline metatype *Relation::find(int type, const char *name, int nlen) const
-{ return _parent ? _parent->find(type, name, nlen) : 0; }
-#endif
-
 __MPT_EXTDECL_BEGIN
 
 /* reference counter operations */
@@ -799,10 +680,6 @@ extern uintptr_t mpt_refcount_lower(MPT_STRUCT(refcount) *);
 
 /* get file/socket properties from string */
 extern int mpt_mode_parse(MPT_STRUCT(fdmode) *, const char *);
-
-/* socket operations */
-extern int mpt_connect(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode) *);
-extern int mpt_bind(MPT_STRUCT(socket) *, const char *, const MPT_STRUCT(fdmode) *, int);
 
 
 /* identifier operations */
@@ -820,26 +697,6 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUC
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
 /* read from value */
 extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
-
-
-/* push log message */
-extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
-/* get default logger instance */
-extern MPT_INTERFACE(logger) *mpt_log_default(void);
-
-/* set default logger options */
-extern int mpt_log_default_format(int);
-extern int mpt_log_default_skip(int);
-
-#if defined(_STDIO_H) || defined(_STDIO_H_)
-/* start log message */
-extern const char *mpt_log_intro(FILE *, int);
-#endif
-
-/* message type description */
-extern const char *mpt_log_identifier(int);
-/* determine message level */
-int mpt_log_level(const char *);
 
 
 /* write error message and abort program */

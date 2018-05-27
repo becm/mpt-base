@@ -6,7 +6,11 @@
 #ifndef _MPT_PARSE_H
 #define _MPT_PARSE_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#ifdef __cplusplus
+# include "output.h"
+#else
+# include "core.h"
+#endif
 
 struct iovec;
 

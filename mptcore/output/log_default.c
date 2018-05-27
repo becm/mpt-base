@@ -14,7 +14,7 @@
 
 #include "convert.h"
 
-#include "message.h"
+#include "output.h"
 
 static int logSkip  = MPT_LOG(Info);
 static int logFlags = MPT_ENUM(LogPretty);
@@ -49,7 +49,9 @@ static int loggerLog(MPT_INTERFACE(logger) *out, const char *where, int type, co
 		fputc(' ', fd);
 	}
 	ret = fmt ? vfprintf(fd, fmt, ap) : 0;
-	if (ansi) fputs(ansi, fd);
+	if (ansi) {
+		fputs(ansi, fd);
+	}
 	fputs(mpt_newline_string(0), fd);
 	
 	return ret;
@@ -98,7 +100,7 @@ extern int mpt_log_default_skip(int val)
 {
 	if (val < 0) {
 		logSkip = MPT_LOG(Info);
-	}else {
+	} else {
 		logSkip = val & 0xff;
 	}
 	return logSkip | logFlags;

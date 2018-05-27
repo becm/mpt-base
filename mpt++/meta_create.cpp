@@ -7,8 +7,9 @@
 #include <errno.h>
 
 #include "meta.h"
+#include "convert.h"
 
-#include "../mptio/stream.h"
+#include "stream.h"
 
 __MPT_NAMESPACE_BEGIN
 

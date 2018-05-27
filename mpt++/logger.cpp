@@ -11,6 +11,7 @@
 #include "array.h"
 #include "output.h"
 #include "client.h"
+#include "convert.h"
 
 __MPT_NAMESPACE_BEGIN
 

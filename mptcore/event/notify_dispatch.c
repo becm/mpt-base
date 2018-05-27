@@ -7,6 +7,8 @@
 
 #include "../mptio/notify.h"
 
+#include "output.h"
+
 #include "event.h"
 
 static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)

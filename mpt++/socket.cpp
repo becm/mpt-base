@@ -12,7 +12,10 @@
 #include <sys/un.h>
 
 #include "meta.h"
+
 #include "stream.h"
+
+#include "connection.h"
 
 __MPT_NAMESPACE_BEGIN
 

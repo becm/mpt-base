@@ -1,19 +1,7 @@
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
+#include "connection.h"
 
-#include "queue.h"
 #include "stream.h"
-
-#include "array.h"
-#include "message.h"
-
-#include "convert.h"
-
-#include "output.h"
 
 /*!
  * \ingroup mptStream

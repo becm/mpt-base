@@ -9,6 +9,11 @@
 
 #include <sys/uio.h>
 
+#include "message.h"
+#include "convert.h"
+
+#include "connection.h"
+
 #include "stream.h"
 
 __MPT_NAMESPACE_BEGIN

@@ -6,7 +6,11 @@
 #ifndef _MPT_OBJECT_H
 #define _MPT_OBJECT_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#ifdef __cplusplus
+# include "output.h"
+#else
+# include "core.h"
+#endif
 
 __MPT_NAMESPACE_BEGIN
 

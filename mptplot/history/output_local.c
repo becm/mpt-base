@@ -8,7 +8,7 @@
 #include "meta.h"
 #include "object.h"
 
-#include "output.h"
+#include "history.h"
 
 MPT_STRUCT(local_output)
 {
@@ -227,7 +227,7 @@ static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, cons
 	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, log, _log);
 	
 	if (!(lo->hist.info.state & MPT_OUTFLAG(Active))) {
-		return mpt_history_log(&lo->hist.info, from, type, fmt, arg);
+		return mpt_logfile_log(&lo->hist.info, from, type, fmt, arg);
 	}
 	if ((log = mpt_log_default())) {
 		return log->_vptr->log(log, from, type, fmt, arg);

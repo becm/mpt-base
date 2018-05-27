@@ -9,6 +9,7 @@
 #include "meta.h"
 #include "array.h"
 #include "message.h"
+#include "output.h"
 
 #include "config.h"
 

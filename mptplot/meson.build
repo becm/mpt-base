@@ -3,19 +3,16 @@
 
 # collect source files
 plot_src = files(
-  'history_push.c',
-  'history_values.c',
   'mapping.c',
-  'output_local.c',
   'rawdata_typeid.c', 'rawdata_create.c'
 )
-foreach d : [ 'layout', 'values', 'output' ]
+foreach d : [ 'history', 'layout', 'values', 'output' ]
   subdir(d)
   plot_src += src
 endforeach
 
 if not meson.is_subproject()
-  install_headers('layout.h', 'values.h', subdir : 'mpt')
+  install_headers('history.h', 'layout.h', 'values.h', subdir : 'mpt')
 endif
 
 plot = include_directories('.')

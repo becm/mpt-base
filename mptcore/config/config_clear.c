@@ -2,12 +2,10 @@
  * execute solver step
  */
 
-#include "event.h"
-#include "message.h"
-#include "config.h"
 #include "meta.h"
+#include "output.h"
 
-#include "client.h"
+#include "config.h"
 
 /*!
  * \ingroup mptClient

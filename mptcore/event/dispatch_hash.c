@@ -10,9 +10,9 @@
 
 #include <sys/uio.h>
 
-#include "array.h"
-#include "config.h"
 #include "message.h"
+#include "output.h"
+
 #include "event.h"
 
 /*!
