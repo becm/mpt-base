@@ -137,11 +137,12 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeConfig)         = 0x81,
 	/* input interface types */
 	MPT_ENUM(TypeIterator)       = 0x82,
-	MPT_ENUM(TypeSolver)         = 0x83,
-	/* output interfaces */
+	/* output interface types */
 	MPT_ENUM(TypeLogger)         = 0x84,
 	MPT_ENUM(TypeReply)          = 0x85,
 	MPT_ENUM(TypeOutput)         = 0x86,
+	/* other interface types */
+	MPT_ENUM(TypeSolver)         = 0x88,
 	/* range for dynamic interfaces */
 	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeDynamic) + 0x10,
 	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeDynamic) + 0x3f,
