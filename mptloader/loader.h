@@ -15,6 +15,7 @@ MPT_STRUCT(libhandle)
 #ifdef __cplusplus
 	inline libhandle() : _ref(0), lib(0)
 	{ }
+protected:
 	~libhandle();
 #else
 # define MPT_LIBHANDLE_INIT { { 0 }, 0 }
@@ -26,9 +27,9 @@ MPT_STRUCT(libhandle)
 MPT_STRUCT(libsymbol)
 {
 #ifdef __cplusplus
-	inline libhandle() : lib(0), addr(0), type(0)
+	inline libsymbol() : lib(0), addr(0), type(0)
 	{ }
-	~libhandle();
+	~libsymbol();
 #else
 # define MPT_LIBSYMBOL_INIT { 0, 0, 0 }
 #endif
@@ -38,7 +39,6 @@ MPT_STRUCT(libsymbol)
 };
 
 __MPT_EXTDECL_BEGIN
-
 
 /* get input from user */
 extern char *mpt_readline(const char *);
@@ -60,9 +60,9 @@ extern int mpt_library_bind(MPT_STRUCT(libsymbol) *, const char *, const char *,
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-inline libhandle::~libhandle()
+inline libsymbol::~libsymbol()
 {
-    mpt_library_close(this);
+    mpt_library_detach(&lib);
 }
 #endif /* C++ */
 
