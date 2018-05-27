@@ -10,7 +10,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(core.h)
+#include MPT_INCLUDE(connection.h)
 
 int main(int argc, char *argv[])
 {

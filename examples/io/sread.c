@@ -24,8 +24,8 @@
 
 #include MPT_INCLUDE(array.h)
 #include MPT_INCLUDE(queue.h)
-#include MPT_INCLUDE(message.h)
 
+#include MPT_INCLUDE(connection.h)
 #include MPT_INCLUDE(stream.h)
 
 /* easyest/general way to access envionment */

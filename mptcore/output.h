@@ -134,7 +134,7 @@ MPT_STRUCT(logfile)
 	~logfile();
 protected:
 #else
-# define MPT_HISTINFO_INIT { 0, 0,0, 0,0 }
+# define MPT_LOGFILE_INIT  { 0, 0,0, 0,0 }
 #endif
 #if defined(_STDIO_H) || defined(_STDIO_H_)
 	FILE *file;
@@ -181,7 +181,6 @@ extern MPT_INTERFACE(metatype) *mpt_output_local(void);
 extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
 /* get default logger instance */
 extern MPT_INTERFACE(logger) *mpt_log_default(void);
-
 
 
 /* set default logger options */

@@ -9,9 +9,9 @@
 #include MPT_INCLUDE(array.h)
 #include MPT_INCLUDE(convert.h)
 #include MPT_INCLUDE(message.h)
-
 #include MPT_INCLUDE(queue.h)
-#include MPT_INCLUDE(stream.h)
+
+#include MPT_INCLUDE(connection.h)
 
 #include MPT_INCLUDE(output.h)
 

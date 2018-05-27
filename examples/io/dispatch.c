@@ -24,10 +24,10 @@
 #include MPT_INCLUDE(convert.h)
 #include MPT_INCLUDE(message.h)
 #include MPT_INCLUDE(event.h)
-
-#include MPT_INCLUDE(stream.h)
 #include MPT_INCLUDE(output.h)
 
+#include MPT_INCLUDE(connection.h)
+#include MPT_INCLUDE(stream.h)
 #include MPT_INCLUDE(notify.h)
 
 static int printMessage(void *fd, MPT_STRUCT(event) *ev)

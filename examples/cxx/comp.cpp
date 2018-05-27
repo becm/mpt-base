@@ -13,32 +13,36 @@
 # define mtrace()
 #endif
 
-#include <mpt/array.h>
-#include <mpt/message.h>
-#include <mpt/event.h>
+#ifndef MPT_INCLUDE
+# define MPT_INCLUDE(x) <mpt/x>
+#endif
 
-#include <mpt/notify.h>
+#include MPT_INCLUDE(message.h)
+
+#include MPT_INCLUDE(notify.h)
 
 static int printMessage(mpt::input *in, mpt::event *ev)
 {
-	struct mpt::message msg;
+	mpt::message msg;
 	mpt::msgtype mt(0);
 	char buf[128];
 	int len, total = 0;
 	
-	if (!ev || !ev->msg) return -1;
+	if (!ev || !ev->msg) {
+		return -1;
+	}
 	
 	msg = *ev->msg;
 	total = msg.length();
 	
-	int file = -1;
-	in->conv(mpt::socket::Type, &file);
+	int32_t file = -1;
+	in->conv(mpt::TypeSocket, &file);
 	msg.read(sizeof(mt), &mt);
 	printf("file: %d, size: %d, { cmd: %d, arg: %d }\n",
 	       file, total, mt.cmd, mt.cmd);
 	
-	while ((len = msg.read(sizeof(buf)-1, &buf))) {
-		buf[sizeof(buf)-1] = 0;
+	while ((len = msg.read(sizeof(buf) - 1, &buf))) {
+		buf[len] = 0;
 		if (strstr(buf, "exit")) {
 			puts("\nexiting");
 			return mpt::event::Terminate;
@@ -76,7 +80,8 @@ extern int main(int argc, char *argv[])
 			}
 		}
 		if ((arg = no.wait(-1, -1)) < 0) {
-			perror("wait"); break;
+			perror("wait");
+			break;
 		}
 	}
 	

@@ -36,7 +36,7 @@ struct history : logfile, public histfmt
 #else
 MPT_STRUCT(history)
 {
-# define MPT_HISTORY_INIT { MPT_HISTINFO_INIT, MPT_HISTFMT_INIT }
+# define MPT_HISTORY_INIT { MPT_LOGFILE_INIT, MPT_HISTFMT_INIT }
 	MPT_STRUCT(logfile) info;
 	MPT_STRUCT(histfmt) fmt;
 #endif
