@@ -13,7 +13,7 @@ bool object::const_iterator::select(uintptr_t pos)
 {
     _prop.name = 0;
     _prop.desc = (const char *) pos;
-    if (_ref.property(&_prop) < 0) {
+    if (_ref.property_get(&_prop) < 0) {
         return false;
     }
     _pos = pos;
@@ -21,8 +21,8 @@ bool object::const_iterator::select(uintptr_t pos)
 }
 bool object::iterator::select(uintptr_t pos)
 {
-    struct property pr(pos);
-    if (_ref.property(&pr) < 0) {
+    property pr(pos);
+    if (_ref.property_get(&pr) < 0) {
         return false;
     }
     _name = pr.name;
@@ -44,8 +44,8 @@ bool object::set(const char *name, const value &val, logger *out)
     }
     if (ret >= 0) return true;
     if (!out) return false;
-    struct property pr("");
-    if (property(&pr) < 0) pr.name = "object";
+    property pr("");
+    if (property_get(&pr) < 0) pr.name = "object";
     pr.val.fmt = val.fmt;
     if (!(pr.val.ptr = val.ptr)) {
         pr.val.fmt = 0;
@@ -89,7 +89,7 @@ static int objectSetProperty(void *addr, const property *pr)
     if (dat->obj->set(pr->name, pr->val, dat->out)) return 0;
     return dat->out ? 1 : -1;
 }
-bool object::setProperties(const object &from, logger *out)
+bool object::set(const object &from, logger *out)
 {
     propertyErrorOut dat = { this, out };
     return mpt_object_foreach(&from, objectSetProperty, &dat);
@@ -117,7 +117,7 @@ object::Property & object::Property::operator= (const char *val)
 bool object::Property::select(const char *name)
 {
     struct property pr(name);
-    if (_obj.property(&pr) < 0) return false;
+    if (_obj.property_get(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
@@ -125,15 +125,15 @@ bool object::Property::select(int pos)
 {
     if (pos < 0) return false;
     struct property pr(pos);
-    if (_obj.property(&pr) < 0) return false;
+    if (_obj.property_get(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
 bool object::Property::set(const metatype &src)
 {
     if (!_prop.name) return false;
-    if (_obj.setProperty(_prop.name, &src) < 0) return false;
-    if (_obj.property(&_prop) < 0) _prop.name = 0;
+    if (_obj.property_set(_prop.name, &src) < 0) return false;
+    if (_obj.property_get(&_prop) < 0) _prop.name = 0;
     return false;
 }
 bool object::Property::set(const value &val)
@@ -141,7 +141,7 @@ bool object::Property::set(const value &val)
     if (!_prop.name) return false;
     struct value tmp = val;
     if (mpt_object_set_value(&_obj, _prop.name, &tmp) < 0) return false;
-    if (_obj.property(&_prop) < 0) _prop.name = 0;
+    if (_obj.property_get(&_prop) < 0) _prop.name = 0;
     return true;
 }
 // get property by name/position
@@ -157,10 +157,12 @@ object::Property object::operator [](int pos)
     prop.select(pos);
     return prop;
 }
-const node *object::getProperties(const node *head, PropertyHandler proc, void *pdata)
+const node *object::set(const node *head, PropertyHandler proc, void *pdata)
 {
     const int traverse = TraverseAll | TraverseChange;
-    if (!head) return 0;
+    if (!head) {
+        return 0;
+    }
     do {
         int ret = mpt_object_set_property(this, traverse, &head->ident, head->meta().pointer());
         if (ret) {
@@ -169,8 +171,8 @@ const node *object::getProperties(const node *head, PropertyHandler proc, void *
         if (!proc) {
             continue;
         }
-        struct property pr(head->ident.name());
-        this->property(&pr);
+        property pr(head->ident.name());
+        property_get(&pr);
         const metatype *mt;
         static const uint8_t metafmt[] = { metatype::Type, 0 };
         pr.val.fmt = metafmt;

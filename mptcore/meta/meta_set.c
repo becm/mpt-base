@@ -44,7 +44,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 				}
 				return ret;
 			}
-			if ((err = obj->_vptr->setProperty(obj, 0, 0)) >= 0) {
+			if ((err = obj->_vptr->property_set(obj, 0, 0)) >= 0) {
 				return ret;
 			}
 		}

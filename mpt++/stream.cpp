@@ -128,7 +128,7 @@ int Stream::conv(int type, void *ptr) const
     return BadType;
 }
 // object interface
-int Stream::property(struct property *pr) const
+int Stream::property_get(struct property *pr) const
 {
     int me = mpt_input_typeid();
     
@@ -168,7 +168,7 @@ int Stream::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Stream::setProperty(const char *pr, const metatype *src)
+int Stream::property_set(const char *pr, const metatype *src)
 {
     if (!pr) {
         if (!_srm) {

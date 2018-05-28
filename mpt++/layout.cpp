@@ -128,11 +128,11 @@ int Line::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Line::property(struct property *prop) const
+int Line::property_get(struct property *prop) const
 {
     return mpt_line_get(this, prop);
 }
-int Line::setProperty(const char *name, const metatype *src)
+int Line::property_set(const char *name, const metatype *src)
 {
     return mpt_line_set(this, name, src);
 }
@@ -207,11 +207,11 @@ int Text::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Text::property(struct property *prop) const
+int Text::property_get(struct property *prop) const
 {
     return mpt_text_get(this, prop);
 }
-int Text::setProperty(const char *prop, const metatype *src)
+int Text::property_set(const char *prop, const metatype *src)
 {
     return mpt_text_set(this, prop, src);
 }
@@ -280,11 +280,11 @@ int Axis::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Axis::property(struct property *prop) const
+int Axis::property_get(struct property *prop) const
 {
     return mpt_axis_get(this, prop);
 }
-int Axis::setProperty(const char *prop, const metatype *src)
+int Axis::property_set(const char *prop, const metatype *src)
 {
     return mpt_axis_set(this, prop, src);
 }
@@ -366,11 +366,11 @@ int World::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int World::property(struct property *prop) const
+int World::property_get(struct property *prop) const
 {
     return mpt_world_get(this, prop);
 }
-int World::setProperty(const char *prop, const metatype *src)
+int World::property_set(const char *prop, const metatype *src)
 {
     return mpt_world_set(this, prop, src);
 }
@@ -432,14 +432,14 @@ int Graph::conv(int type, void *ptr) const
     return Collection::conv(type, ptr);
 }
 // object interface
-int Graph::property(struct property *prop) const
+int Graph::property_get(struct property *prop) const
 {
     if (!prop) {
         return typeinfo<Graph *>::id();
     }
     return mpt_graph_get(this, prop);
 }
-int Graph::setProperty(const char *prop, const metatype *src)
+int Graph::property_set(const char *prop, const metatype *src)
 {
     int ret = mpt_graph_set(this, prop, src);
 
@@ -459,7 +459,7 @@ static Axis *makeAxis(metatype *mt, logger *out, const char *_func, const char *
     object *o;
     if ((o = mt->cast<object>())) {
         Axis *a = new Axis;
-        if (a->setProperties(*o, out)) {
+        if (a->set(*o, out)) {
              return a;
         }
         a->unref();
@@ -485,7 +485,7 @@ static World *makeWorld(metatype *mt, logger *out, const char *_func, const char
     object *o;
     if (!(o = mt->cast<object>())) {
         World *w = new World;
-        if (w->setProperties(*o, out)) {
+        if (w->set(*o, out)) {
             return w;
         }
         w->unref();
@@ -753,7 +753,7 @@ Layout::~Layout()
     delete _parse;
 }
 // object interface
-int Layout::property(struct property *pr) const
+int Layout::property_get(struct property *pr) const
 {
     if (!pr) {
         return typeinfo<Layout *>::id();
@@ -789,7 +789,7 @@ int Layout::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Layout::setProperty(const char *name, const metatype *src)
+int Layout::property_set(const char *name, const metatype *src)
 {
     int len;
 
@@ -833,7 +833,7 @@ bool Layout::bind(const Relation &rel, logger *out)
             if (!(o = mt->cast<object>())) {
                 continue;
             }
-            if (g->setProperties(*o, out)) {
+            if (g->set(*o, out)) {
                 continue;
             }
             if (!out) {

@@ -27,7 +27,7 @@ template <> int typeinfo<Group *>::id()
     return id;
 }
 // object interface for group
-int Group::property(struct property *pr) const
+int Group::property_get(struct property *pr) const
 {
     if (!pr) {
         return typeinfo<Group *>::id();
@@ -41,7 +41,7 @@ int Group::property(struct property *pr) const
     pr->val.ptr = 0;
     return 0;
 }
-int Group::setProperty(const char *, const metatype *)
+int Group::property_set(const char *, const metatype *)
 {
     return BadOperation;
 }
@@ -152,7 +152,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             }
             object *obj, *src;
             if ((src = curr->cast<object>()) && (obj = from->cast<object>())) {
-                obj->setProperties(*src, out);
+                obj->set(*src, out);
                 continue;
             }
             from->unref();

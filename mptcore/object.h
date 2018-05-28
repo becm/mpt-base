@@ -70,24 +70,25 @@ public:
 	class const_iterator end() const;
 	
 	bool set(const char *, const value &, logger * = logger::defaultInstance());
-	bool setProperties(const object &, logger * = logger::defaultInstance());
+	bool set(const object &, logger * = logger::defaultInstance());
 	
 	/* get property by name/position */
 	object::Property operator [](const char *);
 	object::Property operator [](int);
 	
 	/* get properties from node list */
-	const node *getProperties(const node *, PropertyHandler , void *);
-	/* set non-default/all child entrys */
-	int setProperties(node *) const;
-	int setAllProperties(node *) const;
+	const node *set(const node *, PropertyHandler , void *);
+	/* set property elements */
+	int properties(node **) const;
 	
-	/* get next node with default/unknown property */
-	node *getDefault(const node *) const;
-	node *getAlien(const node *) const;
+	/* get next node with valid/default/changed/unknown property */
+	node *next_valid(const node *) const;
+	node *next_default(const node *) const;
+	node *next_changed(const node *) const;
+	node *next_alien(const node *) const;
 	
-	virtual int property(struct property *) const = 0;
-	virtual int setProperty(const char *, const metatype * = 0) = 0;
+	virtual int property_get(struct property *) const = 0;
+	virtual int property_set(const char *, const metatype * = 0) = 0;
 };
 template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 	return object::Type;
@@ -95,8 +96,8 @@ template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
-	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*setProperty)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
+	int (*property_get)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
+	int (*property_set)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
 };
@@ -291,8 +292,8 @@ struct node;
 class Group : public object
 {
 public:
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	virtual const Item<metatype> *item(size_t pos) const;
 	virtual Item<metatype> *append(metatype *);

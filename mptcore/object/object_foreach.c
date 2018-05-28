@@ -7,7 +7,7 @@
 static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
 {
 	MPT_INTERFACE(object) *obj = ptr;
-	return obj->_vptr->property(obj, pr);
+	return obj->_vptr->property_get(obj, pr);
 }
 
 /*!

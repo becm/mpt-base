@@ -20,7 +20,7 @@ extern const char *mpt_object_typename(MPT_INTERFACE(object) *mt)
 	pr.name = "";
 	pr.desc = 0;
 	
-	if (mt->_vptr->property(mt, &pr) < 0) {
+	if (mt->_vptr->property_get(mt, &pr) < 0) {
 		return 0;
 	}
 	return pr.name;

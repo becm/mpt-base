@@ -90,7 +90,7 @@ static int processObjectFormat(MPT_INTERFACE(object) *obj, const char *prop, con
 			return ret;
 		}
 		s._mt._vptr = &metaValCtl;
-		if ((ret = obj->_vptr->setProperty(obj, prop, &s._mt)) >= 0
+		if ((ret = obj->_vptr->property_set(obj, prop, &s._mt)) >= 0
 		    || ret != MPT_ERROR(BadType)) {
 			return ret;
 		}
@@ -113,10 +113,10 @@ static int processObjectFormat(MPT_INTERFACE(object) *obj, const char *prop, con
 extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
 {
 	if (!fmt) {
-		return obj->_vptr->setProperty(obj, prop, 0);
+		return obj->_vptr->property_set(obj, prop, 0);
 	}
 	if (!fmt[0]) {
-		return obj->_vptr->setProperty(obj, prop, mpt_metatype_default());
+		return obj->_vptr->property_set(obj, prop, mpt_metatype_default());
 	}
 	return processObjectFormat(obj, prop, fmt, va);
 }
@@ -136,10 +136,10 @@ extern int mpt_object_set(MPT_INTERFACE(object) *obj, const char *prop, const ch
 	int ret;
 	
 	if (!fmt) {
-		return obj->_vptr->setProperty(obj, prop, 0);
+		return obj->_vptr->property_set(obj, prop, 0);
 	}
 	if (!fmt[0]) {
-		return obj->_vptr->setProperty(obj, prop, mpt_metatype_default());
+		return obj->_vptr->property_set(obj, prop, mpt_metatype_default());
 	}
 	va_start(va, fmt);
 	ret = processObjectFormat(obj, prop, fmt, va);

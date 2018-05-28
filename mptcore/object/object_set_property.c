@@ -52,7 +52,7 @@ extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const 
 		if ((ret = val->_vptr->conv(val, 's', &str)) >= 0) {
 			ret = mpt_object_set_string(obj, name, ret ? str : 0, 0);
 		} else {
-			ret = obj->_vptr->setProperty(obj, name, val);
+			ret = obj->_vptr->property_set(obj, name, val);
 		}
 	}
 	/* no property value */
@@ -60,7 +60,7 @@ extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const 
 		if (!(match & MPT_ENUM(TraverseDefault))) {
 			return MPT_ENUM(TraverseDefault);
 		}
-		ret = obj->_vptr->setProperty(obj, name, 0);
+		ret = obj->_vptr->property_set(obj, name, 0);
 	}
 	if (ret == MPT_ERROR(BadArgument)) {
 		if (!(match & MPT_ENUM(TraverseUnknown))) {

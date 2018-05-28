@@ -109,7 +109,7 @@ extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, c
 	mt.src = 0;
 	mt.val = val;
 	mt.sep = sep;
-	ret = obj->_vptr->setProperty(obj, name, &mt._ctl);
+	ret = obj->_vptr->property_set(obj, name, &mt._ctl);
 	if ((src = mt.src)) {
 		src->_vptr->ref.unref((void *) src);
 	}

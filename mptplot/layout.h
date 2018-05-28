@@ -315,8 +315,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype * = 0) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype * = 0) __MPT_OVERRIDE;
 };
 
 class Text : public metatype, public object, public text
@@ -328,8 +328,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 class Axis : public metatype, public object, public axis
@@ -342,8 +342,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 class World : public metatype, public object, public world
@@ -356,8 +356,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 /*! Group implementation using reference array */
@@ -420,8 +420,8 @@ public:
 	
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
@@ -455,8 +455,8 @@ public:
 	Layout();
 	~Layout() __MPT_OVERRIDE;
 	
-	int property(struct property *pr) const __MPT_OVERRIDE;
-	int setProperty(const char *pr, const metatype *src) __MPT_OVERRIDE;
+	int property_get(struct property *pr) const __MPT_OVERRIDE;
+	int property_set(const char *pr, const metatype *src) __MPT_OVERRIDE;
 	
 	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	

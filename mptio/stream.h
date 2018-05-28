@@ -208,8 +208,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int , void *) const __MPT_OVERRIDE;
 	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int setProperty(const char *, const metatype *) __MPT_OVERRIDE;
+	int property_get(struct property *) const __MPT_OVERRIDE;
+	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;
@@ -228,7 +228,7 @@ public:
 	bool open(void *, size_t , int = stream::Read);
 	
 	inline void close()
-	{ setProperty(0, 0); }
+	{ property_set(0, 0); }
 	
 	class Dispatch;
 protected:

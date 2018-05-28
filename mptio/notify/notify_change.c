@@ -57,7 +57,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	}
 	/* assign new target */
 	if (!val) {
-		ret = obj->_vptr->setProperty(obj, 0, 0);
+		ret = obj->_vptr->property_set(obj, 0, 0);
 	} else if (!val->fmt) {
 		ret = mpt_object_set_string(obj, 0, val->ptr, 0);
 	} else {

@@ -41,9 +41,6 @@ examples_% :
 clear :
 	${RM} "${CLEAR_FILES}"
 
-clear :
-	${RM} "${DIR_LIB}/libmpt.a"
-
 # combined static library
 "${DIR_LIB}/libmpt.a" :
 	@for m in ${MERGE}; do \
