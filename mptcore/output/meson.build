@@ -7,6 +7,7 @@ src = files(
   'log_intro.c',
   'log_level.c',
   'logfile_log.c',
+  'logfile_property.c',
   'logfile_push.c',
   'output_flags.c',
   'output_log.c',

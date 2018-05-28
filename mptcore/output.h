@@ -154,6 +154,9 @@ __MPT_EXTDECL_BEGIN
 extern int mpt_logfile_log(MPT_STRUCT(logfile) *, const char *, int , const char *, va_list);
 /* push to log file */
 extern ssize_t mpt_logfile_push(MPT_STRUCT(logfile) *, size_t , const void *);
+/* get/set logfile properties */
+extern int mpt_logfile_get(const MPT_STRUCT(logfile) *, MPT_STRUCT(property) *);
+extern int mpt_logfile_set(MPT_STRUCT(logfile) *, const char *, const MPT_INTERFACE(metatype) *);
 
 /* determine output print flags */
 extern int mpt_output_flags(uint8_t arg, int min);
