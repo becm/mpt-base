@@ -130,10 +130,10 @@ public:
 	enum Flags {
 		ValueChange = 1
 	};
-	inline typed_array() : _flags(0), _type(0), _esize(0)
+	inline typed_array() : _type(0), _flags(0), _esize(0), _code(0)
 	{ }
 	bool setType(int);
-	void *reserve(size_t, long = 0);
+	void *reserve(long, long = 0);
 	
 	inline int flags() const
 	{ return _flags; }
@@ -141,7 +141,7 @@ public:
 	
 	inline size_t elementSize() const
 	{ return _esize; }
-	inline size_t elements() const
+	inline long elements() const
 	{ return _esize ? _d.length() / _esize : 0; }
 	inline const void *base() const
 	{ return _d.base(); }
@@ -153,9 +153,10 @@ protected:
 # define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
 #endif
 	MPT_STRUCT(array) _d;
+	uint32_t _type;
 	uint16_t _flags;
-	uint8_t _type;
-	uint8_t _esize;
+	uint8_t  _esize;
+	uint8_t  _code;
 };
 MPT_STRUCT(rawdata_stage)
 {

@@ -66,3 +66,36 @@ extern int mpt_msgvalfmt_typeid(uint8_t fmt)
 	}
 	return fmt ? fmt : MPT_ERROR(BadType);
 }
+
+/*!
+ * \ingroup mptMessage
+ * \brief get type message code
+ * 
+ * Message type code for native value type.
+ * 
+ * \param type  native type id
+ * 
+ * \return message type code
+ */
+extern int mpt_msgvalfmt_code(int type)
+{
+	switch (type) {
+#ifdef _MPT_FLOAT_EXTENDED_H
+	    case 'e': return MPT_message_value(Float, long double);
+#endif
+	    case 'd': return MPT_message_value(Float, double);
+	    case 'f': return MPT_message_value(Float, float);
+	    
+	    case 'b': return MPT_message_value(Integer, int8_t);
+	    case 'n': return MPT_message_value(Integer, int16_t);
+	    case 'i': return MPT_message_value(Integer, int32_t);
+	    case 'x': return MPT_message_value(Integer, int64_t);
+	    
+	    case 'y': return MPT_message_value(Unsigned, uint8_t);
+	    case 'q': return MPT_message_value(Unsigned, uint16_t);
+	    case 'u': return MPT_message_value(Unsigned, uint32_t);
+	    case 't': return MPT_message_value(Unsigned, uint64_t);
+	    
+	    default:  return -1;
+	}
+}

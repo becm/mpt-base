@@ -213,12 +213,13 @@ template<typename MPT_COPY_ST, typename MPT_COPY_DT>
 #if defined(MPT_COPY_FCN) && (defined(__cplusplus) || (defined(MPT_COPY_ST) && defined(MPT_COPY_DT)))
 extern void MPT_COPY_FCN(int pts, const MPT_COPY_ST *src, int lds, MPT_COPY_DT *dest, int ldd)
 {
-	intptr_t i, j;
+	int i, j;
 	
-	if (pts <= 0) return;
-	
+	if (pts <= 0) {
+		return;
+	}
 	if (!ldd) {
-		dest[0] = src[(pts-1) * lds];
+		dest[0] = src[(pts - 1) * lds];
 		return;
 	}
 	if (!lds) {
@@ -237,6 +238,19 @@ extern void MPT_COPY_FCN(int pts, const MPT_COPY_ST *src, int lds, MPT_COPY_DT *
 		dest[i] = src[j];
 	}
 }
+#endif
+
+#ifdef __cplusplus
+template<typename SRC, typename DST>
+extern void copy(long pts, const SRC *src, DST *dest)
+{
+	long i;
+	
+	for (i = 0; i < pts; i++) {
+		dest[i] = src[i];
+	}
+}
+template<> void copy<double, double>(long pts, const double *, double *);
 #endif
 
 __MPT_EXTDECL_BEGIN

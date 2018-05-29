@@ -196,6 +196,7 @@ extern int mpt_message_buf2id(const void *, size_t, uint64_t *);
 /* get size/type from message value format type */
 size_t mpt_msgvalfmt_size(uint8_t);
 int mpt_msgvalfmt_typeid(uint8_t);
+int mpt_msgvalfmt_code(int);
 
 __MPT_EXTDECL_END
 

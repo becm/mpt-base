@@ -85,12 +85,22 @@ void Cycle::unref()
 
 int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
 {
-    int nc;
     if (_maxDimensions && dim >= _maxDimensions) {
         return BadArgument;
     }
+    int esize;
+    if ((esize = mpt_valsize(type)) <= 0) {
+        return BadType;
+    }
+    if (len % esize) {
+        return MissingData;
+    }
+    len /= esize;
+    int nc;
     if (!vd || !(nc = vd->cycle)) {
         nc = _act;
+    } else {
+        --nc;
     }
     Stage *st;
     if (!(st = _stages.get(nc))) {
@@ -102,7 +112,7 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
             return BadOperation;
         }
     }
-    typed_array *a = st->rawdata_stage::values(dim, type);
+    typed_array *a = st->rawdata_stage::values(dim, typeinfo<double>::id());
     if (!a) {
         return BadValue;
     }
@@ -111,13 +121,50 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
     if (!(ptr = a->reserve(len, off))) {
         return BadOperation;
     }
-    a->setModified();
-    if (src) {
-        memcpy(ptr, src, len);
-    } else {
-        memset(ptr, 0, len);
+    if (!src) {
+        memset(ptr, 0, len * sizeof(double));
     }
-    // invalidate view
+    else switch (type) {
+        case typeinfo<long double>::id():
+            copy(len, static_cast<const long double *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<double>::id():
+            memcpy(ptr, src, len * sizeof(double));
+            break;
+        case typeinfo<float>::id():
+            copy(len, static_cast<const float *>(src), static_cast<double *>(ptr));
+            break;
+        
+        case typeinfo<int8_t>::id():
+            copy(len, static_cast<const int8_t  *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<int16_t>::id():
+            copy(len, static_cast<const int16_t *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<int32_t>::id():
+            copy(len, static_cast<const int32_t *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<int64_t>::id():
+            copy(len, static_cast<const int64_t *>(src), static_cast<double *>(ptr));
+            break;
+	    
+        case typeinfo<uint8_t>::id():
+            copy(len, static_cast<const uint8_t  *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<uint16_t>::id():
+            copy(len, static_cast<const uint16_t *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<uint32_t>::id():
+            copy(len, static_cast<const uint32_t *>(src), static_cast<double *>(ptr));
+            break;
+        case typeinfo<uint64_t>::id():
+            copy(len, static_cast<const uint64_t *>(src), static_cast<double *>(ptr));
+            break;
+        default:
+            return BadType;
+    }
+    // update dimension and invalidate view
+    a->setModified();
     st->invalidate();
     return a->flags();
 }

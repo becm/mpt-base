@@ -2,6 +2,8 @@
  * MPT C++ typed array
  */
 
+#include "message.h"
+
 #include "values.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -9,12 +11,17 @@ __MPT_NAMESPACE_BEGIN
 // typed information for array
 bool typed_array::setType(int t)
 {
+    if (t == static_cast<int>(_type)) {
+        return true;
+    }
     int esize;
-    if ((esize = mpt_valsize(t)) <= 0) {
+    if ((esize = mpt_valsize(t)) <= 0 || esize > 0xff) {
         return false;
     }
     _type = t;
     _esize = esize;
+    t = mpt_msgvalfmt_code(t);
+    _code = t < 0 ? 0 : t;
     return true;
 }
 void typed_array::setModified(bool set)
@@ -23,26 +30,22 @@ void typed_array::setModified(bool set)
     else _flags &= ~ValueChange;
 }
 
-void *typed_array::reserve(size_t len, long off)
+void *typed_array::reserve(long len, long off)
 {
     if (!_esize) {
         return 0;
     }
     // avoid incomplete element assignments
-    size_t match = len / _esize;
-    if (len != (match * _esize)) {
-        return 0;
-    }
-    off *= _esize;
+    size_t need = len * _esize;
+    ssize_t pos = off * _esize;
     // relative to data end
-    if (off < 0) {
-        off += _d.length();
-        if (off < 0) {
+    if (pos < 0) {
+        pos += _d.length();
+        if (pos < 0) {
             return 0;
         }
     }
-    return mpt_array_slice(&_d, off, len);
-    
+    return mpt_array_slice(&_d, pos, need);
 }
 size_t maxsize(Slice<const typed_array> sl, int type)
 {

@@ -108,27 +108,36 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 		memset(st, 0, sizeof(*st));
 	}
 	else {
-		st = (void *) (buf+1);
+		st = (void *) (buf + 1);
 		st += nc;
 	}
 	if (!(arr = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (!arr->_type) {
-		int esze;
-		if (fmt > 0xff || (esze = mpt_valsize(fmt)) <= 0) {
+		int size;
+		if (fmt > 0xff || (size = mpt_valsize(fmt)) <= 0) {
+			return MPT_ERROR(BadType);
+		}
+		if (size > 0xff) {
 			return MPT_ERROR(BadType);
 		}
 		arr->_type = fmt;
-		arr->_esize = esze;
+		arr->_esize = size;
+		
+		fmt = mpt_msgvalfmt_code(fmt);
+		arr->_code = fmt < 0 ? 0 : fmt;
 	}
-	else if (fmt != arr->_type) {
+	else if ((uint32_t) fmt != arr->_type) {
 		return MPT_ERROR(BadType);
 	}
 	if (len) {
 		void *dest;
 		size_t pos = 0;
 		
+		if (len % arr->_esize) {
+			return MPT_ERROR(BadValue);
+		}
 		if (vd) {
 			pos = vd->offset * arr->_esize;
 		}
