@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <errno.h>
+#include <limits.h>
+
 #include <sys/uio.h>
 
 #include "meta.h"
@@ -15,16 +18,22 @@
 MPT_STRUCT(RawData) {
 	MPT_INTERFACE(metatype) _mt;
 	MPT_INTERFACE(rawdata)  _rd;
+	
+	MPT_STRUCT(refcount) _ref;
+	
 	_MPT_ARRAY_TYPE(rawdata_stage) st;
-	size_t act, max;
+	long act, max;
 };
  
 /* reference interface */
 static void rdUnref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(RawData) *rd = (void *) ref;
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
 	MPT_STRUCT(buffer) *buf;
 	
+	if (mpt_refcount_lower(&rd->_ref)) {
+		return;
+	}
 	if ((buf = rd->st._buf)) {
 		MPT_STRUCT(rawdata_stage) *st = (void *) (buf + 1);
 		size_t i, len = buf->_used/sizeof(*st);
@@ -40,8 +49,8 @@ static void rdUnref(MPT_INTERFACE(reference) *ref)
 }
 static uintptr_t rdRef(MPT_INTERFACE(reference) *ref)
 {
-	(void) ref;
-	return 0;
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
+	return mpt_refcount_raise(&rd->_ref);
 }
 /* metatype interface */
 static int rdConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
@@ -83,14 +92,14 @@ static int rdModify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const vo
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(typed_array) *arr;
-	int nc;
+	long nc;
 	
 	if (!vd || !(nc = vd->cycle)) {
 		nc = rd->act;
 	}
 	if (!(buf = rd->st._buf)
-	    || nc >= (int) (buf->_used / sizeof(*st))) {
-		if (!rd->max || nc >= (int) rd->max) {
+	    || nc >= (long) (buf->_used / sizeof(*st))) {
+		if (!rd->max || nc >= rd->max) {
 			return MPT_ERROR(BadValue);
 		}
 		if (!(st = mpt_array_slice(&rd->st, nc * sizeof(*st), sizeof(*st)))) {
@@ -139,7 +148,7 @@ static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
-	size_t act;
+	long act;
 	
 	/* limit cycle size */
 	if ((act = rd->act + 1) >= rd->max) {
@@ -147,7 +156,7 @@ static int rdAdvance(MPT_INTERFACE(rawdata) *ptr)
 	}
 	/* reuse existing cycle */
 	if ((buf = rd->st._buf)
-	    && act < buf->_used / sizeof(MPT_STRUCT(rawdata_stage))) {
+	    && act < (long) (buf->_used / sizeof(MPT_STRUCT(rawdata_stage)))) {
 		return act;
 	}
 	/* add cycle placeholder */
@@ -177,7 +186,7 @@ static int rdValues(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iove
 		return MPT_ERROR(BadValue);
 	}
 	/* get existing cycle dimension data */
-	st = (void *) (buf+1);
+	st = (void *) (buf + 1);
 	if (!(arr = mpt_stage_data(st + nc, dim))) {
 		return MPT_ERROR(BadValue);
 	}
@@ -242,7 +251,7 @@ static int rdStages(const MPT_INTERFACE(rawdata) *ptr)
  * 
  * \return new raw data buffer instance
  */
-extern MPT_INTERFACE(metatype) *mpt_cycle_create(size_t max)
+extern MPT_INTERFACE(metatype) *mpt_rawdata_create(long max)
 {
 	static const MPT_INTERFACE_VPTR(metatype) rawMeta = {
 		{ rdUnref, rdRef },
@@ -256,15 +265,26 @@ extern MPT_INTERFACE(metatype) *mpt_cycle_create(size_t max)
 		rdDimensions,
 		rdStages
 	};
+	static const MPT_STRUCT(RawData) def = {
+		{ &rawMeta },
+		{ &rawData },
+		{ 1 },
+		MPT_ARRAY_INIT,
+		0, 0
+	};
 	MPT_STRUCT(RawData) *rd;
 	
+	if (max >= LONG_MAX) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (max < 0) {
+		max = 0;
+	}
 	if (!(rd = malloc(sizeof(*rd)))) {
 		return 0;
 	}
-	rd->_mt._vptr = &rawMeta;
-	rd->_rd._vptr = &rawData;
-	rd->st._buf = 0;
-	rd->act = 0;
+	*rd = def;
 	rd->max = max;
 	
 	return &rd->_mt;
