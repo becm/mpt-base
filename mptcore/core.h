@@ -684,12 +684,11 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *, const char *);
 /* identifier operations */
 extern MPT_STRUCT(identifier) *mpt_identifier_new(size_t);
 extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *);
-extern int mpt_identifier_len(const MPT_STRUCT(identifier) *);
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *, const char *, int);
 extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
-extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
-extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
+extern void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
+extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
 
 
 /* compare data types */

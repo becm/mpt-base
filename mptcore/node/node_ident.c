@@ -18,8 +18,10 @@
  */
 extern const char *mpt_node_ident(const MPT_STRUCT(node) *node)
 {
-	int len = mpt_identifier_len(&node->ident);
-	return (len <= 0) ? 0 : mpt_identifier_data(&node->ident);
+	if (!node->ident._len || node->ident._type != 'c') {
+		return 0;
+	}
+	return mpt_identifier_data(&node->ident);
 }
 
 /*!

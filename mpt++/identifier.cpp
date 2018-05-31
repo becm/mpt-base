@@ -27,7 +27,10 @@ bool identifier::set_name(const char *name, int nlen)
 }
 const char *identifier::name() const
 {
-    return (mpt_identifier_len(this) <= 0) ? 0 : static_cast<const char *>(mpt_identifier_data(this));
+    if (_type != 'c') {
+        return 0;
+    }
+    return static_cast<const char *>(mpt_identifier_data(this));
 }
 
 __MPT_NAMESPACE_END

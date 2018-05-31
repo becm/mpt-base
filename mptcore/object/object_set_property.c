@@ -23,23 +23,21 @@
  */
 extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const MPT_STRUCT(identifier) *id, const MPT_INTERFACE(metatype) *val)
 {
-	const char *name;
+	const char *name = 0;
 	int ret;
 	
 	/* get current identifier */
-	if (id && mpt_identifier_len(id) > 0) {
-		if (id->_type) {
+	if (id && id->_len) {
+		if (id->_type != 'c') {
 			return MPT_ERROR(BadEncoding);
 		}
 		if (!(name = mpt_identifier_data(id))) {
 			return MPT_ERROR(MissingData);
 		}
-	} else {
-		/* avoid empty property */
-		if (!(match & MPT_ENUM(TraverseEmpty))) {
-			return MPT_ENUM(TraverseEmpty);
-		}
-		name = 0;
+	}
+	/* no global property */
+	if (!name && !(match & MPT_ENUM(TraverseEmpty))) {
+		return MPT_ENUM(TraverseEmpty);
 	}
 	/* get data from current metatype */
 	if (val) {

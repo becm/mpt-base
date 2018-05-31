@@ -82,7 +82,7 @@ extern void mpt_identifier_init(MPT_STRUCT(identifier) *id, size_t len)
  * \param id    address of identifier header
  * \param from  source identifier
  */
-extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *from)
+extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(identifier) *from)
 {
 	const void *base;
 	void *dest;
@@ -90,23 +90,23 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STR
 	if (!from) {
 		return mpt_identifier_set(id, 0, 0);
 	}
-	base = (from->_len > from->_max) ? from->_base : from->_val;
 	if (id == from) {
-		return base;
+		return (id->_len > id->_max) ? id->_base : id->_val;
 	}
+	base = (from->_len > from->_max) ? from->_base : from->_val;
 	if (from->_len <= id->_max) {
 		dest = id->_val;
 	}
 	else if (!(dest = malloc(from->_len))) {
 		return 0;
 	}
+	memcpy(dest, base, from->_len);
 	if (id->_len > id->_max) {
 		free(id->_base);
 		id->_base = 0;
 	}
 	id->_len  = from->_len;
 	id->_type = from->_type;
-	memcpy(dest, base, from->_len);
 	
 	return dest;
 }
@@ -124,24 +124,21 @@ extern const void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STR
  * 
  * \return start of identifier data
  */
-extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, int nlen)
+extern void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, int len)
 {
-	char *addr;
-	int len;
+	char *dest, *addr;
+	int nlen = 0;
 	
-	/* auto-detect length */
-	if ((len = nlen)) {
-		if (nlen < 0) {
-			if (!name) {
-				return 0;
-			}
-			nlen = strlen(name);
+	/* set name data */
+	if (name) {
+		if (len < 0) {
+			len = strlen(name);
 		}
-		len = nlen + 1;
-		/* max length exceeded */
-		if (len > UINT16_MAX) {
-			return 0;
-		}
+		nlen = len++;
+	}
+	/* max length exceeded */
+	if (len < 0 || len > UINT16_MAX) {
+		return 0;
 	}
 	/* length exceeds local size */
 	if (len > id->_max) {
@@ -152,41 +149,41 @@ extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *na
 		if (nlen) {
 			memcpy(addr, name, nlen);
 			addr[nlen] = 0;
+			id->_type = 'c';
 		} else {
 			memset(addr, 0, len);
+			id->_type = 0;
 		}
 		/* clear old allocation */
 		if ((id->_len > id->_max) && id->_base) {
 			free(id->_base);
 		}
 		/* set new name content address */
-		id->_len = len;
-		id->_type = 0;
 		memset(id->_val, 0, id->_max);
+		id->_len = len;
 		id->_base = addr;
 		
 		return addr;
 	}
-	/* data fits local data */
+	/* local data sufficient */
 	addr = (id->_len > id->_max) ? id->_base : 0;
-	
-	if (name) {
+	if (nlen) {
 		int post = id->_max - nlen;
+		dest = memcpy(id->_val, name, nlen);
 		if (post) {
 			memset(id->_val + nlen, 0, post);
 		}
-		name = memcpy(id->_val, name, nlen);
 	} else {
-		name = memset(id->_val, 0, id->_max);
+		dest = memset(id->_val, 0, id->_max);
 	}
-	/* clear old allocation */
+	/* clear potential old allocation */
 	if (addr) {
 		free(addr);
 	}
 	id->_len  = len;
-	id->_type = 0;
+	id->_type = name ? 'c' : 0;
 	
-	return name;
+	return dest;
 }
 
 /*!
@@ -199,34 +196,52 @@ extern const void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *na
  * \param name  data to compare
  * \param nlen  data length
  * 
- * \return start of identifier data
+ * \retval 0  identifier matches
+ * \retval >0 different data content
+ * \retval mpt::BadArgument  invalid argument combination
+ * \retval mpt::BadType      identifier has non-character content
+ * \retval mpt::MissingData  lengt differs
  */
 extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *name, int nlen)
 {
 	const char *base = id->_val;
+	int i;
 	
 	if (nlen < 0) {
 		if (!name) {
-			return -2;
+			return MPT_ERROR(BadArgument);
 		}
 		nlen = strlen(name);
 	}
 	if (!nlen && !id->_len) {
 		return 0;
 	}
-	if (id->_type) {
-		return 1;
+	if (name && id->_type != 'c') {
+		return MPT_ERROR(BadType);
 	}
 	if ((nlen + 1) != id->_len) {
-		return 2;
+		return MPT_ERROR(MissingData);
 	}
 	if (id->_len > id->_max) {
 		base = id->_base;
 	}
+	if (!name) {
+		for (i = 0; i <= nlen; ++i) {
+			if (base[i]) {
+				return i + 1;
+			}
+		}
+		return 0;
+	}
+	for (i = 0; i < nlen; ++i) {
+		if (base[i] != name[i]) {
+			return i + 1;
+		}
+	}
 	if (base[nlen]) {
 		return nlen;
 	}
-	return memcmp(base, name, nlen);
+	return 0;
 }
 
 /*!
@@ -275,21 +290,4 @@ extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *id, const MPT_ST
 extern const void *mpt_identifier_data(const MPT_STRUCT(identifier) *id)
 {
 	return (id->_len > id->_max) ? id->_base : id->_val;
-}
-/*!
- * \ingroup mptCore
- * \brief identifier printable length
- * 
- * return printable identifier size.
- * 
- * \param id  address of identifier
- * 
- * \return length of printable data (error code for non-printable type)
- */
-extern int mpt_identifier_len(const MPT_STRUCT(identifier) *id)
-{
-	if (id->_type) {
-		return MPT_ERROR(BadType);
-	}
-	return id->_len ? id->_len - 1 : 0;
 }

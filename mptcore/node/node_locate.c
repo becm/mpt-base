@@ -38,9 +38,9 @@
 	if (type >= 0) {
 		idlen = len;
 	}
-	/* base identifier */
+	/* default identifier type */
 	else {
-		type = 0;
+		type = 'c';
 		idlen = len + 1;
 	}
 	/* simple end search, check final for match */
