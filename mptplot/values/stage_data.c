@@ -14,10 +14,10 @@ static void stageDataUnref(MPT_INTERFACE(reference) *ref)
 	MPT_STRUCT(buffer) *buf = (void *) ref;
 	
 	if (!mpt_refcount_lower(&buf->_ref)) {
-		MPT_STRUCT(typed_array) *arr = (void *) (buf + 1);
-		size_t i, len = buf->_used / sizeof(*arr);
+		MPT_STRUCT(value_store) *val = (void *) (buf + 1);
+		size_t i, len = buf->_used / sizeof(*val);
 		for (i = 0; i < len; ++i) {
-			mpt_array_clone(&arr->_d, 0);
+			mpt_array_clone(&val->_d, 0);
 		}
 		free(buf);
 	}
@@ -31,16 +31,16 @@ static uintptr_t stageDataRef(MPT_INTERFACE(reference) *ref)
 static MPT_INTERFACE_VPTR(buffer) stageData;
 static MPT_STRUCT(buffer) *stageDataDetach(MPT_STRUCT(buffer) *buf, long len)
 {
-	MPT_STRUCT(typed_array) *arr;
+	MPT_STRUCT(value_store) *val;
 	
 	if (len < 0) {
-		len = buf->_used / sizeof(*arr);
+		len = buf->_used / sizeof(*val);
 	}
 	/* require reference copies */
 	if (buf->_ref._val > 1) {
-		MPT_STRUCT(typed_array) *ptr;
+		MPT_STRUCT(value_store) *ptr;
 		MPT_STRUCT(buffer) *b;
-		long i = len * sizeof(*arr);
+		long i = len * sizeof(*val);
 		
 		if (!(b = malloc(sizeof(*buf) + i))) {
 			return 0;
@@ -50,32 +50,32 @@ static MPT_STRUCT(buffer) *stageDataDetach(MPT_STRUCT(buffer) *buf, long len)
 		b->_size = i;
 		b->_used = 0;
 		
-		arr = (void *) (buf + 1);
+		val = (void *) (buf + 1);
 		ptr = (void *) (b + 1);
-		len = buf->_used / sizeof(*arr);
+		len = buf->_used / sizeof(*val);
 		for (i = 0; i < len; ++i) {
-			MPT_STRUCT(buffer) *tmp = arr[i]._d._buf;
+			MPT_STRUCT(buffer) *tmp = val[i]._d._buf;
 			if (tmp) mpt_refcount_raise(&tmp->_ref);
-			ptr[i] = arr[i];
+			ptr[i] = val[i];
 		}
 		b->_used = len * sizeof(*ptr);
 		mpt_refcount_lower(&buf->_ref);
 		return b;
 	}
-	if ((size_t) len <= buf->_size / sizeof(*arr)) {
-		long i, max = buf->_used / sizeof(*arr);
-		arr = (void *) (buf + 1);
+	if ((size_t) len <= buf->_size / sizeof(*val)) {
+		long i, max = buf->_used / sizeof(*val);
+		val = (void *) (buf + 1);
 		for (i = max; i < len; ++i) {
-			memset(arr + i, 0, sizeof(*arr));
+			memset(val + i, 0, sizeof(*val));
 		}
 		for (i = len; i < max; ++i) {
-			MPT_STRUCT(buffer) *tmp = arr[i]._d._buf;
+			MPT_STRUCT(buffer) *tmp = val[i]._d._buf;
 			if (tmp) tmp->_vptr->ref.unref((void *) tmp);
 		}
-		buf->_used = len * sizeof(*arr);
+		buf->_used = len * sizeof(*val);
 		return buf;
 	}
-	len *= sizeof(*arr);
+	len *= sizeof(*val);
 	if ((buf = realloc(buf, sizeof(*buf) + len))) {
 		buf->_size = len;
 	}
@@ -103,19 +103,19 @@ static MPT_INTERFACE_VPTR(buffer) stageDataCtl = {
  * 
  * \return dimension data array
  */
-extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim)
+extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim)
 {
 	MPT_STRUCT(buffer) *buf = st->_d._buf;
-	MPT_STRUCT(typed_array) *arr;
+	MPT_STRUCT(value_store) *val;
 	unsigned max = 0;
 	
 	if (buf) {
 		if (buf->_vptr->content(buf) == stageDataType(0)) {
 			/* return existing slot */
 			if (buf->_ref._val < 2
-			    && (max = buf->_used / sizeof(*arr)) > dim) {
-				arr = (void *) (buf + 1);
-				return arr + dim;
+			    && (max = buf->_used / sizeof(*val)) > dim) {
+				val = (void *) (buf + 1);
+				return val + dim;
 			}
 		}
 		/* invalidate current buffer */
@@ -133,7 +133,7 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		max = dim + 1;
 	}
 	if (!buf) {
-		size_t len = max * sizeof(*arr);
+		size_t len = max * sizeof(*val);
 		if (!(buf = malloc(sizeof(*buf) + len))) {
 			return 0;
 		}
@@ -147,13 +147,13 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 	}
 	st->_d._buf = buf;
 	
-	if (!(arr = mpt_buffer_insert(buf, dim * sizeof(*arr), sizeof(*arr)))) {
-		return arr;
+	if (!(val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val)))) {
+		return val;
 	}
-	arr->_d._buf = 0;
-	arr->_type   = 0;
-	arr->_esize  = 0;
-	arr->_flags  = 0;
+	val->_d._buf = 0;
+	val->_type   = 0;
+	val->_esize  = 0;
+	val->_flags  = 0;
 	
-	return arr;
+	return val;
 }

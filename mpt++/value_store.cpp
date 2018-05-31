@@ -9,7 +9,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // typed information for array
-bool typed_array::set_type(int t)
+bool value_store::set_type(int t)
 {
     if (t == static_cast<int>(_type)) {
         return true;
@@ -24,13 +24,13 @@ bool typed_array::set_type(int t)
     _code = t < 0 ? 0 : t;
     return true;
 }
-void typed_array::set_modified(bool set)
+void value_store::set_modified(bool set)
 {
     if (set) _flags |= ValueChange;
     else _flags &= ~ValueChange;
 }
 
-void *typed_array::reserve(long len, long off)
+void *value_store::reserve(long len, long off)
 {
     if (!_esize) {
         return 0;
@@ -47,18 +47,18 @@ void *typed_array::reserve(long len, long off)
     }
     return mpt_array_slice(&_d, pos, need);
 }
-size_t maxsize(Slice<const typed_array> sl, int type)
+size_t maxsize(Slice<const value_store> sl, int type)
 {
-    const typed_array *arr = sl.base();
+    const value_store *val = sl.base();
     size_t len = 0;
     for (size_t i = 0, max = sl.length(); i < max; ++i) {
-        if (!arr->element_size()) {
+        if (!val->element_size()) {
             continue;
         }
-        if (type >= 0 && type != arr->type()) {
+        if (type >= 0 && type != val->type()) {
             continue;
         }
-        long curr = arr->element_count();
+        long curr = val->element_count();
         if (curr < 0) {
             continue;
         }

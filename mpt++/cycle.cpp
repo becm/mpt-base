@@ -32,7 +32,7 @@ template <> int typeinfo<Cycle::Stage>::id()
     }
     return id;
 }
-template <> int typeinfo<typed_array>::id()
+template <> int typeinfo<value_store>::id()
 {
     static int id = 0;
     if (!id) {
@@ -41,18 +41,18 @@ template <> int typeinfo<typed_array>::id()
     return id;
 }
 
-typed_array *rawdata_stage::values(int dim, int type)
+value_store *rawdata_stage::values(int dim, int type)
 {
     if (dim < 0) {
         errno = EINVAL;
         return 0;
     }
-    typed_array *arr;
-    if ((arr = _d.get(dim))) {
+    value_store *val;
+    if ((val = _d.get(dim))) {
         if (type >= 0) {
             int old;
-            if (!(old = arr->type())) {
-                if (!arr->set_type(type)) {
+            if (!(old = val->type())) {
+                if (!val->set_type(type)) {
                     errno = EINVAL;
                     return 0;
                 }
@@ -62,16 +62,16 @@ typed_array *rawdata_stage::values(int dim, int type)
                 return 0;
             }
         }
-        return arr;
+        return val;
     }
-    if (!(arr = mpt_stage_data(this, dim))) {
+    if (!(val = mpt_stage_data(this, dim))) {
         return 0;
     }
-    if (!arr->set_type(type)) {
+    if (!val->set_type(type)) {
         errno = EINVAL;
         return 0;
     }
-    return arr;
+    return val;
 }
 
 Cycle::Cycle() : _act(0), _max_dimensions(0), _flags(0)
@@ -112,13 +112,13 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
             return BadOperation;
         }
     }
-    typed_array *a = st->rawdata_stage::values(dim, typeinfo<double>::id());
-    if (!a) {
+    value_store *val = st->rawdata_stage::values(dim, typeinfo<double>::id());
+    if (!val) {
         return BadValue;
     }
     long off = vd ? vd->offset : 0;
     void *ptr;
-    if (!(ptr = a->reserve(len, off))) {
+    if (!(ptr = val->reserve(len, off))) {
         return BadOperation;
     }
     if (!src) {
@@ -164,9 +164,9 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
             return BadType;
     }
     // update dimension and invalidate view
-    a->set_modified();
+    val->set_modified();
     st->invalidate();
-    return a->flags();
+    return val->flags();
 }
 int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
 {
@@ -180,20 +180,20 @@ int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
     if (!(st = _stages.get(nc))) {
         return BadValue;
     }
-    const typed_array *arr;
-    if (!(arr = st->rawdata_stage::values(dim))) {
+    const value_store *val;
+    if (!(val = st->rawdata_stage::values(dim))) {
         return BadValue;
     }
     if (vec) {
-        if (arr->type()) {
-            vec->iov_base = (void *) arr->base();
-            vec->iov_len  = arr->element_count() * arr->element_size();
+        if (val->type()) {
+            vec->iov_base = (void *) val->base();
+            vec->iov_len  = val->element_count() * val->element_size();
         } else {
             vec->iov_base = 0;
             vec->iov_len  = 0;
         }
     }
-    return arr->type() + (arr->flags() & ~0xff);
+    return val->type() + (val->flags() & ~0xff);
 }
 int Cycle::advance()
 {

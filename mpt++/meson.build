@@ -19,8 +19,8 @@ cxx_src = files(
   'queue.cpp',
   'refcount_wrap.cpp',
   'std_cout.cpp',
-  'typed_array.cpp',
   'value.cpp',
+  'value_store.cpp',
 )
 
 # creator overrides

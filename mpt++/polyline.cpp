@@ -174,25 +174,25 @@ long linepart::array::length_raw()
     return len;
 }
 
-int apply_data(point<double> *dest, const linepart *lp, int plen, const Transform &tr, Slice<const typed_array> st)
+int apply_data(point<double> *dest, const linepart *lp, int plen, const Transform &tr, Slice<const value_store> st)
 {
     int dim, proc = 0;
 
     dim = tr.dimensions();
 
     for (int i = 0; i < dim; i++) {
-        const typed_array *arr;
+        const value_store *val;
 
-        if (!(arr = st.nth(i))) {
+        if (!(val = st.nth(i))) {
             break;
         }
         const double *from = 0;
         long max;
-        if (arr->type() != typeinfo<double>::id()) {
+        if (val->type() != typeinfo<double>::id()) {
             continue;
         };
-        from = static_cast<__decltype(from)>(arr->base());
-        if ((max = arr->element_count()) <= 0) {
+        from = static_cast<__decltype(from)>(val->base());
+        if ((max = val->element_count()) <= 0) {
             continue;
         }
         linepart tmp;
@@ -227,19 +227,19 @@ int apply_data(point<double> *dest, const linepart *lp, int plen, const Transfor
     return proc;
 }
 
-bool Polyline::set(const Transform &tr, Slice<const typed_array> src)
+bool Polyline::set(const Transform &tr, Slice<const value_store> src)
 {
     // generate parts data
     long max = maxsize(src, typeinfo<double>::id());
     if (!max || !_vis.set(max)) {
         return false;
     }
-    const typed_array *arr = src.base();
+    const value_store *val = src.base();
     for (long i = 0, max = src.length(); i < max; ++i) {
-        if (arr->type() != typeinfo<double>::id()) {
+        if (val->type() != typeinfo<double>::id()) {
             continue;
         }
-        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->element_count()));
+        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(val->base()), val->element_count()));
     }
     // prepare target data
     if (!(max = _vis.length_user())) {

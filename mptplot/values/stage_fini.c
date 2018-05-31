@@ -17,16 +17,16 @@
 extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *st)
 {
 	MPT_STRUCT(buffer) *buf;
-	MPT_STRUCT(typed_array) *arr;
+	MPT_STRUCT(value_store) *val;
 	size_t len;
 	
 	if (!(buf = st->_d._buf)) {
 		return;
 	}
-	len = buf->_used / sizeof(*arr);
-	arr = (void *) (buf + 1);
+	len = buf->_used / sizeof(*val);
+	val = (void *) (buf + 1);
 	while (len--) {
-		mpt_array_clone(&(arr++)->_d, 0);
+		mpt_array_clone(&(val++)->_d, 0);
 	}
 	mpt_array_clone(&st->_d, 0);
 }

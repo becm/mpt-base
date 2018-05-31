@@ -123,14 +123,14 @@ MPT_STRUCT(valsrc)
 };
 
 /*! information about containing data */
-MPT_STRUCT(typed_array)
+MPT_STRUCT(value_store)
 {
 #ifdef __cplusplus
 public:
 	enum Flags {
 		ValueChange = 1
 	};
-	inline typed_array() : _type(0), _flags(0), _esize(0), _code(0)
+	inline value_store() : _type(0), _flags(0), _esize(0), _code(0)
 	{ }
 	bool set_type(int);
 	void *reserve(long, long = 0);
@@ -164,8 +164,8 @@ MPT_STRUCT(rawdata_stage)
     public:
 	int clear_modified(int = -1);
 	
-	inline typed_array *values(int dim, int fmt = -1);
-	inline Slice<const typed_array> values() const
+	inline value_store *values(int dim, int fmt = -1);
+	inline Slice<const value_store> values() const
 	{ return _d.slice(); }
 	inline int dimensions() const
 	{ return _d.length(); }
@@ -173,7 +173,7 @@ MPT_STRUCT(rawdata_stage)
 #else
 # define MPT_RAWDATA_STAGE_INIT { MPT_ARRAY_INIT, 0 }
 #endif
-	_MPT_ARRAY_TYPE(typed_array) _d;
+	_MPT_ARRAY_TYPE(value_store) _d;
 	uint8_t _max_dimensions;
 };
 
@@ -285,7 +285,7 @@ extern int mpt_values_file(FILE *, long , long , double *);
 
 
 /* multi dimension data operations */
-extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
+extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
 extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
 /* set dimensions to defined size */
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
@@ -329,7 +329,7 @@ extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-size_t maxsize(Slice<const typed_array>, int = -1);
+size_t maxsize(Slice<const value_store>, int = -1);
 
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
@@ -347,7 +347,7 @@ protected:
 };
 
 extern void apply_log(point<double> *, const linepart &, const double *, const point<double> &);
-extern int apply_data(point<double> *, const linepart *, int , Transform &, Slice<const typed_array>);
+extern int apply_data(point<double> *, const linepart *, int , Transform &, Slice<const value_store>);
 class Polyline
 {
 public:
@@ -389,7 +389,7 @@ public:
 		const Point *_points;
 	};
 	bool set(const Transform &, const rawdata &, int = -1);
-	bool set(const Transform &, Slice<const typed_array>);
+	bool set(const Transform &, Slice<const value_store>);
 	
 	iterator begin() const;
 	iterator end() const;
