@@ -22,7 +22,7 @@ MPT_STRUCT(node)
 	node(metatype *ref = 0);
 	~node();
 	
-	void setMeta(metatype *mt);
+	void set_metatype(metatype *mt);
 	struct node &operator=(const Reference<metatype> &);
 	
 	inline const Reference<metatype> &meta() const
@@ -157,7 +157,7 @@ inline node &node::operator = (const Reference<metatype> &other)
     _meta = m.detach();
     return *this;
 }
-inline void node::setMeta(metatype *ref)
+inline void node::set_metatype(metatype *ref)
 {
     if (_meta) _meta->unref();
     _meta = ref;

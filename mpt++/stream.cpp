@@ -32,7 +32,7 @@ streaminfo::~streaminfo()
 {
     _mpt_stream_setfile(this, -1, -1);
 }
-bool streaminfo::setFlags(int fl)
+bool streaminfo::set_flags(int fl)
 {
     if (fl & ~0xf0) return false;
     _fd |= fl;
@@ -53,7 +53,7 @@ int stream::flags() const
 int stream::errors() const {
     return MPT_stream_errors(mpt_stream_flags(&this->_info));
 }
-void stream::setError(int err)
+void stream::set_error(int err)
 {
     return mpt_stream_seterror(&this->_info, err);
 }
@@ -66,7 +66,7 @@ bool stream::endline()
     }
     return mpt_stream_write(this, 1, endl, strlen(endl));
 }
-void stream::setNewline(int nl, int what)
+void stream::set_newline(int nl, int what)
 {
     return mpt_stream_setnewline(&this->_info, nl, what);
 }
@@ -84,8 +84,8 @@ Stream::Stream(const streaminfo *from) : _srm(0), _cid(0), _inputFile(-1), _idle
     _mpt_stream_setfile(&_srm->_info, _mpt_stream_fread(from), _mpt_stream_fwrite(from));
     int flags = mpt_stream_flags(from);
     mpt_stream_setmode(_srm, flags & 0xff);
-    _srm->setNewline(MPT_stream_newline_read(flags),  _srm->Read);
-    _srm->setNewline(MPT_stream_newline_write(flags), _srm->Write);
+    _srm->set_newline(MPT_stream_newline_read(flags),  _srm->Read);
+    _srm->set_newline(MPT_stream_newline_write(flags), _srm->Write);
 }
 Stream::~Stream()
 { }
@@ -128,7 +128,7 @@ int Stream::conv(int type, void *ptr) const
     return BadType;
 }
 // object interface
-int Stream::property_get(struct property *pr) const
+int Stream::property(struct property *pr) const
 {
     int me = mpt_input_typeid();
     
@@ -168,7 +168,7 @@ int Stream::property_get(struct property *pr) const
     }
     return BadArgument;
 }
-int Stream::property_set(const char *pr, const metatype *src)
+int Stream::set_property(const char *pr, const metatype *src)
 {
     if (!pr) {
         if (!_srm) {
@@ -176,7 +176,7 @@ int Stream::property_set(const char *pr, const metatype *src)
         }
         int ret = mpt_stream_setter(_srm, src);
         if (ret >= 0) {
-            _ctx.setPointer(0);
+            _ctx.set_pointer(0);
         }
         return ret;
     }
@@ -321,7 +321,7 @@ public:
             if (!(rd = ctx->cast<reply_data>())) {
                 break;
             }
-            if (!rd->setData(idlen, id)) {
+            if (!rd->set(idlen, id)) {
                 error(_func, "%s", MPT_tr("reply context unusable"));
                 return BadOperation;
             }
@@ -411,7 +411,7 @@ int Stream::await(int (*rctl)(void *, const struct message *), void *rpar)
     if (!rctl) {
         return 0;
     }
-    if (!(cmd = _wait.next(_idlen))) {
+    if (!(cmd = _wait.reserve(_idlen))) {
         return BadOperation;
     }
     _cid = cmd->id;
@@ -434,6 +434,13 @@ int Stream::getchar()
         return base[_srm->_rd.off++];
     }
     return IODevice::getchar();
+}
+
+void Stream::close()
+{
+    if (_srm) {
+        mpt_stream_close(_srm);
+    }
 }
 
 __MPT_NAMESPACE_END

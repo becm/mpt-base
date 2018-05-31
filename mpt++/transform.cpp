@@ -21,7 +21,7 @@ range::range() : min(DBL_MIN), max(DBL_MAX)
 transform::transform(AxisFlags flg)
 { mpt_trans_init(this, flg); }
 
-int transform::fromAxis(const axis &a, int type)
+int transform::set(const axis &a, int type)
 {
     double min = a.begin, max = a.end;
 
@@ -137,8 +137,8 @@ linepart Transform3::part(unsigned dim, const double *val, int len) const
         if (cut) cut = log10(cut);
         if (trim) trim = log10(trim);
 
-        lp.setCut(cut);
-        lp.setTrim(trim);
+        lp.set_cut(cut);
+        lp.set_trim(trim);
     }
     return lp;
 }

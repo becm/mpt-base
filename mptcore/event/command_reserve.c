@@ -11,7 +11,7 @@
 
 #include "event.h"
 
-static int logReply(void *out, void *arg)
+static int log_reply(void *out, void *arg)
 {
 	static const char _func[] = "mpt::command::reply\0";
 	MPT_STRUCT(message) msg;
@@ -68,7 +68,7 @@ static int logReply(void *out, void *arg)
  * 
  * \return registered command
  */
-extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t max)
+extern MPT_STRUCT(command) *mpt_command_reserve(MPT_STRUCT(array) *arr, size_t max)
 {
 	MPT_STRUCT(buffer) *msg;
 	MPT_STRUCT(command) *base, *cmd = 0;
@@ -98,7 +98,7 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 		if ((cmd = mpt_array_append(arr, sizeof(*cmd) * 8, 0))) {
 			static const uintptr_t firstId = 1;
 			cmd->id  = firstId;
-			cmd->cmd = logReply;
+			cmd->cmd = log_reply;
 			cmd->arg = (void *) firstId;
 		}
 		return cmd;
@@ -155,7 +155,7 @@ extern MPT_STRUCT(command) *mpt_command_nextid(MPT_STRUCT(array) *arr, size_t ma
 	
 	/* setup default handling */
 	cmd->id  = mid;
-	cmd->cmd = logReply;
+	cmd->cmd = log_reply;
 	cmd->arg = (void *) mid;
 	
 	return cmd;

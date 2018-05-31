@@ -73,7 +73,7 @@ DecodingQueue::~DecodingQueue()
     mpt_queue_resize(this, 0);
 }
 // message source interface
-bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
+bool DecodingQueue::current_message(message &msg, struct iovec *cont) const
 {
     if (_mlen < 0) {
         return false;
@@ -82,7 +82,7 @@ bool DecodingQueue::currentMessage(message &msg, struct iovec *cont)
 
     return true;
 }
-bool DecodingQueue::pendingMessage()
+bool DecodingQueue::pending_message()
 {
     if (_mlen >= 0) {
         return true;

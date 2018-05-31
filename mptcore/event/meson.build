@@ -1,7 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'command_get.c',
-  'command_nextid.c',
+  'command_reserve.c',
   'command_set.c',
   'context_reply.c',
   'dispatch_emit.c',

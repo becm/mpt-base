@@ -148,7 +148,7 @@ MPT_STRUCT(world)
 	enum { Type = TypeWorld };
 	
 	inline const char *alias() const { return _alias; }
-	bool setAlias(const char *name, int len = -1);
+	bool set_alias(const char *name, int len = -1);
 protected:
 #endif
 	char  *_alias;  /* display name */
@@ -205,11 +205,11 @@ MPT_STRUCT(text)
 	
 	enum { Type = TypeText };
 	
-	bool setValue(const char *);
+	bool set_value(const char *);
 	inline const char *value() const
 	{ return _value; }
 	
-	bool setFont(const char *);
+	bool set_font(const char *);
 	inline const char *font() const
 	{ return _font; }
 	
@@ -235,7 +235,7 @@ MPT_STRUCT(transform)
 #ifdef __cplusplus
 	transform(enum AxisFlags = AxisStyleGen);
 	
-	int fromAxis(const axis &, int type = -1);
+	int set(const axis &, int type = -1);
 #endif
 	MPT_STRUCT(dpoint) scale,  /* scale factor */
 	                   move;   /* move start position */
@@ -315,8 +315,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype * = 0) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype * = 0) __MPT_OVERRIDE;
 };
 
 class Text : public metatype, public object, public text
@@ -328,8 +328,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 class Axis : public metatype, public object, public axis
@@ -342,8 +342,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 class World : public metatype, public object, public world
@@ -356,8 +356,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 };
 
 /*! Group implementation using reference array */
@@ -420,21 +420,21 @@ public:
 	
 	int conv(int, void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
-	virtual Item<class Axis> *addAxis(class Axis * = 0, const char * = 0, int = -1);
+	virtual Item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Axis> > axes() const
 	{ return _axes.slice(); }
 	
-	virtual Item<class Data> *addWorld(class World * = 0, const char * = 0, int = -1);
+	virtual Item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Data> > worlds() const
 	{ return _worlds.slice(); }
 	
-	virtual bool setCycle(int pos, const Reference<class Cycle> &) const;
-	virtual const Reference<class Cycle> *cycle(int pos) const;
+	virtual bool set_cycle(int , const Reference<class Cycle> &) const;
+	virtual const Reference<class Cycle> *cycle(int) const;
 	
 	const Transform &transform();
 	
@@ -455,8 +455,8 @@ public:
 	Layout();
 	~Layout() __MPT_OVERRIDE;
 	
-	int property_get(struct property *pr) const __MPT_OVERRIDE;
-	int property_set(const char *pr, const metatype *src) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
@@ -467,15 +467,15 @@ public:
 	inline Slice<const Item<Graph> > graphs() const
 	{ return _graphs.slice(); }
 	
-	virtual bool setAlias(const char *, int = -1);
+	virtual bool set_alias(const char *, int = -1);
 	inline const char *alias() const
 	{ return _alias; }
 	
-	virtual bool setFont(const char *, int = -1);
+	virtual bool set_font(const char *, int = -1);
 	inline const char *font() const
 	{ return _font; }
 	
-	fpoint minScale() const;
+	fpoint minimal_scale() const;
 	
 protected:
 	ItemArray<Graph> _graphs;

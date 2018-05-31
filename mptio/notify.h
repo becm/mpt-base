@@ -44,7 +44,7 @@ public:
 	bool add(input *);
 	size_t used() const { return _fdused; }
 	
-	void setDispatch(dispatch *);
+	void set_handler(dispatch *);
 	
 	int wait(int what = -1, int wait = -1);
 	input *next() const;

@@ -27,7 +27,7 @@ template <> int typeinfo<Group *>::id()
     return id;
 }
 // object interface for group
-int Group::property_get(struct property *pr) const
+int Group::property(struct property *pr) const
 {
     if (!pr) {
         return typeinfo<Group *>::id();
@@ -41,7 +41,7 @@ int Group::property_get(struct property *pr) const
     pr->val.ptr = 0;
     return 0;
 }
-int Group::property_set(const char *, const metatype *)
+int Group::set_property(const char *, const metatype *)
 {
     return BadOperation;
 }
@@ -55,7 +55,7 @@ const Item<metatype> *Group::item(size_t) const
 bool Group::bind(const Relation &, logger *)
 { return true; }
 
-bool Group::addItems(node *head, const Relation *relation, logger *out)
+bool Group::add_items(node *head, const Relation *relation, logger *out)
 {
     const char _func[] = "mpt::Group::addItems";
 
@@ -64,11 +64,11 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
 
         if (from && from->addref()) {
             Reference<metatype> m;
-            m.setPointer(from);
+            m.set_pointer(from);
             Item<metatype> *it;
             if ((it = append(from))) {
                 m.detach();
-                it->setName(head->ident.name());
+                it->set_name(head->ident.name());
             }
             else if (out) {
                 out->message(_func, out->Warning, "%s %p: %s",
@@ -172,7 +172,7 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
             }
             continue;
         }
-        ni->setName(ident, ilen);
+        ni->set_name(ident, ilen);
 
         // set properties and subitems
         if (!head->children) continue;
@@ -181,13 +181,13 @@ bool Group::addItems(node *head, const Relation *relation, logger *out)
         Group *ig;
         if ((ig = from->cast<Group>())) {
             if (!relation) {
-                if (!(ig->addItems(head->children, relation, out))) {
+                if (!(ig->add_items(head->children, relation, out))) {
                     return false;
                 }
                 continue;
             }
             GroupRelation rel(*ig, relation);
-            if (!(ig->addItems(head->children, &rel, out))) {
+            if (!(ig->add_items(head->children, &rel, out))) {
                 return false;
             }
             continue;
@@ -336,7 +336,7 @@ size_t Collection::clear(const reference *ref)
         reference *curr = it.pointer();
         if (!curr) { ++empty; continue; }
         if (curr != ref) continue;
-        it.setPointer(nullptr);
+        it.set_pointer(nullptr);
         ++remove;
     }
     if ((remove + empty) > _items.length()/2) {

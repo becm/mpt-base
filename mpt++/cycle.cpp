@@ -52,7 +52,7 @@ typed_array *rawdata_stage::values(int dim, int type)
         if (type >= 0) {
             int old;
             if (!(old = arr->type())) {
-                if (!arr->setType(type)) {
+                if (!arr->set_type(type)) {
                     errno = EINVAL;
                     return 0;
                 }
@@ -67,14 +67,14 @@ typed_array *rawdata_stage::values(int dim, int type)
     if (!(arr = mpt_stage_data(this, dim))) {
         return 0;
     }
-    if (!arr->setType(type)) {
+    if (!arr->set_type(type)) {
         errno = EINVAL;
         return 0;
     }
     return arr;
 }
 
-Cycle::Cycle() : _act(0), _maxDimensions(0), _flags(0)
+Cycle::Cycle() : _act(0), _max_dimensions(0), _flags(0)
 { }
 Cycle::~Cycle()
 { }
@@ -85,7 +85,7 @@ void Cycle::unref()
 
 int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
 {
-    if (_maxDimensions && dim >= _maxDimensions) {
+    if (_max_dimensions && dim >= _max_dimensions) {
         return BadArgument;
     }
     int esize;
@@ -164,13 +164,13 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
             return BadType;
     }
     // update dimension and invalidate view
-    a->setModified();
+    a->set_modified();
     st->invalidate();
     return a->flags();
 }
 int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
 {
-    if (_maxDimensions && dim >= _maxDimensions) {
+    if (_max_dimensions && dim >= _max_dimensions) {
         return BadArgument;
     }
     if (nc < 0) {
@@ -187,7 +187,7 @@ int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
     if (vec) {
         if (arr->type()) {
             vec->iov_base = (void *) arr->base();
-            vec->iov_len  = arr->elements() * arr->elementSize();
+            vec->iov_len  = arr->element_count() * arr->element_size();
         } else {
             vec->iov_base = 0;
             vec->iov_len  = 0;
@@ -231,7 +231,7 @@ int Cycle::stages() const
 {
     return _stages.length();
 }
-bool Cycle::limitStages(size_t max)
+bool Cycle::limit_stages(size_t max)
 {
     if (!max) {
         _flags &= LimitStages;
@@ -247,9 +247,9 @@ bool Cycle::limitStages(size_t max)
     _flags |= LimitStages;
     return true;
 }
-void Cycle::limitDimensions(uint8_t md)
+void Cycle::limit_dimensions(uint8_t md)
 {
-    _maxDimensions = md;
+    _max_dimensions = md;
 }
 
 bool Cycle::Stage::transform(const Transform &tr)

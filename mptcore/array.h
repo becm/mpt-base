@@ -72,7 +72,7 @@ MPT_STRUCT(array)
 		inline void *data() const
 		{ return static_cast<void *>(const_cast<Data *>(this) + 1); }
 		
-		bool setLength(size_t);
+		bool set_length(size_t);
 		static Data *create(size_t);
 	protected:
 		inline ~Data()
@@ -132,7 +132,7 @@ public:
 	
 	bool prepare(size_t);
 	ssize_t push(size_t , const void *);
-	bool setEncoding(DataEncoder);
+	bool set_encoding(DataEncoder);
 	bool shift(size_t = 0);
 	
 	bool push(const struct message &);
@@ -422,7 +422,7 @@ public:
 	{
 		return _used / sizeof(T);
 	}
-	bool setLength(long len)
+	bool set_length(long len)
 	{
 		long end = length();
 		if (len < 0 && (len += end) < 0) {
@@ -545,7 +545,7 @@ public:
 	inline UniqueArray(long len = 0)
 	{
 		if (len) {
-			_ref.setPointer(Data::create(len));
+			_ref.set_pointer(Data::create(len));
 		}
 	}
 	inline iterator begin() const
@@ -620,10 +620,10 @@ public:
 	{
 		Content<T> *n, *d = _ref.detach();
 		if ((n = d->detach())) {
-			_ref.setPointer(n);
+			_ref.set_pointer(n);
 			return true;
 		} else {
-			_ref.setPointer(d);
+			_ref.set_pointer(d);
 			return false;
 		}
 	}
@@ -637,7 +637,7 @@ public:
 			if (!(d = Data::create(len))) {
 				return false;
 			}
-			_ref.setPointer(d);
+			_ref.set_pointer(d);
 			return true;
 		}
 		if (!len && d->shared()) {
@@ -646,10 +646,10 @@ public:
 		}
 		Content<T> *r;
 		if ((r = d->detach(len))) {
-			_ref.setPointer(r);
+			_ref.set_pointer(r);
 			return true;
 		} else {
-			_ref.setPointer(d);
+			_ref.set_pointer(d);
 			return false;
 		}
 	}
@@ -660,7 +660,7 @@ public:
 		}
 		Content<T> *d;
 		if (len >= 0 && (d = _ref.pointer())) {
-			return d->setLength(len);
+			return d->set_length(len);
 		}
 		return true;
 	}
@@ -723,7 +723,7 @@ public:
 	inline Array(long len = 0)
 	{
 		if (len) {
-			this->_ref.setPointer(Data::create(len));
+			this->_ref.set_pointer(Data::create(len));
 		}
 	}
 	inline Array & operator=(const Reference<Content<T *> > &v)
@@ -767,8 +767,8 @@ public:
 		if (!(it = this->insert(pos))) {
 			return 0;
 		}
-		if (!id || it->setName(id, len)) {
-			it->setPointer(t);
+		if (!id || it->set_name(id, len)) {
+			it->set_pointer(t);
 			return it;
 		}
 		this->resize(pos);
@@ -800,7 +800,7 @@ public:
 			++space;
 		}
 		if (!space) return false;
-		this->_ref.pointer()->setLength(len);
+		this->_ref.pointer()->set_length(len);
 		return true;
 	}
 };
@@ -879,7 +879,7 @@ public:
 		if (!ptr) {
 			return false;
 		}
-		ptr->setPointer(ref);
+		ptr->set_pointer(ref);
 		return true;
 	}
 	bool set(long pos, T *ref)
@@ -888,7 +888,7 @@ public:
 		if (!ptr) {
 			return false;
 		}
-		ptr->setPointer(ref);
+		ptr->set_pointer(ref);
 		return true;
 	}
 	long clear(const T *ref = 0) const
@@ -899,7 +899,7 @@ public:
 			for (long i = 0; i < len; ++i) {
 				T *match;
 				if (!(match = ptr[i].pointer())) continue;
-				ptr[i].setPointer(0);
+				ptr[i].set_pointer(0);
 				++elem;
 			}
 			return elem;
@@ -909,7 +909,7 @@ public:
 			if (!(match = ptr[i].pointer()) || (match != ref)) {
 				continue;
 			}
-			ptr[i].setPointer(0);
+			ptr[i].set_pointer(0);
 			++elem;
 		}
 		return elem;
@@ -963,16 +963,16 @@ public:
 	
 	int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
 	
-	virtual const Entry *nextEntry();
-	virtual void clearLog();
+	virtual const Entry *next();
+	virtual void clear();
 	
-	virtual bool setIgnoreLevel(int);
-	virtual bool setFlowFlags(int);
+	virtual bool set_ignore_level(int);
+	virtual bool set_flow_flags(int);
 	
-	inline int flowFlags() const
+	inline int flow_flags() const
 	{ return _flags; }
 	
-	inline const Slice<const Entry> logEnries() const
+	inline const Slice<const Entry> entries() const
 	{ return _msg.slice(); }
 protected:
 	Array<Entry> _msg;

@@ -65,7 +65,7 @@ Slice<const char> path::data() const
 bool path::clearData()
 {
     array::Data *d = array();
-    return d ? d->setLength(off + len) : true;
+    return d ? d->set_length(off + len) : true;
 }
 
 void path::set(const char *path, int len, int s, int a)
@@ -124,7 +124,7 @@ Config::Config()
 Config::~Config()
 { }
 // private element access
-Config::Element *Config::getElement(const UniqueArray<Config::Element> &arr, path &p)
+Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, path &p)
 {
     const Slice<const char> name = p.value();
     int len;
@@ -137,13 +137,13 @@ Config::Element *Config::getElement(const UniqueArray<Config::Element> &arr, pat
             continue;
         }
         if (!p.empty()) {
-            return getElement(*e, p);
+            return get_element(*e, p);
         }
         return e;
     }
     return 0;
 }
-Config::Element *Config::makeElement(UniqueArray<Config::Element> &arr, path &p)
+Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p)
 {
     const Slice<const char> name = p.value();
     int len;
@@ -160,7 +160,7 @@ Config::Element *Config::makeElement(UniqueArray<Config::Element> &arr, path &p)
             continue;
         }
         if (!p.empty()) {
-            return makeElement(*e, p);
+            return make_element(*e, p);
         }
         return e;
     }
@@ -171,11 +171,11 @@ Config::Element *Config::makeElement(UniqueArray<Config::Element> &arr, path &p)
     }
     else {
         unused->resize(0);
-        unused->setPointer(0);
+        unused->set_pointer(0);
     }
-    unused->setName(name.base(), len);
+    unused->set_name(name.base(), len);
 
-    return p.empty() ? unused : makeElement(*unused, p);
+    return p.empty() ? unused : make_element(*unused, p);
 }
 // config interface
 int Config::assign(const path *dest, const value *val)
@@ -190,22 +190,24 @@ int Config::assign(const path *dest, const value *val)
     Element *curr;
 
     if (!val) {
-        if (!(curr = getElement(_sub, p))) {
+        if (!(curr = get_element(_sub, p))) {
             return 0;
         }
         int type = 0;
-        if ((m = curr->pointer())) type = m->type();
-        curr->setPointer(0);
+        if ((m = curr->pointer())) {
+            type = m->type();
+        }
+        curr->set_pointer(0);
         return type;
     }
     if (!(m = metatype::create(*val))) {
         return BadType;
     }
-    if (!(curr = makeElement(_sub, p))) {
+    if (!(curr = make_element(_sub, p))) {
         m->unref();
         return BadOperation;
     }
-    curr->setPointer(m);
+    curr->set_pointer(m);
     return m->type();
 }
 const metatype *Config::query(const path *dest) const
@@ -218,7 +220,7 @@ const metatype *Config::query(const path *dest) const
     path p = *dest;
     Element *curr;
 
-    if (!(curr = getElement(_sub, p))) {
+    if (!(curr = get_element(_sub, p))) {
         return 0;
     }
     return curr->pointer();
@@ -237,12 +239,12 @@ int Config::remove(const path *dest)
     path p = *dest;
     Element *curr;
     // requested element not found
-    if (!(curr = getElement(_sub, p))) {
+    if (!(curr = get_element(_sub, p))) {
         return BadOperation;
     }
     curr->resize(0); // remove childen from element
-    curr->setName(0); // mark element as unused
-    curr->setPointer(0); // remove element data
+    curr->set_name(0); // mark element as unused
+    curr->set_pointer(0); // remove element data
 
     return 0;
 }

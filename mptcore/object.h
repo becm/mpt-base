@@ -87,8 +87,8 @@ public:
 	node *next_changed(const node *) const;
 	node *next_alien(const node *) const;
 	
-	virtual int property_get(struct property *) const = 0;
-	virtual int property_set(const char *, const metatype * = 0) = 0;
+	virtual int property(struct property *) const = 0;
+	virtual int set_property(const char *, const metatype * = 0) = 0;
 };
 template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 	return object::Type;
@@ -96,7 +96,7 @@ template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 #else
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
-	int (*property_get)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
+	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
 	int (*property_set)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
@@ -148,7 +148,7 @@ public:
 	inline const_iterator &operator ++()
 	{
 		if (_pos >= 0 && !select(++_pos)) {
-			setInvalid();
+			clear();
 		}
 		return *this;
 	}
@@ -156,7 +156,7 @@ public:
 	{
 		return _pos == cmp._pos;
 	}
-	inline void setInvalid()
+	inline void clear()
 	{
 		_prop.name = 0;
 		_pos = -1;
@@ -185,7 +185,7 @@ public:
 	inline iterator &operator ++()
 	{
 		if (_pos >= 0 && !select(++_pos)) {
-			setInvalid();
+			clear();
 		}
 		return *this;
 	}
@@ -193,7 +193,7 @@ public:
 	{
 		return _pos == cmp._pos;
 	}
-	inline void setInvalid()
+	inline void clear()
 	{
 		_name = 0;
 		_pos = -1;
@@ -292,15 +292,15 @@ struct node;
 class Group : public object
 {
 public:
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	virtual const Item<metatype> *item(size_t pos) const;
 	virtual Item<metatype> *append(metatype *);
 	virtual size_t clear(const reference * = 0);
 	virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
 	
-	bool addItems(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
+	bool add_items(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
 protected:
 	inline ~Group() {}
 	virtual metatype *create(const char *, int = -1);

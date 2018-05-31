@@ -1,5 +1,6 @@
 /*
- * MPT C++ metatype creator
+ * MPT C++ library
+ *   metatype creator override
  */
 
 #include "meta.h"

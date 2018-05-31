@@ -88,7 +88,7 @@ array::Data *array::Data::create(size_t len)
     return new (b) Data(len - sizeof(Data));
 }
 
-bool array::Data::setLength(size_t len)
+bool array::Data::set_length(size_t len)
 {
     if (len > _size) return 0;
     if (len > _used) {
@@ -188,8 +188,8 @@ void *array::set(size_t len, const void *base)
     } else {
         _buf.detach();
     }
-    _buf.setPointer(d);
-    d->setLength(len);
+    _buf.set_pointer(d);
+    d->set_length(len);
     void *ptr = d->data();
     if (base) {
         memcpy(ptr, base, len);
@@ -307,7 +307,7 @@ void *array::insert(size_t off, size_t len, const void *data)
         }
         _buf.detach();
     }
-    _buf.setPointer(d);
+    _buf.set_pointer(d);
     void *dest;
     if (!(dest = mpt_buffer_insert(d, off, len))) {
         return 0;
@@ -340,7 +340,7 @@ slice::slice(slice const& from) : array(from), _off(0), _len(0)
 }
 slice::slice(array::Data *b) : _off(0), _len(0)
 {
-    _buf.setPointer(b);
+    _buf.set_pointer(b);
     _len = length();
 }
 bool slice::shift(ssize_t len)

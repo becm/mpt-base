@@ -40,7 +40,7 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 		/* object specific name */
 		if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
 		    && obj
-		    && (obj->_vptr->property_get(obj, pr) >= 0)
+		    && (obj->_vptr->property(obj, pr) >= 0)
 		    && pr->name) {
 			pr->desc = pr->name;
 			pr->name = MPT_tr("object");

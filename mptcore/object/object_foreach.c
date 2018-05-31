@@ -4,10 +4,10 @@
 
 #include "object.h"
 
-static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
+static int get_property(void *ptr, MPT_STRUCT(property) *pr)
 {
-	MPT_INTERFACE(object) *obj = ptr;
-	return obj->_vptr->property_get(obj, pr);
+	const MPT_INTERFACE(object) *obj = ptr;
+	return obj->_vptr->property(obj, pr);
 }
 
 /*!
@@ -25,5 +25,5 @@ static int getProperty(void *ptr, MPT_STRUCT(property) *pr)
  */
 extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
 {
-	return mpt_properties_foreach(getProperty, (void *) obj, proc, data, match);
+	return mpt_properties_foreach(get_property, (void *) obj, proc, data, match);
 }

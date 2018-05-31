@@ -16,7 +16,7 @@ MPT_STRUCT(histfmt)
 public:
 	inline histfmt() : pos(0), fmt(0)
 	{ }
-	bool setFormat(const char *fmt);
+	bool set_format(const char *fmt);
 	bool add(valfmt);
 	bool add(char);
 protected:

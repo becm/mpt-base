@@ -43,7 +43,7 @@ MyClient::MyClient()
     if (mt && (o = mt->cast<mpt::object>())) {
         o->set(0, "w:client.out");
     }
-    _mt.setPointer(mt);
+    _mt.set_pointer(mt);
 }
 int MyClient::process(uintptr_t , mpt::iterator *)
 {
@@ -63,7 +63,7 @@ int MyClient::conv(int type, void *ptr) const
     return client::conv(type, ptr);
 }
 
-static int doCommand(void *ptr, mpt::event *ev)
+static int do_command(void *ptr, mpt::event *ev)
 {
     auto *c = static_cast<mpt::client *>(ptr);
     if (!ev) {
@@ -90,8 +90,8 @@ int main(int argc, char * const argv[])
     }
     MyClient c;
     mpt::dispatch d;
-    d.set(mpt::msgtype::Command, doCommand, &c);
-    n.setDispatch(&d);
+    d.set_handler(mpt::msgtype::Command, do_command, &c);
+    n.set_handler(&d);
     mpt::mpt_dispatch_param(&d);
 
     n.loop();

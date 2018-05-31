@@ -43,7 +43,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *con, int (*ctl)(void *, 
 	if ((max = con->out._idlen) > sizeof(con->cid)) {
 		max = sizeof(con->cid);
 	}
-	if (!(cmd = mpt_command_nextid(&con->_wait, max))) {
+	if (!(cmd = mpt_command_reserve(&con->_wait, max))) {
 		return MPT_ERROR(BadValue);
 	}
 	/* make next message non-local */

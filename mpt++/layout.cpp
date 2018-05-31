@@ -128,11 +128,11 @@ int Line::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Line::property_get(struct property *prop) const
+int Line::property(struct property *prop) const
 {
     return mpt_line_get(this, prop);
 }
-int Line::property_set(const char *name, const metatype *src)
+int Line::set_property(const char *name, const metatype *src)
 {
     return mpt_line_set(this, name, src);
 }
@@ -155,10 +155,10 @@ text::~text()
 {
     mpt_text_fini(this);
 }
-bool text::setValue(const char *v)
+bool text::set_value(const char *v)
 { return mpt_string_set(&_value, v); }
 
-bool text::setFont(const char *v)
+bool text::set_font(const char *v)
 { return mpt_string_set(&_font, v); }
 
 int text::set(metatype &src)
@@ -207,11 +207,11 @@ int Text::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Text::property_get(struct property *prop) const
+int Text::property(struct property *prop) const
 {
     return mpt_text_get(this, prop);
 }
-int Text::property_set(const char *prop, const metatype *src)
+int Text::set_property(const char *prop, const metatype *src)
 {
     return mpt_text_set(this, prop, src);
 }
@@ -280,11 +280,11 @@ int Axis::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int Axis::property_get(struct property *prop) const
+int Axis::property(struct property *prop) const
 {
     return mpt_axis_get(this, prop);
 }
-int Axis::property_set(const char *prop, const metatype *src)
+int Axis::set_property(const char *prop, const metatype *src)
 {
     return mpt_axis_set(this, prop, src);
 }
@@ -307,7 +307,7 @@ world::~world()
 {
     mpt_world_fini(this);
 }
-bool world::setAlias(const char *name, int len)
+bool world::set_alias(const char *name, int len)
 {
     return mpt_string_set(&_alias, name, len) < 0 ? false : true;
 }
@@ -366,11 +366,11 @@ int World::conv(int type, void *ptr) const
     }
     return BadType;
 }
-int World::property_get(struct property *prop) const
+int World::property(struct property *prop) const
 {
     return mpt_world_get(this, prop);
 }
-int World::property_set(const char *prop, const metatype *src)
+int World::set_property(const char *prop, const metatype *src)
 {
     return mpt_world_set(this, prop, src);
 }
@@ -432,14 +432,14 @@ int Graph::conv(int type, void *ptr) const
     return Collection::conv(type, ptr);
 }
 // object interface
-int Graph::property_get(struct property *prop) const
+int Graph::property(struct property *prop) const
 {
     if (!prop) {
         return typeinfo<Graph *>::id();
     }
     return mpt_graph_get(this, prop);
 }
-int Graph::property_set(const char *prop, const metatype *src)
+int Graph::set_property(const char *prop, const metatype *src)
 {
     int ret = mpt_graph_set(this, prop, src);
 
@@ -450,7 +450,7 @@ int Graph::property_set(const char *prop, const metatype *src)
     return ret;
 }
 // graph group interface
-static Axis *makeAxis(metatype *mt, logger *out, const char *_func, const char *name, int len)
+static Axis *make_axis(metatype *mt, logger *out, const char *_func, const char *name, int len)
 {
     axis *d = 0;
     if (mt->conv(axis::Type, &d) >= 0) {
@@ -476,7 +476,7 @@ static Axis *makeAxis(metatype *mt, logger *out, const char *_func, const char *
     }
     return 0;
 }
-static World *makeWorld(metatype *mt, logger *out, const char *_func, const char *name, int len)
+static World *make_world(metatype *mt, logger *out, const char *_func, const char *name, int len)
 {
     world *d = 0;
     if (mt->conv(world::Type, &d) >= 0) {
@@ -517,7 +517,7 @@ bool Graph::bind(const Relation &rel, logger *out)
             Axis *a;
             if (!(mt = it.pointer()) || !(a = mt->cast<Axis>())) continue;
             curr = it.name();
-            if (!a->addref() || addAxis(a, curr)) {
+            if (!a->addref() || add_axis(a, curr)) {
                 continue;
             }
             a->unref();
@@ -538,8 +538,8 @@ bool Graph::bind(const Relation &rel, logger *out)
             len -= (sep - curr) + 1;
             curr = sep + 1;
         }
-        Axis *a = makeAxis(mt, out, _func, curr, len);
-        if (a && !addAxis(a, curr, len)) {
+        Axis *a = make_axis(mt, out, _func, curr, len);
+        if (a && !add_axis(a, curr, len)) {
             a->unref();
             _axes = oldaxes;
             if (out) out->message(_func, out->Error, "%s: %s", MPT_tr("could not assign axis"), std::string(curr, len).c_str());
@@ -554,7 +554,7 @@ bool Graph::bind(const Relation &rel, logger *out)
             World *w;
             if (!(mt = it.pointer()) || !(w = mt->cast<World>())) continue;
             curr = it.name();
-            if (!w->addref() || addWorld(w, curr)) {
+            if (!w->addref() || add_world(w, curr)) {
                 continue;
             }
             w->unref();
@@ -576,8 +576,8 @@ bool Graph::bind(const Relation &rel, logger *out)
             len -= (sep - curr) + 1;
             curr = sep + 1;
         }
-        World *w = makeWorld(mt, out, _func, curr, len);
-        if (w && !addWorld(w, curr, len)) {
+        World *w = make_world(mt, out, _func, curr, len);
+        if (w && !add_world(w, curr, len)) {
             w->unref();
             _axes = oldaxes;
             _worlds = oldworlds;
@@ -597,7 +597,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     return true;
 }
-Item<Axis> *Graph::addAxis(Axis *from, const char *name, int nlen)
+Item<Axis> *Graph::add_axis(Axis *from, const char *name, int nlen)
 {
     Axis *a;
 
@@ -615,7 +615,7 @@ Item<Axis> *Graph::addAxis(Axis *from, const char *name, int nlen)
     if (!from) a->unref();
     return 0;
 }
-Item<Graph::Data> *Graph::addWorld(World *from, const char *name, int nlen)
+Item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
 {
     Data *d;
     World *w;
@@ -641,16 +641,16 @@ const Reference<Cycle> *Graph::cycle(int pos) const
     if (!d) return 0;
     if (!d->cycle.pointer()) {
         Cycle *c = new Reference<Cycle>::instance;
-        d->cycle.setPointer(c);
+        d->cycle.set_pointer(c);
         World *w;
         if ((w = d->world.pointer())) {
-            c->limitDimensions(3);
-            c->limitStages(w->cyc);
+            c->limit_dimensions(3);
+            c->limit_stages(w->cyc);
         }
     }
     return &d->cycle;
 }
-bool Graph::setCycle(int pos, const Reference<Cycle> &cyc) const
+bool Graph::set_cycle(int pos, const Reference<Cycle> &cyc) const
 {
     if (pos < 0 && (pos += _worlds.length()) < 0) return false;
     Data *d = _worlds.get(pos)->pointer();
@@ -686,18 +686,18 @@ bool Graph::updateTransform(int dim)
     Transform3 *t;
     if (!(t = _gtr.pointer())) {
         t = new Transform3;
-        _gtr.setPointer(t);
+        _gtr.set_pointer(t);
     }
     t->cutoff = clip;
     switch (dim) {
     case 0:
-        t->fx = t->tx.fromAxis(*a, AxisStyleX);
+        t->fx = t->tx.set(*a, AxisStyleX);
         return true;
     case 1:
-        t->fy = t->ty.fromAxis(*a, AxisStyleY);
+        t->fy = t->ty.set(*a, AxisStyleY);
         return true;
     case 2:
-        t->fz = t->tz.fromAxis(*a, AxisStyleZ);
+        t->fz = t->tz.set(*a, AxisStyleZ);
         return true;
     default: return false;
     }
@@ -753,7 +753,7 @@ Layout::~Layout()
     delete _parse;
 }
 // object interface
-int Layout::property_get(struct property *pr) const
+int Layout::property(struct property *pr) const
 {
     if (!pr) {
         return typeinfo<Layout *>::id();
@@ -789,7 +789,7 @@ int Layout::property_get(struct property *pr) const
     }
     return BadArgument;
 }
-int Layout::property_set(const char *name, const metatype *src)
+int Layout::set_property(const char *name, const metatype *src)
 {
     int len;
 
@@ -884,7 +884,7 @@ bool Layout::load(logger *out)
     GroupRelation self(*this);
     clear();
     // add items to layout
-    if (!addItems(conf, &self, out)) return false;
+    if (!add_items(conf, &self, out)) return false;
     // create graphic representations
     if (!bind(self, out)) return false;
 
@@ -896,8 +896,8 @@ bool Layout::reset()
         return false;
     }
     _graphs = ItemArray<Graph>();
-    setFont(0);
-    setAlias(0);
+    set_font(0);
+    set_alias(0);
     return true;
 }
 
@@ -910,16 +910,16 @@ bool Layout::open(const char *fn)
     return _parse->open(fn);
 }
 
-bool Layout::setAlias(const char *base, int len)
+bool Layout::set_alias(const char *base, int len)
 {
     return mpt_string_set(&_alias, base, len) >= 0;
 }
-bool Layout::setFont(const char *base, int len)
+bool Layout::set_font(const char *base, int len)
 {
     return mpt_string_set(&_font, base, len) >= 0;
 }
 
-fpoint Layout::minScale() const
+fpoint Layout::minimal_scale() const
 {
     float x = 1, y = 1;
 

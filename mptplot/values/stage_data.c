@@ -125,7 +125,7 @@ extern MPT_STRUCT(typed_array) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		}
 	}
 	/* not allowed to extend dimensions */
-	if (st->_maxDimensions && (dim >= st->_maxDimensions)) {
+	if (st->_max_dimensions && (dim >= st->_max_dimensions)) {
 		errno = EINVAL;
 		return 0;
 	}

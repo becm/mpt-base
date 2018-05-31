@@ -42,7 +42,7 @@ bool notify::add(input *in)
     return mpt_notify_add(this, POLLIN, in) >= 0;
 }
 
-static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
+static int dispatch_event(void *arg, MPT_STRUCT(event) *ev)
 {
     if (!ev) {
         return 0;
@@ -52,13 +52,13 @@ static int dispatchEvent(void *arg, MPT_STRUCT(event) *ev)
     }
     return mpt_dispatch_emit(static_cast<dispatch *>(arg), ev);
 }
-void notify::setDispatch(dispatch *d)
+void notify::set_handler(dispatch *d)
 {
     if (_disp.cmd) {
         _disp.cmd(_disp.arg, 0);
     }
     if ((_disp.arg = d)) {
-        _disp.cmd = dispatchEvent;
+        _disp.cmd = dispatch_event;
     } else {
         _disp.cmd = 0;
     }

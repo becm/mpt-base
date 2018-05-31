@@ -21,7 +21,7 @@ const char *object_name(MPT_INTERFACE(object) *obj)
 {
 	MPT_STRUCT(property) pr;
 	pr.name = "";
-	if (obj->_vptr->property_get(obj, &pr) < 0) {
+	if (obj->_vptr->property(obj, &pr) < 0) {
 		return 0;
 	}
 	return pr.name;

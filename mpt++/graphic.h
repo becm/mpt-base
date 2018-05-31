@@ -42,12 +42,12 @@ public:
 
     // direct cycle access
     const Reference<Cycle> *cycle(laydest) const;
-    bool setCycle(laydest, Cycle *);
+    bool set_cycle(laydest, Cycle *);
 
     // modify target elements
-    int setCycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
-    int getCycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
-    int clearCycles(UpdateHint = UpdateHint()) const;
+    int set_cycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
+    int get_cycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
+    int clear_cycles(UpdateHint = UpdateHint()) const;
 
     void clear();
 protected:
@@ -68,7 +68,7 @@ public:
         UpdateHint hint;
         uint32_t used;
     };
-    inline Slice<const Element> slice() const
+    inline Slice<const Element> elements() const
     { return Slice<const Element>((const Element *) base(), length()); }
     
     inline size_t length() const
@@ -133,7 +133,7 @@ public:
         }
         Data *d;
         if ((d = _buf.pointer())) {
-            d->setLength(len * sizeof(*c));
+            d->set_length(len * sizeof(*c));
         }
     }
 };
@@ -146,19 +146,19 @@ public:
     virtual ~Graphic();
 
     // layout (de)registration
-    virtual int addLayout(Layout *, bool = true);
-    virtual int removeLayout(const Layout *);
-    long layoutCount() const;
+    virtual int add_layout(Layout *, bool = true);
+    virtual int remove_layout(const Layout *);
+    long layout_count() const;
 
     // create new layout
-    virtual Layout *createLayout();
+    virtual Layout *create_layout();
 
     // mapping helpers
     int target(laydest &, message &, size_t = 0) const;
     metatype *item(message &, size_t = 0) const;
 
     // untracked reference to shedule update
-    virtual bool registerUpdate(const reference *, UpdateHint = UpdateHint());
+    virtual bool register_update(const reference *, UpdateHint = UpdateHint());
 
 protected:
     virtual void dispatchUpdates();

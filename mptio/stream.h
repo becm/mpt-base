@@ -40,7 +40,7 @@ MPT_STRUCT(streaminfo)
 	{ }
 	~streaminfo();
 	
-	bool setFlags(int);
+	bool set_flags(int);
     private:
 #else
 # define MPT_STREAMINFO_INIT { 0 }
@@ -87,12 +87,12 @@ enum MPT_STREAMFLAG(Flags) {
 	~stream();
 	
 	bool endline();
-	void setNewline(int , int = RdWr);
+	void set_newline(int , int = RdWr);
 	
 	int flags() const;
 	
 	int errors() const;
-	void setError(int);
+	void set_error(int);
 	
 	bool open(const char *, const char * = "r");
     protected:
@@ -208,8 +208,8 @@ public:
 	void unref() __MPT_OVERRIDE;
 	int conv(int , void *) const __MPT_OVERRIDE;
 	
-	int property_get(struct property *) const __MPT_OVERRIDE;
-	int property_set(const char *, const metatype *) __MPT_OVERRIDE;
+	int property(struct property *) const __MPT_OVERRIDE;
+	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;
@@ -227,8 +227,7 @@ public:
 	bool open(const char *, const char * = "r");
 	bool open(void *, size_t , int = stream::Read);
 	
-	inline void close()
-	{ property_set(0, 0); }
+	virtual void close();
 	
 	class Dispatch;
 protected:

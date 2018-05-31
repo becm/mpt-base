@@ -14,6 +14,24 @@
 
 __MPT_NAMESPACE_BEGIN
 
+// default conversion
+int metatype::conv(int type, void *ptr) const
+{
+    void **dest = (void **) ptr;
+
+    if (!type) {
+        static const char types[] = { Type, 0 };
+        if (dest) *dest = (void *) types;
+        return 0;
+    }
+    if (type != Type) {
+        return BadType;
+    }
+    if (dest) *dest = const_cast<metatype *>(this);
+    return type;
+}
+
+// basic metatype
 metatype::Basic::Basic(size_t post)
 {
     _mpt_geninfo_init(this + 1, post);

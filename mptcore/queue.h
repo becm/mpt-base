@@ -144,8 +144,8 @@ public:
 	DecodingQueue(DataDecoder = 0);
 	~DecodingQueue();
 	
-	bool pendingMessage();
-	bool currentMessage(struct message &, struct iovec * = 0);
+	bool pending_message();
+	bool current_message(struct message &, struct iovec * = 0) const;
 	bool advance();
 protected:
 	ssize_t _mlen;
@@ -228,7 +228,9 @@ public:
 	}
 	const Reference<instance> &ref()
 	{
-		if (!_d.pointer()) _d.setPointer(new instance);
+		if (!_d.pointer()) {
+			_d.set_pointer(new instance);
+		}
 		return _d;
 	}
 	bool push(const T & elem)

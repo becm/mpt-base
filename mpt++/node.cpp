@@ -16,55 +16,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-// basic metatype
-int metatype::conv(int type, void *ptr) const
-{
-    void **dest = (void **) ptr;
-
-    if (!type) {
-        static const char types[] = { Type, 0 };
-        if (dest) *dest = (void *) types;
-        return 0;
-    }
-    if (type != Type) {
-        return BadType;
-    }
-    if (dest) *dest = const_cast<metatype *>(this);
-    return type;
-}
-
-// identifier operations
-identifier::identifier(size_t total)
-{
-    mpt_identifier_init(this, total);
-}
-bool identifier::equal(const char *name, int nlen) const
-{
-    return mpt_identifier_compare(this, name, nlen) ? false : true;
-}
-identifier &identifier::operator=(const identifier &id)
-{
-    mpt_identifier_copy(this, &id);
-    return *this;
-}
-bool identifier::setName(const char *name, int nlen)
-{
-    return (mpt_identifier_set(this, name, nlen)) ? true : false;
-}
-const char *identifier::name() const
-{
-    return (mpt_identifier_len(this) <= 0) ? 0 : static_cast<const char *>(mpt_identifier_data(this));
-}
-Slice<const char> identifier::nameData() const
-{
-    if (mpt_identifier_len(this) <= 0) {
-        return Slice<const char>(0, 0);
-    }
-    const char *id = (const char *) mpt_identifier_data(this);
-    return Slice<const char>(id, _len);
-}
-
-// private data for node containing single reference metadata
+// private data for aligned identifier
 class NodePrivate : public node
 {
 public:
@@ -105,7 +57,7 @@ node *node::create(const char *ident, int len)
     if (!(n = create(need))) {
         return 0;
     }
-    n->ident.setName(ident, len);
+    n->ident.set_name(ident, len);
     return n;
 }
 

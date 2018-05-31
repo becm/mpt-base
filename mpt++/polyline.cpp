@@ -29,14 +29,14 @@ float linepart::trim() const
 { return mpt_linepart_real(_trim); }
 
 // linepart set operation
-bool linepart::setTrim(float val)
+bool linepart::set_trim(float val)
 {
     int v = mpt_linepart_code(val);
     if (v < 0) return false;
     _trim = v;
     return true;
 }
-bool linepart::setCut(float val)
+bool linepart::set_cut(float val)
 {
     int v = mpt_linepart_code(val);
     if (v < 0) return false;
@@ -157,7 +157,7 @@ bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> sr
     resize(next);
     return true;
 }
-long linepart::array::userLength()
+long linepart::array::length_user()
 {
     long len = 0;
     for (auto p : *this) {
@@ -165,7 +165,7 @@ long linepart::array::userLength()
     }
     return len;
 }
-long linepart::array::rawLength()
+long linepart::array::length_raw()
 {
     long len = 0;
     for (auto p : *this) {
@@ -187,12 +187,12 @@ int apply_data(point<double> *dest, const linepart *lp, int plen, const Transfor
             break;
         }
         const double *from = 0;
-        int max;
+        long max;
         if (arr->type() != typeinfo<double>::id()) {
             continue;
         };
         from = static_cast<__decltype(from)>(arr->base());
-        if ((max = arr->elements()) <= 0) {
+        if ((max = arr->element_count()) <= 0) {
             continue;
         }
         linepart tmp;
@@ -239,10 +239,10 @@ bool Polyline::set(const Transform &tr, Slice<const typed_array> src)
         if (arr->type() != typeinfo<double>::id()) {
             continue;
         }
-        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->elements()));
+        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(arr->base()), arr->element_count()));
     }
     // prepare target data
-    if (!(max = _vis.userLength())) {
+    if (!(max = _vis.length_user())) {
         _values.resize(0);
         return false;
     }

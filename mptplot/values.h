@@ -132,16 +132,16 @@ public:
 	};
 	inline typed_array() : _type(0), _flags(0), _esize(0), _code(0)
 	{ }
-	bool setType(int);
+	bool set_type(int);
 	void *reserve(long, long = 0);
 	
 	inline int flags() const
 	{ return _flags; }
-	void setModified(bool mod = true);
+	void set_modified(bool mod = true);
 	
-	inline size_t elementSize() const
+	inline size_t element_size() const
 	{ return _esize; }
-	inline long elements() const
+	inline long element_count() const
 	{ return _esize ? _d.length() / _esize : 0; }
 	inline const void *base() const
 	{ return _d.base(); }
@@ -162,7 +162,7 @@ MPT_STRUCT(rawdata_stage)
 {
 #ifdef __cplusplus
     public:
-	int clearModified(int = -1);
+	int clear_modified(int = -1);
 	
 	inline typed_array *values(int dim, int fmt = -1);
 	inline Slice<const typed_array> values() const
@@ -174,7 +174,7 @@ MPT_STRUCT(rawdata_stage)
 # define MPT_RAWDATA_STAGE_INIT { MPT_ARRAY_INIT, 0 }
 #endif
 	_MPT_ARRAY_TYPE(typed_array) _d;
-	uint8_t _maxDimensions;
+	uint8_t _max_dimensions;
 };
 
 /* part of MPT world */
@@ -216,16 +216,16 @@ MPT_STRUCT(linepart)
 	float cut() const;
 	float trim() const;
 	
-	bool setTrim(float);
-	bool setCut(float);
+	bool set_trim(float);
+	bool set_cut(float);
 	
 	class array : public Array<linepart>
 	{
 	public:
 		bool apply(const Transform &, int , Slice<const double>);
 		bool set(long);
-		long userLength();
-		long rawLength();
+		long length_user();
+		long length_raw();
 	};
 #endif
 	uint16_t raw,   /* raw points in line part */
@@ -440,8 +440,8 @@ public:
 	int dimensions(int = -1) const __MPT_OVERRIDE;
 	int stages() const __MPT_OVERRIDE;
 	
-	virtual void limitDimensions(uint8_t);
-	virtual bool limitStages(size_t);
+	virtual void limit_dimensions(uint8_t);
+	virtual bool limit_stages(size_t);
 	
 	inline Stage *begin()
 	{ return _stages.begin(); }
@@ -454,7 +454,7 @@ protected:
 	virtual ~Cycle();
 	Array<Stage> _stages;
 	uint16_t _act;
-	uint8_t _maxDimensions;
+	uint8_t _max_dimensions;
 	uint8_t _flags;
 };
 

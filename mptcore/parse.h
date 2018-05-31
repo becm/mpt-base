@@ -25,9 +25,9 @@ MPT_STRUCT(parsefmt)
 #ifdef __cplusplus
 	parsefmt();
 	
-	inline bool isComment(int c) const
+	inline bool is_comment(int c) const
 	{ return c && (c==com[0] || c==com[1] || c==com[2] || c==com[3]); }
-	inline bool isEscape(int c) const
+	inline bool is_escape(int c) const
 	{ return c && (c==esc[0] || c==esc[1] || c==esc[2]); }
 #else
 # define MPT_PARSEFMT_INIT  { '{', '}', 0, '=', 0, { '"', '\'' }, { '#' } }
@@ -191,7 +191,7 @@ public:
 	virtual ~Parse();
 	
 	virtual bool reset();
-	virtual bool setFormat(const char *);
+	virtual bool set_format(const char *);
 	virtual bool open(const char *);
 	virtual int read(struct node &, logger * = logger::defaultInstance());
 	
@@ -209,7 +209,7 @@ protected:
 	void *_nextCtx;
 	char *_fn;
 };
-inline bool Parse::setFormat(const char *)
+inline bool Parse::set_format(const char *)
 {
 	return false;
 }
@@ -219,9 +219,9 @@ public:
 	LayoutParser();
 	
 	bool reset() __MPT_OVERRIDE;
-	bool setFormat(const char *) __MPT_OVERRIDE;
+	bool set_format(const char *) __MPT_OVERRIDE;
 	
-	static const char *defaultFormat();
+	static const char *default_format();
 protected:
 	parsefmt _fmt;
 };

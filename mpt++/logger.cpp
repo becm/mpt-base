@@ -289,7 +289,7 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     return ret;
 }
 
-const LogStore::Entry *LogStore::nextEntry()
+const LogStore::Entry *LogStore::next()
 {
     Entry *e;
 
@@ -299,21 +299,21 @@ const LogStore::Entry *LogStore::nextEntry()
     return e;
 }
 
-void LogStore::clearLog()
+void LogStore::clear()
 {
     _msg.resize(0);
     _act = 0;
     _level = 0;
 }
 
-bool LogStore::setIgnoreLevel(int val)
+bool LogStore::set_ignore_level(int val)
 {
     if (val < 0) val = Debug;
     else if (val >= File) return false;
     _ignore = val;
     return true;
 }
-bool LogStore::setFlowFlags(int val)
+bool LogStore::set_flow_flags(int val)
 {
     _flags = val;
     return true;

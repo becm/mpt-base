@@ -22,12 +22,12 @@ int main()
     mpt::Graphic g;
     mpt::Layout *l;
     
-    l = g.createLayout();
+    l = g.create_layout();
     
     l->set("name", "lay");
     
-    int pos = g.addLayout(l);
-    g.registerUpdate(l, mpt::UpdateHint(pos));
+    int pos = g.add_layout(l);
+    g.register_update(l, mpt::UpdateHint(pos));
     
-    g.removeLayout(l);
+    g.remove_layout(l);
 }

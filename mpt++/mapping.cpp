@@ -93,7 +93,7 @@ const Reference<Cycle> *Mapping::cycle(laydest dst) const
     return 0;
 }
 // set cycle reference
-bool Mapping::setCycle(laydest dst, Cycle *ref)
+bool Mapping::set_cycle(laydest dst, Cycle *ref)
 {
     if (!set(dst, Reference<Cycle>())) {
         return false;
@@ -105,12 +105,12 @@ bool Mapping::setCycle(laydest dst, Cycle *ref)
     if (!(ptr = get(dst))) {
         return false;
     }
-    ptr->setPointer(ref);
+    ptr->set_pointer(ref);
     return true;
 }
 
-// save cycles references
-int Mapping::setCycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
+// save cycle references
+int Mapping::set_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
@@ -146,7 +146,7 @@ int Mapping::setCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
     return total;
 }
 // load cycles references
-int Mapping::getCycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
+int Mapping::get_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
@@ -190,7 +190,7 @@ int Mapping::getCycles(const Slice<const Reference<Layout> > &layouts, UpdateHin
     return total;
 }
 // deregister cycle references
-int Mapping::clearCycles(UpdateHint hint) const
+int Mapping::clear_cycles(UpdateHint hint) const
 {
     int clear = 0;
     for (auto &e : _d) {

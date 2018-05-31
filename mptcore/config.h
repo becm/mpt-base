@@ -201,8 +201,8 @@ public:
 		return _sub.slice();
 	}
 protected:
-	static Element *getElement(const UniqueArray<Element> &, path &);
-	static Element *makeElement(UniqueArray<Element> &, path &);
+	static Element *get_element(const UniqueArray<Element> &, path &);
+	static Element *make_element(UniqueArray<Element> &, path &);
 	UniqueArray<Element> _sub;
 };
 class Config::Element : public UniqueArray<Config::Element>, public Item<metatype>

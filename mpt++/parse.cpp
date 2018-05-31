@@ -130,7 +130,7 @@ LayoutParser::LayoutParser()
     _d.name.sect = _d.name.NumCont | _d.name.Space | _d.name.Special;
     _d.name.opt  = _d.name.NumCont;
 
-    _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, defaultFormat()));
+    _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, default_format()));
     _nextCtx = &_fmt;
 }
 bool LayoutParser::reset()
@@ -142,13 +142,13 @@ bool LayoutParser::reset()
     _d.src.line = 0;
     return true;
 }
-bool LayoutParser::setFormat(const char *fmt)
+bool LayoutParser::set_format(const char *fmt)
 {
     int type;
     ParserFcn n;
     parsefmt p;
     
-    if (!fmt) fmt = defaultFormat();
+    if (!fmt) fmt = default_format();
     
     if ((type = mpt_parse_format(&p, fmt)) < 0
         || !(n = mpt_parse_next_fcn(type))) {
@@ -160,7 +160,7 @@ bool LayoutParser::setFormat(const char *fmt)
     return true;
 }
 
-const char *LayoutParser::defaultFormat()
+const char *LayoutParser::default_format()
 {
     static const char fmt[] = "{*} =;#! '\"\0";
     return fmt;

@@ -9,7 +9,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // typed information for array
-bool typed_array::setType(int t)
+bool typed_array::set_type(int t)
 {
     if (t == static_cast<int>(_type)) {
         return true;
@@ -24,7 +24,7 @@ bool typed_array::setType(int t)
     _code = t < 0 ? 0 : t;
     return true;
 }
-void typed_array::setModified(bool set)
+void typed_array::set_modified(bool set)
 {
     if (set) _flags |= ValueChange;
     else _flags &= ~ValueChange;
@@ -52,14 +52,19 @@ size_t maxsize(Slice<const typed_array> sl, int type)
     const typed_array *arr = sl.base();
     size_t len = 0;
     for (size_t i = 0, max = sl.length(); i < max; ++i) {
-        if (!arr->elementSize()) {
+        if (!arr->element_size()) {
             continue;
         }
         if (type >= 0 && type != arr->type()) {
             continue;
         }
-        size_t curr = arr->elements();
-        if (curr > len) len = curr;
+        long curr = arr->element_count();
+        if (curr < 0) {
+            continue;
+        }
+        if ((size_t) curr > len) {
+            len = curr;
+        }
     }
     return len;
 }

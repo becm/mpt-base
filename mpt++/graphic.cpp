@@ -87,7 +87,7 @@ Graphic::~Graphic()
 { }
 
 // layout registration
-int Graphic::addLayout(Layout *lay, bool reuse)
+int Graphic::add_layout(Layout *lay, bool reuse)
 {
     if (!lay) {
         return BadArgument;
@@ -99,7 +99,7 @@ int Graphic::addLayout(Layout *lay, bool reuse)
         e = _layouts.end();
         for (Reference<Layout> *c = b; c < e; ++c) {
             if (c->pointer()) continue;
-            c->setPointer(lay);
+            c->set_pointer(lay);
             return c - b;
         }
     }
@@ -111,7 +111,7 @@ int Graphic::addLayout(Layout *lay, bool reuse)
     return pos;
 }
 // layout removal
-int Graphic::removeLayout(const Layout *lay)
+int Graphic::remove_layout(const Layout *lay)
 {
     if (!lay) {
         return -1;
@@ -121,23 +121,23 @@ int Graphic::removeLayout(const Layout *lay)
         if (r[i].pointer() != lay) {
             continue;
         }
-        r[i].setPointer(0);
+        r[i].set_pointer(0);
         return i;
     }
     return MissingData;
 }
 // number of layouts
-long Graphic::layoutCount() const
+long Graphic::layout_count() const
 {
     return _layouts.count();
 }
 // layout creation
-Layout *Graphic::createLayout()
+Layout *Graphic::create_layout()
 {
     return new Layout;
 }
 
-static ssize_t nextPart(const message &msg, size_t len)
+static ssize_t next_part(const message &msg, size_t len)
 {
     const char *end, *dest;
 
@@ -172,7 +172,7 @@ static ssize_t nextPart(const message &msg, size_t len)
         return MissingData;
     }
 }
-static Graph::Data *graphData(Slice<const Item<Graph::Data> > gd, int pos)
+static Graph::Data *graph_data(Slice<const Item<Graph::Data> > gd, int pos)
 {
     const Item<Graph::Data> *it = gd.nth(pos);
     if (!it) return 0;
@@ -191,7 +191,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
         return MissingData;
     }
 
-    if ((part = nextPart(msg, len)) < 0) {
+    if ((part = next_part(msg, len)) < 0) {
         return MissingData;
     }
 
@@ -243,7 +243,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
 
     /* get graph */
-    if ((part = nextPart(tmp, len -= part + 1)) < 0) {
+    if ((part = next_part(tmp, len -= part + 1)) < 0) {
         return part;
     }
     if (part >= (ssize_t) sizeof(buf)) {
@@ -294,7 +294,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
 
     /* get world */
     uint8_t dim;
-    if ((part = nextPart(tmp, len -= part + 1)) < 0) {
+    if ((part = next_part(tmp, len -= part + 1)) < 0) {
         if (len >= sizeof(buf)) {
             return MissingBuffer;
         }
@@ -312,7 +312,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
             if (w <= 0 || w > UINT8_MAX) {
                 return BadValue;
             }
-            const Graph::Data *d = graphData(gd, w - 1);
+            const Graph::Data *d = graph_data(gd, w - 1);
             if (d && (wld = d->world.pointer())) {
                 dst.wld = w;
                 match = dst.MatchWorld;
@@ -338,7 +338,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
     else if (dst.wld) {
         const Graph::Data *d;
-        if ((d = graphData(gd, dst.wld - 1))) {
+        if ((d = graph_data(gd, dst.wld - 1))) {
             wld = d->world.pointer();
         }
     }
@@ -388,7 +388,7 @@ metatype *Graphic::item(message &msg, size_t len) const
     if (!len) len = msg.length();
 
     /* get layout part */
-    if ((part = nextPart(tmp, len)) >= 0) {
+    if ((part = next_part(tmp, len)) >= 0) {
         if (part >= (ssize_t) sizeof(buf)) {
             return 0;
         }
@@ -429,7 +429,7 @@ metatype *Graphic::item(message &msg, size_t len) const
 
         while (!term) {
             // get next part
-            if ((part = nextPart(tmp, len)) >= 0) {
+            if ((part = next_part(tmp, len)) >= 0) {
                 if (part >= (ssize_t) sizeof(buf)) {
                     return 0;
                 }
@@ -469,7 +469,7 @@ metatype *Graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool Graphic::registerUpdate(const reference *, UpdateHint)
+bool Graphic::register_update(const reference *, UpdateHint)
 { return true; }
 void Graphic::dispatchUpdates()
 { }

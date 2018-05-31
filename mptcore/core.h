@@ -517,7 +517,7 @@ public:
 	{ 
 		return _ref;
 	}
-	inline void setPointer(T *ref)
+	inline void set_pointer(T *ref)
 	{
 		if (_ref) _ref->unref();
 		_ref = ref;
@@ -536,7 +536,7 @@ public:
 	{
 		T *r = ref._ref;
 		ref._ref = 0;
-		setPointer(r);
+		set_pointer(r);
 		return *this;
 	}
 #endif
@@ -569,13 +569,12 @@ MPT_STRUCT(identifier)
 #ifdef __cplusplus
 	identifier(size_t = sizeof(identifier));
 	inline ~identifier()
-	{ setName(0); }
+	{ set_name(0); }
 	
 	bool equal(const char *, int) const;
-	Slice<const char> nameData() const;
-	const char *name() const;
 	
-	bool setName(const char *, int = -1);
+	const char *name() const;
+	bool set_name(const char *, int = -1);
 	
 	identifier &operator =(const identifier &);
 	

@@ -22,7 +22,7 @@ MPT_STRUCT(reply_data)
 	
 	inline bool active() const
 	{ return len != 0; }
-	bool setData(size_t , const void *);
+	bool set(size_t , const void *);
 protected:
 #endif
 	uint16_t _max;
@@ -148,9 +148,9 @@ public:
 	class array : public UniqueArray<command>
 	{
 	public:
-		bool set(uintptr_t, EventHandler , void *);
-		command *get(uintptr_t);
-		command *next(size_t);
+		bool set_handler(uintptr_t, EventHandler , void *);
+		command *handler(uintptr_t) const;
+		command *reserve(size_t);
 	};
 #endif
 	uintptr_t  id;  /* command id */
@@ -166,8 +166,8 @@ public:
 	dispatch();
 	~dispatch();
 	
-	bool setDefault(uintptr_t);
-	void setError(EventHandler , void *);
+	bool set_default(uintptr_t);
+	void set_error(EventHandler , void *);
 	
 	enum {
 		LogStatus = logger::Debug2,
@@ -203,7 +203,7 @@ extern MPT_STRUCT(command) *mpt_command_get(const _MPT_UARRAY_TYPE(command) *, u
 extern void mpt_command_clear(const _MPT_UARRAY_TYPE(command) *);
 
 /* generate (next) id for message */
-extern MPT_STRUCT(command) *mpt_command_nextid(_MPT_UARRAY_TYPE(command) *, size_t);
+extern MPT_STRUCT(command) *mpt_command_reserve(_MPT_UARRAY_TYPE(command) *, size_t);
 
 /* find command with specified id */
 extern MPT_STRUCT(command) *mpt_command_find(const MPT_STRUCT(command) *, size_t , uintptr_t);
@@ -247,8 +247,8 @@ class MessageSource : public reply_context
 public:
 	virtual ~MessageSource()
 	{ }
-	virtual const struct message *currentMessage(bool align = false) = 0;
-	virtual size_t pendingMessages(int wait = 0) = 0;
+	virtual const struct message *current_message(bool align = false) = 0;
+	virtual long pending(int wait = 0) = 0;
 };
 #endif
 

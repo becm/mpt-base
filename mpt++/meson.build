@@ -4,8 +4,10 @@
 cxx_src = files(
   'array.cpp',
   'buffer.cpp',
-  'client.cpp', 'config.cpp',
+  'client.cpp',
+  'config.cpp',
   'event.cpp',
+  'identifier.cpp',
   'logger.cpp',
   'makeid.cpp',
   'message.cpp',
