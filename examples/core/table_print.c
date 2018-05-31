@@ -1,5 +1,6 @@
 /*!
- * test MPT environment inclusion
+ * MPT base examples
+ *   output node content
  */
 
 #include <stdio.h>

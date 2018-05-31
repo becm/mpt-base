@@ -18,3 +18,8 @@ test('config environment import',
     c_args : test_defines,
     dependencies: core),
   args: 'mpt_*')
+
+test('config file import',
+  executable('config', 'config.c',
+    c_args : test_defines,
+    dependencies: core))

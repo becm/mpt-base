@@ -1,3 +1,9 @@
+/*!
+ * MPT core library
+ *   get config element
+ */
+
+#include <string.h>
 
 #include "meta.h"
 
@@ -7,7 +13,7 @@
  * \ingroup mptConfig
  * \brief get configuration element
  * 
- * Find element in configuration tree/list.
+ * Find element in configuration.
  * 
  * \param dest   element path
  * \param sep    path separator
@@ -29,9 +35,13 @@ extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config)
 		}
 	}
 	if (dest) {
+		const char *end;
 		p.sep = sep;
-		p.assign = assign;
+		p.assign = 0;
 		mpt_path_set(&p, dest, -1);
+		if (assign > 0 && (end = memchr(dest, assign, p.len))) {
+			p.assign = assign;
+		}
 	}
 	return conf->_vptr->query(conf, &p);
 }

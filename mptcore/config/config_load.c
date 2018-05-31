@@ -1,5 +1,6 @@
 /*!
- * resolve alias to full library description
+ * MPT core library
+ *   load configuration
  */
 
 #define _POSIX_C_SOURCE 200809L
