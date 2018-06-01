@@ -161,7 +161,7 @@ public:
     virtual bool register_update(const reference *, UpdateHint = UpdateHint());
 
 protected:
-    virtual void dispatchUpdates();
+    virtual void dispatch_updates();
     RefArray<Layout> _layouts;
 };
 

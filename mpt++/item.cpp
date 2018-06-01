@@ -57,7 +57,7 @@ bool Group::bind(const Relation &, logger *)
 
 bool Group::add_items(node *head, const Relation *relation, logger *out)
 {
-    const char _func[] = "mpt::Group::addItems";
+    const char _func[] = "mpt::Group::add_items";
 
     for (; head; head = head->next) {
         metatype *from = head->_meta;

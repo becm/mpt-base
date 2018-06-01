@@ -471,7 +471,7 @@ metatype *Graphic::item(message &msg, size_t len) const
 // collect references for update trigger
 bool Graphic::register_update(const reference *, UpdateHint)
 { return true; }
-void Graphic::dispatchUpdates()
+void Graphic::dispatch_updates()
 { }
 
 __MPT_NAMESPACE_END
