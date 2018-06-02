@@ -1,98 +1,19 @@
 /*!
- * parse value output format
+ * MPT core library
+ *   add value format element
  */
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "array.h"
 
 #include "convert.h"
-
-static MPT_INTERFACE_VPTR(buffer) valfmtCtl;
-static MPT_STRUCT(buffer) *valfmtCreate(long len)
-{
-	MPT_STRUCT(buffer) *b;
-	if (len < 0) {
-		len = 8;
-	}
-	len = sizeof(*b) + len * sizeof(MPT_STRUCT(valfmt));
-	len = MPT_align(len);
-	
-	if (!(b = malloc(len))) {
-		return 0;
-	}
-	b->_vptr = &valfmtCtl;
-	b->_ref._val = 1;
-	b->_size = len - sizeof(*b);
-	b->_used = 0;
-	return b;
-}
-
-static void valfmtUnref(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(buffer) *b = (void *) ref;
-	if (!mpt_refcount_lower(&b->_ref)) {
-		free(b);
-	}
-}
-static uintptr_t valfmtRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(buffer) *b = (void *) ref;
-	return mpt_refcount_raise(&b->_ref);
-}
-static MPT_STRUCT(buffer) *valfmtDetach(MPT_STRUCT(buffer) *b, long len)
-{
-	MPT_STRUCT(valfmt) *fmt;
-	if (len < 0) {
-		len = b->_used / sizeof(*fmt);
-	}
-	if (b->_ref._val > 1) {
-		MPT_STRUCT(buffer) *c;
-		long used;
-		if (!(c = valfmtCreate(len))) {
-			return 0;
-		}
-		len *= sizeof(*fmt);
-		mpt_refcount_lower(&b->_ref);
-		used = b->_used;
-		if (used > len) {
-			used = len;
-		}
-		c->_used = used;
-		memcpy(c + 1, b + 1, used);
-		return c;
-	}
-	len *= sizeof(*fmt);
-	if (len <= (long) b->_size) {
-		if (len < (long) b->_used) {
-			b->_used = len;
-		}
-		return b;
-	}
-	len += sizeof(*b);
-	len = MPT_align(len);
-	if (!(b = realloc(b, len))) {
-		return 0;
-	}
-	b->_size = len - sizeof(*b);
-	return b;
-}
-static int valfmtType(const MPT_STRUCT(buffer) *b)
-{
-	(void) b;
-	return MPT_ENUM(TypeValFmt);
-}
-static MPT_INTERFACE_VPTR(buffer) valfmtCtl = {
-	{ valfmtUnref, valfmtRef },
-	valfmtDetach,
-	valfmtType
-};
 /*!
  * \ingroup mptConvert
- * \brief parse value format elements
+ * \brief add to value format array
  * 
- * Append value formats in string.
+ * Create buffer for and add data to array
+ * for value output format elements.
  * 
  * \param arr   value format target array
  * \param base  format descriptions
@@ -101,28 +22,34 @@ static MPT_INTERFACE_VPTR(buffer) valfmtCtl = {
  */
 extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(valfmt) *arr, MPT_STRUCT(valfmt) fmt)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *b;
 	MPT_STRUCT(valfmt) *dest;
 	long len;
-	if ((b = arr->_buf)
-	  && b->_vptr->content(b) != valfmtType(0)) {
-		b = 0;
-	}
-	if (!b) {
-		if (!(b = valfmtCreate(-1))) {
+	
+	if (!(b = arr->_buf)) {
+		static const MPT_STRUCT(type_traits) _valfmt_info = MPT_TYPETRAIT_INIT(MPT_STRUCT(valfmt), MPT_ENUM(TypeValFmt));
+		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt), 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		memcpy(b + 1, &fmt, sizeof(fmt));
+		b->_typeinfo = &_valfmt_info;
 		b->_used = sizeof(fmt);
 		arr->_buf = b;
 		return 1;
 	}
-	len = b->_used / sizeof(fmt);
-	if (!(b = b->_vptr->detach(b, len + 1))) {
+	if (!(info = b->_typeinfo)
+	    || info->type != MPT_ENUM(TypeValFmt)) {
+		return MPT_ERROR(BadType);
+	}
+	len = b->_used / sizeof(sizeof(fmt));
+	if (!(b = b->_vptr->detach(b, (len + 8) * sizeof(fmt)))) {
 		return 0;
 	}
+	arr->_buf = b;
 	dest = (void *) (b + 1);
 	memcpy(dest + len, &fmt, sizeof(fmt));
-	b->_used = (len + 1) * sizeof(fmt);
-	return len + 1;
+	++len;
+	b->_used = len * sizeof(fmt);
+	return len;
 }

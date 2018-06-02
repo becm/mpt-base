@@ -1,3 +1,7 @@
+/*!
+ * MPT core library
+ *   convert type to string pointer/slice
+ */
 
 #include <ctype.h>
 #include <string.h>
@@ -13,7 +17,8 @@
  * \ingroup mptConvert
  * \brief get string data
  * 
- * convert typed data pointer to string
+ * Convert typed data pointer to string
+ * or slice of characters
  * 
  * \param[in,out] from pointer to current string position
  * \param         type convertion target type
@@ -23,7 +28,7 @@
  */
 extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 {
-	static const char def[] = "";
+	static const char def[] = "\0";
 	const char *base;
 	
 	/* simple pointer */
@@ -40,7 +45,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	}
 	/* data is text array */
 	if (type == MPT_ENUM(TypeArray)) {
-		static const char def[] = "\0";
+		const MPT_STRUCT(type_traits) *info;
 		const MPT_STRUCT(array) *arr = *from;
 		MPT_STRUCT(buffer) *b;
 		
@@ -49,21 +54,19 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			if (len) *len = 0;
 			return def;
 		}
-		if ((type = b->_vptr->content(b))
-		    && type != 'c') {
+		if (!(info = b->_typeinfo)
+		    || info->type != 'c') {
 			return 0;
 		}
-		if (!len) {
-			char *sep;
-			if (!b->_used) {
-				return def;
-			}
-			if (!(sep = memchr(b + 1, 0, b->_used))) {
-				return 0;
-			}
-		}
-		else {
+		base = (void *) (b + 1);
+		if (len) {
 			*len = b->_used;
+		}
+		else if (!b->_used) {
+			base = def;
+		}
+		else if (!memchr(base, 0, b->_used)) {
+			return 0;
 		}
 		*from = arr + 1;
 		return (char *) (b + 1);

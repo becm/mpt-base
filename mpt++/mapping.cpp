@@ -59,7 +59,7 @@ Array<laydest> Mapping::destinations(valsrc src, int client) const
 {
     Array<laydest> arr;
 
-    for (auto &map : _bind.slice()) {
+    for (auto &map : _bind.elements()) {
         if (mpt_mapping_cmp(&map, &src, client)) {
             continue;
         }

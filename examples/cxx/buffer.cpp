@@ -64,8 +64,8 @@ extern int main(int argc, char * const argv[])
 	
 	d.insert(3, 4);
 	d.set(2, 1);
-	std::cout << type(d) << '>' << type(d.slice());
-	std::cout << ": " << d.slice() << std::endl;
+	std::cout << type(d) << '>' << type(d.elements());
+	std::cout << ": " << d.elements() << std::endl;
 	
 	cq.push('b');
 	std::cout << cq.data() << std::endl;

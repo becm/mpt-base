@@ -198,7 +198,7 @@ public:
 	class Element;
 	inline Slice<const Element> elements() const
 	{
-		return _sub.slice();
+		return _sub.elements();
 	}
 protected:
 	static Element *get_element(const UniqueArray<Element> &, path &);

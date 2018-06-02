@@ -30,51 +30,68 @@ extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 	size_t len, size, used;
 	
 	if (!(buf = arr->_buf)) {
-		if (!(buf = _mpt_buffer_alloc(64))) {
+		static const MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(char, 'c');
+		if (!(buf = _mpt_buffer_alloc(64, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
+		buf->_typeinfo = &info;
+		arr->_buf = buf;
+		size = buf->_size;
+		used = 0;
+		len = size;
 	}
 	/* require raw or character data buffer */
 	else {
-		int type = buf->_vptr->content(buf);
-		if (type && type != 'c') {
+		const MPT_STRUCT(type_traits) *info;
+		if (!(info = buf->_typeinfo) || info->type != 'c') {
 			return MPT_ERROR(BadType);
 		}
-	}
-	size = buf->_size;
-	used = buf->_used;
-	
-	if ((len = size - used) < 64) {
-		if (!(buf = buf->_vptr->detach(buf, size + 64))) {
-			return MPT_ERROR(BadOperation);
+		size = buf->_size;
+		used = buf->_used;
+		len  = size - used;
+		
+		rval = len - len % 64;
+		while ((size_t) rval < len) {
+			rval += 64;
 		}
-		len = (size = buf->_size) - used;
-		arr->_buf = buf;
+		len = rval;
 	}
-	base = (char *) (buf + 1);
-	
-	va_copy(tmp, args);
-	rval = vsnprintf(base+used, len, format, tmp);
-	va_end(tmp);
-	
-	if (rval >= 0 && (size_t) rval <= len) {
-		if ((used = (buf->_used += rval)) < size)
-			base[used] = '\0';
-		return rval;
-	}
-	/* ignore broken implementations */
-	else if (rval < 0) {
-		return MPT_ERROR(BadValue);
-	}
-	else if (!(buf = buf->_vptr->detach(buf, used + rval + 1))) {
+	if (!(base = mpt_array_slice(arr, used, len))) {
 		return MPT_ERROR(BadOperation);
 	}
-	base = (char *) (buf + 1);
-	len  = buf->_size - buf->_used;
-	if ((rval = vsnprintf(base+used, len, format, args)) > 0) {
-		buf->_used += rval;
+	buf = arr->_buf;
+	
+	va_copy(tmp, args);
+	rval = vsnprintf(base, len, format, tmp);
+	va_end(tmp);
+	
+	/* ignore broken implementations */
+	if (rval < 0) {
+		buf->_used = used;
+		return MPT_ERROR(BadValue);
 	}
-	return rval < 0 ? MPT_ERROR(BadValue) : rval;
+	if (rval >= 0 && (size_t) rval <= len) {
+		if ((size_t) rval < len) {
+			base[rval] = '\0';
+		}
+		buf->_used = used + rval;
+		return rval;
+	}
+	while (len <= (size_t) rval) {
+		len += 64;
+	}
+	if (!(base = mpt_array_slice(arr, used, len))) {
+		return MPT_ERROR(BadOperation);
+	}
+	size = used + len;
+	if ((rval = vsnprintf(base, len, format, args)) > 0) {
+		used += rval;
+		if (used < size) {
+			base[rval] = '\0';
+			return rval;
+		}
+	}
+	return MPT_ERROR(BadValue);
 }
 
 /*!

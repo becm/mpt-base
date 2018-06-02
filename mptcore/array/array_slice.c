@@ -1,5 +1,6 @@
 /*!
- * array slice access
+ * MPT core library
+ *   array slice access
  */
 
 #include <errno.h>
@@ -21,58 +22,65 @@
  */
 extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
-	size_t total, used, max;
+	size_t total, used, size;
 	uint8_t *ptr;
 	
+	/* invalid argument combination */
 	if (len > (SIZE_MAX - off)) {
 		errno = EINVAL;
 		return 0;
 	}
 	total = off + len;
 	
-	/* require raw buffer data */
-	if ((buf = arr->_buf)
-	  && buf->_vptr->content(buf)) {
-		buf->_vptr->ref.unref((void *) buf);
-		buf = 0;
-	}
-	if (!buf) {
-		if (!len || !(buf = _mpt_buffer_alloc(total))) {
+	/* new raw buffer */
+	if (!(buf = arr->_buf)) {
+		if (!(buf = _mpt_buffer_alloc(total, 0))) {
 			return 0;
 		}
 		buf->_used = total;
 		arr->_buf = buf;
-		if (off) memset(buf + 1, 0, off);
-		return ((uint8_t *) (buf + 1)) + off;
+		ptr = (uint8_t *) (buf + 1);
+		if (off) {
+			memset(buf + 1, 0, off);
+			ptr += off;
+		}
+		return ptr;
 	}
 	used = buf->_used;
+	size = total < used ? used : total;
 	
-	/* no shared data */
-	if (buf->_ref._val < 2) {
-		ptr = ((uint8_t *) (buf + 1)) + off;
-		/* slice in existing data */
-		if (total <= used) {
-			return ptr;
-		}
-		if (total < buf->_size) {
-			if (off > used) {
-				memset(ptr, 0, used - off);
-			}
-			buf->_used = total;
-			return ptr;
+	/* enforce data alignment */
+	if ((info = buf->_typeinfo)) {
+		size_t elem;
+		if (!(elem = info->size)
+		    || off % elem
+		    || len % elem
+		    || size % elem) {
+			return 0;
 		}
 	}
-	max = total < used ? used : total;
-	if (!(buf = buf->_vptr->detach(buf, max))) {
+	/* sufficient private space */
+	if (total < buf->_size
+	    && !buf->_vptr->shared(buf)) {
+		ptr = (void *) (buf + 1);
+		if (total <= used) {
+			return ptr + off;
+		}
+		if (!(mpt_buffer_insert(buf, used, total - used))) {
+			return 0;
+		}
+		if (info && !info->init) {
+			memset(ptr + used, 0, total - used);
+		}
+		return ptr + off;
+	}
+	/* make private copy */
+	if (!(buf = buf->_vptr->detach(buf, size))) {
 		return 0;
 	}
-	ptr = ((uint8_t *) (buf + 1)) + off;
-	if (off > used) {
-		memset(ptr, 0, used - off);
-	}
-	if (used < total) {
-		buf->_used = total;
-	}
-	return buf;
+	arr->_buf = buf;
+	
+	return mpt_buffer_insert(buf, off, len);
 }

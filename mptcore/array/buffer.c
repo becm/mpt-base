@@ -1,5 +1,6 @@
 /*!
- * control and initializer for heap-based data.
+ * MPT core library
+ *   control and initializer for heap-based data.
  */
 
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 # define _MPT_BUFFER_PSTD 128
 #endif
 
-static int psize = 0;
+static int _mpt_buffer_alloc_psize = 0;
 
 /*!
  * \ingroup mptArray
@@ -26,94 +27,169 @@ static int psize = 0;
  */
 static int _mpt_buffer_alloc_align(size_t size)
 {
-	if (psize) {
-		return -3;
+	if (!size) {
+		return _mpt_buffer_alloc_psize = _MPT_BUFFER_PSTD;
 	}
 	if (size < 8 || size > 4*1024*1024) {
-		return -2;
+		return MPT_ERROR(BadValue);
 	}
-	return psize = MPT_align(size);
+	return _mpt_buffer_alloc_psize = MPT_align(size);
 }
+
+MPT_STRUCT(bufferData)
+{
+	MPT_STRUCT(refcount) _ref;
+	MPT_STRUCT(type_traits) *info;
+	size_t _psize;
+	
+	/* align memory boundary */
+	uint8_t _pad[8 * sizeof(void *)
+	           - sizeof(MPT_STRUCT(refcount))
+	           - sizeof(MPT_STRUCT(type_traits) *)
+	           - sizeof(size_t)
+	           - sizeof(MPT_STRUCT(buffer))
+	];
+	
+	MPT_STRUCT(buffer) buf;
+};
 /* reference interface */
 static void _mpt_buffer_alloc_unref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
-	
-	if (!mpt_refcount_lower(&buf->_ref)) {
-		free(buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, buf);
+	const MPT_STRUCT(type_traits) *info;
+	if (mpt_refcount_lower(&buf->_ref)) {
+		return;
 	}
+	if ((info = buf->buf._typeinfo)) {
+		void (*fini)(void *);
+		size_t size;
+		if ((size = info->size)
+		    && (fini = info->fini)) {
+			size_t i, len = buf->buf._used;
+			uint8_t *ptr = (void *) (buf + 1);
+			len -= len % size;
+			for (i = 0; i < len; i += size) {
+				fini(ptr + i);
+			}
+		}
+	}
+	if (buf->info) {
+		free(buf->info);
+	}
+	free(buf);
 }
 static uintptr_t _mpt_buffer_alloc_ref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, buf);
 	return mpt_refcount_raise(&buf->_ref);
 }
-static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr;
-static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *buf, long len)
+/* buffer interface */
+static int _mpt_buffer_alloc_shared(const MPT_STRUCT(buffer) *ptr)
 {
-	MPT_STRUCT(buffer) *b;
-	long used = buf->_used;
-	
-	if (len < 0) {
-		len = used;
-	}
-	if (buf->_ref._val > 1) {
-		if (!(b = _mpt_buffer_alloc(len))) {
-			return 0;
-		}
-	}
-	else {
-		long size = buf->_size, align;
-		size_t next = len + sizeof(*b);
-		
-		if ((align = next % psize)) {
-			next += psize - align;
-		}
-		if (len < used) {
-			used = len;
-		}
-		/* compatible size */
-		if (len < size) {
-			/* keep instance */
-			if (next <= (size_t) psize || len >= size / 2 || len > size - 1024) {
-				buf->_used = used;
-				return buf;
-			}
-		}
-		/* try to get in-place memory */
-		if (used > size / 4) {
-			if (!(b = realloc(buf, next))) {
-				return 0;
-			}
-			b->_used = used;
-			b->_size = next - sizeof(*b);
-			return b;
-		}
-		/* get new memory in favour of less copying */
-		if (!(b = _mpt_buffer_alloc(len))) {
-			return 0;
-		}
-	}
-	/* copy old data */
-	if ((b->_used = used)) {
-		(void) memcpy(b + 1, buf + 1, used);
-	}
-	/* clear data reference */
-	if (!mpt_refcount_lower(&buf->_ref)) {
-		free(buf);
-	}
-	return b;
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, buf);
+	return buf->_ref._val > 1 ? 1 : 0;
 }
-static int _mpt_buffer_alloc_content(const MPT_STRUCT(buffer) *buf)
-{
-	(void) buf;
-	return 0;
-}
+static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *, size_t);
 static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
 	{ _mpt_buffer_alloc_unref, _mpt_buffer_alloc_ref },
 	_mpt_buffer_alloc_detach,
-	_mpt_buffer_alloc_content
+	_mpt_buffer_alloc_shared
 };
+static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, size_t len)
+{
+	MPT_STRUCT(bufferData) *next, *buf = MPT_baseaddr(bufferData, ptr, buf);
+	const MPT_STRUCT(type_traits) *info;
+	size_t add;
+	
+	/* get real required size */
+	if ((info = buf->buf._typeinfo)) {
+		size_t size;
+		if (!(size = info->size)) {
+			return 0;
+		}
+		/* align size info */
+		len += size - (len % size);
+	}
+	/* no modification required */
+	if (buf->_ref._val < 2) {
+		if (len <= buf->buf._size) {
+			return &buf->buf;
+		}
+	}
+	/* require valid copy operation */
+	else if (info
+	         && info->init
+	         && !info->copy) {
+		return 0;
+	}
+	/* add management info size */
+	len += sizeof(*buf);
+	
+	/* align to creation time part size */
+	add = len % buf->_psize;
+	if (add) {
+		len += buf->_psize - add;
+	}
+	if (!(next = malloc(len))) {
+		return 0;
+	}
+	/* copy type information */
+	if (!info) {
+		next->info = 0;
+	} else {
+		void *ptr;
+		if (!(ptr = malloc(sizeof(*info)))) {
+			free(next);
+			return 0;
+		}
+		next->info = memcpy(ptr, info, sizeof(*info));
+	}
+	next->_psize = buf->_psize;
+	next->_ref._val = 1;
+	
+	next->buf._vptr = &_mpt_buffer_vptr;
+	next->buf._typeinfo = next->info;
+	next->buf._size = len - sizeof(*next);
+	next->buf._used = 0;
+	
+	/* require content copy */
+	if (mpt_refcount_lower(&buf->_ref)) {
+		if (mpt_buffer_copy(&next->buf, &buf->buf) < 0) {
+			if (next->info) {
+				free(next->info);
+			}
+			free(next);
+			return 0;
+		}
+	}
+	/* move data content */
+	else if ((add = buf->buf._used)) {
+		if (add > len) {
+			void (*fini)(void *);
+			if (!info) {
+				add = len;
+			}
+			if ((fini = info->fini)) {
+				size_t pos, size = info->size;
+				uint8_t *ptr = (void *) (buf + 1);
+				add -= (add % size);
+				len -= (len % size);
+				
+				for (pos = len; pos < add; pos += size) {
+					fini(ptr + pos);
+				}
+				add = len;
+			}
+		}
+		memcpy(next + 1, buf + 1, add);
+		next->buf._used = add;
+		if (buf->info) {
+			free(buf->info);
+		}
+		free(buf);
+	}
+	return &next->buf;
+}
 /*!
  * \ingroup mptArray
  * \brief buffer data
@@ -124,25 +200,39 @@ static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
  * 
  * \return new buffer sattisfying (at least) size
  */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len)
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len, const MPT_STRUCT(type_traits) *info)
 {
-	MPT_STRUCT(buffer) *b;
+	MPT_STRUCT(bufferData) *b;
 	
 	/* get buffer increase size (<page table) */
-	if (!psize && _mpt_buffer_alloc_align(_MPT_BUFFER_PSTD) < 0) {
+	if (!_mpt_buffer_alloc_psize
+	    && _mpt_buffer_alloc_align(0) < 0) {
 		return 0;
 	}
-	/* align to psize */
+	/* persistent type information */
 	len += sizeof(*b);
-	len = ((len - 1) / psize + 1) * psize;
-	
+	len = (((len - 1) / _mpt_buffer_alloc_psize) + 1) * _mpt_buffer_alloc_psize;
 	if (!(b = malloc(len))) {
 		return 0;
 	}
-	b->_vptr = &_mpt_buffer_vptr;
 	b->_ref._val = 1;
-	b->_size = len - sizeof(*b);
-	b->_used = 0;
+	if (!info) {
+		b->info = 0;
+	} else {
+		void *ptr;
+		if (!(ptr = malloc(sizeof(*info)))) {
+			free(b);
+			return 0;
+		}
+		info = memcpy(ptr, info, sizeof(*info));
+		b->info = ptr;
+	}
+	b->_psize = _mpt_buffer_alloc_psize;
 	
-	return b;
+	b->buf._vptr = &_mpt_buffer_vptr;
+	b->buf._typeinfo = info;
+	b->buf._size = len - sizeof(*b);
+	b->buf._used = 0;
+	
+	return &b->buf;
 }

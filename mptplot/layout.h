@@ -427,11 +427,11 @@ public:
 	
 	virtual Item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Axis> > axes() const
-	{ return _axes.slice(); }
+	{ return _axes.elements(); }
 	
 	virtual Item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Data> > worlds() const
-	{ return _worlds.slice(); }
+	{ return _worlds.elements(); }
 	
 	virtual bool set_cycle(int , const Reference<class Cycle> &) const;
 	virtual const Reference<class Cycle> *cycle(int) const;
@@ -465,7 +465,7 @@ public:
 	virtual bool reset();
 	
 	inline Slice<const Item<Graph> > graphs() const
-	{ return _graphs.slice(); }
+	{ return _graphs.elements(); }
 	
 	virtual bool set_alias(const char *, int = -1);
 	inline const char *alias() const

@@ -11,7 +11,7 @@
  * \ingroup mptValues
  * \brief reserve data on array
  * 
- * Prepare new elements on array.
+ * Prepare new floating point elements on array.
  * Copy old data if length arument is less than zero.
  * 
  * \param arr  array to append data
@@ -21,56 +21,53 @@
  */
 extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
-	double *data;
-	long used, add;
-	int type;
+	uint8_t *data;
+	size_t add;
+	long used;
 	
 	if (!(buf = arr->_buf)) {
+		static const MPT_STRUCT(type_traits) _values_double_info = MPT_TYPETRAIT_INIT(double, 'd');
 		if (len < 0) {
 			errno = EINVAL;
 			return 0;
 		}
-		return mpt_array_append(arr, len * sizeof(*data), 0);
+		add = len * sizeof(double);
+		if (!(buf = _mpt_buffer_alloc(add, 0))) {
+			return 0;
+		}
+		buf->_typeinfo = &_values_double_info;
+		
+		return memset(buf + 1, 0, add);
+	}
+	/* use raw data buffer */
+	if (!(info = buf->_typeinfo)
+	    || info->type != 'd') {
+		errno = EBADSLT;
+		return 0;
 	}
 	/* existing size and limit */
-	used = buf->_used / sizeof(*data);
+	used = buf->_used;
 	if (len >= 0) {
-		add = len;
+		add = len * sizeof(*data);
 	}
 	else if (used < (-len)) {
 		errno = EINVAL;
 		return 0;
 	} else {
-		add = -len;
+		add = (-len) * sizeof(*data);
 	}
-	/* use raw data buffer */
-	if (!(type = buf->_vptr->content(buf))) {
-		add *= sizeof(*data);
-		if (!(data = mpt_array_append(arr, add, 0))) {
-			return 0;
-		}
-	}
-	else if (type != 'd') {
-		errno = EINVAL;
+	if (!(buf = buf->_vptr->detach(buf, used + add))) {
 		return 0;
 	}
-	else if (!(buf = buf->_vptr->detach(buf, used + add))) {
-		return 0;
-	}
-	else {
-		arr->_buf = buf;
-		used *= sizeof(*data);
-		add *= sizeof(*data);
-		/* data area at end for new data */
-		if (!(data = mpt_buffer_insert(buf, used, add))) {
-			return 0;
-		}
-	}
-	/* copy data from old location */
+	arr->_buf = buf;
+	data = (void *) (buf + 1);
 	if (len < 0) {
-		memcpy(data, data + len, add);
+		data = memcpy(data + used, data + (used - len), len);
+	} else {
+		data = memset(data + used, 0, len);
 	}
-	return data;
+	return (double *) data;
 }
 

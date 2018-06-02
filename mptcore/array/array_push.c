@@ -1,11 +1,14 @@
 /*!
- * send (double) world data message via stream.
+ * MPT core library
+ *   encode/add data to 
  */
 
 #include <string.h>
 #include <errno.h>
 
 #include <sys/uio.h>
+
+#include "output.h"
 
 #include "array.h"
 
@@ -27,10 +30,11 @@
 extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const void *data)
 {
 	MPT_STRUCT(buffer) *b;
-	ssize_t max;
+	ssize_t max, add;
 	
 	/* fast path for raw data */
 	if (!arr->_enc) {
+		void *dest;
 		if (!len) {
 			arr->_state.done += arr->_state.scratch;
 			arr->_state.scratch = 0;
@@ -39,23 +43,43 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		if (!data) {
 			return MPT_ERROR(MissingData);
 		}
-		if (!mpt_array_append(&arr->_d, len, data)) {
+		if ((b = arr->_d._buf)
+		    && b->_typeinfo) {
+			return MPT_ERROR(BadType);
+		}
+		max = arr->_state.done + arr->_state.scratch;
+		if (!(dest = mpt_array_insert(&arr->_d, max, len))) {
 			return MPT_ERROR(MissingBuffer);
 		}
+		b = arr->_d._buf;
+		memcpy(dest, data, len);
 		arr->_state.scratch += len;
+		b->_used = max + len;
 		
 		return len;
 	}
+	max = arr->_state.done + arr->_state.scratch;
+	add = len > 64 ? len : 64;
+	
 	/* current buffer data */
 	if (!(b = arr->_d._buf)) {
+		if (max) {
+			return MPT_ERROR(BadArgument);
+		}
 		/* use initial data size */
-		if (!(b = _mpt_buffer_alloc(len > 64 ? len : 64))) {
-			return -1;
+		if (!(b = _mpt_buffer_alloc(add, 0))) {
+			return MPT_ERROR(BadOperation);
 		}
 		arr->_d._buf = b;
 	}
-	else if (b->_vptr->content(b)) {
+	else if (b->_typeinfo) {
 		return MPT_ERROR(BadType);
+	}
+	else if (!(b = b->_vptr->detach(b, max + add))) {
+		return MPT_ERROR(BadOperation);
+	}
+	else {
+		arr->_d._buf = b;
 	}
 	max = 0;
 	
@@ -84,42 +108,41 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 		
 		/* size update */
 		if (b->_size < (size_t) off) {
-			MPT_ABORT("invalid encoder data size");
+			mpt_log(0, __func__, MPT_LOG(Fatal), "%s: %zi > %zu",
+			        MPT_tr("invalid encoder data size"), off, (size_t) b->_size);
 			arr->_enc(&arr->_state, 0, 0);
-			return -1;
+			return MPT_ERROR(BadEncoding);
 		}
 		b->_used = off;
 		
-		/* retry on size problem only */
+		/* require larger buffer */
 		if (cont == MPT_ERROR(MissingBuffer)) {
-			;
+			if (!(b = b->_vptr->detach(b, b->_size + 64))) {
+				return max ? max : MPT_ERROR(MissingBuffer);
+			}
+			arr->_d._buf = b;
+			continue;
 		}
-		else if (cont < 0) {
-			return cont;
+		if (cont < 0) {
+			return max ? max : cont;
 		}
 		/* positive no error except for incomplete write */
-		else if (!data || !len) {
+		if (!data || !len) {
 			return max + cont;
 		}
 		/* space error */
-		else if (len < (size_t) cont) {
-			MPT_ABORT("bad encoder return size");
+		if (len < (size_t) cont) {
+			mpt_log(0, __func__, MPT_LOG(Critical), "%s: %zi > %zu",
+			        MPT_tr("bad encoder return size"), cont, len);
 			arr->_enc(&arr->_state, 0, 0);
-			return MPT_ERROR(BadOperation);
+			return MPT_ERROR(BadEncoding);
 		}
 		/* all data processed */
-		else if (!(len -= cont)) {
+		if (!(len -= cont)) {
 			return max + cont;
 		}
 		/* advance source data offset */
-		else {
-			data = ((uint8_t *) data) + cont;
-			max += cont;
-		}
-		/* get larger buffer */
-		if (!(b = b->_vptr->detach(b, b->_size + 64))) {
-			return max ? max : MPT_ERROR(MissingBuffer);
-		}
-		arr->_d._buf = b;
+		data = ((uint8_t *) data) + cont;
+		max += cont;
 	}
 }

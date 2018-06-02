@@ -1,5 +1,6 @@
 /*!
- * control and initializer for mmap-based data.
+ * MPT core library
+ *   control and initializer for mmap-based data.
  */
 
 #include <string.h>
@@ -25,7 +26,22 @@
 
 #define MPT_MMAP_FLAGS  (PROT_READ | PROT_WRITE)
 
-static int ptsize = 0;
+static int _mpt_buffer_map_psize = 0;
+
+MPT_STRUCT(bufferData)
+{
+	MPT_STRUCT(refcount) _ref;
+	size_t _align;
+	size_t _total;
+	
+	uint8_t _pad[8 * sizeof(void *)
+	           - sizeof(MPT_STRUCT(refcount))
+	           - sizeof(size_t)
+	           - sizeof(size_t)
+	           - sizeof(MPT_STRUCT(buffer))];
+	
+	MPT_STRUCT(buffer) _buf;
+};
 
 /*!
  * \ingroup mptArray
@@ -49,11 +65,14 @@ extern void *_mpt_memmap(size_t len, void *base)
 	/* NULL page mapping -> memory penalty for shitty system */
 	if (!(base = mmap(base, len, MPT_MMAP_FLAGS, MPT_MMAP_TYPE, devzero, 0))) {
 		/* get page table size & check range */
-		if (!ptsize || (ptsize = sysconf(_SC_PAGESIZE)) < 1) {
+		if (!_mpt_buffer_map_psize
+		    || (_mpt_buffer_map_psize = sysconf(_SC_PAGESIZE)) < 1) {
 			return 0;
 		}
-		if (len > (size_t) ptsize) munmap(((uint8_t *) base) + ptsize, len - ptsize);
-		(void) mprotect(base, ptsize, PROT_NONE);
+		if (len > (size_t) _mpt_buffer_map_psize) {
+			munmap(((uint8_t *) base) + _mpt_buffer_map_psize, len - _mpt_buffer_map_psize);
+		}
+		(void) mprotect(base, _mpt_buffer_map_psize, PROT_NONE);
 		base = mmap(base, len, MPT_MMAP_FLAGS, MPT_MMAP_TYPE, devzero, 0);
 	}
 #if !defined(MAP_ANONYMOUS)
@@ -65,59 +84,81 @@ extern void *_mpt_memmap(size_t len, void *base)
 /* reference interface */
 static void _mpt_buffer_map_unref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
-	
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
+	const MPT_STRUCT(type_traits) *info;
+	void (*fini)(void *);
+	size_t size;
 	if (mpt_refcount_lower(&buf->_ref)) {
 		return;
 	}
-	munmap(buf, sizeof(*buf) + buf->_size);
+	if ((info = buf->_buf._typeinfo)
+	    && (fini = info->fini)
+	    && (size = info->size)) {
+		size_t len = buf->_buf._size;
+		len -= len % size;
+		uint8_t *ptr = (void *) (buf + 1);
+		size_t i;
+		for (i = 0; i < len; i += size) {
+			fini(ptr + i);
+		}
+	}
+	munmap(buf, buf->_total);
 }
 static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(reference) *ref)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
-	
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
 	return mpt_refcount_raise(&buf->_ref);
 }
-/* buffer interface */
-static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *buf, long len)
+static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *ptr, size_t len)
 {
-	long align, max;
+	MPT_STRUCT(bufferData) *next, *buf = MPT_baseaddr(bufferData, ptr, _buf);
+	size_t old, align;
 	
-	/* deny non-exclusive modification */
-	if (buf->_ref._val > 1) {
-		errno = ENOTSUP;
+	if (buf->_ref._val == 1) {
+		return &buf->_buf;
+	}
+	/* only detach raw buffer */
+	if (buf->_buf._typeinfo) {
 		return 0;
 	}
-	if (len < 0) {
-		return buf;
-	}
-	/* deny mapping enlarge (MAP_FIXED is ... strange?) */
-	if ((size_t) len > buf->_size) {
-		errno = EINVAL;
-		return 0;
-	}
-	/* discard tailing data */
+	/* align to originating segment size */
 	len += sizeof(*buf);
-	max = sizeof(*buf) + buf->_size;
-	if ((align = len % ptsize)) {
-		len += ptsize - align;
+	
+	if (buf->_align && (align = (len % buf->_align))) {
+		len += buf->_align - align;
 	}
-	if (len < max) {
-		if (munmap(((uint8_t *) buf) + len, max - len) < 0) {
-			return 0;
-		}
-		len -= sizeof(*buf);
-		buf->_size = len;
-		if ((size_t) len < buf->_used) {
-			buf->_used = len;
-		}
+	if ((align = len % _mpt_buffer_map_psize)) {
+		len  += _mpt_buffer_map_psize - align;
 	}
-	return buf;
+	if (!(next = _mpt_memmap(len, 0))) {
+		return 0;
+	}
+	next->_ref._val = 1;
+	next->_align = buf->_align;
+	next->_total = len;
+	
+	old = buf->_buf._used;
+	len -= sizeof(*buf);
+	
+	if (old > len) {
+		old = len;
+	}
+	if (old) {
+		memcpy(next + 1, buf + 1, old);
+	}
+	next->_buf._vptr = buf->_buf._vptr;
+	next->_buf._typeinfo = 0;
+	next->_buf._used = old;
+	next->_buf._size = len;
+	
+	_mpt_buffer_map_unref((void *) &buf->_buf);
+	
+	return &next->_buf;
 }
-static int _mpt_buffer_map_content(const MPT_STRUCT(buffer) *buf)
+static int _mpt_buffer_map_shared(const MPT_STRUCT(buffer) *ptr)
 {
-	(void) buf;
-	return 0;
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, _buf);
+	return buf->_ref._val > 1 ? 1 : 0;
 }
 /*!
  * \ingroup mptArray
@@ -134,31 +175,36 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len)
 	static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
 		{ _mpt_buffer_map_unref, _mpt_buffer_map_ref },
 		_mpt_buffer_map_detach,
-		_mpt_buffer_map_content
+		_mpt_buffer_map_shared
 	};
-	MPT_STRUCT(buffer) *buf;
+	MPT_STRUCT(bufferData) *buf;
 	size_t align;
 	
 	/* get page table size & check range */
-	if (!ptsize || (ptsize = sysconf(_SC_PAGESIZE)) < 1) {
+	if (!_mpt_buffer_map_psize
+	    || (_mpt_buffer_map_psize = sysconf(_SC_PAGESIZE)) < 1) {
 		return 0;
 	}
-	if (SIZE_MAX - sizeof(*buf) - ptsize < len) {
+	if (SIZE_MAX - sizeof(*buf) - _mpt_buffer_map_psize < len) {
 		errno = ERANGE;
 		return 0;
 	}
 	len += sizeof(*buf);
 	
-	if ((align = len % ptsize)) {
-		len += ptsize - align;
+	if ((align = len % _mpt_buffer_map_psize)) {
+		len  += _mpt_buffer_map_psize - align;
 	}
 	if (!(buf = _mpt_memmap(len, 0))) {
 		return 0;
 	}
-	buf->_vptr = &_mpt_buffer_map_vptr;
 	buf->_ref._val = 1;
-	buf->_size = len - sizeof(*buf);
-	buf->_used = 0;
+	buf->_align = _mpt_buffer_map_psize;
+	buf->_total = len;
 	
-	return buf;
+	buf->_buf._vptr = &_mpt_buffer_map_vptr;
+	buf->_buf._typeinfo  = 0;
+	buf->_buf._size = len - sizeof(*buf);
+	buf->_buf._used = 0;
+	
+	return &buf->_buf;
 }

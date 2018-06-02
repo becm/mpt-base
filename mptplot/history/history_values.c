@@ -118,6 +118,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	}
 	/* get otput format data */
 	flen = 0;
+	fmt = 0;
 	if ((buf = hist->fmt._fmt._buf)) {
 		fmt = (void *) (buf + 1);
 		flen = buf->_used / sizeof(*fmt);

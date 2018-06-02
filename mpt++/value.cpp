@@ -134,12 +134,16 @@ const array *value::array(int type) const
     if (from != MPT_ENUM(TypeArray)) {
         return 0;
     }
-    const struct array *arr = reinterpret_cast<const struct array *>(ptr);
-    const buffer *b = arr->data();
-    if (type >= 0 && type != b->content()) {
-        return 0;
+    const mpt::array *arr = reinterpret_cast<const mpt::array *>(ptr);
+    if (type < 0) {
+        return arr;
     }
-    return arr;
+    const array::Data *d;
+    const type_traits *info;
+    if ((d = arr->data()) && (info = d->typeinfo()) && type == info->type) {
+        return arr;
+    }
+    return 0;
 }
 
 __MPT_NAMESPACE_END

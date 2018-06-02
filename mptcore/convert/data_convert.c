@@ -1,3 +1,7 @@
+/*!
+ * MPT core library
+ *   convert between MPT (base) type data
+ */
 
 #include <ctype.h>
 #include <string.h>
@@ -37,34 +41,40 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	/* special array processing */
 	if (ftype == MPT_ENUM(TypeArray)) {
 		const MPT_STRUCT(array) *arr = (void *) from;
-		MPT_STRUCT(buffer) *b = arr->_buf;
-		int content;
+		MPT_STRUCT(buffer) *b;
+		int content = 0;
 		
-		content = b ? b->_vptr->content(b) : -1;
-		
+		/* special content on buffer */
+		if ((b = arr->_buf)) {
+			const MPT_STRUCT(type_traits) *info = 0;
+			content = -1;
+			if ((info = b->_typeinfo)
+			    && (!(content = info->type))) {
+				return MPT_ERROR(BadValue);
+			}
+		}
 		if (ftype == dtype) {
-			if (dest) {
-				mpt_array_clone(dest, b ? arr : 0);
+			if (dest
+			    && mpt_array_clone(dest, b ? arr : 0) < 0) {
+				return MPT_ERROR(BadOperation);
 			}
 			*fptr = arr + 1;
 			return sizeof(*arr);
 		}
 		if (dtype == 's') {
 			const char **txt = dest;
-			if (content < 0) {
-				*txt = 0;
+			const char *s;
+			
+			if (content && content != 'c') {
+				return MPT_ERROR(BadType);
 			}
-			else if (!content || content == 'c') {
-				char *s;
-				if ((s = memchr(b + 1, 0, b->_used))) {
-					if (dest) *txt = (char *) b + 1;
-					*fptr = arr + 1;
-					return sizeof(*txt);
-				} else {
-					return MPT_ERROR(BadValue);
-				}
+			if (b && !(s = memchr(b + 1, 0, b->_used))) {
+				return MPT_ERROR(BadValue);
 			}
-			return MPT_ERROR(BadType);
+			*fptr = arr + 1;
+			
+			if (dest) *txt = b ? (void *) (b + 1) : 0;
+			return sizeof(*txt);
 		}
 		if ((dtype = MPT_value_fromVector(dtype)) >= 0) {
 			struct iovec *vec;
@@ -73,8 +83,13 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 				return MPT_ERROR(BadType);
 			}
 			if ((vec = dest)) {
-				vec->iov_base = b + 1;
-				vec->iov_len = b->_used;
+				if (b) {
+					vec->iov_base = b + 1;
+					vec->iov_len = b->_used;
+				} else {
+					vec->iov_base = 0;
+					vec->iov_len = 0;
+				}
 			}
 			*fptr = arr + 1;
 			return sizeof(*vec);

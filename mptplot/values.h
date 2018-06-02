@@ -166,8 +166,9 @@ MPT_STRUCT(rawdata_stage)
 	
 	inline value_store *values(int dim, int fmt = -1);
 	inline Slice<const value_store> values() const
-	{ return _d.slice(); }
-	inline int dimensions() const
+	{ return _d.elements(); }
+	
+	inline long dimension_count() const
 	{ return _d.length(); }
     protected:
 #else
@@ -186,8 +187,8 @@ public:
 	virtual int advance() = 0;
 	
 	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
-	virtual int dimensions(int = -1) const = 0;
-	virtual int stages() const = 0;
+	virtual long dimension_count(int = -1) const = 0;
+	virtual long stage_count() const = 0;
 protected:
 	inline ~rawdata() { }
 };
@@ -198,8 +199,8 @@ MPT_INTERFACE_VPTR(rawdata) {
 	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
 	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
-	int (*dimensions)(const MPT_INTERFACE(rawdata) *, int);
-	int (*stages)(const MPT_INTERFACE(rawdata) *);
+	int (*dimension_count)(const MPT_INTERFACE(rawdata) *, int);
+	int (*stage_count)(const MPT_INTERFACE(rawdata) *);
 }; MPT_INTERFACE(rawdata) {
 	const MPT_INTERFACE_VPTR(rawdata) *_vptr;
 };
@@ -283,7 +284,9 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *);
 extern int mpt_values_file(FILE *, long , long , double *);
 #endif
 
-
+/* type identifiers for special array and stage data */
+extern int mpt_value_store_typeid(void);
+extern int mpt_rawdata_stage_typeid(void);
 /* multi dimension data operations */
 extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
 extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
@@ -398,9 +401,9 @@ public:
 	{ _vis.set(0); _values.resize(0); }
 	
 	Slice<const linepart> parts() const
-	{ return _vis.slice(); }
+	{ return _vis.elements(); }
 	Slice<const Point> points() const
-	{ return _values.slice(); }
+	{ return _values.elements(); }
 protected:
 	linepart::array _vis;
 	Array<Point> _values;
@@ -437,8 +440,8 @@ public:
 	int advance() __MPT_OVERRIDE;
 	
 	int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
-	int dimensions(int = -1) const __MPT_OVERRIDE;
-	int stages() const __MPT_OVERRIDE;
+	long dimension_count(int = -1) const __MPT_OVERRIDE;
+	long stage_count() const __MPT_OVERRIDE;
 	
 	virtual void limit_dimensions(uint8_t);
 	virtual bool limit_stages(size_t);
@@ -448,8 +451,8 @@ public:
 	inline Stage *end()
 	{ return _stages.end(); }
 	
-	Slice<const Stage> slice() const
-	{ return _stages.slice(); }
+	Slice<const Stage> stages() const
+	{ return _stages.elements(); }
 protected:
 	virtual ~Cycle();
 	Array<Stage> _stages;

@@ -264,7 +264,7 @@ bool Polyline::set(const Transform &tr, Slice<const value_store> src)
 // polyline iterator operations
 Polyline::iterator Polyline::begin() const
 {
-    return Polyline::iterator(_vis.slice(), _values.begin());
+    return Polyline::iterator(_vis.elements(), _values.begin());
 }
 Polyline::iterator Polyline::end() const
 {

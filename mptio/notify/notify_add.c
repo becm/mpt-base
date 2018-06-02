@@ -17,55 +17,42 @@
 # include <sys/epoll.h>
 #endif
 
-/* reference interface */
-static void notifyDataUnref(MPT_INTERFACE(reference) *ref)
+static int _input_ref_type = 0;
+
+static void _input_ref_init(const MPT_STRUCT(type_traits) *info, void *ptr)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
+	memset(ptr, 0, info->size);
+}
+static int _input_ref_copy(void *src, int type, void *dest)
+{
+	MPT_INTERFACE(reference) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
 	
-	if (!mpt_refcount_lower(&buf->_ref)) {
-		MPT_INTERFACE(metatype) *curr, **base = (void *) (buf + 1);
-		size_t i, len = buf->_used / sizeof(*base);
-		for (i = 0; i < len; ++i) {
-			if ((curr = base[i])) {
-				curr->_vptr->ref.unref((void *) curr);
-				base[i] = 0;
-			}
-		}
-		free(buf);
+	src_ptr = src;
+	dest_ptr = dest;
+	
+	if (type != MPT_ENUM(TypeMeta)) {
+		return MPT_ERROR(BadType);
 	}
+	if ((src_ref = *src_ptr)
+	    && !(src_ref->_vptr->addref(src_ref))) {
+		return MPT_ERROR(BadOperation);
+	}
+	if ((dest_ref = *dest_ptr)) {
+		dest_ref->_vptr->unref(dest_ref);
+	}
+	*dest_ptr = src_ref;
+	return src_ref ? 1 : 0;
 }
-static uintptr_t notifyDataRef(MPT_INTERFACE(reference) *ref)
+static void _input_ref_fini(void *ptr)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
-	return mpt_refcount_raise(&buf->_ref);
-}
-/* buffer interface */
-static MPT_STRUCT(buffer) *notifyDataDetach(MPT_STRUCT(buffer) *buf, long len)
-{
-	/* unable to clone input references */
-	if (buf->_ref._val > 1) {
-		errno = ENOTSUP;
-		return 0;
+	MPT_INTERFACE(reference) **ref_ptr, *ref;
+	
+	ref_ptr = ptr;
+	if ((ref = *ref_ptr)) {
+		ref->_vptr->unref(ref);
+		*ref_ptr = 0;
 	}
-	len *= sizeof(void *);
-	if (len < (long) (buf->_used)) {
-		return buf;
-	}
-	if ((buf = realloc(buf, sizeof(*buf) + len))) {
-		buf->_size = len;
-	}
-	return buf;
 }
-static int notifyDataType(const MPT_STRUCT(buffer) *buf)
-{
-	(void) buf;
-	return mpt_input_typeid();
-}
-static MPT_INTERFACE_VPTR(buffer) notifyDataCtl = {
-	{ notifyDataUnref, notifyDataRef },
-	notifyDataDetach,
-	notifyDataType
-};
 
 /*!
  * \ingroup mptNotify
@@ -80,9 +67,17 @@ static MPT_INTERFACE_VPTR(buffer) notifyDataCtl = {
  */
 extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input) *in)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
 	MPT_INTERFACE(input) **base;
 	int file;
+	
+	if (!_input_ref_type) {
+		_input_ref_type = mpt_input_typeid();
+	}
+	if (_input_ref_type < 0) {
+		return MPT_ERROR(BadEncoding);
+	}
 	
 	file = -1;
 	if (!in
@@ -92,36 +87,36 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	}
 	/* create new buffer */
 	if (!(buf = no->_slot._buf)) {
-		size_t len = (file + 1) * sizeof(*base);
-		if (!(buf = malloc(sizeof(*buf) + len))) {
-			return MPT_ERROR(BadOperation);
+		MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(*base, MPT_ENUM(TypeMeta));
+		size_t len;
+		
+		info.init = _input_ref_init;
+		info.copy = _input_ref_copy;
+		info.fini = _input_ref_fini;
+		
+		info.type = _input_ref_type;
+		info.size = sizeof(*base);
+		info.base = MPT_ENUM(TypeMeta);
+		
+		len = (file + 1) * sizeof(*base);
+		if (!(buf = _mpt_buffer_alloc(len, &info))) {
+			return 0;
 		}
-		buf->_vptr = &notifyDataCtl;
-		buf->_ref._val = 1;
-		buf->_size = len;
-		buf->_used = len;
-		no->_slot._buf = buf;
 		base = memset(buf + 1, 0, len);
 		base += file;
 	}
 	/* reject incompatible data */
-	else if (buf->_vptr->content(buf) != notifyDataType(0)) {
+	else if (!(info = buf->_typeinfo) || info->type != _input_ref_type) {
 		return MPT_ERROR(BadType);
 	}
-	/* already existing position */
-	else if ((base = mpt_buffer_data(buf, file, sizeof(*base)))) {
+	/* reserve matching position */
+	else {
+		if (!(base = mpt_array_slice(&no->_slot, file, sizeof(*base)))) {
+			return MPT_ERROR(BadOperation);
+		}
 		if (*base) {
 			return MPT_ERROR(BadArgument);
 		}
-	}
-	/* add new element */
-	else if (!(buf = buf->_vptr->detach(buf, file + 1))) {
-		return MPT_ERROR(BadOperation);
-	}
-	else {
-		no->_slot._buf = buf;
-		base = mpt_buffer_insert(buf, file * sizeof(*base), sizeof(*base));
-		*base = 0;
 	}
 #if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {

@@ -10,6 +10,7 @@ src = files(
   'array_string.c',
   'bitmap.c',
   'buffer.c',
+  'buffer_copy.c',
   'buffer_cut.c',
   'buffer_data.c',
   'buffer_insert.c',

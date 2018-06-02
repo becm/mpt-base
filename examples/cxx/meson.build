@@ -4,8 +4,7 @@
 test('array operations',
   executable('array', 'array.cpp',
     cpp_args: test_defines,
-    dependencies: cxx),
-    args: [ join_paths(meson.current_source_dir(), 'layout.lay') ]
+    dependencies: cxx)
 )
 test('config data',
   executable('config', 'config.cpp',

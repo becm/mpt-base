@@ -174,10 +174,15 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	};
 	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(iterator) *it;
+	MPT_STRUCT(buffer) *buf;
 	struct _iter_poly *d;
 	struct coeff_poly coeff[128];
 	int nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
 	
+	if ((buf = base->_buf)
+	    && !buf->_vptr->ref.addref((void *) buf)) {
+		return 0;
+	}
 	/* polynom coefficients */
 	if (desc) {
 		do {
@@ -185,6 +190,9 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 			
 			if (len <= 0) {
 				if (!nc) {
+					if (buf) {
+						buf->_vptr->ref.unref((void *) buf);
+					}
 					errno = EINVAL;
 					return 0;
 				}
@@ -212,6 +220,9 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 		coeff[ns].shift = 0;
 	}
 	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + nc * sizeof(*coeff)))) {
+		if (buf) {
+			buf->_vptr->ref.unref((void *) buf);
+		}
 		return 0;
 	}
 	mt->_vptr = &polyMeta;
@@ -220,7 +231,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	it->_vptr = &polyIter;
 	
 	d = (void *) (it + 1);
-	d->grid._buf = (base && base->_buf && mpt_refcount_raise(&base->_buf->_ref)) ? base->_buf : 0;
+	d->grid._buf = buf;
 	d->pos = 0;
 	d->coeff = nc;
 	memcpy(d + 1, coeff, nc * sizeof(*coeff));

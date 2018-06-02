@@ -22,44 +22,59 @@
  */
 extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *buf, size_t pos, size_t len)
 {
+	const MPT_STRUCT(type_traits) *info;
+	void (*init)(const MPT_STRUCT(type_traits) *, void *);
 	uint8_t *base;
-	size_t used, min, total;
+	size_t used, total, size, keep;
 	
-	if (len > (SIZE_MAX - pos)) {
-		errno = EINVAL;
-		return 0;
+	/* need memory for inserted and existing data */
+	used = buf->_used;
+	if (pos < used) {
+		total = used + len;
+	} else {
+		total = pos + len;
 	}
-	total = len + pos;
 	if (!total) {
 		return buf + 1;
 	}
-	if (!buf) {
+	if (total > buf->_size) {
 		errno = EINVAL;
 		return 0;
 	}
-	used = buf->_used;
-	if (len > (SIZE_MAX - used)) {
-		errno = EINVAL;
-		return 0;
+	/* require aligned values */
+	init = 0;
+	size = 0;
+	if ((info = buf->_typeinfo)) {
+		init = info->init;
+		if (!(size = info->size)
+		    || used % size
+		    || pos % size
+		    || len % size) {
+			errno = EINVAL;
+			return 0;
+		}
 	}
-	min = pos > used ? pos : used;
+	base = (uint8_t *) (buf + 1);
+	buf->_used = total;
+	keep = 0;
 	
-	/* need memory for inserted and existing data */
-	if (len > (SIZE_MAX - min)
-	    || buf->_size < (min + len)) {
-		errno = EINVAL;
-		return 0;
+	/* move data after insert position */
+	if (used > pos) {
+		keep = used - pos;
+		memmove(base + total - keep, base + pos, keep);
 	}
-	base = ((uint8_t *) (buf + 1)) + pos;
-	if (pos > used) {
-		/* fill preceeding data */
-		pos -= used;
-		memset(base - pos, 0, pos);
+	/* init all new data */
+	if (init) {
+		size_t curr, end;
+		curr = pos - keep;
+		end = total - keep;
+		for (curr = pos - keep; curr < end; curr += size) {
+			init(info, base + curr);
+		}
 	}
-	else if ((pos = used - pos)) {
-		/* move data after position */
-		memmove(base + len, base, pos);
+	/* fill preceeding data */
+	else if (pos > used) {
+		memset(base + used, 0, pos - used);
 	}
-	buf->_used = min + len;
-	return base;
+	return base + pos;
 }

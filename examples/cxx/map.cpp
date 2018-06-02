@@ -39,7 +39,7 @@ extern int main(int , char * const [])
 	
 	for (auto &x : r) {
 		Cycle *m = x.pointer();
-		std::cout << m->stages() << std::endl;
+		std::cout << m->stage_count() << std::endl;
 	}
 	
 	r = p.values(laydest(1,4,3));

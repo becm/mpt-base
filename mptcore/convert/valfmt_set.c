@@ -1,5 +1,6 @@
 /*!
- * set history state
+ * MPT core library
+ *   create value format data
  */
 
 #include "meta.h"
@@ -11,7 +12,7 @@
  * \ingroup mptConvert
  * \brief set value format
  * 
- * Set value formats from source.
+ * Set value format elements from source.
  * 
  * \param arr  value format array
  * \param src  metatype descriptor
@@ -27,14 +28,14 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	int ret, curr;
 	
 	if (!src) {
-		MPT_STRUCT(buffer) *buf;
+		const MPT_STRUCT(type_traits) *info;
+		const MPT_STRUCT(buffer) *buf;
 		if (!(buf = arr->_buf)) {
 			return 0;
 		}
-		if (buf->_vptr->content(buf) != MPT_ENUM(TypeValFmt)) {
-			buf->_vptr->ref.unref((void *) buf);
-			arr->_buf = 0;
-			return 0;
+		if (!(info = buf->_typeinfo)
+		    || info->type != MPT_ENUM(TypeValFmt)) {
+			return MPT_ERROR(BadType);
 		}
 		return buf->_used / sizeof(MPT_STRUCT(valfmt));
 	}

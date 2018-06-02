@@ -29,7 +29,7 @@ static void printCfg(int depth, const mpt::Slice<const mpt::Config::Element> lis
 			if (content) std::cout << content;
 		}
 		std::cout << std::endl;
-		printCfg(depth + 1, a.slice());
+		printCfg(depth + 1, a.elements());
 	}
 }
 

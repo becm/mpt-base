@@ -1,5 +1,6 @@
 /*!
- * select data type from description
+ * MPT core library
+ *   make profile from description
  */
 
 #include <string.h>
@@ -57,9 +58,12 @@ static int getValues(double *val, int len, const char *ptr)
 }
 /*!
  * \ingroup mptValues
- * \brief profile type
+ * \brief profile data iterator
  * 
- * Get type of profile to generate.
+ * Create iterator wit profile data content.
+ * Length is based on source array and some
+ * some profile types may add reference for
+ * later data use.
  * 
  * \param[in]  start  profile description
  * \param[out] end    end of consumed string
@@ -68,20 +72,20 @@ static int getValues(double *val, int len, const char *ptr)
  */
 extern MPT_INTERFACE(metatype) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *arr, const char *desc)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
 	long len;
-	int type, match;
+	int match;
 	
-	if (!(buf = arr->_buf) || !(len = buf->_used / sizeof(double))) {
-		errno = EINVAL;
-		return 0;
-	}
-	if ((type = buf->_vptr->content(buf)) && type != 'd') {
-		errno = EINVAL;
-		return 0;
-	}
 	if (!desc) {
 		return mpt_iterator_values(0);
+	}
+	if (!(buf = arr->_buf)
+	    || !(info = buf->_typeinfo)
+	    || info->type != 'd'
+	    || !(len = buf->_used / sizeof(double))) {
+		errno = EINVAL;
+		return 0;
 	}
 	while (*desc && isspace(*desc)) {
 		desc++;

@@ -20,44 +20,32 @@
  */
 extern char *mpt_array_string(MPT_STRUCT(array) *arr)
 {
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
-	size_t len;
 	char *str, *sep;
-	int type;
+	size_t len;
 	
 	if (!(buf = arr->_buf)) {
 		errno = EFAULT;
 		return 0;
 	}
-	/* accept raw and character data only */
-	if ((type = buf->_vptr->content(buf))
-	  && type != 'c') {
+	/* accept character data only */
+	if (!(info = buf->_typeinfo) || info->type != 'c') {
 		errno = EINVAL;
 		return 0;
 	}
 	str = (char *) (buf + 1);
 	len = buf->_used;
 	
-	if (!(sep = memchr(str, 0, len))) {
-		if (len < buf->_size) {
-		    str[len] = '\0';
-		    return str;
-		}
+	/* string termination in buffer data */
+	if ((sep = memchr(str, 0, len))) {
+		return str;
 	}
-	if (!(buf = buf->_vptr->detach(buf, len + 1))) {
+	if (!(sep = mpt_array_slice(arr, len, 1))) {
 		return 0;
 	}
-	arr->_buf = buf;
-	
 	str = (char *) (buf + 1);
-	str[len] = '\0';
+	*sep = '\0';
 	
-	/* replace inline separators with space */
-	while (sep) {
-		size_t pos;
-		*sep++ = ' ';
-		pos = sep - str;
-		sep = memchr(sep, 0, len - pos);
-	}
 	return str;
 }

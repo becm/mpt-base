@@ -1,5 +1,6 @@
 /*!
- * array maintenance
+ * MPT core library
+ *   array maintenance
  */
 
 #include "array.h"
@@ -23,15 +24,7 @@ size_t mpt_array_reduce(MPT_STRUCT(array) *arr)
 		return 0;
 	}
 	size = buf->_size;
-	if (buf->_ref._val > 1) {
-		return size;
-	}
-	if (buf->_vptr->content(buf)) {
-		buf = buf->_vptr->detach(buf, -1);
-	} else {
-		buf = buf->_vptr->detach(buf, buf->_used);
-	}
-	if (!buf) {
+	if (!(buf = buf->_vptr->detach(buf, buf->_used))) {
 		return size;
 	}
 	arr->_buf = buf;
@@ -47,21 +40,30 @@ size_t mpt_array_reduce(MPT_STRUCT(array) *arr)
  * 
  * \param arr  target array pointer
  * \param from source array pointer
+ * 
+ * \retval mpt::BadOperation  unable to create clone
+ * \retval 0  no change
+ * \retval 1  new buffer assigned
+ * \retval 2  buffer removed
+ * \retval 3  existing buffer replaced
  */
-void mpt_array_clone(MPT_STRUCT(array) *arr, const MPT_STRUCT(array) *from)
+int mpt_array_clone(MPT_STRUCT(array) *arr, const MPT_STRUCT(array) *from)
 {
-	MPT_STRUCT(buffer) *buf;
+	MPT_STRUCT(buffer) *buf = arr->_buf, *set = 0;
 	
-	if ((buf = arr->_buf)) {
-		if (from && from->_buf == buf) {
-			return;
+	if (from) {
+		set = from->_buf;
+		if (set == buf) {
+			return 0;
 		}
+		if (!set->_vptr->ref.addref((void *) set)) {
+			return MPT_ERROR(BadOperation);
+		}
+	}
+	arr->_buf = set;
+	if (buf) {
 		buf->_vptr->ref.unref((void *) buf);
-		arr->_buf = 0;
+		return set ? 3 : 2;
 	}
-	if (from
-	    && (buf = from->_buf)
-	    && mpt_refcount_raise(&buf->_ref)) {
-		arr->_buf = buf;
-	}
+	return set ? 1 : 0;
 }

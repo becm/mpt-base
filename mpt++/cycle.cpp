@@ -212,22 +212,22 @@ int Cycle::advance()
         return BadArgument;
     }
     // no advance if current stage empty
-    int dim = st->dimensions();
-    if (!dim) {
+    long dim = st->dimension_count();
+    if (dim <= 0) {
         return _act;
     }
     _act = n;
     return n;
 }
-int Cycle::dimensions(int n) const
+long Cycle::dimension_count(int n) const
 {
     if (n < 0) {
         n = _act;
     }
     Stage *st = _stages.get(n);
-    return st ? st->dimensions() : BadArgument;
+    return st ? st->dimension_count() : (long) BadArgument;
 }
-int Cycle::stages() const
+long Cycle::stage_count() const
 {
     return _stages.length();
 }

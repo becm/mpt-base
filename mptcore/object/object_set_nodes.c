@@ -58,8 +58,8 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 			continue;
 		}
 		if ((val == MPT_ERROR(BadEncoding))) {
-			mpt_log(info, __func__, MPT_LOG(Debug), "%s.%s: %02x",
-				pr.name, name, MPT_tr("bad identifier type"), conf->ident._type);
+			mpt_log(info, __func__, MPT_LOG(Debug), "%s: %s: %02x",
+				pr.name, MPT_tr("bad identifier type"), conf->ident._type);
 			continue;
 		}
 		name = mpt_node_ident(conf);

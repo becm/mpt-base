@@ -8,89 +8,38 @@
 
 #include "values.h"
 
-/* reference interface */
-static void stageDataUnref(MPT_INTERFACE(reference) *ref)
+static int _value_store_type = 0;
+
+static void _value_store_init(const MPT_STRUCT(type_traits) *info, void *ptr)
 {
-	MPT_STRUCT(buffer) *buf = (void *) ref;
+	memset(ptr, 0, info->size);
+}
+
+static int _value_store_copy(void *src, int type, void *dest)
+{
+	const MPT_STRUCT(value_store) *from = src;
+	MPT_STRUCT(value_store) *to = dest;
 	
-	if (!mpt_refcount_lower(&buf->_ref)) {
-		MPT_STRUCT(value_store) *val = (void *) (buf + 1);
-		size_t i, len = buf->_used / sizeof(*val);
-		for (i = 0; i < len; ++i) {
-			mpt_array_clone(&val->_d, 0);
-		}
-		free(buf);
+	if (type == MPT_ENUM(TypeArray)) {
+		return mpt_array_clone(&to->_d, &from->_d);
 	}
-}
-static uintptr_t stageDataRef(MPT_INTERFACE(reference) *ref)
-{
-	MPT_STRUCT(buffer) *buf = (void *) ref;
+	if (type != _value_store_type) {
+		return MPT_ERROR(BadType);
+	}
+	if ((type = mpt_array_clone(&to->_d, &from->_d)) < 0) {
+		return type;
+	}
+	to->_type   = from->_type;
+	to->_esize  = from->_esize;
+	to->_flags  = from->_flags;
 	
-	return mpt_refcount_raise(&buf->_ref);
+	return 0;
 }
-static MPT_INTERFACE_VPTR(buffer) stageData;
-static MPT_STRUCT(buffer) *stageDataDetach(MPT_STRUCT(buffer) *buf, long len)
+static void _value_store_fini(void *ptr)
 {
-	MPT_STRUCT(value_store) *val;
-	
-	if (len < 0) {
-		len = buf->_used / sizeof(*val);
-	}
-	/* require reference copies */
-	if (buf->_ref._val > 1) {
-		MPT_STRUCT(value_store) *ptr;
-		MPT_STRUCT(buffer) *b;
-		long i = len * sizeof(*val);
-		
-		if (!(b = malloc(sizeof(*buf) + i))) {
-			return 0;
-		}
-		b->_vptr = &stageData;
-		b->_ref._val = 1;
-		b->_size = i;
-		b->_used = 0;
-		
-		val = (void *) (buf + 1);
-		ptr = (void *) (b + 1);
-		len = buf->_used / sizeof(*val);
-		for (i = 0; i < len; ++i) {
-			MPT_STRUCT(buffer) *tmp = val[i]._d._buf;
-			if (tmp) mpt_refcount_raise(&tmp->_ref);
-			ptr[i] = val[i];
-		}
-		b->_used = len * sizeof(*ptr);
-		mpt_refcount_lower(&buf->_ref);
-		return b;
-	}
-	if ((size_t) len <= buf->_size / sizeof(*val)) {
-		long i, max = buf->_used / sizeof(*val);
-		val = (void *) (buf + 1);
-		for (i = max; i < len; ++i) {
-			memset(val + i, 0, sizeof(*val));
-		}
-		for (i = len; i < max; ++i) {
-			MPT_STRUCT(buffer) *tmp = val[i]._d._buf;
-			if (tmp) tmp->_vptr->ref.unref((void *) tmp);
-		}
-		buf->_used = len * sizeof(*val);
-		return buf;
-	}
-	len *= sizeof(*val);
-	if ((buf = realloc(buf, sizeof(*buf) + len))) {
-		buf->_size = len;
-	}
-	return buf;
+	MPT_STRUCT(value_store) *val = ptr;
+	mpt_array_clone(&val->_d, 0);
 }
-static int stageDataType(const MPT_STRUCT(buffer) *buf)
-{
-	(void) buf;
-	return MPT_ENUM(TypeArray);
-}
-static MPT_INTERFACE_VPTR(buffer) stageDataCtl = {
-	{ stageDataUnref, stageDataRef },
-	stageDataDetach,
-	stageDataType
-};
 
 /*!
  * \ingroup mptPlot
@@ -109,51 +58,54 @@ extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 	MPT_STRUCT(value_store) *val;
 	unsigned max = 0;
 	
+	if (!_value_store_type) {
+		_value_store_type = mpt_value_store_typeid();
+	}
+	if (_value_store_type < 0) {
+		errno = EBADSLT;
+		return 0;
+	}
+	
+	/* existing buffer must be valied */
 	if (buf) {
-		if (buf->_vptr->content(buf) == stageDataType(0)) {
-			/* return existing slot */
-			if (buf->_ref._val < 2
-			    && (max = buf->_used / sizeof(*val)) > dim) {
-				val = (void *) (buf + 1);
-				return val + dim;
-			}
+		const MPT_STRUCT(type_traits) *info;
+		if (!(info = buf->_typeinfo)
+		    || info->type != _value_store_type) {
+			errno = EBADSLT;
+			return 0;
 		}
-		/* invalidate current buffer */
-		else {
-			buf->_vptr->ref.unref((void *) buf);
-			st->_d._buf = buf = 0;
-		}
+		max = buf->_used / sizeof(*val);
 	}
 	/* not allowed to extend dimensions */
-	if (st->_max_dimensions && (dim >= st->_max_dimensions)) {
-		errno = EINVAL;
+	if (st->_max_dimensions
+	    && (dim >= st->_max_dimensions)) {
+		errno = ENOMEM;
 		return 0;
 	}
 	if (dim >= max) {
 		max = dim + 1;
 	}
+	max *= sizeof(*val);
 	if (!buf) {
-		size_t len = max * sizeof(*val);
-		if (!(buf = malloc(sizeof(*buf) + len))) {
+		MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(*val, MPT_ENUM(TypeArray));
+		
+		info.init = _value_store_init;
+		info.copy = _value_store_copy;
+		info.fini = _value_store_fini;
+		info.type = _value_store_type;
+		
+		if (!(buf = _mpt_buffer_alloc(max, &info))) {
 			return 0;
 		}
-		buf->_vptr = &stageDataCtl;
-		buf->_ref._val = 1;
-		buf->_size = len;
-		buf->_used = 0;
+		val = memset(buf + 1, 0, max);
+		return val + dim;
 	}
-	else if (!(buf = buf->_vptr->detach(buf, max))) {
+	if (!(buf = buf->_vptr->detach(buf, max))) {
 		return 0;
 	}
 	st->_d._buf = buf;
 	
-	if (!(val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val)))) {
-		return val;
-	}
-	val->_d._buf = 0;
-	val->_type   = 0;
-	val->_esize  = 0;
-	val->_flags  = 0;
-	
+	/* init function executed on insert */
+	val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val));
 	return val;
 }

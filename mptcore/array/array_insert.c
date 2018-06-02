@@ -1,5 +1,6 @@
 /*!
- * insert data in array
+ * MPT core library
+ *   insert data in array
  */
 
 #include <errno.h>
@@ -30,19 +31,14 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 		errno = EINVAL;
 		return 0;
 	}
-	/* need raw buffer data */
-	if (!(b = arr->_buf)
-	  && (b->_vptr->content(b))) {
-		b->_vptr->ref.unref((void *) b);
-		b = 0;
-	}
 	/* create new raw buffer */
-	if (!b) {
+	if (!(b = arr->_buf)) {
 		uint8_t *base;
 		len += pos;
-		if (!(b = _mpt_buffer_alloc(len))) {
+		if (!(b = _mpt_buffer_alloc(len, 0))) {
 			return 0;
 		}
+		arr->_buf = b;
 		base = (void *) (b + 1);
 		if (pos) {
 			memset(base, 0, pos);
@@ -54,8 +50,14 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	if (pos > used) {
 		used = pos;
 	}
+	/* sufficient private space */
+	if ((used + len) <= b->_size
+	    && !b->_vptr->shared(b)) {
+		return mpt_buffer_insert(b, pos, len);
+	}
 	if (!(b = b->_vptr->detach(b, used + len))) {
 		return 0;
 	}
+	arr->_buf = b;
 	return mpt_buffer_insert(b, pos, len);
 }

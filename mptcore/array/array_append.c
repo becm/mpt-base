@@ -1,5 +1,6 @@
 /*!
- * array extension
+ * MPT core library
+ *   raw data array extension
  */
 
 #include <errno.h>
@@ -11,14 +12,18 @@
  * \ingroup mptArray
  * \brief append data to array
  * 
- * Push data to array, resize if needed.
+ * Push raw data to array, resize if needed.
  * Use data null pointer to add zeroed data.
+ * 
+ * Target buffer may not contain type information.
+ * To not initialize target area reserve new data after
+ * buffer end with mpt_array_slice().
  * 
  * \param arr  array descriptor
  * \param len  length to append
  * \param base data to append
  * 
- * \return start address appended data
+ * \return appended data start address
  */
 extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *base)
 {
@@ -26,20 +31,22 @@ extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *ba
 	size_t used;
 	void *dest;
 	
-	if (!len) return 0;
-	
+	if (!len) {
+		return 0;
+	}
 	if (!(b = arr->_buf)) {
-		if (!(b = _mpt_buffer_alloc(len))) {
+		if (!(b = _mpt_buffer_alloc(len, 0))) {
 			return 0;
 		}
 		used = 0;
 		arr->_buf = b;
 	}
 	/* require raw buffer to append data */
-	else if (b->_vptr->content(b)) {
+	else if (b->_typeinfo) {
 		errno = EINVAL;
 		return 0;
 	}
+	/* need more space */
 	else if (len > (b->_size - (used = b->_used))) {
 		if (len > (SIZE_MAX - used)) {
 			errno = EINVAL;

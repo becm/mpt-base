@@ -74,10 +74,11 @@ static int rd_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		if (ptr) *((const void **) ptr) = &rd->_rd;
 		return MPT_ENUM(TypeMeta);
 	}
+	/* TODO: type info for stage data array
 	if (type == MPT_ENUM(TypeArray)) {
 		if (ptr) *((const void **) ptr) = &rd->st;
 		return me;
-	}
+	}*/
 	return MPT_ERROR(BadType);
 }
 static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)

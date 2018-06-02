@@ -56,13 +56,11 @@ extern int mpt_path_del(MPT_STRUCT(path) *path)
 		if (len > pos) {
 			return MPT_ERROR(BadValue);
 		}
-		pos = len + path->off;
-		if (arr._buf->_ref._val > 1) {
-			if (!(data = mpt_array_slice(&arr, 0, pos))) {
-				return MPT_ERROR(BadOperation);
-			}
-			path->base = (char *) data;
+		pos = len;
+		if (!(data = mpt_array_slice(&arr, 0, pos))) {
+			return MPT_ERROR(BadOperation);
 		}
+		path->base = (char *) data;
 		arr._buf->_used = pos;
 	}
 	
@@ -91,7 +89,7 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(array) arr;
 	size_t used, len = path->off + path->len;
-	const char *base;
+	char *base;
 	
 	if (!(arr._buf = (void *) path->base)) {
 		return len ? -2 : 0;
@@ -108,7 +106,8 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		return 0;
 	}
-	if (arr._buf->_ref._val < 2) {
+	/* can modify local copy */
+	if (!arr._buf->_vptr->shared(arr._buf)) {
 		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		arr._buf->_used = len;
 		((char *) path->base)[len] = 0;
@@ -118,6 +117,10 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 	if (!(base = mpt_array_slice(&arr, 0, len))) {
 		return -1;
 	}
+	if (arr._buf->_size > len) {
+		base[len] = '\0';
+	}
+	arr._buf->_used = len;
 	path->base = base;
 	path->flags &= ~MPT_PATHFLAG(KeepPost);
 	return 2;

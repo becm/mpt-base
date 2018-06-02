@@ -21,19 +21,46 @@ MPT_STRUCT(slice);
 
 MPT_INTERFACE(metatype);
 
+MPT_STRUCT(type_traits)
+{
+#ifdef __cplusplus
+	inline type_traits() : init(0), copy(0), fini(0), type(0), size(0), base(0)
+	{ }
+#else
+# define MPT_TYPETRAIT_INIT(t, i)  { 0, 0, 0,  (i), sizeof(t), (i) }
+#endif
+	void   (*init)(const MPT_STRUCT(type_traits) *, void *);
+	int    (*copy)(void *, int , void *);
+	void   (*fini)(void *);
+	int      type;
+	uint16_t size;
+	uint8_t  base;
+};
+
 /*! header for data segment */
 #ifdef __cplusplus
 MPT_STRUCT(buffer) : public reference
 {
 public:
-	void unref() __MPT_OVERRIDE;
-	uintptr_t addref() __MPT_OVERRIDE;
-	virtual buffer *detach(long capacity = -1) = 0;
-	virtual int content() const = 0;
+	virtual buffer *detach(size_t);
+	virtual int shared() const = 0;
 	
-	bool shared() const;
+	bool copy(const buffer &);
+	
+	bool move(buffer &);
+	bool skip(size_t);
+	bool trim(size_t);
+	
+	void *append(size_t);
+	void *insert(size_t , size_t);
+	
+	inline const type_traits *typeinfo() const
+	{ return _typeinfo; }
+	
+	static buffer *create(size_t , const type_traits * = 0);
 protected:
-	buffer(size_t);
+	inline buffer() : _typeinfo(0), _size(0), _used(0)
+	{ }
 	inline ~buffer()
 	{ }
 #else
@@ -41,13 +68,13 @@ MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
 {
 	MPT_INTERFACE_VPTR(reference) ref;
-	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, long);
-	int (*content)(const MPT_STRUCT(buffer) *);
+	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, size_t);
+	int (*shared)(const MPT_STRUCT(buffer) *);
 }; MPT_STRUCT(buffer)
 {
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
 #endif
-	MPT_STRUCT(refcount) _ref;
+	const MPT_STRUCT(type_traits) *_typeinfo;
 	size_t _size;
 	size_t _used;
 };
@@ -59,12 +86,6 @@ MPT_STRUCT(array)
 	class Data : public buffer
 	{
 	public:
-		inline Data(size_t post) : buffer(post)
-		{ }
-		
-		Data *detach(long capacity = -1) __MPT_OVERRIDE;
-		int content() const __MPT_OVERRIDE;
-		
 		inline size_t length() const
 		{ return _used; }
 		inline size_t left() const
@@ -73,7 +94,6 @@ MPT_STRUCT(array)
 		{ return static_cast<void *>(const_cast<Data *>(this) + 1); }
 		
 		bool set_length(size_t);
-		static Data *create(size_t);
 	protected:
 		inline ~Data()
 		{ }
@@ -276,7 +296,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *);
 
 /* array manipulation */
 extern size_t mpt_array_reduce(MPT_STRUCT(array) *);
-extern void mpt_array_clone(MPT_STRUCT(array) *, const MPT_STRUCT(array) *);
+extern int mpt_array_clone(MPT_STRUCT(array) *, const MPT_STRUCT(array) *);
 
 /* add data to array */
 extern void *mpt_array_append(MPT_STRUCT(array) *, size_t , const void *__MPT_DEFPAR(0));
@@ -286,6 +306,8 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *, size_t , size_t);
 extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *, size_t , size_t);
 /* remove data from buffer */
 extern ssize_t mpt_buffer_cut(MPT_STRUCT(buffer) *, size_t , size_t);
+/* copy buffer content */
+extern int mpt_buffer_copy(MPT_STRUCT(buffer) *, const MPT_STRUCT(buffer) *);
 /* get data element */
 extern void *mpt_buffer_data(const MPT_STRUCT(buffer) *, size_t , size_t);
 
@@ -315,8 +337,8 @@ extern size_t mpt_array_compact(void **, size_t);
 extern size_t mpt_array_move(void *, size_t , size_t , size_t);
 
 /* buffer resizing backends */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t);
-extern MPT_STRUCT(buffer) *_mpt_buffer_map  (size_t);
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t, const MPT_STRUCT(type_traits) * __MPT_DEFPAR(0));
+extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t);
 
 /* bit operations */
 extern int mpt_bitmap_set(uint8_t *, size_t , size_t);
@@ -326,14 +348,10 @@ extern int mpt_bitmap_get(const uint8_t *, size_t , size_t);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-inline bool buffer::shared() const
-{
-	return _ref.value() > 1;
-}
 inline void *array::base() const
 {
 	Data *d = _buf.pointer();
-	if (!d || d->content()) {
+	if (!d || d->typeinfo()) {
 		return 0;
 	}
 	return d->data();
@@ -341,12 +359,12 @@ inline void *array::base() const
 inline size_t array::length() const
 {
 	Data *d = _buf.pointer();
-	return d && !d->content() ? d->length() : 0;
+	return (d && !d->typeinfo()) ? d->length() : 0;
 }
 inline size_t array::left() const
 {
 	Data *d = _buf.pointer();
-	return d && !d->content() ? d->left() : 0;
+	return (d && !d->typeinfo()) ? d->left() : 0;
 }
 inline bool array::shared() const
 {
@@ -402,101 +420,85 @@ template <typename T>
 class Content : public buffer
 {
 public:
-	void unref() __MPT_OVERRIDE
-	{
-		if (!_ref.lower()) {
-			T *t = data();
-			for (long i = 0, end = length(); i < end; ++i) t[i].~T();
-			std::free(this);
-		}
-	}
-	inline T *data() const
+	typedef T* iterator;
+	
+	inline iterator begin() const
 	{
 		return static_cast<T *>(const_cast<void *>(static_cast<const void *>(this + 1)));
 	}
-	inline long size() const
+	inline iterator end() const
 	{
-		return _size / sizeof(T);
+		return begin() + length();
+	}
+	uintptr_t addref() __MPT_OVERRIDE
+	{
+		return 0;
+	}
+	Content<T> *detach(size_t len) __MPT_OVERRIDE
+	{
+		size_t align;
+		if ((align = (len % sizeof(T)))) {
+			len -= sizeof(T) - align;
+		}
+		buffer *b = buffer::create(len, _typeinfo);
+		if (b && !b->copy(*this)) {
+			b->unref();
+			return 0;
+		}
+		return static_cast<Content<T> *>(b);
+	}
+	int shared() const __MPT_OVERRIDE
+	{
+		return 0;
 	}
 	inline long length() const
 	{
 		return _used / sizeof(T);
 	}
+	inline long left() const
+	{
+		return (_size - _used) / sizeof(T);
+	}
 	bool set_length(long len)
 	{
-		long end = length();
-		if (len < 0 && (len += end) < 0) {
+		size_t set = len * sizeof(T);
+		if (set == _used) {
+			return true;
+		}
+		if (set < _used) {
+			return buffer::trim(set - _used);
+		}
+		size_t used = _used;
+		uint8_t *ptr = static_cast<uint8_t *>(buffer::append(set - used));
+		if (!ptr) {
 			return false;
 		}
-		long max = size();
-		if (len > max) {
-			return false;
+		if (!_typeinfo || !_typeinfo->init) {
+			set -= used;
+			for (size_t pos = 0; pos < set; pos += sizeof(T)) {
+				new (ptr + pos) T();
+			}
 		}
-		T *t = data();
-		for (long i = end; i < len; ++i) {
-			new (t + i) T();
-		}
-		for (long i = len; i < end; ++i) {
-			t[i].~T();
-		}
-		_used = len * sizeof(T);
 		return true;
-	}
-	Content *detach(long len = -1) __MPT_OVERRIDE
-	{
-		/* keep current size */
-		if (len < 0) {
-			return this;
-		}
-		long max = length();
-		/* no expand operation */
-		if (len > max) {
-			return 0;
-		}
-		/* shrink to requested size */
-		T *t = data();
-		for (long i = len; i < max; ++i) t[i].~T();
-		_used = len * sizeof(*t);
-		return this;
-	}
-	inline int content() const __MPT_OVERRIDE
-	{
-		return typeinfo<T>::id();
-	}
-	static Content *create(long len = -1)
-	{
-		if (len < 1) len = 4;
-		len *= sizeof(T);
-		void *d = std::malloc(sizeof(Content) + len);
-		return new (d) Content(len);
 	}
 	T *insert(long pos)
 	{
-		long end = length();
-		if (pos < 0 && (pos += end) < 0) {
-			return 0;
-		}
-		long max = size();
-		if (pos >= max || end >= max) {
-			return 0;
-		}
-		T *t = data();
-		if ((max = end - pos) > 0) {
-			/* move elements after position */
-			std::memmove(t + pos + 1, t + pos, max * sizeof(*t));
-			_used = (end + 1) * sizeof(*t);
-		} else {
-			/* init created filler elements */
-			for (long i = end; i < pos; ++i) {
-				new (t + i) T();
+		if (pos < 0) {
+			pos += _used / sizeof(T);
+			if (pos < 0) {
+				return 0;
 			}
-			_used = (pos + 1) * sizeof(*t);
 		}
-		return new (t + pos) T;
+		void *ptr = buffer::insert(pos * sizeof(T), sizeof(T));
+		if (!ptr) {
+			return 0;
+		}
+		if (!_typeinfo || !_typeinfo->init) {
+			return new (ptr) T;
+		}
+		return static_cast<T *>(ptr);
 	}
 protected:
-	inline Content(size_t len) : buffer(len)
-	{ }
 	inline ~Content()
 	{ }
 };
@@ -508,59 +510,65 @@ class UniqueArray
 public:
 	typedef T* iterator;
 	
-	class Data : public Content<T>
+	static const type_traits &typeinfo()
 	{
-	public:
-		Content<T> *detach(long len = -1) __MPT_OVERRIDE
-		{
-			/* detach requires new instance */
-			if (this->shared()) {
-				return 0;
-			}
-			/* shrink to requested size */
-			if (len < this->size()) {
-				return Content<T>::detach(len);
-			}
-			len *= sizeof(T);
-			/* increase reserved size */
-			Data *d = static_cast<Data *>(std::realloc(this, sizeof(*this) + len));
-			if (d) {
-				d->_size = len;
-			}
-			return d;
+		static type_traits info;
+		
+		if (info.init) {
+			return info;
 		}
-		static Data *create(long len = -1)
-		{
-			if (len < 1) len = 4;
-			len *= sizeof(T);
-			void *d = std::malloc(sizeof(Data) + len);
-			return new (d) Data(len);
-		}
-	protected:
-		inline Data(long len) : Content<T>(len)
-		{ }
-		inline ~Data()
-		{ }
-	};
-	inline UniqueArray(long len = 0)
+		info.init = _data_init;
+		info.fini = _data_fini;
+		info.size = sizeof(T);
+		info.type = ::mpt::typeinfo<T>::id();
+		return info;
+	}
+	UniqueArray(long len = 0)
 	{
 		if (len) {
-			_ref.set_pointer(Data::create(len));
+			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
+			if (b) {
+				_ref.set_pointer(static_cast<Content<T> *>(b));
+				return;
+			}
 		}
+		class dummy : public Content<T>
+		{
+		public:
+			inline dummy()
+			{
+				this->_typeinfo = &UniqueArray::typeinfo();
+			}
+			uintptr_t addref() __MPT_OVERRIDE
+			{
+				return 1;
+			}
+			void unref() __MPT_OVERRIDE
+			{ }
+			virtual ~dummy()
+			{ }
+		};
+		static dummy _dummy;
+		_ref.set_pointer(&_dummy);
 	}
 	inline iterator begin() const
 	{
-		Content<T> *d = _ref.pointer();
-		return d ? d->data() : 0;
+		Content<T> *c = _ref.pointer();
+		return c ? c->begin() : 0;
 	}
 	inline iterator end() const
 	{
-		Content<T> *d = _ref.pointer();
-		return d ? d->data() + d->length() : 0;
+		Content<T> *c = _ref.pointer();
+		return c ? c->end() : 0;
 	}
-	UniqueArray & operator=(const UniqueArray &a)
+	inline UniqueArray & operator=(const UniqueArray &a)
 	{
 		_ref = a._ref;
+		return *this;
+	}
+	inline UniqueArray & operator=(const Reference<Content<T> > &v)
+	{
+		this->_ref = v;
 		return *this;
 	}
 	bool set(long pos, T const &v)
@@ -612,46 +620,45 @@ public:
 		Content<T> *d = _ref.pointer();
 		return d ? d->length() : 0;
 	}
-	inline Slice<const T> slice() const
+	inline Slice<const T> elements() const
 	{
 		return Slice<const T>(begin(), length());
 	}
 	bool detach()
 	{
-		Content<T> *n, *d = _ref.detach();
-		if ((n = d->detach())) {
-			_ref.set_pointer(n);
-			return true;
-		} else {
-			_ref.set_pointer(d);
+		long elem;
+		if ((elem = length()) < 0) {
 			return false;
 		}
+		Content<T> *c, *n;
+		if (!(c =  _ref.detach())) {
+			return true;
+		}
+		if ((n = c->detach(elem * sizeof(T)))) {
+			_ref.set_pointer(n);
+			return true;
+		}
+		_ref.set_pointer(c);
+		return false;
 	}
 	bool reserve(long len)
 	{
-		Content<T> *d;
-		if (!(d = _ref.detach())) {
-			if (len <= 0) {
-				return true;
-			}
-			if (!(d = Data::create(len))) {
-				return false;
-			}
-			_ref.set_pointer(d);
-			return true;
-		}
-		if (!len && d->shared()) {
-			d->unref();
-			return true;
-		}
-		Content<T> *r;
-		if ((r = d->detach(len))) {
-			_ref.set_pointer(r);
-			return true;
-		} else {
-			_ref.set_pointer(d);
+		Content<T> *c;
+		if (!(c = _ref.detach())) {
 			return false;
 		}
+		if (len < 0
+		    && (len += length()) < 0) {
+			_ref.set_pointer(c);
+			return false;
+		}
+		Content<T> *n;
+		if ((n = c->detach(len * sizeof(T)))) {
+			_ref.set_pointer(n);
+			return true;
+		}
+		_ref.set_pointer(c);
+		return true;
 	}
 	bool resize(long len)
 	{
@@ -666,6 +673,15 @@ public:
 	}
 protected:
 	Reference<Content<T> > _ref;
+	
+	static void _data_init(const type_traits *, void *ptr)
+	{
+		new (ptr) T;
+	}
+	static void _data_fini(void *ptr)
+	{
+		static_cast<T *>(ptr)->~T();
+	}
 };
 template<typename T>
 class typeinfo<UniqueArray<T> >
@@ -683,52 +699,51 @@ template <typename T>
 class Array : public UniqueArray<T>
 {
 public:
-	class Data : public UniqueArray<T>::Data
+	static const type_traits &typeinfo()
 	{
-	public:
-		Content<T> *detach(long len) __MPT_OVERRIDE
-		{
-			/* keep current size */
-			if (len < 0) {
-				len = this->length();
-			}
-			/* force new instance */
-			if (this->shared()) {
-				Data *d = create(len);
-				/* clone existing data */
-				T *o = this->data();
-				T *t = d->data();
-				long elem = this->length();
-				for (long i = 0; i < elem; ++i) {
-					t[i] = o[i];
-				}
-				d->_used = elem * sizeof(*t);
-				this->unref();
-				return d;
-			}
-			return UniqueArray<T>::Data::detach(len);
+		static type_traits info;
+		
+		if (info.init) {
+			return info;
 		}
-		static Data *create(long len) {
-			if (len < 1) len = 4;
-			len *= sizeof(T);
-			void *d = std::malloc(sizeof(Data) + len);
-			return new (d) Data(len);
-		}
-	protected:
-		inline Data(long len) : UniqueArray<T>::Data(len)
-		{ }
-		inline ~Data()
-		{ }
-	};
-	inline Array(long len = 0)
+		info.init = UniqueArray<T>::_data_init;
+		info.copy = _data_copy;
+		info.fini = UniqueArray<T>::_data_fini;
+		info.size = sizeof(T);
+		info.type = ::mpt::typeinfo<T>::id();
+		return info;
+	}
+	Array(long len = 0)
 	{
 		if (len) {
-			this->_ref.set_pointer(Data::create(len));
+			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
+			if (b) {
+				this->_ref.set_pointer(static_cast<Content<T> *>(b));
+				return;
+			}
 		}
+		class dummy : public Content<T>
+		{
+		public:
+			inline dummy()
+			{
+				this->_typeinfo = &Array::typeinfo();
+			}
+			uintptr_t addref() __MPT_OVERRIDE
+			{
+				return 1;
+			}
+			void unref() __MPT_OVERRIDE
+			{ }
+			virtual ~dummy()
+			{ }
+		};
+		static dummy _dummy;
+		this->_ref.set_pointer(&_dummy);
 	}
-	inline Array & operator=(const Reference<Content<T *> > &v)
+	inline Array & operator=(const Array &a)
 	{
-		this->_ref = v;
+		this->_ref = a._ref;
 		return *this;
 	}
 	bool insert(long pos, const T &v)
@@ -739,6 +754,17 @@ public:
 		}
 		*ptr = v;
 		return true;
+	}
+protected:
+	static int _data_copy(void *src, int type, void *dst)
+	{
+		if (type != typeinfo().type) {
+			return BadType;
+		}
+		T *from = static_cast<T *>(src);
+		T *to = static_cast<T *>(dst);
+		*to = *from;
+		return 0;
 	}
 };
 template<typename T>
@@ -894,19 +920,11 @@ public:
 	long clear(const T *ref = 0) const
 	{
 		Reference<T> *ptr = this->begin();
-		long elem = 0, len = this->length();
-		if (!ref) {
-			for (long i = 0; i < len; ++i) {
-				T *match;
-				if (!(match = ptr[i].pointer())) continue;
-				ptr[i].set_pointer(0);
-				++elem;
-			}
-			return elem;
-		}
-		for (long i = 0; i < len; ++i) {
-			T *match;
-			if (!(match = ptr[i].pointer()) || (match != ref)) {
+		long elem = 0;
+		
+		for (long i = 0, len = this->length(); i < len; ++i) {
+			T *match = ptr[i].pointer();
+			if (!match || (ref && (match != ref))) {
 				continue;
 			}
 			ptr[i].set_pointer(0);
@@ -973,7 +991,7 @@ public:
 	{ return _flags; }
 	
 	inline const Slice<const Entry> entries() const
-	{ return _msg.slice(); }
+	{ return _msg.elements(); }
 protected:
 	Array<Entry> _msg;
 	uint32_t _act;

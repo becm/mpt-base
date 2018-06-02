@@ -29,15 +29,17 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	
 	/* need new storage */
 	if (!(b = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
-		if (!(b = _mpt_buffer_alloc(pos + 1))) {
+		static const MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(char, 'c');
+		if (!(b = _mpt_buffer_alloc(pos + 1, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
+		b->_typeinfo = &info;
 		if (!(dest = mpt_buffer_insert(b, 0, pos + 1))) {
 			b->_vptr->ref.unref((void *) b);
 			return MPT_ERROR(MissingBuffer);
 		}
 		if (path->base) {
-		    memcpy(dest, path->base, pos);
+			memcpy(dest, path->base, pos);
 		}
 		path->base = (void *) (b + 1);
 		dest[pos]  = val & 0xff;
@@ -48,7 +50,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	off = (--b)->_used;
 	
 	/* modify local copy */
-	if (b->_ref._val < 2) {
+	if (!b->_vptr->shared(b)) {
 		dest = (uint8_t *) (b + 1);
 		/* can reuse last existing value */
 		if ((pos < off) && !(path->flags & MPT_PATHFLAG(KeepPost))) {

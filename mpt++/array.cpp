@@ -60,37 +60,121 @@ bool swap(Slice<void *> s, long p1, long p2)
     b[p2] = t;
     return true;
 }
-
-// buffer operations
-void buffer::unref()
+// buffer storage implementation
+buffer *buffer::create(size_t len, const type_traits *info)
 {
-    if (!mpt_refcount_lower(&_ref)) {
-         free(this);
+    return _mpt_buffer_alloc(len, info);
+}
+buffer *buffer::detach(size_t)
+{
+    return nullptr;
+}
+void *buffer::insert(size_t pos, size_t len)
+{
+    return mpt_buffer_insert(this, pos, len);
+}
+bool buffer::move(buffer &from)
+{
+    if (this == &from) {
+        return true;
     }
+    if (_size < from._used) {
+        return false;
+    }
+    if (!trim(_used)) {
+        return false;
+    }
+    memcpy(this + 1, (&from) + 1, from._used);
+    _used = from._used;
+    from._used = 0;
+    return true;
 }
-uintptr_t buffer::addref()
+bool buffer::copy(const buffer &from)
 {
-    return mpt_refcount_raise(&_ref);
+    return mpt_buffer_copy(this, &from) >= 0;
 }
-
-buffer::buffer(size_t post) : _size(post), _used(0)
-{ }
-
-// array data implementation
-array::Data *array::Data::create(size_t len)
+    
+bool buffer::skip(size_t len)
 {
-    void *b;
-    len += sizeof(buffer);
-    len = MPT_align(len);
-    if (!(b = malloc(len))) {
+    if (_used < len) {
+        return false;
+    }
+    size_t post = _used - len;
+    uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1));
+    if (_typeinfo) {
+        size_t size;
+        if (!(size = _typeinfo->size)
+            || len % size) {
+            return false;
+        }
+        void (*fini)(void *);
+        if ((fini = _typeinfo->fini)) {
+            for (size_t i = 0; i < len; i += size) {
+                fini(base + i);
+            }
+        }
+    }
+    std::memmove(base, base + len, post);
+    _used = post;
+    return true;
+}
+bool buffer::trim(size_t len)
+{
+    if (_used < len) {
+        return false;
+    }
+    size_t used = _used;
+    len = used - len;
+    if (_typeinfo) {
+        size_t size;
+        if (!(size = _typeinfo->size)
+            || used % size
+            || len % size) {
+            return false;
+        }
+        void (*fini)(void *);
+        if ((fini = _typeinfo->fini)) {
+            uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1)) + len;
+            for (size_t i = len; i < used; i += size) {
+                fini(base + i);
+            }
+        }
+    }
+    _used = len;
+    return true;
+}
+void *buffer::append(size_t len)
+{
+    size_t used = _used;
+    size_t avail = _size - used;
+    if (len > avail) {
         return 0;
     }
-    return new (b) Data(len - sizeof(Data));
+    uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1)) + used;
+    const type_traits *info;
+    if ((info = _typeinfo)) {
+        size_t size;
+        if (!(size = info->size)
+            || used % size
+            || len % size) {
+            return 0;
+        }
+        void (*init)(const type_traits *, void *);
+        if ((init = info->init)) {
+            for (size_t i = len; i < used; i += size) {
+                init(info, base + i);
+            }
+        }
+    }
+    _used += len;
+    return base;
 }
-
+// simple array data implementation
 bool array::Data::set_length(size_t len)
 {
-    if (len > _size) return 0;
+    if (len > _size) {
+        return false;
+    }
     if (len > _used) {
         uint8_t *ptr = static_cast<uint8_t *>(data());
         memset(ptr + _used, 0, len - _used);
@@ -98,53 +182,13 @@ bool array::Data::set_length(size_t len)
     _used = len;
     return true;
 }
-int array::Data::content() const
-{
-    return 0;
-}
-array::Data *array::Data::detach(long len)
-{
-    if (len < 0) {
-        len = _used;
-    }
-    Data *d;
-    // create copy
-    if (shared()) {
-        if (!(d = create(len))) {
-            return 0;
-        }
-        if (_used) {
-            memcpy(static_cast<void *>(d + 1), static_cast<void *>(this + 1), _used);
-            d->_used = _used;
-        }
-        _ref.lower();
-        return d;
-    }
-    size_t total = len + sizeof(*d);
-    total = MPT_align(total);
-    // skip for big data shrink
-    if ((size_t) len <= _size && (size_t) len < _used / 2 && total <= 0x100) {
-        // reduce data to available size
-        if ((size_t) len < _used) {
-            _used = len;
-        }
-        return this;
-    }
-    // set new buffer size
-    if (!(d = static_cast<Data *>(realloc(this, total)))) {
-        return 0;
-    }
-    d->_size = len;
-    if ((size_t) len < d->_used) {
-        d->_used = len;
-    }
-    return d;
-}
 
 // array initialisation
 array::array(size_t len) : _buf(0)
 {
-    if (len) _buf = array::Data::create(len);
+    if (len) {
+        _buf.set_pointer(static_cast <Data *>(buffer::create(len)));
+    }
 }
 array::array(const array &a) : _buf(0)
 { *this = a; }
@@ -159,7 +203,7 @@ array &array::operator= (const array &a)
 bool array::set(const Reference<buffer> &a)
 {
     buffer *b;
-    if ((b = a.pointer()) && b->content()) {
+    if ((b = a.pointer()) && b->typeinfo()) {
         return false;
     }
     _buf = reinterpret_cast<const Reference<array::Data> &>(a);
@@ -174,22 +218,33 @@ array &array::operator+= (struct iovec const& vec)
 
 void *array::set(size_t len, const void *base)
 {
-    Data *d = _buf.pointer();
-    if (d && d->content()) {
-        d = 0;
-    }
-    if (!d) {
-        if (!(d = Data::create(len))) {
-            return 0;
+    Data *d;
+    
+    if ((d = _buf.pointer())) {
+        size_t used;
+        /* incompatible target buffer */
+        if (d->typeinfo() || d->shared()) {
+            d = 0;
+        }
+        else if (len <= (used = d->length())) {
+            d->set_length(len);
+        }
+        /* reserve uninitialized data */
+        else if (!d->append(len - used)) {
+            d = 0;
         }
     }
-    else if (!(d = d->detach(len))) {
-        return 0;
-    } else {
-        _buf.detach();
+    if (d) {
+        if (!(d = static_cast<Data *>(buffer::create(len)))) {
+            return 0;
+        }
+        /* reserve uninitialized data */
+        if (!d->append(len)) {
+            d->unref();
+            return 0;
+        }
+        _buf.set_pointer(d);
     }
-    _buf.set_pointer(d);
-    d->set_length(len);
     void *ptr = d->data();
     if (base) {
         memcpy(ptr, base, len);
@@ -285,33 +340,26 @@ void *array::append(size_t len, const void *data)
 }
 void *array::insert(size_t off, size_t len, const void *data)
 {
-    size_t used = 0, min;
+    void *dest = 0;
     Data *d;
+    
     /* compatibility check */
-    if ((d = _buf.pointer())) {
-        int type;
-        if ((type = d->content()) || type != 'c') {
+    if ((d = _buf.pointer())
+        && !d->typeinfo()
+        && !d->shared()) {
+        dest = d->insert(off, len);
+    }
+    if (!dest) {
+        size_t total = off + len;
+        if (!(d = static_cast<Data *>(buffer::create(total)))) {
+            return 0;
+        }
+        if (!(dest = d->insert(off, len))) {
             d->unref();
-            _buf.detach();
-        }
-    }
-    if (!d) {
-        if (!(d = Data::create(off + len))) {
             return 0;
         }
     }
-    else {
-        min = off > used ? off : used;
-        if (!(d = d->detach(min + len))) {
-            return 0;
-        }
-        _buf.detach();
-    }
-    _buf.set_pointer(d);
-    void *dest;
-    if (!(dest = mpt_buffer_insert(d, off, len))) {
-        return 0;
-    }
+    dest = static_cast<uint8_t *>(dest) + off;
     if (data) {
         memcpy(dest, data, len);
     } else {
