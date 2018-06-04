@@ -11,6 +11,15 @@
 
 __MPT_NAMESPACE_BEGIN
 
+template <> int typeinfo<point<double> >::id()
+{
+    static int id = 0;
+    if (!id) {
+        id = make_id();
+    }
+    return id;
+}
+
 template <> int typeinfo<linepart>::id()
 {
     static int id = 0;

@@ -36,6 +36,8 @@ struct point
 	
 	T x, y;
 };
+template<> int typeinfo<point<double> >::id();
+
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
 #else
@@ -158,6 +160,10 @@ protected:
 	uint8_t  _esize;
 	uint8_t  _code;
 };
+#ifdef __cplusplus
+template<> int typeinfo<value_store>::id();
+#endif
+
 MPT_STRUCT(rawdata_stage)
 {
 #ifdef __cplusplus
@@ -177,6 +183,9 @@ MPT_STRUCT(rawdata_stage)
 	_MPT_ARRAY_TYPE(value_store) _d;
 	uint8_t _max_dimensions;
 };
+#ifdef __cplusplus
+template<> int typeinfo<rawdata_stage>::id();
+#endif
 
 /* part of MPT world */
 #ifdef __cplusplus
@@ -192,6 +201,7 @@ public:
 protected:
 	inline ~rawdata() { }
 };
+template<> int typeinfo<rawdata>::id();
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
@@ -408,10 +418,8 @@ protected:
 	linepart::array _vis;
 	Array<Point> _values;
 };
-template<> inline int typeinfo<Polyline::Point>::id()
-{
-	return typeinfo<point<double> >::id();
-}
+
+template<> int typeinfo<Polyline::Point>::id();
 
 class Cycle : public reference, public rawdata
 {

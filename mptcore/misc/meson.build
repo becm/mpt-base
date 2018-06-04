@@ -16,6 +16,7 @@ src = files(
   'refcount.c',
   'valsize.c',
   'valtype.c',
+  'valtype_generic_new.c',
   'value_compare.c',
   'value_read.c',
 )

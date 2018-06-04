@@ -244,17 +244,19 @@ extern int mpt_offset(const uint8_t *, int);
 /* get size for registered types */
 extern ssize_t mpt_valsize(int);
 
-/* add user scalar or pointer type */
-extern int mpt_valtype_add(size_t);
-
 /* id for registered named type */
 extern int mpt_valtype_id(const char *, int);
 /* get name registered type */
 extern const char *mpt_meta_typename(int);
 extern const char *mpt_interface_typename(int);
-/* registered object type */
+
+/* add user scalar or pointer type */
+extern int mpt_valtype_add(size_t);
+/* register interface type */
 extern int mpt_valtype_meta_new(const char *);
 extern int mpt_valtype_interface_new(const char *);
+/* register extended type */
+extern int mpt_valtype_generic_new(void);
 
 /* calculate environment-depending hash for data */
 extern uintptr_t mpt_hash(const void *, int __MPT_DEFPAR(-1));

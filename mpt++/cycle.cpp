@@ -34,11 +34,7 @@ template <> int typeinfo<Cycle::Stage>::id()
 }
 template <> int typeinfo<value_store>::id()
 {
-    static int id = 0;
-    if (!id) {
-        id = make_id();
-    }
-    return id;
+    return mpt_value_store_typeid();
 }
 
 value_store *rawdata_stage::values(int dim, int type)

@@ -18,8 +18,7 @@ extern int mpt_value_store_typeid(void)
 	static int id = 0;
 	
 	if (!id) {
-		/* TODO: use type registration when avail in core */
-		id = 0xc0fefe;
+		id = mpt_valtype_generic_new();
 	}
 	return id;
 }

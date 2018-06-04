@@ -60,11 +60,7 @@ extern int to_item_id(int from)
  */
 extern int make_id()
 {
-    static int id = _TypeGenericBase;
-    if (id >= _TypeGenericMax) {
-        return BadValue;
-    }
-    return id++;
+    return mpt_valtype_generic_new();
 }
 /*!
  * \ingroup mptCore
