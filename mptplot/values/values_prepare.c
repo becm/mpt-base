@@ -37,7 +37,10 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 		if (!(buf = _mpt_buffer_alloc(add, 0))) {
 			return 0;
 		}
+		arr->_buf = buf;
+		
 		buf->_typeinfo = &_values_double_info;
+		buf->_used = add;
 		
 		return memset(buf + 1, 0, add);
 	}
