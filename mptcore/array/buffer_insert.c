@@ -31,8 +31,10 @@ extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *buf, size_t pos, size_t len)
 	used = buf->_used;
 	if (pos < used) {
 		total = used + len;
+		keep = used - pos;
 	} else {
 		total = pos + len;
+		keep = 0;
 	}
 	if (!total) {
 		return buf + 1;
@@ -56,20 +58,19 @@ extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *buf, size_t pos, size_t len)
 	}
 	base = (uint8_t *) (buf + 1);
 	buf->_used = total;
-	keep = 0;
 	
 	/* move data after insert position */
-	if (used > pos) {
-		keep = used - pos;
+	if (keep) {
 		memmove(base + total - keep, base + pos, keep);
 	}
 	/* init all new data */
 	if (init) {
 		size_t curr, end;
-		curr = pos - keep;
+		curr = used - keep;
 		end = total - keep;
-		for (curr = pos - keep; curr < end; curr += size) {
+		while (curr < end) {
 			init(info, base + curr);
+			curr += size;
 		}
 	}
 	/* fill preceeding data */
