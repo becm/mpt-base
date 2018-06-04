@@ -307,7 +307,7 @@ extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *, size_t , size_t);
 /* remove data from buffer */
 extern ssize_t mpt_buffer_cut(MPT_STRUCT(buffer) *, size_t , size_t);
 /* copy buffer content */
-extern int mpt_buffer_copy(MPT_STRUCT(buffer) *, const MPT_STRUCT(buffer) *);
+extern long mpt_buffer_copy(MPT_STRUCT(buffer) *, const MPT_STRUCT(buffer) *);
 /* get data element */
 extern void *mpt_buffer_data(const MPT_STRUCT(buffer) *, size_t , size_t);
 
