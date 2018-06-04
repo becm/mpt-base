@@ -53,13 +53,13 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 	/* existing size and limit */
 	used = buf->_used;
 	if (len >= 0) {
-		add = len * sizeof(*data);
+		add = len * sizeof(double);
 	}
 	else if (used < (-len)) {
 		errno = EINVAL;
 		return 0;
 	} else {
-		add = (-len) * sizeof(*data);
+		add = (-len) * sizeof(double);
 	}
 	if (!(buf = buf->_vptr->detach(buf, used + add))) {
 		return 0;
@@ -67,10 +67,11 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 	arr->_buf = buf;
 	data = (void *) (buf + 1);
 	if (len < 0) {
-		data = memcpy(data + used, data + (used - len), len);
+		data = memcpy(data + used, data + (used - add), add);
 	} else {
-		data = memset(data + used, 0, len);
+		data = memset(data + used, 0, add);
 	}
+	buf->_used = used + add;
 	return (double *) data;
 }
 
