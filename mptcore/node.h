@@ -26,7 +26,9 @@ MPT_STRUCT(node)
 	struct node &operator=(const Reference<metatype> &);
 	
 	inline const Reference<metatype> &meta() const
-	{ return *((Reference<metatype> *) &_meta); }
+	{
+		return *((Reference<metatype> *) &_meta);
+	}
 	
 	const char *data(size_t * = 0) const;
 	
@@ -46,7 +48,8 @@ MPT_STRUCT(node)
 };
 
 #if defined(__cplusplus)
-template<> inline __MPT_CONST_TYPE int typeinfo<node *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<node *>::id()
+{
 	return node::Type;
 }
 

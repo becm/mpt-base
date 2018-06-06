@@ -18,7 +18,9 @@ MPT_STRUCT(queue)
 	inline queue() : base(0), len(0), max(0), off(0)
 	{ }
 	inline bool fragmented()
-	{ return (max - len) < off; }
+	{
+		return (max - len) < off;
+	}
 #else
 # define MPT_QUEUE_INIT    { 0, 0, 0, 0 }
 # define MPT_queue_frag(q) (((q)->max - (q)->len) < (q)->off)
@@ -35,13 +37,16 @@ MPT_STRUCT(decode_queue) : public queue
 	decode_queue(DataDecoder d = 0) : _dec(d)
 	{ }
 	~decode_queue()
-	{ if (_dec) _dec(&_state, 0, 0); }
-	
+	{
+		if (_dec) _dec(&_state, 0, 0);
+	}
 	ssize_t peek(size_t len, const void *);
 	ssize_t receive();
 	
-	bool encoded() const
-	{ return _dec; }
+	inline bool encoded() const
+	{
+		return _dec;
+	}
 protected:
 #else
 MPT_STRUCT(decode_queue)
@@ -59,17 +64,20 @@ MPT_STRUCT(encode_queue) : public queue
 	encode_queue(DataEncoder e = 0) : _enc(e)
 	{ }
 	~encode_queue()
-	{ if (_enc) _enc(&_state, 0, 0); }
-	
+	{
+		if (_enc) _enc(&_state, 0, 0);
+	}
 	ssize_t push(size_t len, const void *);
-	
-	inline size_t done()
-	{ return _state.done; }
-	
 	bool trim(size_t);
 	
-	bool encoded() const
-	{ return _enc; }
+	inline size_t done()
+	{
+		return _state.done;
+	}
+	inline bool encoded() const
+	{
+		return _enc;
+	}
 protected:
 #else
 MPT_STRUCT(encode_queue)
@@ -200,14 +208,20 @@ public:
 	public:
 		void unref()
 		{
-			if (_ref.lower()) return;
+			if (_ref.lower()) {
+				return;
+			}
 			delete this;
 		}
 	};
-	Pipe(const T &v, size_t len)
+	Pipe(const T &v, long len)
 	{
-		if (len && ref().pointer()->prepare(len * sizeof(T))) {
-			while (len--) push(v);
+		if (len <= 0) {
+			return;
+		}
+		ref().pointer()->prepare(len * sizeof(T));
+		while (len--) {
+			push(v);
 		}
 	}
 	inline Pipe(const Pipe &from)
@@ -235,50 +249,76 @@ public:
 	}
 	bool push(const T & elem)
 	{
-		Queue *d = ref().pointer();
+		Queue *d;
+		if (!(d = _d.pointer())) {
+			return false;
+		}
 		uint8_t buf[sizeof(T)];
 		T *t = static_cast<T *>(static_cast<void *>(buf));
 		new (t) T(elem);
-		if (d->push(t, sizeof(T))) return true;
+		if (d->push(t, sizeof(T))) {
+			return true;
+		}
 		t->~T();
 		return false;
 	}
 	bool pop(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) return false;
+		if (!(d = _d.pointer())) {
+			return false;
+		}
 		uint8_t buf[sizeof(T)];
 		T *t = static_cast<T *>(static_cast<void *>(buf));
-		if (!d->pop(t, sizeof(T))) return false;
-		if (data) *data = *t;
-		else t->~T();
+		if (!d->pop(t, sizeof(T))) {
+			return false;
+		}
+		if (data) {
+			*data = *t;
+		} else {
+			t->~T();
+		}
 		return true;
 	}
 	bool unshift(const T & elem)
 	{
-		Queue *d = ref().pointer();
+		Queue *d;
+		if (!(d = _d.pointer())) {
+			return false;
+		}
 		uint8_t buf[sizeof(T)];
 		T *t = static_cast<T *>(static_cast<void *>(buf));
 		new (t) T(elem);
-		if (d->unshift(t, sizeof(T))) return true;
+		if (d->unshift(t, sizeof(T))) {
+			return true;
+		}
 		t->~T();
 		return false;
 	}
 	bool shift(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) return false;
+		if (!(d = _d.pointer())) {
+			return false;
+		}
 		uint8_t buf[sizeof(T)];
 		T *t = static_cast<T *>(static_cast<void *>(buf));
-		if (!d->shift(t, sizeof(T))) return false;
-		if (data) *data = *t;
-		else t->~T();
+		if (!d->shift(t, sizeof(T))) {
+			return false;
+		}
+		if (data) {
+			*data = *t;
+		} else {
+			t->~T();
+		}
 		return true;
 	}
-	Slice<T> data()
+	Slice<T> elements()
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) return Slice<T>(0, 0);
+		if (!(d = _d.pointer())) {
+			return Slice<T>(0, 0);
+		}
 		Slice<uint8_t> r = d->peek();
 		return Slice<T>((T *) r.base(), r.length() / sizeof(T));
 	}

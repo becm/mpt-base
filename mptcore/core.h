@@ -319,36 +319,57 @@ class Slice
 public:
 	typedef T* iterator;
 	
-	inline Slice(T *a, size_t len) : _base(len ? a : 0), _len(len*sizeof(T))
+	inline Slice(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
 	{ }
 	
 	inline iterator begin() const
-	{ return _base; }
-	
-	inline iterator end() const
-	{ return _base + length(); }
-	
-	inline iterator nth(int i) const
 	{
-		if (i > (int) length()) return 0;
-		if (i < 0 && (i += length()) < 0) return 0;
-		return _base + i;
+		return _base;
+	}
+	inline iterator end() const
+	{
+		return _base + length();
+	}
+	inline iterator nth(long pos) const
+	{
+		if (pos < 0) {
+			if ((pos += length()) < 0) {
+				return 0;
+			}
+		}
+		else if (pos > length()) {
+			return 0;
+		}
+		return _base + pos;
 	}
 	inline long length() const
-	{ return _len / sizeof(T); }
+	{
+		return _len / sizeof(T);
+	}
 	inline T *base() const
-	{ return _base; };
+	{
+		return _base;
+	}
 	bool skip(long l)
 	{
-		if (l < 0 || l > length()) return false;
-		if (!(_len -= l * sizeof(T))) _base = 0;
-		else _base += l;
+		if (l < 0 || l > length()) {
+			return false;
+		}
+		if (!(_len -= l * sizeof(T))) {
+			_base = 0;
+		} else {
+			_base += l;
+		}
 		return true;
 	}
 	bool trim(long l)
 	{
-		if (l < 0 || l > length()) return false;
-		if (!(_len -= (l * sizeof(T)))) _base = 0;
+		if (l < 0 || l > length()) {
+			return false;
+		}
+		if (!(_len -= l * sizeof(T))) {
+			_base = 0;
+		}
 		return true;
 	}
 protected:
@@ -403,15 +424,19 @@ MPT_STRUCT(value)
 	{
 	public:
 		inline format()
-		{ set(0); }
-		
+		{
+			set(0);
+		}
 		bool set(int);
 		
 		inline bool valid() const
-		{ return _fmt[0] != 0; }
-		
+		{
+			return _fmt[0] != 0;
+		}
 		inline operator const uint8_t *() const
-		{ return _fmt; }
+		{
+			return _fmt;
+		}
 	protected:
 		uint8_t _fmt[8];
 	};
@@ -446,8 +471,11 @@ MPT_STRUCT(refcount)
 	{ }
 	uintptr_t raise();
 	uintptr_t lower();
+	
 	inline uintptr_t value() const
-	{ return _val; }
+	{
+		return _val;
+	}
 protected:
 #endif
 	uintptr_t _val;
@@ -476,8 +504,9 @@ MPT_INTERFACE_VPTR(reference)
 
 #ifdef __cplusplus
 inline uintptr_t reference::addref()
-{ return 0; }
-
+{
+	return 0;
+}
 extern int convert(const void **, int , void *, int);
 
 /*! container for reference type pointer */
@@ -527,8 +556,12 @@ public:
 	inline Reference & operator= (Reference const &ref)
 	{
 		T *r = ref._ref;
-		if (r == _ref) return *this;
-		if (r && !r->addref()) r = 0;
+		if (r == _ref) {
+			return *this;
+		}
+		if (r && !r->addref()) {
+			r = 0;
+		}
 		if (_ref) _ref->unref();
 		_ref = r;
 		return *this;
@@ -571,8 +604,9 @@ MPT_STRUCT(identifier)
 #ifdef __cplusplus
 	identifier(size_t = sizeof(identifier));
 	inline ~identifier()
-	{ set_name(0); }
-	
+	{
+		set_name(0);
+	}
 	bool equal(const char *, int) const;
 	
 	const char *name() const;
@@ -581,10 +615,13 @@ MPT_STRUCT(identifier)
 	identifier &operator =(const identifier &);
 	
 	static inline __MPT_CONST_EXPR size_t minimalLength()
-	{ return 4 + sizeof(char *); }
-	
+	{
+		return 4 + sizeof(char *);
+	}
 	inline size_t totalSize() const
-	{ return 4 + _max; }
+	{
+		return 4 + _max;
+	}
 protected:
 #else
 # define MPT_IDENTIFIER_INIT   { 0, 0, 0, { 0 }, 0 }
@@ -632,11 +669,15 @@ public:
 	{ }
 	virtual const Reference<T> &ref()
 	{
-		if (!Reference<T>::_ref) Reference<T>::_ref = new typename Reference<T>::instance;
+		if (!Reference<T>::_ref) {
+			Reference<T>::_ref = new typename Reference<T>::instance;
+		}
 		return *this;
 	}
 	inline T *pointer() const
-	{ return Reference<T>::pointer(); }
+	{
+		return Reference<T>::pointer();
+	}
 };
 
 /*! interface to search objects in tree */
@@ -651,7 +692,9 @@ protected:
 	const Relation *_parent;
 };
 inline metatype *Relation::find(int type, const char *name, int nlen) const
-{ return _parent ? _parent->find(type, name, nlen) : 0; }
+{
+	return _parent ? _parent->find(type, name, nlen) : 0;
+}
 #endif /* C++ */
 
 MPT_STRUCT(fdmode)
@@ -713,9 +756,13 @@ template <typename T>
 std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)
 {
 	typename mpt::Slice<T>::iterator begin = d.begin(), end = d.end();
-	if (begin == end) return o;
-	o << *(begin++);
-	while (begin != end) o << ' ' << *(begin++);
+	if (begin == end) {
+		return o;
+	}
+	o << *begin;
+	while (++begin != end) {
+		o << ' ' << *begin;
+	}
 	return o;
 }
 template <> std::ostream &operator<<(std::ostream &, mpt::Slice<char>);

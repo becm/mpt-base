@@ -21,7 +21,9 @@ MPT_STRUCT(reply_data)
 	reply_data(size_t len);
 	
 	inline bool active() const
-	{ return len != 0; }
+	{
+		return len != 0;
+	}
 	bool set(size_t , const void *);
 protected:
 #endif
@@ -143,8 +145,11 @@ public:
 	inline command() : id(0), cmd(0), arg(0)
 	{ }
 	inline ~command()
-	{ if (cmd) cmd(arg, 0); }
-	
+	{
+		if (cmd) {
+			cmd(arg, 0);
+		}
+	}
 	class array : public UniqueArray<command>
 	{
 	public:
@@ -238,7 +243,8 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<command>::id()  {
+template<> inline __MPT_CONST_TYPE int typeinfo<command>::id()
+{
 	return command::Type;
 }
 

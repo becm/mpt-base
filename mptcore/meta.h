@@ -41,7 +41,9 @@ public:
 		return static_cast<T *>(ptr);
 	}
 	inline operator const char *() const
-	{ return string(); }
+	{
+		return string();
+	}
 	
 	static metatype *create(value);
 	static metatype *create(int, const void *);
@@ -52,10 +54,12 @@ public:
 	inline int type() const
 	{ return conv(0, 0); }
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<metatype *>::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<metatype *>::id()
+{
 	return metatype::Type;
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id()
+{
 	return typeinfo<metatype *>::id();
 }
 #else
@@ -83,7 +87,8 @@ public:
 	virtual int advance();
 	virtual int reset();
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<iterator *>::id() {
+template <> inline __MPT_CONST_TYPE int typeinfo<iterator *>::id()
+{
 	return iterator::Type;
 }
 #else
@@ -104,7 +109,9 @@ MPT_STRUCT(consumable)
 #ifdef __cplusplus
 	inline consumable(const metatype &mt)
 	{
-	    if ((_it = mt.cast<iterator>())) return;
+	    if ((_it = mt.cast<iterator>())) {
+		    return;
+	    }
 	    mt.conv(_val.Type, &_val);
 	}
 	template <typename T>
@@ -151,11 +158,17 @@ protected:
 
 #ifdef __cplusplus
 inline metatype *metatype::clone() const
-{ return 0; }
+{
+	return 0;
+}
 inline int iterator::advance()
-{ return 0; }
+{
+	return 0;
+}
 inline int iterator::reset()
-{ return 0; }
+{
+	return 0;
+}
 
 /* specialize metatype string cast */
 template <> inline const char *metatype::cast<const char>() const
@@ -198,11 +211,17 @@ public:
 	{
 		static const int me = typeinfo<T>::id();
 		if (!type) {
-		if (dest) *static_cast<const char **>(dest) = 0;
-		return me;
+			if (dest) {
+				*static_cast<const char **>(dest) = 0;
+			}
+			return me;
 		}
-		if (type != me) return BadType;
-		if (dest) *static_cast<T *>(dest) = _val;
+		if (type != me) {
+			return BadType;
+		}
+		if (dest) {
+			*static_cast<T *>(dest) = _val;
+		}
 		return me;
 	}
 	metatype *clone() const
@@ -228,24 +247,35 @@ template <typename T>
 class Source : public iterator
 {
 public:
-	Source(const T *val, size_t len = 1) : _d(val, len), _pos(0)
+	Source(const T *val, long len = 1) : _d(val, len), _pos(0)
 	{ }
 	virtual ~Source()
 	{ }
 	int get(int type, void *dest) __MPT_OVERRIDE
 	{
-		int fmt = this->content();
+		int fmt;
+		if ((fmt = this->content()) < 0) {
+			return BadType;
+		}
 		const T *val = _d.nth(_pos);
-		if (!val) return MissingData;
+		if (!val) {
+			return MissingData;
+		}
 		type = convert((const void **) &val, fmt, dest, type);
-		if (type < 0) return type;
+		if (type < 0) {
+			return type;
+		}
 		return fmt;
 	}
 	int advance() __MPT_OVERRIDE
 	{
 		int pos = _pos + 1;
-		if (pos > _d.size()) return MissingData;
-		if (pos == _d.size()) return 0;
+		if (pos > _d.length()) {
+			return MissingData;
+		}
+		if (pos == _d.length()) {
+			return 0;
+		}
 		_pos = pos;
 		return content();
 	}

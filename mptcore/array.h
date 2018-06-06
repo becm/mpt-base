@@ -55,8 +55,9 @@ public:
 	void *insert(size_t , size_t);
 	
 	inline const type_traits *typeinfo() const
-	{ return _typeinfo; }
-	
+	{
+		return _typeinfo;
+	}
 	static buffer *create(size_t , const type_traits * = 0);
 protected:
 	inline buffer() : _typeinfo(0), _size(0), _used(0)
@@ -87,12 +88,17 @@ MPT_STRUCT(array)
 	{
 	public:
 		inline size_t length() const
-		{ return _used; }
+		{
+			return _used;
+		}
 		inline size_t left() const
-		{ return _size - _used; }
+		{
+			return _size - _used;
+		}
 		inline void *data() const
-		{ return static_cast<void *>(const_cast<Data *>(this) + 1); }
-		
+		{
+			return static_cast<void *>(const_cast<Data *>(this) + 1);
+		}
 		bool set_length(size_t);
 	protected:
 		inline ~Data()
@@ -216,12 +222,17 @@ extern void MPT_RANGE_FCN(MPT_RANGE_T range[2], int len, const MPT_RANGE_T *val,
 	}
 	range[0] = range[1] = *val;
 	
-	if (!ld) return;
-	
+	if (!ld) {
+		return;
+	}
 	while (--len > 0) {
 		val += ld;
-		if (*val < range[0]) range[0] = *val;
-		if (*val > range[1]) range[1] = *val;
+		if (*val < range[0]) {
+			range[0] = *val;
+		}
+		if (*val > range[1]) {
+			range[1] = *val;
+		}
 	}
 }
 #endif
@@ -376,17 +387,30 @@ inline const array::Data *array::data() const
 	return _buf.pointer();
 }
 inline void *array::prepend(size_t len, const void *data)
-{ return insert(0, len, data); }
-
+{
+	return insert(0, len, data);
+}
 inline array &array::operator= (slice const& from)
-{ Slice<uint8_t> d = from.data(); set(d.length(), d.base()); return *this; }
+{
+	Slice<uint8_t> d = from.data();
+	set(d.length(), d.base());
+	return *this;
+}
 inline array &array::operator+= (array const& from)
-{ append(from.length(), from.base()); return *this; }
+{
+	append(from.length(), from.base());
+	return *this;
+}
 inline array &array::operator+= (slice const& from)
-{ Slice<uint8_t> d = from.data(); append(d.length(), d.base()); return *this; }
-
+{
+	Slice<uint8_t> d = from.data();
+	append(d.length(), d.base());
+	return *this;
+}
 inline slice::slice(array const& a) : array(a), _off(0)
-{ _len = length(); }
+{
+	_len = length();
+}
 inline slice::~slice()
 { }
 inline Slice<uint8_t> slice::data() const
@@ -402,7 +426,9 @@ long offset(Slice<void *>, const void *);
 template <typename T>
 void move(T *v, long from, long to)
 {
-	if (from == to) return;
+	if (from == to) {
+		return;
+	}
 	/* save data to anonymous store */
 	uint8_t buf[sizeof(T)];
 	memcpy(buf, v + from, sizeof(T));
@@ -436,11 +462,8 @@ public:
 	}
 	Content<T> *detach(size_t len) __MPT_OVERRIDE
 	{
-		size_t align;
-		if ((align = (len % sizeof(T)))) {
-			len -= sizeof(T) - align;
-		}
-		buffer *b = buffer::create(len, _typeinfo);
+		size_t align = len % sizeof(T);
+		buffer *b = buffer::create(len - align, _typeinfo);
 		if (b && !b->copy(*this)) {
 			b->unref();
 			return 0;
@@ -590,14 +613,16 @@ public:
 	}
 	T *insert(long pos)
 	{
-		long min = length();
-		if (pos < 0 && (pos += min) < 0) {
-			return 0;
+		long len = length();
+		if (pos < 0) {
+			if ((pos += len) < 0) {
+				return 0;
+			}
 		}
-		if (pos > min) {
-			min = pos;
+		else if (pos > len) {
+			len = pos;
 		}
-		if (!reserve(min + 1)) {
+		if (!reserve(len + 1)) {
 			return 0;
 		}
 		Content<T> *d = _ref.pointer();
@@ -626,14 +651,11 @@ public:
 	}
 	bool detach()
 	{
-		long elem;
-		if ((elem = length()) < 0) {
-			return false;
-		}
 		Content<T> *c, *n;
 		if (!(c =  _ref.detach())) {
 			return true;
 		}
+		long elem = c->length();
 		if ((n = c->detach(elem * sizeof(T)))) {
 			_ref.set_pointer(n);
 			return true;
@@ -825,7 +847,9 @@ public:
 			memset(pos, 0, sizeof(*pos));
 			++space;
 		}
-		if (!space) return false;
+		if (!space) {
+			return false;
+		}
 		this->_ref.pointer()->set_length(len);
 		return true;
 	}
@@ -988,10 +1012,13 @@ public:
 	virtual bool set_flow_flags(int);
 	
 	inline int flow_flags() const
-	{ return _flags; }
-	
+	{
+		return _flags;
+	}
 	inline const Slice<const Entry> entries() const
-	{ return _msg.elements(); }
+	{
+		return _msg.elements();
+	}
 protected:
 	Array<Entry> _msg;
 	uint32_t _act;
@@ -1036,14 +1063,19 @@ public:
 	typedef const Element * const_iterator;
 	
 	inline const_iterator begin() const
-	{ return _d.begin(); }
+	{
+		return _d.begin();
+	}
 	inline const_iterator end() const
-	{ return _d.end(); }
-	
+	{
+		return _d.end();
+	}
 	bool set(const K &key, const V &value)
 	{
 		V *d = get(key);
-		if (!d) return _d.insert(_d.length(), Element(key, value));
+		if (!d) {
+			return _d.insert(_d.length(), Element(key, value));
+		}
 		*d = value;
 		return true;
 	}

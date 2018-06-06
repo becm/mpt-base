@@ -84,11 +84,17 @@ public:
 	inline valfmt() : fmt(6), wdt(0)
 	{ }
 	inline int width() const
-	{ return wdt; }
+	{
+		return wdt;
+	}
 	inline int flags() const
-	{ return fmt & 0xff00; }
+	{
+		return fmt & 0xff00;
+	}
 	inline int decimals() const
-	{ return fmt & 0x7f; }
+	{
+		return fmt & 0x7f;
+	}
 # define MPT_VALFMT(x)  x
 #else
 # define MPT_VALFMT(x)  MPT_ENUM(Format##x)
@@ -123,7 +129,8 @@ MPT_STRUCT(strdest)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<valfmt>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<valfmt>::id()
+{
 	return valfmt::Type;
 }
 
@@ -244,7 +251,9 @@ __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
 inline std::ostream &operator<<(std::ostream &o, const mpt::float80 &f)
-{ return o << static_cast<double>(f.value()); }
+{
+	return o << static_cast<double>(f.value());
+}
 #endif
 
 #endif /* _MPT_CONVERT_H */

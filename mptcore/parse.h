@@ -26,9 +26,13 @@ MPT_STRUCT(parsefmt)
 	parsefmt();
 	
 	inline bool is_comment(int c) const
-	{ return c && (c==com[0] || c==com[1] || c==com[2] || c==com[3]); }
+	{
+		return c && (c == com[0] || c == com[1] || c == com[2] || c == com[3]);
+	}
 	inline bool is_escape(int c) const
-	{ return c && (c==esc[0] || c==esc[1] || c==esc[2]); }
+	{
+		return c && (c == esc[0] || c == esc[1] || c == esc[2]);
+	}
 #else
 # define MPT_PARSEFMT_INIT  { '{', '}', 0, '=', 0, { '"', '\'' }, { '#' } }
 # define MPT_iscomment(f,c) ((c) && ((c)==(f)->com[0]||(c)==(f)->com[1]||(c)==(f)->com[2]||(c)==(f)->com[3]))
