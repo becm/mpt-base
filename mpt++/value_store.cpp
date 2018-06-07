@@ -9,43 +9,54 @@
 __MPT_NAMESPACE_BEGIN
 
 // typed information for array
-bool value_store::set_type(int t)
+int value_store::type() const
 {
-    if (t == static_cast<int>(_type)) {
-        return true;
+    const array::Data *d;
+    if (!(d = _d.data())) {
+        return BadArgument;
     }
-    int esize;
-    if ((esize = mpt_valsize(t)) <= 0 || esize > 0xff) {
-        return false;
+    const type_traits *t;
+    if (!(t = d->typeinfo())) {
+        return BadType;
     }
-    _type = t;
-    _esize = esize;
-    t = mpt_msgvalfmt_code(t);
-    _code = t < 0 ? 0 : t;
-    return true;
+    return t->type;
+}
+size_t value_store::element_size() const
+{
+    const array::Data *d;
+    if (!(d = _d.data())) {
+        return 0;
+    }
+    const type_traits *t;
+    if (!(t = d->typeinfo())) {
+        return 0;
+    }
+    return t->size;
+}
+long value_store::element_count() const
+{
+    const array::Data *d;
+    if (!(d = _d.data())) {
+        return BadArgument;
+    }
+    const type_traits *t;
+    if (!(t = d->typeinfo())) {
+        return BadType;
+    }
+    return d->length() / t->size;
 }
 void value_store::set_modified(bool set)
 {
-    if (set) _flags |= ValueChange;
-    else _flags &= ~ValueChange;
+    if (set) {
+        _flags |= ValueChange;
+    } else {
+        _flags &= ~ValueChange;
+    }
 }
 
-void *value_store::reserve(long len, long off)
+void *value_store::reserve(int type, size_t len, long off)
 {
-    if (!_esize) {
-        return 0;
-    }
-    // avoid incomplete element assignments
-    size_t need = len * _esize;
-    ssize_t pos = off * _esize;
-    // relative to data end
-    if (pos < 0) {
-        pos += _d.length();
-        if (pos < 0) {
-            return 0;
-        }
-    }
-    return mpt_array_slice(&_d, pos, need);
+    return mpt_value_store_reserve(&_d, type, len, off);
 }
 size_t maxsize(Slice<const value_store> sl, int type)
 {

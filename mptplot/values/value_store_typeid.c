@@ -1,17 +1,18 @@
 /*!
- * register input with type system.
+ *  MPT plot library
+ *    register value store with type system
  */
 
 #include "values.h"
 
 
 /*!
- * \ingroup mptNotify
- * \brief get input type
+ * \ingroup mptValues
+ * \brief value store type
  * 
- * Get or register input reference type.
+ * Get or register value store data type.
  * 
- * \return input id
+ * \return value store id
  */
 extern int mpt_value_store_typeid(void)
 {

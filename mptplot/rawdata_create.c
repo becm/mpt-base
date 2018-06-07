@@ -87,12 +87,15 @@ static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* raw data interface */
-static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
+static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
+	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(value_store) *val;
+	size_t pos = 0;
+	void *dest;
 	long nc;
 	
 	if (!vd || !(nc = vd->cycle)) {
@@ -112,39 +115,44 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const v
 		st = (void *) (buf + 1);
 		st += nc;
 	}
+	if (vd) {
+		pos = vd->offset;
+	}
 	if (!(val = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!val->_type) {
-		int size;
-		if (fmt > 0xff || (size = mpt_valsize(fmt)) <= 0) {
+	if (!(buf = val->_d._buf)) {
+		MPT_STRUCT(type_traits) info;
+		memset(&info, 0, sizeof(info));
+		ssize_t size;
+		
+		if (type > 0xff || (size = mpt_valsize(type)) < 0) {
 			return MPT_ERROR(BadType);
 		}
-		if (size > 0xff) {
-			return MPT_ERROR(BadType);
-		}
-		val->_type = fmt;
-		val->_esize = size;
+		info.size = size;
+		info.type = type;
+		info.base = type;
 		
-		fmt = mpt_msgvalfmt_code(fmt);
-		val->_code = fmt < 0 ? 0 : fmt;
-	}
-	else if ((uint32_t) fmt != val->_type) {
-		return MPT_ERROR(BadType);
-	}
-	if (len) {
-		void *dest;
-		size_t pos = 0;
-		
-		if (len % val->_esize) {
-			return MPT_ERROR(BadValue);
-		}
-		if (vd) {
-			pos = vd->offset * val->_esize;
-		}
-		if (!(dest = mpt_array_slice(&val->_d, pos, len))) {
+		pos *= size;
+		if (!(buf = _mpt_buffer_alloc(pos + len, &info))) {
 			return MPT_ERROR(BadOperation);
 		}
+		type = mpt_msgvalfmt_code(type);
+		val->_code = type < 0 ? 0 : type;
+		
+		dest = memset(buf + 1, 0, pos);
+		dest = ((uint8_t *) dest) + pos;
+	}
+	else if (!(info = buf->_typeinfo)) {
+		return MPT_ERROR(BadArgument);
+	}
+	else if (info->type != type) {
+		return MPT_ERROR(BadType);
+	}
+	else if (!(dest = mpt_array_slice(&val->_d, pos, len))) {
+		return MPT_ERROR(BadOperation);
+	}
+	if (len) {
 		if (src) {
 			memcpy(dest, src, len);
 		} else {
@@ -157,7 +165,7 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int fmt, const v
 static int rd_advance(MPT_INTERFACE(rawdata) *ptr)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
-	MPT_STRUCT(buffer) *buf;
+	const MPT_STRUCT(buffer) *buf;
 	long act;
 	
 	/* limit cycle size */
@@ -180,9 +188,11 @@ static int rd_advance(MPT_INTERFACE(rawdata) *ptr)
 static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iovec *vec, int nc)
 {
 	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
+	const MPT_STRUCT(type_traits) *info;
 	const MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	const MPT_STRUCT(value_store) *val;
+	int type;
 	
 	/* query type of raw data */
 	if (!(buf = rd->st._buf)) {
@@ -200,8 +210,12 @@ static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iov
 	if (!(val = mpt_stage_data(st + nc, dim))) {
 		return MPT_ERROR(BadValue);
 	}
-	if (!val->_type) {
-		return MPT_ERROR(BadOperation);
+	if (!(buf = val->_d._buf)) {
+		return 0;
+	}
+	if (!(info = buf->_typeinfo)
+	    || (type = info->type) <= 0) {
+		return MPT_ERROR(BadType);
 	}
 	if (vec) {
 		if ((buf = val->_d._buf)) {
@@ -212,7 +226,7 @@ static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iov
 			vec->iov_len  = 0;
 		}
 	}
-	return val->_type;
+	return type;
 }
 
 static int rd_dimensions(const MPT_INTERFACE(rawdata) *ptr, int part)

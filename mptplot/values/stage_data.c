@@ -29,9 +29,8 @@ static int _value_store_copy(void *src, int type, void *dest)
 	if ((type = mpt_array_clone(&to->_d, &from->_d)) < 0) {
 		return type;
 	}
-	to->_type   = from->_type;
-	to->_esize  = from->_esize;
-	to->_flags  = from->_flags;
+	to->_flags = from->_flags;
+	to->_code  = from->_code;
 	
 	return 0;
 }

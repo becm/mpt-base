@@ -37,37 +37,16 @@ template <> int typeinfo<value_store>::id()
     return mpt_value_store_typeid();
 }
 
-value_store *rawdata_stage::values(int dim, int type)
+value_store *rawdata_stage::values(long dim)
 {
     if (dim < 0) {
-        errno = EINVAL;
-        return 0;
-    }
-    value_store *val;
-    if ((val = _d.get(dim))) {
-        if (type >= 0) {
-            int old;
-            if (!(old = val->type())) {
-                if (!val->set_type(type)) {
-                    errno = EINVAL;
-                    return 0;
-                }
-            }
-            else if (type != old) {
-                errno = EINVAL;
-                return 0;
-            }
+        dim += values().length();
+        if (dim < 0) {
+            errno = EINVAL;
+            return 0;
         }
-        return val;
     }
-    if (!(val = mpt_stage_data(this, dim))) {
-        return 0;
-    }
-    if (!val->set_type(type)) {
-        errno = EINVAL;
-        return 0;
-    }
-    return val;
+    return mpt_stage_data(this, dim);
 }
 
 Cycle::Cycle() : _act(0), _max_dimensions(0), _flags(0)
@@ -108,13 +87,13 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
             return BadOperation;
         }
     }
-    value_store *val = st->rawdata_stage::values(dim, typeinfo<double>::id());
+    value_store *val = st->rawdata_stage::values(dim);
     if (!val) {
         return BadValue;
     }
     long off = vd ? vd->offset : 0;
-    void *ptr;
-    if (!(ptr = val->reserve(len, off))) {
+    double *ptr;
+    if (!(ptr = static_cast<double *>(val->reserve(typeinfo<double>::id(), len * sizeof(double), off)))) {
         return BadOperation;
     }
     if (!src) {
@@ -122,39 +101,39 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
     }
     else switch (type) {
         case typeinfo<long double>::id():
-            copy(len, static_cast<const long double *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const long double *>(src), ptr);
             break;
         case typeinfo<double>::id():
             memcpy(ptr, src, len * sizeof(double));
             break;
         case typeinfo<float>::id():
-            copy(len, static_cast<const float *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const float *>(src), ptr);
             break;
         
         case typeinfo<int8_t>::id():
-            copy(len, static_cast<const int8_t  *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const int8_t  *>(src), ptr);
             break;
         case typeinfo<int16_t>::id():
-            copy(len, static_cast<const int16_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const int16_t *>(src), ptr);
             break;
         case typeinfo<int32_t>::id():
-            copy(len, static_cast<const int32_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const int32_t *>(src), ptr);
             break;
         case typeinfo<int64_t>::id():
-            copy(len, static_cast<const int64_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const int64_t *>(src), ptr);
             break;
 	    
         case typeinfo<uint8_t>::id():
-            copy(len, static_cast<const uint8_t  *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const uint8_t  *>(src), ptr);
             break;
         case typeinfo<uint16_t>::id():
-            copy(len, static_cast<const uint16_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const uint16_t *>(src), ptr);
             break;
         case typeinfo<uint32_t>::id():
-            copy(len, static_cast<const uint32_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const uint32_t *>(src), ptr);
             break;
         case typeinfo<uint64_t>::id():
-            copy(len, static_cast<const uint64_t *>(src), static_cast<double *>(ptr));
+            copy(len, static_cast<const uint64_t *>(src), ptr);
             break;
         default:
             return BadType;

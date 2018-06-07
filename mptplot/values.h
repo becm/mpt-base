@@ -134,41 +134,29 @@ public:
 	enum Flags {
 		ValueChange = 1
 	};
-	inline value_store() : _type(0), _flags(0), _esize(0), _code(0)
+	inline value_store() : _flags(0), _code(0)
 	{ }
-	bool set_type(int);
-	void *reserve(long, long = 0);
-	
+	void *reserve(int , size_t , long = 0);
 	void set_modified(bool mod = true);
+	size_t element_size() const;
+	long element_count() const;
+	int type() const;
 	
 	inline int flags() const
 	{
 		return _flags;
 	}
-	inline size_t element_size() const
-	{
-		return _esize;
-	}
-	inline long element_count() const
-	{
-		return _esize ? _d.length() / _esize : 0;
-	}
 	inline const void *base() const
 	{
-		return _d.base();
-	}
-	inline int type() const
-	{
-		return _type;
+		const array::Data *d = _d.data();
+		return d ? (d + 1) : 0;
 	}
 protected:
 #else
 # define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
 #endif
 	MPT_STRUCT(array) _d;
-	uint32_t _type;
 	uint16_t _flags;
-	uint8_t  _esize;
 	uint8_t  _code;
 };
 #ifdef __cplusplus
@@ -181,7 +169,7 @@ MPT_STRUCT(rawdata_stage)
     public:
 	int clear_modified(int = -1);
 	
-	inline value_store *values(int dim, int fmt = -1);
+	value_store *values(long dim);
 	inline Slice<const value_store> values() const
 	{
 		return _d.elements();
@@ -316,6 +304,8 @@ extern int mpt_rawdata_stage_typeid(void);
 /* multi dimension data operations */
 extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
 extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
+/* reserve data for value segment */
+extern void *mpt_value_store_reserve(MPT_STRUCT(array) *, int , size_t, long);
 /* set dimensions to defined size */
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
 
@@ -485,8 +475,18 @@ public:
 	virtual void limit_dimensions(uint8_t);
 	virtual bool limit_stages(size_t);
 	
+	inline Stage *begin()
+	{
+		return _stages.begin();
+	}
+	inline Stage *end()
+	{
+		return _stages.end();
+	}
 	inline Slice<const Stage> stages() const
-	{ return _stages.elements(); }
+	{
+		return _stages.elements();
+	}
 protected:
 	virtual ~Cycle();
 	Array<Stage> _stages;
