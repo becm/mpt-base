@@ -20,7 +20,8 @@ public:
 	virtual int next(int);
 	virtual int dispatch(EventHandler , void *);
 protected:
-	inline ~input() { }
+	inline ~input()
+	{ }
 };
 # else
 MPT_INTERFACE(input);

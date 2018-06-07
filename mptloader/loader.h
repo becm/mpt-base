@@ -62,7 +62,7 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline libsymbol::~libsymbol()
 {
-    mpt_library_detach(&lib);
+	mpt_library_detach(&lib);
 }
 #endif /* C++ */
 

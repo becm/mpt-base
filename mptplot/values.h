@@ -74,7 +74,9 @@ MPT_STRUCT(laydest)
 	bool match(laydest dst, int = MatchAll) const;
 	
 	inline bool operator ==(const laydest &cmp)
-	{ return match(cmp); }
+	{
+		return match(cmp);
+	}
 #else
 # define MPT_LAYDEST_INIT { 0, 0, 0, 0 }
 #endif
@@ -137,19 +139,28 @@ public:
 	bool set_type(int);
 	void *reserve(long, long = 0);
 	
-	inline int flags() const
-	{ return _flags; }
 	void set_modified(bool mod = true);
 	
+	inline int flags() const
+	{
+		return _flags;
+	}
 	inline size_t element_size() const
-	{ return _esize; }
+	{
+		return _esize;
+	}
 	inline long element_count() const
-	{ return _esize ? _d.length() / _esize : 0; }
+	{
+		return _esize ? _d.length() / _esize : 0;
+	}
 	inline const void *base() const
-	{ return _d.base(); }
-	
+	{
+		return _d.base();
+	}
 	inline int type() const
-	{ return _type; }
+	{
+		return _type;
+	}
 protected:
 #else
 # define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
@@ -172,10 +183,13 @@ MPT_STRUCT(rawdata_stage)
 	
 	inline value_store *values(int dim, int fmt = -1);
 	inline Slice<const value_store> values() const
-	{ return _d.elements(); }
-	
+	{
+		return _d.elements();
+	}
 	inline long dimension_count() const
-	{ return _d.length(); }
+	{
+		return _d.length();
+	}
     protected:
 #else
 # define MPT_RAWDATA_STAGE_INIT { MPT_ARRAY_INIT, 0 }
@@ -253,7 +267,9 @@ MPT_STRUCT(mapping)
 		src(m), client(c), dest(d)
 	{ }
 	inline bool valid() const
-	{ return src.state != 0; }
+	{
+		return src.state != 0;
+	}
 #else
 # define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
 #endif
@@ -356,7 +372,8 @@ public:
 	virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
 	virtual point<double> zero() const;
 protected:
-	inline ~Transform() { }
+	inline ~Transform()
+	{ }
 };
 
 extern void apply_log(point<double> *, const linepart &, const double *, const point<double> &);
@@ -394,9 +411,13 @@ public:
 		iterator & operator++ ();
 		
 		bool operator== (const iterator &it) const
-		{ return _points == it._points; }
+		{
+			return _points == it._points;
+		}
 		inline bool operator!= (const iterator &it) const
-		{ return !operator==(it); }
+		{
+			return !operator==(it);
+		}
 	protected:
 		Slice<const linepart> _parts;
 		const Point *_points;
@@ -408,12 +429,18 @@ public:
 	iterator end() const;
 	
 	inline void clear()
-	{ _vis.set(0); _values.resize(0); }
-	
+	{
+		_vis.set(0);
+		_values.resize(0);
+	}
 	Slice<const linepart> parts() const
-	{ return _vis.elements(); }
+	{
+		return _vis.elements();
+	}
 	Slice<const Point> points() const
-	{ return _values.elements(); }
+	{
+		return _values.elements();
+	}
 protected:
 	linepart::array _vis;
 	Array<Point> _values;
@@ -433,9 +460,13 @@ public:
 	{
 	public:
 		inline const Polyline &values() const
-		{ return _values; }
+		{
+			return _values;
+		}
 		inline void invalidate()
-		{ _values.clear(); }
+		{
+			_values.clear();
+		}
 		bool transform(const Transform &);
 	protected:
 		Polyline _values;
@@ -454,12 +485,7 @@ public:
 	virtual void limit_dimensions(uint8_t);
 	virtual bool limit_stages(size_t);
 	
-	inline Stage *begin()
-	{ return _stages.begin(); }
-	inline Stage *end()
-	{ return _stages.end(); }
-	
-	Slice<const Stage> stages() const
+	inline Slice<const Stage> stages() const
 	{ return _stages.elements(); }
 protected:
 	virtual ~Cycle();

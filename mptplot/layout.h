@@ -117,7 +117,9 @@ MPT_STRUCT(axis)
 	enum { Type = TypeAxis };
 	
 	inline const char *title() const
-	{ return _title; }
+	{
+		return _title;
+	}
 protected:
 #endif
 	char   *_title;   /* axis title */
@@ -147,7 +149,10 @@ MPT_STRUCT(world)
 	
 	enum { Type = TypeWorld };
 	
-	inline const char *alias() const { return _alias; }
+	inline const char *alias() const
+	{
+		return _alias;
+	}
 	bool set_alias(const char *name, int len = -1);
 protected:
 #endif
@@ -172,9 +177,13 @@ MPT_STRUCT(graph)
 	enum { Type = TypeGraph };
 	
 	inline const char *axes() const
-	{ return _axes; }
+	{
+		return _axes;
+	}
 	inline const char *worlds() const
-	{ return _worlds; }
+	{
+		return _worlds;
+	}
 protected:
 #endif
 	char             *_axes;
@@ -207,11 +216,14 @@ MPT_STRUCT(text)
 	
 	bool set_value(const char *);
 	inline const char *value() const
-	{ return _value; }
-	
+	{
+		return _value;
+	}
 	bool set_font(const char *);
 	inline const char *font() const
-	{ return _font; }
+	{
+		return _font;
+	}
 	
 	int set(metatype &);
     protected:
@@ -427,12 +439,14 @@ public:
 	
 	virtual Item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Axis> > axes() const
-	{ return _axes.elements(); }
-	
+	{
+		return _axes.elements();
+	}
 	virtual Item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
 	inline Slice<const Item<class Data> > worlds() const
-	{ return _worlds.elements(); }
-	
+	{
+		return _worlds.elements();
+	}
 	virtual bool set_cycle(int , const Reference<class Cycle> &) const;
 	virtual const Reference<class Cycle> *cycle(int) const;
 	
@@ -465,18 +479,21 @@ public:
 	virtual bool reset();
 	
 	inline Slice<const Item<Graph> > graphs() const
-	{ return _graphs.elements(); }
-	
+	{
+		return _graphs.elements();
+	}
 	virtual bool set_alias(const char *, int = -1);
 	inline const char *alias() const
-	{ return _alias; }
-	
+	{
+		return _alias;
+	}
 	virtual bool set_font(const char *, int = -1);
 	inline const char *font() const
-	{ return _font; }
+	{
+		return _font;
+	}
 	
 	fpoint minimal_scale() const;
-	
 protected:
 	ItemArray<Graph> _graphs;
 	Parse *_parse;

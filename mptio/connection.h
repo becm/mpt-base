@@ -35,7 +35,9 @@ enum MPT_ENUM(SocketFlags) {
 	~socket();
 	
 	inline bool active() const
-	{ return _id >= 0; }
+	{
+		return _id >= 0;
+	}
 	
 	bool bind(const char *, int = 2);
 	bool open(const char *, const char *mode = "w");
