@@ -489,7 +489,7 @@ public:
 			return true;
 		}
 		if (set < _used) {
-			return buffer::trim(set - _used);
+			return buffer::trim(_used - set);
 		}
 		size_t used = _used;
 		uint8_t *ptr = static_cast<uint8_t *>(buffer::append(set - used));
