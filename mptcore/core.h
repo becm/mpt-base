@@ -337,7 +337,7 @@ public:
 				return 0;
 			}
 		}
-		else if (pos > length()) {
+		else if (pos >= length()) {
 			return 0;
 		}
 		return _base + pos;
@@ -605,7 +605,7 @@ MPT_STRUCT(identifier)
 	identifier(size_t = sizeof(identifier));
 	inline ~identifier()
 	{
-		set_name(0);
+		set_name(0, 0);
 	}
 	bool equal(const char *, int) const;
 	
