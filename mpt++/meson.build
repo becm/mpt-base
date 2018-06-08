@@ -37,6 +37,7 @@ if with_plot
     'graphic.cpp',
     'item.cpp',
     'layout.cpp',
+    'linepart.cpp',
     'mapping.cpp',
     'polyline.cpp',
     'transform.cpp'
