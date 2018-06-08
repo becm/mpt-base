@@ -161,7 +161,7 @@ void *buffer::append(size_t len)
         }
         void (*init)(const type_traits *, void *);
         if ((init = info->init)) {
-            for (size_t i = len; i < used; i += size) {
+            for (size_t i = 0; i < len; i += size) {
                 init(info, base + i);
             }
         }

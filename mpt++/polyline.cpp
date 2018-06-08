@@ -90,6 +90,7 @@ bool Polyline::set(const Transform &tr, Slice<const value_store> src)
             continue;
         }
         _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(val->base()), val->element_count()));
+        ++val;
     }
     // prepare target data
     if (!(max = _vis.length_user())) {

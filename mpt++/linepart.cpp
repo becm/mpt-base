@@ -68,7 +68,9 @@ bool linepart::array::set(long len)
     }
     // reserve total size
     num = len / max;
-    if (len > num * max) ++num;
+    if (len > num * max) {
+        ++num;
+    }
     if (!resize(num)) {
         return false;
     }
@@ -76,11 +78,11 @@ bool linepart::array::set(long len)
     for (long i = 0; i < num; ++i) {
         if (len < max) {
             lp[i].usr = lp[i].raw = len;
-            resize(i + 1);
-            return true;
+            len = 0;
+        } else {
+            lp[i].usr = lp[i].raw = max;
+            len -= max;
         }
-        lp[i].usr = lp[i].raw = max;
-        len -= max;
     }
     return true;
 }
