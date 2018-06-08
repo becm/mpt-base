@@ -366,7 +366,6 @@ protected:
 	{ }
 };
 
-extern void apply_log(point<double> *, const linepart &, const double *, const point<double> &);
 extern int apply_data(point<double> *, const linepart *, int , Transform &, Slice<const value_store>);
 class Polyline
 {
@@ -529,11 +528,6 @@ void apply(T *d, const linepart &pt, const S *src, const T &scale)
 		d[j].x += sx * src[j];
 		d[j].y += sy * src[j];
 	}
-}
-template <typename S>
-inline void apply(point<S> *d, const linepart &pt, const S *src, const point<S> &scale)
-{
-	return apply<point<S>, S>(d, pt, src, scale);
 }
 
 #endif

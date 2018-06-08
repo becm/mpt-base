@@ -27,8 +27,12 @@ enum MPT_ENUM(AxisFlags) {
 	MPT_ENUM(AxisStyleZ)    = 0x3,
 	MPT_ENUM(AxisStyles)    = 0x3,
 	
-	MPT_ENUM(AxisLg)        = 0x4,
-	MPT_ENUM(TransformSwap) = 0x8
+	MPT_ENUM(AxisLimitSwap) = 0x8
+};
+
+enum MPT_ENUM(TransformFlags) {
+	MPT_ENUM(TransformLimit) = 0x10,
+	MPT_ENUM(TransformLg)    = 0x20
 };
 
 enum MPT_ENUM(GraphFlags) {
@@ -245,13 +249,13 @@ MPT_STRUCT(text)
 MPT_STRUCT(transform)
 {
 #ifdef __cplusplus
-	transform(enum AxisFlags = AxisStyleGen);
+	transform(int = -1);
 	
-	int set(const axis &, int type = -1);
+	void set(const struct range &, int);
 #endif
-	MPT_STRUCT(dpoint) scale,  /* scale factor */
-	                   move;   /* move start position */
-	MPT_STRUCT(range)  limit;  /* value range */
+	double scale;               /* raw value scale factor */
+	float  add;                 /* scaled value offset */
+	MPT_STRUCT(fpoint) apply;   /* apply (add + scale * <raw>) to X and Y components */
 };
 
 __MPT_EXTDECL_BEGIN
@@ -289,7 +293,7 @@ extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
 extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, const MPT_INTERFACE(metatype) *);
 
 /* initialize transform dimension */
-extern void mpt_trans_init(MPT_STRUCT(transform) *, enum MPT_ENUM(AxisFlags) __MPT_DEFPAR(AxisStyleGen));
+extern void mpt_trans_init(MPT_STRUCT(transform) *, int __MPT_DEFPAR(-1));
 
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double);
@@ -317,6 +321,20 @@ __MPT_EXTDECL_END
 class Parse;
 struct parseflg;
 struct path;
+
+template <typename S>
+void apply(point<S> *d, const linepart &pt, const S *src, const transform &t)
+{
+	S mx(t.apply.x * t.add);
+	S my(t.apply.y * t.add);
+	for (size_t i = 0; i < pt.usr; ++i) {
+		d->x += mx;
+		d->y += my;
+	}
+	const point<S> scale(t.apply.x * t.scale, t.apply.y * t.scale);
+	apply<point<S>, S>(d, pt, src, scale);
+}
+extern void apply_log(point<double> *, const linepart &, const double *, const transform &);
 
 class Line : public metatype, public object, public line
 {
@@ -394,6 +412,14 @@ protected:
 class Transform3 : public reference, public Transform
 {
 public:
+	struct data {
+		data(int = -1);
+		
+		struct range     limit;
+		struct transform transform;
+		uint32_t        _flags;
+	};
+	
 	Transform3();
 	
 	inline virtual ~Transform3()
@@ -406,9 +432,8 @@ public:
 	bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
 	point<double> zero() const __MPT_OVERRIDE;
 	
-	transform tx, ty, tz; /* dimension transformations */
-	uint8_t fx, fy, fz;   /* transformation options */
-	uint8_t cutoff;       /* limit data to range */
+	data   _dim[3];
+	fpoint _base;
 };
 
 /*! Container and binding for data to axes */
@@ -452,9 +477,10 @@ public:
 	
 	const Transform &transform();
 	
-	const struct transform *getTransform(int = -1) const;
-	int getFlags(int = -1) const;
-	bool updateTransform(int dim = -1);
+	const struct transform *transform_part(int = -1) const;
+	int transform_flags(int = -1) const;
+	
+	bool update_transform(int dim = -1);
 	
 protected:
 	Reference<Transform3> _gtr;

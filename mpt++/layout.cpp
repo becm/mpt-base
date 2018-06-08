@@ -446,7 +446,7 @@ int Graph::set_property(const char *prop, const metatype *src)
     if (ret < 0 || !src) {
         return ret;
     }
-    updateTransform();
+    update_transform();
     return ret;
 }
 // graph group interface
@@ -670,12 +670,15 @@ const Transform &Graph::transform()
     }
 }
 
-bool Graph::updateTransform(int dim)
+bool Graph::update_transform(int dim)
 {
     if (dim < 0) {
-        updateTransform(0);
-        updateTransform(1);
-        updateTransform(2);
+        update_transform(0);
+        update_transform(1);
+        update_transform(2);
+    }
+    if (dim > 2) {
+        return false;
     }
     Item<Axis> *it = _axes.get(dim);
     Axis *a;
@@ -688,21 +691,27 @@ bool Graph::updateTransform(int dim)
         t = new Transform3;
         _gtr.set_pointer(t);
     }
-    t->cutoff = clip;
+    int type;
     switch (dim) {
-    case 0:
-        t->fx = t->tx.set(*a, AxisStyleX);
-        return true;
-    case 1:
-        t->fy = t->ty.set(*a, AxisStyleY);
-        return true;
-    case 2:
-        t->fz = t->tz.set(*a, AxisStyleZ);
-        return true;
-    default: return false;
+    case 0: type = AxisStyleX; break;
+    case 1: type = AxisStyleY; break;
+    case 2: type = AxisStyleZ; break;
     }
+    if (a->axis::begin > a->axis::end) {
+        t->_dim[dim].limit.min = a->axis::end;
+        t->_dim[dim].limit.max = a->axis::begin;
+        type |= AxisLimitSwap;
+    }
+    if (a->format & TransformLg) {
+        t->_dim[dim].limit.min = a->axis::begin;
+        t->_dim[dim].limit.max = a->axis::end;
+        type |= TransformLg;
+    }
+    struct range r(a->axis::begin, a->axis::end);
+    t->_dim[dim].transform.set(r, type);
+    return true;
 }
-const struct transform *Graph::getTransform(int dim) const
+const struct transform *Graph::transform_part(int dim) const
 {
     Transform3 *t;
     if (!(t = _gtr.pointer())) {
@@ -710,16 +719,16 @@ const struct transform *Graph::getTransform(int dim) const
     }
     switch (dim) {
     case 0:
-        return &t->tx;
+        return &t->_dim[0].transform;
     case 1:
-        return &t->ty;
+        return &t->_dim[0].transform;
     case 2:
-        return &t->tz;
+        return &t->_dim[0].transform;
     default:
         return 0;
     }
 }
-int Graph::getFlags(int dim) const
+int Graph::transform_flags(int dim) const
 {
     Transform3 *t;
     if (!(t = _gtr.pointer())) {
@@ -727,11 +736,11 @@ int Graph::getFlags(int dim) const
     }
     switch (dim) {
     case 0:
-        return t->fx;
+        return t->_dim[0]._flags;
     case 1:
-        return t->fy;
+        return t->_dim[0]._flags;
     case 2:
-        return t->fz;
+        return t->_dim[0]._flags;
     default:
         return 0;
     }

@@ -165,18 +165,18 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 		const char *l;
 		if (!src) {
 			ax->intv = def_axis.intv;
-			ax->format &= ~MPT_ENUM(AxisLg);
+			ax->format &= ~MPT_ENUM(TransformLg);
 			return 0;
 		}
 		if (!(len = src->_vptr->conv(src, 'y', &ax->intv))) {
-			ax->format &= ~MPT_ENUM(AxisLg);
+			ax->format &= ~MPT_ENUM(TransformLg);
 			ax->intv = 0;
 		}
 		if (len >= 0 || (len = src->_vptr->conv(src, 's', &l)) < 0 || len < 0 || !l) {
-			ax->format &= ~MPT_ENUM(AxisLg);
+			ax->format &= ~MPT_ENUM(TransformLg);
 		}
 		else if (!strncasecmp(l, "log", 3)) {
-			ax->format |= MPT_ENUM(AxisLg);
+			ax->format |= MPT_ENUM(TransformLg);
 			ax->intv = 0;
 		}
 		return len < 0 ? len : 0;
@@ -280,7 +280,7 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 		return 0;
 	}
 	
-	if ((pos == 5) && (ax->format & MPT_ENUM(AxisLg))) {
+	if ((pos == 5) && (ax->format & MPT_ENUM(TransformLg))) {
 		static const char desc[] = "log\0";
 		pr->val.fmt = 0;
 		pr->val.ptr = desc;

@@ -18,65 +18,44 @@ __MPT_NAMESPACE_BEGIN
 range::range() : min(DBL_MIN), max(DBL_MAX)
 { }
 
-transform::transform(AxisFlags flg)
-{ mpt_trans_init(this, flg); }
-
-int transform::set(const axis &a, int type)
+transform::transform(int flg)
 {
-    double min = a.begin, max = a.end;
+    mpt_trans_init(this, flg);
+}
+void transform::set(const struct range &r, int flg)
+{
+    double min, max;
 
-    if (type < 0) {
-        type = a.format & AxisStyles;
-    }
     // log. scale
-    if (a.format & AxisLg) {
-        if (min > max) {
-            type |= TransformSwap;
-            min = floor(a.end);
-            max = ceil(a.begin);
+    if (flg & TransformLg) {
+        if (flg & AxisLimitSwap) {
+            min = floor(r.max);
+            max = ceil(r.min);
         } else {
-            min = floor(min);
-            max = ceil(max);
+            min = floor(r.min);
+            max = ceil(r.max);
         }
         if (min <= max) {
             max = min + 1;
         }
         min = exp10(min);
         max = exp10(max);
-        type |= AxisLg;
     }
     // normalize range
-    else if (min > max) {
-        type |= TransformSwap;
-        this->limit.min = max;
-        this->limit.max = min;
-    } else {
-        this->limit.min = min;
-        this->limit.max = max;
+    else if (flg & AxisLimitSwap) {
+        min = r.max;
+        max = r.min;
+    }
+    else {
+        min = r.min;
+        max = r.max;
     }
     double fact = 1.0/(max - min);
-
-    switch (type) {
-    case AxisStyleX:
-        scale.x = fact;
-        scale.y = 0;
-        break;
-    case AxisStyleY:
-        scale.x = 0;
-        scale.y = fact;
-        break;
-    case AxisStyleZ:
-        scale.x = fact * M_SQRT1_2;
-        scale.y = fact * M_SQRT1_2;
-        break;
-    default:
-        scale.x = scale.y = 0;
-    }
-    move.x = -min * scale.x;
-    move.y = -min * scale.y;
-
-    return type;
+    
+    scale = fact;
+    add   = min * fact;
 }
+
 
 int Transform::dimensions() const
 { return 0; }
@@ -94,8 +73,20 @@ bool Transform::apply(unsigned , const linepart &, point<double> *, const double
 { return false; }
 
 // implementation with 3 dimensions
-Transform3::Transform3() : tx(AxisStyleX), ty(AxisStyleY), tz(AxisStyleZ), fx(0), fy(0), fz(0), cutoff(0xff)
-{ }
+Transform3::data::data(int flg) : transform(flg < 0 ? 0 : flg)
+{
+    if (flg < 0) {
+        _flags = 0;
+    } else {
+        _flags = flg;
+    }
+}
+Transform3::Transform3()
+{
+    new (&_dim[0]) data(AxisStyleX);
+    new (&_dim[1]) data(AxisStyleY);
+    new (&_dim[2]) data(AxisStyleZ);
+}
 
 void Transform3::unref()
 {
@@ -104,33 +95,47 @@ void Transform3::unref()
 
 int Transform3::dimensions() const
 {
-    return (tz.scale.x || tz.scale.y) ? 3 : 2;
+    if (_dim[2].transform.apply.x || _dim[2].transform.apply.y) {
+        return 3;
+    }
+    if (_dim[1].transform.apply.x || _dim[1].transform.apply.y) {
+        return 2;
+    }
+    if (_dim[0].transform.apply.x || _dim[0].transform.apply.y) {
+        return 1;
+    }
+    return 0;
 }
 point<double> Transform3::zero() const
 {
-    double x = tx.move.x + ty.move.x + tz.move.x;
-    double y = tx.move.y + ty.move.y + tz.move.y;
-
-    return point<double>(x,y);
+    return point<double>(_base.x, _base.y);
 }
 linepart Transform3::part(unsigned dim, const double *val, int len) const
 {
     struct range l;
-    bool log = false;
+    const data *curr = 0;
 
     switch (dim) {
-    case 0: l = tx.limit; if (fx & AxisLg) log = true; break;
-    case 1: l = ty.limit; if (fy & AxisLg) log = true; break;
-    case 2: l = tz.limit; if (fz & AxisLg) log = true; break;
+    case 0: curr = &_dim[0]; break;
+    case 1: curr = &_dim[1]; break;
+    case 2: curr = &_dim[2]; break;
     }
     linepart lp;
-    if (log) {
-        l.min = exp10(floor(l.min));
-        l.max = exp10(ceil(l.max));
+    
+    if (!curr
+     || !(curr->_flags & TransformLimit)) {
+        mpt_linepart_linear(&lp, val, len, 0);
+        return lp;
     }
-    mpt_linepart_linear(&lp, val, len, (cutoff & (1<<dim)) ? &l : 0);
+    if (curr->_flags & TransformLg) {
+        l.min = exp10(floor(curr->limit.min));
+        l.max = exp10(ceil(curr->limit.max));
+    } else {
+        l = curr->limit;
+    }
+    mpt_linepart_linear(&lp, val, len, &l);
 
-    if (log) {
+    if (curr->_flags & TransformLg) {
         double cut  = lp.cut();
         double trim = lp.trim();
 
@@ -144,8 +149,9 @@ linepart Transform3::part(unsigned dim, const double *val, int len) const
 }
 
 template void apply<point<double>, double>(point<double> *, const linepart &, const double *, const point<double> &);
+template void apply<double>(point<double> *, const linepart &, const double *, const transform &);
 
-extern void apply_log(point<double> *dest, const linepart &pt, const double *from, const point<double> &fact)
+extern void apply_log(point<double> *dest, const linepart &pt, const double *from, const transform &fact)
 {
     linepart all = pt;
     while (all.usr) {
@@ -169,41 +175,26 @@ extern void apply_log(point<double> *dest, const linepart &pt, const double *fro
 
 bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
 {
-    const dpoint *scale;
-    bool log = false;
-    double zx = 0, zy;
+    const data *curr;
 
     if (!from) {
         return false;
     }
     // select transformation
-    switch (dim) {
-    case 0: scale = &tx.scale; zx = tx.limit.min; if (fx & AxisLg) log = true; break;
-    case 1: scale = &ty.scale; zx = ty.limit.min; if (fy & AxisLg) log = true; break;
-    case 2: scale = &tz.scale; zx = tz.limit.min; if (fz & AxisLg) log = true; break;
-    default: return false;
+    if (dim > 2) {
+        return false;
     }
     size_t len;
-    if (!(len = pt.usr)) return true;
-
+    if (!(len = pt.usr)) {
+        return true;
+    }
+    curr = &_dim[dim];
     // apply point data
-    point<double> fact(scale->x, scale->y);
-    if (!log) {
-        ::mpt::apply<double>(dest, pt, from, fact);
+    if (!(curr->_flags & TransformLg)) {
+        ::mpt::apply<double>(dest, pt, from, curr->transform);
     }
     else {
-        apply_log(dest, pt, from, fact);
-        if (zx) zx = log10(zx);
-    }
-    // remove difference to axis start
-    if (!zx) return true;
-
-    zy = scale->y * zx;
-    zx = scale->x * zx;
-
-    for (int i = 0; i < pt.usr; i++) {
-        dest[i].x -= zx;
-        dest[i].y -= zy;
+        apply_log(dest, pt, from, curr->transform);
     }
     return true;
 }
