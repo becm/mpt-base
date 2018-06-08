@@ -158,7 +158,7 @@ int Mapping::get_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.length(); j < gmax; ++j) {
-            auto grf = graphs.nth(i)->pointer();
+            auto grf = graphs.nth(j)->pointer();
             if (!grf) continue;
             if (hint.match & laydest::MatchGraph
              && hint.grf != j) {
