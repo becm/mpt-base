@@ -14,11 +14,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class Reference<Line>;
-template class Reference<Text>;
-template class Reference<Axis>;
-template class Reference<World>;
-template class Reference<Graph>;
+template class reference_wrapper<Line>;
+template class reference_wrapper<Text>;
+template class reference_wrapper<Axis>;
+template class reference_wrapper<World>;
+template class reference_wrapper<Graph>;
 
 template <> int typeinfo<Line *>::id()
 {
@@ -502,7 +502,7 @@ static World *make_world(metatype *mt, logger *out, const char *_func, const cha
     }
     return 0;
 }
-bool Graph::bind(const Relation &rel, logger *out)
+bool Graph::bind(const relation &rel, logger *out)
 {
     static const char _func[] = "mpt::Graph::bind";
     metatype *mt;
@@ -515,7 +515,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     if (!(names = graph::axes())) {
         for (auto &it : _items) {
             Axis *a;
-            if (!(mt = it.pointer()) || !(a = mt->cast<Axis>())) continue;
+            if (!(mt = it.reference()) || !(a = mt->cast<Axis>())) continue;
             curr = it.name();
             if (!a->addref() || add_axis(a, curr)) {
                 continue;
@@ -552,7 +552,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     if (!(names = graph::worlds())) {
         for (auto &it : _items) {
             World *w;
-            if (!(mt = it.pointer()) || !(w = mt->cast<World>())) continue;
+            if (!(mt = it.reference()) || !(w = mt->cast<World>())) continue;
             curr = it.name();
             if (!w->addref() || add_world(w, curr)) {
                 continue;
@@ -587,7 +587,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     for (auto &it : _items) {
         Group *g;
-        if (!(mt = it.pointer()) || !(g = mt->cast<Group>())) continue;
+        if (!(mt = it.reference()) || !(g = mt->cast<Group>())) continue;
         GroupRelation gr(*g, &rel);
         if (!g->bind(gr, out)) {
             _axes = oldaxes;
@@ -597,7 +597,7 @@ bool Graph::bind(const Relation &rel, logger *out)
     }
     return true;
 }
-Item<Axis> *Graph::add_axis(Axis *from, const char *name, int nlen)
+item<Axis> *Graph::add_axis(Axis *from, const char *name, int nlen)
 {
     Axis *a;
 
@@ -605,17 +605,17 @@ Item<Axis> *Graph::add_axis(Axis *from, const char *name, int nlen)
         a = new Axis;
     } else {
         for (auto &it : _axes) {
-            if (a == it.pointer()) return 0; // deny multiple dimensions sharing same transformation
+            if (a == it.reference()) return 0; // deny multiple dimensions sharing same transformation
         }
     }
-    Item<Axis> *it;
+    class item<Axis> *it;
     if ((it = _axes.append(a, name, nlen))) {
         return it;
     }
     if (!from) a->unref();
     return 0;
 }
-Item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
+item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
 {
     Data *d;
     World *w;
@@ -625,7 +625,7 @@ Item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
     } else {
         d = new Data(w);
     }
-    Item<Graph::Data> *it;
+    class item<Graph::Data> *it;
     if ((it = _worlds.append(d, name, nlen))) {
         return it;
     }
@@ -633,28 +633,36 @@ Item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
     return 0;
 }
 
-const Reference<Cycle> *Graph::cycle(int pos) const
+const reference_wrapper<Cycle> *Graph::cycle(int pos) const
 {
-    static const Reference<Cycle> def;
-    if (pos < 0 && (pos += _worlds.length()) < 0) return 0;
-    Data *d = _worlds.get(pos)->pointer();
-    if (!d) return 0;
-    if (!d->cycle.pointer()) {
-        Cycle *c = new Reference<Cycle>::instance;
-        d->cycle.set_pointer(c);
+    static const reference_wrapper<Cycle> def;
+    if (pos < 0 && (pos += _worlds.length()) < 0) {
+        return 0;
+    }
+    Data *d = _worlds.get(pos)->reference();
+    if (!d) {
+        return 0;
+    }
+    if (!d->cycle.reference()) {
+        Cycle *c = new reference_wrapper<Cycle>::instance;
+        d->cycle.set_reference(c);
         World *w;
-        if ((w = d->world.pointer())) {
+        if ((w = d->world.reference())) {
             c->limit_dimensions(3);
             c->limit_stages(w->cyc);
         }
     }
     return &d->cycle;
 }
-bool Graph::set_cycle(int pos, const Reference<Cycle> &cyc) const
+bool Graph::set_cycle(int pos, const reference_wrapper<Cycle> &cyc) const
 {
-    if (pos < 0 && (pos += _worlds.length()) < 0) return false;
-    Data *d = _worlds.get(pos)->pointer();
-    if (!d) return false;
+    if (pos < 0 && (pos += _worlds.length()) < 0) {
+        return false;
+    }
+    Data *d = _worlds.get(pos)->reference();
+    if (!d) {
+        return false;
+    }
     d->cycle = cyc;
     return true;
 }
@@ -662,7 +670,7 @@ bool Graph::set_cycle(int pos, const Reference<Cycle> &cyc) const
 const Transform &Graph::transform()
 {
     Transform *t;
-    if ((t = _gtr.pointer())) {
+    if ((t = _gtr.reference())) {
         return *t;
     } else {
         static const Transform3 def;
@@ -680,16 +688,16 @@ bool Graph::update_transform(int dim)
     if (dim > 2) {
         return false;
     }
-    Item<Axis> *it = _axes.get(dim);
+    class item<Axis> *it = _axes.get(dim);
     Axis *a;
 
-    if (!it || !(a = it->pointer())) {
+    if (!it || !(a = it->reference())) {
         return false;
     }
     Transform3 *t;
-    if (!(t = _gtr.pointer())) {
+    if (!(t = _gtr.reference())) {
         t = new Transform3;
-        _gtr.set_pointer(t);
+        _gtr.set_reference(t);
     }
     int type;
     switch (dim) {
@@ -714,7 +722,7 @@ bool Graph::update_transform(int dim)
 const struct transform *Graph::transform_part(int dim) const
 {
     Transform3 *t;
-    if (!(t = _gtr.pointer())) {
+    if (!(t = _gtr.reference())) {
         return 0;
     }
     switch (dim) {
@@ -731,7 +739,7 @@ const struct transform *Graph::transform_part(int dim) const
 int Graph::transform_flags(int dim) const
 {
     Transform3 *t;
-    if (!(t = _gtr.pointer())) {
+    if (!(t = _gtr.reference())) {
         return 0;
     }
     switch (dim) {
@@ -824,17 +832,21 @@ int Layout::set_property(const char *name, const metatype *src)
     }
     return BadArgument;
 }
-bool Layout::bind(const Relation &rel, logger *out)
+bool Layout::bind(const relation &rel, logger *out)
 {
     ItemArray<metatype> old = _items;
-    if (!Collection::bind(rel, out)) return false;
+    if (!Collection::bind(rel, out)) {
+        return false;
+    }
 
     ItemArray<Graph> arr;
 
     for (auto &it : _items) {
         metatype *mt;
         Graph *g;
-        if (!(mt = it.pointer()) || !(g = mt->cast<Graph>())) continue;
+        if (!(mt = it.reference()) || !(g = mt->cast<Graph>())) {
+            continue;
+        }
         const char *name = it.name();
         if (!g->addref()) {
             g = new Graph();
@@ -893,10 +905,13 @@ bool Layout::load(logger *out)
     GroupRelation self(*this);
     clear();
     // add items to layout
-    if (!add_items(conf, &self, out)) return false;
+    if (!add_items(conf, &self, out)) {
+        return false;
+    }
     // create graphic representations
-    if (!bind(self, out)) return false;
-
+    if (!bind(self, out)) {
+        return false;
+    }
     return true;
 }
 bool Layout::reset()
@@ -913,7 +928,9 @@ bool Layout::reset()
 bool Layout::open(const char *fn)
 {
     if (!_parse) {
-        if (!fn) return true;
+        if (!fn) {
+            return true;
+        }
         _parse = new LayoutParser();
     }
     return _parse->open(fn);
@@ -934,7 +951,9 @@ fpoint Layout::minimal_scale() const
 
     for (auto &it : _graphs) {
         Graph *g;
-        if (!(g = it.pointer())) continue;
+        if (!(g = it.reference())) {
+            continue;
+        }
         if (g->scale.x < x) x = g->scale.x;
         if (g->scale.y < y) y = g->scale.y;
     }

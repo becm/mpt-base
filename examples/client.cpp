@@ -31,7 +31,7 @@ public:
     
     int conv(int , void *) const __MPT_OVERRIDE;
 protected:
-    mpt::Reference<mpt::metatype> _mt;
+    mpt::reference_wrapper<mpt::metatype> _mt;
 };
 MyClient::MyClient()
 {
@@ -43,7 +43,7 @@ MyClient::MyClient()
     if (mt && (o = mt->cast<mpt::object>())) {
         o->set(0, "w:client.out");
     }
-    _mt.set_pointer(mt);
+    _mt.set_reference(mt);
 }
 int MyClient::process(uintptr_t , mpt::iterator *)
 {
@@ -57,7 +57,7 @@ int MyClient::conv(int type, void *ptr) const
 {
     metatype *mt;
     int ret;
-    if ((mt = _mt.pointer()) && (ret = mt->conv(type, ptr)) > 0) {
+    if ((mt = _mt.reference()) && (ret = mt->conv(type, ptr)) > 0) {
         return Type;
     }
     return client::conv(type, ptr);

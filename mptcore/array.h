@@ -123,7 +123,7 @@ MPT_STRUCT(array)
 	void *prepend(size_t , const void * = 0);
 	void *insert(size_t , size_t , const void * = 0);
 	void *set(size_t , const void * = 0);
-	bool set(const Reference<buffer> &);
+	bool set(const reference_wrapper<buffer> &);
 	
 	int set(value);
 	int set(metatype &);
@@ -139,7 +139,7 @@ protected:
 # define _MPT_ARRAY_TYPE(x)     ::mpt::Array<x>
 # define _MPT_UARRAY_TYPE(x)    ::mpt::UniqueArray<x>
 # define _MPT_REF_ARRAY_TYPE(x) ::mpt::RefArray<x>
-	Reference<Data> _buf;
+	reference_wrapper<Data> _buf;
 #else
 	MPT_STRUCT(buffer) *_buf;
 # define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
@@ -361,7 +361,7 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline void *array::base() const
 {
-	Data *d = _buf.pointer();
+	Data *d = _buf.reference();
 	if (!d || d->typeinfo()) {
 		return 0;
 	}
@@ -369,22 +369,22 @@ inline void *array::base() const
 }
 inline size_t array::length() const
 {
-	Data *d = _buf.pointer();
+	Data *d = _buf.reference();
 	return (d && !d->typeinfo()) ? d->length() : 0;
 }
 inline size_t array::left() const
 {
-	Data *d = _buf.pointer();
+	Data *d = _buf.reference();
 	return (d && !d->typeinfo()) ? d->left() : 0;
 }
 inline bool array::shared() const
 {
-	Data *d = _buf.pointer();
+	Data *d = _buf.reference();
 	return d && d->shared();
 }
 inline const array::Data *array::data() const
 {
-	return _buf.pointer();
+	return _buf.reference();
 }
 inline void *array::prepend(size_t len, const void *data)
 {
@@ -415,7 +415,7 @@ inline slice::~slice()
 { }
 inline span<uint8_t> slice::data() const
 {
-	buffer *b = _buf.pointer();
+	buffer *b = _buf.reference();
 	return span<uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
 }
 long compact(span<void *>);
@@ -551,7 +551,7 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				_ref.set_pointer(static_cast<Content<T> *>(b));
+				_ref.set_reference(static_cast<Content<T> *>(b));
 				return;
 			}
 		}
@@ -572,16 +572,16 @@ public:
 			{ }
 		};
 		static dummy _dummy;
-		_ref.set_pointer(&_dummy);
+		_ref.set_reference(&_dummy);
 	}
 	inline iterator begin() const
 	{
-		Content<T> *c = _ref.pointer();
+		Content<T> *c = _ref.reference();
 		return c ? c->begin() : 0;
 	}
 	inline iterator end() const
 	{
-		Content<T> *c = _ref.pointer();
+		Content<T> *c = _ref.reference();
 		return c ? c->end() : 0;
 	}
 	inline UniqueArray & operator=(const UniqueArray &a)
@@ -589,7 +589,7 @@ public:
 		_ref = a._ref;
 		return *this;
 	}
-	inline UniqueArray & operator=(const Reference<Content<T> > &v)
+	inline UniqueArray & operator=(const reference_wrapper<Content<T> > &v)
 	{
 		this->_ref = v;
 		return *this;
@@ -625,7 +625,7 @@ public:
 		if (!reserve(len + 1)) {
 			return 0;
 		}
-		Content<T> *d = _ref.pointer();
+		Content<T> *d = _ref.reference();
 		return d->insert(pos);
 	}
 	T *get(long pos) const
@@ -642,7 +642,7 @@ public:
 	}
 	inline long length() const
 	{
-		Content<T> *d = _ref.pointer();
+		Content<T> *d = _ref.reference();
 		return d ? d->length() : 0;
 	}
 	inline span<const T> elements() const
@@ -657,10 +657,10 @@ public:
 		}
 		long elem = c->length();
 		if ((n = c->detach(elem * sizeof(T)))) {
-			_ref.set_pointer(n);
+			_ref.set_reference(n);
 			return true;
 		}
-		_ref.set_pointer(c);
+		_ref.set_reference(c);
 		return false;
 	}
 	bool reserve(long len)
@@ -671,15 +671,15 @@ public:
 		}
 		if (len < 0
 		    && (len += length()) < 0) {
-			_ref.set_pointer(c);
+			_ref.set_reference(c);
 			return false;
 		}
 		Content<T> *n;
 		if ((n = c->detach(len * sizeof(T)))) {
-			_ref.set_pointer(n);
+			_ref.set_reference(n);
 			return true;
 		}
-		_ref.set_pointer(c);
+		_ref.set_reference(c);
 		return true;
 	}
 	bool resize(long len)
@@ -688,13 +688,13 @@ public:
 			return false;
 		}
 		Content<T> *d;
-		if (len >= 0 && (d = _ref.pointer())) {
+		if (len >= 0 && (d = _ref.reference())) {
 			return d->set_length(len);
 		}
 		return true;
 	}
 protected:
-	Reference<Content<T> > _ref;
+	reference_wrapper<Content<T> > _ref;
 	
 	static void _data_init(const type_traits *, void *ptr)
 	{
@@ -740,7 +740,7 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				this->_ref.set_pointer(static_cast<Content<T> *>(b));
+				this->_ref.set_reference(static_cast<Content<T> *>(b));
 				return;
 			}
 		}
@@ -761,7 +761,7 @@ public:
 			{ }
 		};
 		static dummy _dummy;
-		this->_ref.set_pointer(&_dummy);
+		this->_ref.set_reference(&_dummy);
 	}
 	inline Array & operator=(const Array &a)
 	{
@@ -803,20 +803,20 @@ public:
 
 /*! typed array with standard operations */
 template <typename T>
-class ItemArray : public UniqueArray<Item<T> >
+class ItemArray : public UniqueArray<item<T> >
 {
 public:
-	inline ItemArray(size_t len = 0) : UniqueArray<Item<T> >(len)
+	inline ItemArray(size_t len = 0) : UniqueArray<item<T> >(len)
 	{ }
-	Item<T> *append(T *t, const char *id, int len = -1)
+	item<T> *append(T *t, const char *id, int len = -1)
 	{
-		Item<T> *it;
+		item<T> *it;
 		long pos = this->length();
 		if (!(it = this->insert(pos))) {
 			return 0;
 		}
 		if (!id || it->set_name(id, len)) {
-			it->set_pointer(t);
+			it->set_reference(t);
 			return it;
 		}
 		this->resize(pos);
@@ -825,24 +825,24 @@ public:
 	long count() const
 	{
 		long len = 0;
-		for (Item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
-			if (pos->pointer()) ++len;
+		for (item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
+			if (pos->reference()) ++len;
 		}
 		return len;
 	}
 	bool compact()
 	{
-		Item<T> *space = 0;
+		item<T> *space = 0;
 		long len = 0;
-		for (Item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
-			T *c = pos->pointer();
+		for (item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
+			T *c = pos->reference();
 			if (!c) {
 				if (!space) space = pos;
 				continue;
 			}
 			++len;
 			if (!space) continue;
-			space->~Item<T>();
+			space->~item<T>();
 			memcpy(space, pos, sizeof(*space));
 			memset(pos, 0, sizeof(*pos));
 			++space;
@@ -850,7 +850,7 @@ public:
 		if (!space) {
 			return false;
 		}
-		this->_ref.pointer()->set_length(len);
+		this->_ref.reference()->set_length(len);
 		return true;
 	}
 };
@@ -916,42 +916,42 @@ public:
 
 /*! extendable array for reference types */
 template <typename T>
-class RefArray : public UniqueArray<Reference<T> >
+class RefArray : public UniqueArray<reference_wrapper<T> >
 {
 public:
-	typedef Reference<T>* iterator;
+	typedef reference_wrapper<T>* iterator;
 	
-	inline RefArray(size_t len = 0) : UniqueArray<Reference<T> >(len)
+	inline RefArray(size_t len = 0) : UniqueArray<reference_wrapper<T> >(len)
 	{ }
 	bool insert(long pos, T *ref)
 	{
-		Reference<T> *ptr = UniqueArray<Reference<T> >::insert(pos);
+		reference_wrapper<T> *ptr = UniqueArray<reference_wrapper<T> >::insert(pos);
 		if (!ptr) {
 			return false;
 		}
-		ptr->set_pointer(ref);
+		ptr->set_reference(ref);
 		return true;
 	}
 	bool set(long pos, T *ref)
 	{
-		Reference<T> *ptr = UniqueArray<Reference<T> >::get(pos);
+		reference_wrapper<T> *ptr = UniqueArray<reference_wrapper<T> >::get(pos);
 		if (!ptr) {
 			return false;
 		}
-		ptr->set_pointer(ref);
+		ptr->set_reference(ref);
 		return true;
 	}
 	long clear(const T *ref = 0) const
 	{
-		Reference<T> *ptr = this->begin();
+		reference_wrapper<T> *ptr = this->begin();
 		long elem = 0;
 		
 		for (long i = 0, len = this->length(); i < len; ++i) {
-			T *match = ptr[i].pointer();
+			T *match = ptr[i].reference();
 			if (!match || (ref && (match != ref))) {
 				continue;
 			}
-			ptr[i].set_pointer(0);
+			ptr[i].set_reference(0);
 			++elem;
 		}
 		return elem;
@@ -959,8 +959,8 @@ public:
 	long count() const
 	{
 		long len = 0;
-		for (Reference<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
-			if (pos->pointer()) ++len;
+		for (reference_wrapper<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+			if (pos->reference()) ++len;
 		}
 		return len;
 	}
@@ -981,7 +981,7 @@ public:
 	}
 };
 
-class LogStore : public logger, public Reference<metatype>
+class LogStore : public logger, public reference_wrapper<metatype>
 {
 public:
 	enum {

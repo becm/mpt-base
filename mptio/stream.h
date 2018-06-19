@@ -233,7 +233,7 @@ public:
 protected:
 	stream *_srm;
 	command::array _wait;
-	Reference<metatype> _ctx;
+	reference_wrapper<metatype> _ctx;
 	uintptr_t _cid;
 	int _inputFile;
 	uint8_t _idlen;

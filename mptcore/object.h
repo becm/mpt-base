@@ -295,22 +295,22 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	virtual const Item<metatype> *item(size_t pos) const;
-	virtual Item<metatype> *append(metatype *);
+	virtual const class item<metatype> *item(size_t pos) const;
+	virtual class item<metatype> *append(metatype *);
 	virtual size_t clear(const reference * = 0);
-	virtual bool bind(const Relation &from, logger * = logger::defaultInstance());
+	virtual bool bind(const relation &from, logger * = logger::defaultInstance());
 	
-	bool add_items(node *head, const Relation *from = 0, logger * = logger::defaultInstance());
+	bool add_items(node *head, const relation *from = 0, logger * = logger::defaultInstance());
 protected:
 	inline ~Group() {}
 	virtual metatype *create(const char *, int = -1);
 };
 
 /*! Relation implemetation using Group as current element */
-class GroupRelation : public Relation
+class GroupRelation : public relation
 {
 public:
-	inline GroupRelation(const Group &g, const Relation *p = 0, char sep = '.') : Relation(p), _curr(g), _sep(sep)
+	inline GroupRelation(const Group &g, const relation *p = 0, char sep = '.') : relation(p), _curr(g), _sep(sep)
 	{ }
 	virtual ~GroupRelation()
 	{ }

@@ -220,7 +220,7 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     return length();
 }
 
-LogStore::LogStore(metatype *next) : Reference<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
+LogStore::LogStore(metatype *next) : reference_wrapper<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
 LogStore::~LogStore()
 { }
@@ -260,7 +260,7 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     if (type & File) {
         pass |= _flags & PassFile;
     }
-    metatype *mt = pointer();
+    metatype *mt = reference();
     // fast-track without argument list copy
     if (!save) {
         if (mt && pass) {

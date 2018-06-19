@@ -67,7 +67,7 @@ public:
 	
 	int assign(const value *);
 	
-	virtual Reference<class Stream> accept();
+	virtual reference_wrapper<class Stream> accept();
 };
 #endif
 
@@ -103,7 +103,7 @@ protected:
 	
 	/* reply context */
 #ifdef __cplusplus
-	Reference<metatype> _rctx;
+	reference_wrapper<metatype> _rctx;
 #else
 	MPT_INTERFACE(metatype) *_rctx;
 # define MPT_CONNECTION_INIT { MPT_OUTDATA_INIT,  0, MPT_ARRAY_INIT,  0 }

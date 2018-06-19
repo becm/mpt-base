@@ -81,7 +81,7 @@ int Socket::assign(const value *val)
     return (socket::set(val)) ? (val ? 1 : 0) : BadOperation;
 }
 
-Reference<Stream> Socket::accept()
+reference_wrapper<Stream> Socket::accept()
 {
     int sock;
 

@@ -23,11 +23,11 @@ MPT_STRUCT(node)
 	~node();
 	
 	void set_metatype(metatype *mt);
-	struct node &operator=(const Reference<metatype> &);
+	struct node &operator=(const reference_wrapper<metatype> &);
 	
-	inline const Reference<metatype> &meta() const
+	inline const reference_wrapper<metatype> &meta() const
 	{
-		return *((Reference<metatype> *) &_meta);
+		return *((reference_wrapper<metatype> *) &_meta);
 	}
 	
 	const char *data(size_t * = 0) const;
@@ -54,10 +54,10 @@ template<> inline __MPT_CONST_TYPE int typeinfo<node *>::id()
 }
 
 /*! Relation implemetation using node as current element */
-class NodeRelation : public Relation
+class NodeRelation : public relation
 {
 public:
-    inline NodeRelation(const node *n, const Relation *p = 0) : Relation(p), _curr(n)
+    inline NodeRelation(const node *n, const relation *p = 0) : relation(p), _curr(n)
     { }
     metatype *find(int type, const char *, int = -1) const;
 protected:
@@ -153,9 +153,9 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline node::node(metatype *ref) : _meta(ref), next(0), prev(0), parent(0), children(0)
 { }
-inline node &node::operator = (const Reference<metatype> &other)
+inline node &node::operator = (const reference_wrapper<metatype> &other)
 {
-    Reference<metatype> m(other);
+    reference_wrapper<metatype> m(other);
     if (_meta) _meta->unref();
     _meta = m.detach();
     return *this;

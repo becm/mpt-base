@@ -58,7 +58,7 @@ template <> inline __MPT_CONST_TYPE int typeinfo<metatype *>::id()
 {
 	return metatype::Type;
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id()
+template <> inline __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id()
 {
 	return typeinfo<metatype *>::id();
 }

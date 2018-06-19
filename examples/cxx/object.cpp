@@ -87,8 +87,8 @@ extern int main(int , char * const [])
 	if ((mt = config.get("next"))) {
 		std::cout << "next type: " << typeid(*mt).name() << std::endl;
 	}
-	mpt::Line *li = new mpt::Reference<mpt::Line>::instance;
-	mpt::Axis *ax = new mpt::Reference<mpt::Axis>::instance;
+	mpt::Line *li = new mpt::reference_wrapper<mpt::Line>::instance;
+	mpt::Axis *ax = new mpt::reference_wrapper<mpt::Axis>::instance;
 	
 	std::cout << "ao: " << ax->type() << std::endl;
 	std::cout << "lo: " << li->type() << std::endl;

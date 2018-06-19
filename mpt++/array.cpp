@@ -187,7 +187,7 @@ bool array::Data::set_length(size_t len)
 array::array(size_t len) : _buf(0)
 {
     if (len) {
-        _buf.set_pointer(static_cast <Data *>(buffer::create(len)));
+        _buf.set_reference(static_cast <Data *>(buffer::create(len)));
     }
 }
 array::array(const array &a) : _buf(0)
@@ -200,13 +200,13 @@ array &array::operator= (const array &a)
     return *this;
 }
 // copy buffer reference
-bool array::set(const Reference<buffer> &a)
+bool array::set(const reference_wrapper<buffer> &a)
 {
     buffer *b;
-    if ((b = a.pointer()) && b->typeinfo()) {
+    if ((b = a.reference()) && b->typeinfo()) {
         return false;
     }
-    _buf = reinterpret_cast<const Reference<array::Data> &>(a);
+    _buf = reinterpret_cast<const reference_wrapper<array::Data> &>(a);
     return true;
 }
 // array size modifier
@@ -220,7 +220,7 @@ void *array::set(size_t len, const void *base)
 {
     Data *d;
     
-    if ((d = _buf.pointer())) {
+    if ((d = _buf.reference())) {
         size_t used;
         /* incompatible target buffer */
         if (d->typeinfo() || d->shared()) {
@@ -243,7 +243,7 @@ void *array::set(size_t len, const void *base)
             d->unref();
             return 0;
         }
-        _buf.set_pointer(d);
+        _buf.set_reference(d);
     }
     void *ptr = d->data();
     if (base) {
@@ -344,7 +344,7 @@ void *array::insert(size_t off, size_t len, const void *data)
     Data *d;
     
     /* compatibility check */
-    if ((d = _buf.pointer())
+    if ((d = _buf.reference())
         && !d->typeinfo()
         && !d->shared()) {
         dest = d->insert(off, len);
@@ -382,13 +382,13 @@ char *array::string()
 slice::slice(slice const& from) : array(from), _off(0), _len(0)
 {
     _buf = from._buf;
-    if (!_buf.pointer()) return;
+    if (!_buf.reference()) return;
     _len = from._len;
     _off = from._off;
 }
 slice::slice(array::Data *b) : _off(0), _len(0)
 {
-    _buf.set_pointer(b);
+    _buf.set_reference(b);
     _len = length();
 }
 bool slice::shift(ssize_t len)

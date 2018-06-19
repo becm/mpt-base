@@ -205,7 +205,7 @@ protected:
 	static Element *make_element(UniqueArray<Element> &, path &);
 	UniqueArray<Element> _sub;
 };
-class Config::Element : public UniqueArray<Config::Element>, public Item<metatype>
+class Config::Element : public UniqueArray<Config::Element>, public item<metatype>
 {
 public:
 	inline bool unused()

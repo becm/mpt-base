@@ -176,7 +176,7 @@ int Stream::set_property(const char *pr, const metatype *src)
         }
         int ret = mpt_stream_setter(_srm, src);
         if (ret >= 0) {
-            _ctx.set_pointer(0);
+            _ctx.set_reference(0);
         }
         return ret;
     }
@@ -314,7 +314,7 @@ public:
             if (!id[i]) {
                 continue;
             }
-            if (!(ctx = srm._ctx.pointer())) {
+            if (!(ctx = srm._ctx.reference())) {
                 warning(_func, "%s", MPT_tr("no reply context"));
                 break;
             }

@@ -400,10 +400,10 @@ public:
 	int conv(int, void *) const __MPT_OVERRIDE;
 	Collection *clone() const __MPT_OVERRIDE;
 	
-	const Item<metatype> *item(size_t) const __MPT_OVERRIDE;
-	Item<metatype> *append(metatype *) __MPT_OVERRIDE;
+	const class item<metatype> *item(size_t) const __MPT_OVERRIDE;
+	class item<metatype> *append(metatype *) __MPT_OVERRIDE;
 	size_t clear(const reference * = 0) __MPT_OVERRIDE;
-	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 protected:
 	ItemArray<metatype> _items;
 };
@@ -449,8 +449,8 @@ public:
 		
 		void unref() __MPT_OVERRIDE;
 		
-		Reference<class World> world;
-		Reference<class Cycle> cycle;
+		reference_wrapper<class World> world;
+		reference_wrapper<class Cycle> cycle;
 	};
 	Graph(const graph * = 0);
 	~Graph() __MPT_OVERRIDE;
@@ -460,20 +460,20 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
-	virtual Item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
-	inline span<const Item<class Axis> > axes() const
+	virtual class item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
+	inline span<const class item<class Axis> > axes() const
 	{
 		return _axes.elements();
 	}
-	virtual Item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
-	inline span<const Item<class Data> > worlds() const
+	virtual class item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
+	inline span<const class item<class Data> > worlds() const
 	{
 		return _worlds.elements();
 	}
-	virtual bool set_cycle(int , const Reference<class Cycle> &) const;
-	virtual const Reference<class Cycle> *cycle(int) const;
+	virtual bool set_cycle(int , const reference_wrapper<class Cycle> &) const;
+	virtual const reference_wrapper<class Cycle> *cycle(int) const;
 	
 	const Transform &transform();
 	
@@ -483,7 +483,7 @@ public:
 	bool update_transform(int dim = -1);
 	
 protected:
-	Reference<Transform3> _gtr;
+	reference_wrapper<Transform3> _gtr;
 	ItemArray<Axis> _axes;
 	ItemArray<Data> _worlds;
 };
@@ -498,13 +498,13 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	bool bind(const Relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
 	virtual bool load(logger * = logger::defaultInstance());
 	virtual bool open(const char *);
 	virtual bool reset();
 	
-	inline span<const Item<Graph> > graphs() const
+	inline span<const class item<class Graph> > graphs() const
 	{
 		return _graphs.elements();
 	}

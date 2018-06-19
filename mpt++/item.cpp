@@ -48,14 +48,14 @@ int Group::set_property(const char *, const metatype *)
 // generic item group
 size_t Group::clear(const reference *)
 { return 0; }
-Item<metatype> *Group::append(metatype *)
+item<metatype> *Group::append(metatype *)
 { return 0; }
-const Item<metatype> *Group::item(size_t) const
+const item<metatype> *Group::item(size_t) const
 { return 0; }
-bool Group::bind(const Relation &, logger *)
+bool Group::bind(const relation &, logger *)
 { return true; }
 
-bool Group::add_items(node *head, const Relation *relation, logger *out)
+bool Group::add_items(node *head, const relation *relation, logger *out)
 {
     const char _func[] = "mpt::Group::add_items";
 
@@ -63,9 +63,9 @@ bool Group::add_items(node *head, const Relation *relation, logger *out)
         metatype *from = head->_meta;
 
         if (from && from->addref()) {
-            Reference<metatype> m;
-            m.set_pointer(from);
-            Item<metatype> *it;
+            reference_wrapper<metatype> m;
+            m.set_reference(from);
+            class item<metatype> *it;
             if ((it = append(from))) {
                 m.detach();
                 it->set_name(head->ident.name());
@@ -163,7 +163,7 @@ bool Group::add_items(node *head, const Relation *relation, logger *out)
             return false;
         }
         // add item to group
-        Item<metatype> *ni = append(from);
+        class item<metatype> *ni = append(from);
         if (!ni) {
             from->unref();
             if (out) {
@@ -242,21 +242,21 @@ metatype *Group::create(const char *type, int nl)
     }
 
     if (nl == 4 && !memcmp("line", type, nl)) {
-        return new Reference<Line>::instance;
+        return new reference_wrapper<Line>::instance;
     }
     if (nl == 4 && !memcmp("text", type, nl)) {
-        return new Reference<Text>::instance;
+        return new reference_wrapper<Text>::instance;
     }
     if (nl == 5 && !memcmp("world", type, nl)) {
-        return new Reference<World>::instance;
+        return new reference_wrapper<World>::instance;
     }
     if (nl == 5 && !memcmp("graph", type, nl)) {
-        return new Reference<Graph>::instance;
+        return new reference_wrapper<Graph>::instance;
     }
     if (nl == 4 && !memcmp("axis", type, nl)) {
-        return new Reference<Axis>::instance;
+        return new reference_wrapper<Axis>::instance;
     }
-    class TypedAxis : public Reference<Axis>::instance
+    class TypedAxis : public reference_wrapper<Axis>::instance
     {
     public:
         TypedAxis(int type)
@@ -315,11 +315,11 @@ Collection *Collection::clone() const
     return copy;
 }
 
-const Item<metatype> *Collection::item(size_t pos) const
+const item<metatype> *Collection::item(size_t pos) const
 {
     return _items.get(pos);
 }
-Item<metatype> *Collection::append(metatype *mt)
+item<metatype> *Collection::append(metatype *mt)
 {
     return _items.append(mt, 0);
 }
@@ -333,10 +333,10 @@ size_t Collection::clear(const reference *ref)
     }
     long empty = 0;
     for (auto &it : _items) {
-        reference *curr = it.pointer();
+        reference *curr = it.reference();
         if (!curr) { ++empty; continue; }
         if (curr != ref) continue;
-        it.set_pointer(nullptr);
+        it.set_reference(nullptr);
         ++remove;
     }
     if ((remove + empty) > _items.length()/2) {
@@ -344,12 +344,12 @@ size_t Collection::clear(const reference *ref)
     }
     return remove;
 }
-bool Collection::bind(const Relation &from, logger *out)
+bool Collection::bind(const relation &from, logger *out)
 {
     for (auto &it : _items) {
         metatype *curr;
         Group *g;
-        if (!(curr = it.pointer()) || !(g = curr->cast<Group>())) {
+        if (!(curr = it.reference()) || !(g = curr->cast<Group>())) {
             continue;
         }
         if (!g->bind(GroupRelation(*g, &from), out)) {
@@ -363,7 +363,7 @@ bool Collection::bind(const Relation &from, logger *out)
 // Relation search operations
 metatype *GroupRelation::find(int type, const char *name, int nlen) const
 {
-    const Item<metatype> *c;
+    const class item<metatype> *c;
     const char *sep;
 
     if (nlen < 0) nlen = name ? strlen(name) : 0;
@@ -371,7 +371,7 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
     if (_sep && name && (sep = (char *) memchr(name, _sep, nlen))) {
         size_t plen = sep - name;
         for (int i = 0; (c = _curr.item(i)); ++i) {
-            metatype *m = c->pointer();
+            metatype *m = c->reference();
             if (!m || !c->equal(name, plen)) {
                 continue;
             }
@@ -387,7 +387,7 @@ metatype *GroupRelation::find(int type, const char *name, int nlen) const
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
             metatype *m;
-            if (!(m = c->pointer())) {
+            if (!(m = c->reference())) {
                 continue;
             }
             if (name && !c->equal(name, nlen)) {

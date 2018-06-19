@@ -30,24 +30,24 @@ public:
 	uint8_t lay, grf, wld;
 };
 
-class Mapping : Map<laydest, Reference<Cycle> >
+class Mapping : Map<laydest, reference_wrapper<Cycle> >
 {
 public:
 	int add(valsrc , laydest , int = 0);
 	int del(const valsrc *, const laydest * = 0, int = 0) const;
 	Array<laydest> destinations(valsrc , int = 0) const;
 	
-	inline const Map<laydest, Reference<Cycle> > &targets() const
+	inline const Map<laydest, reference_wrapper<Cycle> > &targets() const
 	{
 		return *this;
 	}
 	// direct cycle access
-	const Reference<Cycle> *cycle(laydest) const;
+	const reference_wrapper<Cycle> *cycle(laydest) const;
 	bool set_cycle(laydest, Cycle *);
 	
 	// modify target elements
-	int set_cycles(const span<const Reference<Layout> > &, UpdateHint = UpdateHint());
-	int get_cycles(const span<const Reference<Layout> > &, UpdateHint = UpdateHint());
+	int set_cycles(const span<const reference_wrapper<Layout> > &, UpdateHint = UpdateHint());
+	int get_cycles(const span<const reference_wrapper<Layout> > &, UpdateHint = UpdateHint());
 	int clear_cycles(UpdateHint = UpdateHint()) const;
 	
 	void clear();
@@ -134,7 +134,7 @@ public:
 			}
 		}
 		Data *d;
-		if ((d = _buf.pointer())) {
+		if ((d = _buf.reference())) {
 			d->set_length(len * sizeof(*c));
 		}
 	}

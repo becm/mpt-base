@@ -20,7 +20,7 @@
 using namespace mpt;
 
 namespace mpt {
-template <> int typeinfo<Reference<metatype> *>::id()
+template <> int typeinfo<reference_wrapper<metatype> *>::id()
 {
 	static int id = 0;
 	if (!id) {
@@ -34,9 +34,9 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	Array<Reference<metatype> *> d;
-	PointerArray<Reference<metatype> > p;
-	Array<Reference<metatype> > a;
+	Array<reference_wrapper<metatype> *> d;
+	PointerArray<reference_wrapper<metatype> > p;
+	Array<reference_wrapper<metatype> > a;
 	Array<metatype *> v;
 	
 	a.insert(1, new Metatype<double>(2));

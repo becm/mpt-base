@@ -94,12 +94,12 @@ int Graphic::add_layout(Layout *lay, bool reuse)
     }
     // insert layout on vacant position
     if (reuse) {
-        Reference<Layout> *b, *e;
+        reference_wrapper<Layout> *b, *e;
         b = _layouts.begin();
         e = _layouts.end();
-        for (Reference<Layout> *c = b; c < e; ++c) {
-            if (c->pointer()) continue;
-            c->set_pointer(lay);
+        for (reference_wrapper<Layout> *c = b; c < e; ++c) {
+            if (c->reference()) continue;
+            c->set_reference(lay);
             return c - b;
         }
     }
@@ -114,14 +114,14 @@ int Graphic::add_layout(Layout *lay, bool reuse)
 int Graphic::remove_layout(const Layout *lay)
 {
     if (!lay) {
-        return -1;
+        return BadArgument;
     }
-    Reference<Layout> *r = _layouts.begin();
-    for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
-        if (r[i].pointer() != lay) {
+    reference_wrapper<Layout> *r = _layouts.begin();
+    for (long i = 0, max = _layouts.length(); i < max; ++i) {
+        if (r[i].reference() != lay) {
             continue;
         }
-        r[i].set_pointer(0);
+        r[i].set_reference(0);
         return i;
     }
     return MissingData;
@@ -172,11 +172,11 @@ static ssize_t next_part(const message &msg, size_t len)
         return MissingData;
     }
 }
-static Graph::Data *graph_data(span<const Item<Graph::Data> > gd, int pos)
+static Graph::Data *graph_data(span<const item<Graph::Data> > gd, int pos)
 {
-    const Item<Graph::Data> *it = gd.nth(pos);
+    const item<Graph::Data> *it = gd.nth(pos);
     if (!it) return 0;
-    return it->pointer();
+    return it->reference();
 }
 
 int Graphic::target(laydest &old, message &msg, size_t len) const
@@ -202,7 +202,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     tmp = msg;
     mpt_message_read(&tmp, part + 1, buf);
 
-    Reference<Layout> *r;
+    reference_wrapper<Layout> *r;
     Layout *lay = 0;
     if (part) {
         int l = strtol(buf, &end, 0);
@@ -211,7 +211,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             r = _layouts.get(l - 1);
-            if ((lay = r ? r->pointer() : 0)) {
+            if ((lay = r ? r->reference() : 0)) {
                 dst.lay = l;
                 match |= dst.MatchLayout;
             }
@@ -223,7 +223,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
                 max = UINT8_MAX - 1;
             }
             for (long i = 0; i < max; ++i) {
-                Layout *l = r[i].pointer();
+                Layout *l = r[i].reference();
                 const char *id;
                 if (l && (id = l->alias()) && part == (ssize_t) strlen(id) && !memcmp(id, buf, part)) {
                     dst.lay = i + 1;
@@ -236,7 +236,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
     else if (dst.lay) {
         r = _layouts.get(dst.lay - 1);
-        lay = r ? r->pointer() : 0;
+        lay = r ? r->reference() : 0;
     }
     if (!lay) {
         return BadValue;
@@ -251,8 +251,8 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
     mpt_message_read(&tmp, part + 1, buf);
 
-    span<const Item<Graph> > graphs = lay->graphs();
-    const Item<Graph> *gi;
+    span<const class item<Graph> > graphs = lay->graphs();
+    const class item<Graph> *gi;
     Graph *grf = 0;
     if (part) {
         int g = strtol(buf, &end, 0);
@@ -261,7 +261,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             gi = graphs.nth(g - 1);
-            if (gi && (grf = gi->pointer())) {
+            if (gi && (grf = gi->reference())) {
                 dst.grf = g;
                 match |= dst.MatchGraph;
             }
@@ -274,7 +274,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
             for (size_t i = 0; i < max; ++i) {
                 gi = graphs.nth(i);
                 if (gi->equal(buf, part)) {
-                    if ((grf = gi->pointer())) {
+                    if ((grf = gi->reference())) {
                         dst.grf = i + 1;
                         match |= dst.MatchGraph;
                     }
@@ -285,7 +285,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
     else if (dst.grf) {
         if ((gi = graphs.nth(dst.grf - 1))) {
-            grf = gi->pointer();
+            grf = gi->reference();
         }
     }
     if (!grf) {
@@ -304,7 +304,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     else if (part >= (ssize_t) sizeof(buf)) {
         return MissingBuffer;
     }
-    span<const Item<Graph::Data> > gd = grf->worlds();
+    span<const class item<Graph::Data> > gd = grf->worlds();
     World *wld = 0;
     if (part) {
         int w = strtol(buf, &end, 0);
@@ -313,7 +313,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             const Graph::Data *d = graph_data(gd, w - 1);
-            if (d && (wld = d->world.pointer())) {
+            if (d && (wld = d->world.reference())) {
                 dst.wld = w;
                 match = dst.MatchWorld;
             }
@@ -324,10 +324,10 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
                 max = UINT8_MAX - 1;
             }
             for (size_t i = 0; i < max; ++i) {
-                const Item<Graph::Data> *it = gd.nth(i);
+                const class item<Graph::Data> *it = gd.nth(i);
                 Graph::Data *ptr;
-                if (it && (ptr = it->pointer()) && it->equal(buf, part)) {
-                    if ((wld = ptr->world.pointer())) {
+                if (it && (ptr = it->reference()) && it->equal(buf, part)) {
+                    if ((wld = ptr->world.reference())) {
                         dst.wld = i + 1;
                         match |= dst.MatchWorld;
                     }
@@ -339,7 +339,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     else if (dst.wld) {
         const Graph::Data *d;
         if ((d = graph_data(gd, dst.wld - 1))) {
-            wld = d->world.pointer();
+            wld = d->world.reference();
         }
     }
     if (!wld) {
@@ -405,10 +405,10 @@ metatype *Graphic::item(message &msg, size_t len) const
     }
     int type = typeinfo<Group *>::id();
     
-    Reference<Layout> *r = _layouts.begin();
+    reference_wrapper<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         Layout *l;
-        if (!(l = r[i].pointer())) {
+        if (!(l = r[i].reference())) {
             continue;
         }
         const char *id;

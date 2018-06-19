@@ -22,7 +22,7 @@ class MyQueue : public mpt::Queue
 public:
 	void add(const char *, int = -1);
 	void add(char);
-	const char *string();
+	mpt::span<const char> string();
 };
 
 void MyQueue::add(const char *txt, int len)
@@ -34,13 +34,11 @@ void MyQueue::add(char c)
 	Queue::push(&c, 1);
 }
 
-const char *MyQueue::string()
+mpt::span<const char> MyQueue::string()
 {
-	if (!prepare(1)) return 0;
 	mpt::span<uint8_t> d = peek();
-	char *base = reinterpret_cast<char *>(d.base());
-	base[d.length()] = 0;
-	return base;
+	char *base = reinterpret_cast<char *>(d.begin());
+	return mpt::span<const char>(base, d.size());
 }
 
 extern int main(int argc, char * const argv[])

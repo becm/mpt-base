@@ -13,7 +13,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class Reference<Cycle>;
+template class reference_wrapper<Cycle>;
 template class RefArray<Cycle>;
 
 template <> int typeinfo<Cycle *>::id()

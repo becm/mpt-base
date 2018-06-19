@@ -203,7 +203,7 @@ template <typename T>
 class Pipe
 {
 public:
-	class instance : public Reference<Queue>::instance
+	class instance : public reference_wrapper<Queue>::instance
 	{
 	public:
 		void unref()
@@ -219,7 +219,7 @@ public:
 		if (len <= 0) {
 			return;
 		}
-		ref().pointer()->prepare(len * sizeof(T));
+		ref().reference()->prepare(len * sizeof(T));
 		while (len--) {
 			push(v);
 		}
@@ -240,17 +240,17 @@ public:
 	{
 		while (pop());
 	}
-	const Reference<instance> &ref()
+	const reference_wrapper<instance> &ref()
 	{
-		if (!_d.pointer()) {
-			_d.set_pointer(new instance);
+		if (!_d.reference()) {
+			_d.set_reference(new instance);
 		}
 		return _d;
 	}
 	bool push(const T & elem)
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) {
+		if (!(d = _d.reference())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -265,7 +265,7 @@ public:
 	bool pop(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) {
+		if (!(d = _d.reference())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -283,7 +283,7 @@ public:
 	bool unshift(const T & elem)
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) {
+		if (!(d = _d.reference())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -298,7 +298,7 @@ public:
 	bool shift(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) {
+		if (!(d = _d.reference())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -316,14 +316,14 @@ public:
 	span<T> elements()
 	{
 		Queue *d;
-		if (!(d = _d.pointer())) {
+		if (!(d = _d.reference())) {
 			return span<T>(0, 0);
 		}
 		span<uint8_t> r = d->peek();
 		return span<T>((T *) r.begin(), r.size() / sizeof(T));
 	}
 protected:
-	Reference<instance> _d;
+	reference_wrapper<instance> _d;
 };
 
 #endif /* defined(__cplusplus) */

@@ -506,7 +506,7 @@ extern int convert(const void **, int , void *, int);
 
 /*! container for reference type pointer */
 template<typename T>
-class Reference
+class reference_wrapper
 {
 public:
 	class instance : public T
@@ -528,27 +528,27 @@ public:
 	protected:
 		refcount _ref;
 	};
-	inline Reference(T *ref = 0) : _ref(ref)
+	inline reference_wrapper(T *ref = 0) : _ref(ref)
 	{ }
-	inline Reference(const Reference &ref) : _ref(0)
+	inline reference_wrapper(const reference_wrapper &ref) : _ref(0)
 	{
 		*this = ref;
 	}
-	inline ~Reference()
+	inline ~reference_wrapper()
 	{
 		if (_ref) _ref->unref();
 	}
 	
-	inline T *pointer() const
+	inline T *reference() const
 	{ 
 		return _ref;
 	}
-	inline void set_pointer(T *ref)
+	inline void set_reference(T *ref)
 	{
 		if (_ref) _ref->unref();
 		_ref = ref;
 	}
-	inline Reference & operator= (Reference const &ref)
+	inline reference_wrapper & operator= (reference_wrapper const &ref)
 	{
 		T *r = ref._ref;
 		if (r == _ref) {
@@ -562,11 +562,11 @@ public:
 		return *this;
 	}
 #if __cplusplus >= 201103L
-	inline Reference & operator= (Reference &&ref)
+	inline reference_wrapper & operator= (reference_wrapper &&ref)
 	{
 		T *r = ref._ref;
 		ref._ref = 0;
-		set_pointer(r);
+		set_reference(r);
 		return *this;
 	}
 #endif
@@ -580,7 +580,7 @@ protected:
 	T *_ref;
 };
 template <typename T>
-class typeinfo<Reference<T> >
+class typeinfo<reference_wrapper<T> >
 {
 protected:
 	typeinfo();
@@ -590,7 +590,7 @@ public:
 		return to_reference_id(typeinfo<T *>::id());
 	}
 };
-template <> __MPT_CONST_TYPE int typeinfo<Reference <metatype> >::id();
+template <> __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id();
 #endif
 
 /* text identifier for entity */
@@ -631,16 +631,16 @@ protected:
 
 #ifdef __cplusplus
 template<typename T>
-class Item : public Reference<T>, public identifier
+class item : public reference_wrapper<T>, public identifier
 {
 public:
-	Item(T *ref = 0) : Reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
+	item(T *ref = 0) : reference_wrapper<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
 	{ }
 protected:
-	char _post[32 - sizeof(identifier) - sizeof(Reference<T>)];
+	char _post[32 - sizeof(identifier) - sizeof(reference_wrapper<T>)];
 };
 template <typename T>
-class typeinfo<Item<T> >
+class typeinfo<item<T> >
 {
 protected:
 	typeinfo();
@@ -653,40 +653,40 @@ public:
 
 /* auto-create wrapped reference */
 template <typename T>
-class Container : protected Reference<T>
+class container : protected reference_wrapper<T>
 {
 public:
-	inline Container(T *ref = 0) : Reference<T>(ref)
+	inline container(T *ref = 0) : reference_wrapper<T>(ref)
 	{ }
-	inline Container(const Reference<T> &ref) : Reference<T>(ref)
+	inline container(const reference_wrapper<T> &ref) : reference_wrapper<T>(ref)
 	{ }
-	virtual ~Container()
+	virtual ~container()
 	{ }
-	virtual const Reference<T> &ref()
+	virtual const reference_wrapper<T> &ref()
 	{
-		if (!Reference<T>::_ref) {
-			Reference<T>::_ref = new typename Reference<T>::instance;
+		if (!reference_wrapper<T>::_ref) {
+			reference_wrapper<T>::_ref = new typename reference_wrapper<T>::instance;
 		}
 		return *this;
 	}
-	inline T *pointer() const
+	inline T *reference() const
 	{
-		return Reference<T>::pointer();
+		return reference_wrapper<T>::reference();
 	}
 };
 
 /*! interface to search objects in tree */
-class Relation
+class relation
 {
 public:
-	inline Relation(const Relation *p = 0) : _parent(p)
+	inline relation(const relation *p = 0) : _parent(p)
 	{ }
 	virtual metatype *find(int , const char *, int = -1) const;
 protected:
-	virtual ~Relation() {}
-	const Relation *_parent;
+	virtual ~relation() {}
+	const relation *_parent;
 };
-inline metatype *Relation::find(int type, const char *name, int nlen) const
+inline metatype *relation::find(int type, const char *name, int nlen) const
 {
 	return _parent ? _parent->find(type, name, nlen) : 0;
 }
