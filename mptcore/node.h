@@ -54,10 +54,10 @@ template<> inline __MPT_CONST_TYPE int typeinfo<node *>::id()
 }
 
 /*! Relation implemetation using node as current element */
-class NodeRelation : public relation
+class node_relation : public relation
 {
 public:
-    inline NodeRelation(const node *n, const relation *p = 0) : relation(p), _curr(n)
+    inline node_relation(const node *n, const relation *p = 0) : relation(p), _curr(n)
     { }
     metatype *find(int type, const char *, int = -1) const;
 protected:

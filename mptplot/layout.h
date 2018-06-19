@@ -391,7 +391,7 @@ public:
 };
 
 /*! Group implementation using reference array */
-class Collection : public metatype, public Group
+class Collection : public metatype, public group
 {
 public:
 	virtual ~Collection();

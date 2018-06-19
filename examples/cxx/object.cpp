@@ -104,11 +104,11 @@ extern int main(int , char * const [])
 	std::cout << "type(lo): " << typeid(*obj).name() << std::endl;
 	
 	mpt::object &lr = *li;
-	mpt::object::Property prop = lr["x1"];
+	mpt::object::attribute a = lr["x1"];
 	mpt::line *l = li;
 	
 	int old = l->from.x;
-	prop = "10";
+	a = "10";
 	std::cout << old << " -> " << l->from.x << std::endl;
 	
 	lr["x2"] = 4.6;

@@ -84,31 +84,31 @@ bool object::set(const char *name, const value &val, logger *out)
     }
     return false;
 }
-struct propertyErrorOut { object *obj; logger *out; };
-static int objectSetProperty(void *addr, const property *pr)
+struct property_error_out { object *obj; logger *out; };
+static int object_set_property(void *addr, const property *pr)
 {
-    struct propertyErrorOut *dat = (propertyErrorOut *) addr;
+    struct property_error_out *dat = static_cast<property_error_out *>(addr);
     if (dat->obj->set(pr->name, pr->val, dat->out)) return 0;
     return dat->out ? 1 : -1;
 }
 bool object::set(const object &from, logger *out)
 {
-    propertyErrorOut dat = { this, out };
-    return mpt_object_foreach(&from, objectSetProperty, &dat);
+    property_error_out dat = { this, out };
+    return mpt_object_foreach(&from, object_set_property, &dat);
 }
 
 // class extension for basic property
-object::Property::Property(object &obj) : _obj(obj)
+object::attribute::attribute(object &obj) : _obj(obj)
 { }
 // assignment operation for metatypes
-object::Property & object::Property::operator= (const metatype &meta)
+object::attribute & object::attribute::operator= (const metatype &meta)
 {
     if (_prop.name && !set(meta)) {
         _prop.name = 0;
     }
     return *this;
 }
-object::Property & object::Property::operator= (const char *val)
+object::attribute & object::attribute::operator= (const char *val)
 {
     if (_prop.name && mpt_object_set_string(&_obj, _prop.name, val, 0) < 0) {
         _prop.name = 0;
@@ -116,14 +116,14 @@ object::Property & object::Property::operator= (const char *val)
     return *this;
 }
 
-bool object::Property::select(const char *name)
+bool object::attribute::select(const char *name)
 {
     ::mpt::property pr(name);
     if (_obj.property(&pr) < 0) return false;
     _prop = pr;
     return true;
 }
-bool object::Property::select(int pos)
+bool object::attribute::select(int pos)
 {
     if (pos < 0) return false;
     ::mpt::property pr(pos);
@@ -131,14 +131,14 @@ bool object::Property::select(int pos)
     _prop = pr;
     return true;
 }
-bool object::Property::set(const metatype &src)
+bool object::attribute::set(const metatype &src)
 {
     if (!_prop.name) return false;
     if (_obj.set_property(_prop.name, &src) < 0) return false;
     if (_obj.property(&_prop) < 0) _prop.name = 0;
     return false;
 }
-bool object::Property::set(const value &val)
+bool object::attribute::set(const value &val)
 {
     if (!_prop.name) return false;
     ::mpt::value tmp = val;
@@ -147,15 +147,15 @@ bool object::Property::set(const value &val)
     return true;
 }
 // get property by name/position
-object::Property object::operator [](const char *name)
+object::attribute object::operator [](const char *name)
 {
-    object::Property prop(*this);
+    object::attribute prop(*this);
     prop.select(name);
     return prop;
 }
-object::Property object::operator [](int pos)
+object::attribute object::operator [](int pos)
 {
-    object::Property prop(*this);
+    object::attribute prop(*this);
     prop.select(pos);
     return prop;
 }

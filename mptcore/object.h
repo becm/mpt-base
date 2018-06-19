@@ -59,7 +59,7 @@ public:
 	
 	class iterator;
 	class const_iterator;
-	class Property;
+	class attribute;
 	
 	class iterator begin();
 	class iterator end();
@@ -73,8 +73,8 @@ public:
 	bool set(const object &, logger * = logger::defaultInstance());
 	
 	/* get property by name/position */
-	object::Property operator [](const char *);
-	object::Property operator [](int);
+	object::attribute operator [](const char *);
+	object::attribute operator [](int);
 	
 	/* get properties from node list */
 	const node *set(const node *, PropertyHandler , void *);
@@ -243,10 +243,10 @@ inline object::const_iterator object::end() const
 	return const_end();
 }
 
-class object::Property
+class object::attribute
 {
 public:
-	Property(object &);
+	attribute(object &);
 	
 	inline operator const struct property&() const
 	{ return _prop; }
@@ -258,17 +258,19 @@ public:
 	bool select(int);
 	
 	bool set(const metatype &);
-	bool set(const struct value &);
+	bool set(const value &);
 	
-	Property & operator= (const char *val);
-	Property & operator= (const metatype &meta);
-	Property & operator= (const struct property &);
+	attribute & operator= (const char *val);
+	attribute & operator= (const metatype &meta);
+	attribute & operator= (const struct property &);
 	
-	inline Property & operator= (const value &v)
-	{ if (!set(v)) _prop.name = 0; return *this; }
-	
+	inline attribute & operator= (const value &v)
+	{
+		if (!set(v)) _prop.name = 0;
+		return *this;
+	}
 	template <typename T>
-	Property & operator= (const T &v)
+	attribute & operator= (const T &v)
 	{
 		value::format fmt;
 		value val;
@@ -282,14 +284,13 @@ public:
 protected:
 	struct property _prop;
 	object &_obj;
-	friend class Object;
 private:
-	Property & operator= (const Property &);
+	attribute & operator= (const attribute &);
 };
 
 struct node;
 /*! interface to generic groups of metatypes elements */
-class Group : public object
+class group : public object
 {
 public:
 	int property(struct property *) const __MPT_OVERRIDE;
@@ -302,21 +303,21 @@ public:
 	
 	bool add_items(node *head, const relation *from = 0, logger * = logger::defaultInstance());
 protected:
-	inline ~Group() {}
+	inline ~group() {}
 	virtual metatype *create(const char *, int = -1);
 };
 
 /*! Relation implemetation using Group as current element */
-class GroupRelation : public relation
+class group_relation : public relation
 {
 public:
-	inline GroupRelation(const Group &g, const relation *p = 0, char sep = '.') : relation(p), _curr(g), _sep(sep)
+	inline group_relation(const group &g, const relation *p = 0, char sep = '.') : relation(p), _curr(g), _sep(sep)
 	{ }
-	virtual ~GroupRelation()
+	virtual ~group_relation()
 	{ }
 	metatype *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
 protected:
-	const Group &_curr;
+	const group &_curr;
 	char _sep;
 };
 #endif /* C++ */

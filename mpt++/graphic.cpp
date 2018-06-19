@@ -403,7 +403,7 @@ metatype *Graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
-    int type = typeinfo<Group *>::id();
+    int type = typeinfo<group *>::id();
     
     reference_wrapper<Layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
@@ -424,7 +424,7 @@ metatype *Graphic::item(message &msg, size_t len) const
         if (type < 0) {
             continue;
         }
-        Group *g = l;
+        group *g = l;
         metatype *m = l;
 
         while (!term) {
@@ -449,7 +449,7 @@ metatype *Graphic::item(message &msg, size_t len) const
             }
             // find element by type and name
             metatype *m;
-            if (!(m = GroupRelation(*g, 0).find(type, buf, part))) {
+            if (!(m = group_relation(*g, 0).find(type, buf, part))) {
                 return 0;
             }
             // last name part

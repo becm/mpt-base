@@ -586,9 +586,9 @@ bool Graph::bind(const relation &rel, logger *out)
         }
     }
     for (auto &it : _items) {
-        Group *g;
-        if (!(mt = it.reference()) || !(g = mt->cast<Group>())) continue;
-        GroupRelation gr(*g, &rel);
+        group *g;
+        if (!(mt = it.reference()) || !(g = mt->cast<group>())) continue;
+        group_relation gr(*g, &rel);
         if (!g->bind(gr, out)) {
             _axes = oldaxes;
             _worlds = oldworlds;
@@ -902,7 +902,7 @@ bool Layout::load(logger *out)
         }
     }
     // add items
-    GroupRelation self(*this);
+    group_relation self(*this);
     clear();
     // add items to layout
     if (!add_items(conf, &self, out)) {
