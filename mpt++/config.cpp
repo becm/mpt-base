@@ -55,12 +55,12 @@ path &path::operator =(const path &from)
     return *this;
 }
 
-Slice<const char> path::data() const
+span<const char> path::data() const
 {
     array::Data *d = array();
     size_t skip, max;
-    if (!d || (skip = off + len) > (max = d->length())) return Slice<const char>(0, 0);
-    return Slice<const char>(static_cast<char *>(d->data()) + skip, max - skip);
+    if (!d || (skip = off + len) > (max = d->length())) return span<const char>(0, 0);
+    return span<const char>(static_cast<char *>(d->data()) + skip, max - skip);
 }
 bool path::clearData()
 {
@@ -126,14 +126,14 @@ Config::~Config()
 // private element access
 Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, path &p)
 {
-    const Slice<const char> name = p.value();
+    const span<const char> name = p.value();
     int len;
 
     if ((len = mpt_path_next(&p)) < 0) {
         return 0;
     }
     for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
-        if (e->unused() || !e->equal(name.base(), len)) {
+        if (e->unused() || !e->equal(name.begin(), len)) {
             continue;
         }
         if (!p.empty()) {
@@ -145,7 +145,7 @@ Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, pa
 }
 Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p)
 {
-    const Slice<const char> name = p.value();
+    const span<const char> name = p.value();
     int len;
 
     if ((len = mpt_path_next(&p)) < 0) {
@@ -156,7 +156,7 @@ Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p
         if (e->unused()) {
             if (!unused) unused = e;
         }
-        if (!e->equal(name.base(), len)) {
+        if (!e->equal(name.begin(), len)) {
             continue;
         }
         if (!p.empty()) {
@@ -173,7 +173,7 @@ Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p
         unused->resize(0);
         unused->set_pointer(0);
     }
-    unused->set_name(name.base(), len);
+    unused->set_name(name.begin(), len);
 
     return p.empty() ? unused : make_element(*unused, p);
 }

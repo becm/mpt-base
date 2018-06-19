@@ -196,7 +196,7 @@ public:
 	
 	int64_t pos() __MPT_OVERRIDE;
 	bool seek(int64_t) __MPT_OVERRIDE;
-	Slice<uint8_t> peek(size_t) __MPT_OVERRIDE;
+	span<uint8_t> peek(size_t) __MPT_OVERRIDE;
 };
 
 class Stream : public input, public object, public output, public IODevice

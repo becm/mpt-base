@@ -23,9 +23,9 @@ template <> int typeinfo<IODevice *>::id()
 }
 
 // generic IODevice operations
-Slice<uint8_t> IODevice::peek(size_t)
+span<uint8_t> IODevice::peek(size_t)
 {
-    return Slice<uint8_t>(0, 0);
+    return span<uint8_t>(0, 0);
 }
 int64_t IODevice::pos()
 {
@@ -166,7 +166,7 @@ ssize_t Queue::read(size_t len, void *d, size_t part)
     }
     return len;
 }
-Slice<uint8_t> Queue::peek(size_t len)
+span<uint8_t> Queue::peek(size_t len)
 {
     size_t low = 0;
     void *base = mpt_queue_data(&_d, &low);
@@ -184,7 +184,7 @@ Slice<uint8_t> Queue::peek(size_t len)
         base = _d.base;
         len = _d.len;
     }
-    return Slice<uint8_t>(static_cast<uint8_t *>(base), len);
+    return span<uint8_t>(static_cast<uint8_t *>(base), len);
 }
 
 __MPT_NAMESPACE_END

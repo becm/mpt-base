@@ -87,13 +87,13 @@ bool linepart::array::set(long len)
     return true;
 }
 // modify parts to include dimension data
-bool linepart::array::apply(const Transform &tr, int dim, Slice<const double> src)
+bool linepart::array::apply(const Transform &tr, int dim, span<const double> src)
 {
     if (dim < 0 || dim >= tr.dimensions()) {
         return false;
     }
     long len;
-    if (!(len = src.length())) {
+    if (!(len = src.size())) {
         return false;
     }
     const double *val = src.begin();

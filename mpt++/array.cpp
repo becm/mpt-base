@@ -36,11 +36,11 @@ template<> void copy<float, double>(int pts, const float *src, int lds, double *
 { mpt_copy_fd(pts, src, lds, dest, ldd); }
 
 // pointer slice compact redirection
-long compact(Slice<void *> s)
+long compact(span<void *> s)
 {
-    return mpt_array_compact(s.base(), s.length());
+    return mpt_array_compact(s.begin(), s.size());
 }
-long unused(Slice<void *> s)
+long unused(span<void *> s)
 {
     long u = 0;
     for (void **b = s.begin(), **e = s.end(); b < e; ++b) {
@@ -48,9 +48,9 @@ long unused(Slice<void *> s)
     }
     return u;
 }
-bool swap(Slice<void *> s, long p1, long p2)
+bool swap(span<void *> s, long p1, long p2)
 {
-    long len = s.length();
+    long len = s.size();
     if (p1 > len || p2 > len) {
         return false;
     }
@@ -446,12 +446,12 @@ bool encode_array::prepare(size_t len)
     _d.set(old);
     return true;
 }
-Slice<uint8_t> encode_array::data() const
+span<uint8_t> encode_array::data() const
 {
     uint8_t *base = (uint8_t *) _d.base();
     size_t off = _d.length() - _state.done - _state.scratch;
 
-    return Slice<uint8_t>(base + off, _state.done);
+    return span<uint8_t>(base + off, _state.done);
 }
 /*!
  * \ingroup mptArray

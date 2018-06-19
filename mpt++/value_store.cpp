@@ -58,11 +58,11 @@ void *value_store::reserve(int type, size_t len, long off)
 {
     return mpt_value_store_reserve(&_d, type, len, off);
 }
-size_t maxsize(Slice<const value_store> sl, int type)
+size_t maxsize(span<const value_store> sl, int type)
 {
-    const value_store *val = sl.base();
+    const value_store *val = sl.begin();
     size_t len = 0;
-    for (size_t i = 0, max = sl.length(); i < max; ++i) {
+    for (size_t i = 0, max = sl.size(); i < max; ++i) {
         if (!val->element_size()) {
             continue;
         }

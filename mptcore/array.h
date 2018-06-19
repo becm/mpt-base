@@ -163,7 +163,7 @@ public:
 	
 	bool push(const struct message &);
 	
-	Slice<uint8_t> data() const;
+	span<uint8_t> data() const;
 protected:
 #else
 # define MPT_ENCODE_ARRAY_INIT { 0, MPT_ENCODE_INIT, MPT_ARRAY_INIT }
@@ -187,7 +187,7 @@ struct slice : array
 	slice(Data * = 0);
 	~slice();
 	
-	Slice<uint8_t> data() const;
+	span<uint8_t> data() const;
 	
 	ssize_t write(size_t , const void *, size_t);
 	int set(metatype &);
@@ -392,8 +392,8 @@ inline void *array::prepend(size_t len, const void *data)
 }
 inline array &array::operator= (slice const& from)
 {
-	Slice<uint8_t> d = from.data();
-	set(d.length(), d.base());
+	span<uint8_t> d = from.data();
+	set(d.size(), d.begin());
 	return *this;
 }
 inline array &array::operator+= (array const& from)
@@ -403,8 +403,8 @@ inline array &array::operator+= (array const& from)
 }
 inline array &array::operator+= (slice const& from)
 {
-	Slice<uint8_t> d = from.data();
-	append(d.length(), d.base());
+	span<uint8_t> d = from.data();
+	append(d.size(), d.begin());
 	return *this;
 }
 inline slice::slice(array const& a) : array(a), _off(0)
@@ -413,15 +413,15 @@ inline slice::slice(array const& a) : array(a), _off(0)
 }
 inline slice::~slice()
 { }
-inline Slice<uint8_t> slice::data() const
+inline span<uint8_t> slice::data() const
 {
 	buffer *b = _buf.pointer();
-	return Slice<uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
+	return span<uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
 }
-long compact(Slice<void *>);
-long unused(Slice<void *>);
-bool swap(Slice<void *>, long , long);
-long offset(Slice<void *>, const void *);
+long compact(span<void *>);
+long unused(span<void *>);
+bool swap(span<void *>, long , long);
+long offset(span<void *>, const void *);
 
 template <typename T>
 void move(T *v, long from, long to)
@@ -645,9 +645,9 @@ public:
 		Content<T> *d = _ref.pointer();
 		return d ? d->length() : 0;
 	}
-	inline Slice<const T> elements() const
+	inline span<const T> elements() const
 	{
-		return Slice<const T>(begin(), length());
+		return span<const T>(begin(), length());
 	}
 	bool detach()
 	{
@@ -897,9 +897,9 @@ public:
 		return swap(generic(), p1, p2);
 	}
 protected:
-	inline Slice<void *> generic() const
+	inline span<void *> generic() const
 	{
-		return Slice<void *>(this->begin(), this->length());
+		return span<void *>(this->begin(), this->length());
 	}
 };
 template<typename T>
@@ -966,7 +966,7 @@ public:
 	}
 	void compact()
 	{
-		::mpt::compact(Slice<void *>(reinterpret_cast<void **>(this->begin()), this->length()));
+		::mpt::compact(span<void *>(reinterpret_cast<void **>(this->begin()), this->length()));
 	}
 };
 template<typename T>
@@ -1015,7 +1015,7 @@ public:
 	{
 		return _flags;
 	}
-	inline const Slice<const Entry> entries() const
+	inline const span<const Entry> entries() const
 	{
 		return _msg.elements();
 	}
@@ -1032,7 +1032,7 @@ class LogStore::Entry : array
 public:
 	logger::LogType type() const;
 	const char *source() const;
-	Slice<const char> data(int part = 0) const;
+	span<const char> data(int part = 0) const;
 	int set(const char *, int, const char *, va_list);
 protected:
 	struct Header

@@ -1,5 +1,6 @@
 /*!
- * MPT C++ interfaces to output stream
+ * MPT C++ library
+ *   interfaces to output stream
  */
 
 #include "convert.h"
@@ -19,13 +20,13 @@ std::ostream &operator<<(std::ostream &o, const mpt::value &v)
     if (*v.fmt) mpt_tostring(&v, writeOutStream, &o);
     return o;
 }
-template <> std::ostream &operator<< <char>(std::ostream &o, mpt::Slice<char> p)
+template <> std::ostream &operator<< <char>(std::ostream &o, mpt::span<char> p)
 {
-    writeOutStream(&o, p.base(), p.length());
+    writeOutStream(&o, p.begin(), p.size());
     return o;
 }
-template <> std::ostream &operator<< <const char>(std::ostream &o, mpt::Slice<const char> p)
+template <> std::ostream &operator<< <const char>(std::ostream &o, mpt::span<const char> p)
 {
-    writeOutStream(&o, p.base(), p.length());
+    writeOutStream(&o, p.begin(), p.size());
     return o;
 }

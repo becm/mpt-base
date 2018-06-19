@@ -314,12 +314,12 @@ template<> inline __MPT_CONST_TYPE int typeinfo<const char *>::id() { return 's'
 
 /*! reduced slice with type but no data reference */
 template <typename T>
-class Slice
+class span
 {
 public:
 	typedef T* iterator;
 	
-	inline Slice(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
+	inline span(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
 	{ }
 	
 	inline iterator begin() const
@@ -328,48 +328,43 @@ public:
 	}
 	inline iterator end() const
 	{
-		return _base + length();
+		return _base + size();
+	}
+	inline long size() const
+	{
+		return _len / sizeof(T);
+	}
+	inline size_t size_bytes() const
+	{
+		return _len;
 	}
 	inline iterator nth(long pos) const
 	{
 		if (pos < 0) {
-			if ((pos += length()) < 0) {
+			if ((pos += size()) < 0) {
 				return 0;
 			}
 		}
-		else if (pos >= length()) {
+		else if (pos >= size()) {
 			return 0;
 		}
 		return _base + pos;
 	}
-	inline long length() const
-	{
-		return _len / sizeof(T);
-	}
-	inline T *base() const
-	{
-		return _base;
-	}
 	bool skip(long l)
 	{
-		if (l < 0 || l > length()) {
+		if (l < 0 || l > size()) {
 			return false;
 		}
-		if (!(_len -= l * sizeof(T))) {
-			_base = 0;
-		} else {
-			_base += l;
-		}
+		_len -= l * sizeof(T);
+		_base += l;
 		return true;
 	}
 	bool trim(long l)
 	{
-		if (l < 0 || l > length()) {
+		if (l < 0 || l > size()) {
 			return false;
 		}
-		if (!(_len -= l * sizeof(T))) {
-			_base = 0;
-		}
+		_len -= l * sizeof(T);
 		return true;
 	}
 protected:
@@ -379,7 +374,7 @@ protected:
 
 /* vector-type auto-cast for constant base types */
 template <typename T>
-class typeinfo<Slice<T> >
+class typeinfo<span<T> >
 {
 protected:
 	typeinfo();
@@ -399,14 +394,14 @@ public:
 	}
 };
 template <typename T>
-class typeinfo<Slice<const T> >
+class typeinfo<span<const T> >
 {
 protected:
 	typeinfo();
 public:
 	inline static int id()
 	{
-		return typeinfo<Slice<T> >::id();
+		return typeinfo<span<T> >::id();
 	}
 };
 #endif
@@ -753,9 +748,9 @@ __MPT_NAMESPACE_END
 std::ostream &operator<<(std::ostream &, const mpt::value &);
 
 template <typename T>
-std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)
+std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
 {
-	typename mpt::Slice<T>::iterator begin = d.begin(), end = d.end();
+	typename mpt::span<T>::iterator begin = d.begin(), end = d.end();
 	if (begin == end) {
 		return o;
 	}
@@ -765,8 +760,8 @@ std::ostream &operator<<(std::ostream &o, mpt::Slice<T> d)
 	}
 	return o;
 }
-template <> std::ostream &operator<<(std::ostream &, mpt::Slice<char>);
-template <> std::ostream &operator<<(std::ostream &, mpt::Slice<const char>);
+template <> std::ostream &operator<<(std::ostream &, mpt::span<char>);
+template <> std::ostream &operator<<(std::ostream &, mpt::span<const char>);
 #endif
 
 #endif /* _MPT_CORE_H */

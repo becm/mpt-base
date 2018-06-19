@@ -172,7 +172,7 @@ static ssize_t next_part(const message &msg, size_t len)
         return MissingData;
     }
 }
-static Graph::Data *graph_data(Slice<const Item<Graph::Data> > gd, int pos)
+static Graph::Data *graph_data(span<const Item<Graph::Data> > gd, int pos)
 {
     const Item<Graph::Data> *it = gd.nth(pos);
     if (!it) return 0;
@@ -251,7 +251,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     }
     mpt_message_read(&tmp, part + 1, buf);
 
-    Slice<const Item<Graph> > graphs = lay->graphs();
+    span<const Item<Graph> > graphs = lay->graphs();
     const Item<Graph> *gi;
     Graph *grf = 0;
     if (part) {
@@ -267,7 +267,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
             }
         }
         else {
-            size_t max = graphs.length();
+            size_t max = graphs.size();
             if (max >= UINT8_MAX) {
                 max = UINT8_MAX - 1;
             }
@@ -304,7 +304,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
     else if (part >= (ssize_t) sizeof(buf)) {
         return MissingBuffer;
     }
-    Slice<const Item<Graph::Data> > gd = grf->worlds();
+    span<const Item<Graph::Data> > gd = grf->worlds();
     World *wld = 0;
     if (part) {
         int w = strtol(buf, &end, 0);
@@ -319,7 +319,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
             }
         }
         else {
-            size_t max = gd.length();
+            size_t max = gd.size();
             if (max >= UINT8_MAX) {
                 max = UINT8_MAX - 1;
             }

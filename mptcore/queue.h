@@ -168,7 +168,7 @@ public:
 	
 	virtual int64_t pos();
 	virtual bool seek(int64_t);
-	virtual Slice<uint8_t> peek(size_t);
+	virtual span<uint8_t> peek(size_t);
 	virtual int getchar();
 protected:
 	virtual ~IODevice()
@@ -185,7 +185,7 @@ public:
 	ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
 	ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
 	
-	Slice<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
+	span<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
 	
 	/* queue access */
 	virtual bool prepare(size_t);
@@ -313,14 +313,14 @@ public:
 		}
 		return true;
 	}
-	Slice<T> elements()
+	span<T> elements()
 	{
 		Queue *d;
 		if (!(d = _d.pointer())) {
-			return Slice<T>(0, 0);
+			return span<T>(0, 0);
 		}
-		Slice<uint8_t> r = d->peek();
-		return Slice<T>((T *) r.base(), r.length() / sizeof(T));
+		span<uint8_t> r = d->peek();
+		return span<T>((T *) r.begin(), r.size() / sizeof(T));
 	}
 protected:
 	Reference<instance> _d;

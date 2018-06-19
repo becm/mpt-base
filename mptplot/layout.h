@@ -463,12 +463,12 @@ public:
 	bool bind(const Relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 	
 	virtual Item<class Axis> *add_axis(class Axis * = 0, const char * = 0, int = -1);
-	inline Slice<const Item<class Axis> > axes() const
+	inline span<const Item<class Axis> > axes() const
 	{
 		return _axes.elements();
 	}
 	virtual Item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
-	inline Slice<const Item<class Data> > worlds() const
+	inline span<const Item<class Data> > worlds() const
 	{
 		return _worlds.elements();
 	}
@@ -504,7 +504,7 @@ public:
 	virtual bool open(const char *);
 	virtual bool reset();
 	
-	inline Slice<const Item<Graph> > graphs() const
+	inline span<const Item<Graph> > graphs() const
 	{
 		return _graphs.elements();
 	}

@@ -21,7 +21,7 @@ template <> int typeinfo<point<double> >::id()
     return id;
 }
 
-int apply_data(point<double> *dest, const linepart *lp, int plen, const Transform &tr, Slice<const value_store> st)
+int apply_data(point<double> *dest, const linepart *lp, int plen, const Transform &tr, span<const value_store> st)
 {
     int dim, proc = 0;
 
@@ -77,19 +77,19 @@ int apply_data(point<double> *dest, const linepart *lp, int plen, const Transfor
     return proc;
 }
 
-bool Polyline::set(const Transform &tr, Slice<const value_store> src)
+bool Polyline::set(const Transform &tr, span<const value_store> src)
 {
     // generate parts data
     long max = maxsize(src, typeinfo<double>::id());
     if (!max || !_vis.set(max)) {
         return false;
     }
-    const value_store *val = src.base();
-    for (long i = 0, max = src.length(); i < max; ++i) {
+    const value_store *val = src.begin();
+    for (long i = 0, max = src.size(); i < max; ++i) {
         if (val->type() != typeinfo<double>::id()) {
             continue;
         }
-        _vis.apply(tr, i, Slice<const double>(static_cast<const double *>(val->base()), val->element_count()));
+        _vis.apply(tr, i, span<const double>(static_cast<const double *>(val->base()), val->element_count()));
         ++val;
     }
     // prepare target data
@@ -119,14 +119,14 @@ Polyline::iterator Polyline::begin() const
 }
 Polyline::iterator Polyline::end() const
 {
-    return Polyline::iterator(Slice<const linepart>(_vis.end(), 0), _values.end());
+    return Polyline::iterator(span<const linepart>(_vis.end(), 0), _values.end());
 }
 Polyline::iterator &Polyline::iterator::operator++()
 {
-    if (!_parts.length()) {
+    if (!_parts.size()) {
         return *this;
     }
-    const linepart *curr = _parts.base();
+    const linepart *curr = _parts.begin();
     _points += curr->usr;
     _parts.skip(1);
     return *this;
@@ -135,13 +135,13 @@ Polyline::iterator &Polyline::iterator::operator++()
 // polyline part operations
 Polyline::Part Polyline::iterator::operator *() const
 {
-    if (!_parts.length()) {
+    if (!_parts.size()) {
         return Part(linepart(0), 0);
     }
-    const linepart *curr = _parts.base();
+    const linepart *curr = _parts.begin();
     return Part(*curr, _points);
 }
-Slice<const Polyline::Point> Polyline::Part::points() const
+span<const Polyline::Point> Polyline::Part::points() const
 {
     size_t len = _part.usr;
     const Point *pts = _pts;
@@ -152,11 +152,11 @@ Slice<const Polyline::Point> Polyline::Part::points() const
     if (_part._trim) {
         --len;
     }
-    return Slice<const Point>(pts, len);
+    return span<const Point>(pts, len);
 }
-Slice<const Polyline::Point> Polyline::Part::line() const
+span<const Polyline::Point> Polyline::Part::line() const
 {
-    return Slice<const Point>(_pts, _part.usr);
+    return span<const Point>(_pts, _part.usr);
 }
 
 __MPT_NAMESPACE_END

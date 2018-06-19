@@ -37,7 +37,7 @@
 template <typename T>
 void print()
 {
-	int sid = mpt::typeinfo<mpt::Slice <T> >::id();
+	int sid = mpt::typeinfo<mpt::span <T> >::id();
 	std::cout << mpt::typeinfo<T>::id() << ' ';
 	std::cout << '<' << mpt::basetype(sid) << '>' << ' ';
 	std::cout << sid << std::endl;
@@ -79,8 +79,8 @@ extern int main(int, char *[])
 	long double e = 5;
 	std::cout << "long double(" << type(e) << ") = " << e << std::endl;
 	
-	mpt::Slice<double> t(&d, 1);
-	std::cout << "Slice<" << type(d) <<">(" << type(t) << ") = " << t << std::endl;
+	mpt::span<double> t(&d, 1);
+	std::cout << "span<" << type(d) <<">(" << type(t) << ") = " << t << std::endl;
 	v.set(&t);
 	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 }

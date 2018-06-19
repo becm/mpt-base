@@ -40,7 +40,7 @@ template <> int typeinfo<value_store>::id()
 value_store *rawdata_stage::values(long dim)
 {
     if (dim < 0) {
-        dim += values().length();
+        dim += values().size();
         if (dim < 0) {
             errno = EINVAL;
             return 0;

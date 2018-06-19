@@ -110,10 +110,10 @@ bool Mapping::set_cycle(laydest dst, Cycle *ref)
 }
 
 // save cycle references
-int Mapping::set_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
+int Mapping::set_cycles(const span<const Reference<Layout> > &layouts, UpdateHint hint)
 {
     int total = 0;
-    for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
+    for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->pointer();
         if (!lay) continue;
         if (hint.match & laydest::MatchLayout
@@ -121,7 +121,7 @@ int Mapping::set_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
             continue;
         }
         const auto graphs = lay->graphs();
-        for (size_t j = 0, gmax = graphs.length(); j < gmax; ++j) {
+        for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
             auto grf = graphs.nth(i)->pointer();
             if (!grf) continue;
             if (hint.match & laydest::MatchGraph
@@ -129,7 +129,7 @@ int Mapping::set_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
                 continue;
             }
             const auto worlds = grf->worlds();
-            for (size_t k = 0, wmax = worlds.length(); k < wmax; ++k) {
+            for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->pointer();
                 if (!wld) continue;
                 if (hint.match & laydest::MatchWorld
@@ -146,10 +146,10 @@ int Mapping::set_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
     return total;
 }
 // load cycles references
-int Mapping::get_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHint hint)
+int Mapping::get_cycles(const span<const Reference<Layout> > &layouts, UpdateHint hint)
 {
     int total = 0;
-    for (size_t i = 0, lmax = layouts.length(); i < lmax; ++i) {
+    for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->pointer();
         if (!lay) continue;
         if (hint.match & laydest::MatchLayout
@@ -157,7 +157,7 @@ int Mapping::get_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
             continue;
         }
         const auto graphs = lay->graphs();
-        for (size_t j = 0, gmax = graphs.length(); j < gmax; ++j) {
+        for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
             auto grf = graphs.nth(j)->pointer();
             if (!grf) continue;
             if (hint.match & laydest::MatchGraph
@@ -166,7 +166,7 @@ int Mapping::get_cycles(const Slice<const Reference<Layout> > &layouts, UpdateHi
             }
             int dim = grf->transform().dimensions();
             const auto worlds = grf->worlds();
-            for (size_t k = 0, wmax = worlds.length(); k < wmax; ++k) {
+            for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->pointer();
                 if (!wld) continue;
                 if (hint.match & laydest::MatchWorld

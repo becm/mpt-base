@@ -37,7 +37,7 @@ void MyQueue::add(char c)
 const char *MyQueue::string()
 {
 	if (!prepare(1)) return 0;
-	mpt::Slice<uint8_t> d = peek();
+	mpt::span<uint8_t> d = peek();
 	char *base = reinterpret_cast<char *>(d.base());
 	base[d.length()] = 0;
 	return base;

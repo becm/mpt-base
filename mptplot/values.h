@@ -170,7 +170,7 @@ MPT_STRUCT(rawdata_stage)
 	int clear_modified(int = -1);
 	
 	value_store *values(long dim);
-	inline Slice<const value_store> values() const
+	inline span<const value_store> values() const
 	{
 		return _d.elements();
 	}
@@ -235,7 +235,7 @@ MPT_STRUCT(linepart)
 	class array : public Array<linepart>
 	{
 	public:
-		bool apply(const Transform &, int , Slice<const double>);
+		bool apply(const Transform &, int , span<const double>);
 		bool set(long);
 		long length_user();
 		long length_raw();
@@ -348,7 +348,7 @@ extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-size_t maxsize(Slice<const value_store>, int = -1);
+size_t maxsize(span<const value_store>, int = -1);
 
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
@@ -366,7 +366,7 @@ protected:
 	{ }
 };
 
-extern int apply_data(point<double> *, const linepart *, int , Transform &, Slice<const value_store>);
+extern int apply_data(point<double> *, const linepart *, int , Transform &, span<const value_store>);
 class Polyline
 {
 public:
@@ -385,8 +385,8 @@ public:
 	public:
 		Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
 		{ }
-		Slice<const Point> line() const;
-		Slice<const Point> points() const;
+		span<const Point> line() const;
+		span<const Point> points() const;
 	protected:
 		linepart _part;
 		const Point *_pts;
@@ -394,7 +394,7 @@ public:
 	class iterator
 	{
 	public:
-		iterator(Slice<const linepart> l, const Point *p) : _parts(l), _points(p)
+		iterator(span<const linepart> l, const Point *p) : _parts(l), _points(p)
 		{ }
 		Part operator *() const;
 		iterator & operator++ ();
@@ -408,11 +408,11 @@ public:
 			return !operator==(it);
 		}
 	protected:
-		Slice<const linepart> _parts;
+		span<const linepart> _parts;
 		const Point *_points;
 	};
 	bool set(const Transform &, const rawdata &, int = -1);
-	bool set(const Transform &, Slice<const value_store>);
+	bool set(const Transform &, span<const value_store>);
 	
 	iterator begin() const;
 	iterator end() const;
@@ -422,11 +422,11 @@ public:
 		_vis.set(0);
 		_values.resize(0);
 	}
-	Slice<const linepart> parts() const
+	span<const linepart> parts() const
 	{
 		return _vis.elements();
 	}
-	Slice<const Point> points() const
+	span<const Point> points() const
 	{
 		return _values.elements();
 	}
@@ -482,7 +482,7 @@ public:
 	{
 		return _stages.end();
 	}
-	inline Slice<const Stage> stages() const
+	inline span<const Stage> stages() const
 	{
 		return _stages.elements();
 	}

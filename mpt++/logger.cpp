@@ -138,14 +138,14 @@ const char *LogStore::Entry::source() const
     }
     return (const char *) (h + 1);
 }
-Slice<const char> LogStore::Entry::data(int part) const
+span<const char> LogStore::Entry::data(int part) const
 {
     Header *h = (Header *) base();
     const char *data;
     size_t skip, len = length();
 
     if ((len < sizeof(*h)) || ((len <= (skip = h->from + sizeof(*h))))) {
-        return Slice<const char>(0, 0);
+        return span<const char>(0, 0);
     }
     data = ((char *) h) + skip;
     len -= skip;
@@ -155,7 +155,7 @@ Slice<const char> LogStore::Entry::data(int part) const
 
         if (!(end = (const char *) memchr(data, 0, len))) {
             if (part) {
-                return Slice<const char>(0, 0);
+                return span<const char>(0, 0);
             }
             break;
         }
@@ -169,7 +169,7 @@ Slice<const char> LogStore::Entry::data(int part) const
         data += skip;
         len  -= skip;
     }
-    return Slice<const char>(data, len);
+    return span<const char>(data, len);
 }
 
 

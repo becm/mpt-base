@@ -289,7 +289,7 @@ public:
 		return typeinfo<T>::id();
 	}
 protected:
-	Slice<const T> _d;
+	span<const T> _d;
 	int _pos;
 };
 template <typename T>

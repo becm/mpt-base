@@ -44,8 +44,8 @@ enum MPT_PATHFLAG(Flags) {
 	bool next();
 	
 	bool empty() const;
-	Slice<const char> data() const;
-	Slice<const char> value() const;
+	span<const char> data() const;
+	span<const char> value() const;
 	
 	path & operator=(path const &);
 	
@@ -180,9 +180,9 @@ inline bool path::empty() const
 {
 	return len == 0;
 }
-inline Slice<const char> path::value() const
+inline span<const char> path::value() const
 {
-	return Slice<const char>(base + off, len);
+	return span<const char>(base + off, len);
 }
 /* config with private element store */
 class Config : public config
@@ -196,7 +196,7 @@ public:
 	int remove(const path *) __MPT_OVERRIDE;
 	
 	class Element;
-	inline Slice<const Element> elements() const
+	inline span<const Element> elements() const
 	{
 		return _sub.elements();
 	}

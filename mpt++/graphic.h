@@ -46,8 +46,8 @@ public:
 	bool set_cycle(laydest, Cycle *);
 	
 	// modify target elements
-	int set_cycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
-	int get_cycles(const Slice<const Reference<Layout> > &, UpdateHint = UpdateHint());
+	int set_cycles(const span<const Reference<Layout> > &, UpdateHint = UpdateHint());
+	int get_cycles(const span<const Reference<Layout> > &, UpdateHint = UpdateHint());
 	int clear_cycles(UpdateHint = UpdateHint()) const;
 	
 	void clear();
@@ -69,9 +69,9 @@ public:
 		UpdateHint hint;
 		uint32_t used;
 	};
-	inline Slice<const Element> elements() const
+	inline span<const Element> elements() const
 	{
-		return Slice<const Element>((const Element *) base(), length());
+		return span<const Element>((const Element *) base(), length());
 	}
 	inline long length() const
 	{

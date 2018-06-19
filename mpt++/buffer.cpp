@@ -63,15 +63,15 @@ int Buffer::conv(int type, void *ptr) const
     if (type == MPT_value_toVector('c')) {
         struct iovec *vec;
         if ((vec = static_cast<struct iovec *>(ptr))) {
-            Slice<uint8_t> d = data();
-            vec->iov_base = d.base();
-            vec->iov_len = d.length();
+            span<uint8_t> d = data();
+            vec->iov_base = d.begin();
+            vec->iov_len = d.size();
         }
         return me;
     }
     if (type == 's') {
-        Slice<uint8_t> d = data();
-        if (!memchr(d.begin(), 0, d.length())) {
+        span<uint8_t> d = data();
+        if (!memchr(d.begin(), 0, d.size())) {
             return BadValue;
         }
         if (ptr) *static_cast<const uint8_t **>(ptr) = d.begin();
@@ -108,12 +108,12 @@ int Buffer::advance()
     if (!_state.done) {
         return MissingData;
     }
-    Slice<uint8_t> d = data();
+    span<uint8_t> d = data();
     uint8_t *end;
-    if (!(end = (uint8_t *) memchr(d.base(), 0, d.length()))) {
+    if (!(end = (uint8_t *) memchr(d.begin(), 0, d.size()))) {
         return BadValue;
     }
-    shift((end + 1) - d.base());
+    shift((end + 1) - d.begin());
     return _state.done ? 's' : 0;
 }
 int Buffer::reset()
@@ -125,20 +125,23 @@ int Buffer::reset()
 // I/O device interface
 ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 {
-    Slice<uint8_t> d = data();
+    span<uint8_t> d = data();
     if (!esze) {
-        if ((size_t) d.length() < nblk) return -2;
-        if (dest) memcpy(dest, d.base(), nblk);
+        if ((size_t) d.size() < nblk) {
+            return MissingData;
+        }
+        if (dest) memcpy(dest, d.begin(), nblk);
         return nblk;
     }
-    size_t avail = d.length() / esze;
+    size_t avail = d.size() / esze;
 
     if (nblk > avail) nblk = avail;
 
-    if (!nblk) return 0;
-
+    if (!nblk) {
+        return 0;
+    }
     avail = nblk * esze;
-    if (dest) memcpy(dest, d.base(), avail);
+    if (dest) memcpy(dest, d.begin(), avail);
 
     shift(avail);
 
@@ -167,7 +170,6 @@ ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
         --nblk;
     }
     return left - nblk;
-
 }
 int64_t Buffer::pos()
 {
@@ -193,7 +195,7 @@ bool Buffer::seek(int64_t pos)
 
     return true;
 }
-Slice<uint8_t> Buffer::peek(size_t)
+span<uint8_t> Buffer::peek(size_t)
 {
     return encode_array::data();
 }
