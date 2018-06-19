@@ -84,7 +84,7 @@ MPT_INTERFACE_VPTR(buffer)
 MPT_STRUCT(array)
 {
 #ifdef __cplusplus
-	class Data : public buffer
+	class content : public buffer
 	{
 	public:
 		inline size_t length() const
@@ -97,11 +97,11 @@ MPT_STRUCT(array)
 		}
 		inline void *data() const
 		{
-			return static_cast<void *>(const_cast<Data *>(this) + 1);
+			return static_cast<void *>(const_cast<content *>(this) + 1);
 		}
 		bool set_length(size_t);
 	protected:
-		inline ~Data()
+		inline ~content()
 		{ }
 	};
 	enum { Type = TypeArray };
@@ -109,7 +109,7 @@ MPT_STRUCT(array)
 	array(array const&);
 	array(size_t = 0);
 	
-	const Data *data() const;
+	const content *data() const;
 	
 	size_t length() const;
 	size_t left() const;
@@ -139,7 +139,7 @@ protected:
 # define _MPT_ARRAY_TYPE(x)     ::mpt::Array<x>
 # define _MPT_UARRAY_TYPE(x)    ::mpt::UniqueArray<x>
 # define _MPT_REF_ARRAY_TYPE(x) ::mpt::RefArray<x>
-	reference_wrapper<Data> _buf;
+	reference_wrapper<content> _buf;
 #else
 	MPT_STRUCT(buffer) *_buf;
 # define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
@@ -184,7 +184,7 @@ struct slice : array
 {
 	slice(const array &);
 	slice(const slice &);
-	slice(Data * = 0);
+	slice(array::content * = 0);
 	~slice();
 	
 	span<uint8_t> data() const;
@@ -361,7 +361,7 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline void *array::base() const
 {
-	Data *d = _buf.reference();
+	content *d = _buf.reference();
 	if (!d || d->typeinfo()) {
 		return 0;
 	}
@@ -369,20 +369,20 @@ inline void *array::base() const
 }
 inline size_t array::length() const
 {
-	Data *d = _buf.reference();
+	content *d = _buf.reference();
 	return (d && !d->typeinfo()) ? d->length() : 0;
 }
 inline size_t array::left() const
 {
-	Data *d = _buf.reference();
+	content *d = _buf.reference();
 	return (d && !d->typeinfo()) ? d->left() : 0;
 }
 inline bool array::shared() const
 {
-	Data *d = _buf.reference();
+	content *d = _buf.reference();
 	return d && d->shared();
 }
-inline const array::Data *array::data() const
+inline const array::content *array::data() const
 {
 	return _buf.reference();
 }
@@ -443,7 +443,7 @@ void move(T *v, long from, long to)
 }
 
 template <typename T>
-class Content : public buffer
+class content : public buffer
 {
 public:
 	typedef T* iterator;
@@ -460,7 +460,7 @@ public:
 	{
 		return 0;
 	}
-	Content<T> *detach(size_t len) __MPT_OVERRIDE
+	content<T> *detach(size_t len) __MPT_OVERRIDE
 	{
 		size_t align = len % sizeof(T);
 		buffer *b = buffer::create(len - align, _typeinfo);
@@ -468,7 +468,7 @@ public:
 			b->unref();
 			return 0;
 		}
-		return static_cast<Content<T> *>(b);
+		return static_cast<content<T> *>(b);
 	}
 	int shared() const __MPT_OVERRIDE
 	{
@@ -522,7 +522,7 @@ public:
 		return static_cast<T *>(ptr);
 	}
 protected:
-	inline ~Content()
+	inline ~content()
 	{ }
 };
 
@@ -551,11 +551,11 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				_ref.set_reference(static_cast<Content<T> *>(b));
+				_ref.set_reference(static_cast<content<T> *>(b));
 				return;
 			}
 		}
-		class dummy : public Content<T>
+		class dummy : public content<T>
 		{
 		public:
 			inline dummy()
@@ -576,12 +576,12 @@ public:
 	}
 	inline iterator begin() const
 	{
-		Content<T> *c = _ref.reference();
+		content<T> *c = _ref.reference();
 		return c ? c->begin() : 0;
 	}
 	inline iterator end() const
 	{
-		Content<T> *c = _ref.reference();
+		content<T> *c = _ref.reference();
 		return c ? c->end() : 0;
 	}
 	inline UniqueArray & operator=(const UniqueArray &a)
@@ -589,7 +589,7 @@ public:
 		_ref = a._ref;
 		return *this;
 	}
-	inline UniqueArray & operator=(const reference_wrapper<Content<T> > &v)
+	inline UniqueArray & operator=(const reference_wrapper<content<T> > &v)
 	{
 		this->_ref = v;
 		return *this;
@@ -625,7 +625,7 @@ public:
 		if (!reserve(len + 1)) {
 			return 0;
 		}
-		Content<T> *d = _ref.reference();
+		content<T> *d = _ref.reference();
 		return d->insert(pos);
 	}
 	T *get(long pos) const
@@ -642,7 +642,7 @@ public:
 	}
 	inline long length() const
 	{
-		Content<T> *d = _ref.reference();
+		content<T> *d = _ref.reference();
 		return d ? d->length() : 0;
 	}
 	inline span<const T> elements() const
@@ -651,7 +651,7 @@ public:
 	}
 	bool detach()
 	{
-		Content<T> *c, *n;
+		content<T> *c, *n;
 		if (!(c =  _ref.detach())) {
 			return true;
 		}
@@ -665,7 +665,7 @@ public:
 	}
 	bool reserve(long len)
 	{
-		Content<T> *c;
+		content<T> *c;
 		if (!(c = _ref.detach())) {
 			return false;
 		}
@@ -674,7 +674,7 @@ public:
 			_ref.set_reference(c);
 			return false;
 		}
-		Content<T> *n;
+		content<T> *n;
 		if ((n = c->detach(len * sizeof(T)))) {
 			_ref.set_reference(n);
 			return true;
@@ -687,14 +687,14 @@ public:
 		if (!reserve(len)) {
 			return false;
 		}
-		Content<T> *d;
+		content<T> *d;
 		if (len >= 0 && (d = _ref.reference())) {
 			return d->set_length(len);
 		}
 		return true;
 	}
 protected:
-	reference_wrapper<Content<T> > _ref;
+	reference_wrapper<content<T> > _ref;
 	
 	static void _data_init(const type_traits *, void *ptr)
 	{
@@ -740,11 +740,11 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				this->_ref.set_reference(static_cast<Content<T> *>(b));
+				this->_ref.set_reference(static_cast<content<T> *>(b));
 				return;
 			}
 		}
-		class dummy : public Content<T>
+		class dummy : public content<T>
 		{
 		public:
 			inline dummy()

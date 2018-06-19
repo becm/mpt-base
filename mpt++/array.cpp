@@ -170,7 +170,7 @@ void *buffer::append(size_t len)
     return base;
 }
 // simple array data implementation
-bool array::Data::set_length(size_t len)
+bool array::content::set_length(size_t len)
 {
     if (len > _size) {
         return false;
@@ -187,7 +187,7 @@ bool array::Data::set_length(size_t len)
 array::array(size_t len) : _buf(0)
 {
     if (len) {
-        _buf.set_reference(static_cast <Data *>(buffer::create(len)));
+        _buf.set_reference(static_cast<content *>(buffer::create(len)));
     }
 }
 array::array(const array &a) : _buf(0)
@@ -206,7 +206,7 @@ bool array::set(const reference_wrapper<buffer> &a)
     if ((b = a.reference()) && b->typeinfo()) {
         return false;
     }
-    _buf = reinterpret_cast<const reference_wrapper<array::Data> &>(a);
+    _buf = reinterpret_cast<const reference_wrapper<content> &>(a);
     return true;
 }
 // array size modifier
@@ -218,7 +218,7 @@ array &array::operator+= (struct iovec const& vec)
 
 void *array::set(size_t len, const void *base)
 {
-    Data *d;
+    content *d;
     
     if ((d = _buf.reference())) {
         size_t used;
@@ -235,7 +235,7 @@ void *array::set(size_t len, const void *base)
         }
     }
     if (d) {
-        if (!(d = static_cast<Data *>(buffer::create(len)))) {
+        if (!(d = static_cast<content *>(buffer::create(len)))) {
             return 0;
         }
         /* reserve uninitialized data */
@@ -341,7 +341,7 @@ void *array::append(size_t len, const void *data)
 void *array::insert(size_t off, size_t len, const void *data)
 {
     void *dest = 0;
-    Data *d;
+    content *d;
     
     /* compatibility check */
     if ((d = _buf.reference())
@@ -351,7 +351,7 @@ void *array::insert(size_t off, size_t len, const void *data)
     }
     if (!dest) {
         size_t total = off + len;
-        if (!(d = static_cast<Data *>(buffer::create(total)))) {
+        if (!(d = static_cast<content *>(buffer::create(total)))) {
             return 0;
         }
         if (!(dest = d->insert(off, len))) {
@@ -386,7 +386,7 @@ slice::slice(slice const& from) : array(from), _off(0), _len(0)
     _len = from._len;
     _off = from._off;
 }
-slice::slice(array::Data *b) : _off(0), _len(0)
+slice::slice(array::content *b) : _off(0), _len(0)
 {
     _buf.set_reference(b);
     _len = length();

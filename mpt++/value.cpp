@@ -138,7 +138,7 @@ const array *value::array(int type) const
     if (type < 0) {
         return arr;
     }
-    const array::Data *d;
+    const array::content *d;
     const type_traits *info;
     if ((d = arr->data()) && (info = d->typeinfo()) && type == info->type) {
         return arr;

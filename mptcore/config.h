@@ -52,10 +52,10 @@ enum MPT_PATHFLAG(Flags) {
 	int add(int = -1);
 	int del();
 	
-	bool clearData();
+	bool clear_data();
 	
 protected:
-	::mpt::array::Data *array() const;
+	array::content *array_content() const;
 #else
 MPT_STRUCT(path)
 {

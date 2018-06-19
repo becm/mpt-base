@@ -11,7 +11,7 @@ __MPT_NAMESPACE_BEGIN
 // typed information for array
 int value_store::type() const
 {
-    const array::Data *d;
+    const array::content *d;
     if (!(d = _d.data())) {
         return BadArgument;
     }
@@ -23,7 +23,7 @@ int value_store::type() const
 }
 size_t value_store::element_size() const
 {
-    const array::Data *d;
+    const array::content *d;
     if (!(d = _d.data())) {
         return 0;
     }
@@ -35,7 +35,7 @@ size_t value_store::element_size() const
 }
 long value_store::element_count() const
 {
-    const array::Data *d;
+    const array::content *d;
     if (!(d = _d.data())) {
         return BadArgument;
     }

@@ -148,7 +148,7 @@ public:
 	}
 	inline const void *base() const
 	{
-		const array::Data *d = _d.data();
+		const array::content *d = _d.data();
 		return d ? (d + 1) : 0;
 	}
 protected:

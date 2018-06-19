@@ -20,12 +20,12 @@ template <> int typeinfo<configuration::element>::id()
 }
 
 // non-trivial path operations
-array::Data *path::array() const
+array::content *path::array_content() const
 {
 	if (!base || !(flags & HasArray)) {
 		return 0;
 	}
-	return reinterpret_cast<array::Data *>(const_cast<char *>(base)) - 1;
+	return reinterpret_cast<array::content *>(const_cast<char *>(base)) - 1;
 }
 path::path(const char *path, int s, int a) : base(0), off(0), len(0)
 {
@@ -46,7 +46,7 @@ path &path::operator =(const path &from)
     if (this == &from) {
         return *this;
     }
-    ::mpt::array::Data *s = from.array(), *t = array();
+    array::content *s = from.array_content(), *t = array_content();
     if (s != t) {
         if (s) s->addref();
         if (t) t->unref();
@@ -57,14 +57,14 @@ path &path::operator =(const path &from)
 
 span<const char> path::data() const
 {
-    array::Data *d = array();
+    array::content *d = array_content();
     size_t skip, max;
     if (!d || (skip = off + len) > (max = d->length())) return span<const char>(0, 0);
     return span<const char>(static_cast<char *>(d->data()) + skip, max - skip);
 }
-bool path::clearData()
+bool path::clear_data()
 {
-    array::Data *d = array();
+    array::content *d = array_content();
     return d ? d->set_length(off + len) : true;
 }
 

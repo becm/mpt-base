@@ -133,7 +133,7 @@ public:
 				}
 			}
 		}
-		Data *d;
+		content *d;
 		if ((d = _buf.reference())) {
 			d->set_length(len * sizeof(*c));
 		}
