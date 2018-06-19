@@ -185,27 +185,27 @@ inline span<const char> path::value() const
 	return span<const char>(base + off, len);
 }
 /* config with private element store */
-class Config : public config
+class configuration : public config
 {
 public:
-	Config();
-	virtual ~Config();
+	configuration();
+	virtual ~configuration();
 	
 	const metatype *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
 	
-	class Element;
-	inline span<const Element> elements() const
+	class element;
+	inline span<const element> elements() const
 	{
 		return _sub.elements();
 	}
 protected:
-	static Element *get_element(const UniqueArray<Element> &, path &);
-	static Element *make_element(UniqueArray<Element> &, path &);
-	UniqueArray<Element> _sub;
+	static element *get_element(const UniqueArray<element> &, path &);
+	static element *make_element(UniqueArray<element> &, path &);
+	UniqueArray<element> _sub;
 };
-class Config::Element : public UniqueArray<Config::Element>, public item<metatype>
+class configuration::element : public UniqueArray<configuration::element>, public item<metatype>
 {
 public:
 	inline bool unused()
@@ -213,7 +213,7 @@ public:
 		return _len == 0;
 	}
 private:
-	Element & operator =(const Element &from);
+	element & operator =(const element &from);
 };
 #endif
 

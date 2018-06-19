@@ -78,7 +78,7 @@ extern int main(int , char * const [])
 	Double d(46);
 	std::cout << d.f0() << std::endl;
 	
-	mpt::Config config;
+	mpt::configuration config;
 	const mpt::metatype *mt;
 	if ((mt = config.get(0))) {
 		std::cout << "base type: " << typeid(*mt).name() << std::endl;

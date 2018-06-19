@@ -10,7 +10,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<Config::Element>::id()
+template <> int typeinfo<configuration::element>::id()
 {
     static int id = 0;
     if (!id) {
@@ -119,12 +119,12 @@ metatype *config::global(const path *p)
 }
 
 // config with private element store
-Config::Config()
+configuration::configuration()
 { }
-Config::~Config()
+configuration::~configuration()
 { }
 // private element access
-Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, path &p)
+configuration::element *configuration::get_element(const UniqueArray<configuration::element> &arr, path &p)
 {
     const span<const char> name = p.value();
     int len;
@@ -132,7 +132,7 @@ Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, pa
     if ((len = mpt_path_next(&p)) < 0) {
         return 0;
     }
-    for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+    for (element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
         if (e->unused() || !e->equal(name.begin(), len)) {
             continue;
         }
@@ -143,7 +143,7 @@ Config::Element *Config::get_element(const UniqueArray<Config::Element> &arr, pa
     }
     return 0;
 }
-Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p)
+configuration::element *configuration::make_element(UniqueArray<configuration::element> &arr, path &p)
 {
     const span<const char> name = p.value();
     int len;
@@ -151,8 +151,8 @@ Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p
     if ((len = mpt_path_next(&p)) < 0) {
         return 0;
     }
-    Element *unused = 0;
-    for (Element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+    element *unused = 0;
+    for (element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
         if (e->unused()) {
             if (!unused) unused = e;
         }
@@ -178,7 +178,7 @@ Config::Element *Config::make_element(UniqueArray<Config::Element> &arr, path &p
     return p.empty() ? unused : make_element(*unused, p);
 }
 // config interface
-int Config::assign(const path *dest, const value *val)
+int configuration::assign(const path *dest, const value *val)
 {
     // no 'self' element(s)
     if (!dest || dest->empty()) {
@@ -187,7 +187,7 @@ int Config::assign(const path *dest, const value *val)
     // find existing
     path p = *dest;
     metatype *m;
-    Element *curr;
+    element *curr;
 
     if (!val) {
         if (!(curr = get_element(_sub, p))) {
@@ -210,7 +210,7 @@ int Config::assign(const path *dest, const value *val)
     curr->set_reference(m);
     return m->type();
 }
-const metatype *Config::query(const path *dest) const
+const metatype *configuration::query(const path *dest) const
 {
     // no 'self' element(s)
     if (!dest || dest->empty()) {
@@ -218,14 +218,14 @@ const metatype *Config::query(const path *dest) const
     }
     // find existing
     path p = *dest;
-    Element *curr;
+    element *curr;
 
     if (!(curr = get_element(_sub, p))) {
         return 0;
     }
     return curr->reference();
 }
-int Config::remove(const path *dest)
+int configuration::remove(const path *dest)
 {
     // clear root element
     if (!dest) {
@@ -237,7 +237,7 @@ int Config::remove(const path *dest)
         return 0;
     }
     path p = *dest;
-    Element *curr;
+    element *curr;
     // requested element not found
     if (!(curr = get_element(_sub, p))) {
         return BadOperation;

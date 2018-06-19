@@ -17,7 +17,7 @@
 # define mtrace()
 #endif
 
-static void printCfg(int depth, const mpt::span<const mpt::Config::Element> list)
+static void printCfg(int depth, const mpt::span<const mpt::configuration::element> list)
 {
 	for (auto &a : list) {
 		for (int i = 0; i < depth; ++i) std::cout << '.';
@@ -35,7 +35,7 @@ static void printCfg(int depth, const mpt::span<const mpt::Config::Element> list
 
 extern int main(int argc, char * const argv[])
 {
-	mpt::Config conf;
+	mpt::configuration conf;
 	const mpt::metatype *m;
 	const char *name;
 	
