@@ -114,33 +114,33 @@ int logger::message(const char *from, int err, const char *fmt, ...)
 }
 
 // logging store entry
-logger::LogType LogStore::Entry::type() const
+logger::LogType message_store::entry::type() const
 {
-    Header *h;
+    header *h;
 
     if (length() < sizeof(*h)) {
         return logger::Message;
     }
-    h = (Header *) base();
+    h = static_cast<header *>(base());
     return (logger::LogType) h->type;
 }
-const char *LogStore::Entry::source() const
+const char *message_store::entry::source() const
 {
-    Header *h;
+    header *h;
 
     if (length() < (sizeof(*h) + 1)) {
         return 0;
     }
-    h = (Header *) base();
+    h = static_cast<header *>(base());
 
     if (!h->from) {
         return 0;
     }
     return (const char *) (h + 1);
 }
-span<const char> LogStore::Entry::data(int part) const
+span<const char> message_store::entry::data(int part) const
 {
-    Header *h = (Header *) base();
+    header *h = static_cast<header *>(base());
     const char *data;
     size_t skip, len = length();
 
@@ -173,13 +173,13 @@ span<const char> LogStore::Entry::data(int part) const
 }
 
 
-int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list arg)
+int message_store::entry::set(const char *from, int type, const char *fmt, va_list arg)
 {
-    Header *h;
+    header *h;
     array d;
     size_t len;
 
-    if (!(h = (Header *) d.append(sizeof(*h)))) {
+    if (!(h = static_cast<header *>(d.append(sizeof(*h))))) {
         return -1;
     }
     h->args = 0;
@@ -202,7 +202,7 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
             return -1;
         }
     }
-    h = (Header *) d.base();
+    h = static_cast<header *>(d.base());
     h->from = len;
 
     if (!fmt) {
@@ -211,7 +211,7 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     else if (mpt_vprintf(&d, fmt, arg) < 0) {
         return -1;
     } else {
-        h = (Header *) d.base();
+        h = static_cast<header *>(d.base());
         h->args = 1;
     }
 
@@ -220,11 +220,11 @@ int LogStore::Entry::set(const char *from, int type, const char *fmt, va_list ar
     return length();
 }
 
-LogStore::LogStore(metatype *next) : reference_wrapper<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
+message_store::message_store(metatype *next) : reference_wrapper<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
-LogStore::~LogStore()
+message_store::~message_store()
 { }
-static int logMeta(const metatype *mt, const char *from, int type, const char *fmt, va_list arg)
+static int log_meta(const metatype *mt, const char *from, int type, const char *fmt, va_list arg)
 {
     logger *l;
     if (!mt) {
@@ -242,7 +242,7 @@ static int logMeta(const metatype *mt, const char *from, int type, const char *f
     }
     return BadType;
 }
-int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
+int message_store::log(const char *from, int type, const char *fmt, va_list arg)
 {
     int save = 0, pass = 0, code = 0x7f & type;
 
@@ -264,7 +264,7 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     // fast-track without argument list copy
     if (!save) {
         if (mt && pass) {
-            return logMeta(mt, from, type, fmt, arg);
+            return log_meta(mt, from, type, fmt, arg);
         }
         return 0;
     }
@@ -272,10 +272,10 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
         va_list tmp;
         // use copy to keep data for storage operation
         va_copy(tmp, arg);
-        return logMeta(mt, from, type, fmt, arg);
+        return log_meta(mt, from, type, fmt, arg);
         va_end(tmp);
     }
-    Entry m;
+    entry m;
     int ret;
 
     if (code && code < _level) _level = code;
@@ -289,9 +289,9 @@ int LogStore::log(const char *from, int type, const char *fmt, va_list arg)
     return ret;
 }
 
-const LogStore::Entry *LogStore::next()
+const message_store::entry *message_store::next()
 {
-    Entry *e;
+    entry *e;
 
     if ((e = _msg.get(_act))) {
         ++_act;
@@ -299,21 +299,21 @@ const LogStore::Entry *LogStore::next()
     return e;
 }
 
-void LogStore::clear()
+void message_store::clear()
 {
     _msg.resize(0);
     _act = 0;
     _level = 0;
 }
 
-bool LogStore::set_ignore_level(int val)
+bool message_store::set_ignore_level(int val)
 {
     if (val < 0) val = Debug;
     else if (val >= File) return false;
     _ignore = val;
     return true;
 }
-bool LogStore::set_flow_flags(int val)
+bool message_store::set_flow_flags(int val)
 {
     _flags = val;
     return true;

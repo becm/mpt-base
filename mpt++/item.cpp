@@ -336,7 +336,7 @@ size_t Collection::clear(const reference *ref)
     long remove = 0;
     if (!ref) {
         remove = _items.length();
-        _items = ItemArray<metatype>();
+        _items = item_array<metatype>();
         return remove ? true : false;
     }
     long empty = 0;

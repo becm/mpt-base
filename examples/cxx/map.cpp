@@ -22,7 +22,7 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	Map<laydest, reference_wrapper<Cycle> > p;
+	map<laydest, reference_wrapper<Cycle> > p;
 	reference_wrapper<Cycle> c(new reference_wrapper<Cycle>::instance);
 	
 	p.set(laydest(1,2,3), c);
@@ -35,7 +35,7 @@ extern int main(int , char * const [])
 		return 1;
 	}
 	
-	Array<reference_wrapper<Cycle>> r = p.values();
+	typed_array<reference_wrapper<Cycle>> r = p.values();
 	
 	for (auto &x : r) {
 		Cycle *m = x.reference();

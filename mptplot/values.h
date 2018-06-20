@@ -232,7 +232,7 @@ MPT_STRUCT(linepart)
 	bool set_trim(float);
 	bool set_cut(float);
 	
-	class array : public Array<linepart>
+	class array : public typed_array<linepart>
 	{
 	public:
 		bool apply(const Transform &, int , span<const double>);
@@ -432,7 +432,7 @@ public:
 	}
 protected:
 	linepart::array _vis;
-	Array<Point> _values;
+	typed_array<Point> _values;
 };
 
 template<> int typeinfo<Polyline::Point>::id();
@@ -488,7 +488,7 @@ public:
 	}
 protected:
 	virtual ~Cycle();
-	Array<Stage> _stages;
+	typed_array<Stage> _stages;
 	uint16_t _act;
 	uint8_t _max_dimensions;
 	uint8_t _flags;

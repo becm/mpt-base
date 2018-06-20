@@ -14,7 +14,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<Map<laydest, reference_wrapper<Cycle> >::Element>::id()
+template <> int typeinfo<map<laydest, reference_wrapper<Cycle> >::entry>::id()
 {
     static int id = 0;
     if (!id) {
@@ -40,24 +40,24 @@ template <> int typeinfo<laydest>::id()
 }
 
 // add data mapping
-int Mapping::add(valsrc src, laydest dst, int client)
+int graphic::mapping::add(valsrc src, laydest dst, int client)
 {
     const reference_wrapper<Cycle> *r;
     if (!(r = cycle(dst))) {
         return MissingData;
     }
-    mapping map(src, dst, client);
+    ::mpt::mapping map(src, dst, client);
     return mpt_mapping_add(&_bind, &map);
 }
 // clear data mapping
-int Mapping::del(const valsrc *src, const laydest *dest, int client) const
+int graphic::mapping::del(const valsrc *src, const laydest *dest, int client) const
 {
     return mpt_mapping_del(&_bind, src, dest, client);
 }
 // get data mapping
-Array<laydest> Mapping::destinations(valsrc src, int client) const
+typed_array<laydest> graphic::mapping::destinations(valsrc src, int client) const
 {
-    Array<laydest> arr;
+    typed_array<laydest> arr;
 
     for (auto &map : _bind.elements()) {
         if (mpt_mapping_cmp(&map, &src, client)) {
@@ -68,13 +68,13 @@ Array<laydest> Mapping::destinations(valsrc src, int client) const
     return arr;
 }
 // clear data mappings
-void Mapping::clear()
+void graphic::mapping::clear()
 {
-    _bind = Array<mapping>();
-    _d = Array<Element>();
+    _bind = typed_array<::mpt::mapping>();
+    _d = typed_array<entry>();
 }
 // get cycle reference
-const reference_wrapper<Cycle> *Mapping::cycle(laydest dst) const
+const reference_wrapper<Cycle> *graphic::mapping::cycle(laydest dst) const
 {
     // search matching destination
     for (auto &e : _d) {
@@ -93,7 +93,7 @@ const reference_wrapper<Cycle> *Mapping::cycle(laydest dst) const
     return 0;
 }
 // set cycle reference
-bool Mapping::set_cycle(laydest dst, Cycle *ref)
+bool graphic::mapping::set_cycle(laydest dst, Cycle *ref)
 {
     if (!set(dst, reference_wrapper<Cycle>())) {
         return false;
@@ -110,7 +110,7 @@ bool Mapping::set_cycle(laydest dst, Cycle *ref)
 }
 
 // save cycle references
-int Mapping::set_cycles(const span<const reference_wrapper<Layout> > &layouts, UpdateHint hint)
+int graphic::mapping::set_cycles(const span<const reference_wrapper<Layout> > &layouts, update_hint hint)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
@@ -146,7 +146,7 @@ int Mapping::set_cycles(const span<const reference_wrapper<Layout> > &layouts, U
     return total;
 }
 // load cycles references
-int Mapping::get_cycles(const span<const reference_wrapper<Layout> > &layouts, UpdateHint hint)
+int graphic::mapping::get_cycles(const span<const reference_wrapper<Layout> > &layouts, update_hint hint)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
@@ -173,7 +173,7 @@ int Mapping::get_cycles(const span<const reference_wrapper<Layout> > &layouts, U
                  && hint.wld != k) {
                     continue;
                 }
-                for (Element *b = _d.begin(), *e = _d.end(); b < e; ++b) {
+                for (entry *b = _d.begin(), *e = _d.end(); b < e; ++b) {
                     if (!b->key.match(laydest(i, j, k), laydest::MatchPath)) {
                         continue;
                     }
@@ -190,7 +190,7 @@ int Mapping::get_cycles(const span<const reference_wrapper<Layout> > &layouts, U
     return total;
 }
 // deregister cycle references
-int Mapping::clear_cycles(UpdateHint hint) const
+int graphic::mapping::clear_cycles(update_hint hint) const
 {
     int clear = 0;
     for (auto &e : _d) {

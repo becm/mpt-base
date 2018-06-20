@@ -201,11 +201,11 @@ public:
 		return _sub.elements();
 	}
 protected:
-	static element *get_element(const UniqueArray<element> &, path &);
-	static element *make_element(UniqueArray<element> &, path &);
-	UniqueArray<element> _sub;
+	static element *get_element(const unique_array<element> &, path &);
+	static element *make_element(unique_array<element> &, path &);
+	unique_array<element> _sub;
 };
-class configuration::element : public UniqueArray<configuration::element>, public item<metatype>
+class configuration::element : public unique_array<configuration::element>, public item<metatype>
 {
 public:
 	inline bool unused()

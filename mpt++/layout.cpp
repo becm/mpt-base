@@ -509,8 +509,8 @@ bool Graph::bind(const relation &rel, logger *out)
     const char *names, *curr;
     size_t len;
 
-    ItemArray<Axis> oldaxes = _axes;
-    _axes = ItemArray< Axis>();
+    item_array<Axis> oldaxes = _axes;
+    _axes = item_array< Axis>();
 
     if (!(names = graph::axes())) {
         for (auto &it : _items) {
@@ -546,8 +546,8 @@ bool Graph::bind(const relation &rel, logger *out)
             return false;
         }
     }
-    ItemArray<Data> oldworlds = _worlds;
-    _worlds = ItemArray<Data>();
+    item_array<Data> oldworlds = _worlds;
+    _worlds = item_array<Data>();
 
     if (!(names = graph::worlds())) {
         for (auto &it : _items) {
@@ -834,12 +834,12 @@ int Layout::set_property(const char *name, const metatype *src)
 }
 bool Layout::bind(const relation &rel, logger *out)
 {
-    ItemArray<metatype> old = _items;
+    item_array<metatype> old = _items;
     if (!Collection::bind(rel, out)) {
         return false;
     }
 
-    ItemArray<Graph> arr;
+    item_array<Graph> arr;
 
     for (auto &it : _items) {
         metatype *mt;
@@ -919,7 +919,7 @@ bool Layout::reset()
     if (_parse && !_parse->reset()) {
         return false;
     }
-    _graphs = ItemArray<Graph>();
+    _graphs = item_array<Graph>();
     set_font(0);
     set_alias(0);
     return true;

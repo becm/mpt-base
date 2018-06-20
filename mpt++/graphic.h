@@ -18,26 +18,53 @@ class Layout;
 
 struct message;
 
-class UpdateHint
+
+class graphic
 {
 public:
-	UpdateHint(int = -1, int = -1, int = -1);
+	graphic();
+	virtual ~graphic();
 	
-	bool merge(const UpdateHint &, int = 0);
-	bool destination(laydest *);
+	class update_hint
+	{
+	public:
+		update_hint(int = -1, int = -1, int = -1);
+		
+		bool merge(const update_hint &, int = 0);
+		bool destination(laydest *);
+		
+		uint8_t match;
+		uint8_t lay, grf, wld;
+	};
+	class mapping;
 	
-	uint8_t match;
-	uint8_t lay, grf, wld;
+	// layout (de)registration
+	virtual int add_layout(Layout *, bool = true);
+	virtual int remove_layout(const Layout *);
+	long layout_count() const;
+	
+	// create new layout
+	virtual Layout *create_layout();
+	
+	// mapping helpers
+	int target(laydest &, message &, size_t = 0) const;
+	metatype *item(message &, size_t = 0) const;
+	
+	// untracked reference to shedule update
+	virtual bool register_update(const reference *, update_hint = update_hint());
+protected:
+	virtual void dispatch_updates();
+	reference_array<Layout> _layouts;
 };
 
-class Mapping : Map<laydest, reference_wrapper<Cycle> >
+class graphic::mapping : map<laydest, reference_wrapper<Cycle> >
 {
 public:
 	int add(valsrc , laydest , int = 0);
 	int del(const valsrc *, const laydest * = 0, int = 0) const;
-	Array<laydest> destinations(valsrc , int = 0) const;
+	typed_array<laydest> destinations(valsrc , int = 0) const;
 	
-	inline const Map<laydest, reference_wrapper<Cycle> > &targets() const
+	inline const map<laydest, reference_wrapper<Cycle> > &targets() const
 	{
 		return *this;
 	}
@@ -46,40 +73,39 @@ public:
 	bool set_cycle(laydest, Cycle *);
 	
 	// modify target elements
-	int set_cycles(const span<const reference_wrapper<Layout> > &, UpdateHint = UpdateHint());
-	int get_cycles(const span<const reference_wrapper<Layout> > &, UpdateHint = UpdateHint());
-	int clear_cycles(UpdateHint = UpdateHint()) const;
+	int set_cycles(const span<const reference_wrapper<Layout> > &, update_hint = update_hint());
+	int get_cycles(const span<const reference_wrapper<Layout> > &, update_hint = update_hint());
+	int clear_cycles(update_hint = update_hint()) const;
 	
 	void clear();
 protected:
-	Array<mapping> _bind;
+	typed_array<::mpt::mapping> _bind;
 };
 
-
 template<typename T>
-class Updates : array
+class updates : array
 {
 public:
-	class Element
+	class element
 	{
 	public:
-		inline Element(const T &m = T(), const UpdateHint &h = UpdateHint()) : data(m), hint(h), used(1)
+		inline element(const T &m = T(), const graphic::update_hint &h = graphic::update_hint()) : data(m), hint(h), used(1)
 		{ }
 		T data;
-		UpdateHint hint;
+		graphic::update_hint hint;
 		uint32_t used;
 	};
-	inline span<const Element> elements() const
+	inline span<const element> elements() const
 	{
-		return span<const Element>((const Element *) base(), length());
+		return span<const element>((const element *) base(), length());
 	}
 	inline long length() const
 	{
-		return array::length() / sizeof(Element);
+		return array::length() / sizeof(element);
 	}
-	int add(const T &m, const UpdateHint &d = UpdateHint())
+	int add(const T &m, const graphic::update_hint &d = graphic::update_hint())
 	{
-		Element *cmp = (Element *) base();
+		element *cmp = (element *) base();
 		
 		for (long i = 0, max = length(); i < max; ++i) {
 			// different data elements
@@ -91,15 +117,15 @@ public:
 				return 1;
 			}
 		}
-		if (!(cmp = (Element *) array::append(sizeof(*cmp)))) {
+		if (!(cmp = (element *) array::append(sizeof(*cmp)))) {
 			return BadOperation;
 		}
-		new (cmp) Element(m, d);
+		new (cmp) element(m, d);
 		return 2;
 	}
 	
 	void compress(int mask = 0) {
-		Element *u = 0, *c = (Element *) base();
+		element *u = 0, *c = (element *) base();
 		long len = 0;
 		
 		for (long i = 0, max = length(); i < max; ++i) {
@@ -138,32 +164,6 @@ public:
 			d->set_length(len * sizeof(*c));
 		}
 	}
-};
-
-class Graphic
-{
-public:
-	Graphic();
-	virtual ~Graphic();
-	
-	// layout (de)registration
-	virtual int add_layout(Layout *, bool = true);
-	virtual int remove_layout(const Layout *);
-	long layout_count() const;
-	
-	// create new layout
-	virtual Layout *create_layout();
-	
-	// mapping helpers
-	int target(laydest &, message &, size_t = 0) const;
-	metatype *item(message &, size_t = 0) const;
-	
-	// untracked reference to shedule update
-	virtual bool register_update(const reference *, UpdateHint = UpdateHint());
-	
-protected:
-	virtual void dispatch_updates();
-	RefArray<Layout> _layouts;
 };
 
 __MPT_NAMESPACE_END

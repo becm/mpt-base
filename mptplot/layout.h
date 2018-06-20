@@ -405,7 +405,7 @@ public:
 	size_t clear(const reference * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
 protected:
-	ItemArray<metatype> _items;
+	item_array<metatype> _items;
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
@@ -484,8 +484,8 @@ public:
 	
 protected:
 	reference_wrapper<Transform3> _gtr;
-	ItemArray<Axis> _axes;
-	ItemArray<Data> _worlds;
+	item_array<Axis> _axes;
+	item_array<Data> _worlds;
 };
 
 /*! Represent elements in layout file */
@@ -521,7 +521,7 @@ public:
 	
 	fpoint minimal_scale() const;
 protected:
-	ItemArray<Graph> _graphs;
+	item_array<Graph> _graphs;
 	Parse *_parse;
 	char *_alias;
 	char *_font;

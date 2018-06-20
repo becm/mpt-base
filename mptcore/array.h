@@ -136,9 +136,9 @@ MPT_STRUCT(array)
 	array & operator=  (struct ::iovec const&);
 	array & operator+= (struct ::iovec const&);
 protected:
-# define _MPT_ARRAY_TYPE(x)     ::mpt::Array<x>
-# define _MPT_UARRAY_TYPE(x)    ::mpt::UniqueArray<x>
-# define _MPT_REF_ARRAY_TYPE(x) ::mpt::RefArray<x>
+# define _MPT_ARRAY_TYPE(x)     ::mpt::typed_array<x>
+# define _MPT_UARRAY_TYPE(x)    ::mpt::unique_array<x>
+# define _MPT_REF_ARRAY_TYPE(x) ::mpt::reference_array<x>
 	reference_wrapper<content> _buf;
 #else
 	MPT_STRUCT(buffer) *_buf;
@@ -528,7 +528,7 @@ protected:
 
 /*! typed array with standard operations */
 template <typename T>
-class UniqueArray
+class unique_array
 {
 public:
 	typedef T* iterator;
@@ -546,7 +546,7 @@ public:
 		info.type = ::mpt::typeinfo<T>::id();
 		return info;
 	}
-	UniqueArray(long len = 0)
+	unique_array(long len = 0)
 	{
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
@@ -560,7 +560,7 @@ public:
 		public:
 			inline dummy()
 			{
-				this->_typeinfo = &UniqueArray::typeinfo();
+				this->_typeinfo = &unique_array::typeinfo();
 			}
 			uintptr_t addref() __MPT_OVERRIDE
 			{
@@ -584,12 +584,12 @@ public:
 		content<T> *c = _ref.reference();
 		return c ? c->end() : 0;
 	}
-	inline UniqueArray & operator=(const UniqueArray &a)
+	inline unique_array & operator=(const unique_array &a)
 	{
 		_ref = a._ref;
 		return *this;
 	}
-	inline UniqueArray & operator=(const reference_wrapper<content<T> > &v)
+	inline unique_array & operator=(const reference_wrapper<content<T> > &v)
 	{
 		this->_ref = v;
 		return *this;
@@ -706,7 +706,7 @@ protected:
 	}
 };
 template<typename T>
-class typeinfo<UniqueArray<T> >
+class typeinfo<unique_array<T> >
 {
 protected:
 	typeinfo();
@@ -718,7 +718,7 @@ public:
 };
 
 template <typename T>
-class Array : public UniqueArray<T>
+class typed_array : public unique_array<T>
 {
 public:
 	static const type_traits &typeinfo()
@@ -728,14 +728,14 @@ public:
 		if (info.init) {
 			return info;
 		}
-		info.init = UniqueArray<T>::_data_init;
+		info.init = unique_array<T>::_data_init;
 		info.copy = _data_copy;
-		info.fini = UniqueArray<T>::_data_fini;
+		info.fini = unique_array<T>::_data_fini;
 		info.size = sizeof(T);
 		info.type = ::mpt::typeinfo<T>::id();
 		return info;
 	}
-	Array(long len = 0)
+	typed_array(long len = 0)
 	{
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
@@ -749,7 +749,7 @@ public:
 		public:
 			inline dummy()
 			{
-				this->_typeinfo = &Array::typeinfo();
+				this->_typeinfo = &typed_array::typeinfo();
 			}
 			uintptr_t addref() __MPT_OVERRIDE
 			{
@@ -763,7 +763,7 @@ public:
 		static dummy _dummy;
 		this->_ref.set_reference(&_dummy);
 	}
-	inline Array & operator=(const Array &a)
+	inline typed_array & operator=(const typed_array &a)
 	{
 		this->_ref = a._ref;
 		return *this;
@@ -771,7 +771,7 @@ public:
 	bool insert(long pos, const T &v)
 	{
 		T *ptr;
-		if (!(ptr = UniqueArray<T>::insert(pos))) {
+		if (!(ptr = unique_array<T>::insert(pos))) {
 			return false;
 		}
 		*ptr = v;
@@ -790,7 +790,7 @@ protected:
 	}
 };
 template<typename T>
-class typeinfo<Array<T> >
+class typeinfo<typed_array<T> >
 {
 protected:
 	typeinfo();
@@ -803,10 +803,10 @@ public:
 
 /*! typed array with standard operations */
 template <typename T>
-class ItemArray : public UniqueArray<item<T> >
+class item_array : public unique_array<item<T> >
 {
 public:
-	inline ItemArray(size_t len = 0) : UniqueArray<item<T> >(len)
+	inline item_array(size_t len = 0) : unique_array<item<T> >(len)
 	{ }
 	item<T> *append(T *t, const char *id, int len = -1)
 	{
@@ -855,7 +855,7 @@ public:
 	}
 };
 template<typename T>
-class typeinfo<ItemArray<T> >
+class typeinfo<item_array<T> >
 {
 protected:
 	typeinfo();
@@ -868,16 +868,16 @@ public:
 
 /*! basic pointer array */
 template <typename T>
-class PointerArray : public Array<T *>
+class pointer_array : public typed_array<T *>
 {
 public:
 	typedef T** iterator;
 	
-	inline PointerArray(long len = 0) : Array<T *>(len)
+	inline pointer_array(long len = 0) : typed_array<T *>(len)
 	{ }
-	inline PointerArray &operator =(Array<T *> &from)
+	inline pointer_array &operator =(typed_array<T *> &from)
 	{
-		this->_ref = static_cast<PointerArray<T> &>(from)._ref;
+		this->_ref = static_cast<pointer_array<T> &>(from)._ref;
 		return *this;
 	}
 	inline void compact()
@@ -903,7 +903,7 @@ protected:
 	}
 };
 template<typename T>
-class typeinfo<PointerArray<T> >
+class typeinfo<pointer_array<T> >
 {
 protected:
 	typeinfo();
@@ -916,16 +916,16 @@ public:
 
 /*! extendable array for reference types */
 template <typename T>
-class RefArray : public UniqueArray<reference_wrapper<T> >
+class reference_array : public unique_array<reference_wrapper<T> >
 {
 public:
 	typedef reference_wrapper<T>* iterator;
 	
-	inline RefArray(size_t len = 0) : UniqueArray<reference_wrapper<T> >(len)
+	inline reference_array(size_t len = 0) : unique_array<reference_wrapper<T> >(len)
 	{ }
 	bool insert(long pos, T *ref)
 	{
-		reference_wrapper<T> *ptr = UniqueArray<reference_wrapper<T> >::insert(pos);
+		reference_wrapper<T> *ptr = unique_array<reference_wrapper<T> >::insert(pos);
 		if (!ptr) {
 			return false;
 		}
@@ -934,7 +934,7 @@ public:
 	}
 	bool set(long pos, T *ref)
 	{
-		reference_wrapper<T> *ptr = UniqueArray<reference_wrapper<T> >::get(pos);
+		reference_wrapper<T> *ptr = unique_array<reference_wrapper<T> >::get(pos);
 		if (!ptr) {
 			return false;
 		}
@@ -970,7 +970,7 @@ public:
 	}
 };
 template<typename T>
-class typeinfo<RefArray<T> >
+class typeinfo<reference_array<T> >
 {
 protected:
 	typeinfo();
@@ -981,7 +981,7 @@ public:
 	}
 };
 
-class LogStore : public logger, public reference_wrapper<metatype>
+class message_store : public logger, public reference_wrapper<metatype>
 {
 public:
 	enum {
@@ -998,14 +998,14 @@ public:
 		
 		FlowNormal  = PassUnsaved | PassSaved | PassFile
 	};
-	LogStore(metatype * = 0);
-	virtual ~LogStore();
+	message_store(metatype * = 0);
+	virtual ~message_store();
 	
-	class Entry;
+	class entry;
 	
 	int log(const char *, int, const char *, va_list) __MPT_OVERRIDE;
 	
-	virtual const Entry *next();
+	virtual const entry *next();
 	virtual void clear();
 	
 	virtual bool set_ignore_level(int);
@@ -1015,19 +1015,19 @@ public:
 	{
 		return _flags;
 	}
-	inline const span<const Entry> entries() const
+	inline const span<const entry> messages() const
 	{
 		return _msg.elements();
 	}
 protected:
-	Array<Entry> _msg;
+	typed_array<entry> _msg;
 	uint32_t _act;
 	uint8_t  _flags;
 	uint8_t  _ignore;
 	uint8_t  _level;
 };
 /*! storage for log messages */
-class LogStore::Entry : array
+class message_store::entry : array
 {
 public:
 	logger::LogType type() const;
@@ -1035,7 +1035,7 @@ public:
 	span<const char> data(int part = 0) const;
 	int set(const char *, int, const char *, va_list);
 protected:
-	struct Header
+	struct header
 	{
 		uint8_t from;
 		uint8_t args;
@@ -1043,24 +1043,24 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<LogStore::Entry>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<message_store::entry>::id() {
 	return typeinfo<array>::id();
 }
 
 /*! linear search map type */
 template <typename K, typename V>
-class Map
+class map
 {
 public:
-	class Element
+	class entry
 	{
 	public:
-		inline Element(const K &k = K(), const V &v = V()) : key(k), value(v)
+		inline entry(const K &k = K(), const V &v = V()) : key(k), value(v)
 		{ }
 		K key;
 		V value;
 	};
-	typedef const Element * const_iterator;
+	typedef const entry * const_iterator;
 	
 	inline const_iterator begin() const
 	{
@@ -1074,32 +1074,32 @@ public:
 	{
 		V *d = get(key);
 		if (!d) {
-			return _d.insert(_d.length(), Element(key, value));
+			return _d.insert(_d.length(), entry(key, value));
 		}
 		*d = value;
 		return true;
 	}
 	bool append(const K &key, const V &value)
 	{
-		return _d.insert(_d.length(), Element(key, value));
+		return _d.insert(_d.length(), entry(key, value));
 	}
 	V *get(const K &key) const
 	{
-		for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
+		for (entry *c = _d.begin(), *e = _d.end(); c < e; ++c) {
 			if (c->key == key) {
 				return &e->value;
 			}
 		}
 		return 0;
 	}
-	inline Array<V> values(const K &key) const
+	inline typed_array<V> values(const K &key) const
 	{
 		return values(&key);
 	}
-	Array<V> values(const K *key = 0) const
+	typed_array<V> values(const K *key = 0) const
 	{
-		Array<V> a;
-		for (Element *c = _d.begin(), *e = _d.end(); c < e; ++c) {
+		typed_array<V> a;
+		for (entry *c = _d.begin(), *e = _d.end(); c < e; ++c) {
 			if (!key || c->key == *key) {
 				a.insert(a.length(), c->value);
 			}
@@ -1107,10 +1107,10 @@ public:
 		return a;
 	}
 protected:
-	Array<Element> _d;
+	typed_array<entry> _d;
 };
 template<typename K, typename V>
-class typeinfo<Map<K, V> >
+class typeinfo<map<K, V> >
 {
 protected:
 	typeinfo();

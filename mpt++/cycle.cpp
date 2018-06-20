@@ -14,7 +14,7 @@
 __MPT_NAMESPACE_BEGIN
 
 template class reference_wrapper<Cycle>;
-template class RefArray<Cycle>;
+template class reference_array<Cycle>;
 
 template <> int typeinfo<Cycle *>::id()
 {

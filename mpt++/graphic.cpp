@@ -18,14 +18,14 @@
 __MPT_NAMESPACE_BEGIN
 
 // update registration
-UpdateHint::UpdateHint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
+graphic::update_hint::update_hint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
 {
     if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= laydest::MatchLayout; }
     if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= laydest::MatchGraph; }
     if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= laydest::MatchWorld; }
 }
 // update reduction
-bool UpdateHint::merge(const UpdateHint &with, int mask)
+bool graphic::update_hint::merge(const update_hint &with, int mask)
 {
     // unconditional update
     if (!match) {
@@ -66,7 +66,7 @@ bool UpdateHint::merge(const UpdateHint &with, int mask)
     return false;
 }
 // update target
-bool UpdateHint::destination(laydest *dst)
+bool graphic::update_hint::destination(laydest *dst)
 {
     if (match != laydest::MatchPath) {
         return false;
@@ -80,14 +80,14 @@ bool UpdateHint::destination(laydest *dst)
     return true;
 }
 // graphic interface
-Graphic::Graphic()
+graphic::graphic()
 { }
 
-Graphic::~Graphic()
+graphic::~graphic()
 { }
 
 // layout registration
-int Graphic::add_layout(Layout *lay, bool reuse)
+int graphic::add_layout(Layout *lay, bool reuse)
 {
     if (!lay) {
         return BadArgument;
@@ -111,7 +111,7 @@ int Graphic::add_layout(Layout *lay, bool reuse)
     return pos;
 }
 // layout removal
-int Graphic::remove_layout(const Layout *lay)
+int graphic::remove_layout(const Layout *lay)
 {
     if (!lay) {
         return BadArgument;
@@ -127,12 +127,12 @@ int Graphic::remove_layout(const Layout *lay)
     return MissingData;
 }
 // number of layouts
-long Graphic::layout_count() const
+long graphic::layout_count() const
 {
     return _layouts.count();
 }
 // layout creation
-Layout *Graphic::create_layout()
+Layout *graphic::create_layout()
 {
     return new Layout;
 }
@@ -179,7 +179,7 @@ static Graph::Data *graph_data(span<const item<Graph::Data> > gd, int pos)
     return it->reference();
 }
 
-int Graphic::target(laydest &old, message &msg, size_t len) const
+int graphic::target(laydest &old, message &msg, size_t len) const
 {
     message tmp;
     laydest dst = old;
@@ -378,7 +378,7 @@ int Graphic::target(laydest &old, message &msg, size_t len) const
 
     return match;
 }
-metatype *Graphic::item(message &msg, size_t len) const
+metatype *graphic::item(message &msg, size_t len) const
 {
     message tmp = msg;
     ssize_t part;
@@ -469,9 +469,11 @@ metatype *Graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool Graphic::register_update(const reference *, UpdateHint)
-{ return true; }
-void Graphic::dispatch_updates()
+bool graphic::register_update(const reference *, update_hint)
+{
+    return true;
+}
+void graphic::dispatch_updates()
 { }
 
 __MPT_NAMESPACE_END

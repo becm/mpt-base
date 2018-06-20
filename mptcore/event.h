@@ -150,7 +150,7 @@ public:
 			cmd(arg, 0);
 		}
 	}
-	class array : public UniqueArray<command>
+	class array : public unique_array<command>
 	{
 	public:
 		bool set_handler(uintptr_t, EventHandler , void *);

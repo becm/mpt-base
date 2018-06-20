@@ -124,7 +124,7 @@ configuration::configuration()
 configuration::~configuration()
 { }
 // private element access
-configuration::element *configuration::get_element(const UniqueArray<configuration::element> &arr, path &p)
+configuration::element *configuration::get_element(const unique_array<configuration::element> &arr, path &p)
 {
     const span<const char> name = p.value();
     int len;
@@ -143,7 +143,7 @@ configuration::element *configuration::get_element(const UniqueArray<configurati
     }
     return 0;
 }
-configuration::element *configuration::make_element(UniqueArray<configuration::element> &arr, path &p)
+configuration::element *configuration::make_element(unique_array<configuration::element> &arr, path &p)
 {
     const span<const char> name = p.value();
     int len;

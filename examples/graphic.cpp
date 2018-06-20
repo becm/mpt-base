@@ -19,7 +19,7 @@ int main()
 {
     mtrace();
     
-    mpt::Graphic g;
+    mpt::graphic g;
     mpt::Layout *l;
     
     l = g.create_layout();
@@ -27,7 +27,7 @@ int main()
     l->set("name", "lay");
     
     int pos = g.add_layout(l);
-    g.register_update(l, mpt::UpdateHint(pos));
+    g.register_update(l, mpt::graphic::update_hint(pos));
     
     g.remove_layout(l);
 }

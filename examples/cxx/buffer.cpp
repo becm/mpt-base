@@ -30,7 +30,7 @@ extern int main(int argc, char * const argv[])
 	mtrace();
 	
 	mpt::Buffer buf;
-	mpt::Array<double> d;
+	mpt::typed_array<double> d;
 	
 	d.insert(3, 4);
 	d.set(2, 1);
