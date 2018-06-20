@@ -684,6 +684,7 @@ bool Graph::update_transform(int dim)
         update_transform(0);
         update_transform(1);
         update_transform(2);
+        return true;
     }
     if (dim > 2) {
         return false;
