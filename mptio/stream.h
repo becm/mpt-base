@@ -1,5 +1,5 @@
 /*!
- * MPT core library
+ * MPT I/O library
  *  file/network/data interface
  */
 

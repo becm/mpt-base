@@ -39,7 +39,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		return MPT_ERROR(MissingData);
 	}
 	while (*fmt) {
-		static const MPT_STRUCT(valfmt) vfmt = MPT_VALFMT_INIT;
+		static const MPT_STRUCT(value_format) vfmt = MPT_VALFMT_INIT;
 		char buf[256];
 		const char *txt;
 		size_t len;

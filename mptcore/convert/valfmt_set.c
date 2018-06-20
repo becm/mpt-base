@@ -24,7 +24,7 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	MPT_INTERFACE(iterator) *it;
 	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
 	MPT_STRUCT(value) val = MPT_VALUE_INIT;
-	MPT_STRUCT(valfmt) fmt;
+	MPT_STRUCT(value_format) fmt;
 	int ret, curr;
 	
 	if (!src) {
@@ -37,7 +37,7 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 		    || info->type != MPT_ENUM(TypeValFmt)) {
 			return MPT_ERROR(BadType);
 		}
-		return buf->_used / sizeof(MPT_STRUCT(valfmt));
+		return buf->_used / sizeof(fmt);
 	}
 	/* get elements from iterator */
 	it = 0;

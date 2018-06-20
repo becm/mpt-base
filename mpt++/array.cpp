@@ -316,7 +316,7 @@ int array::set(value val)
         char buf[256];
         int ret;
         /* print number data */
-        if ((ret = mpt_number_print(buf, sizeof(buf), valfmt(), *val.fmt, val.ptr)) >= 0) {
+        if ((ret = mpt_number_print(buf, sizeof(buf), value_format(), *val.fmt, val.ptr)) >= 0) {
             if (!mpt_array_append(&a, ret, buf)) {
                 return BadOperation;
             }

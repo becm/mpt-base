@@ -24,7 +24,7 @@ static const struct {
 	{ MPT_ENUM(TypeAddress),   0 },
 	
 	/* basic types (0x8 - 0xf) */
-	{ MPT_ENUM(TypeValFmt),    sizeof(MPT_STRUCT(valfmt)) },
+	{ MPT_ENUM(TypeValFmt),    sizeof(MPT_STRUCT(value_format)) },
 	{ MPT_ENUM(TypeValue),     sizeof(MPT_STRUCT(value)) },
 	{ MPT_ENUM(TypeProperty),  sizeof(MPT_STRUCT(property)) },
 	{ MPT_ENUM(TypeCommand),   sizeof(MPT_STRUCT(command)) },

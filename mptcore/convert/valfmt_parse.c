@@ -19,7 +19,7 @@
  */
 extern int mpt_valfmt_parse(MPT_STRUCT(array) *arr, const char *base)
 {
-	MPT_STRUCT(valfmt) fmt;
+	MPT_STRUCT(value_format) fmt;
 	const char *pos = base;
 	int curr;
 	

@@ -23,7 +23,7 @@
  */
 extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const void *src)
 {
-	MPT_STRUCT(valfmt) *fmt;
+	MPT_STRUCT(value_format) *fmt;
 	MPT_STRUCT(buffer) *buf;
 	FILE *fd;
 	const char *endl, *dat;
@@ -126,7 +126,7 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	while (len) {
 		char buf[256];
 		const char *curr = src;
-		MPT_STRUCT(valfmt) val = MPT_VALFMT_INIT;
+		MPT_STRUCT(value_format) val = MPT_VALFMT_INIT;
 		int adv, conv;
 		uint16_t pos;
 		char cfmt = hist->fmt.fmt;
@@ -187,8 +187,8 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			hist->fmt.fmt = 0;
 		}
 		/* stretch field size */
-		if (conv < val.wdt) {
-			conv = val.wdt;
+		if (conv < val.width) {
+			conv = val.width;
 		}
 		/* field separation */
 		if ((pos = hist->fmt.pos++)) {

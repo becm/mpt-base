@@ -94,7 +94,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		pr->val.fmt = fmt;
 		pr->val.ptr = 0;
 		if (!(buf = hist->fmt._fmt._buf)
-		    || !(len = buf->_used / sizeof(MPT_STRUCT(valfmt)))) {
+		    || !(len = buf->_used / sizeof(MPT_STRUCT(value_format)))) {
 			return 0;
 		}
 		pr->val.ptr = buf + 1;

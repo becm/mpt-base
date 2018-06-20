@@ -20,15 +20,15 @@
  * 
  * \return consumed length
  */
-extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(valfmt) *arr, MPT_STRUCT(valfmt) fmt)
+extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(value_format) *arr, MPT_STRUCT(value_format) fmt)
 {
 	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *b;
-	MPT_STRUCT(valfmt) *dest;
+	MPT_STRUCT(value_format) *dest;
 	long len;
 	
 	if (!(b = arr->_buf)) {
-		static const MPT_STRUCT(type_traits) _valfmt_info = MPT_TYPETRAIT_INIT(MPT_STRUCT(valfmt), MPT_ENUM(TypeValFmt));
+		static const MPT_STRUCT(type_traits) _valfmt_info = MPT_TYPETRAIT_INIT(MPT_STRUCT(value_format), MPT_ENUM(TypeValFmt));
 		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt), 0))) {
 			return MPT_ERROR(BadOperation);
 		}
@@ -42,7 +42,7 @@ extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(valfmt) *arr, MPT_STRUCT(valfmt) fmt)
 	    || info->type != MPT_ENUM(TypeValFmt)) {
 		return MPT_ERROR(BadType);
 	}
-	len = b->_used / sizeof(sizeof(fmt));
+	len = b->_used / sizeof(fmt);
 	if (!(b = b->_vptr->detach(b, (len + 8) * sizeof(fmt)))) {
 		return 0;
 	}

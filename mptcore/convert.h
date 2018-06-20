@@ -76,50 +76,37 @@ MPT_STRUCT(scalar)
 
 /* value output format */
 #ifdef __cplusplus
-MPT_STRUCT(valfmt)
+MPT_STRUCT(value_format)
 {
 public:
 	enum { Type = TypeValFmt };
 	
-	inline valfmt() : fmt(6), wdt(0)
+	inline value_format() : flags(0), width(0), dec(6)
 	{ }
-	inline int width() const
-	{
-		return wdt;
-	}
-	inline int flags() const
-	{
-		return fmt & 0xff00;
-	}
-	inline int decimals() const
-	{
-		return fmt & 0x7f;
-	}
 # define MPT_VALFMT(x)  x
 #else
 # define MPT_VALFMT(x)  MPT_ENUM(Format##x)
 #endif
 enum MPT_VALFMT(Flags) {
-	MPT_VALFMT(IntHex)      = 0x0100, /* print hexadecimal */
-	MPT_VALFMT(IntOctal)    = 0x0200, /* print octal integer */
-	MPT_VALFMT(FltHex)      = 0x0400, /* print hexadecimal */
+	MPT_VALFMT(IntHex)      = 0x1,    /* print hexadecimal */
+	MPT_VALFMT(IntOctal)    = 0x2,    /* print octal integer */
+	MPT_VALFMT(IntFlags)    = 0xf,    /* print hexadecimal */
+	MPT_VALFMT(FltHex)      = 0x10,   /* print hexadecimal */
 	MPT_VALFMT(NumberHex)   = MPT_VALFMT(IntHex) | MPT_VALFMT(FltHex),
-	MPT_VALFMT(Scientific)  = 0x0800, /* scientific float notation */
+	MPT_VALFMT(Scientific)  = 0x20,   /* scientific float notation */
+	MPT_VALFMT(FltFlags)    = 0xf0,   /* print hexadecimal */
 	
-	MPT_VALFMT(Sign)        = 0x1000, /* print sign */
-	MPT_VALFMT(Left)        = 0x2000  /* print left bounded */
+	MPT_VALFMT(Sign)        = 0x100,  /* print sign */
+	MPT_VALFMT(Left)        = 0x200   /* print left bounded */
 };
-#ifdef __cplusplus
-protected:
-#else
-MPT_STRUCT(valfmt)
+#ifndef __cplusplus
+MPT_STRUCT(value_format)
 {
 # define MPT_VALFMT_INIT  { 0, 0, 0 }
-# define MPT_VALFMT_DECMAX  0x7f
 #endif
-	uint16_t fmt;  /* format flags and number of decimals */
-	uint8_t  wdt;  /* field width */
-	uint8_t _pad;
+	uint16_t flags;  /* format flags */ 
+	uint8_t  width;  /* field width */
+	uint8_t  dec;    /* number of decimals */
 };
 
 MPT_STRUCT(strdest)
@@ -129,9 +116,9 @@ MPT_STRUCT(strdest)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<valfmt>::id()
+template<> inline __MPT_CONST_TYPE int typeinfo<value_format>::id()
 {
-	return valfmt::Type;
+	return value_format::Type;
 }
 
 float swapOrder(float);
@@ -222,16 +209,16 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec
 
 
 /* convert structured data to string */
-extern int mpt_number_print(char *, size_t , MPT_STRUCT(valfmt) , int , const void *);
+extern int mpt_number_print(char *, size_t , MPT_STRUCT(value_format) , int , const void *);
 /* output data */
 extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
 
 /* parse/create terminal output format */
-extern int mpt_valfmt_get(MPT_STRUCT(valfmt) *, const char *);
+extern int mpt_valfmt_get(MPT_STRUCT(value_format) *, const char *);
 #ifdef _MPT_ARRAY_H
-extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(valfmt) *, const char *);
-extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(valfmt) *, const MPT_INTERFACE(metatype) *);
-extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(valfmt) *, MPT_STRUCT(valfmt));
+extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(value_format) *, const char *);
+extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(value_format) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(value_format) *, MPT_STRUCT(value_format));
 #endif
 
 /* parse character separated values */

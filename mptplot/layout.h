@@ -1,5 +1,5 @@
 /*!
- * MPT core library
+ * MPT plotting library
  *  layout data structures
  */
 

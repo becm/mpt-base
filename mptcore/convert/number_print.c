@@ -22,25 +22,22 @@
  * 
  * \return consumed buffer size
  */
-extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int type, const void *arg)
+extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fmt, int type, const void *arg)
 {
 	int flg, sgn, len, dec;
 	uint8_t wd;
 	
-	type |= fmt.fmt & 0xff00;
+	flg = fmt.flags & 0xff;
+	sgn = fmt.flags & MPT_VALFMT(Sign);
+	wd  = fmt.width;
+	dec = fmt.dec;
 	
-	flg = type & 0xf00;
-	sgn = type & MPT_VALFMT(Sign);
-	dec = fmt.fmt & MPT_VALFMT_DECMAX;
-	
-	wd = fmt.wdt;
-	if (type & MPT_VALFMT(Left)) {
+	if (fmt.flags & MPT_VALFMT(Left)) {
 		wd = 0;
 	}
 	else if (wd > left) {
 		return MPT_ERROR(MissingBuffer);
 	}
-	type &= 0xff;
 	if (type == 'l') {
 		type = mpt_type_int(sizeof(long));
 	}
@@ -51,7 +48,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 		break;
 	/* 8bit formats */
 	    case 'b':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			if (sgn) {
 				len = snprintf(dest, left, "%+*" PRIi8, wd, *((int8_t*)arg));
 			} else {
@@ -60,7 +57,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			break;
 		}
 	    case 'y':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu8, wd, *((uint8_t*)arg));
 			break;
 		}
@@ -75,7 +72,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 		return MPT_ERROR(BadValue);
 	/* 16bit formats */
 	    case 'n':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			if (sgn) {
 				len = snprintf(dest, left, "%+*" PRIi16, wd, *((int16_t*)arg));
 			} else {
@@ -84,7 +81,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			break;
 		}
 	    case 'q':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu16, wd, *((uint16_t*)arg));
 			break;
 		}
@@ -99,7 +96,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 		return MPT_ERROR(BadValue);
 	/* 32bit formats */
 	    case 'i':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			if (sgn) {
 				len = snprintf(dest, left, "%+*" PRIi32, wd, *((int32_t*)arg));
 			} else {
@@ -108,7 +105,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			break;
 		}
 	    case 'u':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu32, wd, *((uint32_t*)arg));
 			break;
 		}
@@ -123,7 +120,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 		return MPT_ERROR(BadValue);
 	/* 64bit formats */
 	    case 'x':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			if (sgn) {
 				len = snprintf(dest, left, "%+*" PRIi64, wd, *((int64_t*)arg));
 			} else {
@@ -132,7 +129,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			break;
 		}
 	    case 't':
-		if (!flg) {
+		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu64, wd, *((uint64_t*)arg));
 			break;
 		}
@@ -155,6 +152,14 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			}
 			break;
 		}
+		if (!(flg & MPT_VALFMT(FltFlags))) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*f", wd, dec, *((float*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*f", wd, dec, *((float*)arg));
+			}
+			break;
+		}
 #if __STDC_VERSION__ >= 199901L
 		if (flg & MPT_VALFMT(FltHex)) {
 			if (sgn) {
@@ -173,18 +178,21 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			}
 			break;
 		}
-		if (sgn) {
-			len = snprintf(dest, left, "%+*.*f", wd, dec, *((float*)arg));
-		} else {
-			len = snprintf(dest, left, "%*.*f", wd, dec, *((float*)arg));
-		}
-		break;
+		return MPT_ERROR(BadValue);
 	    case 'd':
 		if (!dec) {
 			if (sgn) {
 				len = snprintf(dest, left, "%+*g", wd, *((double*)arg));
 			} else {
 				len = snprintf(dest, left, "%*g", wd, *((double*)arg));
+			}
+			break;
+		}
+		if (!(flg & MPT_VALFMT(FltFlags))) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*f", wd, dec, *((double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*f", wd, dec, *((double*)arg));
 			}
 			break;
 		}
@@ -206,12 +214,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			}
 			break;
 		}
-		if (sgn) {
-			len = snprintf(dest, left, "%+*.*f", wd, dec, *((double*)arg));
-		} else {
-			len = snprintf(dest, left, "%*.*f", wd, dec, *((double*)arg));
-		}
-		break;
+		return MPT_ERROR(BadValue);
 #ifdef _MPT_FLOAT_EXTENDED_H
 	    case 'e':
 		if (!dec) {
@@ -219,6 +222,14 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 				len = snprintf(dest, left, "%+*Lg", wd, *((long double*)arg));
 			} else {
 				len = snprintf(dest, left, "%*Lg", wd, *((long double*)arg));
+			}
+			break;
+		}
+		if (!(flg & MPT_VALFMT(FltFlags))) {
+			if (sgn) {
+				len = snprintf(dest, left, "%+*.*Lf", wd, dec, *((long double*)arg));
+			} else {
+				len = snprintf(dest, left, "%*.*Lf", wd, dec, *((long double*)arg));
 			}
 			break;
 		}
@@ -240,22 +251,20 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(valfmt) fmt, int
 			}
 			break;
 		}
-		if (sgn) {
-			len = snprintf(dest, left, "%+*.*Lf", wd, dec, *((long double*)arg));
-		} else {
-			len = snprintf(dest, left, "%*.*Lf", wd, dec, *((long double*)arg));
-		}
-		break;
+		return MPT_ERROR(BadValue);
 #endif /* _MPT_FLOAT_EXTENDED_H */
 	    default:
 		return MPT_ERROR(BadType);
 	}
-	if (len < 0) return len;
-	if ((size_t) len >= left) return MPT_ERROR(MissingBuffer);
-	
+	if (len < 0) {
+		return len;
+	}
+	if ((size_t) len >= left) {
+		return MPT_ERROR(MissingBuffer);
+	}
 	if (flg & MPT_VALFMT(Left)) {
 		dest += len;
-		wd = fmt.fmt & 0xff;
+		wd = fmt.width;
 		if (left <= (size_t) wd) {
 			return MPT_ERROR(MissingBuffer);
 		}
