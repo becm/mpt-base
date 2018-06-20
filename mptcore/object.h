@@ -97,7 +97,7 @@ template<> inline __MPT_CONST_TYPE int typeinfo<object *>::id() {
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*property_set)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
+	int (*set_property)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
 };MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
 };

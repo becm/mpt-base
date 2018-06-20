@@ -61,7 +61,7 @@ static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
 	mt.base.it = it;
 	mt.v = par->val;
 	
-	return obj->_vptr->property_set(obj, par->prop, &mt.base._ctl);
+	return obj->_vptr->set_property(obj, par->prop, &mt.base._ctl);
 }
 /*!
  * \ingroup mptObject

@@ -29,5 +29,5 @@ extern int mpt_object_set_iterator(MPT_INTERFACE(object) *obj, const char *prop,
 	mt._ctl._vptr = &metaIterCtl;
 	mt.it = it;
 	
-	return obj->_vptr->property_set(obj, prop, &mt._ctl);
+	return obj->_vptr->set_property(obj, prop, &mt._ctl);
 }
