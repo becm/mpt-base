@@ -108,7 +108,10 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 			return 0;
 		}
 		/* align size info */
-		len += size - (len % size);
+		add = len % size;
+		if (add) {
+			len += size - add;
+		}
 	}
 	/* no modification required */
 	if (buf->_ref._val < 2) {
@@ -134,22 +137,23 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 		return 0;
 	}
 	/* copy type information */
-	if (!info) {
-		next->info = 0;
-	} else {
+	if (info) {
 		void *ptr;
 		if (!(ptr = malloc(sizeof(*info)))) {
 			free(next);
 			return 0;
 		}
 		next->info = memcpy(ptr, info, sizeof(*info));
+	} else {
+		next->info = 0;
 	}
 	next->_psize = buf->_psize;
 	next->_ref._val = 1;
 	
+	len -= sizeof(*next);
 	next->buf._vptr = &_mpt_buffer_vptr;
 	next->buf._typeinfo = next->info;
-	next->buf._size = len - sizeof(*next);
+	next->buf._size = len;
 	next->buf._used = 0;
 	
 	/* require content copy */
@@ -169,7 +173,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 			if (!info) {
 				add = len;
 			}
-			if ((fini = info->fini)) {
+			else if ((fini = info->fini)) {
 				size_t pos, size = info->size;
 				uint8_t *ptr = (void *) (buf + 1);
 				add -= (add % size);
