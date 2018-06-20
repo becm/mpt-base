@@ -15,6 +15,7 @@ src = files(
   'range_set.c',
   'stage_data.c',
   'stage_fini.c',
+  'value_apply_init.c',
   'value_store_reserve.c',
   'value_store_typeid.c',
   'values_bound.c',

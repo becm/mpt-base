@@ -18,11 +18,11 @@ __MPT_NAMESPACE_BEGIN
 range::range() : min(DBL_MIN), max(DBL_MAX)
 { }
 
-transform::transform(int flg)
+value_apply::value_apply(int flg)
 {
-    mpt_trans_init(this, flg);
+    mpt_value_apply_init(this, flg);
 }
-void transform::set(const struct range &r, int flg)
+void value_apply::set(const struct range &r, int flg)
 {
     double min, max;
 
@@ -56,24 +56,32 @@ void transform::set(const struct range &r, int flg)
     add   = min * fact;
 }
 
-
-int Transform::dimensions() const
-{ return 0; }
-
-point<double> Transform::zero() const
-{ return point<double>(); }
-
-linepart Transform::part(unsigned , const double *from, int len) const
+// interface for transformation
+void transform::unref()
+{
+    delete this;
+}
+int transform::dimensions() const
+{
+    return 0;
+}
+point<double> transform::zero() const
+{
+    return point<double>();
+}
+linepart transform::part(unsigned , const double *from, int len) const
 {
      linepart p;
      mpt_linepart_linear(&p, from, len, 0);
      return p;
 }
-bool Transform::apply(unsigned , const linepart &, point<double> *, const double *) const
-{ return false; }
+bool transform::apply(unsigned , const linepart &, point<double> *, const double *) const
+{
+    return false;
+}
 
 // implementation with 3 dimensions
-Transform3::data::data(int flg) : transform(flg < 0 ? 0 : flg)
+Graph::transform::data::data(int flg) : value_apply(flg < 0 ? 0 : flg)
 {
     if (flg < 0) {
         _flags = 0;
@@ -81,36 +89,33 @@ Transform3::data::data(int flg) : transform(flg < 0 ? 0 : flg)
         _flags = flg;
     }
 }
-Transform3::Transform3()
+Graph::transform::transform()
 {
     new (&_dim[0]) data(AxisStyleX);
     new (&_dim[1]) data(AxisStyleY);
     new (&_dim[2]) data(AxisStyleZ);
 }
+Graph::transform::~transform()
+{ }
 
-void Transform3::unref()
+int Graph::transform::dimensions() const
 {
-    delete this;
-}
-
-int Transform3::dimensions() const
-{
-    if (_dim[2].transform.apply.x || _dim[2].transform.apply.y) {
+    if (_dim[2].to.x || _dim[2].to.y) {
         return 3;
     }
-    if (_dim[1].transform.apply.x || _dim[1].transform.apply.y) {
+    if (_dim[1].to.x || _dim[1].to.y) {
         return 2;
     }
-    if (_dim[0].transform.apply.x || _dim[0].transform.apply.y) {
+    if (_dim[0].to.x || _dim[0].to.y) {
         return 1;
     }
     return 0;
 }
-point<double> Transform3::zero() const
+point<double> Graph::transform::zero() const
 {
     return point<double>(_base.x, _base.y);
 }
-linepart Transform3::part(unsigned dim, const double *val, int len) const
+linepart Graph::transform::part(unsigned dim, const double *val, int len) const
 {
     struct range l;
     const data *curr = 0;
@@ -149,9 +154,9 @@ linepart Transform3::part(unsigned dim, const double *val, int len) const
 }
 
 template void apply<point<double>, double>(point<double> *, const linepart &, const double *, const point<double> &);
-template void apply<double>(point<double> *, const linepart &, const double *, const transform &);
+template void apply<double>(point<double> *, const linepart &, const double *, const value_apply &);
 
-extern void apply_log(point<double> *dest, const linepart &pt, const double *from, const transform &fact)
+extern void apply_log(point<double> *dest, const linepart &pt, const double *from, const value_apply &a)
 {
     linepart all = pt;
     while (all.usr) {
@@ -164,7 +169,7 @@ extern void apply_log(point<double> *dest, const linepart &pt, const double *fro
         for (uint16_t i = 0; i < curr.usr; ++i) {
             tmp[i] = log10(from[i]);
         }
-        ::mpt::apply<double>(dest, curr, tmp, fact);
+        ::mpt::apply<double>(dest, curr, tmp, a);
         from += curr.usr;
         dest += curr.usr;
         all.usr -= curr.usr;
@@ -173,7 +178,7 @@ extern void apply_log(point<double> *dest, const linepart &pt, const double *fro
     }
 }
 
-bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
+bool Graph::transform::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
 {
     const data *curr;
 
@@ -191,10 +196,10 @@ bool Transform3::apply(unsigned dim, const linepart &pt, point<double> *dest, co
     curr = &_dim[dim];
     // apply point data
     if (!(curr->_flags & TransformLg)) {
-        ::mpt::apply<double>(dest, pt, from, curr->transform);
+        ::mpt::apply<double>(dest, pt, from, *curr);
     }
     else {
-        apply_log(dest, pt, from, curr->transform);
+        apply_log(dest, pt, from, *curr);
     }
     return true;
 }

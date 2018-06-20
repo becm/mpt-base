@@ -11,6 +11,5 @@ src = files(
   'text_property.c',
   'tick_log10.c',
   'ticks_linear.c',
-  'trans_init.c',
   'world_property.c',
 )

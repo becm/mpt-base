@@ -17,7 +17,7 @@ MPT_STRUCT(node);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
-class Transform;
+class transform;
 
 template<typename T>
 struct point
@@ -153,7 +153,7 @@ public:
 	}
 protected:
 #else
-# define MPT_TYPED_ARRAY_INIT { MPT_ARRAY_INIT, 0, 0, 0 }
+# define MPT_VALUE_STORE_INIT { MPT_ARRAY_INIT, 0, 0 }
 #endif
 	MPT_STRUCT(array) _d;
 	uint16_t _flags;
@@ -235,7 +235,7 @@ MPT_STRUCT(linepart)
 	class array : public typed_array<linepart>
 	{
 	public:
-		bool apply(const Transform &, int , span<const double>);
+		bool apply(const transform &, int , span<const double>);
 		bool set(long);
 		long length_user();
 		long length_raw();
@@ -245,6 +245,19 @@ MPT_STRUCT(linepart)
 	         usr,   /* transformed points in line part */
 	        _cut,
 	        _trim;  /* remove fraction from line start/end */
+};
+
+MPT_STRUCT(value_apply)
+{
+#ifdef __cplusplus
+	value_apply(int = -1);
+	
+	void set(const struct range &, int);
+#endif
+	double             scale;  /* raw value scale factor */
+	float              add;    /* scaled value offset */
+	uint32_t          _flags;  /* axis and transformation flags */
+	MPT_STRUCT(fpoint) to;     /* apply (add + scale * <raw>) to X and Y components */
 };
 
 /* binding to layout mapping */
@@ -259,7 +272,7 @@ MPT_STRUCT(mapping)
 		return src.state != 0;
 	}
 #else
-# define MPT_MAPPING_INIT { MPT_MSGBIND_INIT, 0, MPT_MSGDEST_INIT }
+# define MPT_MAPPING_INIT { MPT_VALSRC_INIT, 0, MPT_LAYDEST_INIT }
 #endif
 	MPT_STRUCT(valsrc)  src;
 	uint16_t            client;
@@ -321,6 +334,9 @@ extern double mpt_linepart_real(int val);
 /* join parts if allowed by size and no userdata in second */
 extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT_STRUCT(linepart));
 
+/* initialize transform dimension */
+extern void mpt_value_apply_init(MPT_STRUCT(value_apply) *, int __MPT_DEFPAR(-1));
+
 /* set point data */
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
@@ -353,50 +369,52 @@ size_t maxsize(span<const value_store>, int = -1);
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
 
-class Transform
+class transform : public reference
 {
 public:
+	void unref() __MPT_OVERRIDE;
+	
 	virtual int dimensions() const = 0;
 	
 	virtual linepart part(unsigned , const double *, int) const;
 	virtual bool apply(unsigned , const linepart &, point<double> *, const double *) const;
 	virtual point<double> zero() const;
 protected:
-	inline ~Transform()
+	inline virtual ~transform()
 	{ }
 };
 
-extern int apply_data(point<double> *, const linepart *, int , Transform &, span<const value_store>);
-class Polyline
+extern int apply_data(point<double> *, const span<const linepart> &, const transform &, span<const value_store>);
+class polyline
 {
 public:
 # if __cplusplus >= 201103L
-	using Point = point<double>;
+	using point = ::mpt::point<double>;
 # else
-	struct Point : public point<double>
+	struct point : public ::mpt::point<double>
 	{
 	public:
-		inline Point(const point<double> &from = point<double>(0, 0)) : point<double>(from)
+		inline point(const ::mpt::point<double> &from = ::mpt::point<double>(0, 0)) : ::mpt::point<double>(from)
 		{ }
 	};
 # endif
-	class Part
+	class part
 	{
 	public:
-		Part(const linepart lp, const Point *pts) : _part(lp), _pts(pts)
+		part(const linepart lp, const point *pts) : _part(lp), _pts(pts)
 		{ }
-		span<const Point> line() const;
-		span<const Point> points() const;
+		span<const point> line() const;
+		span<const point> points() const;
 	protected:
 		linepart _part;
-		const Point *_pts;
+		const point *_pts;
 	};
 	class iterator
 	{
 	public:
-		iterator(span<const linepart> l, const Point *p) : _parts(l), _points(p)
+		iterator(span<const linepart> l, const point *p) : _parts(l), _points(p)
 		{ }
-		Part operator *() const;
+		part operator *() const;
 		iterator & operator++ ();
 		
 		bool operator== (const iterator &it) const
@@ -409,10 +427,10 @@ public:
 		}
 	protected:
 		span<const linepart> _parts;
-		const Point *_points;
+		const point *_points;
 	};
-	bool set(const Transform &, const rawdata &, int = -1);
-	bool set(const Transform &, span<const value_store>);
+	bool set(const transform &, const rawdata &, int = -1);
+	bool set(const transform &, span<const value_store>);
 	
 	iterator begin() const;
 	iterator end() const;
@@ -426,29 +444,29 @@ public:
 	{
 		return _vis.elements();
 	}
-	span<const Point> points() const
+	span<const point> points() const
 	{
 		return _values.elements();
 	}
 protected:
 	linepart::array _vis;
-	typed_array<Point> _values;
+	typed_array<point> _values;
 };
 
-template<> int typeinfo<Polyline::Point>::id();
+template<> int typeinfo<polyline::point>::id();
 
-class Cycle : public reference, public rawdata
+class cycle : public reference, public rawdata
 {
 public:
 	enum Flags {
 		LimitStages = 1
 	};
-	Cycle();
+	cycle();
 	
-	class Stage : public rawdata_stage
+	class stage : public rawdata_stage
 	{
 	public:
-		inline const Polyline &values() const
+		inline const polyline &values() const
 		{
 			return _values;
 		}
@@ -456,9 +474,9 @@ public:
 		{
 			_values.clear();
 		}
-		bool transform(const Transform &);
+		bool transform(const class transform &);
 	protected:
-		Polyline _values;
+		polyline _values;
 	};
 	/* reference interface */
 	void unref() __MPT_OVERRIDE;
@@ -474,21 +492,21 @@ public:
 	virtual void limit_dimensions(uint8_t);
 	virtual bool limit_stages(size_t);
 	
-	inline Stage *begin()
+	inline stage *begin()
 	{
 		return _stages.begin();
 	}
-	inline Stage *end()
+	inline stage *end()
 	{
 		return _stages.end();
 	}
-	inline span<const Stage> stages() const
+	inline span<const stage> stages() const
 	{
 		return _stages.elements();
 	}
 protected:
-	virtual ~Cycle();
-	typed_array<Stage> _stages;
+	virtual ~cycle();
+	typed_array<stage> _stages;
 	uint16_t _act;
 	uint8_t _max_dimensions;
 	uint8_t _flags;

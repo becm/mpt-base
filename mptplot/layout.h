@@ -246,18 +246,6 @@ MPT_STRUCT(text)
 	double              angle;   /* raw text rotation */
 };
 
-MPT_STRUCT(transform)
-{
-#ifdef __cplusplus
-	transform(int = -1);
-	
-	void set(const struct range &, int);
-#endif
-	double scale;               /* raw value scale factor */
-	float  add;                 /* scaled value offset */
-	MPT_STRUCT(fpoint) apply;   /* apply (add + scale * <raw>) to X and Y components */
-};
-
 __MPT_EXTDECL_BEGIN
 
 /* color assignments */
@@ -292,9 +280,6 @@ extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
 extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, const MPT_INTERFACE(metatype) *);
 
-/* initialize transform dimension */
-extern void mpt_trans_init(MPT_STRUCT(transform) *, int __MPT_DEFPAR(-1));
-
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double);
 extern void mpt_axis_sety(MPT_STRUCT(axis) *, double);
@@ -323,15 +308,15 @@ struct parseflg;
 struct path;
 
 template <typename S>
-void apply(point<S> *d, const linepart &pt, const S *src, const transform &t)
+void apply(point<S> *d, const linepart &pt, const S *src, const value_apply &v)
 {
-	S mx(t.apply.x * t.add);
-	S my(t.apply.y * t.add);
+	S mx(v.to.x * v.add);
+	S my(v.to.y * v.add);
 	for (size_t i = 0; i < pt.usr; ++i) {
 		d->x += mx;
 		d->y += my;
 	}
-	const point<S> scale(t.apply.x * t.scale, t.apply.y * t.scale);
+	const point<S> scale(v.to.x * v.scale, v.to.y * v.scale);
 	apply<point<S>, S>(d, pt, src, scale);
 }
 extern void apply_log(point<double> *, const linepart &, const double *, const transform &);
@@ -391,14 +376,14 @@ public:
 };
 
 /*! Group implementation using reference array */
-class Collection : public metatype, public group
+class collection : public metatype, public group
 {
 public:
-	virtual ~Collection();
+	virtual ~collection();
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
-	Collection *clone() const __MPT_OVERRIDE;
+	collection *clone() const __MPT_OVERRIDE;
 	
 	const class item<metatype> *item(size_t) const __MPT_OVERRIDE;
 	class item<metatype> *append(metatype *) __MPT_OVERRIDE;
@@ -408,50 +393,24 @@ protected:
 	item_array<metatype> _items;
 };
 
-/*! Transformation parameters/interface for (up to) 3 dimensions */
-class Transform3 : public reference, public Transform
-{
-public:
-	struct data {
-		data(int = -1);
-		
-		struct range     limit;
-		struct transform transform;
-		uint32_t        _flags;
-	};
-	
-	Transform3();
-	
-	inline virtual ~Transform3()
-	{ }
-	void unref() __MPT_OVERRIDE;
-	
-	int dimensions() const __MPT_OVERRIDE;
-	
-	linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
-	bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
-	point<double> zero() const __MPT_OVERRIDE;
-	
-	data   _dim[3];
-	fpoint _base;
-};
-
 /*! Container and binding for data to axes */
-class Graph : public Collection, public graph
+class Graph : public collection, public graph
 {
 public:
-	class Data : public reference
+	class data : public reference
 	{
 	public:
-		Data(class World *w = 0);
-		virtual ~Data()
+		data(class World *w = 0);
+		virtual ~data()
 		{ }
 		
 		void unref() __MPT_OVERRIDE;
 		
 		reference_wrapper<class World> world;
-		reference_wrapper<class Cycle> cycle;
+		reference_wrapper<class cycle> cycle;
 	};
+	class transform;
+	
 	Graph(const graph * = 0);
 	~Graph() __MPT_OVERRIDE;
 	
@@ -467,33 +426,57 @@ public:
 	{
 		return _axes.elements();
 	}
-	virtual class item<class Data> *add_world(class World * = 0, const char * = 0, int = -1);
-	inline span<const class item<class Data> > worlds() const
+	virtual class item<data> *add_world(class World * = 0, const char * = 0, int = -1);
+	inline span<const class item<data> > worlds() const
 	{
 		return _worlds.elements();
 	}
-	virtual bool set_cycle(int , const reference_wrapper<class Cycle> &) const;
-	virtual const reference_wrapper<class Cycle> *cycle(int) const;
+	virtual bool set_cycle(int , const reference_wrapper<class cycle> &) const;
+	virtual const reference_wrapper<class cycle> *cycle(int) const;
 	
-	const Transform &transform();
+	const class ::mpt::transform &transform();
 	
-	const struct transform *transform_part(int = -1) const;
+	const struct value_apply *transform_part(int = -1) const;
 	int transform_flags(int = -1) const;
 	
 	bool update_transform(int dim = -1);
 	
 protected:
-	reference_wrapper<Transform3> _gtr;
+	reference_wrapper<class transform> _gtr;
 	item_array<Axis> _axes;
-	item_array<Data> _worlds;
+	item_array<data> _worlds;
+};
+
+/*! Transformation parameters/interface for (up to) 3 dimensions */
+class Graph::transform : public ::mpt::transform
+{
+public:
+	struct data : public value_apply
+	{
+		data(int = -1);
+		
+		struct range limit;
+	};
+	
+	transform();
+	~transform() __MPT_OVERRIDE;
+	
+	int dimensions() const __MPT_OVERRIDE;
+	
+	linepart part(unsigned , const double *, int) const __MPT_OVERRIDE;
+	bool apply(unsigned , const linepart &pt, point<double> *, const double *) const __MPT_OVERRIDE;
+	point<double> zero() const __MPT_OVERRIDE;
+	
+	data   _dim[3];
+	fpoint _base;
 };
 
 /*! Represent elements in layout file */
-class Layout : public Collection
+class layout : public collection
 {
 public:
-	Layout();
-	~Layout() __MPT_OVERRIDE;
+	layout();
+	~layout() __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;

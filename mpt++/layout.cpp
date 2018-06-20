@@ -20,6 +20,8 @@ template class reference_wrapper<Axis>;
 template class reference_wrapper<World>;
 template class reference_wrapper<Graph>;
 
+template class reference_wrapper<layout>;
+
 template <> int typeinfo<Line *>::id()
 {
     static int id = 0;
@@ -60,7 +62,7 @@ template <> int typeinfo<Graph *>::id()
     }
     return id;
 }
-template <> int typeinfo<Graph::Data *>::id()
+template <> int typeinfo<Graph::data *>::id()
 {
     static int id = 0;
     if (!id) {
@@ -68,7 +70,7 @@ template <> int typeinfo<Graph::Data *>::id()
     }
     return id;
 }
-template <> int typeinfo<Layout *>::id()
+template <> int typeinfo<layout *>::id()
 {
     static int id = 0;
     if (!id && (id = mpt_valtype_meta_new("layout")) < 0) {
@@ -429,7 +431,7 @@ int Graph::conv(int type, void *ptr) const
         if (ptr) *static_cast<const color **>(ptr) = &fg;
         return me;
     }
-    return Collection::conv(type, ptr);
+    return collection::conv(type, ptr);
 }
 // object interface
 int Graph::property(struct property *prop) const
@@ -546,8 +548,8 @@ bool Graph::bind(const relation &rel, logger *out)
             return false;
         }
     }
-    item_array<Data> oldworlds = _worlds;
-    _worlds = item_array<Data>();
+    item_array<data> oldworlds = _worlds;
+    _worlds = item_array<data>();
 
     if (!(names = graph::worlds())) {
         for (auto &it : _items) {
@@ -615,17 +617,17 @@ item<Axis> *Graph::add_axis(Axis *from, const char *name, int nlen)
     if (!from) a->unref();
     return 0;
 }
-item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
+item<Graph::data> *Graph::add_world(World *from, const char *name, int nlen)
 {
-    Data *d;
+    data *d;
     World *w;
 
     if (!(w = from)) {
-        d = new Data(w = new World);
+        d = new data(w = new World);
     } else {
-        d = new Data(w);
+        d = new data(w);
     }
-    class item<Graph::Data> *it;
+    class item<Graph::data> *it;
     if ((it = _worlds.append(d, name, nlen))) {
         return it;
     }
@@ -633,18 +635,18 @@ item<Graph::Data> *Graph::add_world(World *from, const char *name, int nlen)
     return 0;
 }
 
-const reference_wrapper<Cycle> *Graph::cycle(int pos) const
+const reference_wrapper<cycle> *Graph::cycle(int pos) const
 {
-    static const reference_wrapper<Cycle> def;
+    static const reference_wrapper<class cycle> def;
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return 0;
     }
-    Data *d = _worlds.get(pos)->reference();
+    data *d = _worlds.get(pos)->reference();
     if (!d) {
         return 0;
     }
     if (!d->cycle.reference()) {
-        Cycle *c = new reference_wrapper<Cycle>::instance;
+        class cycle *c = new reference_wrapper<class cycle>::instance;
         d->cycle.set_reference(c);
         World *w;
         if ((w = d->world.reference())) {
@@ -654,12 +656,12 @@ const reference_wrapper<Cycle> *Graph::cycle(int pos) const
     }
     return &d->cycle;
 }
-bool Graph::set_cycle(int pos, const reference_wrapper<Cycle> &cyc) const
+bool Graph::set_cycle(int pos, const reference_wrapper<class cycle> &cyc) const
 {
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return false;
     }
-    Data *d = _worlds.get(pos)->reference();
+    data *d = _worlds.get(pos)->reference();
     if (!d) {
         return false;
     }
@@ -667,13 +669,13 @@ bool Graph::set_cycle(int pos, const reference_wrapper<Cycle> &cyc) const
     return true;
 }
 
-const Transform &Graph::transform()
+const transform &Graph::transform()
 {
-    Transform *t;
+    ::mpt::transform *t;
     if ((t = _gtr.reference())) {
         return *t;
     } else {
-        static const Transform3 def;
+        static const class transform def;
         return def;
     }
 }
@@ -695,9 +697,9 @@ bool Graph::update_transform(int dim)
     if (!it || !(a = it->reference())) {
         return false;
     }
-    Transform3 *t;
+    class transform *t;
     if (!(t = _gtr.reference())) {
-        t = new Transform3;
+        t = new class transform;
         _gtr.set_reference(t);
     }
     int type;
@@ -716,30 +718,29 @@ bool Graph::update_transform(int dim)
         t->_dim[dim].limit.max = a->axis::end;
         type |= TransformLg;
     }
-    struct range r(a->axis::begin, a->axis::end);
-    t->_dim[dim].transform.set(r, type);
+    t->_dim[dim].set(t->_dim[dim].limit, type);
     return true;
 }
-const struct transform *Graph::transform_part(int dim) const
+const struct value_apply *Graph::transform_part(int dim) const
 {
-    Transform3 *t;
+    const class transform *t;
     if (!(t = _gtr.reference())) {
         return 0;
     }
     switch (dim) {
     case 0:
-        return &t->_dim[0].transform;
+        return &t->_dim[0];
     case 1:
-        return &t->_dim[0].transform;
+        return &t->_dim[0];
     case 2:
-        return &t->_dim[0].transform;
+        return &t->_dim[0];
     default:
         return 0;
     }
 }
 int Graph::transform_flags(int dim) const
 {
-    Transform3 *t;
+    const class transform *t;
     if (!(t = _gtr.reference())) {
         return 0;
     }
@@ -755,26 +756,26 @@ int Graph::transform_flags(int dim) const
     }
 }
 // graph data operations
-Graph::Data::Data(World *w) : world(w)
+Graph::data::data(World *w) : world(w)
 { }
-void Graph::Data::unref()
+void Graph::data::unref()
 {
     delete this;
 }
 
 // layout extension
-Layout::Layout() : _parse(0), _alias(0), _font(0)
+layout::layout() : _parse(0), _alias(0), _font(0)
 { }
-Layout::~Layout()
+layout::~layout()
 {
     mpt_string_set(&_alias, 0, 0);
     delete _parse;
 }
 // object interface
-int Layout::property(struct property *pr) const
+int layout::property(struct property *pr) const
 {
     if (!pr) {
-        return typeinfo<Layout *>::id();
+        return typeinfo<layout *>::id();
     }
     const char *name = pr->name;
     int pos = -1;
@@ -807,7 +808,7 @@ int Layout::property(struct property *pr) const
     }
     return BadArgument;
 }
-int Layout::set_property(const char *name, const metatype *src)
+int layout::set_property(const char *name, const metatype *src)
 {
     int len;
 
@@ -833,10 +834,10 @@ int Layout::set_property(const char *name, const metatype *src)
     }
     return BadArgument;
 }
-bool Layout::bind(const relation &rel, logger *out)
+bool layout::bind(const relation &rel, logger *out)
 {
     item_array<metatype> old = _items;
-    if (!Collection::bind(rel, out)) {
+    if (!collection::bind(rel, out)) {
         return false;
     }
 
@@ -879,7 +880,7 @@ bool Layout::bind(const relation &rel, logger *out)
     return true;
 }
 
-bool Layout::load(logger *out)
+bool layout::load(logger *out)
 {
     static const char _func[] = "mpt::Layout::load\0";
     if (!_parse) {
@@ -915,7 +916,7 @@ bool Layout::load(logger *out)
     }
     return true;
 }
-bool Layout::reset()
+bool layout::reset()
 {
     if (_parse && !_parse->reset()) {
         return false;
@@ -926,7 +927,7 @@ bool Layout::reset()
     return true;
 }
 
-bool Layout::open(const char *fn)
+bool layout::open(const char *fn)
 {
     if (!_parse) {
         if (!fn) {
@@ -937,16 +938,16 @@ bool Layout::open(const char *fn)
     return _parse->open(fn);
 }
 
-bool Layout::set_alias(const char *base, int len)
+bool layout::set_alias(const char *base, int len)
 {
     return mpt_string_set(&_alias, base, len) >= 0;
 }
-bool Layout::set_font(const char *base, int len)
+bool layout::set_font(const char *base, int len)
 {
     return mpt_string_set(&_font, base, len) >= 0;
 }
 
-fpoint Layout::minimal_scale() const
+fpoint layout::minimal_scale() const
 {
     float x = 1, y = 1;
 

@@ -284,14 +284,14 @@ metatype *group::create(const char *type, int nl)
 }
 
 // group storing elements in RefArray
-Collection::~Collection()
+collection::~collection()
 { }
 
-void Collection::unref()
+void collection::unref()
 {
     delete this;
 }
-int Collection::conv(int type, void *ptr) const
+int collection::conv(int type, void *ptr) const
 {
     int me = typeinfo<group *>::id();
     if (me < 0) {
@@ -316,22 +316,22 @@ int Collection::conv(int type, void *ptr) const
     }
     return BadType;
 }
-Collection *Collection::clone() const
+collection *collection::clone() const
 {
-    Collection *copy = new Collection;
+    collection *copy = new collection;
     copy->_items = _items;
     return copy;
 }
 
-const item<metatype> *Collection::item(size_t pos) const
+const item<metatype> *collection::item(size_t pos) const
 {
     return _items.get(pos);
 }
-item<metatype> *Collection::append(metatype *mt)
+item<metatype> *collection::append(metatype *mt)
 {
     return _items.append(mt, 0);
 }
-size_t Collection::clear(const reference *ref)
+size_t collection::clear(const reference *ref)
 {
     long remove = 0;
     if (!ref) {
@@ -352,7 +352,7 @@ size_t Collection::clear(const reference *ref)
     }
     return remove;
 }
-bool Collection::bind(const relation &from, logger *out)
+bool collection::bind(const relation &from, logger *out)
 {
     for (auto &it : _items) {
         metatype *curr;

@@ -12,9 +12,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-class Cycle;
-class Graph;
-class Layout;
+class layout;
 
 struct message;
 
@@ -39,12 +37,12 @@ public:
 	class mapping;
 	
 	// layout (de)registration
-	virtual int add_layout(Layout *, bool = true);
-	virtual int remove_layout(const Layout *);
+	virtual int add_layout(layout *, bool = true);
+	virtual int remove_layout(const layout *);
 	long layout_count() const;
 	
 	// create new layout
-	virtual Layout *create_layout();
+	virtual layout *create_layout();
 	
 	// mapping helpers
 	int target(laydest &, message &, size_t = 0) const;
@@ -54,27 +52,27 @@ public:
 	virtual bool register_update(const reference *, update_hint = update_hint());
 protected:
 	virtual void dispatch_updates();
-	reference_array<Layout> _layouts;
+	reference_array<layout> _layouts;
 };
 
-class graphic::mapping : map<laydest, reference_wrapper<Cycle> >
+class graphic::mapping : map<laydest, reference_wrapper<cycle> >
 {
 public:
 	int add(valsrc , laydest , int = 0);
 	int del(const valsrc *, const laydest * = 0, int = 0) const;
 	typed_array<laydest> destinations(valsrc , int = 0) const;
 	
-	inline const map<laydest, reference_wrapper<Cycle> > &targets() const
+	inline const map<laydest, reference_wrapper<class cycle> > &targets() const
 	{
 		return *this;
 	}
 	// direct cycle access
-	const reference_wrapper<Cycle> *cycle(laydest) const;
-	bool set_cycle(laydest, Cycle *);
+	const reference_wrapper<class cycle> *cycle(laydest) const;
+	bool set_cycle(laydest, class cycle *);
 	
 	// modify target elements
-	int set_cycles(const span<const reference_wrapper<Layout> > &, update_hint = update_hint());
-	int get_cycles(const span<const reference_wrapper<Layout> > &, update_hint = update_hint());
+	int set_cycles(const span<const reference_wrapper<layout> > &, update_hint = update_hint());
+	int get_cycles(const span<const reference_wrapper<layout> > &, update_hint = update_hint());
 	int clear_cycles(update_hint = update_hint()) const;
 	
 	void clear();

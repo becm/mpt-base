@@ -20,7 +20,7 @@ int main()
     mtrace();
     
     mpt::graphic g;
-    mpt::Layout *l;
+    mpt::layout *l;
     
     l = g.create_layout();
     

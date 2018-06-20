@@ -13,10 +13,10 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class reference_wrapper<Cycle>;
-template class reference_array<Cycle>;
+template class reference_wrapper<cycle>;
+template class reference_array<cycle>;
 
-template <> int typeinfo<Cycle *>::id()
+template <> int typeinfo<cycle *>::id()
 {
     static int id = 0;
     if (!id) {
@@ -24,7 +24,7 @@ template <> int typeinfo<Cycle *>::id()
     }
     return id;
 }
-template <> int typeinfo<Cycle::Stage>::id()
+template <> int typeinfo<cycle::stage>::id()
 {
     static int id = 0;
     if (!id) {
@@ -49,16 +49,16 @@ value_store *rawdata_stage::values(long dim)
     return mpt_stage_data(this, dim);
 }
 
-Cycle::Cycle() : _act(0), _max_dimensions(0), _flags(0)
+cycle::cycle() : _act(0), _max_dimensions(0), _flags(0)
 { }
-Cycle::~Cycle()
+cycle::~cycle()
 { }
-void Cycle::unref()
+void cycle::unref()
 {
     delete this;
 }
 
-int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
+int cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
 {
     if (_max_dimensions && dim >= _max_dimensions) {
         return BadArgument;
@@ -77,13 +77,12 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
     } else {
         --nc;
     }
-    Stage *st;
+    stage *st;
     if (!(st = _stages.get(nc))) {
         if (_flags & LimitStages) {
             return BadValue;
         }
-        if (!_stages.insert(nc, Stage())
-            || !(st = _stages.get(nc))) {
+        if (!(st = _stages.unique_array<stage>::insert(nc))) {
             return BadOperation;
         }
     }
@@ -143,7 +142,7 @@ int Cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
     st->invalidate();
     return val->flags();
 }
-int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
+int cycle::values(unsigned dim, struct iovec *vec, int nc) const
 {
     if (_max_dimensions && dim >= _max_dimensions) {
         return BadArgument;
@@ -151,7 +150,7 @@ int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
     if (nc < 0) {
         nc = _act;
     }
-    Stage *st;
+    stage *st;
     if (!(st = _stages.get(nc))) {
         return BadValue;
     }
@@ -170,7 +169,7 @@ int Cycle::values(unsigned dim, struct iovec *vec, int nc) const
     }
     return val->type() + (val->flags() & ~0xff);
 }
-int Cycle::advance()
+int cycle::advance()
 {
     int n = _act + 1;
     rawdata_stage *st;
@@ -194,19 +193,19 @@ int Cycle::advance()
     _act = n;
     return n;
 }
-long Cycle::dimension_count(int n) const
+long cycle::dimension_count(int n) const
 {
     if (n < 0) {
         n = _act;
     }
-    Stage *st = _stages.get(n);
+    stage *st = _stages.get(n);
     return st ? st->dimension_count() : (long) BadArgument;
 }
-long Cycle::stage_count() const
+long cycle::stage_count() const
 {
     return _stages.length();
 }
-bool Cycle::limit_stages(size_t max)
+bool cycle::limit_stages(size_t max)
 {
     if (!max) {
         _flags &= LimitStages;
@@ -216,18 +215,18 @@ bool Cycle::limit_stages(size_t max)
     if (max < curr) {
         return false;
     }
-    if (curr < max && !_stages.insert(max - 1, Stage())) {
+    if (curr < max && !_stages.unique_array<stage>::insert(max - 1)) {
         return false;
     }
     _flags |= LimitStages;
     return true;
 }
-void Cycle::limit_dimensions(uint8_t md)
+void cycle::limit_dimensions(uint8_t md)
 {
     _max_dimensions = md;
 }
 
-bool Cycle::Stage::transform(const Transform &tr)
+bool cycle::stage::transform(const class transform &tr)
 {
     return _values.set(tr, rawdata_stage::values());
 }

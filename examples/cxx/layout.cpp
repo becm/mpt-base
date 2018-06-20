@@ -18,7 +18,7 @@ extern int main(int argc, char *argv[])
 {
 	mtrace();
 	
-	mpt::Layout lay;
+	mpt::layout lay;
 	
 	if (argc < 2) {
 		mpt::warning(__func__, "%s", "missing layout argument");
