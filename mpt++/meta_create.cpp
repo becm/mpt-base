@@ -34,7 +34,7 @@ metatype *metatype::create(value val)
     }
     /* simple empty value */
     else if (!val.fmt[0]) {
-        return metatype::Basic::create(0, 0);
+        return metatype::basic::create(0, 0);
     }
     // single value payload only
     else if (val.fmt[1]) {
@@ -48,7 +48,7 @@ metatype *metatype::create(value val)
     }
     // compatible small generic metatype
     if (len < std::numeric_limits<uint8_t>::max()) {
-        metatype *m = metatype::Basic::create(src, len);
+        metatype *m = metatype::basic::create(src, len);
         if (m) return m;
     }
     // create buffer-backed text metatype

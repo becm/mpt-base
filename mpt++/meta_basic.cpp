@@ -32,19 +32,19 @@ int metatype::conv(int type, void *ptr) const
 }
 
 // basic metatype
-metatype::Basic::Basic(size_t post)
+metatype::basic::basic(size_t post)
 {
     _mpt_geninfo_init(this + 1, post);
 }
-void metatype::Basic::unref()
+void metatype::basic::unref()
 {
     free(this);
 }
-int metatype::Basic::conv(int type, void *ptr) const
+int metatype::basic::conv(int type, void *ptr) const
 {
     return _mpt_geninfo_conv(this + 1, type, ptr);
 }
-metatype::Basic *metatype::Basic::clone() const
+metatype::basic *metatype::basic::clone() const
 {
     struct iovec vec;
     if (_mpt_geninfo_conv(this + 1, MPT_value_toVector('c') , &vec) <= 0) {
@@ -53,7 +53,7 @@ metatype::Basic *metatype::Basic::clone() const
     }
     return create(static_cast<const char *>(vec.iov_base), vec.iov_len);
 }
-bool metatype::Basic::set(const char *src, int len)
+bool metatype::basic::set(const char *src, int len)
 {
     return _mpt_geninfo_set(this + 1, src, len) >= 0;
 }
@@ -68,7 +68,7 @@ bool metatype::Basic::set(const char *src, int len)
  * 
  * \return new metatype
  */
-metatype::Basic *metatype::Basic::create(const char *src, int len)
+metatype::basic *metatype::basic::create(const char *src, int len)
 {
     if (len < 0) {
         len = src ? strlen(src) : 0;
@@ -78,12 +78,12 @@ metatype::Basic *metatype::Basic::create(const char *src, int len)
         errno = EINVAL;
         return 0;
     }
-    Basic *m;
+    basic *m;
     void *ptr;
     if (!(ptr = malloc(sizeof(*m) + post))) {
         return 0;
     }
-    m = new (ptr) Basic(post);
+    m = new (ptr) basic(post);
     m->set(src, len);
     return m;
 }

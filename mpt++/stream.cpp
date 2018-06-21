@@ -270,22 +270,23 @@ int Stream::next(int what)
     }
     return ret;
 }
-class Stream::Dispatch
+class Stream::dispatch
 {
 public:
-    Dispatch(Stream &s, EventHandler c, void *a) : srm(s), cmd(c), arg(a)
+    dispatch(Stream &s, EventHandler c, void *a) : srm(s), cmd(c), arg(a)
     { }
-    int dispatch(const struct message *msg)
+    int process(const struct message *msg)
     {
         static const char _func[] = "mpt::Stream::dispatch";
         struct event ev;
-        uint8_t idlen;
+        int ret;
 
-        if (!msg || !(idlen = srm._idlen)) {
+        if (!msg || !(ret = srm._idlen)) {
+            ev.msg = msg;
             return cmd(arg, &ev);
         }
         uint8_t id[__UINT8_MAX__];
-        int ret;
+        uint8_t idlen = ret;
 
         struct message tmp = *msg;
         if (tmp.read(idlen, id) < idlen) {
@@ -307,13 +308,13 @@ public:
             error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
             return BadValue;
         }
-        metatype *ctx = 0;
         reply_data *rd = 0;
         reply_context *rc = 0;
         for (uint8_t i = 0; i < idlen; ++i) {
             if (!id[i]) {
                 continue;
             }
+            metatype *ctx;
             if (!(ctx = srm._ctx.reference())) {
                 warning(_func, "%s", MPT_tr("no reply context"));
                 break;
@@ -329,6 +330,7 @@ public:
             break;
         }
         ev.reply = rc;
+        ev.msg = &tmp;
         ret = cmd(arg, &ev);
         if (rc && rd && rd->active()) {
             struct msgtype mt(msgtype::Answer, ret);
@@ -342,10 +344,10 @@ protected:
     EventHandler cmd;
     void *arg;
 };
-static int streamDispatch(void *ptr, const struct message *msg)
+static int stream_dispatch(void *ptr, const struct message *msg)
 {
-    Stream::Dispatch *sd = reinterpret_cast<Stream::Dispatch *>(ptr);
-    return sd->dispatch(msg);
+    class Stream::dispatch *sd = reinterpret_cast<class Stream::dispatch *>(ptr);
+    return sd->process(msg);
 }
 int Stream::dispatch(EventHandler cmd, void *arg)
 {
@@ -359,8 +361,8 @@ int Stream::dispatch(EventHandler cmd, void *arg)
         }
         return 0;
     }
-    class Dispatch sd(*this, cmd, arg);
-    return mpt_stream_dispatch(_srm, streamDispatch, &sd);
+    class dispatch sd(*this, cmd, arg);
+    return mpt_stream_dispatch(_srm, stream_dispatch, &sd);
 }
 
 ssize_t Stream::push(size_t len, const void *src)

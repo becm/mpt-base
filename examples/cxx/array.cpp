@@ -39,7 +39,7 @@ extern int main(int , char * const [])
 	typed_array<reference_wrapper<metatype> > a;
 	typed_array<metatype *> v;
 	
-	a.insert(1, new Metatype<double>(2));
+	a.insert(1, new meta_value<double>(2));
 	p.insert(0, a.get(1));
 	
 	d = p;

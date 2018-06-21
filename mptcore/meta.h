@@ -21,7 +21,7 @@ protected:
 public:
 	enum { Type = TypeMeta };
 	
-	class Basic;
+	class basic;
 	
 	const char *string() const;
 	void *pointer(int) const;
@@ -177,37 +177,37 @@ template <> inline const char *metatype::cast<const char>() const
 }
 
 /* basic metatype to support typeinfo */
-class metatype::Basic : public metatype
+class metatype::basic : public metatype
 {
 protected:
-	inline ~Basic() {}
+	inline ~basic() {}
 public:
-	Basic(size_t post);
+	basic(size_t post);
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int , void *) const __MPT_OVERRIDE;
-	Basic *clone() const __MPT_OVERRIDE;
+	basic *clone() const __MPT_OVERRIDE;
 	
 	bool set(const char *, int);
 	
-	static Basic *create(const char *, int);
+	static basic *create(const char *, int);
 };
 /* generic implementation for metatype */
 template <typename T>
-class Metatype : public metatype
+class meta_value : public metatype
 {
 public:
-	inline Metatype(const T *val = 0) : _val(val ? *val : 0)
+	inline meta_value(const T *val = 0) : _val(val ? *val : 0)
 	{ }
-	inline Metatype(const T &val) : _val(val)
+	inline meta_value(const T &val) : _val(val)
 	{ }
-	virtual ~Metatype()
+	virtual ~meta_value()
 	{ }
-	void unref()
+	void unref() __MPT_OVERRIDE
 	{
 		delete this;
 	}
-	int conv(int type, void *dest) const
+	int conv(int type, void *dest) const __MPT_OVERRIDE
 	{
 		static const int me = typeinfo<T>::id();
 		if (!type) {
@@ -224,15 +224,15 @@ public:
 		}
 		return me;
 	}
-	metatype *clone() const
+	meta_value *clone() const __MPT_OVERRIDE
 	{
-		return new Metatype(_val);
+		return new meta_value(_val);
 	}
 protected:
 	T _val;
 };
 template <typename T>
-class typeinfo<Metatype<T> >
+class typeinfo<meta_value<T> >
 {
 protected:
 	typeinfo();
@@ -244,12 +244,12 @@ public:
 };
 
 template <typename T>
-class Source : public iterator
+class source : public iterator
 {
 public:
-	Source(const T *val, long len = 1) : _d(val, len), _pos(0)
+	source(const T *val, long len = 1) : _d(val, len), _pos(0)
 	{ }
-	virtual ~Source()
+	virtual ~source()
 	{ }
 	int get(int type, void *dest) __MPT_OVERRIDE
 	{
@@ -293,7 +293,7 @@ protected:
 	int _pos;
 };
 template <typename T>
-class typeinfo<Source<T> >
+class typeinfo<source<T> >
 {
 protected:
 	typeinfo();

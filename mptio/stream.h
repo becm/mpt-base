@@ -229,7 +229,7 @@ public:
 	
 	virtual void close();
 	
-	class Dispatch;
+	class dispatch;
 protected:
 	stream *_srm;
 	command::array _wait;
