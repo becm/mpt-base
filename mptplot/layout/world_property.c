@@ -74,7 +74,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -100,7 +100,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 			mpt_world_fini(wld);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeWorld), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;

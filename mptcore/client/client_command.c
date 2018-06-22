@@ -43,7 +43,7 @@ extern int mpt_client_command(MPT_INTERFACE(client) *cl, const MPT_STRUCT(messag
 		id = mpt_hash(cmd, strlen(cmd));
 	}
 	it = 0;
-	ret = arg->_vptr->conv(arg, MPT_ENUM(TypeIterator), &it);
+	ret = arg->_vptr->conv(arg, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
 	
 	ret = cl->_vptr->process(cl, id, it);
 	arg->_vptr->ref.unref((void *) arg);

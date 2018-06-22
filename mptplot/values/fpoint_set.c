@@ -27,7 +27,7 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, const MPT_INTERFACE(metatype) 
 		return 0;
 	}
 	it = 0;
-	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) < 0) {
+	if ((ret = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) < 0) {
 		MPT_STRUCT(value) val = MPT_VALUE_INIT;
 		
 		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) < 0) {

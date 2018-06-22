@@ -103,12 +103,12 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 	
 	/* auto-select matching property */
 	if (!name) {
-		MPT_STRUCT(axis) *from;
+		const MPT_STRUCT(axis) *from;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeAxis), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeAxis)), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;
@@ -120,13 +120,13 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, const MPT_INTERF
 	}
 	/* copy from sibling */
 	if (!*name) {
-		MPT_STRUCT(axis) *from;
+		const MPT_STRUCT(axis) *from;
 		
 		if (!src) {
 			mpt_axis_fini(ax);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;

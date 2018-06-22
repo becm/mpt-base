@@ -161,11 +161,11 @@ enum MPT_ENUM(Types)
 	
 	/* automatic range types */
 	MPT_ENUM(_TypePointerBase)   = 0x1000,
-#define MPT_type_pointer(v)       (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypePointerBase) : MPT_ERROR(BadType))
+#define MPT_type_pointer(v)       (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypePointerBase) : MPT_ERROR(BadType))
 	MPT_ENUM(_TypeReferenceBase) = 0x2000,
-#define MPT_type_reference(v)     (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeReferenceBase) : MPT_ERROR(BadType))
+#define MPT_type_reference(v)     (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeReferenceBase) : MPT_ERROR(BadType))
 	MPT_ENUM(_TypeItemBase)      = 0x3000,
-#define MPT_type_item(v)          (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeItemBase) : MPT_ERROR(BadType))
+#define MPT_type_item(v)          (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeItemBase) : MPT_ERROR(BadType))
 	
 	/* combined regular types */
 	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypePointerBase),

@@ -29,7 +29,7 @@ extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config)
 		MPT_INTERFACE(metatype) *mt;
 		
 		if (!(mt = mpt_config_global(0))
-		    || (mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &conf) < 0)
+		    || (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0)
 		    || !conf) {
 			return 0;
 		}

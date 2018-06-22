@@ -38,7 +38,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (dest) {
 			MPT_INTERFACE(metatype) *src;
 			if (!it->val || !*it->val) {
@@ -50,7 +50,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 				}
 				it->src = src;
 			}
-			return src->_vptr->conv(src, MPT_ENUM(TypeIterator), dest);
+			return src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), dest);
 		}
 		return 's';
 	}

@@ -41,7 +41,7 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	}
 	/* get elements from iterator */
 	it = 0;
-	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it)) > 0
+	if ((ret = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) > 0
 	    && it
 	    && (curr  = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
 		if (!curr) {

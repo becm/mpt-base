@@ -31,7 +31,7 @@ static void clearConfig(void)
 		return;
 	}
 	cfg = 0;
-	if (mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg) < 0
+	if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 	    || !cfg) {
 		return;
 	}
@@ -88,7 +88,7 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 	
 	if (!cfg) {
 		MPT_INTERFACE(metatype) *mt = mpt_config_global(0);
-		mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg);
+		mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
 	}
 	if (!(p.src.arg = fopen(fname, "r"))) {
 		mpt_log(0, "mpt_init::config", MPT_LOG(Error), "%s: %s",
@@ -117,7 +117,7 @@ static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
 	MPT_STRUCT(node) *mpt, *c;
 	
 	mpt = 0;
-	top->_vptr->conv(top, MPT_ENUM(TypeNode), &mpt);
+	top->_vptr->conv(top, MPT_type_pointer(MPT_ENUM(TypeNode)), &mpt);
 	if (!mpt) {
 		return MPT_ERROR(BadType);
 	}
@@ -187,7 +187,7 @@ extern int mpt_init(int argc, char * const argv[])
 	if (!(top = mpt_config_global(&p))) {
 		return MPT_ERROR(BadOperation);
 	}
-	top->_vptr->conv(top, MPT_ENUM(TypeConfig), &cfg);
+	top->_vptr->conv(top, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
 	
 	/* load configs in `etc` subdirectory */
 	mpt_config_load(cfg, getenv("MPT_PREFIX"), mpt_log_default());

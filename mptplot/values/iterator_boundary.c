@@ -43,9 +43,9 @@ static int iterBoundaryConv(const MPT_INTERFACE(metatype) *mt, int type, void *p
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (ptr) *((void **) ptr) = (void *) (mt + 1);
-		return MPT_ENUM(TypeIterator);
+		return 'd';
 	}
 	return MPT_ERROR(BadType);
 }

@@ -29,7 +29,7 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	MPT_INTERFACE(output) *out;
 	out = 0;
 	if (!(mt = lo->pass)
-	    || mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out) < 0) {
+	    || mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) < 0) {
 		return 0;
 	}
 	return out;

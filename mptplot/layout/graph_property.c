@@ -94,7 +94,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeGraph), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, len ? from : 0);
 			return 0;
@@ -113,7 +113,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;

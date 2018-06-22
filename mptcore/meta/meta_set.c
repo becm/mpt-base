@@ -34,7 +34,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 			ret = 0;
 		}
 		obj = 0;
-		if ((old->_vptr->conv(old, MPT_ENUM(TypeObject), &obj)) >= 0
+		if ((old->_vptr->conv(old, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj)) >= 0
 	            && obj) {
 			int err;
 			if (val) {
@@ -49,7 +49,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 			}
 		}
 		cfg = 0;
-		if ((old->_vptr->conv(old, MPT_ENUM(TypeConfig), &cfg)) >= 0
+		if ((old->_vptr->conv(old, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg)) >= 0
 		    && cfg
 		    && (ret = cfg->_vptr->assign(cfg, 0, val)) >= 0) {
 			return ret;
@@ -60,7 +60,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 		/* try to reset existing iterator */
 		MPT_INTERFACE(iterator) *it = 0;
 		if (old
-		    && old->_vptr->conv(old, MPT_ENUM(TypeIterator), &it) >= 0
+		    && old->_vptr->conv(old, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it) >= 0
 		    && it
 		    && it->_vptr->reset(it) >= 0) {
 			return ret;

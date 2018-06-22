@@ -42,9 +42,9 @@ static int iterConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (ptr) *((const void **) ptr) = mt + 1;
-		return type;
+		return 'd';
 	}
 	return MPT_ERROR(BadType);
 }

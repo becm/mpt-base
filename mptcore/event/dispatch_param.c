@@ -53,7 +53,7 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		if (conf->_vptr->conv(conf, MPT_ENUM(TypeConfig), &cfg) < 0
+		if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -105,7 +105,7 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		if (conf->_vptr->conv(conf, MPT_ENUM(TypeConfig), &cfg) < 0
+		if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -160,7 +160,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	/* require valid config for replace */
 	cfg = 0;
-	if (conf->_vptr->conv(conf, MPT_ENUM(TypeConfig), &cfg) < 0
+	if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 	    || !cfg) {
 		ret = MPT_ERROR(BadOperation);
 	} else {

@@ -181,7 +181,7 @@ static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return 's';
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (dest) *((void **) dest) = it;
 		return 's';
 	}

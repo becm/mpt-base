@@ -83,7 +83,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, len ? from : 0);
 			return 0;
@@ -105,7 +105,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeText), &from)) >= 0) {
+		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return 0;

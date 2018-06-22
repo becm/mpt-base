@@ -23,7 +23,7 @@ extern int main(int argc, char *argv[])
 			fputc('\n', stderr);
 			continue;
 		}
-		src->_vptr->conv(src, MPT_ENUM(TypeIterator), &it);
+		src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
 		while (1) {
 			double val;
 			int res;

@@ -36,14 +36,14 @@ int mpt_meta_vlog(const MPT_INTERFACE(metatype) *mt, const char *src, int type, 
 		return log->_vptr->log(log, src, type, fmt, va);
 	}
 	log = 0;
-	if (mt->_vptr->conv(mt, MPT_ENUM(TypeLogger), &log) > 0) {
+	if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeLogger)), &log) > 0) {
 		if (!log) {
 			return 0;
 		}
 		return log->_vptr->log(log, src, type, fmt, va);
 	}
 	out = 0;
-	if (mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out) > 0) {
+	if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) > 0) {
 		if (!out) {
 			return 0;
 		}

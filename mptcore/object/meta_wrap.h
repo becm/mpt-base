@@ -36,11 +36,11 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(_TypeMetaBase)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (dest) *((const void **) dest) = &wr->_ctl;
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (dest) *((const void **) dest) = wr->it;
 		return MPT_ENUM(TypeIterator);
 	}

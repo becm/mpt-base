@@ -60,7 +60,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	if (!ev->reply) {
 		MPT_INTERFACE(metatype) *mt;
 		if ((mt = disp->_ctx)) {
-			mt->_vptr->conv(mt, MPT_ENUM(TypeReply), &ev->reply);
+			mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeReply)), &ev->reply);
 		}
 	}
 	/* execute resolved command */

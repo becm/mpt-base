@@ -38,7 +38,7 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 		pr->name = "";
 		pr->desc = 0;
 		/* object specific name */
-		if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
+		if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
 		    && obj
 		    && (obj->_vptr->property(obj, pr) >= 0)
 		    && pr->name) {

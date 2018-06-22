@@ -49,11 +49,11 @@ static int fileConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (ptr) *((const void **) ptr) = mt + 1;
 		return MPT_ENUM(TypeFile);
 	}
-	if (type == MPT_ENUM(TypeFile)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeFile))) {
 		struct _iter_fdata *d = (void *) (mt + 2);
 		if (ptr) *((void **) ptr) = d->fd;
 		return MPT_ENUM(TypeIterator);
