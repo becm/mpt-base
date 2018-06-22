@@ -50,7 +50,7 @@ static int convScalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 #ifdef MPT_NO_CONVERT
 	if (type == s->val.type) {
 		if (ptr && s->val.len) memcpy(ptr, val, s->val.len);
-		return MPT_ENUM(TypeMeta);
+		return type;
 	}
 	return MPT_ERROR(BadType);
 #else
