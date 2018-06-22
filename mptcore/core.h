@@ -279,10 +279,42 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 extern int make_id();
-extern int to_span_id(int);
-extern int to_pointer_id(int);
-extern int to_reference_id(int);
-extern int to_item_id(int);
+
+inline __MPT_CONST_EXPR int to_pointer_id(int from)
+{
+	return (from < 0)
+	? BadValue
+	: ((from > _TypeGenericMax)
+		? BadType
+		: _TypePointerBase + from);
+}
+inline __MPT_CONST_EXPR int to_reference_id(int from)
+{
+	return (from < 0)
+	? BadValue
+	: ((from > _TypeGenericMax)
+		? BadType
+		: _TypeReferenceBase + from);
+}
+inline __MPT_CONST_EXPR int to_item_id(int from)
+{
+	return (from < 0)
+	? BadValue
+	: ((from > _TypeGenericMax)
+		? BadType
+		: _TypeItemBase + from);
+}
+
+inline __MPT_CONST_EXPR int to_span_id(int from)
+{
+	return (from < 0)
+	? BadValue
+	: ((from > _TypeGenericMax)
+		? BadType
+		: ((MPT_type_isScalar(from) || MPT_type_isExtended(from))
+			? from + _TypeVectorBase - _TypeScalarBase
+			: _TypeSpanBase + from));
+}
 
 inline __MPT_CONST_EXPR uint8_t basetype(int id)
 {
