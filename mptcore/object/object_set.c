@@ -13,32 +13,32 @@
 
 #include "object.h"
 
-struct objectProperty
+struct object_property
 {
 	MPT_INTERFACE(object) *obj;
 	const char *prop;
 };
-struct metaScalar
+struct meta_scalar
 {
 	MPT_INTERFACE(metatype) _mt;
 	MPT_STRUCT(scalar) val;
 	char fmt[2];
 };
 /* reference interface */
-static void unrefScalar(MPT_INTERFACE(reference) *ref)
+static void unref_scalar(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	MPT_ABORT("unref scalar value interface");
 }
-static uintptr_t addrefScalar(MPT_INTERFACE(reference) *ref)
+static uintptr_t addref_scalar(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	MPT_ABORT("ref scalar value interface");
 }
 /* metatype interface */
-static int convScalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int conv_scalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
-	const struct metaScalar *s = (void *) mt;
+	const struct meta_scalar *s = (void *) mt;
 	const void *val = &s->val.val;
 	if (!type) {
 		if (ptr) {
@@ -52,15 +52,17 @@ static int convScalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		if (ptr && s->val.len) memcpy(ptr, val, s->val.len);
 		return type;
 	}
-	return MPT_ERROR(BadType);
 #else
-	return mpt_data_convert(&val, s->val.type, ptr, type);
+	if (mpt_data_convert(&val, s->val.type, ptr, type) >= 0) {
+		return s->val.type;
+	}
 #endif
+	return MPT_ERROR(BadType);
 }
-static MPT_INTERFACE(metatype) *cloneScalar(const MPT_INTERFACE(metatype) *mt)
+static MPT_INTERFACE(metatype) *clone_scalar(const MPT_INTERFACE(metatype) *mt)
 {
-	const struct metaScalar *s = (void *) mt;
-	struct metaScalar *c;
+	const struct meta_scalar *s = (void *) mt;
+	struct meta_scalar *c;
 	if (!(c = malloc(sizeof(*c)))) {
 		return 0;
 	}
@@ -70,21 +72,21 @@ static MPT_INTERFACE(metatype) *cloneScalar(const MPT_INTERFACE(metatype) *mt)
 /* set object property from iterator */
 static int process_object_args(void *ptr, MPT_INTERFACE(iterator) *it)
 {
-	const struct objectProperty *op = ptr;
+	const struct object_property *op = ptr;
 	return mpt_object_set_iterator(op->obj, op->prop, it);
 }
 /* set object property to arguments */
 static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
 {
-	struct objectProperty op;
+	struct object_property op;
 	int ret;
 	if (!(ret = fmt[1])) {
 		static const MPT_INTERFACE_VPTR(metatype) metaValCtl = {
-		    { unrefScalar, addrefScalar },
-		    convScalar,
-		    cloneScalar
+		    { unref_scalar, addref_scalar },
+		    conv_scalar,
+		    clone_scalar
 		};
-		struct metaScalar s;
+		struct meta_scalar s;
 		va_list cpy;
 		va_copy(cpy, va);
 		ret = mpt_scalar_argv(&s.val, *fmt, cpy);
