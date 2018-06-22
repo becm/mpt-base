@@ -24,7 +24,7 @@ struct _mpt_metaProxy
 	uint8_t fmt[2];
 };
 
-static void mpUnref(MPT_INTERFACE(reference) *m)
+static void _proxy_unref(MPT_INTERFACE(reference) *m)
 {
 	struct _mpt_metaProxy *mp = (void *) m;
 	
@@ -33,19 +33,19 @@ static void mpUnref(MPT_INTERFACE(reference) *m)
 	}
 	if ((m = mp->ptr)) {
 		int type = mp->fmt[0];
-		if (MPT_value_isMetatype(type)) {
+		if (MPT_type_isMetatype(type)) {
 			m->_vptr->unref(m);
 		}
 	}
 	mpt_library_detach(&mp->sym.lib);
 	free(mp);
 }
-static uintptr_t mpRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t _proxy_addref(MPT_INTERFACE(reference) *ref)
 {
 	struct _mpt_metaProxy *mp = (void *) ref;
 	return __mpt_library_proxy_addref(&mp->_ref);
 }
-static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
+static int _proxy_conv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
 	int mt = mp->sym.type;
@@ -65,20 +65,17 @@ static int mpConv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 		if (ptr) *((const void **) ptr) = mp + 1;
 		return mp->fmt[0];
 	}
-	if (type == MPT_ENUM(TypeMeta)) {
-		if (!MPT_value_isMetatype(mt)) {
-			return MPT_ERROR(BadType);
-		}
+	if (!MPT_type_isMetatype(mt)) {
+		return MPT_ERROR(BadType);
+	}
+	if (type == MPT_type_pointer(mt)
+	 || type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = mp->ptr;
 		return mt;
 	}
-	if (MPT_value_isMetatype(mt)) {
-		return m->_vptr->conv(m, type, ptr);
-	}
-	return MPT_ERROR(BadType);
+	return m->_vptr->conv(m, type, ptr);
 }
-static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl;
-static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
+static MPT_INTERFACE(metatype) *_proxy_clone(const MPT_INTERFACE(metatype) *m)
 {
 	const struct _mpt_metaProxy *mp = (void *) m;
 	MPT_STRUCT(libhandle) *lh = 0;
@@ -104,16 +101,11 @@ static MPT_INTERFACE(metatype) *mpClone(const MPT_INTERFACE(metatype) *m)
 	n->sym.lib = lh;
 	
 	if (!(n->ptr = val.make())) {
-		mpUnref((MPT_INTERFACE(reference) *) n);
+		_proxy_unref((MPT_INTERFACE(reference) *) n);
 		return 0;
 	}
 	return &n->_mt;
 }
-static const MPT_INTERFACE_VPTR(metatype) _mpt_metaProxyCtl = {
-	{ mpUnref, mpRef },
-	mpConv,
-	mpClone
-};
 
 static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const char *fmt, ... )
 {
@@ -141,6 +133,11 @@ static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const ch
  */
 extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, const char *path, MPT_INTERFACE(logger) *info)
 {
+	static const MPT_INTERFACE_VPTR(metatype) _proxy_ctl = {
+		{ _proxy_unref, _proxy_addref },
+		_proxy_conv,
+		_proxy_clone
+	};
 	MPT_STRUCT(libsymbol) sym = MPT_LIBSYMBOL_INIT;
 	struct _mpt_metaProxy *mp;
 	union {
@@ -181,20 +178,16 @@ extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, con
 	}
 	sym.type = type;
 	
-	mp->_mt._vptr = &_mpt_metaProxyCtl;
+	mp->_mt._vptr = &_proxy_ctl;
 	mp->_ref._val = 1;
 	
 	mp->sym = sym;
 	mp->ptr = val.ptr;
 	mp->len = len;
 	
-	if (MPT_value_isMetatype(type)) {
-		mp->fmt[0] = MPT_ENUM(TypeMeta);
-	}
-	else if (type >= 0 && type <= 0xff) {
+	if (type >= 0 && type <= 0xff) {
 		mp->fmt[0] = type;
-	}
-	else {
+	} else {
 		mp->fmt[0] = 0;
 	}
 	mp->fmt[1] = 0;

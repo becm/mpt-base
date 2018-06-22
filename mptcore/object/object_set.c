@@ -41,8 +41,11 @@ static int convScalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	const struct metaScalar *s = (void *) mt;
 	const void *val = &s->val.val;
 	if (!type) {
-		if (ptr) *((const char **) ptr) = s->fmt;
-		return MPT_ENUM(TypeMeta);
+		if (ptr) {
+			*((const char **) ptr) = s->fmt;
+			return 0;
+		}
+		return s->val.type;
 	}
 #ifdef MPT_NO_CONVERT
 	if (type == s->val.type) {
@@ -65,13 +68,13 @@ static MPT_INTERFACE(metatype) *cloneScalar(const MPT_INTERFACE(metatype) *mt)
 	return &c->_mt;
 }
 /* set object property from iterator */
-static int processObjectArgs(void *ptr, MPT_INTERFACE(iterator) *it)
+static int process_object_args(void *ptr, MPT_INTERFACE(iterator) *it)
 {
 	const struct objectProperty *op = ptr;
 	return mpt_object_set_iterator(op->obj, op->prop, it);
 }
 /* set object property to arguments */
-static int processObjectFormat(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
+static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
 {
 	struct objectProperty op;
 	int ret;
@@ -97,7 +100,7 @@ static int processObjectFormat(MPT_INTERFACE(object) *obj, const char *prop, con
 	}
 	op.obj = obj;
 	op.prop = prop;
-	return mpt_process_vararg(fmt, va, processObjectArgs, &op);
+	return mpt_process_vararg(fmt, va, process_object_args, &op);
 }
 /*!
  * \ingroup mptObject
@@ -118,7 +121,7 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 	if (!fmt[0]) {
 		return obj->_vptr->set_property(obj, prop, mpt_metatype_default());
 	}
-	return processObjectFormat(obj, prop, fmt, va);
+	return process_object_format(obj, prop, fmt, va);
 }
 /*!
  * \ingroup mptObject
@@ -142,7 +145,7 @@ extern int mpt_object_set(MPT_INTERFACE(object) *obj, const char *prop, const ch
 		return obj->_vptr->set_property(obj, prop, mpt_metatype_default());
 	}
 	va_start(va, fmt);
-	ret = processObjectFormat(obj, prop, fmt, va);
+	ret = process_object_format(obj, prop, fmt, va);
 	va_end(va);
 	
 	return ret;

@@ -132,7 +132,7 @@ extern int _mpt_geninfo_conv(const void *raw, int type, void *ptr)
 	  case 's':
 		if (dest) *dest = info->used ? (void *) (info + 1) : 0;
 		return type;
-	  case MPT_value_toVector('c'):
+	  case MPT_type_vector('c'):
 		if (ptr) {
 			struct iovec *vec = ptr;
 			vec->iov_len = info->used;

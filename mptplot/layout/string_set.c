@@ -69,7 +69,7 @@ extern int mpt_string_pset(char **ptr, const MPT_INTERFACE(metatype) *src)
 	if (!src) {
 		return (ptr && *ptr) ? strlen(*ptr) : 0;
 	}
-	if ((len = src->_vptr->conv(src, MPT_value_toVector('c'), &vec)) > 0) {
+	if ((len = src->_vptr->conv(src, MPT_type_vector('c'), &vec)) > 0) {
 		if ((len = mpt_string_set(ptr, vec.iov_base, vec.iov_len)) < 0) {
 			return len;
 		}

@@ -37,7 +37,7 @@ static int solverNext(MPT_STRUCT(consumable) *val, void *dest, int type, size_t 
 		}
 		if (fmt != type) {
 			MPT_INTERFACE(metatype) *mt;
-			if (fmt != MPT_ENUM(TypeMeta)) {
+			if (fmt != MPT_ENUM(TypeMetaRef)) {
 				return MPT_ERROR(BadType);
 			}
 			if (!(mt = *((MPT_INTERFACE(metatype) **) val->_val.ptr))) {

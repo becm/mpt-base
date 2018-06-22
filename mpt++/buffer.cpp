@@ -43,24 +43,28 @@ Buffer *Buffer::clone() const
 }
 int Buffer::conv(int type, void *ptr) const
 {
-    int me = typeinfo<IODevice *>::id();
+    int me = typeinfo<IODevice>::id();
     if (me < 0) {
         me = metatype::Type;
     }
+    else if (type == to_pointer_id(me)) {
+        if (ptr) *static_cast<const IODevice **>(ptr) = this;
+        return me;
+    }
     if (!type) {
-        static const uint8_t types[] = { metatype::Type, iterator::Type, MPT_value_toVector('c'), 's', 0 };
+        static const uint8_t types[] = { iterator::Type, MPT_type_vector('c'), 's', 0 };
         if (ptr) *static_cast<const uint8_t **>(ptr) = types;
         return me;
     }
-    if (type == metatype::Type) {
+    if (type == to_pointer_id(metatype::Type)) {
         if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
-    if (type == iterator::Type) {
+    if (type == to_pointer_id(iterator::Type)) {
         if (ptr) *static_cast<const iterator **>(ptr) = this;
         return me;
     }
-    if (type == MPT_value_toVector('c')) {
+    if (type == MPT_type_vector('c')) {
         struct iovec *vec;
         if ((vec = static_cast<struct iovec *>(ptr))) {
             span<uint8_t> d = data();
@@ -77,17 +81,13 @@ int Buffer::conv(int type, void *ptr) const
         if (ptr) *static_cast<const uint8_t **>(ptr) = d.begin();
         return me;
     }
-    if (type == me) {
-        if (ptr) *static_cast<const IODevice **>(ptr) = this;
-        return me;
-    }
     return BadType;
 }
 // iterator interface
 int Buffer::get(int type, void *ptr)
 {
     if (!type) {
-        int me = typeinfo<IODevice *>::id();
+        int me = typeinfo<IODevice>::id();
         mpt_slice_get(0, type, ptr);
         return me < 0 ? array::Type : me;
     }
@@ -100,7 +100,7 @@ int Buffer::get(int type, void *ptr)
     if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
         return type;
     }
-    int me = typeinfo<IODevice *>::id();
+    int me = typeinfo<IODevice>::id();
     return me < 0 ? metatype::Type : me;
 }
 int Buffer::advance()

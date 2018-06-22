@@ -47,6 +47,7 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 		} else {
 			pr->desc = desc;
 			pr->name = MPT_tr("interface");
+			mt->_vptr->conv(mt, MPT_ENUM(TypeValue), &pr->val);
 		}
 		return code;
 	}

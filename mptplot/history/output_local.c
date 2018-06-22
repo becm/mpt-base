@@ -74,23 +74,23 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		}
 		return MPT_ENUM(TypeObject);
 	}
-	if (type == MPT_ENUM(TypeMeta)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = lo->pass;
 		return MPT_ENUM(TypeOutput);
 	}
-	if (type == MPT_ENUM(TypeObject)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeObject))) {
 		if (ptr) *((void **) ptr) = &lo->_obj;
 		return MPT_ENUM(TypeOutput);
 	}
-	if (type == MPT_ENUM(TypeOutput)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeOutput))) {
 		if (ptr) *((void **) ptr) = &lo->_out;
 		return MPT_ENUM(TypeObject);
 	}
-	if (type == MPT_ENUM(TypeLogger)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeLogger))) {
 		if (ptr) *((void **) ptr) = &lo->_log;
 		return MPT_ENUM(TypeObject);
 	}
-	if (type == MPT_ENUM(TypeFile)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeFile))) {
 		if (ptr) *((void **) ptr) = lo->hist.info.file;
 		return MPT_ENUM(TypeOutput);
 	}
@@ -111,7 +111,7 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutput);
 	}
 	if ((name = pr->name) && !*name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeMeta), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeMetaRef), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("local data output");
 		pr->val.fmt = fmt;
@@ -137,14 +137,14 @@ static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTE
 		}
 		/* get modifyable instance pointer */
 		mt = 0;
-		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeMeta), &mt)) < 0) {
+		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeMetaPtr), &mt)) < 0) {
 			return ret;
 		}
 		if (!mt) {
 			return MPT_ERROR(BadValue);
 		}
 		out = 0;
-		if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeOutput), &out)) < 0) {
+		if ((ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out)) < 0) {
 			return ret;
 		}
 		/* avoid circular redirection */

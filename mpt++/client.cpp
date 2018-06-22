@@ -16,7 +16,7 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int typeinfo<client *>::id()
+template <> int typeinfo<client>::id()
 {
     return mpt_client_typeid();
 }
@@ -56,25 +56,25 @@ static config *clientConfig()
  */
 int client::conv(int type, void *ptr) const
 {
-    int me = mpt_client_typeid();
+    int me = typeinfo<client>::id();
     if (me < 0) {
         me = metatype::Type;
     }
+    else if (type == to_pointer_id(me)) {
+        if (ptr) *static_cast<const client **>(ptr) = this;
+        return config::Type;
+    }
     if (!type) {
-        static const uint8_t fmt[] = { metatype::Type, config::Type, 0 };
+        static const uint8_t fmt[] = { config::Type, 0 };
         if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
-    if (type == config::Type) {
+    if (type == to_pointer_id(config::Type)) {
         if (ptr) *static_cast<class config **>(ptr) = clientConfig();
         return me;
     }
-    if (type == metatype::Type) {
+    if (type == to_pointer_id(metatype::Type)) {
         if (ptr) *static_cast<const metatype **>(ptr) = this;
-        return config::Type;
-    }
-    if (type == me) {
-        if (ptr) *static_cast<const client **>(ptr) = this;
         return config::Type;
     }
     return BadType;

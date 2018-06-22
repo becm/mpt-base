@@ -82,54 +82,54 @@ MPT_INTERFACE(iterator);
 enum MPT_ENUM(Types)
 {
 	/* system types */
-	MPT_ENUM(TypeSocket)    = 0x1,   /* SOH */
+	MPT_ENUM(TypeSocket)        = 0x1,   /* SOH */
 	/* system pointer types */
-	MPT_ENUM(TypeFile)      = 0x4,   /* EOT */
-	MPT_ENUM(TypeAddress)   = 0x5,   /* ENQ */
+	MPT_ENUM(TypeFile)          = 0x4,   /* EOT */
+	MPT_ENUM(TypeAddress)       = 0x5,   /* ENQ */
 	
 	/* format types (scalar) */
-	MPT_ENUM(TypeValFmt)    = 0x8,   /* BS '\b' */
-	MPT_ENUM(TypeValue)     = 0x9,   /* HT '\t' */
-	MPT_ENUM(TypeProperty)  = 0xa,   /* LF '\n' */
-	MPT_ENUM(TypeCommand)   = 0xb,   /* FF '\v' */
+	MPT_ENUM(TypeValFmt)        = 0x8,   /* BS '\b' */
+	MPT_ENUM(TypeValue)         = 0x9,   /* HT '\t' */
+	MPT_ENUM(TypeProperty)      = 0xa,   /* LF '\n' */
+	MPT_ENUM(TypeCommand)       = 0xb,   /* FF '\v' */
 	
 	/* special pointer types */
-	MPT_ENUM(TypeNode)      = 0xc,   /* FF '\f' */
-	MPT_ENUM(TypeReplyData) = 0xd,   /* CR '\r' */
+	MPT_ENUM(TypeNode)          = 0xc,   /* FF '\f' */
+	MPT_ENUM(TypeReplyData)     = 0xd,   /* CR '\r' */
 	
 	/* reserve range for layout types */
-#define MPT_value_isLayout(v)  ((v) >= 0x10 && (v) <= 0x1f)
+#define MPT_type_isLayout(v)       ((v) >= 0x10 && (v) <= 0x1f)
 	
 	/* reserve ranges for special/format types */
-#define MPT_value_isSpecial(v)  (((v) >= 0x20 && (v) <= 0x3f) \
-                              || ((v) >= 0x5b && (v) <= 0x5f) \
-                              || ((v) >= 0x7b && (v) <= 0x7f))
+#define MPT_type_isSpecial(v)     (((v) >= 0x20 && (v) <= 0x3f) \
+                                || ((v) >= 0x5b && (v) <= 0x5f) \
+                                || ((v) >= 0x7b && (v) <= 0x7f))
 	/* range for generic base types */
 	MPT_ENUM(_TypeVectorBase)    = 0x40,
-#define MPT_value_isVector(v)   (MPT_value_fromVector(v) >= 0)
-	MPT_ENUM(TypeVector)         = '@',   /* 0x40: generic data */
-#define MPT_value_toVector(v)   (MPT_value_isScalar(v) \
-                               ? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
-                               : 0)
+	MPT_ENUM(_TypeVectorMax)     = 0x5a,
+#define MPT_type_isVector(v)      ((v) >= MPT_ENUM(_TypeVectorBase) && (v) < MPT_ENUM(_TypeVectorMax))
+	MPT_ENUM(TypeVector)         = '@',  /* 0x40: generic data */
+#define MPT_type_vector(v)        (MPT_type_isScalar(v) || MPT_type_isExtended(v) \
+                                 ? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
+                                 : 0)
 	MPT_ENUM(_TypeScalarBase)    = 0x60,
 	MPT_ENUM(_TypeScalarMax)     = 0x7a,
 	MPT_ENUM(_TypeScalarSize)    = MPT_ENUM(_TypeScalarBase) - MPT_ENUM(_TypeVectorBase),
-#define MPT_value_isScalar(v)   ((v) & MPT_ENUM(_TypeDynamic) \
-                               ? ((v) >= (MPT_ENUM(_TypeDynamic) + MPT_ENUM(_TypeScalarBase)) && (v) < 0x100) \
-                               : ((v) > MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax)))
+#define MPT_type_isScalar(v)      ((v) >= MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax))
+#define MPT_type_isExtended(v)    ((v) >= (MPT_ENUM(_TypeDynamic) + MPT_ENUM(_TypeScalarBase)) && (v) < 0x100)
 	
-	MPT_ENUM(TypeMeta)           = '`',   /* 0x60: generic type */
 	/* scalar types ('a'..'z') */
 	MPT_ENUM(TypeArray)          = 'a',   /* array content */
-#define MPT_value_fromVector(v) (((v) == MPT_ENUM(TypeVector)) \
-                               ? 0 \
-                               : (MPT_value_isScalar((v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase)) \
-                                ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
-                                : MPT_ERROR(BadType)))
+	MPT_ENUM(TypeMetaRef)        = 'm',   /* generic metatype reference */
+#define MPT_type_fromVector(v)    (((v) == MPT_ENUM(_TypeVectorBase)) \
+                                 ? 0 \
+                                 : (MPT_type_isVector(v) || MPT_type_isExtended((v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase)) \
+                                  ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
+                                  : MPT_ERROR(BadType)))
 	
-#define MPT_value_isBasic(v)  (MPT_value_isScalar(v) \
-                            || MPT_value_isVector(v) \
-                            || MPT_value_isLayout(v))
+#define MPT_type_isBasic(v)  (MPT_type_isScalar(v) \
+                           || MPT_type_isVector(v) \
+                           || MPT_type_isLayout(v))
 	
 	/* range for type allocations */
 	MPT_ENUM(_TypeDynamic)       = 0x80,
@@ -148,26 +148,32 @@ enum MPT_ENUM(Types)
 	/* range for dynamic interfaces */
 	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeDynamic) + 0x10,
 	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeDynamic) + 0x3f,
-#define MPT_value_isInterface(v)  ((v) >= MPT_ENUM(_TypeDynamic) \
+#define MPT_type_isInterface(v)   ((v) >= MPT_ENUM(_TypeDynamic) \
                                 && (v) < MPT_ENUM(_TypeInterfaceMax))
 	
-	/* range for metatype extensions */
+	/* range for metatype and extensions */
 	MPT_ENUM(_TypeMetaBase)      = 0x0100,
 	MPT_ENUM(_TypeMetaMax)       = 0x01ff,
-#define MPT_value_isMetatype(v)  (((v) == MPT_ENUM(TypeMeta)) \
-                               || ((v) >= MPT_ENUM(_TypeMetaBase) && (v) <= (MPT_ENUM(_TypeMetaMax))))
-	
+#define MPT_type_isMetatype(v)    ((v) >= MPT_ENUM(_TypeMetaBase) && (v) <= (MPT_ENUM(_TypeMetaMax)))
 	/* range for generic type extensions */
 	MPT_ENUM(_TypeGenericBase)   = 0x0200,
 	MPT_ENUM(_TypeGenericMax)    = 0x0fff,
 	
 	/* automatic range types */
-	MPT_ENUM(_TypeReferenceBase) = 0x1000,
-	MPT_ENUM(_TypeItemBase)      = 0x2000,
+	MPT_ENUM(_TypePointerBase)   = 0x1000,
+#define MPT_type_pointer(v)       (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypePointerBase) : MPT_ERROR(BadType))
+	MPT_ENUM(_TypeReferenceBase) = 0x2000,
+#define MPT_type_reference(v)     (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeReferenceBase) : MPT_ERROR(BadType))
+	MPT_ENUM(_TypeItemBase)      = 0x3000,
+#define MPT_type_item(v)          (((v) > 0 && (v) <=  MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeItemBase) : MPT_ERROR(BadType))
 	
-	/* range for map element types */
-	MPT_ENUM(_TypeMapBase)       = 0x4000,
-	MPT_ENUM(_TypeMapMax)        = 0x4fff,
+	/* combined regular types */
+	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypePointerBase),
+#define MPT_type_isMetaPtr(v)     (((v) >= MPT_ENUM(TypeMetaPtr) && (v) <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypePointerBase))))
+#define MPT_type_isMetaRef(v)     ((v) >= (MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypeReferenceBase)) \
+                                && (v) <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypeReferenceBase)))
+	
+	MPT_ENUM(_TypeSpanBase)      = 0x4000,
 	
 	MPT_ENUM(_TypeUserMin)       = 0x10000
 };
@@ -245,18 +251,17 @@ extern int mpt_offset(const uint8_t *, int);
 extern ssize_t mpt_valsize(int);
 
 /* id for registered named type */
-extern int mpt_valtype_id(const char *, int);
+extern int mpt_type_value(const char *, int);
 /* get name registered type */
 extern const char *mpt_meta_typename(int);
 extern const char *mpt_interface_typename(int);
+/* register extended types */
+extern int mpt_type_meta_new(const char *);
+extern int mpt_type_interface_new(const char *);
+extern int mpt_type_generic_new(void);
 
 /* add user scalar or pointer type */
 extern int mpt_valtype_add(size_t);
-/* register interface type */
-extern int mpt_valtype_meta_new(const char *);
-extern int mpt_valtype_interface_new(const char *);
-/* register extended type */
-extern int mpt_valtype_generic_new(void);
 
 /* calculate environment-depending hash for data */
 extern uintptr_t mpt_hash(const void *, int __MPT_DEFPAR(-1));
@@ -274,15 +279,17 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 extern int make_id();
-extern int make_vector_id();
-extern int make_map_id();
+extern int to_span_id(int);
+extern int to_pointer_id(int);
 extern int to_reference_id(int);
 extern int to_item_id(int);
 
 inline __MPT_CONST_EXPR uint8_t basetype(int id)
 {
-	return (MPT_value_isMetatype(id)) ? TypeMeta
-	  : ((id < 0 || id > 0xff) ? 0 : id);
+	return (id >= (MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypeReferenceBase))
+	     && id <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypeReferenceBase)))
+	    ? TypeMetaRef
+	    : ((id < 0 || id > 0xff) ? 0 : id);
 }
 template <typename T>
 class typeinfo
@@ -291,6 +298,17 @@ protected:
 	typeinfo();
 public:
 	static int id();
+};
+template <typename T>
+class typeinfo<T *>
+{
+protected:
+	typeinfo();
+public:
+	static int id()
+	{
+		return to_pointer_id(typeinfo<T>::id());
+	}
 };
 
 /* floating point values */
@@ -383,12 +401,7 @@ public:
 	{
 		static int _id;
 		if (!_id) {
-			int c = typeinfo<T>::id();
-			if (c > 0 && (c = MPT_value_toVector(c)) > 0) {
-				_id = c;
-			} else {
-				_id = make_vector_id();
-			}
+			_id = to_span_id(typeinfo<T>::id());
 		}
 		return _id;
 	}
@@ -453,7 +466,8 @@ MPT_STRUCT(value)
 	const void    *ptr;  /* formated data */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<value>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<value>::id()
+{
 	return value::Type;
 }
 #endif
@@ -587,10 +601,13 @@ protected:
 public:
 	static int id()
 	{
-		return to_reference_id(typeinfo<T *>::id());
+		return to_reference_id(typeinfo<T>::id());
 	}
 };
-template <> __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id();
+template <> inline __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id()
+{
+	return TypeMetaRef;
+}
 #endif
 
 /* text identifier for entity */
@@ -647,7 +664,7 @@ protected:
 public:
 	static int id()
 	{
-		return to_item_id(typeinfo<T *>::id());
+		return to_item_id(typeinfo<T>::id());
 	}
 };
 

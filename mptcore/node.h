@@ -48,7 +48,7 @@ MPT_STRUCT(node)
 };
 
 #if defined(__cplusplus)
-template<> inline __MPT_CONST_TYPE int typeinfo<node *>::id()
+template<> inline __MPT_CONST_TYPE int typeinfo<node>::id()
 {
 	return node::Type;
 }

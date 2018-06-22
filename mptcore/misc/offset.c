@@ -24,23 +24,32 @@ extern int mpt_offset(const uint8_t *fmt, int pos)
 	size_t off = 0;
 	int curr;
 	
+	if (!pos) {
+		return 0;
+	}
 	while ((curr = *fmt++)) {
 		int len;
 		
 		if (isspace(curr)) {
 			continue;
 		}
-		if ((len = mpt_valsize(curr)) < 0) {
+		if (curr == MPT_ENUM(TypeArray)) {
+			len = sizeof(void *);
+		}
+		else if (curr == MPT_ENUM(TypeMetaRef)) {
+			len = sizeof(void *);
+		}
+		else if ((len = mpt_valsize(curr)) < 0) {
 			if (!pos) {
 				return off;
 			}
-			return curr;
+			return len;
 		}
-		if (!len) {
-			off += sizeof(void *);
-		} else {
-			off += len;
+		else if (!len) {
+			len = sizeof(void *);
 		}
+		off += len;
+		
 		if (pos > 0 && !--pos) {
 			return off;
 		}

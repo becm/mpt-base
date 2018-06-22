@@ -59,6 +59,7 @@ extern int main(int, char *[])
 	print<int>();
 	print<float>();
 	print<mpt::array>();
+	print<mpt::metatype>();
 	print<mpt::metatype *>();
 	print<mpt::reference_wrapper<mpt::metatype> >();
 	

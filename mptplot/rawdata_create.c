@@ -59,20 +59,20 @@ static int rd_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	int me = mpt_rawdata_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(TypeMeta);
+		me = MPT_ENUM(_TypeMetaBase);
+	}
+	else if (type == MPT_type_pointer(me)) {
+		if (ptr) *((const void **) ptr) = &rd->_rd;
+		return me;
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeArray), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeArray), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
-	if (type == MPT_ENUM(TypeMeta)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((const void **) ptr) = &rd->_mt;
 		return me;
-	}
-	if (type == me) {
-		if (ptr) *((const void **) ptr) = &rd->_rd;
-		return MPT_ENUM(TypeMeta);
 	}
 	/* TODO: type info for stage data array
 	if (type == MPT_ENUM(TypeArray)) {

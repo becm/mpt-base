@@ -15,7 +15,9 @@
 #include "convert.h"
 #include "output.h"
 
+#include "connection.h"
 #include "notify.h"
+
 #include "stream.h"
 
 MPT_STRUCT(streamInput) {
@@ -79,20 +81,23 @@ static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(TypeMeta);
+		me = MPT_ENUM(_TypeMetaBase);
+	}
+	else if (type == MPT_type_pointer(me)) {
+		if (ptr) *((void **) ptr) = &srm->_in;
+		return MPT_ENUM(TypeSocket);
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
-	if (type == MPT_ENUM(TypeMeta)
-	    || type == me) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = &srm->_in;
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) *((int *) ptr) = _mpt_stream_fread(&srm->data._info);
+		if (ptr) ((MPT_STRUCT(socket) *) ptr)->_id = _mpt_stream_fread(&srm->data._info);
 		return me;
 	}
 	return MPT_ERROR(BadType);

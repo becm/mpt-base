@@ -30,7 +30,7 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 	int len;
 	
 	if (!type) {
-		static const char types[] = { MPT_value_toVector('c'), 's', 0 };
+		static const char types[] = { MPT_type_vector('c'), 's', 0 };
 		if (data) *((const char **) data) = types;
 		return 0;
 	}
@@ -42,7 +42,7 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 	/* element base address */
 	base = ((char *) (s->_a._buf + 1)) + s->_off;
 	
-	if (type == MPT_value_toVector('c')
+	if (type == MPT_type_vector('c')
 	    || type == MPT_ENUM(TypeVector)) {
 		struct iovec *vec;
 		if ((vec = data)) {
@@ -61,7 +61,7 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 			*((const char **) data) = base;
 		}
 		s->_len = len;
-		return MPT_value_toVector('c');
+		return MPT_type_vector('c');
 	}
 	if (type == 'k') {
 		const char *key;
@@ -80,11 +80,11 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 			*((const char **) data) = key;
 		}
 		s->_len = len;
-		return MPT_value_toVector('c');
+		return MPT_type_vector('c');
 	}
 	if ((len = mpt_convert_string(base, type, data)) <= 0) {
 		return len;
 	}
 	s->_len = len;
-	return MPT_value_toVector('c');
+	return MPT_type_vector('c');
 }

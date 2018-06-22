@@ -111,15 +111,15 @@ void *value::pointer(int type) const
 const struct iovec *value::vector(int type) const
 {
     int from;
-    if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
+    if (!ptr || !fmt || !(from = (uint8_t) *fmt)) {
         return 0;
     }
     /* bad source type */
-    if ((from = MPT_value_fromVector(from)) < 0) {
+    if ((from = MPT_type_fromVector(from)) < 0) {
         return 0;
     }
     /* invald content type */
-    if (type && type != from) {
+    if (type >= 0 && type != from) {
         return 0;
     }
     return reinterpret_cast<const struct iovec *>(ptr);

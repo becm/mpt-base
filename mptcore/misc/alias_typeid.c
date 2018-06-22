@@ -38,7 +38,7 @@ extern int mpt_alias_typeid(const char *desc, const char **end)
 			}
 		}
 	}
-	if ((type = mpt_valtype_id(desc, type)) < 0) {
+	if ((type = mpt_type_value(desc, type)) < 0) {
 		return MPT_ERROR(BadValue);;
 	}
 	if (!end) {

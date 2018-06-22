@@ -42,9 +42,6 @@ static const struct {
 	{ MPT_ENUM(TypeWorld),     0 },
 	{ MPT_ENUM(TypeGraph),     0 },
 	
-	/* generic metatype */
-	{ MPT_ENUM(TypeMeta),      0 },
-	
 	/* basic printable types */
 	{ 'c', sizeof(char) },
 	
@@ -98,12 +95,11 @@ extern ssize_t mpt_valsize(int type)
 		uint8_t i;
 		
 		/* generic interface type */
-		if (MPT_value_isInterface(type)) {
+		if (MPT_type_isInterface(type)) {
 			return 0;
 		}
 		/* generic/typed vector */
-		if (type == MPT_ENUM(TypeVector)
-		    || MPT_value_isVector(type)) {
+		if (MPT_type_isVector(type)) {
 			return sizeof(struct iovec);
 		}
 		/* basic type */
@@ -115,7 +111,7 @@ extern ssize_t mpt_valsize(int type)
 		return MPT_ERROR(BadType);
 	}
 	/* static or dynamic interface */
-	if (MPT_value_isInterface(type)) {
+	if (MPT_type_isInterface(type)) {
 		return 0;
 	}
 	type -= MPT_ENUM(_TypeDynamic);

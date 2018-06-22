@@ -20,11 +20,11 @@ int metatype::conv(int type, void *ptr) const
     void **dest = (void **) ptr;
 
     if (!type) {
-        static const char types[] = { Type, 0 };
+        static const char types[] = { 0 };
         if (dest) *dest = (void *) types;
         return 0;
     }
-    if (type != Type) {
+    if (type != to_pointer_id(Type)) {
         return BadType;
     }
     if (dest) *dest = const_cast<metatype *>(this);
@@ -47,7 +47,7 @@ int metatype::basic::conv(int type, void *ptr) const
 metatype::basic *metatype::basic::clone() const
 {
     struct iovec vec;
-    if (_mpt_geninfo_conv(this + 1, MPT_value_toVector('c') , &vec) <= 0) {
+    if (_mpt_geninfo_conv(this + 1, MPT_type_vector('c') , &vec) <= 0) {
         errno = EINVAL;
         return 0;
     }

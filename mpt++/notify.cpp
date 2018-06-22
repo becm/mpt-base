@@ -9,7 +9,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<input *>::id()
+template <> int typeinfo<input>::id()
 {
     return mpt_input_typeid();
 }

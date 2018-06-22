@@ -33,7 +33,8 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<reply_data *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<reply_data>::id()
+{
 	return reply_data::Type;
 }
 
@@ -69,7 +70,8 @@ protected:
 	inline ~reply_context()
 	{ }
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<reply_context *>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<reply_context>::id()
+{
 	return reply_context::Type;
 }
 #else

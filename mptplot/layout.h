@@ -307,6 +307,35 @@ class Parse;
 struct parseflg;
 struct path;
 
+template <> inline __MPT_CONST_TYPE int typeinfo<color>::id()
+{
+	return color::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<lineattr>::id()
+{
+	return lineattr::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<line>::id()
+{
+	return line::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<axis>::id()
+{
+	return axis::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<world>::id()
+{
+	return world::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<graph>::id()
+{
+	return graph::Type;
+}
+template <> inline __MPT_CONST_TYPE int typeinfo<text>::id()
+{
+	return text::Type;
+}
+
 template <typename S>
 void apply(point<S> *d, const linepart &pt, const S *src, const value_apply &v)
 {

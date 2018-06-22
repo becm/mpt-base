@@ -19,7 +19,7 @@ extern int mpt_value_store_typeid(void)
 	static int id = 0;
 	
 	if (!id) {
-		id = mpt_valtype_generic_new();
+		id = mpt_type_generic_new();
 	}
 	return id;
 }

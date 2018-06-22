@@ -407,7 +407,7 @@ metatype *graphic::item(message &msg, size_t len) const
         len = 0;
         term = true;
     }
-    int type = typeinfo<group *>::id();
+    int type = typeinfo<group>::id();
     
     reference_wrapper<layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {

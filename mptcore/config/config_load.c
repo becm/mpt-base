@@ -83,7 +83,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 			        MPT_tr("failed to access mpt config"));
 			return MPT_ERROR(BadOperation);
 		}
-		if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg)) < 0
+		if ((ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg)) < 0
 		    || !cfg) {
 			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
 			        MPT_tr("bad global config element"));

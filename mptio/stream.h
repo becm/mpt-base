@@ -238,6 +238,7 @@ protected:
 	int _inputFile;
 	uint8_t _idlen;
 };
+template <> int typeinfo<Stream>::id();
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

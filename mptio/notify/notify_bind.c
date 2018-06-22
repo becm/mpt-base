@@ -46,19 +46,23 @@ static int socketConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(TypeMeta);
+		me = MPT_ENUM(_TypeMetaBase);
+	}
+	else if (type == MPT_type_pointer(me)) {
+		if (ptr) *((void **) ptr) = &sd->_in;
+		return MPT_ENUM(TypeSocket);
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeMeta), MPT_ENUM(TypeSocket), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
-	if (type == me || type == MPT_ENUM(TypeMeta)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = &sd->_in;
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) *((int *) ptr) = sd->sock._id;
+		if (ptr) *((MPT_STRUCT(socket) *) ptr) = sd->sock;
 		return me;
 	}
 	return MPT_ERROR(BadType);

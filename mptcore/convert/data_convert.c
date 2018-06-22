@@ -76,7 +76,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			if (dest) *txt = b ? (void *) (b + 1) : 0;
 			return sizeof(*txt);
 		}
-		if ((dtype = MPT_value_fromVector(dtype)) >= 0) {
+		if ((dtype = MPT_type_vector(dtype)) >= 0) {
 			struct iovec *vec;
 			/* require matching types */
 			if (dtype != content) {
@@ -96,37 +96,56 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		}
 		return MPT_ERROR(BadType);
 	}
+	/* metatype pointer processing */
+	if (MPT_type_isMetaPtr(ftype)) {
+		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
+		flen = sizeof(void *);
+		if (dtype == ftype
+		 || dtype == MPT_ENUM(TypeMetaPtr)) {
+			if (dest) {
+				*((void **) dest) = *((void **) from);
+			}
+			*fptr = from + sizeof(void *);
+			return flen;
+		}
+		if (!mt) {
+			return MPT_ERROR(BadOperation);
+		}
+		if ((flen = mpt_valsize(dtype)) < 0) {
+			return flen;
+		}
+		if (mt->_vptr->conv(mt, dtype, dest) <= 0) {
+			return MPT_ERROR(BadOperation);
+		}
+		*fptr = from + sizeof(void *);
+		return flen;
+	}
 	/* special metatype processing */
-	if (MPT_value_isMetatype(ftype)) {
+	if (ftype == MPT_ENUM(TypeMetaRef)
+	 || MPT_type_isMetaRef(ftype)) {
+		MPT_INTERFACE(metatype) **ptr;
 		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
 		
 		flen = sizeof(mt);
-		if (dtype != ftype) {
-			if (dtype != MPT_ENUM(TypeMeta)) {
-				return MPT_ERROR(BadType);
-			}
-			if (dest) {
-				if (mt && !mt->_vptr->ref.addref((void *) mt)) {
-					return MPT_ERROR(BadOperation);
-				}
-				*((void **) dest) = mt;
-			}
-			*fptr = from + flen;
-			return sizeof(void *);
+		
+		/* require valid reference for target */
+		if (dtype != MPT_ENUM(TypeMetaRef)
+		 && dtype != ftype) {
+			return MPT_ERROR(BadType);
 		}
-		if (dest) {
-			MPT_INTERFACE(metatype) *to, **ptr = dest;
+		if ((ptr = dest)) {
+			MPT_INTERFACE(metatype) *old;
+			
 			if (mt && !mt->_vptr->ref.addref((void *) mt)) {
 				return MPT_ERROR(BadOperation);
 			}
-			if ((to = *ptr)) {
-				to->_vptr->ref.unref((void *) to);
+			if ((old = *ptr)) {
+				old->_vptr->ref.addref((void *) old);
 			}
 			*ptr = mt;
-			*fptr = from + flen;
-			return sizeof(*ptr);
 		}
-		return sizeof(void *);
+		*fptr = from + flen;
+		return sizeof(*ptr);
 	}
 	/* check input type size */
 	if ((flen = mpt_valsize(ftype)) < 0) {
@@ -396,11 +415,11 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 #endif
 	  default:
 		/* vector conversion */
-		if (MPT_value_isVector(dtype)) {
+		if (MPT_type_vector(dtype)) {
 			struct iovec *vec = dest;
 			
 			/* copy vector data */
-			if (MPT_value_isVector(ftype)) {
+			if (MPT_type_isVector(ftype)) {
 				/* require same or generic type */
 				if ((dtype & 0x1f) && dtype != ftype) {
 					return MPT_ERROR(BadType);
@@ -409,7 +428,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 				break;
 			}
 			/* convert from scalar */
-			else if (!MPT_value_isScalar(ftype)
+			else if (!MPT_type_isScalar(ftype)
 			      || (dtype & 0x1f) != (ftype & 0x1f)) {
 				return MPT_ERROR(BadType);
 			}

@@ -18,11 +18,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<group *>::id()
+template <> int typeinfo<group>::id()
 {
     static int id = 0;
-    if (!id && (id = mpt_valtype_interface_new("group")) < 0) {
-        id = mpt_valtype_interface_new(0);
+    if (!id && (id = mpt_type_interface_new("group")) < 0) {
+        id = mpt_type_interface_new(0);
     }
     return id;
 }
@@ -30,7 +30,7 @@ template <> int typeinfo<group *>::id()
 int group::property(struct property *pr) const
 {
     if (!pr) {
-        return typeinfo<group *>::id();
+        return typeinfo<group>::id();
     }
     if (!pr->name || *pr->name) {
         return BadArgument;
@@ -293,26 +293,26 @@ void collection::unref()
 }
 int collection::conv(int type, void *ptr) const
 {
-    int me = typeinfo<group *>::id();
+    int me = typeinfo<group>::id();
     if (me < 0) {
         me = object::Type;
+    }
+    else if (type == to_pointer_id(me)) {
+        if (ptr) *static_cast<const group **>(ptr) = this;
+        return array::Type;
     }
     if (!type) {
         static const char fmt[] = { array::Type };
         if (ptr) *static_cast<const char **>(ptr) = fmt;
         return me;
     }
-    if (type == metatype::Type) {
+    if (type == to_pointer_id(metatype::Type)) {
         if (ptr) *static_cast<const metatype **>(ptr) = this;
         return me;
     }
-    if (type == object::Type) {
+    if (type == to_pointer_id(object::Type)) {
         if (ptr) *static_cast<const object **>(ptr) = this;
         return me;
-    }
-    if (type == me) {
-        if (ptr) *static_cast<const group **>(ptr) = this;
-        return array::Type;
     }
     return BadType;
 }

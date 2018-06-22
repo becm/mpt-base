@@ -21,7 +21,7 @@
 extern int mpt_scalar_argv(MPT_STRUCT(scalar) *s, int fmt, va_list va)
 {
 	size_t len;
-	if (MPT_value_isVector(fmt)) {
+	if (MPT_type_isVector(fmt)) {
 		s->val.v = va_arg(va, struct iovec);
 		s->len = sizeof(struct iovec);
 		s->type = fmt;

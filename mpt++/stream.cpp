@@ -18,11 +18,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<Stream *>::id()
+template <> int typeinfo<Stream>::id()
 {
     static int id;
-    if (!id && (id = mpt_valtype_meta_new("stream")) < 0) {
-        id = mpt_valtype_meta_new(0);
+    if (!id && (id = mpt_type_meta_new("stream")) < 0) {
+        id = mpt_type_meta_new(0);
     }
     return id;
 }
@@ -104,6 +104,10 @@ int Stream::conv(int type, void *ptr) const
     if (me < 0) {
         me = output::Type;
     }
+    else if (type == to_pointer_id(me)) {
+        if (ptr) *static_cast<const input **>(ptr) = this;
+        return socket::Type;
+    }
     if (!type) {
         static const uint8_t fmt[] = { output::Type, socket::Type, 0 };
         if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
@@ -113,17 +117,13 @@ int Stream::conv(int type, void *ptr) const
         if (ptr) *reinterpret_cast<int *>(ptr) = _inputFile;
         return me;
     }
-    if (type == metatype::Type) {
+    if (type == to_pointer_id(metatype::Type)) {
         if (ptr) *static_cast<const metatype **>(ptr) = this;
         return output::Type;
     }
-    if (type == output::Type) {
+    if (type == to_pointer_id(output::Type)) {
         if (ptr) *static_cast<const output **>(ptr) = this;
         return me;
-    }
-    if (type == me) {
-        if (ptr) *static_cast<const input **>(ptr) = this;
-        return socket::Type;
     }
     return BadType;
 }
@@ -149,7 +149,7 @@ int Stream::property(struct property *pr) const
     else {
         // get stream interface types
         if (!*name) {
-            static const uint8_t fmt[] = { output::Type, input::Type, 0 };
+            static const uint8_t fmt[] = { output::Type, 0 };
             pr->name = "stream";
             pr->desc = "interfaces to stream data";
             pr->val.fmt = fmt;

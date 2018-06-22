@@ -1043,7 +1043,8 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<message_store::entry>::id() {
+template<> inline __MPT_CONST_TYPE int typeinfo<message_store::entry>::id()
+{
 	return typeinfo<array>::id();
 }
 

@@ -86,11 +86,11 @@ static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		}
 		return MPT_ENUM(TypeConfig);
 	}
-	if (type == MPT_ENUM(TypeConfig)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeConfig))) {
 		if (ptr) *((const void **) ptr) = &c->_cfg;
 		return MPT_ENUM(TypeNode);
 	}
-	if (type == MPT_ENUM(TypeNode)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeNode))) {
 		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}

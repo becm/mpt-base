@@ -11,13 +11,15 @@
 #include "array.h"
 #include "config.h"
 
+#include "connection.h"
+
 #include "notify.h"
 
 #if defined(__linux__)
 # include <sys/epoll.h>
 #endif
 
-static int _input_ref_type = 0;
+static int _input_type = 0;
 
 static void _input_ref_init(const MPT_STRUCT(type_traits) *info, void *ptr)
 {
@@ -30,7 +32,7 @@ static int _input_ref_copy(void *src, int type, void *dest)
 	src_ptr = src;
 	dest_ptr = dest;
 	
-	if (type != MPT_ENUM(TypeMeta)) {
+	if (type != MPT_type_reference(_input_type)) {
 		return MPT_ERROR(BadType);
 	}
 	if ((src_ref = *src_ptr)
@@ -70,48 +72,50 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
 	MPT_INTERFACE(input) **base;
-	int file;
+	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	
-	if (!_input_ref_type) {
-		_input_ref_type = mpt_input_typeid();
+	if (!_input_type) {
+		_input_type = mpt_input_typeid();
 	}
-	if (_input_ref_type < 0) {
+	if (_input_type < 0) {
 		return MPT_ERROR(BadEncoding);
 	}
-	
-	file = -1;
 	if (!in
-	    || in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeSocket), &file) < 0
-	    || file < 0) {
+	    || in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeSocket), &sock) < 0
+	    || !MPT_socket_active(&sock)) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* create new buffer */
 	if (!(buf = no->_slot._buf)) {
-		MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(*base, MPT_ENUM(TypeMeta));
+		MPT_STRUCT(type_traits) info;
 		size_t len;
 		
+		memset(&info, 0, sizeof(info));
 		info.init = _input_ref_init;
 		info.copy = _input_ref_copy;
 		info.fini = _input_ref_fini;
 		
-		info.type = _input_ref_type;
+		info.type = MPT_type_reference(_input_type);
 		info.size = sizeof(*base);
-		info.base = MPT_ENUM(TypeMeta);
+		info.base = MPT_ENUM(TypeMetaRef);
 		
-		len = (file + 1) * sizeof(*base);
+		len = (sock._id + 1) * sizeof(*base);
 		if (!(buf = _mpt_buffer_alloc(len, &info))) {
 			return 0;
 		}
+		buf->_used = len;
 		base = memset(buf + 1, 0, len);
-		base += file;
+		base += sock._id;
+		
+		no->_slot._buf = buf;
 	}
 	/* reject incompatible data */
-	else if (!(info = buf->_typeinfo) || info->type != _input_ref_type) {
+	else if (!(info = buf->_typeinfo) || info->type != MPT_type_reference(_input_type)) {
 		return MPT_ERROR(BadType);
 	}
 	/* reserve matching position */
 	else {
-		if (!(base = mpt_array_slice(&no->_slot, file, sizeof(*base)))) {
+		if (!(base = mpt_array_slice(&no->_slot, sock._id * sizeof(*base), sizeof(*base)))) {
 			return MPT_ERROR(BadOperation);
 		}
 		if (*base) {
@@ -137,9 +141,9 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	}
 	if (no->_sysfd >= 0) {
 		struct epoll_event ev;
-		ev.data.fd = file;
+		ev.data.fd = sock._id;
 		ev.events  = mode;
-		if ((mode = epoll_ctl(no->_sysfd, EPOLL_CTL_ADD, file, &ev)) < 0) {
+		if ((mode = epoll_ctl(no->_sysfd, EPOLL_CTL_ADD, sock._id, &ev)) < 0) {
 			return mode;
 		}
 	}

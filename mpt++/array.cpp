@@ -261,7 +261,7 @@ int array::set(metatype &src)
     if (src.conv(TypeVector, &vec) >= 0) {
         return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
     }
-    if (src.conv(MPT_value_toVector('c'), &vec) >= 0) {
+    if (src.conv(MPT_type_vector('c'), &vec) >= 0) {
         return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
     }
     char *data;

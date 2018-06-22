@@ -16,7 +16,7 @@ __MPT_NAMESPACE_BEGIN
 template class reference_wrapper<cycle>;
 template class reference_array<cycle>;
 
-template <> int typeinfo<cycle *>::id()
+template <> int typeinfo<cycle>::id()
 {
     static int id = 0;
     if (!id) {

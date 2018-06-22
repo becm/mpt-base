@@ -25,7 +25,7 @@ extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *meta, size_t *le
 	struct iovec vec;
 	const char *base;
 	
-	if (len && meta->_vptr->conv(meta, MPT_value_toVector('c'), &vec) >= 0) {
+	if (len && meta->_vptr->conv(meta, MPT_type_vector('c'), &vec) >= 0) {
 		*len = vec.iov_len;
 		return vec.iov_base;
 	}

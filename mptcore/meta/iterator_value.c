@@ -59,11 +59,11 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 		}
 	}
 	/* convert from character array */
-	else if (*val->fmt == MPT_value_toVector('c')) {
+	else if (*val->fmt == MPT_type_vector('c')) {
 		const struct iovec *vec = val->ptr;
 		/* target is vector type */
 		if (type == *val->fmt
-		 || type == MPT_ENUM(TypeVector)) {
+		 || type == MPT_ENUM(_TypeVectorBase)) {
 			if (dest) {
 				*((struct iovec *) dest) = *vec;
 			}
@@ -125,7 +125,7 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	if (!(ftype = *it->val.fmt)) {
 		return 0;
 	}
-	if (ftype == MPT_ENUM(TypeMeta)) {
+	if (ftype == MPT_ENUM(TypeMetaRef)) {
 		MPT_INTERFACE(metatype) *mt;
 		if (!(mt = *((MPT_INTERFACE(metatype) **) it->val.ptr))) {
 			return MPT_ERROR(BadValue);
@@ -134,7 +134,7 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	}
 	/* copy scalar or untracked pointer data */
 	if (type == ftype
-	 && MPT_value_isBasic(ftype)) {
+	 && MPT_type_isBasic(ftype)) {
 		int len;
 		if ((len = mpt_valsize(ftype)) < 0) {
 			return MPT_ERROR(BadArgument);
@@ -242,7 +242,7 @@ static int valConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (dest) *((void **) dest) = &it->_it;
 		return MPT_ENUM(TypeIterator);
 	}
@@ -304,11 +304,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	vpos = 0;
 	curr = 0;
 	while ((type = fmt[flen++])) {
-		if (!MPT_value_isBasic(type)) {
-			errno = EINVAL;
-			return 0;
-		}
-		if ((type = mpt_valsize(*fmt)) < 0) {
+		if ((type = mpt_valsize(type)) < 0) {
 			errno = EINVAL;
 			return 0;
 		}

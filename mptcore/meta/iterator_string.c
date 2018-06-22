@@ -51,7 +51,7 @@ static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		it->restore = 0;
 		return 's';
 	}
-	if (type == MPT_value_toVector('c')) {
+	if (type == MPT_type_vector('c')) {
 		while (isspace(*txt)) ++txt;
 		while (!isspace(*txt)) ++txt;
 		it->restore = (char *) txt;
@@ -169,7 +169,7 @@ static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		return 's';
 	}
 	if (type == MPT_ENUM(TypeVector)
-	    || type == MPT_value_toVector('c')) {
+	    || type == MPT_type_vector('c')) {
 		struct iovec *vec;
 		if ((vec = dest)) {
 			vec->iov_base = it + 1;

@@ -44,7 +44,7 @@ enum MPT_OUTFLAG(Flags) {
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<output *>::id()
+template<> inline __MPT_CONST_TYPE int typeinfo<output>::id()
 {
 	return output::Type;
 }
@@ -104,7 +104,7 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<logger *>::id()
+template<> inline __MPT_CONST_TYPE int typeinfo<logger>::id()
 {
 	return logger::Type;
 }

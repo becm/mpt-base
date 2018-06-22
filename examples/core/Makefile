@@ -17,4 +17,4 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 test_ident : ARGS=1020 1021
 test_environ : ARGS='mpt_*'
 test_coding : ARGS=cobs
-test_config : ARGS=${MPT_PREFIX}
+test_config : ARGS=prefix.lib

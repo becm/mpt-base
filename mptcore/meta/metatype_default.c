@@ -21,14 +21,12 @@ static int genMetaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 	void **dest = ptr;
 	
 	if (!type) {
-		static const char types[] = { MPT_ENUM(TypeMeta), 's', 0 };
+		static const uint8_t types[] = { 0 };
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	if (type == MPT_ENUM(TypeMeta)) {
-		if (dest) {
-			*dest = (void *) meta;
-		}
+	if (type == MPT_ENUM(TypeMetaPtr)) {
+		if (dest) *dest = (void *) meta;
 		return 0;
 	}
 	return MPT_ERROR(BadType);

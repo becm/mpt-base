@@ -52,7 +52,7 @@ int main(int argc, const char *argv[])
 			struct mpt_object *obj = 0;
 			int err;
 			
-			if (mt->_vptr->conv(mt, MPT_ENUM(TypeObject), &obj) >= 0
+			if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
 			    && obj) {
 				fputs(object_name(obj), out);
 			}

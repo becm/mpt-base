@@ -17,7 +17,7 @@
  */
 extern int mpt_range_set(MPT_STRUCT(range) *r, MPT_STRUCT(value) *val)
 {
-	static const char fmt[] = { MPT_value_toVector('d'), 0 };
+	static const char fmt[] = { MPT_type_vector('d'), 0 };
 	struct iovec vec;
 	const double *ptr;
 	int len;

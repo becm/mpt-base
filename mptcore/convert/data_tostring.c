@@ -72,7 +72,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return (char *) (b + 1);
 	}
 	/* data is text vector */
-	if (type == MPT_value_toVector('c')) {
+	if (type == MPT_type_vector('c')) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;

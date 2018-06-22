@@ -36,7 +36,7 @@ MPT_STRUCT(out_data) {
 	MPT_STRUCT(connection) con;
 };
 
-static int remoteInfile(const MPT_STRUCT(out_data) *od)
+static int remote_infile(const MPT_STRUCT(out_data) *od)
 {
 	MPT_STRUCT(stream) *srm;
 	if (MPT_socket_active(&od->con.out.sock)) {
@@ -71,44 +71,43 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(TypeMeta);
+		me = MPT_ENUM(_TypeMetaBase);
+	}
+	else if (type == MPT_type_pointer(me)) {
+		if (ptr) *((const void **) ptr) = &od->_in;
+		return MPT_ENUM(TypeSocket);
 	}
 	if (!type) {
 		static const uint8_t fmt[] = {
-			MPT_ENUM(TypeMeta),
 			MPT_ENUM(TypeObject),
 			MPT_ENUM(TypeOutput),
 			MPT_ENUM(TypeLogger),
 			0
 		};
 		if (ptr) {
-			*((const uint8_t **) ptr) = (me == MPT_ENUM(TypeMeta)) ? fmt + 1 : fmt;
+			*((const uint8_t **) ptr) = fmt;
 		}
 		return me;
 	}
-	if (type == MPT_ENUM(TypeMeta)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((const void **) ptr) = &od->_in;
 		return MPT_ENUM(TypeSocket);
 	}
 	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) *((int *) ptr) = remoteInfile(od);
+		if (ptr) ((MPT_STRUCT(socket) *) ptr)->_id = remote_infile(od);
 		return me;
 	}
-	if (type == MPT_ENUM(TypeObject)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeObject))) {
 		if (ptr) *((const void **) ptr) = &od->_obj;
 		return me;
 	}
-	if (type == MPT_ENUM(TypeOutput)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeOutput))) {
 		if (ptr) *((const void **) ptr) = &od->_out;
 		return MPT_ENUM(TypeObject);
 	}
-	if (type == MPT_ENUM(TypeLogger)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeLogger))) {
 		if (ptr) *((const void **) ptr) = &od->_log;
 		return me;
-	}
-	if (type == me) {
-		if (ptr) *((const void **) ptr) = &od->_in;
-		return MPT_ENUM(TypeSocket);
 	}
 	return MPT_ERROR(BadType);
 }

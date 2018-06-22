@@ -15,7 +15,7 @@
  * 
  * \return new type code
  */
-extern int mpt_valtype_generic_new(void)
+extern int mpt_type_generic_new(void)
 {
 	static int id = MPT_ENUM(_TypeGenericBase);
 	if (id >= MPT_ENUM(_TypeGenericMax)) {

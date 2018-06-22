@@ -19,13 +19,13 @@ extern int main(int argc, char *argv[])
 	
 	mpt_path_set(&p, "mpt", -1);
 	mt = mpt_config_global(&p);
-	mt->_vptr->conv(mt, MPT_ENUM(TypeConfig), &cfg);
+	mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
 	
 	if ((i = mpt_config_load(cfg, 0, mpt_log_default())) < 0) {
 		return 1;
 	}
 	if (argc < 2) {
-		mt->_vptr->conv(mt, MPT_ENUM(TypeNode), &n);
+		mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeNode)), &n);
 		mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	}
 	for (i = 1; i < argc; ++i) {

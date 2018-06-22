@@ -22,6 +22,7 @@ extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 {
 	const char *src;
 	const uint8_t *desc;
+	size_t take;
 	int curr, len;
 	
 	if (!fmt) {
@@ -43,23 +44,17 @@ extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 		val->ptr = src;
 		return len;
 	}
+	take = 0;
 	while ((curr = fmt[len]) && curr == desc[len]) {
-		if (!MPT_value_isBasic(curr)) {
+		if ((curr = mpt_valsize(curr)) < 0) {
 			break;
 		}
 		++len;
+		take += curr;
 	}
-	if (len) {
-		int advance = mpt_offset(desc, len);
-		if (advance < 0) {
-			return MPT_ERROR(BadValue);
-		}
-		if (advance && dest) {
-			memcpy(dest, src, advance);
-			dest = ((uint8_t *) dest) + advance;
-		}
+	if (take && dest) {
 		val->fmt += len;
-		val->ptr = src + advance;
+		val->ptr = src + take;
 	}
 	return len;
 }

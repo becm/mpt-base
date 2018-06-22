@@ -20,6 +20,8 @@ static MPT_STRUCT(array) metatype_names  = MPT_ARRAY_INIT;
 static int interface_limit = MPT_ENUM(_TypeInterfaceMax);
 static int metatype_limit  = MPT_ENUM(_TypeMetaMax);
 
+#define MPT_META_OFFSET (MPT_ENUM(_TypeMetaBase) + 1)
+
 static void clearArrays(void)
 {
 	mpt_array_clone(&interface_names, 0);
@@ -34,17 +36,18 @@ struct Element
 static const struct {
 	int type;
 	const char name[28];
-} static_types[] = {
-	/* modify interface types */
+} core_interfaces[] = {
+	/* option interface types */
 	{ MPT_ENUM(TypeObject),   "object"   },
 	{ MPT_ENUM(TypeConfig),   "config"   },
 	/* input interface types */
 	{ MPT_ENUM(TypeIterator), "iterator" },
-	{ MPT_ENUM(TypeSolver),   "solver",  },
 	/* output interfaces */
 	{ MPT_ENUM(TypeLogger),   "logger"   },
 	{ MPT_ENUM(TypeReply),    "reply"    },
 	{ MPT_ENUM(TypeOutput),   "output"   },
+	/* other interfaces */
+	{ MPT_ENUM(TypeSolver),   "solver",  },
 };
 
 static int addArrayIdentifier(MPT_STRUCT(array) *arr, const char *name)
@@ -131,15 +134,18 @@ extern const char *mpt_meta_typename(int type)
 {
 	const char *name;
 	
+	if (type == MPT_ENUM(_TypeMetaBase)) {
+		return "metatype";
+	}
 	if (type > MPT_ENUM(_TypeMetaMax)
-	    || type < MPT_ENUM(_TypeMetaBase)) {
+	    || type < MPT_META_OFFSET) {
 		errno = EINVAL;
 		return 0;
 	}
 	if (type > metatype_limit) {
 		return "";
 	}
-	if (!(name = getArrayName(&metatype_names, type - MPT_ENUM(_TypeMetaBase)))) {
+	if (!(name = getArrayName(&metatype_names, type - MPT_META_OFFSET))) {
 		errno = EAGAIN;
 	}
 	return name;
@@ -165,9 +171,9 @@ extern const char *mpt_interface_typename(int type)
 	if (type > interface_limit) {
 		return "";
 	}
-	for (i = 0, max = MPT_arrsize(static_types); i < max; ++i) {
-		if (type == static_types[i].type) {
-			return static_types[i].name;
+	for (i = 0, max = MPT_arrsize(core_interfaces); i < max; ++i) {
+		if (type == core_interfaces[i].type) {
+			return core_interfaces[i].name;
 		}
 	}
 	if (!(name = getArrayName(&interface_names, type - MPT_ENUM(_TypeInterfaceBase)))) {
@@ -177,15 +183,15 @@ extern const char *mpt_interface_typename(int type)
 }
 
 /*!
- * \ingroup mptConvert
- * \brief get type name
+ * \ingroup mptCore
+ * \brief get type for name
  * 
  * Get name for previously registered type name.
  * Metatype entries take precedence over interfaces.
  * 
  * \return type ID for registered name
  */
-extern int mpt_valtype_id(const char *name, int len)
+extern int mpt_type_value(const char *name, int len)
 {
 	size_t i, max;
 	int pos;
@@ -193,22 +199,39 @@ extern int mpt_valtype_id(const char *name, int len)
 	if (!name || !len || !*name) {
 		return MPT_ERROR(BadArgument);
 	}
+	if (len >= 0) {
+		if (!strncmp(name, "metatype", len)) {
+			return MPT_ENUM(_TypeMetaBase);
+		}
+	}
+	else if (!strcmp(name, "metatype")) {
+		return MPT_ENUM(_TypeMetaBase);
+	}
 	/* prefere metatype registrations */
 	if ((pos = getArrayId(&metatype_names, name, len)) >= 0) {
-		return pos + MPT_ENUM(_TypeMetaBase);
+		return pos + MPT_META_OFFSET;
 	}
 	/* exact length match for interface name */
 	if (len >= 0) {
-		for (i = 0, max = MPT_arrsize(static_types); i < max; ++i) {
-			if (len == (int) strlen(static_types[i].name)
-			    && !strncmp(name, static_types[i].name, len)) {
-				return static_types[i].type;
+		for (i = 0, max = MPT_arrsize(core_interfaces); i < max; ++i) {
+			if (len == (int) strlen(core_interfaces[i].name)
+			    && !strncmp(name, core_interfaces[i].name, len)) {
+				return core_interfaces[i].type;
 			}
 		}
 		if ((pos = getArrayId(&interface_names, name, len)) >= 0) {
 			return pos + MPT_ENUM(_TypeInterfaceBase);
 		}
 		return MPT_ERROR(BadValue);
+	}
+	/* full names without length limit */
+	for (i = 0, max = MPT_arrsize(core_interfaces); i < max; ++i) {
+		if (!strcmp(name, core_interfaces[i].name)) {
+			return core_interfaces[i].type;
+		}
+	}
+	if ((pos = getArrayId(&interface_names, name, len)) >= 0) {
+		return pos + MPT_ENUM(_TypeInterfaceBase);
 	}
 	/* shortnames */
 	if (!strcmp(name, "log")) {
@@ -220,17 +243,8 @@ extern int mpt_valtype_id(const char *name, int len)
 	if (!strcmp(name, "out")) {
 		return MPT_ENUM(TypeOutput);
 	}
-	if (!strcmp(name, "meta") || !strcmp(name, "metatype")) {
-		return MPT_ENUM(TypeMeta);
-	}
-	/* full names without length limit */
-	for (i = 0, max = MPT_arrsize(static_types); i < max; ++i) {
-		if (!strcmp(name, static_types[i].name)) {
-			return static_types[i].type;
-		}
-	}
-	if ((pos = getArrayId(&interface_names, name, len)) >= 0) {
-		return pos + MPT_ENUM(_TypeInterfaceBase);
+	if (!strcmp(name, "meta")) {
+		return MPT_ENUM(_TypeMetaBase);
 	}
 	return MPT_ERROR(BadValue);
 	
@@ -244,12 +258,12 @@ extern int mpt_valtype_id(const char *name, int len)
  * 
  * \return unique type code
  */
-extern int mpt_valtype_meta_new(const char *name)
+extern int mpt_type_meta_new(const char *name)
 {
 	MPT_STRUCT(buffer) *buf;
 	int id, err;
 	
-	id = MPT_ENUM(_TypeMetaBase);
+	id = MPT_META_OFFSET;
 	if ((buf = metatype_names._buf)) {
 		id += buf->_used / sizeof(struct Element);
 	}
@@ -279,7 +293,7 @@ extern int mpt_valtype_meta_new(const char *name)
  * 
  * \return type code of new object type
  */
-extern int mpt_valtype_interface_new(const char *name)
+extern int mpt_type_interface_new(const char *name)
 {
 	MPT_STRUCT(buffer) *buf;
 	int id, err;

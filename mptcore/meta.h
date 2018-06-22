@@ -19,7 +19,7 @@ MPT_INTERFACE(metatype) : public reference
 protected:
 	inline ~metatype() {}
 public:
-	enum { Type = TypeMeta };
+	enum { Type = _TypeMetaBase };
 	
 	class basic;
 	
@@ -54,13 +54,9 @@ public:
 	inline int type() const
 	{ return conv(0, 0); }
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<metatype *>::id()
+template <> inline __MPT_CONST_TYPE int typeinfo<metatype>::id()
 {
 	return metatype::Type;
-}
-template <> inline __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id()
-{
-	return typeinfo<metatype *>::id();
 }
 #else
 MPT_INTERFACE(metatype);
@@ -87,7 +83,7 @@ public:
 	virtual int advance();
 	virtual int reset();
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<iterator *>::id()
+template <> inline __MPT_CONST_TYPE int typeinfo<iterator>::id()
 {
 	return iterator::Type;
 }
@@ -180,7 +176,8 @@ template <> inline const char *metatype::cast<const char>() const
 class metatype::basic : public metatype
 {
 protected:
-	inline ~basic() {}
+	inline ~basic()
+	{ }
 public:
 	basic(size_t post);
 	
@@ -212,7 +209,7 @@ public:
 		static const int me = typeinfo<T>::id();
 		if (!type) {
 			if (dest) {
-				*static_cast<const char **>(dest) = 0;
+				*static_cast<const uint8_t **>(dest) = 0;
 			}
 			return me;
 		}

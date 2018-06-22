@@ -13,11 +13,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<IODevice *>::id()
+template <> int typeinfo<IODevice>::id()
 {
     static int id = 0;
     if (!id) {
-        id = mpt_valtype_interface_new("io");
+        id = mpt_type_interface_new("io");
     }
     return id;
 }

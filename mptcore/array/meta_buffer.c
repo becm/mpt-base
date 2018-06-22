@@ -58,18 +58,18 @@ static int bufferConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) mt;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_value_toVector('c'), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_type_vector('c'), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return MPT_ENUM(TypeArray);
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (ptr) *((const void **) ptr) = &m->_it;
 		return MPT_ENUM(TypeArray);
 	}
-	if (type == MPT_value_toVector('c')
+	if (type == MPT_type_vector('c')
 	    || type == MPT_ENUM(TypeVector)) {
 		struct iovec *vec;
 		if ((vec = ptr)) {
@@ -173,7 +173,7 @@ static int bufferConvArgs(const MPT_INTERFACE(metatype) *mt, int type, void *ptr
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if (type == MPT_ENUM(TypeIterator)) {
+	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
 		if (ptr) {
 			MPT_STRUCT(buffer) *buf = m->s._a._buf;
 			if (buf && m->s._off < buf->_used) {

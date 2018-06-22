@@ -54,7 +54,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		}
 		return 's';
 	}
-	if (type == MPT_value_toVector('c')) {
+	if (type == MPT_type_vector('c')) {
 		struct iovec *vec;
 		if ((vec = dest)) {
 			vec->iov_base = (void *) it->val;
