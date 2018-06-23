@@ -15,17 +15,29 @@
 
 #include "graphic.h"
 
+std::ostream &operator<<(std::ostream &o, const mpt::graphic::hint &h)
+{
+	o << '(';
+	if (h.match & mpt::laydest::MatchLayout) o << (int) h.lay;
+	o << ',';
+	if (h.match & mpt::laydest::MatchGraph)  o << (int) h.grf;
+	o << ',';
+	if (h.match & mpt::laydest::MatchWorld)  o << (int) h.wld;
+	o << ')';
+	return o;
+}
+
 __MPT_NAMESPACE_BEGIN
 
 // update registration
-graphic::update_hint::update_hint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
+graphic::hint::hint(int l, int g, int w) : match(0), lay(0), grf(0), wld(0)
 {
     if (l >= 0 && l <= UINT8_MAX) { lay = l; match |= laydest::MatchLayout; }
     if (g >= 0 && g <= UINT8_MAX) { grf = g; match |= laydest::MatchGraph; }
     if (w >= 0 && w <= UINT8_MAX) { wld = w; match |= laydest::MatchWorld; }
 }
 // update reduction
-bool graphic::update_hint::merge(const update_hint &with, int mask)
+bool graphic::hint::merge(const hint &with, int mask)
 {
     // unconditional update
     if (!match) {
@@ -66,7 +78,7 @@ bool graphic::update_hint::merge(const update_hint &with, int mask)
     return false;
 }
 // update target
-bool graphic::update_hint::destination(laydest *dst)
+bool graphic::hint::destination(laydest *dst)
 {
     if (match != laydest::MatchPath) {
         return false;
@@ -473,7 +485,7 @@ metatype *graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool graphic::register_update(const reference *, update_hint)
+bool graphic::register_update(const reference *, hint)
 {
     return true;
 }

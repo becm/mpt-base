@@ -110,30 +110,30 @@ bool graphic::mapping::set_cycle(laydest dst, class cycle *ref)
 }
 
 // save cycle references
-int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &layouts, update_hint hint)
+int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &layouts, hint h)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->reference();
         if (!lay) continue;
-        if (hint.match & laydest::MatchLayout
-         && hint.lay != i) {
+        if (h.match & laydest::MatchLayout
+         && h.lay != i) {
             continue;
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
             auto grf = graphs.nth(i)->reference();
             if (!grf) continue;
-            if (hint.match & laydest::MatchGraph
-             && hint.grf != j) {
+            if (h.match & laydest::MatchGraph
+             && h.grf != j) {
                 continue;
             }
             const auto worlds = grf->worlds();
             for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->reference();
                 if (!wld) continue;
-                if (hint.match & laydest::MatchWorld
-                 && hint.wld != k) {
+                if (h.match & laydest::MatchWorld
+                 && h.wld != k) {
                     continue;
                 }
                 if (!set(laydest(i, j, k), wld->cycle)) {
@@ -146,22 +146,22 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
     return total;
 }
 // load cycles references
-int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &layouts, update_hint hint)
+int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &layouts, hint h)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
         auto lay = layouts.nth(i)->reference();
         if (!lay) continue;
-        if (hint.match & laydest::MatchLayout
-         && hint.lay != i) {
+        if (h.match & laydest::MatchLayout
+         && h.lay != i) {
             continue;
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
             auto grf = graphs.nth(j)->reference();
             if (!grf) continue;
-            if (hint.match & laydest::MatchGraph
-             && hint.grf != j) {
+            if (h.match & laydest::MatchGraph
+             && h.grf != j) {
                 continue;
             }
             int dim = grf->transform().dimensions();
@@ -169,8 +169,8 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
             for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
                 auto wld = worlds.nth(k)->reference();
                 if (!wld) continue;
-                if (hint.match & laydest::MatchWorld
-                 && hint.wld != k) {
+                if (h.match & laydest::MatchWorld
+                 && h.wld != k) {
                     continue;
                 }
                 for (entry *b = _d.begin(), *e = _d.end(); b < e; ++b) {
@@ -190,13 +190,13 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
     return total;
 }
 // deregister cycle references
-int graphic::mapping::clear_cycles(update_hint hint) const
+int graphic::mapping::clear_cycles(hint h) const
 {
     int clear = 0;
     for (auto &e : _d) {
-        if (hint.match & laydest::MatchLayout && e.key.lay != hint.lay) continue;
-        if (hint.match & laydest::MatchGraph  && e.key.grf != hint.grf) continue;
-        if (hint.match & laydest::MatchWorld  && e.key.grf != hint.wld) continue;
+        if (h.match & laydest::MatchLayout && e.key.lay != h.lay) continue;
+        if (h.match & laydest::MatchGraph  && e.key.grf != h.grf) continue;
+        if (h.match & laydest::MatchWorld  && e.key.grf != h.wld) continue;
         if (!e.value.reference()) continue;
         e.value.set_reference(0);
         ++clear;

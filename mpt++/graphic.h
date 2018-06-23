@@ -23,12 +23,12 @@ public:
 	graphic();
 	virtual ~graphic();
 	
-	class update_hint
+	class hint
 	{
 	public:
-		update_hint(int = -1, int = -1, int = -1);
+		hint(int = -1, int = -1, int = -1);
 		
-		bool merge(const update_hint &, int = 0);
+		bool merge(const hint &, int = 0);
 		bool destination(laydest *);
 		
 		uint8_t match;
@@ -49,7 +49,7 @@ public:
 	metatype *item(message &, size_t = 0) const;
 	
 	// untracked reference to shedule update
-	virtual bool register_update(const reference *, update_hint = update_hint());
+	virtual bool register_update(const reference *, hint = hint());
 protected:
 	virtual void dispatch_updates();
 	reference_array<layout> _layouts;
@@ -71,64 +71,78 @@ public:
 	bool set_cycle(laydest, class cycle *);
 	
 	// modify target elements
-	int set_cycles(const span<const reference_wrapper<layout> > &, update_hint = update_hint());
-	int get_cycles(const span<const reference_wrapper<layout> > &, update_hint = update_hint());
-	int clear_cycles(update_hint = update_hint()) const;
+	int set_cycles(const span<const reference_wrapper<layout> > &, hint = hint());
+	int get_cycles(const span<const reference_wrapper<layout> > &, hint = hint());
+	int clear_cycles(hint = hint()) const;
 	
 	void clear();
 protected:
 	typed_array<::mpt::mapping> _bind;
 };
 
-template<typename T>
+template<typename T, typename H>
 class updates : array
 {
 public:
 	class element
 	{
 	public:
-		inline element(const T &m = T(), const graphic::update_hint &h = graphic::update_hint()) : data(m), hint(h), used(1)
+		inline element(const T &m = T(), const H &h = H()) : data(m), hint(h), used(1)
 		{ }
+		void invalidate()
+		{
+			this->~element();
+			this->used = 0;
+		}
 		T data;
-		graphic::update_hint hint;
+		H hint;
 		uint32_t used;
 	};
-	inline span<const element> elements() const
+	inline span<element> elements() const
 	{
-		return span<const element>((const element *) base(), length());
+		return span<element>(static_cast<element *>(base()), length());
 	}
 	inline long length() const
 	{
 		return array::length() / sizeof(element);
 	}
-	int add(const T &m, const graphic::update_hint &d = graphic::update_hint())
+	int add(const T &d, const H &h = H())
 	{
-		element *cmp = (element *) base();
-		
-		for (long i = 0, max = length(); i < max; ++i) {
-			// different data elements
-			if (m != cmp[i].data) {
+		element *cmp = static_cast<element *>(base());
+		long max = length();
+		for (long i = 0; i < max; ++i) {
+			if (!cmp[i].used) {
 				continue;
 			}
-			if (cmp[i].hint.merge(d)) {
+			// different data elements
+			if (d != cmp[i].data) {
+				continue;
+			}
+			if (cmp[i].hint.merge(h)) {
 				++cmp[i].used;
 				return 1;
 			}
 		}
-		if (!(cmp = (element *) array::append(sizeof(*cmp)))) {
+		for (long i = 0; i < max; ++i) {
+			if (!cmp[i].used) {
+				new (cmp + i) element(d, h);
+				return 0;
+			}
+		}
+		if (!(cmp = static_cast<element *>(array::append(sizeof(*cmp))))) {
 			return BadOperation;
 		}
-		new (cmp) element(m, d);
+		new (cmp) element(d, h);
 		return 2;
 	}
 	
 	void compress(int mask = 0) {
-		element *u = 0, *c = (element *) base();
+		element *u = 0, *c = static_cast<element *>(base());
 		long len = 0;
 		
 		for (long i = 0, max = length(); i < max; ++i) {
 			if (!c[i].used) {
-				if (!u) u = c;
+				if (!u) u = c + i;
 				continue;
 			}
 			for (long j = i + 1; j < max; ++j) {
@@ -139,19 +153,17 @@ public:
 					continue;
 				}
 				c[i].used += c[j].used;
-				c[j].data.~T();
-				c[j].used = 0;
+				c[j].invalidate();
 			}
 			++len;
 			
 			if (!u) {
 				continue;
 			}
-			*u = *c;
-			c->data.~T();
-			c->used = 0;
+			*u = c[i];
+			c[i].invalidate();
 			
-			while (++u < c) {
+			while (++u < c + i) {
 				if (!u->used) {
 					break;
 				}
@@ -165,5 +177,7 @@ public:
 };
 
 __MPT_NAMESPACE_END
+
+std::ostream &operator<<(std::ostream &, const mpt::graphic::hint &);
 
 #endif // _MPT_GRAPHIC_H
