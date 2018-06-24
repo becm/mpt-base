@@ -81,7 +81,7 @@ bool transform::apply(unsigned , const linepart &, point<double> *, const double
 }
 
 // implementation with 3 dimensions
-Graph::transform::data::data(int flg) : value_apply(flg < 0 ? 0 : flg)
+layout::graph::transform::data::data(int flg) : value_apply(flg < 0 ? 0 : flg)
 {
     if (flg < 0) {
         _flags = 0;
@@ -89,16 +89,16 @@ Graph::transform::data::data(int flg) : value_apply(flg < 0 ? 0 : flg)
         _flags = flg;
     }
 }
-Graph::transform::transform()
+layout::graph::transform::transform()
 {
     new (&_dim[0]) data(AxisStyleX);
     new (&_dim[1]) data(AxisStyleY);
     new (&_dim[2]) data(AxisStyleZ);
 }
-Graph::transform::~transform()
+layout::graph::transform::~transform()
 { }
 
-int Graph::transform::dimensions() const
+int layout::graph::transform::dimensions() const
 {
     if (_dim[2].to.x || _dim[2].to.y) {
         return 3;
@@ -111,11 +111,11 @@ int Graph::transform::dimensions() const
     }
     return 0;
 }
-point<double> Graph::transform::zero() const
+point<double> layout::graph::transform::zero() const
 {
     return point<double>(_base.x, _base.y);
 }
-linepart Graph::transform::part(unsigned dim, const double *val, int len) const
+linepart layout::graph::transform::part(unsigned dim, const double *val, int len) const
 {
     struct range l;
     const data *curr = 0;
@@ -178,7 +178,7 @@ extern void apply_log(point<double> *dest, const linepart &pt, const double *fro
     }
 }
 
-bool Graph::transform::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
+bool layout::graph::transform::apply(unsigned dim, const linepart &pt, point<double> *dest, const double *from) const
 {
     const data *curr;
 

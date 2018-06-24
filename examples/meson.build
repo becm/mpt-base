@@ -35,6 +35,19 @@ if with_plot
       c_args: test_defines,
       dependencies: plot),
     args: [ '9', 'poly 1 0 0 : -4', 'lin 1 0' ])
+    
+  if with_cxx
+    test('graph binding',
+      executable('graph', 'graph.cpp',
+        cpp_args: test_defines,
+        dependencies: cxx),
+      args: [ 'w1 w2', 'ax' ])
+    
+    test('graphic updates',
+      executable('graphic', 'graphic.cpp',
+        cpp_args: test_defines,
+        dependencies: cxx))
+  endif
 endif
 
 if with_shared and with_loader

@@ -250,21 +250,21 @@ metatype *group::create(const char *type, int nl)
     }
 
     if (nl == 4 && !memcmp("line", type, nl)) {
-        return new reference_wrapper<Line>::instance;
+        return new reference_wrapper<layout::line>::instance;
     }
     if (nl == 4 && !memcmp("text", type, nl)) {
-        return new reference_wrapper<Text>::instance;
-    }
-    if (nl == 5 && !memcmp("world", type, nl)) {
-        return new reference_wrapper<World>::instance;
+        return new reference_wrapper<layout::text>::instance;
     }
     if (nl == 5 && !memcmp("graph", type, nl)) {
-        return new reference_wrapper<Graph>::instance;
+        return new reference_wrapper<layout::graph>::instance;
+    }
+    if (nl == 5 && !memcmp("world", type, nl)) {
+        return new reference_wrapper<layout::graph::world>::instance;
     }
     if (nl == 4 && !memcmp("axis", type, nl)) {
-        return new reference_wrapper<Axis>::instance;
+        return new reference_wrapper<layout::graph::axis>::instance;
     }
-    class TypedAxis : public reference_wrapper<Axis>::instance
+    class TypedAxis : public reference_wrapper<layout::graph::axis>::instance
     {
     public:
         TypedAxis(int type)
