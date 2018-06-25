@@ -82,8 +82,8 @@ static int saveGlobal(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(val
 }
 static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 {
-	MPT_STRUCT(parse) p = MPT_PARSE_INIT;
-	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
+	MPT_STRUCT(parser_context) p = MPT_PARSER_INIT;
+	MPT_STRUCT(parser_format) fmt = MPT_PARSER_FORMAT_INIT;
 	int ret;
 	
 	if (!cfg) {
@@ -98,6 +98,8 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 	if (!(p.src.arg = fopen(fname, "r"))) {
 		return 0;
 	}
+	/* allow default format override */
+	mpt_parse_format(&fmt, 0);
 	p.src.getc = (int (*)(void *))  mpt_getchar_stdio;
 	p.src.line = 1;
 	ret = mpt_parse_config((MPT_TYPE(input_parser)) mpt_parse_format_pre, &fmt, &p, saveGlobal, cfg);

@@ -37,9 +37,9 @@
  */
 extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(path_handler) save, void *ctx, MPT_INTERFACE(logger) *log)
 {
-	MPT_STRUCT(parse) src = MPT_PARSE_INIT;
+	MPT_STRUCT(parser_context) src = MPT_PARSER_INIT;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
-	MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
+	MPT_STRUCT(parser_format) fmt = MPT_PARSER_FORMAT_INIT;
 	struct dirent *dent;
 	int res = 0;
 	int cdir;
@@ -53,6 +53,8 @@ extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(path_handler) save, void *ctx, MP
 	if ((cdir = dirfd(cfg)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
+	/* allow default format override */
+	mpt_parse_format(&fmt, 0);
 	src.src.getc = (int (*)(void *)) mpt_getchar_stdio;
 	
 	while ((dent = readdir(cfg))) {

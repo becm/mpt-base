@@ -7,7 +7,7 @@
 
 #include "parse.h"
 
-extern int mpt_parse_nextvis(MPT_STRUCT(parseinput) *src, const void *com, size_t len)
+extern int mpt_parse_nextvis(MPT_STRUCT(parser_input) *src, const void *com, size_t len)
 {
 	int curr;
 	

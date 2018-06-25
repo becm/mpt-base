@@ -303,9 +303,7 @@ extern double mpt_tick_log10(int);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-class Parse;
-struct parseflg;
-struct path;
+class parser;
 
 template <> inline __MPT_CONST_TYPE int typeinfo<color>::id()
 {
@@ -406,10 +404,12 @@ public:
 		return _font;
 	}
 	
+	static const char *file_format();
+	
 	fpoint minimal_scale() const;
 protected:
 	item_array<graph> _graphs;
-	Parse *_parse;
+	parser *_parse;
 	char *_alias;
 	char *_font;
 };

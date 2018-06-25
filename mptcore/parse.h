@@ -20,10 +20,10 @@ MPT_STRUCT(node);
 MPT_STRUCT(path);
 
 /* simple format description */
-MPT_STRUCT(parsefmt)
+MPT_STRUCT(parser_format)
 {
 #ifdef __cplusplus
-	parsefmt();
+	parser_format();
 	
 	inline bool is_comment(int c) const
 	{
@@ -34,9 +34,9 @@ MPT_STRUCT(parsefmt)
 		return c && (c == esc[0] || c == esc[1] || c == esc[2]);
 	}
 #else
-# define MPT_PARSEFMT_INIT  { '{', '}', 0, '=', 0, { '"', '\'' }, { '#' } }
-# define MPT_iscomment(f,c) ((c) && ((c)==(f)->com[0]||(c)==(f)->com[1]||(c)==(f)->com[2]||(c)==(f)->com[3]))
-# define MPT_isescape(f,c)  ((c) && ((c)==(f)->esc[0]||(c)==(f)->esc[1]||(c)==(f)->esc[2]))
+# define MPT_PARSER_FORMAT_INIT  { '{', '}', 0, '=', 0, { '"', '\'' }, { '#' } }
+# define MPT_iscomment(f,c)      ((c) && ((c)==(f)->com[0]||(c)==(f)->com[1]||(c)==(f)->com[2]||(c)==(f)->com[3]))
+# define MPT_isescape(f,c)       ((c) && ((c)==(f)->esc[0]||(c)==(f)->esc[1]||(c)==(f)->esc[2]))
 #endif
 	uint8_t sstart,
 	        send,    /* section start/end character */
@@ -46,9 +46,9 @@ MPT_STRUCT(parsefmt)
 	        esc[3],  /* escape characters */
 	        com[4];  /* comment characters */
 };
-/* parser name flags */
+/* element name flags */
 #ifdef __cplusplus
-MPT_STRUCT(parseflg)
+MPT_STRUCT(parser_allow)
 {
 # define MPT_NAMEFLAG(x) x
 #else
@@ -65,25 +65,25 @@ enum MPT_NAMEFLAG(Flags) {
 	MPT_NAMEFLAG(Binary)    = 0x20  /* allow binary character */
 };
 #ifdef __cplusplus
-	inline parseflg() : sect(0xff), opt(0xff)
+	inline parser_allow() : sect(0xff), opt(0xff)
 	{ }
 #else
-MPT_STRUCT(parseflg)
+MPT_STRUCT(parser_allow)
 {
-# define MPT_PARSEFLG_INIT { 0xff, 0xff }
+# define MPT_PARSER_ALLOW_INIT { 0xff, 0xff }
 #endif
-	uint8_t sect,    /* section name format */
-	        opt;     /* option name format */
+	uint16_t sect,  /* section name format */
+	         opt;   /* option name format */
 };
 typedef int (*MPT_TYPE(path_handler))(void *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int, int);
 
 /* parser input metadata */
-MPT_STRUCT(parseinput)
+MPT_STRUCT(parser_input)
 {
 #ifdef __cplusplus
-	parseinput();
+	parser_input();
 #else
-# define MPT_PARSEINPUT_INIT { 0, 0, 1 }
+# define MPT_PARSER_INPUT_INIT { 0, 0, 1 }
 #endif
 	int (*getc)(void *); /* byte read operation */
 	void *arg;           /* reader context */
@@ -91,7 +91,7 @@ MPT_STRUCT(parseinput)
 };
 /* parser context */
 #ifdef __cplusplus
-MPT_STRUCT(parse)
+MPT_STRUCT(parser_context)
 {
 # define MPT_PARSEFLAG(x) x
 #else
@@ -105,29 +105,29 @@ enum MPT_PARSEFLAG(Flags) {
 	MPT_PARSEFLAG(Name)     = 0x8
 };
 #ifdef __cplusplus
-	inline parse() : prev(0), curr(0)
+	inline parser_context() : valid(0), prev(0), curr(0)
 	{ }
 #else
-MPT_STRUCT(parse)
+MPT_STRUCT(parser_context)
 {
-# define MPT_PARSE_INIT  { MPT_PARSEINPUT_INIT,  0,  0, 0, MPT_PARSEFLG_INIT }
+# define MPT_PARSER_INIT  { MPT_PARSER_INPUT_INIT, MPT_PARSER_ALLOW_INIT,  0,  0, 0 }
 #endif
-	MPT_STRUCT(parseinput) src;  /* character source */
+	MPT_STRUCT(parser_input) src;   /* character source */
+	MPT_STRUCT(parser_allow) name;  /* section/option name format */
 	
-	uint16_t             valid;  /* valid size of post data */
+	uint16_t  valid;  /* valid size of post data */
 	
-	uint8_t              prev;   /* previous operation */
-	uint8_t              curr;   /* current operation */
-	MPT_STRUCT(parseflg) name;   /* section/option name format */
+	uint8_t   prev;   /* previous operation */
+	uint8_t   curr;   /* current operation */
 };
-typedef int (*MPT_TYPE(input_parser))(void *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+typedef int (*MPT_TYPE(input_parser))(void *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 
 __MPT_EXTDECL_BEGIN
 
 /* check option/section name according to limit flags */
 extern int mpt_parse_ncheck(const char *, size_t , int);
 /* set accept flags for name */
-extern int mpt_parse_accept(MPT_STRUCT(parseflg) *, const char *);
+extern int mpt_parse_accept(MPT_STRUCT(parser_allow) *, const char *);
 
 
 /* correct path */
@@ -135,16 +135,16 @@ extern int mpt_parse_post(MPT_STRUCT(path) *, int);
 
 
 /* decode parameter and format type */
-extern int mpt_parse_format(MPT_STRUCT(parsefmt) *, const char *);
+extern int mpt_parse_format(MPT_STRUCT(parser_format) *, const char *);
 extern MPT_TYPE(input_parser) mpt_parse_next_fcn(int);
 
 
 /* read character from source, save in 'post' path area */
-extern int mpt_parse_getchar(MPT_STRUCT(parseinput) *, MPT_STRUCT(path) *);
+extern int mpt_parse_getchar(MPT_STRUCT(parser_input) *, MPT_STRUCT(path) *);
 
 /* continue to next visible character / end of line without saving */
-extern int mpt_parse_nextvis(MPT_STRUCT(parseinput) *, const void *, size_t);
-extern int mpt_parse_endline(MPT_STRUCT(parseinput) *);
+extern int mpt_parse_nextvis(MPT_STRUCT(parser_input) *, const void *, size_t);
+extern int mpt_parse_endline(MPT_STRUCT(parser_input) *);
 
 /* get character from file */
 extern int mpt_getchar_file(void *);
@@ -157,16 +157,16 @@ extern int mpt_getchar_iovec(struct iovec *);
 
 
 /* get element for prepending section names */
-extern int mpt_parse_format_pre(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_pre(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 /* get next element for encapsulated section names */
-extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_enc(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 /* get element for separating section names */
-extern int mpt_parse_format_sep(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_format_sep(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 
 /* get option element */
-extern int mpt_parse_option(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_option(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 /* get data element */
-extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+extern int mpt_parse_data(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_context) *, MPT_STRUCT(path) *);
 
 /* create/modify current node element */
 extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int , int);
@@ -174,9 +174,9 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(pa
 extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::default_instance()));
 
 /* parse configuration tree */
-extern int mpt_parse_config(MPT_TYPE(input_parser) , void *, MPT_STRUCT(parse) *, MPT_TYPE(path_handler), void *);
+extern int mpt_parse_config(MPT_TYPE(input_parser) , void *, MPT_STRUCT(parser_context) *, MPT_TYPE(path_handler), void *);
 /* save config tree to node children */
-extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parse) *, const char *);
+extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parser_context) *, const char *);
 
 #ifdef _DIRENT_H
 /* load configuration folder */
@@ -188,11 +188,11 @@ extern int mpt_string_nextvis(const char **);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-class Parse
+class parser
 {
 public:
-	Parse();
-	virtual ~Parse();
+	parser();
+	virtual ~parser();
 	
 	virtual bool reset();
 	virtual bool set_format(const char *);
@@ -208,28 +208,26 @@ public:
 		return _fn;
 	}
 protected:
-	parse _d;
+	parser_context _d;
 	struct {
 		input_parser_t fcn;
 		void *ctx;
 	} _next;
 	char *_fn;
 };
-inline bool Parse::set_format(const char *)
+inline bool parser::set_format(const char *)
 {
 	return false;
 }
-class LayoutParser : public Parse
+class config_parser : public parser
 {
 public:
-	LayoutParser();
+	config_parser();
 	
 	bool reset() __MPT_OVERRIDE;
 	bool set_format(const char *) __MPT_OVERRIDE;
-	
-	static const char *default_format();
 protected:
-	parsefmt _fmt;
+	parser_format _fmt;
 };
 #endif
 

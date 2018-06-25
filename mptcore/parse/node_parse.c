@@ -25,7 +25,7 @@
  */
 extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, MPT_INTERFACE(logger) *log)
 {
-	MPT_STRUCT(parse) parse = MPT_PARSE_INIT;
+	MPT_STRUCT(parser_context) parse = MPT_PARSER_INIT;
 	MPT_STRUCT(node) *old;
 	const char *fname, *format;
 	int res, len;

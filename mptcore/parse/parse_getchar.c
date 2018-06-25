@@ -13,7 +13,7 @@
  * 
  * \return new input character
  */
-extern int mpt_parse_getchar(MPT_STRUCT(parseinput) *src, MPT_STRUCT(path) *path)
+extern int mpt_parse_getchar(MPT_STRUCT(parser_input) *src, MPT_STRUCT(path) *path)
 {
 	int curr;
 	

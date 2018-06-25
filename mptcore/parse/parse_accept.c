@@ -18,7 +18,7 @@
  * 
  * \return parser code for next element
  */
-extern int mpt_parse_accept(MPT_STRUCT(parseflg) *flg, const char *name)
+extern int mpt_parse_accept(MPT_STRUCT(parser_allow) *flg, const char *name)
 {
 	const char *end = name;
 	uint8_t sect = 0, opt = 0;

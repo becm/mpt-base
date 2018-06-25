@@ -117,8 +117,8 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		}
 	}
 	if ((fd = openat(dir, _file, O_RDONLY)) >= 0) {
-		MPT_STRUCT(parse) src = MPT_PARSE_INIT;
-		MPT_STRUCT(parsefmt) fmt = MPT_PARSEFMT_INIT;
+		MPT_STRUCT(parser_context) src = MPT_PARSER_INIT;
+		MPT_STRUCT(parser_format) fmt = MPT_PARSER_FORMAT_INIT;
 		int err;
 		if (!(src.src.arg = fdopen(fd, "r"))) {
 			if (mt) {
@@ -130,6 +130,8 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 			mpt_log(log, __func__, MPT_LOG(Debug3), "%s: %s/%s",
 			        MPT_tr("process config file"), root, _file);
 		}
+		/* allow default format override */
+		mpt_parse_format(&fmt, 0);
 		src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
 		src.src.line = 1;
 		err = mpt_parse_config((MPT_TYPE(input_parser)) mpt_parse_format_pre, &fmt, &src, cfgSet, &ctx);

@@ -23,8 +23,8 @@
 int main(int argc, char *argv[])
 {
 	struct mpt_path path = MPT_PATH_INIT;
-	struct mpt_parse parse = MPT_PARSE_INIT;
-	struct mpt_parsefmt fmt;
+	struct mpt_parser_context parse = MPT_PARSER_INIT;
+	struct mpt_parser_format fmt;
 	MPT_TYPE(input_parser) next;
 	int type;
 	

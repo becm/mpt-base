@@ -214,7 +214,12 @@ bool layout::open(const char *fn)
         if (!fn) {
             return true;
         }
-        _parse = new LayoutParser();
+        _parse = new config_parser;
+        if (!_parse->set_format(file_format())) {
+            delete _parse;
+            _parse = nullptr;
+            return false;
+        }
     }
     return _parse->open(fn);
 }
@@ -380,6 +385,12 @@ int layout::text::property(struct property *prop) const
 int layout::text::set_property(const char *prop, const metatype *src)
 {
     return mpt_text_set(this, prop, src);
+}
+
+const char *layout::file_format()
+{
+    static const char fmt[] = "{*} =;#! '\"\0";
+    return fmt;
 }
 
 __MPT_NAMESPACE_END

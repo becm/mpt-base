@@ -20,9 +20,9 @@
  * \return parse format type
  */
 
-extern int mpt_parse_format(MPT_STRUCT(parsefmt) *fmt, const char *str)
+extern int mpt_parse_format(MPT_STRUCT(parser_format) *fmt, const char *str)
 {
-	static const MPT_STRUCT(parsefmt) pfmt_default = MPT_PARSEFMT_INIT;
+	static const MPT_STRUCT(parser_format) pfmt_default = MPT_PARSER_FORMAT_INIT;
 	
 	int i = pfmt_default.sstart, ret = '*';
 	

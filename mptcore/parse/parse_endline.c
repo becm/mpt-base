@@ -11,7 +11,7 @@
  * 
  * \return newline character
  */
-extern int mpt_parse_endline(MPT_STRUCT(parseinput) *src)
+extern int mpt_parse_endline(MPT_STRUCT(parser_input) *src)
 {
 	int curr, len;
 	

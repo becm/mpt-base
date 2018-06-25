@@ -17,7 +17,7 @@
  * 
  * \return parser code for next element
  */
-extern int mpt_parse_format_enc(const MPT_STRUCT(parsefmt) *fmt, MPT_STRUCT(parse) *parse, MPT_STRUCT(path) *path)
+extern int mpt_parse_format_enc(const MPT_STRUCT(parser_format) *fmt, MPT_STRUCT(parser_context) *parse, MPT_STRUCT(path) *path)
 {
 	int curr;
 	
