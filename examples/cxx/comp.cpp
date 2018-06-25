@@ -21,7 +21,7 @@
 
 #include MPT_INCLUDE(notify.h)
 
-static int printMessage(mpt::input *in, mpt::event *ev)
+static int print_message(mpt::input *in, mpt::event *ev)
 {
 	mpt::message msg;
 	mpt::msgtype mt(0);
@@ -70,7 +70,7 @@ extern int main(int argc, char *argv[])
 	while (no.used()) {
 		mpt::input *in;
 		while ((in = no.next())) {
-			while ((arg = in->dispatch((mpt::EventHandler) printMessage, in)) > 0) {
+			while ((arg = in->dispatch((mpt::event_handler_t) print_message, in)) > 0) {
 				if (arg & mpt::event::Terminate) {
 					return 0;
 				}

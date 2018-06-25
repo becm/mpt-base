@@ -132,7 +132,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		}
 		src.src.getc = (int (*)(void *))  mpt_getchar_stdio;
 		src.src.line = 1;
-		err = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, &src, cfgSet, &ctx);
+		err = mpt_parse_config((MPT_TYPE(input_parser)) mpt_parse_format_pre, &fmt, &src, cfgSet, &ctx);
 		if (err >= 0) ret |= 1;
 		fclose(src.src.arg);
 		

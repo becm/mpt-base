@@ -75,7 +75,7 @@ MPT_STRUCT(parseflg)
 	uint8_t sect,    /* section name format */
 	        opt;     /* option name format */
 };
-typedef int (*MPT_TYPE(PathHandler))(void *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int, int);
+typedef int (*MPT_TYPE(path_handler))(void *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int, int);
 
 /* parser input metadata */
 MPT_STRUCT(parseinput)
@@ -120,7 +120,7 @@ MPT_STRUCT(parse)
 	uint8_t              curr;   /* current operation */
 	MPT_STRUCT(parseflg) name;   /* section/option name format */
 };
-typedef int (*MPT_TYPE(ParserFcn))(void *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
+typedef int (*MPT_TYPE(input_parser))(void *, MPT_STRUCT(parse) *, MPT_STRUCT(path) *);
 
 __MPT_EXTDECL_BEGIN
 
@@ -136,7 +136,7 @@ extern int mpt_parse_post(MPT_STRUCT(path) *, int);
 
 /* decode parameter and format type */
 extern int mpt_parse_format(MPT_STRUCT(parsefmt) *, const char *);
-extern MPT_TYPE(ParserFcn) mpt_parse_next_fcn(int);
+extern MPT_TYPE(input_parser) mpt_parse_next_fcn(int);
 
 
 /* read character from source, save in 'post' path area */
@@ -171,16 +171,16 @@ extern int mpt_parse_data(const MPT_STRUCT(parsefmt) *, MPT_STRUCT(parse) *, MPT
 /* create/modify current node element */
 extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int , int);
 /* set node elements from file */
-extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::defaultInstance()));
+extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::default_instance()));
 
 /* parse configuration tree */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) , void *, MPT_STRUCT(parse) *, MPT_TYPE(PathHandler), void *);
+extern int mpt_parse_config(MPT_TYPE(input_parser) , void *, MPT_STRUCT(parse) *, MPT_TYPE(path_handler), void *);
 /* save config tree to node children */
 extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parse) *, const char *);
 
 #ifdef _DIRENT_H
 /* load configuration folder */
-extern int mpt_parse_folder(DIR *, MPT_TYPE(PathHandler) , void *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
+extern int mpt_parse_folder(DIR *, MPT_TYPE(path_handler) , void *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 #endif
 
 extern int mpt_string_nextvis(const char **);
@@ -197,7 +197,7 @@ public:
 	virtual bool reset();
 	virtual bool set_format(const char *);
 	virtual bool open(const char *);
-	virtual int read(struct node &, logger * = logger::defaultInstance());
+	virtual int read(struct node &, logger * = logger::default_instance());
 	
 	inline size_t line() const
 	{
@@ -209,8 +209,10 @@ public:
 	}
 protected:
 	parse _d;
-	ParserFcn _next;
-	void *_nextCtx;
+	struct {
+		input_parser_t fcn;
+		void *ctx;
+	} _next;
 	char *_fn;
 };
 inline bool Parse::set_format(const char *)

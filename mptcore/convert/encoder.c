@@ -6,11 +6,11 @@
  * 
  * Select encoder function for matching coding.
  * 
- * \param code	message coding
+ * \param code  message coding
  * 
  * \return encoder function
  */
-extern MPT_TYPE(DataEncoder) mpt_message_encoder(int code)
+extern MPT_TYPE(data_encoder) mpt_message_encoder(int code)
 {
 	switch (code) {
 	  /* no encoding */

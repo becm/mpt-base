@@ -147,7 +147,7 @@ extern int mpt_connection_await(MPT_STRUCT(connection) *, int (*)(void *, const 
 /* handle connection input */
 extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
 /* dispatch event to handler */
-extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(EventHandler) cmd, void *arg);
+extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(event_handler) cmd, void *arg);
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
 

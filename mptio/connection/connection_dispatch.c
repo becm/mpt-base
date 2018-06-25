@@ -23,7 +23,7 @@
 struct _streamWrapper
 {
 	MPT_STRUCT(connection) *con;
-	MPT_TYPE(EventHandler) cmd;
+	MPT_TYPE(event_handler) cmd;
 	void *arg;
 };
 static int replyConnection(void *ptr, const MPT_STRUCT(reply_data) *rd, const MPT_STRUCT(message) *msg)
@@ -158,7 +158,7 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
  * \param con  connection descriptor
  * \param cmd  message to send
  */
-extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(EventHandler) cmd, void *arg)
+extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	static const char _func[] = "mpt::connection::dispatch<mpt::output>";
 	MPT_STRUCT(buffer) *buf;

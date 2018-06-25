@@ -19,7 +19,7 @@ int input::next(int)
 {
     return -1;
 }
-int input::dispatch(EventHandler cmd, void *arg)
+int input::dispatch(event_handler_t cmd, void *arg)
 {
     if (!cmd) return -1;
     event ev;

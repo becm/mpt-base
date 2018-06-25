@@ -153,12 +153,12 @@ MPT_STRUCT(encode_array)
 {
 #ifdef __cplusplus
 public:
-	encode_array(DataEncoder = 0);
+	encode_array(data_encoder_t = 0);
 	~encode_array();
 	
 	bool prepare(size_t);
 	ssize_t push(size_t , const void *);
-	bool set_encoding(DataEncoder);
+	bool set_encoding(data_encoder_t);
 	bool shift(size_t = 0);
 	
 	bool push(const struct message &);
@@ -168,7 +168,7 @@ protected:
 #else
 # define MPT_ENCODE_ARRAY_INIT { 0, MPT_ENCODE_INIT, MPT_ARRAY_INIT }
 #endif
-	MPT_TYPE(DataEncoder)_enc;
+	MPT_TYPE(data_encoder) _enc;
 	MPT_STRUCT(encode_state) _state;
 	MPT_STRUCT(array) _d;
 };

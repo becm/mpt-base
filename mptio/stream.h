@@ -216,7 +216,7 @@ public:
 	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
 	
 	int next(int) __MPT_OVERRIDE;
-	int dispatch(EventHandler , void *) __MPT_OVERRIDE;
+	int dispatch(event_handler_t , void *) __MPT_OVERRIDE;
 	
 	ssize_t write(size_t , const void *, size_t part = 1) __MPT_OVERRIDE;
 	ssize_t read(size_t , void *, size_t part = 1) __MPT_OVERRIDE;

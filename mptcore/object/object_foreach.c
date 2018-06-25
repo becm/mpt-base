@@ -23,7 +23,7 @@ static int get_property(void *ptr, MPT_STRUCT(property) *pr)
  * 
  * \return index of requested property
  */
-extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(PropertyHandler) proc, void *data, int match)
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *obj, MPT_TYPE(property_handler) proc, void *data, int match)
 {
 	return mpt_properties_foreach(get_property, (void *) obj, proc, data, match);
 }

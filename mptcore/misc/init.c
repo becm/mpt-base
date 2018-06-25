@@ -100,7 +100,7 @@ static int loadConfig(MPT_INTERFACE(config) *cfg, const char *fname)
 	}
 	p.src.getc = (int (*)(void *))  mpt_getchar_stdio;
 	p.src.line = 1;
-	ret = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, &p, saveGlobal, cfg);
+	ret = mpt_parse_config((MPT_TYPE(input_parser)) mpt_parse_format_pre, &fmt, &p, saveGlobal, cfg);
 	fclose(p.src.arg);
 	if (ret < 0) {
 		int line = p.src.line;

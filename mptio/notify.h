@@ -18,7 +18,7 @@ MPT_INTERFACE(input) : public metatype
 {
 public:
 	virtual int next(int);
-	virtual int dispatch(EventHandler , void *);
+	virtual int dispatch(event_handler_t , void *);
 protected:
 	inline ~input()
 	{ }
@@ -28,7 +28,7 @@ MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
 	MPT_INTERFACE_VPTR(metatype) meta;
 	int (*next)(MPT_INTERFACE(input) *, int);
-	int (*dispatch)(MPT_INTERFACE(input) *, MPT_TYPE(EventHandler) , void *);
+	int (*dispatch)(MPT_INTERFACE(input) *, MPT_TYPE(event_handler) , void *);
 }; MPT_INTERFACE(input) {
 	const MPT_INTERFACE_VPTR(input) *_vptr;
 };
@@ -58,7 +58,7 @@ protected:
 	_MPT_REF_ARRAY_TYPE(input) _slot;  /* compound part pointer array */
 	_MPT_ARRAY_TYPE(input *)   _wait;  /* temporary data for poll info */
 	struct {
-		MPT_TYPE(EventHandler) cmd;
+		MPT_TYPE(event_handler) cmd;
 		void *arg;
 	} _disp;              /* dispatch controller */
 	

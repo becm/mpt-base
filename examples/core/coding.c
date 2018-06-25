@@ -44,7 +44,7 @@ static void enc(MPT_STRUCT(encode_array) *arr, size_t len, const void *data)
 }
 
 /* decode and display next message */
-static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(DataDecoder) decode)
+static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(data_decoder) decode)
 {
 	MPT_STRUCT(decode_state) info = MPT_DECODE_INIT;
 	struct iovec vec;
@@ -80,7 +80,7 @@ int main(int argc, char * const argv[])
 	  { 9, { 0x11, 0x00, 0x00, 0x22, 0x00, 0x00, 0x33, 0x00, 0x00 } }
 	};
 	int type = MPT_ENUM(EncodingCobs);
-	MPT_TYPE(DataDecoder) decode;
+	MPT_TYPE(data_decoder) decode;
 	
 	MPT_STRUCT(encode_array) arr = MPT_ENCODE_ARRAY_INIT;
 	int i, max = sizeof(msg)/sizeof(*msg);

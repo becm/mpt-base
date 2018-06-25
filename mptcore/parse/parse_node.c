@@ -34,7 +34,7 @@ static int saveAppend(void *ctx, const MPT_STRUCT(path) *p, const MPT_STRUCT(val
 extern int mpt_parse_node(MPT_STRUCT(node) *root, MPT_STRUCT(parse) *parse, const char *fmt)
 {
 	MPT_STRUCT(parsefmt) pfmt;
-	MPT_TYPE(ParserFcn) next;
+	MPT_TYPE(input_parser) next;
 	int err;
 	
 	if (!root || !parse) {

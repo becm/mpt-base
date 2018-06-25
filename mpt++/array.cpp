@@ -427,7 +427,7 @@ ssize_t slice::write(size_t nblk, const void *addr, size_t esze)
 
 
 // encoding array
-encode_array::encode_array(DataEncoder enc) : _enc(enc)
+encode_array::encode_array(data_encoder_t enc) : _enc(enc)
 { }
 encode_array::~encode_array()
 {

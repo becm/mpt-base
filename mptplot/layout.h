@@ -365,7 +365,7 @@ public:
 	const class item<metatype> *item(size_t) const __MPT_OVERRIDE;
 	class item<metatype> *append(metatype *) __MPT_OVERRIDE;
 	size_t clear(const reference * = 0) __MPT_OVERRIDE;
-	bool bind(const relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
 protected:
 	item_array<metatype> _items;
 };
@@ -385,9 +385,9 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	bool bind(const relation &, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
-	virtual bool load(logger * = logger::defaultInstance());
+	virtual bool load(logger * = logger::default_instance());
 	virtual bool open(const char *);
 	virtual bool reset();
 	
@@ -468,7 +468,7 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	bool bind(const relation &from, logger * = logger::defaultInstance()) __MPT_OVERRIDE;
+	bool bind(const relation &from, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
 	virtual class item<axis> *add_axis(axis * = 0, const char * = 0, int = -1);
 	inline span<const class item<axis> > axes() const

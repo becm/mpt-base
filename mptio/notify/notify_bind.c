@@ -28,19 +28,19 @@ struct socketInput {
 };
 
 /* reference interface */
-static void socketUnref(MPT_INTERFACE(reference) *ref)
+static void socket_unref(MPT_INTERFACE(reference) *ref)
 {
 	struct socketInput *sd = (void *) ref;
 	mpt_bind(&sd->sock, 0, 0, 0);
 	free(sd);
 }
-static uintptr_t socketRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t socket_addref(MPT_INTERFACE(reference) *ref)
 {
 	(void) ref;
 	return 0;
 }
 /* metatype interface */
-static int socketConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int socket_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 {
 	struct socketInput *sd = (void *) mt;
 	int me = mpt_input_typeid();
@@ -67,13 +67,13 @@ static int socketConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	}
 	return MPT_ERROR(BadType);
 }
-static MPT_INTERFACE(metatype) *socketClone(const MPT_INTERFACE(metatype) *mt)
+static MPT_INTERFACE(metatype) *socket_clone(const MPT_INTERFACE(metatype) *mt)
 {
 	(void) mt;
 	return 0;
 }
 /* input interface */
-static int socketNext(MPT_INTERFACE(input) *in, int what)
+static int socket_next(MPT_INTERFACE(input) *in, int what)
 {
 	static int flags = MPT_STREAMFLAG(RdWr) | MPT_STREAMFLAG(Buffer);
 	MPT_STRUCT(socket) sock;
@@ -99,7 +99,7 @@ static int socketNext(MPT_INTERFACE(input) *in, int what)
 	}
 	return 0;
 }
-static int socketDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
+static int socket_dispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	(void) in;
 	(void) cmd;
@@ -122,12 +122,12 @@ static int socketDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, 
 extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 {
 	static const MPT_INTERFACE_VPTR(input) socketInput = {
-		{ { socketUnref, socketRef },
-		  socketConv,
-		  socketClone
+		{ { socket_unref, socket_addref },
+		  socket_conv,
+		  socket_clone
 		},
-		socketNext,
-		socketDispatch
+		socket_next,
+		socket_dispatch
 	};
 	MPT_STRUCT(fdmode) mode;
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;

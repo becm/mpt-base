@@ -35,7 +35,7 @@
  * 
  * \return solver creator library description
  */
-extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(PathHandler) save, void *ctx, MPT_INTERFACE(logger) *log)
+extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(path_handler) save, void *ctx, MPT_INTERFACE(logger) *log)
 {
 	MPT_STRUCT(parse) src = MPT_PARSE_INIT;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
@@ -80,7 +80,7 @@ extern int mpt_parse_folder(DIR *cfg, MPT_TYPE(PathHandler) save, void *ctx, MPT
 			continue;
 		}
 		src.src.line = 1;
-		res = mpt_parse_config((MPT_TYPE(ParserFcn)) mpt_parse_format_pre, &fmt, &src, save, ctx);
+		res = mpt_parse_config((MPT_TYPE(input_parser)) mpt_parse_format_pre, &fmt, &src, save, ctx);
 		fclose(src.src.arg);
 		if (log) {
 			int line = src.src.line;

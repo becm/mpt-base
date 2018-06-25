@@ -74,7 +74,7 @@ public:
 	
 	int message(const char *, int , const char *, ...);
 	
-	static logger *defaultInstance();
+	static logger *default_instance();
 	
 	virtual int log(const char *, int, const char *, va_list) = 0;
 # define MPT_LOG(x) x

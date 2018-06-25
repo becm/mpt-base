@@ -182,8 +182,8 @@ extern int mpt_culong(unsigned long *, const char *, int , const unsigned long [
 extern int mpt_cutf8(const char **, size_t);
 
 /* en/decoder selection */
-extern MPT_TYPE(DataEncoder) mpt_message_encoder(int);
-extern MPT_TYPE(DataDecoder) mpt_message_decoder(int);
+extern MPT_TYPE(data_encoder) mpt_message_encoder(int);
+extern MPT_TYPE(data_decoder) mpt_message_decoder(int);
 
 /* type of encoding */
 extern int mpt_encoding_value(const char *, int __MPT_DEFPAR(-1));

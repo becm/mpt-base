@@ -11,7 +11,7 @@
 
 struct outData
 {
-	MPT_TYPE(PropertyHandler) h;
+	MPT_TYPE(property_handler) h;
 	void *p;
 };
 
@@ -74,7 +74,7 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
  * 
  * \return index of requested property
  */
-extern int mpt_properties_print(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(PropertyHandler) proc, void *data, int mask)
+extern int mpt_properties_print(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(property_handler) proc, void *data, int mask)
 {
 	struct outData par;
 	

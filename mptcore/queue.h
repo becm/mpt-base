@@ -34,7 +34,7 @@ MPT_STRUCT(queue)
 #ifdef __cplusplus
 MPT_STRUCT(decode_queue) : public queue
 {
-	decode_queue(DataDecoder d = 0) : _dec(d)
+	decode_queue(data_decoder_t d = 0) : _dec(d)
 	{ }
 	~decode_queue()
 	{
@@ -55,13 +55,13 @@ MPT_STRUCT(decode_queue)
 	MPT_STRUCT(queue) data;
 #endif
 	MPT_STRUCT(decode_state) _state;
-	MPT_TYPE(DataDecoder) _dec;
+	MPT_TYPE(data_decoder) _dec;
 };
 
 #ifdef __cplusplus
 MPT_STRUCT(encode_queue) : public queue
 {
-	encode_queue(DataEncoder e = 0) : _enc(e)
+	encode_queue(data_encoder_t e = 0) : _enc(e)
 	{ }
 	~encode_queue()
 	{
@@ -86,7 +86,7 @@ MPT_STRUCT(encode_queue)
 	MPT_STRUCT(queue) data;
 #endif
 	MPT_STRUCT(encode_state) _state;
-	MPT_TYPE(DataEncoder) _enc;
+	MPT_TYPE(data_encoder) _enc;
 };
 
 __MPT_EXTDECL_BEGIN
@@ -149,7 +149,7 @@ __MPT_EXTDECL_END
 class DecodingQueue : protected decode_queue
 {
 public:
-	DecodingQueue(DataDecoder = 0);
+	DecodingQueue(data_decoder_t = 0);
 	~DecodingQueue();
 	
 	bool pending_message();

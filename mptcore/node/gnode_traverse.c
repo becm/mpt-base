@@ -28,7 +28,7 @@
  * 
  * \return node for which traverse function returned non-zero
  */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_in(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(TraverseFcn) traverse, void *data)
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_in(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(node_handler) traverse, void *data)
 {
 	MPT_STRUCT(node) *child, *tmp;
 	
@@ -73,7 +73,7 @@ extern MPT_STRUCT(node) *_mpt_gnode_traverse_in(MPT_STRUCT(node) *node, int flag
  * 
  * \return node for which traverse function returned non-zero
  */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(TraverseFcn) traverse, void *data)
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(node_handler) traverse, void *data)
 {
 	MPT_STRUCT(node) *curr = node;
 	size_t up = 0;
@@ -114,7 +114,7 @@ extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *node, int f
  * 
  * \return node for which traverse function returned non-zero
  */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_post(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(TraverseFcn) traverse, void *data)
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_post(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(node_handler) traverse, void *data)
 {
 	MPT_STRUCT(node) *child, *tmp;
 	
@@ -153,7 +153,7 @@ extern MPT_STRUCT(node) *_mpt_gnode_traverse_post(MPT_STRUCT(node) *node, int fl
  * 
  * \return node for which traverse function returned non-zero
  */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_pre(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(TraverseFcn) traverse, void *data)
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_pre(MPT_STRUCT(node) *node, int flags, size_t depth, MPT_TYPE(node_handler) traverse, void *data)
 {
 	MPT_STRUCT(node) *tmp;
 	
@@ -196,9 +196,9 @@ extern MPT_STRUCT(node) *_mpt_gnode_traverse_pre(MPT_STRUCT(node) *node, int fla
  * 
  * \return node for which traverse function returned non-zero
  */
-extern MPT_STRUCT(node) *mpt_gnode_traverse(MPT_STRUCT(node) *node, int flags, MPT_TYPE(TraverseFcn) traverse, void *data)
+extern MPT_STRUCT(node) *mpt_gnode_traverse(MPT_STRUCT(node) *node, int flags, MPT_TYPE(node_handler) traverse, void *data)
 {
-	MPT_STRUCT(node) *(*process)(MPT_STRUCT(node) *, int, size_t, MPT_TYPE(TraverseFcn), void *);
+	MPT_STRUCT(node) *(*process)(MPT_STRUCT(node) *, int, size_t, MPT_TYPE(node_handler), void *);
 	
 	if (!node || !traverse) {
 		errno = EFAULT;

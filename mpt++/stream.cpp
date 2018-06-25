@@ -273,7 +273,7 @@ int Stream::next(int what)
 class Stream::dispatch
 {
 public:
-    dispatch(Stream &s, EventHandler c, void *a) : srm(s), cmd(c), arg(a)
+    dispatch(Stream &s, event_handler_t c, void *a) : srm(s), cmd(c), arg(a)
     { }
     int process(const struct message *msg)
     {
@@ -341,7 +341,7 @@ public:
     }
 protected:
     Stream &srm;
-    EventHandler cmd;
+    event_handler_t cmd;
     void *arg;
 };
 static int stream_dispatch(void *ptr, const struct message *msg)
@@ -349,7 +349,7 @@ static int stream_dispatch(void *ptr, const struct message *msg)
     class Stream::dispatch *sd = reinterpret_cast<class Stream::dispatch *>(ptr);
     return sd->process(msg);
 }
-int Stream::dispatch(EventHandler cmd, void *arg)
+int Stream::dispatch(event_handler_t cmd, void *arg)
 {
     if (!_srm) {
         return BadArgument;

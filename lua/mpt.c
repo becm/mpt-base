@@ -341,8 +341,8 @@ static int streamNewIndex(lua_State *L)
 	const char *id = luaL_checkstring(L, 2);
 	
 	if (!strcmp(id, "encoding")) {
-		MPT_TYPE(DataEncoder) enc;
-		MPT_TYPE(DataDecoder) dec;
+		MPT_TYPE(data_encoder) enc;
+		MPT_TYPE(data_decoder) dec;
 		int type = -1;
 		
 		if (s->srm._rd.data.base || s->srm._wd.data.base) {

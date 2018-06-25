@@ -25,10 +25,13 @@ parsefmt::parsefmt()
 parseinput::parseinput() : getc((int (*)(void *)) mpt_getchar_stdio), arg(stdin), line(1)
 { }
 
-Parse::Parse() : _next(0), _nextCtx(0), _fn(0)
+Parse::Parse() : _fn(0)
 {
     _d.src.getc = 0;
     _d.src.arg  = 0;
+    
+    _next.fcn = 0;
+    _next.ctx = 0;
 }
 Parse::~Parse()
 {
@@ -82,13 +85,13 @@ int Parse::read(struct node &to, logger *out)
         if (out) out->message(_func, out->Error, "%s", MPT_tr("no parser input"));
         return BadArgument;
     }
-    if (!_next) {
+    if (!_next.fcn) {
         if (out) out->message(_func, out->Error, "%s", MPT_tr("no format specified"));
         return BadArgument;
     }
     node tmp, *ptr = &tmp;
     _d.prev = parse::Section;
-    int ret = mpt_parse_config(_next, _nextCtx, &_d, saveAppend, &ptr);
+    int ret = mpt_parse_config(_next.fcn, _next.ctx, &_d, saveAppend, &ptr);
     /* clear created nodes on error */
     if (ret < 0) {
         mpt_node_clear(&tmp);
@@ -130,8 +133,8 @@ LayoutParser::LayoutParser()
     _d.name.sect = _d.name.NumCont | _d.name.Space | _d.name.Special;
     _d.name.opt  = _d.name.NumCont;
 
-    _next = mpt_parse_next_fcn(mpt_parse_format(&_fmt, default_format()));
-    _nextCtx = &_fmt;
+    _next.fcn = mpt_parse_next_fcn(mpt_parse_format(&_fmt, default_format()));
+    _next.ctx = &_fmt;
 }
 bool LayoutParser::reset()
 {
@@ -145,7 +148,7 @@ bool LayoutParser::reset()
 bool LayoutParser::set_format(const char *fmt)
 {
     int type;
-    ParserFcn n;
+    input_parser_t n;
     parsefmt p;
     
     if (!fmt) fmt = default_format();
@@ -154,7 +157,7 @@ bool LayoutParser::set_format(const char *fmt)
         || !(n = mpt_parse_next_fcn(type))) {
         return false;
     }
-    _next = n;
+    _next.fcn = n;
     _fmt = p;
 
     return true;

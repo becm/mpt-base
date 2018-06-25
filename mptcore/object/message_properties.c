@@ -26,7 +26,7 @@
  * \retval 0                   invalid property
  * \retval >0                  property set result
  */
-extern int mpt_message_property(MPT_STRUCT(message) *msg, int sep, MPT_TYPE(PropertyHandler) sfcn, void *spar)
+extern int mpt_message_property(MPT_STRUCT(message) *msg, int sep, MPT_TYPE(property_handler) sfcn, void *spar)
 {
 	MPT_STRUCT(message) tmp;
 	MPT_STRUCT(property) prop;

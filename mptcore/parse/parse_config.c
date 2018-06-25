@@ -17,7 +17,7 @@
  * 
  * \return error code
  */
-extern int mpt_parse_config(MPT_TYPE(ParserFcn) next, void *npar, MPT_STRUCT(parse) *parse, MPT_TYPE(PathHandler) save, void *ctx)
+extern int mpt_parse_config(MPT_TYPE(input_parser) next, void *npar, MPT_STRUCT(parse) *parse, MPT_TYPE(path_handler) save, void *ctx)
 {
 	MPT_STRUCT(path) path = MPT_PATH_INIT;
 	int ret;

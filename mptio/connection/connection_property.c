@@ -51,8 +51,8 @@ static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metaty
 /* set encoding for stream */
 static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
 {
-	MPT_TYPE(DataEncoder) enc;
-	MPT_TYPE(DataDecoder) dec;
+	MPT_TYPE(data_encoder) enc;
+	MPT_TYPE(data_decoder) dec;
 	MPT_STRUCT(stream) *srm = 0;
 	char *where;
 	int32_t val;

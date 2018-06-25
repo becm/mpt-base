@@ -178,7 +178,7 @@ static int remoteNext(MPT_INTERFACE(input) *in, int what)
 	/* dispatch dereference to notifier */
 	return keep;
 }
-static int remoteDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
+static int remoteDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	return mpt_connection_dispatch(&od->con, cmd, arg);

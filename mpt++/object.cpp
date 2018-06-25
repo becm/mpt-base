@@ -159,7 +159,7 @@ object::attribute object::operator [](int pos)
     prop.select(pos);
     return prop;
 }
-const node *object::set(const node *head, PropertyHandler proc, void *pdata)
+const node *object::set(const node *head, property_handler_t proc, void *pdata)
 {
     const int traverse = TraverseAll | TraverseChange;
     if (!head) {

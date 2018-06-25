@@ -46,7 +46,7 @@ template<> inline __MPT_CONST_TYPE int typeinfo<property>::id() {
 	return property::Type;
 }
 #endif
-typedef int (*MPT_TYPE(PropertyHandler))(void *, const MPT_STRUCT(property) *);
+typedef int (*MPT_TYPE(property_handler))(void *, const MPT_STRUCT(property) *);
 
 /*! generic object interface */
 #ifdef __cplusplus
@@ -69,15 +69,15 @@ public:
 	class const_iterator begin() const;
 	class const_iterator end() const;
 	
-	bool set(const char *, const value &, logger * = logger::defaultInstance());
-	bool set(const object &, logger * = logger::defaultInstance());
+	bool set(const char *, const value &, logger * = logger::default_instance());
+	bool set(const object &, logger * = logger::default_instance());
 	
 	/* get property by name/position */
 	object::attribute operator [](const char *);
 	object::attribute operator [](int);
 	
 	/* get properties from node list */
-	const node *set(const node *, PropertyHandler , void *);
+	const node *set(const node *, property_handler_t , void *);
 	/* set property elements */
 	int properties(node **) const;
 	
@@ -110,7 +110,7 @@ __MPT_EXTDECL_BEGIN
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
 
 /* loop trough object properties */
-extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
+extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(property_handler) , void *, int __MPT_DEFPAR(-1));
 
 /* set object property to match argument */
 extern int mpt_object_set_iterator(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
@@ -129,13 +129,13 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *, int , const MPT_STRUCT(
 /* get matching property by name */
 extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
 /* process properties according to mask */
-extern int mpt_properties_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(-1));
+extern int mpt_properties_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(property_handler) , void *, int __MPT_DEFPAR(-1));
 
 /* apply property from message text argument */
-extern int mpt_message_properties(MPT_STRUCT(message) *, int , MPT_TYPE(PropertyHandler), void *);
+extern int mpt_message_properties(MPT_STRUCT(message) *, int , MPT_TYPE(property_handler), void *);
 
 /* query and print all properties */
-extern int mpt_properties_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(PropertyHandler) , void *, int __MPT_DEFPAR(0));
+extern int mpt_properties_print(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(property_handler) , void *, int __MPT_DEFPAR(0));
 
 __MPT_EXTDECL_END
 
@@ -300,9 +300,9 @@ public:
 	virtual const class item<metatype> *item(size_t pos) const;
 	virtual class item<metatype> *append(metatype *);
 	virtual size_t clear(const reference * = 0);
-	virtual bool bind(const relation &from, logger * = logger::defaultInstance());
+	virtual bool bind(const relation &from, logger * = logger::default_instance());
 	
-	bool add_items(node *head, const relation *from = 0, logger * = logger::defaultInstance());
+	bool add_items(node *head, const relation *from = 0, logger * = logger::default_instance());
 protected:
 	inline ~group() {}
 	virtual metatype *create(const char *, int = -1);

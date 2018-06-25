@@ -47,14 +47,14 @@
 # define MPT_INTERFACE(i) class i
 # define MPT_STRUCT(s)    struct s
 # define MPT_ENUM(e)      e
-# define MPT_TYPE(t)      t
+# define MPT_TYPE(t)      t##_t
 # define MPT_ERROR(t)     t
 #else
 # define MPT_INTERFACE_VPTR(v) struct _mpt_vptr_##v
 # define MPT_INTERFACE(i)      struct mpt_##i
 # define MPT_STRUCT(s)         struct mpt_##s
 # define MPT_ENUM(e)           MPT_##e
-# define MPT_TYPE(t)           Mpt##t
+# define MPT_TYPE(t)           mpt_##t##_t
 # define MPT_ERROR(t)          MPT_ERROR_##t
 
 # define __MPT_DEFPAR(v)
@@ -234,8 +234,8 @@ MPT_STRUCT(decode_state)
 	size_t done;    /* processed data size */
 	size_t scratch; /* working area */
 };
-typedef ssize_t (*MPT_TYPE(DataEncoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
-typedef ssize_t (*MPT_TYPE(DataDecoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
+typedef ssize_t (*MPT_TYPE(data_encoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
+typedef ssize_t (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
 
 __MPT_EXTDECL_BEGIN

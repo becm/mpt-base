@@ -18,7 +18,7 @@ __MPT_NAMESPACE_BEGIN
 static int print_message(const char *fcn, int type, const char *fmt, va_list va)
 {
     logger *log;
-    if ((log = logger::defaultInstance())) {
+    if ((log = logger::default_instance())) {
         return log->log(fcn, type | logger::LogFunction, fmt, va);
     }
     FILE *fd = (type & 0xff) ? stderr : stdout;
@@ -100,7 +100,7 @@ int println(const char *fmt, ... )
     if (fmt) va_end(va);
     return ret;
 }
-logger *logger::defaultInstance()
+logger *logger::default_instance()
 {
     return mpt_log_default();
 }

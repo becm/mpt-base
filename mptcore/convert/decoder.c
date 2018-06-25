@@ -6,11 +6,11 @@
  * 
  * Select decoder function for matching coding.
  * 
- * \param code message coding
+ * \param code  message coding
  * 
  * \return decoder function
  */
-extern MPT_TYPE(DataDecoder) mpt_message_decoder(int code)
+extern MPT_TYPE(data_decoder) mpt_message_decoder(int code)
 {
 	switch (code & 0x7f) {
 	  /* no encoding */

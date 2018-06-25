@@ -116,7 +116,7 @@ static int streamNext(MPT_INTERFACE(input) *in, int what)
 struct streamWrap
 {
 	MPT_STRUCT(streamInput) *in;
-	MPT_TYPE(EventHandler) cmd;
+	MPT_TYPE(event_handler) cmd;
 	void *arg;
 };
 static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
@@ -193,7 +193,7 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 		return ret;
 	}
 }
-static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(EventHandler) cmd, void *arg)
+static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) in;
 	struct streamWrap sw;

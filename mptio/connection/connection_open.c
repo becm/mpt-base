@@ -55,8 +55,8 @@ extern int mpt_connection_open(MPT_STRUCT(connection) *con, const char *to, cons
 	if ((flg = mpt_stream_sockflags(ret)) >= 0) {
 		static const char encoding = MPT_ENUM(EncodingCobs);
 		MPT_STRUCT(stream) s = MPT_STREAM_INIT;
-		MPT_TYPE(DataEncoder) enc;
-		MPT_TYPE(DataDecoder) dec;
+		MPT_TYPE(data_encoder) enc;
+		MPT_TYPE(data_decoder) dec;
 		
 		if (!(enc = mpt_message_encoder(encoding))
 		    || !(dec = mpt_message_decoder(encoding))) {

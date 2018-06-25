@@ -133,7 +133,7 @@ MPT_STRUCT(event)
 	const MPT_STRUCT(message) *msg; /* event data */
 	uintptr_t id;  /* command to process */
 };
-typedef int (*MPT_TYPE(EventHandler))(void *, MPT_STRUCT(event) *);
+typedef int (*MPT_TYPE(event_handler))(void *, MPT_STRUCT(event) *);
 
 /* generic command registration */
 MPT_STRUCT(command)
@@ -155,7 +155,7 @@ public:
 	class array : public unique_array<command>
 	{
 	public:
-		bool set_handler(uintptr_t, EventHandler , void *);
+		bool set_handler(uintptr_t, event_handler_t , void *);
 		command *handler(uintptr_t) const;
 		command *reserve(size_t);
 	};
@@ -174,7 +174,7 @@ public:
 	~dispatch();
 	
 	bool set_default(uintptr_t);
-	void set_error(EventHandler , void *);
+	void set_error(event_handler_t , void *);
 	
 	enum {
 		LogStatus = logger::Debug2,
@@ -191,7 +191,7 @@ MPT_STRUCT(dispatch)
 #endif
 	uintptr_t _def; /* default command id */
 	struct {
-		MPT_TYPE(EventHandler) cmd;
+		MPT_TYPE(event_handler) cmd;
 		void *arg;
 	} _err;         /* handler for unknown ids */
 	
@@ -222,7 +222,7 @@ extern void mpt_dispatch_init(MPT_STRUCT(dispatch) *);
 extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *);
 
 /* register command on event handler */
-extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *, uintptr_t , MPT_TYPE(EventHandler) , void *);
+extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *, uintptr_t , MPT_TYPE(event_handler) , void *);
 /* call event handler and process returned command */
 extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *, MPT_STRUCT(event) *);
 /* use id of command string hash */

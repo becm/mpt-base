@@ -28,7 +28,7 @@ bool reply_data::set(size_t len, const void *data)
 }
 
 // command array
-bool command::array::set_handler(uintptr_t id, EventHandler cmd, void *arg)
+bool command::array::set_handler(uintptr_t id, event_handler_t cmd, void *arg)
 {
     dispatch *d = static_cast<dispatch *>(this);
     return mpt_dispatch_set(d, id, cmd, arg) >= 0;

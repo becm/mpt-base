@@ -65,7 +65,7 @@ protected:
 };
 #endif
 
-typedef int (*MPT_TYPE(TraverseFcn))(MPT_STRUCT(node) *, void *, size_t);
+typedef int (*MPT_TYPE(node_handler))(MPT_STRUCT(node) *, void *, size_t);
 
 __MPT_EXTDECL_BEGIN
 
@@ -139,14 +139,14 @@ extern MPT_STRUCT(node) *mpt_gnode_samelevel(MPT_STRUCT(node) *, size_t );
 extern MPT_STRUCT(node) *mpt_gnode_sublevel(MPT_STRUCT(node) *, size_t );
 
 /* traverse nodes according to parameters and apply function */
-extern MPT_STRUCT(node) *mpt_gnode_traverse(MPT_STRUCT(node) *, int , MPT_TYPE(TraverseFcn) , void *);
+extern MPT_STRUCT(node) *mpt_gnode_traverse(MPT_STRUCT(node) *, int , MPT_TYPE(node_handler) , void *);
 
 /* traverse nodes tree in post/in/pre order */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_in(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(TraverseFcn) , void *);
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_pre(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(TraverseFcn) , void *);
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_post(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(TraverseFcn) , void *);
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_in(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(node_handler) , void *);
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_pre(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(node_handler) , void *);
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_post(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(node_handler) , void *);
 /* traverse tree levels */
-extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(TraverseFcn) , void *);
+extern MPT_STRUCT(node) *_mpt_gnode_traverse_level(MPT_STRUCT(node) *, int , size_t , MPT_TYPE(node_handler) , void *);
 
 __MPT_EXTDECL_END
 

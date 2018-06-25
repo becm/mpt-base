@@ -58,7 +58,7 @@ extern int main(int argc, char *argv[])
 	
 	mtrace();
 	
-	no._disp.cmd = (MPT_TYPE(EventHandler)) mpt_dispatch_emit;
+	no._disp.cmd = (MPT_TYPE(event_handler)) mpt_dispatch_emit;
 	no._disp.arg = &dsp;
 	
 	dsp._err.cmd = printMessage;

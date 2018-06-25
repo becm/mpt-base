@@ -66,7 +66,7 @@ bool encode_queue::trim(size_t take)
 }
 
 // queue with data decoder
-DecodingQueue::DecodingQueue(DataDecoder dec) : decode_queue(dec), _mlen(-1)
+DecodingQueue::DecodingQueue(data_decoder_t dec) : decode_queue(dec), _mlen(-1)
 { }
 DecodingQueue::~DecodingQueue()
 {

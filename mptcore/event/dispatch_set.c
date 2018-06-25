@@ -19,7 +19,7 @@
  * 
  * \return command (de)registration result
  */
-extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *disp, uintptr_t id, MPT_TYPE(EventHandler) cmd, void *arg)
+extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *disp, uintptr_t id, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	MPT_STRUCT(command) *dst = mpt_command_get(&disp->_d, id);
 	
