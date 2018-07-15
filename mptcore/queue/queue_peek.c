@@ -41,27 +41,40 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 		msg.clen = 0;
 		msg.cont = 0;
 	}
-	off = qu->_state.done;
-	if (off && (mpt_message_read(&msg, off, 0) < off)) {
-		return -1;
-	}
-	
+	off = qu->_state.content.pos;
 	/* final data available */
 	if (!qu->_dec) {
+		if (qu->_state.content.len >= 0) {
+			off += qu->_state.content.len;
+		}
+		if (off && (mpt_message_read(&msg, off, 0) < off)) {
+			return MPT_ERROR(MissingData);
+		}
 		if (!dst) {
 			return mpt_message_length(&msg);
 		}
 		return mpt_message_read(&msg, max, dst);
 	}
+	/* work area reduces offset */
+	len = qu->_state.work.pos;
+	if ((len || qu->_state.work.len) && (len < off)) {
+		off = len;
+	}
+	if (off && (mpt_message_read(&msg, off, 0) < off)) {
+		return MPT_ERROR(MissingData);
+	}
 	src.iov_base = (void *) msg.base;
 	src.iov_len  = msg.used;
 	
-	/* start peek for new data */
-	qu->_state.done = 0;
+	/* reduce wrap size */
+	qu->_state.content.pos -= off;
+	qu->_state.work.pos -= off;
+	/* peek for new data */
 	ret = qu->_dec(&qu->_state, &src, 0);
-	len = qu->_state.done;
-	msg.base = (uint8_t *) msg.base + len;
-	qu->_state.done = len + off;
+	len = qu->_state.content.pos;
+	/* restore offsets */
+	qu->_state.content.pos = len + off;
+	qu->_state.work.pos += off;
 	
 	if (ret < 0 || !dst) {
 		return ret;
@@ -70,6 +83,7 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 	if ((size_t) ret > max) {
 		ret = max;
 	}
+	msg.base = (uint8_t *) msg.base + len;
 	(void) memcpy(dst, msg.base, ret);
 	
 	return ret;

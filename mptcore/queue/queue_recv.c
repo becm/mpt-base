@@ -47,44 +47,57 @@ int vectorSet(const MPT_STRUCT(queue) *qu, struct iovec src[2])
  * 
  * \return size of message
  */
-extern ssize_t mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
+extern int mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
 {
 	struct iovec src[2];
-	size_t pre, len, max;
-	ssize_t take;
+	size_t len, max;
+	ssize_t res;
 	
 	if (!(len = qu->data.len)) {
 		return MPT_ERROR(MissingData);
 	}
 	/* get new data part */
 	if (!qu->_dec) {
-		pre = qu->_state.done + qu->_state.scratch;
+		size_t done = qu->_state.content.pos;
 		
-		if (pre > len) {
+		if (qu->_state.content.len >= 0) {
+			done += qu->_state.content.len;
+		}
+		if (done > len) {
 			return MPT_ERROR(BadEncoding);
 		}
-		len -= pre;
-		qu->_state.done = pre;
-		qu->_state.scratch = len;
+		len -= done;
+		qu->_state.content.pos = done;
+		qu->_state.content.len = len;
 		
 		return len ? (ssize_t) len : MPT_ERROR(MissingData);
 	}
 	max = vectorSet(&qu->data, src);
 	
-	if (((take = qu->_dec(&qu->_state, src, max)) >= 0)
-	    || (take != MPT_ERROR(MissingBuffer))) {
-		return take;
+	if (((res = qu->_dec(&qu->_state, src, max)) >= 0)) {
+		return qu->_state.content.len >= 0 ? 1 : 0;
+	}
+	if (res != MPT_ERROR(MissingBuffer)) {
+		return res;
 	}
 	/* queue full */
 	max = qu->data.max;
 	if (len >= max) {
-		return take;
+		return res;
 	}
 	/* enlarge scratch space */
 	max = max - len;
-	if (mpt_qpre(&qu->data, max) >= 0) {
-		qu->_state.done += max;
+	if (mpt_qpre(&qu->data, max) < 0) {
+		return MPT_ERROR(MissingBuffer);
 	}
+	/* correct data area offsets */
+	qu->_state.content.pos += max;
+	qu->_state.work.pos += max;
+	
+	/* retry with bigger prefix space */
 	max = vectorSet(&qu->data, src);
-	return qu->_dec(&qu->_state, src, max);
+	if ((res = qu->_dec(&qu->_state, src, max)) < 0) {
+		return res;
+	}
+	return 0;
 }

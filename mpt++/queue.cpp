@@ -43,11 +43,7 @@ int IODevice::getchar()
         return rv < 0 ? rv : -1;
     return letter;
 }
-// coding queue dispatch and process
-ssize_t decode_queue::receive()
-{
-    return mpt_queue_recv(this);
-}
+// coded queue target
 ssize_t encode_queue::push(size_t len, const void *data)
 {
     return mpt_queue_push(this, len, data);
@@ -64,49 +60,36 @@ bool encode_queue::trim(size_t take)
     _state.done -= take;
     return true;
 }
-
-// queue with data decoder
-DecodingQueue::DecodingQueue(data_decoder_t dec) : decode_queue(dec), _mlen(-1)
-{ }
-DecodingQueue::~DecodingQueue()
+// coded queue source
+bool decode_queue::advance()
 {
-    mpt_queue_resize(this, 0);
-}
-// message source interface
-bool DecodingQueue::current_message(message &msg, struct iovec *cont) const
-{
-    if (_mlen < 0) {
+    if (mpt_queue_recv(this) < 0) {
         return false;
     }
-    mpt_message_get(this, _state.done, _mlen, &msg, cont);
-
-    return true;
-}
-bool DecodingQueue::pending_message()
-{
-    if (_mlen >= 0) {
-        return true;
+    size_t cpos, wpos;
+    
+    cpos = _state.content.pos;
+    wpos = _state.work.pos;
+    
+    if ((wpos || _state.work.len) && wpos < cpos) {
+        cpos = wpos;
     }
-    if ((_mlen = mpt_queue_recv(this)) < 0) {
-        return false;
-    }
-    if (_state.done) {
-        mpt_queue_crop(this, 0, _state.done);
-        _state.done = 0;
+    if (cpos) {
+        mpt_queue_crop(this, 0, cpos);
+        _state.content.pos -= cpos;
+        _state.work.pos -= cpos;
     }
     return true;
+    
 }
-bool DecodingQueue::advance()
+bool decode_queue::current_message(message &msg, struct iovec *cont) const
 {
-    if (_mlen < 0) {
+    if (_state.content.len < 0) {
         return false;
     }
-    mpt_queue_crop(this, 0, _mlen + _state.done);
-    _state.scratch -= _mlen;
-    _state.done = 0;
-
-    _mlen = mpt_queue_recv(this);
-
+    if (mpt_message_get(this, _state.content.pos, _state.content.len, &msg, cont) < 0) {
+        return false;
+    }
     return true;
 }
 

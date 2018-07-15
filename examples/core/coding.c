@@ -55,10 +55,10 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(data_decoder) decode)
 	/*decode(info, &vec, 0);*/
 	while ((len = decode(&info, &vec, 1)) < 0) {
 		if (len == MPT_ERROR(MissingBuffer)) {
-			assert(mpt_array_insert(arr, info.done + info.scratch, 8));
+			assert(mpt_array_insert(arr, info.work.pos, 8));
 			vec.iov_base = (void *) (arr->_buf + 1);
 			vec.iov_len  = arr->_buf->_used;
-			info.scratch += 8;
+			info.work.pos += 8;
 			continue;
 		}
 		fprintf(stderr, "%s %d\n", "error", len);

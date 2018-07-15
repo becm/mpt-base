@@ -100,12 +100,11 @@ enum MPT_STREAMFLAG(Flags) {
 #else
 MPT_STRUCT(stream)
 {
-# define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_DECODE_QUEUE_INIT, MPT_ENCODE_QUEUE_INIT, -1 }
+# define MPT_STREAM_INIT { MPT_STREAMINFO_INIT, MPT_DECODE_QUEUE_INIT, MPT_ENCODE_QUEUE_INIT }
 #endif
 	MPT_STRUCT(streaminfo)   _info;  /* stream state */
 	MPT_STRUCT(decode_queue) _rd;    /* read data */
 	MPT_STRUCT(encode_queue) _wd;    /* write data */
-	ssize_t                  _mlen;  /* current message length */
 };
 
 __MPT_EXTDECL_BEGIN

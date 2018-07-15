@@ -40,13 +40,18 @@ MPT_STRUCT(decode_queue) : public queue
 	{
 		if (_dec) _dec(&_state, 0, 0);
 	}
-	ssize_t peek(size_t len, const void *);
-	ssize_t receive();
-	
 	inline bool encoded() const
 	{
 		return _dec;
 	}
+	inline bool pending_message() const
+	{
+		return _state.content.len >= 0;
+	}
+	bool current_message(struct message &, struct iovec * = 0) const;
+	
+	ssize_t peek(size_t len, const void *);
+	bool advance();
 protected:
 #else
 MPT_STRUCT(decode_queue)
@@ -137,27 +142,13 @@ extern void mpt_queue_align(MPT_STRUCT(queue) *, size_t);
 
 /* get next message */
 extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *, size_t , void *);
-extern ssize_t mpt_queue_recv(MPT_STRUCT(decode_queue) *);
+extern int mpt_queue_recv(MPT_STRUCT(decode_queue) *);
 /* send message */
 extern ssize_t mpt_queue_push(MPT_STRUCT(encode_queue) *, size_t , const void *);
 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-
-/*!  */
-class DecodingQueue : protected decode_queue
-{
-public:
-	DecodingQueue(data_decoder_t = 0);
-	~DecodingQueue();
-	
-	bool pending_message();
-	bool current_message(struct message &, struct iovec * = 0) const;
-	bool advance();
-protected:
-	ssize_t _mlen;
-};
 
 /*! interface to raw device */
 class IODevice

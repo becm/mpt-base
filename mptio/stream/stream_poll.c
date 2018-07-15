@@ -78,19 +78,25 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 	keep = -3;
 	
 	if (fd[0].fd >= 0) {
-		ssize_t len;
+		ssize_t pos, len;
 		
-		if ((len = srm->_rd._state.done)) {
-			if ((mpt_queue_crop(&srm->_rd.data, 0, len) < 0)) {
+		pos = srm->_rd._state.content.pos;
+		len = srm->_rd._state.work.pos;
+		if ((len || srm->_rd._state.work.len) && len < pos) {
+			pos = len;
+		}
+		if (pos) {
+			if ((mpt_queue_crop(&srm->_rd.data, 0, pos) < 0)) {
 				(void) mpt_log(0, __func__, MPT_LOG(Fatal), "%s",
 				               MPT_tr("inconsistent queue/decoder state"));
 			} else {
-				srm->_rd._state.done = 0;
+				srm->_rd._state.content.pos -= pos;
+				srm->_rd._state.work.pos -= pos;
 			}
 		}
 		/* avoid removal if input available */
 		if (!(fd[0].revents & POLLIN)) {
-			if (srm->_mlen >= 0) {
+			if (srm->_rd._state.content.len >= 0) {
 				keep = (what & POLLIN && srm->_rd._dec) ? POLLIN : 0;
 			}
 		}
@@ -102,8 +108,8 @@ extern int mpt_stream_poll(MPT_STRUCT(stream) *srm, int what, int timeout)
 		/* read further input data */
 		else if ((len = mpt_queue_load(&srm->_rd.data, fd[0].fd, 0)) > 0) {
 			mpt_stream_clearerror(&srm->_info, MPT_ENUM(ErrorEmpty) | MPT_ENUM(ErrorRead));
-			if ((srm->_mlen < 0)
-			    && ((srm->_mlen = mpt_queue_recv(&srm->_rd)) < 0)) {
+			if ((srm->_rd._state.content.len < 0)
+			    && ((len = mpt_queue_recv(&srm->_rd)) < 0)) {
 				keep = 0;
 			} else {
 				keep = POLLIN;

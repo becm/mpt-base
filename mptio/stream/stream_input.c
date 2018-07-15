@@ -197,16 +197,17 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd,
 {
 	MPT_STRUCT(streamInput) *srm = (void *) in;
 	struct streamWrap sw;
+	int ret;
 	
-	if (srm->data._mlen < 0
-	    && (srm->data._mlen = mpt_queue_recv(&srm->data._rd)) < 0) {
-		if (_mpt_stream_fread(&srm->data._info) < 0) {
-			return -2;
+	if (srm->data._rd._state.content.len < 0
+	    && (ret = mpt_queue_recv(&srm->data._rd)) < 0) {
+		if ((ret = _mpt_stream_fread(&srm->data._info)) < 0) {
+			return ret;
 		}
 		return 0;
 	}
 	if (!cmd) {
-		srm->data._mlen = -1;
+		srm->data._rd._state.content.len = -1;
 		return 1;
 	}
 	sw.in = srm;

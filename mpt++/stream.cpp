@@ -40,7 +40,7 @@ bool streaminfo::set_flags(int fl)
 }
 
 // stream data operations
-stream::stream() : _mlen(0)
+stream::stream()
 { }
 stream::~stream()
 {
@@ -354,8 +354,8 @@ int Stream::dispatch(event_handler_t cmd, void *arg)
     if (!_srm) {
         return BadArgument;
     }
-    if (_srm->_mlen < 0
-        && (_srm->_mlen = mpt_queue_recv(&_srm->_rd)) < 0) {
+    if (!_srm->_rd.pending_message()
+        && !_srm->_rd.advance()) {
         if (_mpt_stream_fread(&_srm->_info) < 0) {
             return BadArgument;
         }

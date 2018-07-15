@@ -225,14 +225,28 @@ MPT_STRUCT(encode_state)
 MPT_STRUCT(decode_state)
 {
 #ifdef __cplusplus
-	inline decode_state() : _ctx(0), done(0), scratch(0)
-	{ }
+	inline decode_state() : _ctx(0)
+	{
+		content.pos = 0;
+		content.len = -1;
+		
+		work.pos = 0;
+		work.len = 0;
+	}
 #else
-# define MPT_DECODE_INIT { 0, 0, 0 }
+# define MPT_DECODE_INIT { 0,  { 0, -1 },  { 0, 0 } }
 #endif
-	uintptr_t _ctx; /* state pointer */
-	size_t done;    /* processed data size */
-	size_t scratch; /* working area */
+	uintptr_t _ctx;  /* state pointer */
+	
+	struct {
+		size_t  pos;
+		ssize_t len;
+	} content;       /* decoded data content */
+	
+	struct {
+		size_t pos;
+		size_t len;
+	} work;          /* working area in data segment */
 };
 typedef ssize_t (*MPT_TYPE(data_encoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
 typedef ssize_t (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);

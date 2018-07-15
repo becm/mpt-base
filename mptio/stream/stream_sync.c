@@ -30,7 +30,7 @@
  * \retval -2 unable to flush data
  * \retval 1  remaining data in write buffer
  */
-extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_STRUCT(array) *arr, int timeout)
+extern int mpt_stream_sync(MPT_STRUCT(stream) *srm, size_t idlen, const MPT_STRUCT(array) *arr, int timeout)
 {
 	MPT_STRUCT(command) *cmd;
 	int count, pos, sav, len = 0;
@@ -59,14 +59,15 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 		struct iovec vec;
 		uint8_t buf[UINT8_MAX];
 		uint64_t id;
+		size_t cpos, wpos;
 		int ret;
 		
 		if (idlen > sizeof(buf)) {
 			return MPT_ERROR(BadArgument);
 		}
 		/* get message data */
-		if (stream->_mlen < 0) {
-			if ((ret = mpt_stream_poll(stream, POLLIN, timeout)) < 0) {
+		if (srm->_rd._state.content.len < 0) {
+			if ((ret = mpt_stream_poll(srm, POLLIN, timeout)) < 0) {
 				return MPT_ERROR(BadOperation);
 			}
 			if (!ret) {
@@ -75,16 +76,22 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *stream, size_t idlen, const MPT_S
 			if (timeout > 0) {
 				timeout = 0;
 			}
-			if ((stream->_mlen = mpt_queue_recv(&stream->_rd)) < 0) {
+			if (mpt_queue_recv(&srm->_rd) < 0) {
 				continue;
 			}
 		}
 		/* remove processed data */
-		mpt_queue_crop(&stream->_rd.data, 0, stream->_rd._state.done);
-		stream->_rd._state.done = 0;
+		cpos = srm->_rd._state.content.pos;
+		wpos = srm->_rd._state.work.pos;
+		if ((wpos || srm->_rd._state.work.len) && wpos < cpos) {
+			cpos = wpos;
+		}
+		/* adapt state offset data */
+		srm->_rd._state.content.pos -= cpos;
+		srm->_rd._state.work.pos -= cpos;
 		
 		/* initial message data */
-		mpt_message_get(&stream->_rd.data, 0, stream->_mlen, &msg, &vec);
+		mpt_message_get(&srm->_rd.data, srm->_rd._state.content.pos, srm->_rd._state.content.len, &msg, &vec);
 		
 		/* consume/create message id */
 		mpt_message_read(&msg, idlen, buf);

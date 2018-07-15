@@ -100,7 +100,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(m
 		return MPT_ERROR(BadValue);
 	}
 	/* check if state is consistent */
-	if (srm->_rd._state.scratch) {
+	if (srm->_rd._state._ctx) {
 		return MPT_MESGERR(ActiveInput);
 	}
 	val = mpt_stream_flags(&srm->_info);
