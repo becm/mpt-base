@@ -196,24 +196,36 @@ static int streamMessage(void *ptr, const MPT_STRUCT(message) *msg)
 static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd, void *arg)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) in;
-	struct streamWrap sw;
+	ssize_t len;
 	int ret;
 	
-	if (srm->data._rd._state.content.len < 0
-	    && (ret = mpt_queue_recv(&srm->data._rd)) < 0) {
-		if ((ret = _mpt_stream_fread(&srm->data._info)) < 0) {
+	if ((len = srm->data._rd._state.data.msg) < 0) {
+		if ((ret = mpt_queue_recv(&srm->data._rd)) < 0) {
 			return ret;
 		}
-		return 0;
+		if (!ret) {
+			if ((ret = _mpt_stream_fread(&srm->data._info)) < 0) {
+				return 0;
+			} else {
+				return MPT_EVENTFLAG(None);
+			}
+		}
 	}
-	if (!cmd) {
-		srm->data._rd._state.content.len = -1;
-		return 1;
+	if (cmd) {
+		struct streamWrap sw;
+		sw.in = srm;
+		sw.cmd = cmd;
+		sw.arg = arg;
+		return mpt_stream_dispatch(&srm->data, streamMessage, &sw);
 	}
-	sw.in = srm;
-	sw.cmd = cmd;
-	sw.arg = arg;
-	return mpt_stream_dispatch(&srm->data, streamMessage, &sw);
+	srm->data._rd._state.data.pos += len;
+	srm->data._rd._state.data.len -= len;
+	srm->data._rd._state.data.msg = -1;
+	mpt_queue_shift(&srm->data._rd);
+	
+	ret = mpt_queue_recv(&srm->data._rd);
+	
+	return (ret > 0) ? MPT_EVENTFLAG(Retry) : MPT_EVENTFLAG(None);
 }
 
 

@@ -22,42 +22,27 @@
  * 
  * \return consumed data size
  */
-extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct iovec *source, size_t sourcelen)
+extern int mpt_decode_command(MPT_STRUCT(decode_state) *dec, const struct iovec *source, size_t sourcelen)
 {
-	static MPT_STRUCT(msgtype) mt = { MPT_MESGTYPE(Command), ' ' };
 	MPT_STRUCT(message) from;
 	size_t off, len, pos;
 	uint8_t *end;
 	
 	if (!source) {
 		static const MPT_STRUCT(decode_state) _def = MPT_DECODE_INIT;
-		*info = _def;
+		*dec = _def;
 		return 0;
 	}
-	len = info->_ctx;
-	off = info->content.pos;
-	pos = info->work.pos;
+	pos = dec->curr;
+	len = dec->data.len;
+	off = dec->data.pos;
 	
-	/* peek at data */
-	if (!sourcelen) {
-		size_t max = source->iov_len;
-		
-		if (info->content.len >= 0) {
+	if (dec->data.msg >= 0) {
+		if (!sourcelen) {
 			return MPT_ERROR(BadOperation);
 		}
-		if (off < sizeof(mt)) {
-			return MPT_ERROR(MissingBuffer);
-		}
-		if (max < off) {
-			return MPT_ERROR(MissingData);
-		}
-		max -= off;
-		if (len < max) {
-			return max;
-		}
-		return len;
+		len -= dec->data.msg;
 	}
-	
 	from.used = 0;
 	from.base = 0;
 	from.cont = (void *) source;
@@ -65,6 +50,11 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 	
 	/* start new message */
 	if (!len) {
+		static MPT_STRUCT(msgtype) mt = { MPT_MESGTYPE(Command), ' ' };
+		
+		if (!sourcelen) {
+			return MPT_ERROR(BadOperation);
+		}
 		/* need place for header */
 		if (pos < sizeof(mt)) {
 			return MPT_ERROR(MissingBuffer);
@@ -84,38 +74,48 @@ extern ssize_t mpt_decode_command(MPT_STRUCT(decode_state) *info, const struct i
 				continue;
 			}
 			if (!from.clen--) {
-				return MPT_ERROR(BadOperation);
+				return MPT_ERROR(MissingBuffer);
 			}
 			cont = from.cont++;
 			from.base = end = cont->iov_base;
 			from.used = cont->iov_len;
 		}
-		info->_ctx = len;
-		info->content.pos = off;
+		dec->data.pos = off;
+		dec->data.len = len;
+		dec->data.msg = -1;
+	}
+	/* check persistent data assumption */
+	else if (pos != (off + len)) {
+		return MPT_ERROR(BadArgument);
 	}
 	/* skip checked data */
-	else if (mpt_message_read(&from, off, 0) < off) {
+	else if (mpt_message_read(&from, pos, 0) < pos) {
 		return MPT_ERROR(MissingData);
 	}
 	/* find command end */
 	while (1) {
 		if (from.used && (end = memchr(from.base, 0, from.used))) {
 			len += (end - (uint8_t *) from.base);
-			break;
+			
+			if (!sourcelen || dec->data.msg >= 0) {
+				dec->curr = off + len;
+				dec->data.len = len;
+				return 1;
+			}
+			dec->data.len = len;
+			dec->data.msg = len;
+			
+			dec->curr = off + len + 1;
+			return 1;
 		}
 		len += from.used;
 		if (!from.clen--) {
-			info->_ctx = len;
-			info->work.pos = off + len;
-			return MPT_ERROR(MissingData);
+			dec->data.len = len;
+			dec->curr = off + len;
+			return 0;
 		}
 		from.base = from.cont->iov_base;
 		from.used = from.cont->iov_len;
 		++from.cont;
 	}
-	
-	info->_ctx = 0;
-	info->work.pos = off + len + 1;
-	
-	return len;
 }

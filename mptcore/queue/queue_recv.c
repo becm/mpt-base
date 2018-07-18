@@ -1,5 +1,5 @@
 /*!
- * receive message from queue
+ * decode message in queue
  */
 
 #include <sys/uio.h>
@@ -58,24 +58,35 @@ extern int mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
 	}
 	/* get new data part */
 	if (!qu->_dec) {
-		size_t done = qu->_state.content.pos;
+		size_t done = qu->_state.data.pos;
 		
-		if (qu->_state.content.len >= 0) {
-			done += qu->_state.content.len;
+		if (qu->_state.data.msg >= 0) {
+			done += qu->_state.data.msg;
+		} else {
+			done += qu->_state.data.len;
 		}
 		if (done > len) {
 			return MPT_ERROR(BadEncoding);
 		}
 		len -= done;
-		qu->_state.content.pos = done;
-		qu->_state.content.len = len;
 		
-		return len ? (ssize_t) len : MPT_ERROR(MissingData);
+		if (qu->_state.data.msg >= 0) {
+			qu->_state.data.pos = done;
+			qu->_state.data.msg = qu->_state.data.len;
+			qu->_state.data.len = len;
+			mpt_queue_shift(qu);
+			return 1;
+		}
+		qu->_state.data.pos = done;
+		qu->_state.data.len = len;
+		mpt_queue_shift(qu);
+		return 0;
 	}
 	max = vectorSet(&qu->data, src);
 	
 	if (((res = qu->_dec(&qu->_state, src, max)) >= 0)) {
-		return qu->_state.content.len >= 0 ? 1 : 0;
+		mpt_queue_shift(qu);
+		return qu->_state.data.msg >= 0 ? 1 : 0;
 	}
 	if (res != MPT_ERROR(MissingBuffer)) {
 		return res;
@@ -91,13 +102,14 @@ extern int mpt_queue_recv(MPT_STRUCT(decode_queue) *qu)
 		return MPT_ERROR(MissingBuffer);
 	}
 	/* correct data area offsets */
-	qu->_state.content.pos += max;
-	qu->_state.work.pos += max;
+	qu->_state.data.pos += max;
+	qu->_state.curr += max;
 	
 	/* retry with bigger prefix space */
 	max = vectorSet(&qu->data, src);
 	if ((res = qu->_dec(&qu->_state, src, max)) < 0) {
 		return res;
 	}
-	return 0;
+	mpt_queue_shift(qu);
+	return qu->_state.data.msg >= 0 ? 1 : 0;
 }

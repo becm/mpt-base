@@ -48,25 +48,25 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(data_decoder) decode)
 {
 	MPT_STRUCT(decode_state) info = MPT_DECODE_INIT;
 	struct iovec vec;
-	int len;
+	int code;
 	
 	vec.iov_base = arr->_buf + 1;
 	vec.iov_len  = arr->_buf->_used;
 	/*decode(info, &vec, 0);*/
-	while ((len = decode(&info, &vec, 1)) < 0) {
-		if (len == MPT_ERROR(MissingBuffer)) {
-			assert(mpt_array_insert(arr, info.work.pos, 8));
+	while ((code = decode(&info, &vec, 1)) < 0) {
+		if (code == MPT_ERROR(MissingBuffer)) {
+			assert(mpt_array_insert(arr, info.curr, 8));
+			info.curr += 8;
 			vec.iov_base = (void *) (arr->_buf + 1);
 			vec.iov_len  = arr->_buf->_used;
-			info.work.pos += 8;
 			continue;
 		}
-		fprintf(stderr, "%s %d\n", "error", len);
+		fprintf(stderr, "%s %d\n", "error", code);
 		return;
 	}
 	fputc('>',stdout);
 	fputc(' ',stdout);
-	disp(arr, len);
+	disp(arr, info.data.msg);
 	decode(&info, 0, 0);
 }
 

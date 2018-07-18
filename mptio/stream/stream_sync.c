@@ -59,14 +59,13 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *srm, size_t idlen, const MPT_STRU
 		struct iovec vec;
 		uint8_t buf[UINT8_MAX];
 		uint64_t id;
-		size_t cpos, wpos;
 		int ret;
 		
 		if (idlen > sizeof(buf)) {
 			return MPT_ERROR(BadArgument);
 		}
 		/* get message data */
-		if (srm->_rd._state.content.len < 0) {
+		if (srm->_rd._state.data.msg < 0) {
 			if ((ret = mpt_stream_poll(srm, POLLIN, timeout)) < 0) {
 				return MPT_ERROR(BadOperation);
 			}
@@ -76,22 +75,18 @@ extern int mpt_stream_sync(MPT_STRUCT(stream) *srm, size_t idlen, const MPT_STRU
 			if (timeout > 0) {
 				timeout = 0;
 			}
-			if (mpt_queue_recv(&srm->_rd) < 0) {
-				continue;
+			if ((ret = mpt_queue_recv(&srm->_rd))) {
+				return ret;
+			}
+			if (ret) {
+				break;
 			}
 		}
 		/* remove processed data */
-		cpos = srm->_rd._state.content.pos;
-		wpos = srm->_rd._state.work.pos;
-		if ((wpos || srm->_rd._state.work.len) && wpos < cpos) {
-			cpos = wpos;
-		}
-		/* adapt state offset data */
-		srm->_rd._state.content.pos -= cpos;
-		srm->_rd._state.work.pos -= cpos;
+		mpt_queue_shift(&srm->_rd);
 		
 		/* initial message data */
-		mpt_message_get(&srm->_rd.data, srm->_rd._state.content.pos, srm->_rd._state.content.len, &msg, &vec);
+		mpt_message_get(&srm->_rd.data, srm->_rd._state.data.pos, srm->_rd._state.data.msg, &msg, &vec);
 		
 		/* consume/create message id */
 		mpt_message_read(&msg, idlen, buf);

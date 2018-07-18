@@ -19,6 +19,7 @@ src = files(
   'queue_resize.c',
   'queue_save.c',
   'queue_set.c',
+  'queue_shift.c',
   'queue_string.c',
   'qunshift.c',
 )

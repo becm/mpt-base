@@ -8,7 +8,7 @@
 
 /*!
  * \ingroup mptQueue
- * \brief get next message type
+ * \brief preview next message
  * 
  * Get length/start of next message on queue.
  * 
@@ -21,7 +21,7 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 	MPT_STRUCT(message) msg;
 	struct iovec src;
 	size_t off, len;
-	ssize_t ret;
+	int ret;
 	
 	if (!(len = qu->data.len)) {
 		return MPT_ERROR(MissingData);
@@ -41,23 +41,25 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 		msg.clen = 0;
 		msg.cont = 0;
 	}
-	off = qu->_state.content.pos;
+	off = qu->_state.data.pos;
+	
 	/* final data available */
 	if (!qu->_dec) {
-		if (qu->_state.content.len >= 0) {
-			off += qu->_state.content.len;
+		if ((ret = qu->_state.data.msg) >= 0) {
+			off += ret;
+		}
+		if (!dst) {
+			ret = len - off;
+			return ret >= 0 ? ret : MPT_ERROR(MissingData);
 		}
 		if (off && (mpt_message_read(&msg, off, 0) < off)) {
 			return MPT_ERROR(MissingData);
 		}
-		if (!dst) {
-			return mpt_message_length(&msg);
-		}
 		return mpt_message_read(&msg, max, dst);
 	}
 	/* work area reduces offset */
-	len = qu->_state.work.pos;
-	if ((len || qu->_state.work.len) && (len < off)) {
+	len = qu->_state.curr;
+	if (len < off) {
 		off = len;
 	}
 	if (off && (mpt_message_read(&msg, off, 0) < off)) {
@@ -67,24 +69,25 @@ extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *qu, size_t max, void *ds
 	src.iov_len  = msg.used;
 	
 	/* reduce wrap size */
-	qu->_state.content.pos -= off;
-	qu->_state.work.pos -= off;
+	qu->_state.data.pos -= off;
+	qu->_state.curr -= off;
 	/* peek for new data */
 	ret = qu->_dec(&qu->_state, &src, 0);
-	len = qu->_state.content.pos;
+	len = qu->_state.data.pos;
+	msg.base = (uint8_t *) msg.base + len;
 	/* restore offsets */
-	qu->_state.content.pos = len + off;
-	qu->_state.work.pos += off;
+	qu->_state.data.pos = len + off;
+	qu->_state.curr += off;
+	len = qu->_state.data.len;
 	
 	if (ret < 0 || !dst) {
-		return ret;
+		return len;
 	}
 	/* get data start and length */
-	if ((size_t) ret > max) {
-		ret = max;
+	if (len > max) {
+		len = max;
 	}
-	msg.base = (uint8_t *) msg.base + len;
-	(void) memcpy(dst, msg.base, ret);
+	(void) memcpy(dst, msg.base, len);
 	
-	return ret;
+	return len;
 }

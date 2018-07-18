@@ -46,7 +46,7 @@ MPT_STRUCT(decode_queue) : public queue
 	}
 	inline bool pending_message() const
 	{
-		return _state.content.len >= 0;
+		return _state.data.msg >= 0;
 	}
 	bool current_message(struct message &, struct iovec * = 0) const;
 	
@@ -143,6 +143,7 @@ extern void mpt_queue_align(MPT_STRUCT(queue) *, size_t);
 /* get next message */
 extern ssize_t mpt_queue_peek(MPT_STRUCT(decode_queue) *, size_t , void *);
 extern int mpt_queue_recv(MPT_STRUCT(decode_queue) *);
+extern void mpt_queue_shift(MPT_STRUCT(decode_queue) *);
 /* send message */
 extern ssize_t mpt_queue_push(MPT_STRUCT(encode_queue) *, size_t , const void *);
 

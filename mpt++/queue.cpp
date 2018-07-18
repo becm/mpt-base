@@ -66,28 +66,16 @@ bool decode_queue::advance()
     if (mpt_queue_recv(this) < 0) {
         return false;
     }
-    size_t cpos, wpos;
-    
-    cpos = _state.content.pos;
-    wpos = _state.work.pos;
-    
-    if ((wpos || _state.work.len) && wpos < cpos) {
-        cpos = wpos;
-    }
-    if (cpos) {
-        mpt_queue_crop(this, 0, cpos);
-        _state.content.pos -= cpos;
-        _state.work.pos -= cpos;
-    }
+    mpt_queue_shift(this);
     return true;
     
 }
 bool decode_queue::current_message(message &msg, struct iovec *cont) const
 {
-    if (_state.content.len < 0) {
+    if (_state.data.msg < 0) {
         return false;
     }
-    if (mpt_message_get(this, _state.content.pos, _state.content.len, &msg, cont) < 0) {
+    if (mpt_message_get(this, _state.data.pos, _state.data.msg, &msg, cont) < 0) {
         return false;
     }
     return true;
