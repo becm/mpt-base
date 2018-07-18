@@ -29,19 +29,16 @@ static void unrefConfig()
 }
 static config *clientConfig()
 {
-    
     if (!cfg) {
         static const char dest[] = "mpt.client\0";
         path p;
         p.set(dest);
+        if (!(cfg = config::global(&p))) {
+            return 0;
+        }
         atexit(unrefConfig);
-        cfg = config::global(&p);
     }
-    config *ptr = 0;
-    if (cfg->conv(config::Type, &ptr) < 0) {
-        return 0;
-    }
-    return ptr;
+    return cfg->cast<config>();
 }
 /*!
  * \ingroup mptClient
