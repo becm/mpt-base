@@ -216,6 +216,9 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 	if (mpt_dispatch_set(dsp, id, getEvent, mt) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "get");
+		if (mt) {
+			mt->_vptr->ref.unref((void *) mt);
+		}
 		return 1;
 	}
 	if (mt && !mt->_vptr->ref.addref((void *) mt)) {
@@ -227,6 +230,9 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 	if (mpt_dispatch_set(dsp, id, condEvent, mt) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "cond");
+		if (mt) {
+			mt->_vptr->ref.unref((void *) mt);
+		}
 		return 2;
 	}
 	return 3;
