@@ -27,30 +27,30 @@
 #define toString(x) #x
 
 class Double {
-    public:
-    Double(double d) { _d = d; }
-    virtual ~Double() { }
-    virtual int f0() { return _d; }
-    virtual int f1(int) { return 1; }
-    virtual int f2(int) { return 2; }
-    virtual int f3(int) { return 3; }
-    virtual int f4(int) { return 4; }
-    virtual int f5(int) { return 5; }
-    virtual int f6(int) { return 6; }
-    virtual int f7(int) { return 7; }
-    private:
-    double _d;
+	public:
+	Double(double d) { _d = d; }
+	virtual ~Double() { }
+	virtual int f0() { return _d; }
+	virtual int f1(int) { return 1; }
+	virtual int f2(int) { return 2; }
+	virtual int f3(int) { return 3; }
+	virtual int f4(int) { return 4; }
+	virtual int f5(int) { return 5; }
+	virtual int f6(int) { return 6; }
+	virtual int f7(int) { return 7; }
+	private:
+	double _d;
 };
 
 
 class Int {
-    public:
-    Int(int d) { _d = d; }
-    virtual ~Int() { }
-    static int (*get)();
-    virtual int f0() { return _d; }
-    private:
-    int _d;
+	public:
+	Int(int d) { _d = d; }
+	virtual ~Int() { }
+	static int (*get)();
+	virtual int f0() { return _d; }
+	private:
+	int _d;
 };
 
 // SFINAE test
@@ -58,13 +58,13 @@ template <typename T>
 class has_get
 {
 public:
-    operator bool () const
-    { return test<T>(0); }
+	operator bool () const
+	{ return test<T>(0); }
 private:
-    template <typename C> static bool test(__decltype(&C::get))
-    { return true; }
-    template <typename C> static bool test(...)
-    { return false; }
+	template <typename C> static bool test(__decltype(&C::get))
+	{ return true; }
+	template <typename C> static bool test(...)
+	{ return false; }
 };
 
 extern int main(int , char * const [])

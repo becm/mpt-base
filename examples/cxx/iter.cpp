@@ -1,7 +1,6 @@
 /*!
  * test config/path object
  */
-#include <typeinfo>
 #include <iostream>
 
 #ifndef MPT_INCLUDE

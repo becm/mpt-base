@@ -1,7 +1,7 @@
 /*!
- * test config/path object
+ * test array type compatibility
  */
-#include <typeinfo>
+
 #include <iostream>
 
 #ifndef MPT_INCLUDE

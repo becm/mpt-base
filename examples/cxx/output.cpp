@@ -2,15 +2,9 @@
  * test output object
  */
 
-#include <iostream>
-
 #ifndef MPT_INCLUDE
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
-
-#include MPT_INCLUDE(message.h)
-#include MPT_INCLUDE(output.h)
-#include MPT_INCLUDE(node.h)
 
 #include MPT_INCLUDE(stream.h)
 

@@ -8,7 +8,6 @@
 
 #include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(array.h)
-#include MPT_INCLUDE(convert.h)
 
 #include <iostream>
 

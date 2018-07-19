@@ -3,9 +3,6 @@
  */
 
 #include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
 
 #ifdef __GLIBC__
 # include <mcheck.h>
