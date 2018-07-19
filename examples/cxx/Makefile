@@ -5,6 +5,7 @@ TESTS = \
 	${CXX11_TARGETS} \
 	array \
 	buffer \
+	iter \
 	layout \
 	output \
 	queue \
@@ -23,6 +24,7 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 # library config
 config : LDLIBS+=-lmptcore
 output : LDLIBS+=-lmptcore
+iter : LDLIBS+=-lmptplot
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt++ -lmpt
 %_static : CPPFLAGS+=-D_STATIC

@@ -100,9 +100,9 @@ int main(int argc, char * const argv[])
 
     const mpt::metatype *mt;
     if ((mt = mpt::config::global()->cast<mpt::config>()->get("mpt.args"))) {
-        mpt::consumable v(*mt);
+        mpt::iterator *it = mt->cast<mpt::iterator>();
         const char *arg;
-        while (v.consume(arg)) {
+        while (it->consume(arg)) {
             std::cerr << arg << std::endl;
         }
     }

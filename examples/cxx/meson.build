@@ -32,6 +32,11 @@ if with_plot
       cpp_args: test_defines,
       dependencies: cxx)
   )
+  test('iterator processing',
+    executable('iter', 'iter.cpp',
+      cpp_args: test_defines,
+      dependencies: cxx)
+  )
   test('cycle mapping',
     executable('map', 'map.cpp',
       cpp_args: test_defines,

@@ -490,6 +490,32 @@ MPT_STRUCT(value)
 	protected:
 		uint8_t _fmt[8];
 	};
+	template <typename T>
+	bool consume(T &val)
+	{
+		int type;
+		
+		if ((type = typeinfo<T>::id()) <= 0) {
+			return false;
+		}
+		if (fmt) {
+			const T *tmp;
+			if (type != *fmt
+			    || !(tmp = static_cast<const T *>(ptr))) {
+				return false;
+			}
+			val = *tmp;
+			++fmt;
+			ptr = tmp + 1;
+			return true;
+		}
+		if (type == 's') {
+			val = static_cast<const char *>(ptr);
+			ptr = 0;
+			return true;
+		}
+		return BadType;
+	}
 	
 	bool set(const uint8_t *, const void *);
 	value &operator =(const char *);

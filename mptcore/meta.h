@@ -82,6 +82,20 @@ public:
 	virtual int get(int, void *) = 0;
 	virtual int advance();
 	virtual int reset();
+	
+	template <typename T>
+	bool consume(T &val)
+	{
+		T tmp;
+		if (get(typeinfo<T>::id(), &tmp) <= 0) {
+			return false;
+		}
+		if (advance() < 0) {
+			return false;
+		}
+		val = tmp;
+		return true;
+	}
 };
 template <> inline __MPT_CONST_TYPE int typeinfo<iterator>::id()
 {
@@ -105,44 +119,10 @@ MPT_STRUCT(consumable)
 #ifdef __cplusplus
 	inline consumable(const metatype &mt)
 	{
-	    if ((_it = mt.cast<iterator>())) {
-		    return;
-	    }
-	    mt.conv(_val.Type, &_val);
-	}
-	template <typename T>
-	bool consume(T &val)
-	{
-		int type = typeinfo<T>::id();
-		if (_it) {
-			T tmp;
-			if (_it->get(type, &tmp) <= 0) {
-				return false;
-			}
-			if (_it->advance() < 0) {
-				return false;
-			}
-			val = tmp;
-			return true;
+		if ((_it = mt.cast<iterator>())) {
+			return;
 		}
-		if (_val.fmt) {
-			const T *ptr;
-			if (!*_val.fmt
-			    || type != *_val.fmt
-			    || !(ptr = static_cast<const T *>(_val.ptr))) {
-				return false;
-			}
-			val = *ptr;
-			++_val.fmt;
-			_val.ptr = ptr + 1;
-			return true;
-		}
-		if (type == 's') {
-			val = static_cast<const char *>(_val.ptr);
-			_val.ptr = 0;
-			return true;
-		}
-		return BadType;
+		mt.conv(_val.Type, &_val);
 	}
 protected:
 #else
