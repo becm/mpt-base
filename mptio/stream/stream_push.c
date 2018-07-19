@@ -48,7 +48,11 @@ extern ssize_t mpt_stream_push(MPT_STRUCT(stream) *stream, size_t len, const voi
 				fmt = mpt_newline_string(MPT_stream_newline_write(flags));
 				add = fmt ? strlen(fmt) : 0;
 				if (rem >= add) {
-					mpt_queue_push(&stream->_wd, add, fmt);
+					if (fmt) {
+						mpt_queue_push(&stream->_wd, add, fmt);
+					}
+					/* mark segment as done */
+					mpt_queue_push(&stream->_wd, 0, 0);
 					stream->_info._fd &= ~MPT_STREAMFLAG(MesgActive);
 					return 0;
 				}

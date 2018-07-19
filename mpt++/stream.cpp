@@ -394,8 +394,14 @@ ssize_t Stream::push(size_t len, const void *src)
 }
 int Stream::sync(int timeout)
 {
-    if (!_srm || !_idlen) {
+    if (!_srm) {
         return BadArgument;
+    }
+    if (mpt_stream_flush(_srm) < 0) {
+        return BadOperation;
+    }
+    if (!_idlen) {
+        return true;
     }
     return mpt_stream_sync(_srm, _idlen, &_wait, timeout);
 }

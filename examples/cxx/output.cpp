@@ -26,17 +26,10 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	node *n = mpt_node_new(0);
-	delete n;
-	
 	Stream *out = new Stream;
-	logger *log = out->cast<logger>();
 	
 	out->open("/dev/stdout", "w");
 	
-	if (log) {
-		log->message(__func__, log->Error, "%s", "hallo");
-	}
 	mpt_output_log(out, __FUNCTION__, logger::Warning, "%s", "hallo");
 	
 	out->sync();
