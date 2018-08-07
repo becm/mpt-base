@@ -122,7 +122,7 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
-            auto grf = graphs.nth(i)->reference();
+            auto grf = graphs.nth(j)->reference();
             if (!grf) continue;
             if (h.match & laydest::MatchGraph
              && h.grf != j) {
