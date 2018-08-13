@@ -121,7 +121,7 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
         case typeinfo<int64_t>::id():
             copy(len, static_cast<const int64_t *>(src), ptr);
             break;
-	    
+        
         case typeinfo<uint8_t>::id():
             copy(len, static_cast<const uint8_t  *>(src), ptr);
             break;

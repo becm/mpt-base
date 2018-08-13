@@ -293,45 +293,45 @@ extern int make_id();
 inline __MPT_CONST_EXPR int to_pointer_id(int from)
 {
 	return (from < 0)
-	? BadValue
-	: ((from > _TypeGenericMax)
-		? BadType
-		: _TypePointerBase + from);
+		? BadValue
+		: ((from > _TypeGenericMax)
+			? BadType
+			: _TypePointerBase + from);
 }
 inline __MPT_CONST_EXPR int to_reference_id(int from)
 {
 	return (from < 0)
-	? BadValue
-	: ((from > _TypeGenericMax)
-		? BadType
-		: _TypeReferenceBase + from);
+		? BadValue
+		: ((from > _TypeGenericMax)
+			? BadType
+			: _TypeReferenceBase + from);
 }
 inline __MPT_CONST_EXPR int to_item_id(int from)
 {
 	return (from < 0)
-	? BadValue
-	: ((from > _TypeGenericMax)
-		? BadType
-		: _TypeItemBase + from);
+		? BadValue
+		: ((from > _TypeGenericMax)
+			? BadType
+			: _TypeItemBase + from);
 }
 
 inline __MPT_CONST_EXPR int to_span_id(int from)
 {
 	return (from < 0)
-	? BadValue
-	: ((from > _TypeGenericMax)
-		? BadType
-		: ((MPT_type_isScalar(from) || MPT_type_isExtended(from))
-			? from + _TypeVectorBase - _TypeScalarBase
-			: _TypeSpanBase + from));
+		? BadValue
+		: ((from > _TypeGenericMax)
+			? BadType
+			: ((MPT_type_isScalar(from) || MPT_type_isExtended(from))
+				? from + _TypeVectorBase - _TypeScalarBase
+				: _TypeSpanBase + from));
 }
 
 inline __MPT_CONST_EXPR uint8_t basetype(int id)
 {
 	return (id >= (MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypeReferenceBase))
 	     && id <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypeReferenceBase)))
-	    ? TypeMetaRef
-	    : ((id < 0 || id > 0xff) ? 0 : id);
+		? TypeMetaRef
+		: ((id < 0 || id > 0xff) ? 0 : id);
 }
 template <typename T>
 class typeinfo
