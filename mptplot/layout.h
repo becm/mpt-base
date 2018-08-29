@@ -362,7 +362,7 @@ public:
 	
 	const ::mpt::item<metatype> *item(size_t) const __MPT_OVERRIDE;
 	::mpt::item<metatype> *append(metatype *) __MPT_OVERRIDE;
-	size_t clear(const reference * = 0) __MPT_OVERRIDE;
+	size_t clear(const instance * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
 protected:
 	item_array<metatype> _items;
@@ -447,7 +447,7 @@ public:
 	class axis;
 	class world;
 	class transform;
-	class data : public reference
+	class data : public instance
 	{
 	public:
 		data(class world *w = 0);

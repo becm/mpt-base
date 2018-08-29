@@ -142,13 +142,13 @@ static int parseReset(MPT_INTERFACE(iterator) *ctl)
 	return 1;
 }
 /* reference interface */
-static void parseUnref(MPT_INTERFACE(reference) *ctl)
+static void parseUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ctl);
+	free(in);
 }
-static uintptr_t parseRef(MPT_INTERFACE(reference) *ctl)
+static uintptr_t parseRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ctl;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

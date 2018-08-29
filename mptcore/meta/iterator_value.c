@@ -221,13 +221,13 @@ extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INT
 }
 
 /* reference interface */
-static void valUnref(MPT_INTERFACE(reference) *ctl)
+static void valUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ctl);
+	free(in);
 }
-static uintptr_t valRef(MPT_INTERFACE(reference) *ctl)
+static uintptr_t valRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ctl;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

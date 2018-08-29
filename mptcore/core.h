@@ -560,27 +560,27 @@ protected:
 
 /* basic unref interface */
 #ifdef __cplusplus
-MPT_INTERFACE(reference)
+MPT_INTERFACE(instance)
 {
 protected:
-	inline ~reference() { }
+	inline ~instance() { }
 public:
 	virtual void unref() = 0;
 	virtual uintptr_t addref();
 };
 #else
-MPT_INTERFACE(reference);
-MPT_INTERFACE_VPTR(reference)
+MPT_INTERFACE(instance);
+MPT_INTERFACE_VPTR(instance)
 {
-	void (*unref)(MPT_INTERFACE(reference) *);
-	uintptr_t (*addref)(MPT_INTERFACE(reference) *);
-}; MPT_INTERFACE(reference) {
-	const MPT_INTERFACE_VPTR(reference) *_vptr;
+	void (*unref)(MPT_INTERFACE(instance) *);
+	uintptr_t (*addref)(MPT_INTERFACE(instance) *);
+}; MPT_INTERFACE(instance) {
+	const MPT_INTERFACE_VPTR(instance) *_vptr;
 };
 #endif
 
 #ifdef __cplusplus
-inline uintptr_t reference::addref()
+inline uintptr_t instance::addref()
 {
 	return 0;
 }

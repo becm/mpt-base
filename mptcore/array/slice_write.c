@@ -142,7 +142,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		}
 	}
 	if (buf) {
-		buf->_vptr->ref.unref((void *) buf);
+		buf->_vptr->instance.unref((void *) buf);
 	}
 	return nblk;
 }

@@ -136,11 +136,11 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		if ((ptr = dest)) {
 			MPT_INTERFACE(metatype) *old;
 			
-			if (mt && !mt->_vptr->ref.addref((void *) mt)) {
+			if (mt && !mt->_vptr->instance.addref((void *) mt)) {
 				return MPT_ERROR(BadOperation);
 			}
 			if ((old = *ptr)) {
-				old->_vptr->ref.addref((void *) old);
+				old->_vptr->instance.addref((void *) old);
 			}
 			*ptr = mt;
 		}

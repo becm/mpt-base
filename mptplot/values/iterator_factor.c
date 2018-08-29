@@ -24,13 +24,13 @@ struct _iter_fdata
 	double   curr;  /* current value */
 };
 /* reference interface */
-static void iterFactorUnref(MPT_INTERFACE(reference) *ref)
+static void iterFactorUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ref);
+	free(in);
 }
-static uintptr_t iterFactorRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterFactorRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

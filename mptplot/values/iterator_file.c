@@ -27,15 +27,15 @@ struct _iter_fdata
 };
 
 /* reference interface */
-static void fileUnref(MPT_INTERFACE(reference) *ref)
+static void fileUnref(MPT_INTERFACE(instance) *in)
 {
-	struct _iter_fdata *d = (void *) (ref + 2);
+	struct _iter_fdata *d = (void *) (in + 2);
 	fclose(d->fd);
-	free(ref);
+	free(in);
 }
-static uintptr_t fileRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t fileRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

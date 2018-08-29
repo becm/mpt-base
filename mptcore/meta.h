@@ -14,7 +14,7 @@ MPT_STRUCT(property);
 
 /*! generic metatype interface */
 #ifdef __cplusplus
-MPT_INTERFACE(metatype) : public reference
+MPT_INTERFACE(metatype) : public instance
 {
 protected:
 	inline ~metatype() {}
@@ -62,7 +62,7 @@ template <> inline __MPT_CONST_TYPE int typeinfo<metatype>::id()
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
 {
-	MPT_INTERFACE_VPTR(reference) ref;
+	MPT_INTERFACE_VPTR(instance) instance;
 	int (*conv)(const MPT_INTERFACE(metatype) *, int , void *);
 	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {

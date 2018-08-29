@@ -24,25 +24,25 @@ struct _mpt_metaProxy
 	uint8_t fmt[2];
 };
 
-static void _proxy_unref(MPT_INTERFACE(reference) *m)
+static void _proxy_unref(MPT_INTERFACE(instance) *in)
 {
-	struct _mpt_metaProxy *mp = (void *) m;
+	struct _mpt_metaProxy *mp = (void *) in;
 	
 	if (__mpt_library_proxy_unref(&mp->_ref)) {
 		return;
 	}
-	if ((m = mp->ptr)) {
+	if ((in = mp->ptr)) {
 		int type = mp->fmt[0];
 		if (MPT_type_isMetatype(type)) {
-			m->_vptr->unref(m);
+			in->_vptr->unref(in);
 		}
 	}
 	mpt_library_detach(&mp->sym.lib);
 	free(mp);
 }
-static uintptr_t _proxy_addref(MPT_INTERFACE(reference) *ref)
+static uintptr_t _proxy_addref(MPT_INTERFACE(instance) *in)
 {
-	struct _mpt_metaProxy *mp = (void *) ref;
+	struct _mpt_metaProxy *mp = (void *) in;
 	return __mpt_library_proxy_addref(&mp->_ref);
 }
 static int _proxy_conv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
@@ -101,7 +101,7 @@ static MPT_INTERFACE(metatype) *_proxy_clone(const MPT_INTERFACE(metatype) *m)
 	n->sym.lib = lh;
 	
 	if (!(n->ptr = val.make())) {
-		_proxy_unref((MPT_INTERFACE(reference) *) n);
+		_proxy_unref((MPT_INTERFACE(instance) *) n);
 		return 0;
 	}
 	return &n->_mt;

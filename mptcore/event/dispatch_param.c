@@ -47,7 +47,7 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->ref.unref((void *) conf);
+			conf->_vptr->instance.unref((void *) conf);
 		}
 		return 0;
 	}
@@ -92,7 +92,7 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->ref.unref((void *) conf);
+			conf->_vptr->instance.unref((void *) conf);
 		}
 		return 0;
 	}
@@ -142,7 +142,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->ref.unref((void *) conf);
+			conf->_vptr->instance.unref((void *) conf);
 		}
 		return 0;
 	}
@@ -168,7 +168,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	/* unref global config */
 	if (!ptr) {
-		conf->_vptr->ref.unref((void *) conf);
+		conf->_vptr->instance.unref((void *) conf);
 	}
 	if (ret < 0) {
 		return MPT_event_fail(ev, ret, MPT_tr("failed to set global config"));
@@ -207,7 +207,7 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		        errMesg(), id, "set");
 		return MPT_ERROR(BadOperation);
 	}
-	if (mt && !mt->_vptr->ref.addref((void *) mt)) {
+	if (mt && !mt->_vptr->instance.addref((void *) mt)) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %" PRIxPTR,
 		        MPT_tr("unable to assign config query"), mt);
 		return 1;
@@ -217,11 +217,11 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "get");
 		if (mt) {
-			mt->_vptr->ref.unref((void *) mt);
+			mt->_vptr->instance.unref((void *) mt);
 		}
 		return 1;
 	}
-	if (mt && !mt->_vptr->ref.addref((void *) mt)) {
+	if (mt && !mt->_vptr->instance.addref((void *) mt)) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %" PRIxPTR,
 		        MPT_tr("unable to assign conditiona config assign"), mt);
 		return 2;
@@ -231,7 +231,7 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "cond");
 		if (mt) {
-			mt->_vptr->ref.unref((void *) mt);
+			mt->_vptr->instance.unref((void *) mt);
 		}
 		return 2;
 	}

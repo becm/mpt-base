@@ -369,7 +369,7 @@ size_t maxsize(span<const value_store>, int = -1);
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
 
-class transform : public reference
+class transform : public instance
 {
 public:
 	void unref() __MPT_OVERRIDE;
@@ -455,7 +455,7 @@ protected:
 
 template<> int typeinfo<polyline::point>::id();
 
-class cycle : public reference, public rawdata
+class cycle : public instance, public rawdata
 {
 public:
 	enum Flags {
@@ -478,7 +478,7 @@ public:
 	protected:
 		polyline _values;
 	};
-	/* reference interface */
+	/* instance interface */
 	void unref() __MPT_OVERRIDE;
 	
 	/* basic raw data interface */

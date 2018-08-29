@@ -60,18 +60,18 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 	return 0;
 }
 /* reference interface */
-static void streamUnref(MPT_INTERFACE(reference) *ref)
+static void streamUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(streamInput) *srm = (void *) ref;
+	MPT_STRUCT(streamInput) *srm = (void *) in;
 	if (mpt_refcount_lower(&srm->ref)) {
 		return;
 	}
 	(void) mpt_stream_close(&srm->data);
 	free(srm);
 }
-static uintptr_t streamRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t streamRef(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(streamInput) *srm = (void *) ref;
+	MPT_STRUCT(streamInput) *srm = (void *) in;
 	return mpt_refcount_raise(&srm->ref);
 }
 /* metatype interface */

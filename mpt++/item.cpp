@@ -46,7 +46,7 @@ int group::set_property(const char *, const metatype *)
     return BadOperation;
 }
 // generic item group
-size_t group::clear(const reference *)
+size_t group::clear(const instance *)
 {
     return 0;
 }
@@ -331,7 +331,7 @@ item<metatype> *collection::append(metatype *mt)
 {
     return _items.append(mt, 0);
 }
-size_t collection::clear(const reference *ref)
+size_t collection::clear(const instance *ref)
 {
     long remove = 0;
     if (!ref) {
@@ -341,7 +341,7 @@ size_t collection::clear(const reference *ref)
     }
     long empty = 0;
     for (auto &it : _items) {
-        reference *curr = it.instance();
+        instance *curr = it.instance();
         if (!curr) { ++empty; continue; }
         if (curr != ref) continue;
         it.set_instance(nullptr);

@@ -74,7 +74,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 			return 0;
 		}
 		/* need separate reference */
-		if (!(next->_vptr->meta.ref.addref((void *) next))) {
+		if (!(next->_vptr->meta.instance.addref((void *) next))) {
 			return MPT_ERROR(BadOperation);
 		}
 	}
@@ -91,7 +91,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	}
 	/* move reference to notifier */
 	if (mpt_notify_add(no, POLLIN, next) < 0) {
-		in->_vptr->meta.ref.unref((void *) in);
+		in->_vptr->meta.instance.unref((void *) in);
 		return MPT_ERROR(BadOperation);
 	}
 	

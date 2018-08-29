@@ -66,7 +66,7 @@ extern int mpt_notify_connect(MPT_STRUCT(notify) *no, const char *dest)
 		return MPT_ERROR(BadOperation);
 	}
 	if (mpt_notify_add(no, POLLIN, in) < 0) {
-		in->_vptr->meta.ref.unref((void *) in);
+		in->_vptr->meta.instance.unref((void *) in);
 		return -1;
 	}
 	return sock._id;

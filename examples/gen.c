@@ -62,7 +62,7 @@ extern int main(int argc, char *argv[])
 				break;
 			}
 		}
-		src->_vptr->ref.unref((void *) src);
+		src->_vptr->instance.unref((void *) src);
 		fputc('\n', stdout);
 	}
 	return 0;

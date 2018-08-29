@@ -28,7 +28,7 @@ static MPT_INTERFACE(config) *getGlobal(MPT_INTERFACE(metatype) **glob, const ch
 	    || !cfg) {
 		mpt_log(0, _func, MPT_LOG(Error), "%s",
 		        MPT_tr("no interface for global config"));
-		mt->_vptr->ref.unref((void *) mt);
+		mt->_vptr->instance.unref((void *) mt);
 		return 0;
 	}
 	*glob = mt;
@@ -74,7 +74,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 	if (!msg) {
 		ret = proc(ctx, 0, 0);
 		if (glob) {
-			glob->_vptr->ref.unref((void *) glob);
+			glob->_vptr->instance.unref((void *) glob);
 		}
 		return ret;
 	}
@@ -94,7 +94,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 		mpt_log(0, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("no message arguments"));
 		if (glob) {
-			glob->_vptr->ref.unref((void *) glob);
+			glob->_vptr->instance.unref((void *) glob);
 		}
 		return MPT_ERROR(MissingBuffer);
 	}
@@ -108,7 +108,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 		const char *end, *start = p.base + p.off + p.len;
 		if (!(end = memchr(start, 0, all - p.len))) {
 			if (glob) {
-				glob->_vptr->ref.unref((void *) glob);
+				glob->_vptr->instance.unref((void *) glob);
 			}
 			return MPT_ERROR(BadValue);
 		}
@@ -126,7 +126,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 	ret = proc(ctx, &p, &val);
 	
 	if (glob) {
-		glob->_vptr->ref.unref((void *) glob);
+		glob->_vptr->instance.unref((void *) glob);
 	}
 	return ret;
 }
@@ -161,7 +161,7 @@ extern const MPT_INTERFACE(metatype) *mpt_config_message_next(const MPT_INTERFAC
 	if (!msg) {
 		val = cfg->_vptr->query(cfg, 0);
 		if (glob) {
-			glob->_vptr->ref.unref((void *) glob);
+			glob->_vptr->instance.unref((void *) glob);
 		}
 		return val;
 	}
@@ -179,7 +179,7 @@ extern const MPT_INTERFACE(metatype) *mpt_config_message_next(const MPT_INTERFAC
 			p.len = 0;
 			val = cfg->_vptr->query(cfg, 0);
 			if (glob) {
-				glob->_vptr->ref.unref((void *) glob);
+				glob->_vptr->instance.unref((void *) glob);
 			}
 			if (val) {
 				*msg = tmp;
@@ -223,7 +223,7 @@ extern const MPT_INTERFACE(metatype) *mpt_config_message_next(const MPT_INTERFAC
 		len = mpt_message_read(&tmp, 1, buf);
 	}
 	if (glob) {
-		glob->_vptr->ref.unref((void *) glob);
+		glob->_vptr->instance.unref((void *) glob);
 	}
 	if (val) {
 		*msg = tmp;

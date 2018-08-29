@@ -66,7 +66,7 @@ int main(int argc, const char *argv[])
 				}
 			}
 			fputs("\n", out);
-			mt->_vptr->ref.unref((void *) mt);
+			mt->_vptr->instance.unref((void *) mt);
 		}
 		sym = *(++argv);
 	}

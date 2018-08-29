@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeNode)), &n);
 	mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	
-	mt->_vptr->ref.unref((void *) mt);
+	mt->_vptr->instance.unref((void *) mt);
 	return 0;
 }
 

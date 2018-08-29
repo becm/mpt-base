@@ -41,15 +41,15 @@ static int bufferReset(MPT_INTERFACE(iterator) *it)
 	return 0;
 }
 /* reference interface */
-static void bufferUnref(MPT_INTERFACE(reference) *ref)
+static void bufferUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, ref, _mt);
+	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, in, _mt);
 	mpt_array_clone(&m->s._a, 0);
 	free(m);
 }
-static uintptr_t bufferRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t bufferRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

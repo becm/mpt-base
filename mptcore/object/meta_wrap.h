@@ -10,13 +10,13 @@ struct wrapIter
 	MPT_INTERFACE(iterator) *it;
 };
 
-static void metaIterUnref(MPT_INTERFACE(reference) *ref)
+static void metaIterUnref(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 }
-static uintptr_t metaIterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t metaIterRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)

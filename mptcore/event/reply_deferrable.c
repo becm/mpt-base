@@ -71,9 +71,9 @@ static void contextDetach(MPT_STRUCT(reply_context_defer) *ctx)
 	free(ctx);
 }
 /* reference interface */
-static void contextUnref(MPT_INTERFACE(reference) *ref)
+static void contextUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _mt);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, in, _mt);
 	
 	if (mpt_refcount_lower(&ctx->ref)) {
 		ctx->reply.send = 0;
@@ -85,9 +85,9 @@ static void contextUnref(MPT_INTERFACE(reference) *ref)
 	free(ctx);
 }
 /* reference interface */
-static uintptr_t contextRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t contextRef(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, ref, _mt);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, in, _mt);
 	return mpt_refcount_raise(&ctx->ref);
 }
 /* metatype interface */

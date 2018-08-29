@@ -39,7 +39,7 @@ extern int main(int argc, char *argv[])
 	}
 	mpt_path_set(&p, 0, 0);
 	cfg->_vptr->remove(cfg, &p);
-	mt->_vptr->ref.unref((void *) mt);
+	mt->_vptr->instance.unref((void *) mt);
 	
 	return 0;
 }

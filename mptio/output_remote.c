@@ -48,9 +48,9 @@ static int remote_infile(const MPT_STRUCT(out_data) *od)
 	return _mpt_stream_fread(&srm->_info);
 }
 /* reference interface */
-static void remoteUnref(MPT_INTERFACE(reference) *ref)
+static void remoteUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	uintptr_t c;
 	if ((c = mpt_refcount_lower(&od->_ref))) {
 		return;
@@ -58,9 +58,9 @@ static void remoteUnref(MPT_INTERFACE(reference) *ref)
 	mpt_connection_fini(&od->con);
 	free(od);
 }
-static uintptr_t remoteRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t remoteRef(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, ref, _in);
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
 	
 	return mpt_refcount_raise(&od->_ref);
 }

@@ -46,7 +46,7 @@ extern int mpt_client_command(MPT_INTERFACE(client) *cl, const MPT_STRUCT(messag
 	ret = arg->_vptr->conv(arg, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
 	
 	ret = cl->_vptr->process(cl, id, it);
-	arg->_vptr->ref.unref((void *) arg);
+	arg->_vptr->instance.unref((void *) arg);
 	
 	return ret;
 }

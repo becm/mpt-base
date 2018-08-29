@@ -27,7 +27,7 @@ static void _input_ref_init(const MPT_STRUCT(type_traits) *info, void *ptr)
 }
 static int _input_ref_copy(void *src, int type, void *dest)
 {
-	MPT_INTERFACE(reference) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
+	MPT_INTERFACE(instance) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
 	
 	src_ptr = src;
 	dest_ptr = dest;
@@ -47,7 +47,7 @@ static int _input_ref_copy(void *src, int type, void *dest)
 }
 static void _input_ref_fini(void *ptr)
 {
-	MPT_INTERFACE(reference) **ref_ptr, *ref;
+	MPT_INTERFACE(instance) **ref_ptr, *ref;
 	
 	ref_ptr = ptr;
 	if ((ref = *ref_ptr)) {
@@ -178,7 +178,7 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 			errno = EBADF;
 			return -2;
 		}
-		curr->_vptr->meta.ref.unref((void *) curr);
+		curr->_vptr->meta.instance.unref((void *) curr);
 		*base = 0;
 		if ((buf = no->_wait._buf)) {
 			size_t i, len = buf->_used / sizeof(*base);

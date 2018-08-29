@@ -21,11 +21,11 @@ static int getter(void *addr, struct mpt_property *pr)
 	return mpt_axis_get(addr, pr);
 }
 
-static void unref(MPT_INTERFACE(reference) *src)
+static void unref(MPT_INTERFACE(instance) *src)
 {
 	(void) src;
 }
-static uintptr_t addref(MPT_INTERFACE(reference) *src)
+static uintptr_t addref(MPT_INTERFACE(instance) *src)
 {
 	(void) src;
 	return 0;

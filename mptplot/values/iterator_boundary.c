@@ -23,13 +23,13 @@ struct _iter_bdata
 };
 
 /* reference interface */
-static void iterBoundaryUnref(MPT_INTERFACE(reference) *ref)
+static void iterBoundaryUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ref);
+	free(in);
 }
-static uintptr_t iterBoundaryRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterBoundaryRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

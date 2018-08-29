@@ -299,7 +299,7 @@ public:
 	
 	virtual const ::mpt::item<metatype> *item(size_t pos) const;
 	virtual ::mpt::item<metatype> *append(metatype *);
-	virtual size_t clear(const reference * = 0);
+	virtual size_t clear(const instance * = 0);
 	virtual bool bind(const relation &from, logger * = logger::default_instance());
 	
 	bool add_items(node *head, const relation *from = 0, logger * = logger::default_instance());

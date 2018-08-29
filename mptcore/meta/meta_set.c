@@ -76,7 +76,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 		ret = 0;
 	}
 	if (old) {
-		old->_vptr->ref.unref((void *) old);
+		old->_vptr->instance.unref((void *) old);
 	}
 	*mptr = mt;
 	return ret;

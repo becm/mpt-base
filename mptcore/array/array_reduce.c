@@ -56,13 +56,13 @@ int mpt_array_clone(MPT_STRUCT(array) *arr, const MPT_STRUCT(array) *from)
 		if (set == buf) {
 			return 0;
 		}
-		if (!set->_vptr->ref.addref((void *) set)) {
+		if (!set->_vptr->instance.addref((void *) set)) {
 			return MPT_ERROR(BadOperation);
 		}
 	}
 	arr->_buf = set;
 	if (buf) {
-		buf->_vptr->ref.unref((void *) buf);
+		buf->_vptr->instance.unref((void *) buf);
 		return set ? 3 : 2;
 	}
 	return set ? 1 : 0;

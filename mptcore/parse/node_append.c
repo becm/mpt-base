@@ -59,7 +59,7 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 	/* create node with (optional) metadata segment */
 	if (!(conf = mpt_node_new(path.first + 1))) {
 		if (mt) {
-			mt->_vptr->ref.unref((void *) mt);
+			mt->_vptr->instance.unref((void *) mt);
 		}
 		return 0;
 	}

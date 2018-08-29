@@ -33,7 +33,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 		in = 0;
 		ctl = 0;
 		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {
-			if (!in || !in->_vptr->meta.ref.addref((void *) in)) {
+			if (!in || !in->_vptr->meta.instance.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid connection reference");
 				return in ? MPT_ERROR(BadOperation) : MPT_ERROR(BadValue);
@@ -61,7 +61,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 		in = 0;
 		ctl = 0;
 		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {
-			if (!in || !in->_vptr->meta.ref.addref((void *) in)) {
+			if (!in || !in->_vptr->meta.instance.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid input reference");
 				ret = in ? MPT_ERROR(BadOperation) : MPT_ERROR(BadValue);

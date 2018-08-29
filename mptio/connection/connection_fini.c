@@ -32,7 +32,7 @@ extern void mpt_connection_close(MPT_STRUCT(connection) *con)
 	mpt_command_clear(&con->_wait);
 	
 	if ((rc = con->_rctx)) {
-		rc->_vptr->ref.unref((void *) rc);
+		rc->_vptr->instance.unref((void *) rc);
 		con->_rctx = 0;
 	}
 }

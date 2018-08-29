@@ -39,7 +39,7 @@ MPT_STRUCT(type_traits)
 
 /*! header for data segment */
 #ifdef __cplusplus
-MPT_STRUCT(buffer) : public reference
+MPT_STRUCT(buffer) : public instance
 {
 public:
 	virtual buffer *detach(size_t);
@@ -68,7 +68,7 @@ protected:
 MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
 {
-	MPT_INTERFACE_VPTR(reference) ref;
+	MPT_INTERFACE_VPTR(instance) instance;
 	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, size_t);
 	int (*shared)(const MPT_STRUCT(buffer) *);
 }; MPT_STRUCT(buffer)

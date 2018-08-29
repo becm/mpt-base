@@ -26,9 +26,9 @@ MPT_STRUCT(RawData) {
 };
  
 /* reference interface */
-static void rd_unref(MPT_INTERFACE(reference) *ref)
+static void rd_unref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, in, _mt);
 	MPT_STRUCT(buffer) *buf;
 	
 	if (mpt_refcount_lower(&rd->_ref)) {
@@ -47,9 +47,9 @@ static void rd_unref(MPT_INTERFACE(reference) *ref)
 	rd->_rd._vptr = 0;
 	free(rd);
 }
-static uintptr_t rd_ref(MPT_INTERFACE(reference) *ref)
+static uintptr_t rd_ref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, in, _mt);
 	return mpt_refcount_raise(&rd->_ref);
 }
 /* metatype interface */

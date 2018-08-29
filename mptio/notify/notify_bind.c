@@ -28,15 +28,15 @@ struct socketInput {
 };
 
 /* reference interface */
-static void socket_unref(MPT_INTERFACE(reference) *ref)
+static void socket_unref(MPT_INTERFACE(instance) *in)
 {
-	struct socketInput *sd = (void *) ref;
+	struct socketInput *sd = (void *) in;
 	mpt_bind(&sd->sock, 0, 0, 0);
 	free(sd);
 }
-static uintptr_t socket_addref(MPT_INTERFACE(reference) *ref)
+static uintptr_t socket_addref(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */
@@ -90,7 +90,7 @@ static int socket_next(MPT_INTERFACE(input) *in, int what)
 		return -1;
 	}
 	if (mpt_notify_add(sd->no, POLLIN, srm) < 0) {
-		srm->_vptr->meta.ref.unref((void *) srm);
+		srm->_vptr->meta.instance.unref((void *) srm);
 		return -1;
 	}
 	/* single connection mode */

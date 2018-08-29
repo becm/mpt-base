@@ -87,7 +87,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		    || !cfg) {
 			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
 			        MPT_tr("bad global config element"));
-			mt->_vptr->ref.unref((void *) mt);
+			mt->_vptr->instance.unref((void *) mt);
 			return MPT_ERROR(BadType);
 		}
 	}
@@ -122,7 +122,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		int err;
 		if (!(src.src.arg = fdopen(fd, "r"))) {
 			if (mt) {
-				mt->_vptr->ref.unref((void *) mt);
+				mt->_vptr->instance.unref((void *) mt);
 			}
 			return 0;
 		}
@@ -149,7 +149,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		}
 	}
 	if (mt) {
-		mt->_vptr->ref.unref((void *) mt);
+		mt->_vptr->instance.unref((void *) mt);
 	}
 	close(dir);
 	return ret;

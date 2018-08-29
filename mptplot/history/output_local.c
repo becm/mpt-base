@@ -35,9 +35,9 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	return out;
 }
 /* reference interface */
-static void localUnref(MPT_INTERFACE(reference) *ref)
+static void localUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(local_output) *lo = (void *) ref;
+	MPT_STRUCT(local_output) *lo = (void *) in;
 	
 	/* remove active reference */
 	if (mpt_refcount_lower(&lo->ref)) {
@@ -45,14 +45,14 @@ static void localUnref(MPT_INTERFACE(reference) *ref)
 	}
 	mpt_history_fini(&lo->hist);
 	
-	if ((ref = (void *) lo->pass)) {
-		ref->_vptr->unref(ref);
+	if ((in = (void *) lo->pass)) {
+		in->_vptr->unref(in);
 	}
 	free(lo);
 }
-uintptr_t localRef(MPT_INTERFACE(reference) *ref)
+uintptr_t localRef(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(local_output) *lo = (void *) ref;
+	MPT_STRUCT(local_output) *lo = (void *) in;
 	return mpt_refcount_raise(&lo->ref);
 }
 /* metatype interface */
@@ -151,11 +151,11 @@ static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTE
 		if (!out || out == &lo->_out) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!mt->_vptr->ref.addref((void *) mt)) {
+		if (!mt->_vptr->instance.addref((void *) mt)) {
 			return MPT_ERROR(BadOperation);
 		}
 		if ((old = lo->pass)) {
-			old->_vptr->ref.unref((void *) old);
+			old->_vptr->instance.unref((void *) old);
 		}
 		lo->pass = mt;
 		return ret;

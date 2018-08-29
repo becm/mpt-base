@@ -53,9 +53,9 @@ MPT_STRUCT(bufferData)
 	MPT_STRUCT(buffer) buf;
 };
 /* reference interface */
-static void _mpt_buffer_alloc_unref(MPT_INTERFACE(reference) *ref)
+static void _mpt_buffer_alloc_unref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, in, buf);
 	const MPT_STRUCT(type_traits) *info;
 	if (mpt_refcount_lower(&buf->_ref)) {
 		return;
@@ -78,9 +78,9 @@ static void _mpt_buffer_alloc_unref(MPT_INTERFACE(reference) *ref)
 	}
 	free(buf);
 }
-static uintptr_t _mpt_buffer_alloc_ref(MPT_INTERFACE(reference) *ref)
+static uintptr_t _mpt_buffer_alloc_ref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, in, buf);
 	return mpt_refcount_raise(&buf->_ref);
 }
 /* buffer interface */

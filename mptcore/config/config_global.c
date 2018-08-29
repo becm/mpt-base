@@ -53,25 +53,25 @@ static MPT_STRUCT(node) *make_global(const MPT_STRUCT(path) *dest)
 }
 
 /* reference interface */
-static void configUnref(MPT_INTERFACE(reference) *ref)
+static void configUnref(MPT_INTERFACE(instance) *in)
 {
-	MPT_STRUCT(configRoot) *c = (void *) ref;
+	MPT_STRUCT(configRoot) *c = (void *) in;
 	mpt_path_fini(&c->base);
 	free(c);
 }
-static uintptr_t configRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t configRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* special operations for static global instance */
-static void configTopUnref(MPT_INTERFACE(reference) *ref)
+static void configTopUnref(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 }
-static uintptr_t configTopRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t configTopRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 1;
 }
 /* metatype interface */
@@ -198,7 +198,7 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 		if (!path) {
 			MPT_INTERFACE(metatype) *mt;
 			if ((mt = b->_meta)) {
-				mt->_vptr->ref.unref((void *) mt);
+				mt->_vptr->instance.unref((void *) mt);
 				b->_meta = 0;
 			}
 			return 0;

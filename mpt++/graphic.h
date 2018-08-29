@@ -48,8 +48,8 @@ public:
 	int target(laydest &, message &, size_t = 0) const;
 	metatype *item(message &, size_t = 0) const;
 	
-	// untracked reference to shedule update
-	virtual bool register_update(const reference *, hint = hint());
+	// untracked instance to shedule update
+	virtual bool register_update(const instance *, hint = hint());
 protected:
 	virtual void dispatch_updates();
 	reference_array<layout> _layouts;

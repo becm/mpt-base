@@ -7,13 +7,13 @@
 
 #include "meta.h"
 
-static void genMetaUnref(MPT_INTERFACE(reference) *meta)
+static void genMetaUnref(MPT_INTERFACE(instance) *in)
 {
-	(void) meta;
+	(void) in;
 }
-static uintptr_t genMetaRef(MPT_INTERFACE(reference) *meta)
+static uintptr_t genMetaRef(MPT_INTERFACE(instance) *in)
 {
-	(void) meta;
+	(void) in;
 	return 1;
 }
 static int genMetaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)

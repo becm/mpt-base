@@ -22,13 +22,13 @@ struct _iter_ldata
 };
 
 /* reference interface */
-static void iterUnref(MPT_INTERFACE(reference) *ref)
+static void iterUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ref);
+	free(in);
 }
-static uintptr_t iterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

@@ -7,13 +7,13 @@
 
 #include "meta.h"
 
-static void metaUnref(MPT_INTERFACE(reference) *ref)
+static void metaUnref(MPT_INTERFACE(instance) *in)
 {
-	free(ref);
+	free(in);
 }
-static uintptr_t metaRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t metaRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

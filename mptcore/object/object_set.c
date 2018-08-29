@@ -25,14 +25,14 @@ struct meta_scalar
 	char fmt[2];
 };
 /* reference interface */
-static void unref_scalar(MPT_INTERFACE(reference) *ref)
+static void unref_scalar(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	MPT_ABORT("unref scalar value interface");
 }
-static uintptr_t addref_scalar(MPT_INTERFACE(reference) *ref)
+static uintptr_t addref_scalar(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	MPT_ABORT("ref scalar value interface");
 }
 /* metatype interface */

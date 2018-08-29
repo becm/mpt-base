@@ -485,7 +485,7 @@ metatype *graphic::item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool graphic::register_update(const reference *, hint)
+bool graphic::register_update(const instance *, hint)
 {
     return true;
 }

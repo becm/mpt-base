@@ -19,13 +19,13 @@ struct _iter_sdata
 };
 
 /* reference interface */
-static void iterValueUnref(MPT_INTERFACE(reference) *mt)
+static void iterValueUnref(MPT_INTERFACE(instance) *in)
 {
-	free(mt);
+	free(in);
 }
-static uintptr_t iterValueRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t iterValueRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 /* metatype interface */

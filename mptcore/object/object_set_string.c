@@ -18,13 +18,13 @@ struct wrapIter
 	const char *val, *sep;
 };
 
-static void metaIterUnref(MPT_INTERFACE(reference) *ref)
+static void metaIterUnref(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 }
-static uintptr_t metaIterRef(MPT_INTERFACE(reference) *ref)
+static uintptr_t metaIterRef(MPT_INTERFACE(instance) *in)
 {
-	(void) ref;
+	(void) in;
 	return 0;
 }
 static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
@@ -111,7 +111,7 @@ extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, c
 	mt.sep = sep;
 	ret = obj->_vptr->set_property(obj, name, &mt._ctl);
 	if ((src = mt.src)) {
-		src->_vptr->ref.unref((void *) src);
+		src->_vptr->instance.unref((void *) src);
 	}
 	return ret;
 }

@@ -143,14 +143,14 @@ static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
 	}
 	if (!(c = mpt_node_find(mpt, "args", -1))) {
 		if (!(c = mpt_node_new(5))) {
-			b->_vptr->ref.unref((void *) b);
+			b->_vptr->instance.unref((void *) b);
 			return MPT_ERROR(BadArgument);
 		}
 		mpt_identifier_set(&c->ident, "args", -1);
 		mpt_node_insert(mpt, 1, c);
 	}
 	else if ((old = c->_meta)) {
-		old->_vptr->ref.unref((void *) old);
+		old->_vptr->instance.unref((void *) old);
 	}
 	c->_meta = b;
 	
@@ -272,7 +272,7 @@ extern int mpt_init(int argc, char * const argv[])
 		}
 		break;
 	}
-	top->_vptr->ref.unref((void *) top);
+	top->_vptr->instance.unref((void *) top);
 	atexit(clearConfig);
 	
 	return ret < 0 ? ret : optind;
