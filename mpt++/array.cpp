@@ -187,7 +187,7 @@ bool array::content::set_length(size_t len)
 array::array(size_t len) : _buf(0)
 {
     if (len) {
-        _buf.set_reference(static_cast<content *>(buffer::create(len)));
+        _buf.set_instance(static_cast<content *>(buffer::create(len)));
     }
 }
 array::array(const array &a) : _buf(0)
@@ -203,7 +203,7 @@ array &array::operator= (const array &a)
 bool array::set(const reference_wrapper<buffer> &a)
 {
     buffer *b;
-    if ((b = a.reference()) && b->typeinfo()) {
+    if ((b = a.instance()) && b->typeinfo()) {
         return false;
     }
     _buf = reinterpret_cast<const reference_wrapper<content> &>(a);
@@ -220,7 +220,7 @@ void *array::set(size_t len, const void *base)
 {
     content *d;
     
-    if ((d = _buf.reference())) {
+    if ((d = _buf.instance())) {
         size_t used;
         /* incompatible target buffer */
         if (d->typeinfo() || d->shared()) {
@@ -243,7 +243,7 @@ void *array::set(size_t len, const void *base)
             d->unref();
             return 0;
         }
-        _buf.set_reference(d);
+        _buf.set_instance(d);
     }
     void *ptr = d->data();
     if (base) {
@@ -344,7 +344,7 @@ void *array::insert(size_t off, size_t len, const void *data)
     content *d;
     
     /* compatibility check */
-    if ((d = _buf.reference())
+    if ((d = _buf.instance())
         && !d->typeinfo()
         && !d->shared()) {
         dest = d->insert(off, len);
@@ -382,13 +382,13 @@ char *array::string()
 slice::slice(slice const& from) : array(from), _off(0), _len(0)
 {
     _buf = from._buf;
-    if (!_buf.reference()) return;
+    if (!_buf.instance()) return;
     _len = from._len;
     _off = from._off;
 }
 slice::slice(array::content *b) : _off(0), _len(0)
 {
-    _buf.set_reference(b);
+    _buf.set_instance(b);
     _len = length();
 }
 bool slice::shift(ssize_t len)

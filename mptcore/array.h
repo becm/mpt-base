@@ -361,7 +361,7 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline void *array::base() const
 {
-	content *d = _buf.reference();
+	content *d = _buf.instance();
 	if (!d || d->typeinfo()) {
 		return 0;
 	}
@@ -369,22 +369,22 @@ inline void *array::base() const
 }
 inline size_t array::length() const
 {
-	content *d = _buf.reference();
+	content *d = _buf.instance();
 	return (d && !d->typeinfo()) ? d->length() : 0;
 }
 inline size_t array::left() const
 {
-	content *d = _buf.reference();
+	content *d = _buf.instance();
 	return (d && !d->typeinfo()) ? d->left() : 0;
 }
 inline bool array::shared() const
 {
-	content *d = _buf.reference();
+	content *d = _buf.instance();
 	return d && d->shared();
 }
 inline const array::content *array::data() const
 {
-	return _buf.reference();
+	return _buf.instance();
 }
 inline void *array::prepend(size_t len, const void *data)
 {
@@ -415,7 +415,7 @@ inline slice::~slice()
 { }
 inline span<uint8_t> slice::data() const
 {
-	buffer *b = _buf.reference();
+	buffer *b = _buf.instance();
 	return span<uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
 }
 long compact(span<void *>);
@@ -551,7 +551,7 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				_ref.set_reference(static_cast<content<T> *>(b));
+				_ref.set_instance(static_cast<content<T> *>(b));
 				return;
 			}
 		}
@@ -572,16 +572,16 @@ public:
 			{ }
 		};
 		static dummy _dummy;
-		_ref.set_reference(&_dummy);
+		_ref.set_instance(&_dummy);
 	}
 	inline iterator begin() const
 	{
-		content<T> *c = _ref.reference();
+		content<T> *c = _ref.instance();
 		return c ? c->begin() : 0;
 	}
 	inline iterator end() const
 	{
-		content<T> *c = _ref.reference();
+		content<T> *c = _ref.instance();
 		return c ? c->end() : 0;
 	}
 	inline unique_array & operator=(const unique_array &a)
@@ -625,7 +625,7 @@ public:
 		if (!reserve(len + 1)) {
 			return 0;
 		}
-		content<T> *d = _ref.reference();
+		content<T> *d = _ref.instance();
 		return d->insert(pos);
 	}
 	T *get(long pos) const
@@ -642,7 +642,7 @@ public:
 	}
 	inline long length() const
 	{
-		content<T> *d = _ref.reference();
+		content<T> *d = _ref.instance();
 		return d ? d->length() : 0;
 	}
 	inline span<const T> elements() const
@@ -657,10 +657,10 @@ public:
 		}
 		long elem = c->length();
 		if ((n = c->detach(elem * sizeof(T)))) {
-			_ref.set_reference(n);
+			_ref.set_instance(n);
 			return true;
 		}
-		_ref.set_reference(c);
+		_ref.set_instance(c);
 		return false;
 	}
 	bool reserve(long len)
@@ -671,15 +671,15 @@ public:
 		}
 		if (len < 0
 		    && (len += length()) < 0) {
-			_ref.set_reference(c);
+			_ref.set_instance(c);
 			return false;
 		}
 		content<T> *n;
 		if ((n = c->detach(len * sizeof(T)))) {
-			_ref.set_reference(n);
+			_ref.set_instance(n);
 			return true;
 		}
-		_ref.set_reference(c);
+		_ref.set_instance(c);
 		return true;
 	}
 	bool resize(long len)
@@ -688,7 +688,7 @@ public:
 			return false;
 		}
 		content<T> *d;
-		if (len >= 0 && (d = _ref.reference())) {
+		if (len >= 0 && (d = _ref.instance())) {
 			return d->set_length(len);
 		}
 		return true;
@@ -740,7 +740,7 @@ public:
 		if (len) {
 			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
 			if (b) {
-				this->_ref.set_reference(static_cast<content<T> *>(b));
+				this->_ref.set_instance(static_cast<content<T> *>(b));
 				return;
 			}
 		}
@@ -761,7 +761,7 @@ public:
 			{ }
 		};
 		static dummy _dummy;
-		this->_ref.set_reference(&_dummy);
+		this->_ref.set_instance(&_dummy);
 	}
 	inline typed_array & operator=(const typed_array &a)
 	{
@@ -816,7 +816,7 @@ public:
 			return 0;
 		}
 		if (!id || it->set_name(id, len)) {
-			it->set_reference(t);
+			it->set_instance(t);
 			return it;
 		}
 		this->resize(pos);
@@ -826,7 +826,7 @@ public:
 	{
 		long len = 0;
 		for (item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
-			if (pos->reference()) ++len;
+			if (pos->instance()) ++len;
 		}
 		return len;
 	}
@@ -835,7 +835,7 @@ public:
 		item<T> *space = 0;
 		long len = 0;
 		for (item<T> *pos = this->begin(), *to = this->end(); pos != to; ++pos) {
-			T *c = pos->reference();
+			T *c = pos->instance();
 			if (!c) {
 				if (!space) space = pos;
 				continue;
@@ -850,7 +850,7 @@ public:
 		if (!space) {
 			return false;
 		}
-		this->_ref.reference()->set_length(len);
+		this->_ref.instance()->set_length(len);
 		return true;
 	}
 };
@@ -929,7 +929,7 @@ public:
 		if (!ptr) {
 			return false;
 		}
-		ptr->set_reference(ref);
+		ptr->set_instance(ref);
 		return true;
 	}
 	bool set(long pos, T *ref)
@@ -938,7 +938,7 @@ public:
 		if (!ptr) {
 			return false;
 		}
-		ptr->set_reference(ref);
+		ptr->set_instance(ref);
 		return true;
 	}
 	long clear(const T *ref = 0) const
@@ -947,11 +947,11 @@ public:
 		long elem = 0;
 		
 		for (long i = 0, len = this->length(); i < len; ++i) {
-			T *match = ptr[i].reference();
+			T *match = ptr[i].instance();
 			if (!match || (ref && (match != ref))) {
 				continue;
 			}
-			ptr[i].set_reference(0);
+			ptr[i].set_instance(0);
 			++elem;
 		}
 		return elem;
@@ -960,7 +960,7 @@ public:
 	{
 		long len = 0;
 		for (reference_wrapper<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
-			if (pos->reference()) ++len;
+			if (pos->instance()) ++len;
 		}
 		return len;
 	}

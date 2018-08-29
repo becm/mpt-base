@@ -29,7 +29,7 @@ int main(int argc, char * const argv[])
 	it->set_name("ax");
 	
 	// can be used for default element lookup
-	if ((it = g.append(new mpt::reference_wrapper<mpt::layout::graph::world>::instance))) {
+	if ((it = g.append(new mpt::reference_wrapper<mpt::layout::graph::world>::type))) {
 		it->set_name("w1");
 	}
 	// initial values for new world
@@ -52,15 +52,15 @@ int main(int argc, char * const argv[])
 	
 	// add additional world element
 	mpt::item<mpt::layout::graph::data> *d = g.add_world(0, "w3");
-	mpt::mpt_color_parse(&d->reference()->world.reference()->color, "cyan");
+	mpt::mpt_color_parse(&d->instance()->world.instance()->color, "cyan");
 	
 	// print world elements
 	for (auto &w : g.worlds()) {
-		mpt::object &o = *w.reference()->world.reference();
+		mpt::object &o = *w.instance()->world.instance();
 		std::cout << w.name() << ": " << o["color"] << std::endl;
 	}
 	for (auto &a : g.axes()) {
-		mpt::object &o = *a.reference();
+		mpt::object &o = *a.instance();
 		std::cout << a.name() << ": " << o["tlen"] << std::endl;
 	}
 }

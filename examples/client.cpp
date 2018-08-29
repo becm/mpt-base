@@ -44,7 +44,7 @@ MyClient::MyClient()
 	if (mt && (o = mt->cast<mpt::object>())) {
 		o->set(0, "w:client.out");
 	}
-	_mt.set_reference(mt);
+	_mt.set_instance(mt);
 }
 int MyClient::process(uintptr_t , mpt::iterator *)
 {
@@ -58,7 +58,7 @@ int MyClient::conv(int type, void *ptr) const
 {
 	metatype *mt;
 	int ret;
-	if ((mt = _mt.reference()) && (ret = mt->conv(type, ptr)) > 0) {
+	if ((mt = _mt.instance()) && (ret = mt->conv(type, ptr)) > 0) {
 		return Type;
 	}
 	return client::conv(type, ptr);

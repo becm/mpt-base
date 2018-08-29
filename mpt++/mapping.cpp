@@ -105,7 +105,7 @@ bool graphic::mapping::set_cycle(laydest dst, class cycle *ref)
     if (!(ptr = get(dst))) {
         return false;
     }
-    ptr->set_reference(ref);
+    ptr->set_instance(ref);
     return true;
 }
 
@@ -114,7 +114,7 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
-        auto lay = layouts.nth(i)->reference();
+        auto lay = layouts.nth(i)->instance();
         if (!lay) continue;
         if (h.match & laydest::MatchLayout
          && h.lay != i) {
@@ -122,7 +122,7 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
-            auto grf = graphs.nth(j)->reference();
+            auto grf = graphs.nth(j)->instance();
             if (!grf) continue;
             if (h.match & laydest::MatchGraph
              && h.grf != j) {
@@ -130,7 +130,7 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
             }
             const auto worlds = grf->worlds();
             for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
-                auto wld = worlds.nth(k)->reference();
+                auto wld = worlds.nth(k)->instance();
                 if (!wld) continue;
                 if (h.match & laydest::MatchWorld
                  && h.wld != k) {
@@ -150,7 +150,7 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
-        auto lay = layouts.nth(i)->reference();
+        auto lay = layouts.nth(i)->instance();
         if (!lay) continue;
         if (h.match & laydest::MatchLayout
          && h.lay != i) {
@@ -158,7 +158,7 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
         }
         const auto graphs = lay->graphs();
         for (size_t j = 0, gmax = graphs.size(); j < gmax; ++j) {
-            auto grf = graphs.nth(j)->reference();
+            auto grf = graphs.nth(j)->instance();
             if (!grf) continue;
             if (h.match & laydest::MatchGraph
              && h.grf != j) {
@@ -167,7 +167,7 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
             int dim = grf->transform().dimensions();
             const auto worlds = grf->worlds();
             for (size_t k = 0, wmax = worlds.size(); k < wmax; ++k) {
-                auto wld = worlds.nth(k)->reference();
+                auto wld = worlds.nth(k)->instance();
                 if (!wld) continue;
                 if (h.match & laydest::MatchWorld
                  && h.wld != k) {
@@ -177,7 +177,7 @@ int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &l
                     if (!b->key.match(laydest(i, j, k), laydest::MatchPath)) {
                         continue;
                     }
-                    if (!b->value.reference()) {
+                    if (!b->value.instance()) {
                         break;
                     }
                     b->key.dim = dim;
@@ -197,8 +197,8 @@ int graphic::mapping::clear_cycles(hint h) const
         if (h.match & laydest::MatchLayout && e.key.lay != h.lay) continue;
         if (h.match & laydest::MatchGraph  && e.key.grf != h.grf) continue;
         if (h.match & laydest::MatchWorld  && e.key.grf != h.wld) continue;
-        if (!e.value.reference()) continue;
-        e.value.set_reference(0);
+        if (!e.value.instance()) continue;
+        e.value.set_instance(0);
         ++clear;
     }
     return clear;

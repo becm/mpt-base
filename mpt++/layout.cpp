@@ -127,7 +127,7 @@ bool layout::bind(const relation &rel, logger *out)
     for (auto &it : _items) {
         metatype *mt;
         graph *g;
-        if (!(mt = it.reference()) || !(g = mt->cast<graph>())) {
+        if (!(mt = it.instance()) || !(g = mt->cast<graph>())) {
             continue;
         }
         const char *name = it.name();
@@ -239,7 +239,7 @@ fpoint layout::minimal_scale() const
 
     for (auto &it : _graphs) {
         graph *g;
-        if (!(g = it.reference())) {
+        if (!(g = it.instance())) {
             continue;
         }
         if (g->scale.x < x) x = g->scale.x;

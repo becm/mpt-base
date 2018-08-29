@@ -591,10 +591,10 @@ template<typename T>
 class reference_wrapper
 {
 public:
-	class instance : public T
+	class type : public T
 	{
 	public:
-		instance(uintptr_t initial = 1) : _ref(initial)
+		type(uintptr_t initial = 1) : _ref(initial)
 		{ }
 		void unref()
 		{
@@ -621,11 +621,11 @@ public:
 		if (_ref) _ref->unref();
 	}
 	
-	inline T *reference() const
+	inline T *instance() const
 	{ 
 		return _ref;
 	}
-	inline void set_reference(T *ref)
+	inline void set_instance(T *ref)
 	{
 		if (_ref) _ref->unref();
 		_ref = ref;
@@ -648,7 +648,7 @@ public:
 	{
 		T *r = ref._ref;
 		ref._ref = 0;
-		set_reference(r);
+		set_instance(r);
 		return *this;
 	}
 #endif

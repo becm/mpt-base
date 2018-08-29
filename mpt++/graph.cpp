@@ -195,7 +195,7 @@ bool layout::graph::bind(const relation &rel, logger *out)
     if (!(names = ::mpt::graph::axes())) {
         for (auto &it : _items) {
             axis *a;
-            if (!(mt = it.reference()) || !(a = mt->cast<axis>())) continue;
+            if (!(mt = it.instance()) || !(a = mt->cast<axis>())) continue;
             curr = it.name();
             if (!a->addref() || add_axis(a, curr)) {
                 continue;
@@ -232,7 +232,7 @@ bool layout::graph::bind(const relation &rel, logger *out)
     if (!(names = ::mpt::graph::worlds())) {
         for (auto &it : _items) {
             world *w;
-            if (!(mt = it.reference()) || !(w = mt->cast<world>())) continue;
+            if (!(mt = it.instance()) || !(w = mt->cast<world>())) continue;
             curr = it.name();
             if (!w->addref() || add_world(w, curr)) {
                 continue;
@@ -267,7 +267,7 @@ bool layout::graph::bind(const relation &rel, logger *out)
     }
     for (auto &it : _items) {
         group *g;
-        if (!(mt = it.reference()) || !(g = mt->cast<group>())) continue;
+        if (!(mt = it.instance()) || !(g = mt->cast<group>())) continue;
         group_relation gr(*g, &rel);
         if (!g->bind(gr, out)) {
             _axes = oldaxes;
@@ -285,7 +285,7 @@ item<layout::graph::axis> *layout::graph::add_axis(axis *from, const char *name,
         a = new axis;
     } else {
         for (auto &it : _axes) {
-            if (a == it.reference()) return 0; // deny multiple dimensions sharing same transformation
+            if (a == it.instance()) return 0; // deny multiple dimensions sharing same transformation
         }
     }
     ::mpt::item<axis> *it;
@@ -319,15 +319,15 @@ const reference_wrapper<cycle> *layout::graph::cycle(int pos) const
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return 0;
     }
-    data *d = _worlds.get(pos)->reference();
+    data *d = _worlds.get(pos)->instance();
     if (!d) {
         return 0;
     }
-    if (!d->cycle.reference()) {
-        class cycle *c = new reference_wrapper<class cycle>::instance;
-        d->cycle.set_reference(c);
+    if (!d->cycle.instance()) {
+        class cycle *c = new reference_wrapper<class cycle>::type;
+        d->cycle.set_instance(c);
         world *w;
-        if ((w = d->world.reference())) {
+        if ((w = d->world.instance())) {
             c->limit_dimensions(3);
             c->limit_stages(w->cyc);
         }
@@ -339,7 +339,7 @@ bool layout::graph::set_cycle(int pos, const reference_wrapper<class cycle> &cyc
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return false;
     }
-    data *d = _worlds.get(pos)->reference();
+    data *d = _worlds.get(pos)->instance();
     if (!d) {
         return false;
     }
@@ -350,7 +350,7 @@ bool layout::graph::set_cycle(int pos, const reference_wrapper<class cycle> &cyc
 const transform &layout::graph::transform()
 {
     ::mpt::transform *t;
-    if ((t = _gtr.reference())) {
+    if ((t = _gtr.instance())) {
         return *t;
     } else {
         static const class transform def;
@@ -372,13 +372,13 @@ bool layout::graph::update_transform(int dim)
     ::mpt::item<axis> *it = _axes.get(dim);
     axis *a;
 
-    if (!it || !(a = it->reference())) {
+    if (!it || !(a = it->instance())) {
         return false;
     }
     class transform *t;
-    if (!(t = _gtr.reference())) {
+    if (!(t = _gtr.instance())) {
         t = new class transform;
-        _gtr.set_reference(t);
+        _gtr.set_instance(t);
     }
     int type;
     switch (dim) {
@@ -402,7 +402,7 @@ bool layout::graph::update_transform(int dim)
 const struct value_apply *layout::graph::transform_part(int dim) const
 {
     const class transform *t;
-    if (!(t = _gtr.reference())) {
+    if (!(t = _gtr.instance())) {
         return 0;
     }
     switch (dim) {
@@ -419,7 +419,7 @@ const struct value_apply *layout::graph::transform_part(int dim) const
 int layout::graph::transform_flags(int dim) const
 {
     const class transform *t;
-    if (!(t = _gtr.reference())) {
+    if (!(t = _gtr.instance())) {
         return 0;
     }
     switch (dim) {

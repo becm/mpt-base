@@ -22,7 +22,7 @@ static void printCfg(int depth, const mpt::span<const mpt::configuration::elemen
 	for (auto &a : list) {
 		for (int i = 0; i < depth; ++i) std::cout << '.';
 		std::cout << a.name();
-		mpt::metatype *mt = a.reference();
+		mpt::metatype *mt = a.instance();
 		if (mt) {
 			std::cout << " = ";
 			const char *content = *mt;

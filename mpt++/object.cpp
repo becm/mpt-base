@@ -166,7 +166,7 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
         return 0;
     }
     do {
-        int ret = mpt_object_set_property(this, traverse, &head->ident, head->meta().reference());
+        int ret = mpt_object_set_property(this, traverse, &head->ident, head->meta().instance());
         if (ret) {
             return head;
         }

@@ -170,7 +170,7 @@ public:
 			}
 		}
 		content *d;
-		if ((d = _buf.reference())) {
+		if ((d = _buf.instance())) {
 			d->set_length(len * sizeof(*c));
 		}
 	}

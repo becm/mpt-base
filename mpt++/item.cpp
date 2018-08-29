@@ -72,7 +72,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
 
         if (from && from->addref()) {
             reference_wrapper<metatype> m;
-            m.set_reference(from);
+            m.set_instance(from);
             ::mpt::item<metatype> *it;
             if ((it = append(from))) {
                 m.detach();
@@ -250,21 +250,21 @@ metatype *group::create(const char *type, int nl)
     }
 
     if (nl == 4 && !memcmp("line", type, nl)) {
-        return new reference_wrapper<layout::line>::instance;
+        return new reference_wrapper<layout::line>::type;
     }
     if (nl == 4 && !memcmp("text", type, nl)) {
-        return new reference_wrapper<layout::text>::instance;
+        return new reference_wrapper<layout::text>::type;
     }
     if (nl == 5 && !memcmp("graph", type, nl)) {
-        return new reference_wrapper<layout::graph>::instance;
+        return new reference_wrapper<layout::graph>::type;
     }
     if (nl == 5 && !memcmp("world", type, nl)) {
-        return new reference_wrapper<layout::graph::world>::instance;
+        return new reference_wrapper<layout::graph::world>::type;
     }
     if (nl == 4 && !memcmp("axis", type, nl)) {
-        return new reference_wrapper<layout::graph::axis>::instance;
+        return new reference_wrapper<layout::graph::axis>::type;
     }
-    class TypedAxis : public reference_wrapper<layout::graph::axis>::instance
+    class TypedAxis : public reference_wrapper<layout::graph::axis>::type
     {
     public:
         TypedAxis(int type)
@@ -341,10 +341,10 @@ size_t collection::clear(const reference *ref)
     }
     long empty = 0;
     for (auto &it : _items) {
-        reference *curr = it.reference();
+        reference *curr = it.instance();
         if (!curr) { ++empty; continue; }
         if (curr != ref) continue;
-        it.set_reference(nullptr);
+        it.set_instance(nullptr);
         ++remove;
     }
     if ((remove + empty) > _items.length()/2) {
@@ -357,7 +357,7 @@ bool collection::bind(const relation &from, logger *out)
     for (auto &it : _items) {
         metatype *curr;
         group *g;
-        if (!(curr = it.reference()) || !(g = curr->cast<group>())) {
+        if (!(curr = it.instance()) || !(g = curr->cast<group>())) {
             continue;
         }
         if (!g->bind(group_relation(*g, &from), out)) {
@@ -379,7 +379,7 @@ metatype *group_relation::find(int type, const char *name, int nlen) const
     if (_sep && name && (sep = (char *) memchr(name, _sep, nlen))) {
         size_t plen = sep - name;
         for (int i = 0; (c = _curr.item(i)); ++i) {
-            metatype *m = c->reference();
+            metatype *m = c->instance();
             if (!m || !c->equal(name, plen)) {
                 continue;
             }
@@ -395,7 +395,7 @@ metatype *group_relation::find(int type, const char *name, int nlen) const
     else {
         for (int i = 0; (c = _curr.item(i)); ++i) {
             metatype *m;
-            if (!(m = c->reference())) {
+            if (!(m = c->instance())) {
                 continue;
             }
             if (name && !c->equal(name, nlen)) {

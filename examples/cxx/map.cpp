@@ -23,7 +23,7 @@ extern int main(int , char * const [])
 	mtrace();
 	
 	map<laydest, reference_wrapper<cycle> > p;
-	reference_wrapper<cycle> c(new reference_wrapper<cycle>::instance);
+	reference_wrapper<cycle> c(new reference_wrapper<cycle>::type);
 	
 	p.set(laydest(1,2,3), c);
 	p.set(laydest(1,4,3), c);
@@ -38,7 +38,7 @@ extern int main(int , char * const [])
 	typed_array<reference_wrapper<cycle>> r = p.values();
 	
 	for (auto &x : r) {
-		cycle *m = x.reference();
+		cycle *m = x.instance();
 		std::cout << m->stage_count() << std::endl;
 	}
 	

@@ -171,7 +171,7 @@ configuration::element *configuration::make_element(unique_array<configuration::
     }
     else {
         unused->resize(0);
-        unused->set_reference(0);
+        unused->set_instance(0);
     }
     unused->set_name(name.begin(), len);
 
@@ -194,10 +194,10 @@ int configuration::assign(const path *dest, const value *val)
             return 0;
         }
         int type = 0;
-        if ((m = curr->reference())) {
+        if ((m = curr->instance())) {
             type = m->type();
         }
-        curr->set_reference(0);
+        curr->set_instance(0);
         return type;
     }
     if (!(m = metatype::create(*val))) {
@@ -207,7 +207,7 @@ int configuration::assign(const path *dest, const value *val)
         m->unref();
         return BadOperation;
     }
-    curr->set_reference(m);
+    curr->set_instance(m);
     return m->type();
 }
 const metatype *configuration::query(const path *dest) const
@@ -223,7 +223,7 @@ const metatype *configuration::query(const path *dest) const
     if (!(curr = get_element(_sub, p))) {
         return 0;
     }
-    return curr->reference();
+    return curr->instance();
 }
 int configuration::remove(const path *dest)
 {
@@ -244,7 +244,7 @@ int configuration::remove(const path *dest)
     }
     curr->resize(0); // remove childen from element
     curr->set_name(0); // mark element as unused
-    curr->set_reference(0); // remove element data
+    curr->set_instance(0); // remove element data
 
     return 0;
 }

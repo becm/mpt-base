@@ -260,7 +260,7 @@ int message_store::log(const char *from, int type, const char *fmt, va_list arg)
     if (type & File) {
         pass |= _flags & PassFile;
     }
-    metatype *mt = reference();
+    metatype *mt = instance();
     // fast-track without argument list copy
     if (!save) {
         if (mt && pass) {

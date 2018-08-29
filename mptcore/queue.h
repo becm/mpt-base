@@ -195,7 +195,7 @@ template <typename T>
 class Pipe
 {
 public:
-	class instance : public reference_wrapper<Queue>::instance
+	class instance : public reference_wrapper<Queue>::type
 	{
 	public:
 		void unref()
@@ -211,7 +211,7 @@ public:
 		if (len <= 0) {
 			return;
 		}
-		ref().reference()->prepare(len * sizeof(T));
+		ref().instance()->prepare(len * sizeof(T));
 		while (len--) {
 			push(v);
 		}
@@ -234,15 +234,15 @@ public:
 	}
 	const reference_wrapper<instance> &ref()
 	{
-		if (!_d.reference()) {
-			_d.set_reference(new instance);
+		if (!_d.instance()) {
+			_d.set_instance(new instance);
 		}
 		return _d;
 	}
 	bool push(const T & elem)
 	{
 		Queue *d;
-		if (!(d = _d.reference())) {
+		if (!(d = _d.instance())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -257,7 +257,7 @@ public:
 	bool pop(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.reference())) {
+		if (!(d = _d.instance())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -275,7 +275,7 @@ public:
 	bool unshift(const T & elem)
 	{
 		Queue *d;
-		if (!(d = _d.reference())) {
+		if (!(d = _d.instance())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -290,7 +290,7 @@ public:
 	bool shift(T *data = 0) const
 	{
 		Queue *d;
-		if (!(d = _d.reference())) {
+		if (!(d = _d.instance())) {
 			return false;
 		}
 		uint8_t buf[sizeof(T)];
@@ -308,7 +308,7 @@ public:
 	span<T> elements()
 	{
 		Queue *d;
-		if (!(d = _d.reference())) {
+		if (!(d = _d.instance())) {
 			return span<T>(0, 0);
 		}
 		span<uint8_t> r = d->peek();

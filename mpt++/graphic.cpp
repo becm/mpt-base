@@ -110,10 +110,10 @@ int graphic::add_layout(layout *lay, bool reuse)
         b = _layouts.begin();
         e = _layouts.end();
         for (reference_wrapper<layout> *c = b; c < e; ++c) {
-            if (c->reference()) {
+            if (c->instance()) {
                 continue;
             }
-            c->set_reference(lay);
+            c->set_instance(lay);
             return c - b;
         }
     }
@@ -132,10 +132,10 @@ int graphic::remove_layout(const layout *lay)
     }
     reference_wrapper<layout> *r = _layouts.begin();
     for (long i = 0, max = _layouts.length(); i < max; ++i) {
-        if (r[i].reference() != lay) {
+        if (r[i].instance() != lay) {
             continue;
         }
-        r[i].set_reference(0);
+        r[i].set_instance(0);
         return i;
     }
     return MissingData;
@@ -192,7 +192,7 @@ static layout::graph::data *graph_data(span<const item<layout::graph::data> > gd
     if (!(it = gd.nth(pos))) {
         return 0;
     }
-    return it->reference();
+    return it->instance();
 }
 
 int graphic::target(laydest &old, message &msg, size_t len) const
@@ -227,7 +227,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             r = _layouts.get(l - 1);
-            if ((lay = r ? r->reference() : 0)) {
+            if ((lay = r ? r->instance() : 0)) {
                 dst.lay = l;
                 match |= dst.MatchLayout;
             }
@@ -239,7 +239,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
                 max = UINT8_MAX - 1;
             }
             for (long i = 0; i < max; ++i) {
-                layout *l = r[i].reference();
+                layout *l = r[i].instance();
                 const char *id;
                 if (l && (id = l->alias()) && part == (ssize_t) strlen(id) && !memcmp(id, buf, part)) {
                     dst.lay = i + 1;
@@ -252,7 +252,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     }
     else if (dst.lay) {
         r = _layouts.get(dst.lay - 1);
-        lay = r ? r->reference() : 0;
+        lay = r ? r->instance() : 0;
     }
     if (!lay) {
         return BadValue;
@@ -277,7 +277,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             gi = graphs.nth(g - 1);
-            if (gi && (grf = gi->reference())) {
+            if (gi && (grf = gi->instance())) {
                 dst.grf = g;
                 match |= dst.MatchGraph;
             }
@@ -290,7 +290,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
             for (size_t i = 0; i < max; ++i) {
                 gi = graphs.nth(i);
                 if (gi->equal(buf, part)) {
-                    if ((grf = gi->reference())) {
+                    if ((grf = gi->instance())) {
                         dst.grf = i + 1;
                         match |= dst.MatchGraph;
                     }
@@ -301,7 +301,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     }
     else if (dst.grf) {
         if ((gi = graphs.nth(dst.grf - 1))) {
-            grf = gi->reference();
+            grf = gi->instance();
         }
     }
     if (!grf) {
@@ -329,7 +329,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
                 return BadValue;
             }
             const layout::graph::data *d = graph_data(gd, w - 1);
-            if (d && (wld = d->world.reference())) {
+            if (d && (wld = d->world.instance())) {
                 dst.wld = w;
                 match = dst.MatchWorld;
             }
@@ -342,8 +342,8 @@ int graphic::target(laydest &old, message &msg, size_t len) const
             for (size_t i = 0; i < max; ++i) {
                 const ::mpt::item<layout::graph::data> *it = gd.nth(i);
                 layout::graph::data *ptr;
-                if (it && (ptr = it->reference()) && it->equal(buf, part)) {
-                    if ((wld = ptr->world.reference())) {
+                if (it && (ptr = it->instance()) && it->equal(buf, part)) {
+                    if ((wld = ptr->world.instance())) {
                         dst.wld = i + 1;
                         match |= dst.MatchWorld;
                     }
@@ -355,7 +355,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     else if (dst.wld) {
         const layout::graph::data *d;
         if ((d = graph_data(gd, dst.wld - 1))) {
-            wld = d->world.reference();
+            wld = d->world.instance();
         }
     }
     if (!wld) {
@@ -424,7 +424,7 @@ metatype *graphic::item(message &msg, size_t len) const
     reference_wrapper<layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         layout *l;
-        if (!(l = r[i].reference())) {
+        if (!(l = r[i].instance())) {
             continue;
         }
         const char *id;
