@@ -67,7 +67,7 @@ buffer *buffer::create(size_t len, const type_traits *info)
 }
 buffer *buffer::detach(size_t)
 {
-    return nullptr;
+    return 0;
 }
 void *buffer::insert(size_t pos, size_t len)
 {
@@ -84,7 +84,7 @@ bool buffer::move(buffer &from)
     if (!trim(_used)) {
         return false;
     }
-    memcpy(this + 1, (&from) + 1, from._used);
+    memcpy(static_cast<void *>(this + 1), static_cast<void *>((&from) + 1), from._used);
     _used = from._used;
     from._used = 0;
     return true;

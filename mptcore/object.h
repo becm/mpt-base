@@ -297,8 +297,8 @@ public:
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
 	
-	virtual const class item<metatype> *item(size_t pos) const;
-	virtual class item<metatype> *append(metatype *);
+	virtual const ::mpt::item<metatype> *item(size_t pos) const;
+	virtual ::mpt::item<metatype> *append(metatype *);
 	virtual size_t clear(const reference * = 0);
 	virtual bool bind(const relation &from, logger * = logger::default_instance());
 	

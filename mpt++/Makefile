@@ -16,7 +16,7 @@ LINK = ${CXX} ${CXXFLAGS}
 LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
 # require C++11 for compilation
-NEED_CXX_11 = item.o layout.o mapping.o cycle.o polyline.o meta_typed.o
+NEED_CXX_11 = cycle.o item.o graph.o layout.o linepart.o mapping.o meta_typed.o polyline.o
 #
 # source summary
 SRCS := $(wildcard *.cpp)

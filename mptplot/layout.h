@@ -360,8 +360,8 @@ public:
 	int conv(int, void *) const __MPT_OVERRIDE;
 	collection *clone() const __MPT_OVERRIDE;
 	
-	const class item<metatype> *item(size_t) const __MPT_OVERRIDE;
-	class item<metatype> *append(metatype *) __MPT_OVERRIDE;
+	const ::mpt::item<metatype> *item(size_t) const __MPT_OVERRIDE;
+	::mpt::item<metatype> *append(metatype *) __MPT_OVERRIDE;
 	size_t clear(const reference * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
 protected:
@@ -389,7 +389,7 @@ public:
 	virtual bool open(const char *);
 	virtual bool reset();
 	
-	inline span<const class item<graph> > graphs() const
+	inline span<const ::mpt::item<graph> > graphs() const
 	{
 		return _graphs.elements();
 	}
@@ -470,20 +470,20 @@ public:
 	
 	bool bind(const relation &from, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
-	virtual class item<axis> *add_axis(axis * = 0, const char * = 0, int = -1);
-	inline span<const class item<axis> > axes() const
+	virtual ::mpt::item<axis> *add_axis(axis * = 0, const char * = 0, int = -1);
+	inline span<const ::mpt::item<axis> > axes() const
 	{
 		return _axes.elements();
 	}
-	virtual class item<data> *add_world(world * = 0, const char * = 0, int = -1);
-	inline span<const class item<data> > worlds() const
+	virtual ::mpt::item<data> *add_world(world * = 0, const char * = 0, int = -1);
+	inline span<const ::mpt::item<data> > worlds() const
 	{
 		return _worlds.elements();
 	}
 	virtual bool set_cycle(int , const reference_wrapper<class cycle> &) const;
 	virtual const reference_wrapper<class cycle> *cycle(int) const;
 	
-	const class ::mpt::transform &transform();
+	const ::mpt::transform &transform();
 	
 	const struct value_apply *transform_part(int = -1) const;
 	int transform_flags(int = -1) const;

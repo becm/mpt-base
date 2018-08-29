@@ -73,7 +73,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
         if (from && from->addref()) {
             reference_wrapper<metatype> m;
             m.set_reference(from);
-            class item<metatype> *it;
+            ::mpt::item<metatype> *it;
             if ((it = append(from))) {
                 m.detach();
                 it->set_name(head->ident.name());
@@ -171,7 +171,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             return false;
         }
         // add item to group
-        class item<metatype> *ni = append(from);
+        ::mpt::item<metatype> *ni = append(from);
         if (!ni) {
             from->unref();
             if (out) {

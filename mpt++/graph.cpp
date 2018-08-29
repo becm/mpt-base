@@ -77,7 +77,7 @@ graph::~graph()
 layout::graph::graph(const ::mpt::graph *from)
 {
     if (!from) return;
-    *static_cast<::mpt::graph *>(this) = *from;
+    *static_cast< ::mpt::graph *>(this) = *from;
 }
 layout::graph::~graph()
 { }
@@ -133,7 +133,7 @@ int layout::graph::set_property(const char *prop, const metatype *src)
 static layout::graph::axis *make_axis(metatype *mt, logger *out, const char *_func, const char *name, int len)
 {
     ::mpt::axis *d;
-    if ((d = mt->cast<::mpt::axis>())) {
+    if ((d = mt->cast< ::mpt::axis>())) {
         return new layout::graph::axis(d);
     }
     object *o;
@@ -159,7 +159,7 @@ static layout::graph::axis *make_axis(metatype *mt, logger *out, const char *_fu
 static layout::graph::world *make_world(metatype *mt, logger *out, const char *_func, const char *name, int len)
 {
     ::mpt::world *d;
-    if ((d = mt->cast<::mpt::world>())) {
+    if ((d = mt->cast< ::mpt::world>())) {
         return new layout::graph::world(d);
     }
     object *o;
@@ -288,7 +288,7 @@ item<layout::graph::axis> *layout::graph::add_axis(axis *from, const char *name,
             if (a == it.reference()) return 0; // deny multiple dimensions sharing same transformation
         }
     }
-    class item<axis> *it;
+    ::mpt::item<axis> *it;
     if ((it = _axes.append(a, name, nlen))) {
         return it;
     }
@@ -305,7 +305,7 @@ item<layout::graph::data> *layout::graph::add_world(world *from, const char *nam
     } else {
         d = new data(w);
     }
-    class item<data> *it;
+    ::mpt::item<data> *it;
     if ((it = _worlds.append(d, name, nlen))) {
         return it;
     }
@@ -315,7 +315,7 @@ item<layout::graph::data> *layout::graph::add_world(world *from, const char *nam
 
 const reference_wrapper<cycle> *layout::graph::cycle(int pos) const
 {
-    static const reference_wrapper<class cycle> def;
+    static const reference_wrapper< ::mpt::cycle> def;
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return 0;
     }
@@ -369,7 +369,7 @@ bool layout::graph::update_transform(int dim)
     if (dim > 2) {
         return false;
     }
-    class item<axis> *it = _axes.get(dim);
+    ::mpt::item<axis> *it = _axes.get(dim);
     axis *a;
 
     if (!it || !(a = it->reference())) {

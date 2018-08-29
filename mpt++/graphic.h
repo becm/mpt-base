@@ -77,7 +77,7 @@ public:
 	
 	void clear();
 protected:
-	typed_array<::mpt::mapping> _bind;
+	typed_array< ::mpt::mapping> _bind;
 };
 
 template<typename T, typename H>
