@@ -29,7 +29,7 @@ int main(int argc, char * const argv[])
 	it->set_name("ax");
 	
 	// can be used for default element lookup
-	if ((it = g.append(new mpt::reference_wrapper<mpt::layout::graph::world>::type))) {
+	if ((it = g.append(new mpt::reference<mpt::layout::graph::world>::type))) {
 		it->set_name("w1");
 	}
 	// initial values for new world

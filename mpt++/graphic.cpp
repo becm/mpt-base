@@ -106,10 +106,10 @@ int graphic::add_layout(layout *lay, bool reuse)
     }
     // insert layout on vacant position
     if (reuse) {
-        reference_wrapper<layout> *b, *e;
+        reference<layout> *b, *e;
         b = _layouts.begin();
         e = _layouts.end();
-        for (reference_wrapper<layout> *c = b; c < e; ++c) {
+        for (reference<layout> *c = b; c < e; ++c) {
             if (c->instance()) {
                 continue;
             }
@@ -130,7 +130,7 @@ int graphic::remove_layout(const layout *lay)
     if (!lay) {
         return BadArgument;
     }
-    reference_wrapper<layout> *r = _layouts.begin();
+    reference<layout> *r = _layouts.begin();
     for (long i = 0, max = _layouts.length(); i < max; ++i) {
         if (r[i].instance() != lay) {
             continue;
@@ -218,7 +218,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     tmp = msg;
     mpt_message_read(&tmp, part + 1, buf);
 
-    reference_wrapper<layout> *r;
+    reference<layout> *r;
     layout *lay = 0;
     if (part) {
         int l = strtol(buf, &end, 0);
@@ -421,7 +421,7 @@ metatype *graphic::item(message &msg, size_t len) const
     }
     int type = typeinfo<group>::id();
     
-    reference_wrapper<layout> *r = _layouts.begin();
+    reference<layout> *r = _layouts.begin();
     for (size_t i = 0, max = _layouts.length(); i < max; ++i) {
         layout *l;
         if (!(l = r[i].instance())) {

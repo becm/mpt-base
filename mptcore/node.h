@@ -23,11 +23,11 @@ MPT_STRUCT(node)
 	~node();
 	
 	void set_metatype(metatype *mt);
-	struct node &operator=(const reference_wrapper<metatype> &);
+	struct node &operator=(const reference<metatype> &);
 	
-	inline const reference_wrapper<metatype> &meta() const
+	inline const reference<metatype> &meta() const
 	{
-		return *((reference_wrapper<metatype> *) &_meta);
+		return *((reference<metatype> *) &_meta);
 	}
 	
 	const char *data(size_t * = 0) const;
@@ -153,9 +153,9 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 inline node::node(metatype *ref) : _meta(ref), next(0), prev(0), parent(0), children(0)
 { }
-inline node &node::operator = (const reference_wrapper<metatype> &other)
+inline node &node::operator = (const reference<metatype> &other)
 {
-    reference_wrapper<metatype> m(other);
+    reference<metatype> m(other);
     if (_meta) _meta->unref();
     _meta = m.detach();
     return *this;

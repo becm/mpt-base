@@ -195,7 +195,7 @@ template <typename T>
 class Pipe
 {
 public:
-	class instance : public reference_wrapper<Queue>::type
+	class instance : public reference<Queue>::type
 	{
 	public:
 		void unref()
@@ -232,7 +232,7 @@ public:
 	{
 		while (pop());
 	}
-	const reference_wrapper<instance> &ref()
+	const reference<instance> &ref()
 	{
 		if (!_d.instance()) {
 			_d.set_instance(new instance);
@@ -315,7 +315,7 @@ public:
 		return span<T>((T *) r.begin(), r.size() / sizeof(T));
 	}
 protected:
-	reference_wrapper<instance> _d;
+	reference<instance> _d;
 };
 
 #endif /* defined(__cplusplus) */

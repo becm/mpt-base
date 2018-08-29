@@ -123,7 +123,7 @@ MPT_STRUCT(array)
 	void *prepend(size_t , const void * = 0);
 	void *insert(size_t , size_t , const void * = 0);
 	void *set(size_t , const void * = 0);
-	bool set(const reference_wrapper<buffer> &);
+	bool set(const reference<buffer> &);
 	
 	int set(value);
 	int set(metatype &);
@@ -139,7 +139,7 @@ protected:
 # define _MPT_ARRAY_TYPE(x)     ::mpt::typed_array<x>
 # define _MPT_UARRAY_TYPE(x)    ::mpt::unique_array<x>
 # define _MPT_REF_ARRAY_TYPE(x) ::mpt::reference_array<x>
-	reference_wrapper<content> _buf;
+	reference<content> _buf;
 #else
 	MPT_STRUCT(buffer) *_buf;
 # define _MPT_ARRAY_TYPE(x)     MPT_STRUCT(array)
@@ -589,7 +589,7 @@ public:
 		_ref = a._ref;
 		return *this;
 	}
-	inline unique_array & operator=(const reference_wrapper<content<T> > &v)
+	inline unique_array & operator=(const reference<content<T> > &v)
 	{
 		this->_ref = v;
 		return *this;
@@ -694,7 +694,7 @@ public:
 		return true;
 	}
 protected:
-	reference_wrapper<content<T> > _ref;
+	reference<content<T> > _ref;
 	
 	static void _data_init(const type_traits *, void *ptr)
 	{
@@ -916,16 +916,16 @@ public:
 
 /*! extendable array for reference types */
 template <typename T>
-class reference_array : public unique_array<reference_wrapper<T> >
+class reference_array : public unique_array<reference<T> >
 {
 public:
-	typedef reference_wrapper<T>* iterator;
+	typedef reference<T>* iterator;
 	
-	inline reference_array(size_t len = 0) : unique_array<reference_wrapper<T> >(len)
+	inline reference_array(size_t len = 0) : unique_array<reference<T> >(len)
 	{ }
 	bool insert(long pos, T *ref)
 	{
-		reference_wrapper<T> *ptr = unique_array<reference_wrapper<T> >::insert(pos);
+		reference<T> *ptr = unique_array<reference<T> >::insert(pos);
 		if (!ptr) {
 			return false;
 		}
@@ -934,7 +934,7 @@ public:
 	}
 	bool set(long pos, T *ref)
 	{
-		reference_wrapper<T> *ptr = unique_array<reference_wrapper<T> >::get(pos);
+		reference<T> *ptr = unique_array<reference<T> >::get(pos);
 		if (!ptr) {
 			return false;
 		}
@@ -943,7 +943,7 @@ public:
 	}
 	long clear(const T *ref = 0) const
 	{
-		reference_wrapper<T> *ptr = this->begin();
+		reference<T> *ptr = this->begin();
 		long elem = 0;
 		
 		for (long i = 0, len = this->length(); i < len; ++i) {
@@ -959,7 +959,7 @@ public:
 	long count() const
 	{
 		long len = 0;
-		for (reference_wrapper<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
+		for (reference<T> *pos =  this->begin(), *to =  this->end(); pos != to; ++pos) {
 			if (pos->instance()) ++len;
 		}
 		return len;
@@ -981,7 +981,7 @@ public:
 	}
 };
 
-class message_store : public logger, public reference_wrapper<metatype>
+class message_store : public logger, public reference<metatype>
 {
 public:
 	enum {

@@ -588,7 +588,7 @@ extern int convert(const void **, int , void *, int);
 
 /*! container for reference type pointer */
 template<typename T>
-class reference_wrapper
+class reference
 {
 public:
 	class type : public T
@@ -610,13 +610,13 @@ public:
 	protected:
 		refcount _ref;
 	};
-	inline reference_wrapper(T *ref = 0) : _ref(ref)
+	inline reference(T *ref = 0) : _ref(ref)
 	{ }
-	inline reference_wrapper(const reference_wrapper &ref) : _ref(0)
+	inline reference(const reference &ref) : _ref(0)
 	{
 		*this = ref;
 	}
-	inline ~reference_wrapper()
+	inline ~reference()
 	{
 		if (_ref) _ref->unref();
 	}
@@ -630,7 +630,7 @@ public:
 		if (_ref) _ref->unref();
 		_ref = ref;
 	}
-	inline reference_wrapper & operator= (reference_wrapper const &ref)
+	inline reference & operator= (reference const &ref)
 	{
 		T *r = ref._ref;
 		if (r == _ref) {
@@ -644,7 +644,7 @@ public:
 		return *this;
 	}
 #if __cplusplus >= 201103L
-	inline reference_wrapper & operator= (reference_wrapper &&ref)
+	inline reference & operator= (reference &&ref)
 	{
 		T *r = ref._ref;
 		ref._ref = 0;
@@ -662,7 +662,7 @@ protected:
 	T *_ref;
 };
 template <typename T>
-class typeinfo<reference_wrapper<T> >
+class typeinfo<reference<T> >
 {
 protected:
 	typeinfo();
@@ -672,7 +672,7 @@ public:
 		return to_reference_id(typeinfo<T>::id());
 	}
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<reference_wrapper <metatype> >::id()
+template <> inline __MPT_CONST_TYPE int typeinfo<reference <metatype> >::id()
 {
 	return TypeMetaRef;
 }
@@ -716,13 +716,13 @@ protected:
 
 #ifdef __cplusplus
 template<typename T>
-class item : public reference_wrapper<T>, public identifier
+class item : public reference<T>, public identifier
 {
 public:
-	item(T *ref = 0) : reference_wrapper<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
+	item(T *ref = 0) : reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
 	{ }
 protected:
-	char _post[32 - sizeof(identifier) - sizeof(reference_wrapper<T>)];
+	char _post[32 - sizeof(identifier) - sizeof(reference<T>)];
 };
 template <typename T>
 class typeinfo<item<T> >
@@ -738,25 +738,25 @@ public:
 
 /* auto-create wrapped reference */
 template <typename T>
-class container : protected reference_wrapper<T>
+class container : protected reference<T>
 {
 public:
-	inline container(T *ref = 0) : reference_wrapper<T>(ref)
+	inline container(T *ref = 0) : reference<T>(ref)
 	{ }
-	inline container(const reference_wrapper<T> &ref) : reference_wrapper<T>(ref)
+	inline container(const reference<T> &ref) : reference<T>(ref)
 	{ }
 	virtual ~container()
 	{ }
-	virtual const reference_wrapper<T> &ref()
+	virtual const reference<T> &ref()
 	{
-		if (!reference_wrapper<T>::_ref) {
-			reference_wrapper<T>::_ref = new typename reference_wrapper<T>::instance;
+		if (!reference<T>::_ref) {
+			reference<T>::_ref = new typename reference<T>::type;
 		}
 		return *this;
 	}
-	inline T *reference() const
+	inline T *instance() const
 	{
-		return reference_wrapper<T>::reference();
+		return reference<T>::instance();
 	}
 };
 

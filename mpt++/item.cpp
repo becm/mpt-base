@@ -71,7 +71,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
         metatype *from = head->_meta;
 
         if (from && from->addref()) {
-            reference_wrapper<metatype> m;
+            reference<metatype> m;
             m.set_instance(from);
             ::mpt::item<metatype> *it;
             if ((it = append(from))) {
@@ -250,21 +250,21 @@ metatype *group::create(const char *type, int nl)
     }
 
     if (nl == 4 && !memcmp("line", type, nl)) {
-        return new reference_wrapper<layout::line>::type;
+        return new reference<layout::line>::type;
     }
     if (nl == 4 && !memcmp("text", type, nl)) {
-        return new reference_wrapper<layout::text>::type;
+        return new reference<layout::text>::type;
     }
     if (nl == 5 && !memcmp("graph", type, nl)) {
-        return new reference_wrapper<layout::graph>::type;
+        return new reference<layout::graph>::type;
     }
     if (nl == 5 && !memcmp("world", type, nl)) {
-        return new reference_wrapper<layout::graph::world>::type;
+        return new reference<layout::graph::world>::type;
     }
     if (nl == 4 && !memcmp("axis", type, nl)) {
-        return new reference_wrapper<layout::graph::axis>::type;
+        return new reference<layout::graph::axis>::type;
     }
-    class TypedAxis : public reference_wrapper<layout::graph::axis>::type
+    class TypedAxis : public reference<layout::graph::axis>::type
     {
     public:
         TypedAxis(int type)

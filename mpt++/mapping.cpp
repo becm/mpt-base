@@ -14,7 +14,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<map<laydest, reference_wrapper<cycle> >::entry>::id()
+template <> int typeinfo<map<laydest, reference<cycle> >::entry>::id()
 {
     static int id = 0;
     if (!id) {
@@ -42,7 +42,7 @@ template <> int typeinfo<laydest>::id()
 // add data mapping
 int graphic::mapping::add(valsrc src, laydest dst, int client)
 {
-    const reference_wrapper<class cycle> *r;
+    const reference<class cycle> *r;
     if (!(r = cycle(dst))) {
         return MissingData;
     }
@@ -74,7 +74,7 @@ void graphic::mapping::clear()
     _d = typed_array<entry>();
 }
 // get cycle reference
-const reference_wrapper<cycle> *graphic::mapping::cycle(laydest dst) const
+const reference<cycle> *graphic::mapping::cycle(laydest dst) const
 {
     // search matching destination
     for (auto &e : _d) {
@@ -95,13 +95,13 @@ const reference_wrapper<cycle> *graphic::mapping::cycle(laydest dst) const
 // set cycle reference
 bool graphic::mapping::set_cycle(laydest dst, class cycle *ref)
 {
-    if (!set(dst, reference_wrapper<class cycle>())) {
+    if (!set(dst, reference<class cycle>())) {
         return false;
     }
     if (!ref) {
         return true;
     }
-    reference_wrapper<class cycle> *ptr;
+    reference<class cycle> *ptr;
     if (!(ptr = get(dst))) {
         return false;
     }
@@ -110,7 +110,7 @@ bool graphic::mapping::set_cycle(laydest dst, class cycle *ref)
 }
 
 // save cycle references
-int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &layouts, hint h)
+int graphic::mapping::set_cycles(const span<const reference<layout> > &layouts, hint h)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {
@@ -146,7 +146,7 @@ int graphic::mapping::set_cycles(const span<const reference_wrapper<layout> > &l
     return total;
 }
 // load cycles references
-int graphic::mapping::get_cycles(const span<const reference_wrapper<layout> > &layouts, hint h)
+int graphic::mapping::get_cycles(const span<const reference<layout> > &layouts, hint h)
 {
     int total = 0;
     for (size_t i = 0, lmax = layouts.size(); i < lmax; ++i) {

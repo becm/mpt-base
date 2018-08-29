@@ -22,20 +22,20 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	map<laydest, reference_wrapper<cycle> > p;
-	reference_wrapper<cycle> c(new reference_wrapper<cycle>::type);
+	map<laydest, reference<cycle> > p;
+	reference<cycle> c(new reference<cycle>::type);
 	
 	p.set(laydest(1,2,3), c);
 	p.set(laydest(1,4,3), c);
 	
-	reference_wrapper<cycle> *cp = p.get(laydest(1,2,3));
+	reference<cycle> *cp = p.get(laydest(1,2,3));
 	
 	if (!cp) {
 		std::cerr << "missing destination" << std::endl;
 		return 1;
 	}
 	
-	typed_array<reference_wrapper<cycle>> r = p.values();
+	typed_array<reference<cycle>> r = p.values();
 	
 	for (auto &x : r) {
 		cycle *m = x.instance();

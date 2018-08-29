@@ -220,7 +220,7 @@ int message_store::entry::set(const char *from, int type, const char *fmt, va_li
     return length();
 }
 
-message_store::message_store(metatype *next) : reference_wrapper<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
+message_store::message_store(metatype *next) : reference<metatype>(next), _act(0), _flags(FlowNormal), _ignore(Debug), _level(0)
 { }
 message_store::~message_store()
 { }

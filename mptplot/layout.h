@@ -456,8 +456,8 @@ public:
 		
 		void unref() __MPT_OVERRIDE;
 		
-		reference_wrapper<class world> world;
-		reference_wrapper<class cycle> cycle;
+		reference<class world> world;
+		reference<class cycle> cycle;
 	};
 	
 	graph(const ::mpt::graph * = 0);
@@ -480,8 +480,8 @@ public:
 	{
 		return _worlds.elements();
 	}
-	virtual bool set_cycle(int , const reference_wrapper<class cycle> &) const;
-	virtual const reference_wrapper<class cycle> *cycle(int) const;
+	virtual bool set_cycle(int , const reference<class cycle> &) const;
+	virtual const reference<class cycle> *cycle(int) const;
 	
 	const ::mpt::transform &transform();
 	
@@ -491,7 +491,7 @@ public:
 	bool update_transform(int dim = -1);
 	
 protected:
-	reference_wrapper<class transform> _gtr;
+	reference<class transform> _gtr;
 	item_array<axis> _axes;
 	item_array<data> _worlds;
 };

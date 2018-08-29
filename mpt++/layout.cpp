@@ -14,9 +14,9 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class reference_wrapper<layout>;
-template class reference_wrapper<layout::line>;
-template class reference_wrapper<layout::text>;
+template class reference<layout>;
+template class reference<layout::line>;
+template class reference<layout::text>;
 
 template <> int typeinfo<layout>::id()
 {

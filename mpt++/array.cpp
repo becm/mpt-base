@@ -200,13 +200,13 @@ array &array::operator= (const array &a)
     return *this;
 }
 // copy buffer reference
-bool array::set(const reference_wrapper<buffer> &a)
+bool array::set(const reference<buffer> &a)
 {
     buffer *b;
     if ((b = a.instance()) && b->typeinfo()) {
         return false;
     }
-    _buf = reinterpret_cast<const reference_wrapper<content> &>(a);
+    _buf = reinterpret_cast<const reference<content> &>(a);
     return true;
 }
 // array size modifier

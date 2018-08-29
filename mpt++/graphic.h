@@ -55,24 +55,24 @@ protected:
 	reference_array<layout> _layouts;
 };
 
-class graphic::mapping : map<laydest, reference_wrapper<cycle> >
+class graphic::mapping : map<laydest, reference<cycle> >
 {
 public:
 	int add(valsrc , laydest , int = 0);
 	int del(const valsrc *, const laydest * = 0, int = 0) const;
 	typed_array<laydest> destinations(valsrc , int = 0) const;
 	
-	inline const map<laydest, reference_wrapper<class cycle> > &targets() const
+	inline const map<laydest, reference<class cycle> > &targets() const
 	{
 		return *this;
 	}
 	// direct cycle access
-	const reference_wrapper<class cycle> *cycle(laydest) const;
+	const reference<class cycle> *cycle(laydest) const;
 	bool set_cycle(laydest, class cycle *);
 	
 	// modify target elements
-	int set_cycles(const span<const reference_wrapper<layout> > &, hint = hint());
-	int get_cycles(const span<const reference_wrapper<layout> > &, hint = hint());
+	int set_cycles(const span<const reference<layout> > &, hint = hint());
+	int get_cycles(const span<const reference<layout> > &, hint = hint());
 	int clear_cycles(hint = hint()) const;
 	
 	void clear();

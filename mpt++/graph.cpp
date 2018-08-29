@@ -14,11 +14,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class reference_wrapper<layout::graph>;
-template class reference_wrapper<layout::graph::axis>;
-template class reference_wrapper<layout::graph::world>;
-template class reference_wrapper<layout::graph::data>;
-template class reference_wrapper<class layout::graph::transform>;
+template class reference<layout::graph>;
+template class reference<layout::graph::axis>;
+template class reference<layout::graph::world>;
+template class reference<layout::graph::data>;
+template class reference<class layout::graph::transform>;
 
 template <> int typeinfo<layout::graph>::id()
 {
@@ -313,9 +313,9 @@ item<layout::graph::data> *layout::graph::add_world(world *from, const char *nam
     return 0;
 }
 
-const reference_wrapper<cycle> *layout::graph::cycle(int pos) const
+const reference<cycle> *layout::graph::cycle(int pos) const
 {
-    static const reference_wrapper< ::mpt::cycle> def;
+    static const reference< ::mpt::cycle> def;
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return 0;
     }
@@ -324,7 +324,7 @@ const reference_wrapper<cycle> *layout::graph::cycle(int pos) const
         return 0;
     }
     if (!d->cycle.instance()) {
-        class cycle *c = new reference_wrapper<class cycle>::type;
+        class cycle *c = new reference<class cycle>::type;
         d->cycle.set_instance(c);
         world *w;
         if ((w = d->world.instance())) {
@@ -334,7 +334,7 @@ const reference_wrapper<cycle> *layout::graph::cycle(int pos) const
     }
     return &d->cycle;
 }
-bool layout::graph::set_cycle(int pos, const reference_wrapper<class cycle> &cyc) const
+bool layout::graph::set_cycle(int pos, const reference<class cycle> &cyc) const
 {
     if (pos < 0 && (pos += _worlds.length()) < 0) {
         return false;

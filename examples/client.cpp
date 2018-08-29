@@ -21,20 +21,20 @@
 # define mtrace()
 #endif
 
-class MyClient : public mpt::client
+class client : public mpt::client
 {
 public:
-	MyClient();
-	virtual ~MyClient() { }
+	client();
+	virtual ~client() { }
 	
 	void unref() __MPT_OVERRIDE;
 	int process(uintptr_t , mpt::iterator *) __MPT_OVERRIDE;
 	
 	int conv(int , void *) const __MPT_OVERRIDE;
 protected:
-	mpt::reference_wrapper<mpt::metatype> _mt;
+	mpt::reference<mpt::metatype> _mt;
 };
-MyClient::MyClient()
+client::client()
 {
 	mpt::metatype *mt = mpt::mpt_output_remote();
 	mpt::property pr;
@@ -46,15 +46,15 @@ MyClient::MyClient()
 	}
 	_mt.set_instance(mt);
 }
-int MyClient::process(uintptr_t , mpt::iterator *)
+int client::process(uintptr_t , mpt::iterator *)
 {
 	return mpt::event::Terminate;
 }
-void MyClient::unref()
+void client::unref()
 {
 	delete this;
 }
-int MyClient::conv(int type, void *ptr) const
+int client::conv(int type, void *ptr) const
 {
 	metatype *mt;
 	int ret;
@@ -89,7 +89,7 @@ int main(int argc, char * const argv[])
 	if (mpt::mpt_notify_config(&n, 0) < 0) {
 		return 2;
 	}
-	MyClient c;
+	client c;
 	mpt::dispatch d;
 	d.set_handler(mpt::msgtype::Command, do_command, &c);
 	n.set_handler(&d);
