@@ -5,7 +5,7 @@ LIB = mpt++
 INC = .. ../mptcore ../mptplot ../mptio
 #
 # header to export
-HEADER = graphic.h
+HEADER = graphic.h io.h
 #
 # shared library options
 SHLIB_MAJOR = 1
@@ -30,7 +30,7 @@ include ../mpt.lib.mk
 ${NEED_CXX_11} : CPPFLAGS+=-std=c++11
 #
 # additional dependencies
-graphic.o mapping.o : ${HEADER}
+graphic.o mapping.o io_* : ${HEADER}
 libinfo.o : ../libinfo.h ../version.h
 #
 # remove library info object

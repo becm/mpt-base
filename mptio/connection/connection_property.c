@@ -14,6 +14,7 @@
 #include "output.h"
 #include "convert.h"
 #include "message.h"
+#include "event.h"
 
 #include "stream.h"
 

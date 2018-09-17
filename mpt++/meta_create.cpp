@@ -9,7 +9,7 @@
 #include "meta.h"
 #include "convert.h"
 
-#include "stream.h"
+#include "io.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -52,8 +52,8 @@ metatype *metatype::create(value val)
         if (m) return m;
     }
     // create buffer-backed text metatype
-    Buffer *b;
-    if ((b = new mpt::Buffer)) {
+    io::buffer *b;
+    if ((b = new mpt::io::buffer)) {
         if (b->push(len, src) < 0) {
             b->unref();
             return 0;

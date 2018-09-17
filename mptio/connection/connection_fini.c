@@ -5,6 +5,8 @@
 #include <stdlib.h>
 
 #include "meta.h"
+#include "event.h"
+
 #include "stream.h"
 
 #include "connection.h"

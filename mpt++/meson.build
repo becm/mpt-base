@@ -3,11 +3,11 @@
 
 cxx_src = files(
   'array.cpp',
-  'buffer.cpp',
   'client.cpp',
   'config.cpp',
   'event.cpp',
   'identifier.cpp',
+  'io.cpp', 'io_buffer.cpp', 'io_queue.cpp',
   'logger.cpp',
   'makeid.cpp',
   'message.cpp',
@@ -48,6 +48,7 @@ endif
 
 if with_io
   cxx_src += files(
+    'io_stream.cpp',
     'notify.cpp',
     'stream.cpp'
   )
@@ -55,7 +56,7 @@ if with_io
 endif
 
 if not meson.is_subproject()
-  install_headers('graphic.h', subdir : 'mpt')
+  install_headers(['graphic.h', 'io.h'], subdir : 'mpt')
 endif
 
 if with_shared

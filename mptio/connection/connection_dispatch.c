@@ -15,6 +15,7 @@
 #include "meta.h"
 #include "output.h"
 #include "message.h"
+#include "event.h"
 
 #include "stream.h"
 

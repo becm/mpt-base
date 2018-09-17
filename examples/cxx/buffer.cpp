@@ -8,7 +8,9 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(stream.h)
+#include MPT_INCLUDE(queue.h)
+
+#include MPT_INCLUDE(io.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -29,7 +31,7 @@ extern int main(int argc, char * const argv[])
 {
 	mtrace();
 	
-	mpt::Buffer buf;
+	mpt::io::buffer buf;
 	mpt::typed_array<double> d;
 	
 	d.insert(3, 4);
@@ -37,7 +39,7 @@ extern int main(int argc, char * const argv[])
 	std::cout << type(d) << '>' << type(d.elements());
 	std::cout << ": " << d.elements() << std::endl;
 	
-	mpt::Pipe<mpt::array> aq;
+	mpt::pipe<mpt::array> aq;
 	mpt::array tst;
 	
 	tst.append(std::strlen(txt), txt);

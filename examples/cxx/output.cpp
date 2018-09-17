@@ -7,6 +7,7 @@
 #endif
 
 #include MPT_INCLUDE(stream.h)
+#include MPT_INCLUDE(io.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -20,7 +21,7 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	Stream *out = new Stream;
+	io::stream *out = new io::stream;
 	
 	out->open("/dev/stdout", "w");
 	

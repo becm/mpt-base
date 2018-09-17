@@ -4,9 +4,9 @@
 
 #include <errno.h>
 
-#include "array.h"
 #include "output.h"
 
+#include "event.h"
 #include "message.h"
 
 #include "connection.h"

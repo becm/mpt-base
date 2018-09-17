@@ -13,9 +13,9 @@
 
 #include "meta.h"
 
-#include "stream.h"
+#include "../mptio/stream.h"
 
-#include "connection.h"
+#include "io.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -67,21 +67,21 @@ bool socket::set(const value *val)
 }
 
 // socket class
-Socket::Socket(struct socket *from)
+io::socket::socket(struct ::mpt::socket *from)
 {
     if (!from) return;
-    *static_cast<socket *>(this) = *from;
-    new (from) socket;
+    *static_cast<::mpt::socket *>(this) = *from;
+    new (from) ::mpt::socket;
 }
-Socket::~Socket()
+io::socket::~socket()
 { }
 
-int Socket::assign(const value *val)
+int io::socket::assign(const value *val)
 {
-    return (socket::set(val)) ? (val ? 1 : 0) : BadOperation;
+    return (::mpt::socket::set(val)) ? (val ? 1 : 0) : BadOperation;
 }
 
-reference<Stream> Socket::accept()
+reference<io::stream> io::socket::accept()
 {
     int sock;
 
@@ -93,9 +93,9 @@ reference<Stream> Socket::accept()
     if (_mpt_stream_setfile(&info, sock, sock) < 0) {
         return 0;
     }
-    info.set_flags(stream::Buffer);
+    info.set_flags(::mpt::stream::Buffer);
 
-    class Stream *s = new class Stream(&info);
+    class io::stream *s = new io::stream(&info);
 
     return s;
 }

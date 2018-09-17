@@ -10,17 +10,13 @@
 #include "array.h"
 #include "queue.h"
 
-#ifdef __cplusplus
-# include "object.h"
-# include "notify.h"
-# include "output.h"
-#endif
-
 struct sockaddr;
 
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(message);
+MPT_STRUCT(command);
+
 MPT_STRUCT(socket);
 
 MPT_INTERFACE(metatype);
@@ -55,6 +51,9 @@ MPT_STRUCT(streaminfo)
 
 
 #ifdef __cplusplus
+/* forward declare stream user */
+namespace io { class stream; }
+
 MPT_STRUCT(stream)
 {
 # define MPT_STREAMFLAG(x) x
@@ -96,7 +95,7 @@ enum MPT_STREAMFLAG(Flags) {
 	
 	bool open(const char *, const char * = "r");
     protected:
-	friend class Stream;
+	friend class io::stream;
 #else
 MPT_STRUCT(stream)
 {
@@ -169,76 +168,6 @@ extern int mpt_stream_flush(MPT_STRUCT(stream) *);
 extern int mpt_stream_close(MPT_STRUCT(stream) *);
 
 __MPT_EXTDECL_END
-
-#ifdef __cplusplus
-struct msgtype;
-struct message;
-
-
-/* metatype extension to encode array */
-class Buffer : public metatype, public iterator, public IODevice, public encode_array
-{
-public:
-	Buffer(array const& = array(0));
-	virtual ~Buffer();
-	
-	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) const __MPT_OVERRIDE;
-	Buffer *clone() const __MPT_OVERRIDE;
-	
-	int get(int , void *) __MPT_OVERRIDE;
-	int advance() __MPT_OVERRIDE;
-	int reset() __MPT_OVERRIDE;
-	
-	ssize_t write(size_t , const void *, size_t = 1) __MPT_OVERRIDE;
-	ssize_t read(size_t , void *, size_t = 1) __MPT_OVERRIDE;
-	
-	int64_t pos() __MPT_OVERRIDE;
-	bool seek(int64_t) __MPT_OVERRIDE;
-	span<uint8_t> peek(size_t) __MPT_OVERRIDE;
-};
-
-class Stream : public input, public object, public output, public IODevice
-{
-public:
-	Stream(const streaminfo * = 0);
-	virtual ~Stream();
-	
-	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) const __MPT_OVERRIDE;
-	
-	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
-	
-	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
-	int sync(int = -1) __MPT_OVERRIDE;
-	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
-	
-	int next(int) __MPT_OVERRIDE;
-	int dispatch(event_handler_t , void *) __MPT_OVERRIDE;
-	
-	ssize_t write(size_t , const void *, size_t part = 1) __MPT_OVERRIDE;
-	ssize_t read(size_t , void *, size_t part = 1) __MPT_OVERRIDE;
-	int64_t pos() __MPT_OVERRIDE;
-	bool seek(int64_t) __MPT_OVERRIDE;
-	int getchar() __MPT_OVERRIDE;
-	
-	bool open(const char *, const char * = "r");
-	bool open(void *, size_t , int = stream::Read);
-	
-	virtual void close();
-	
-	class dispatch;
-protected:
-	stream *_srm;
-	command::array _wait;
-	reference<metatype> _ctx;
-	uintptr_t _cid;
-	int _inputFile;
-	uint8_t _idlen;
-};
-template <> int typeinfo<Stream>::id();
-#endif /* C++ */
 
 __MPT_NAMESPACE_END
 

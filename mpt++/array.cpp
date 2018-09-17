@@ -8,8 +8,8 @@
 
 #include "message.h"
 #include "convert.h"
+#include "meta.h"
 
-#include "../mptio/stream.h"
 
 #include "array.h"
 

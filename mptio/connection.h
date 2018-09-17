@@ -6,14 +6,17 @@
 #ifndef _MPT_CONNECTION_H
 #define _MPT_CONNECTION_H  @INTERFACE_VERSION@
 
-#include "event.h"
+#include "array.h"
 
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(property);
+MPT_STRUCT(message);
 
 /* collection solver runtime data */
 #ifdef __cplusplus
+struct command;
+
 MPT_STRUCT(socket)
 {
 public:
@@ -57,18 +60,6 @@ MPT_STRUCT(socket)
 template<> inline __MPT_CONST_TYPE int typeinfo<socket>::id() {
 	return socket::Type;
 }
-
-class Stream;
-class Socket : public socket
-{
-public:
-	Socket(socket * = 0);
-	virtual ~Socket();
-	
-	int assign(const value *);
-	
-	virtual reference<class Stream> accept();
-};
 #endif
 
 MPT_STRUCT(outdata)
@@ -146,10 +137,13 @@ extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void
 extern int mpt_connection_await(MPT_STRUCT(connection) *, int (*)(void *, const MPT_STRUCT(message) *), void *);
 /* handle connection input */
 extern int mpt_connection_next(MPT_STRUCT(connection) *, int);
-/* dispatch event to handler */
-extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(event_handler) cmd, void *arg);
 /* push log message to connection */
 extern int mpt_connection_log(MPT_STRUCT(connection) *, const char *, int , const char *);
+
+#ifdef _MPT_EVENT_H
+/* dispatch event to handler */
+extern int mpt_connection_dispatch(MPT_STRUCT(connection) *, MPT_TYPE(event_handler) cmd, void *arg);
+#endif
 
 __MPT_EXTDECL_END
 

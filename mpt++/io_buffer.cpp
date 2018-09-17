@@ -2,53 +2,50 @@
  * MPT C++ buffer implementation
  */
 
-#include <cerrno>
-
 #include <sys/uio.h>
 
 #include "message.h"
-#include "convert.h"
-
-#include "../mptio/stream.h"
 
 #include "array.h"
+
+#include "io.h"
 
 __MPT_NAMESPACE_BEGIN
 
 // buffer instance
-Buffer::Buffer(array const &a)
+io::buffer::buffer(array const &a)
 {
     _d = a;
     _state.done = _d.length();
 }
-Buffer::~Buffer()
+io::buffer::~buffer()
 { }
 // reference interface
-void Buffer::unref()
+void io::buffer::unref()
 {
     delete this;
 }
 // metatype interface
-Buffer *Buffer::clone() const
+io::buffer *io::buffer::clone() const
 {
     if (_enc) {
         if (_state.scratch || _state._ctx) {
             return 0;
         }
     }
-    Buffer *b = new Buffer(_d);
+    io::buffer *b = new io::buffer(_d);
     b->_state = _state;
     b->_enc = _enc;
     return b;
 }
-int Buffer::conv(int type, void *ptr) const
+int io::buffer::conv(int type, void *ptr) const
 {
-    int me = typeinfo<IODevice>::id();
+    int me = typeinfo<io::interface>::id();
     if (me < 0) {
         me = metatype::Type;
     }
     else if (type == to_pointer_id(me)) {
-        if (ptr) *static_cast<const IODevice **>(ptr) = this;
+        if (ptr) *static_cast<const io::interface **>(ptr) = this;
         return me;
     }
     if (!type) {
@@ -84,10 +81,10 @@ int Buffer::conv(int type, void *ptr) const
     return BadType;
 }
 // iterator interface
-int Buffer::get(int type, void *ptr)
+int io::buffer::get(int type, void *ptr)
 {
     if (!type) {
-        int me = typeinfo<IODevice>::id();
+        int me = typeinfo<io::interface>::id();
         mpt_slice_get(0, type, ptr);
         return me < 0 ? array::Type : me;
     }
@@ -100,10 +97,10 @@ int Buffer::get(int type, void *ptr)
     if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
         return type;
     }
-    int me = typeinfo<IODevice>::id();
+    int me = typeinfo<io::interface>::id();
     return me < 0 ? metatype::Type : me;
 }
-int Buffer::advance()
+int io::buffer::advance()
 {
     if (!_state.done) {
         return MissingData;
@@ -116,14 +113,14 @@ int Buffer::advance()
     shift((end + 1) - d.begin());
     return _state.done ? 's' : 0;
 }
-int Buffer::reset()
+int io::buffer::reset()
 {
     _state.done = _d.length() - _state.scratch;
     return _state.done;
 }
 
 // I/O device interface
-ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
+ssize_t io::buffer::read(size_t nblk, void *dest, size_t esze)
 {
     span<uint8_t> d = data();
     if (!esze) {
@@ -147,7 +144,7 @@ ssize_t Buffer::read(size_t nblk, void *dest, size_t esze)
 
     return nblk;
 }
-ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
+ssize_t io::buffer::write(size_t nblk, const void *from, size_t esze)
 {
     if (!nblk) {
         return push(0, 0);
@@ -171,12 +168,12 @@ ssize_t Buffer::write(size_t nblk, const void *from, size_t esze)
     }
     return left - nblk;
 }
-int64_t Buffer::pos()
+int64_t io::buffer::pos()
 {
     size_t len = _state.done + _state.scratch;
     return _d.length() - len;
 }
-bool Buffer::seek(int64_t pos)
+bool io::buffer::seek(int64_t pos)
 {
     if (pos >= 0) {
         if ((size_t) pos > _state.done) {
@@ -195,7 +192,7 @@ bool Buffer::seek(int64_t pos)
 
     return true;
 }
-span<uint8_t> Buffer::peek(size_t)
+span<uint8_t> io::buffer::peek(size_t)
 {
     return encode_array::data();
 }

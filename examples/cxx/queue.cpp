@@ -10,6 +10,7 @@
 #endif
 
 #include MPT_INCLUDE(queue.h)
+#include MPT_INCLUDE(io.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -17,7 +18,7 @@
 # define mtrace()
 #endif
 
-class MyQueue : public mpt::Queue
+class MyQueue : public mpt::io::queue
 {
 public:
 	void add(const char *, int = -1);
@@ -27,11 +28,11 @@ public:
 
 void MyQueue::add(const char *txt, int len)
 {
-	Queue::push((const void *) txt, (len < 0) ? std::strlen(txt) : len);
+	mpt::io::queue::push((const void *) txt, (len < 0) ? std::strlen(txt) : len);
 }
 void MyQueue::add(char c)
 {
-	Queue::push(&c, 1);
+	mpt::io::queue::push(&c, 1);
 }
 
 mpt::span<const char> MyQueue::string()
@@ -45,7 +46,7 @@ extern int main(int argc, char * const argv[])
 {
 	mtrace();
 	
-	mpt::Pipe<char> p;
+	mpt::pipe<char> p;
 	p.push('a');
 	p.push('l');
 	p.push('l');
@@ -54,17 +55,17 @@ extern int main(int argc, char * const argv[])
 	std::cout << p.elements() << std::endl;
 	
 	
-	mpt::Pipe<int> i(5, 8);
+	mpt::pipe<int> i(5, 8);
 	std::cout << i.elements() << std::endl;
 	
-	mpt::Pipe<char> cq('a', 4);
+	mpt::pipe<char> cq('a', 4);
 	cq.push('b');
 	std::cout << cq.elements() << std::endl;
 	
 	
 	MyQueue qu;
 	qu.prepare(456);
-	mpt::Queue *raw = &qu;
+	mpt::io::queue *raw = &qu;
 	
 	raw->push("hallo", 5);
 	
