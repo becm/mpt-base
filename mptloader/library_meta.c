@@ -32,7 +32,7 @@ static void _proxy_unref(MPT_INTERFACE(instance) *in)
 		return;
 	}
 	if ((in = mp->ptr)) {
-		int type = mp->fmt[0];
+		int type = mp->sym.type;
 		if (MPT_type_isMetatype(type)) {
 			in->_vptr->unref(in);
 		}
@@ -57,19 +57,18 @@ static int _proxy_conv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 		if (ptr) *((void **) ptr) = (char *) mp->fmt;
 		return mt;
 	}
-	if (type == mt) {
+	if (type == MPT_type_pointer(mt)) {
 		if (ptr) *((void **) ptr) = mp->ptr;
-		return mp->fmt[0];
+		return mt;
 	}
 	if (type == 's') {
 		if (ptr) *((const void **) ptr) = mp + 1;
-		return mp->fmt[0];
+		return mt;
 	}
 	if (!MPT_type_isMetatype(mt)) {
 		return MPT_ERROR(BadType);
 	}
-	if (type == MPT_type_pointer(mt)
-	 || type == MPT_ENUM(TypeMetaPtr)) {
+	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = mp->ptr;
 		return mt;
 	}
