@@ -61,20 +61,20 @@ public:
 	class const_iterator;
 	class attribute;
 	
-	class iterator begin();
-	class iterator end();
+	iterator begin();
+	iterator end();
 	
-	class const_iterator const_begin() const;
-	class const_iterator const_end() const;
-	class const_iterator begin() const;
-	class const_iterator end() const;
+	const_iterator const_begin() const;
+	const_iterator const_end() const;
+	const_iterator begin() const;
+	const_iterator end() const;
 	
 	bool set(const char *, const value &, logger * = logger::default_instance());
 	bool set(const object &, logger * = logger::default_instance());
 	
 	/* get property by name/position */
-	object::attribute operator [](const char *);
-	object::attribute operator [](int);
+	attribute operator [](const char *);
+	attribute operator [](int);
 	
 	/* get properties from node list */
 	const node *set(const node *, property_handler_t , void *);

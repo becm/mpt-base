@@ -13,7 +13,7 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(libhandle)
 {
 #ifdef __cplusplus
-	inline libhandle() : _ref(0), lib(0)
+	inline libhandle() : _ref(0), addr(0)
 	{ }
 protected:
 	~libhandle();
