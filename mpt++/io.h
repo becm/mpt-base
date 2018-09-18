@@ -8,14 +8,13 @@
 
 
 #include "meta.h"
+#include "array.h"
 
 #ifdef _MPT_STREAM_H
 # include "object.h"
 # include "notify.h"
 # include "output.h"
 #endif
-
-#include "connection.h"
 
 __MPT_NAMESPACE_BEGIN
 
@@ -26,6 +25,8 @@ namespace io {
 /*! interface to raw device */
 class interface
 {
+protected:
+	inline ~interface() { }
 public:
 	virtual ssize_t write(size_t , const void *, size_t = 1) = 0;
 	virtual ssize_t read(size_t , void *, size_t = 1) = 0;
@@ -34,9 +35,6 @@ public:
 	virtual bool seek(int64_t);
 	virtual span<uint8_t> peek(size_t);
 	virtual int getchar();
-protected:
-	~interface()
-	{ }
 };
 
 /* metatype extension to encode array */
@@ -107,6 +105,7 @@ protected:
 class stream;
 #endif
 
+#ifdef _MPT_CONNECTION_H
 class socket : public ::mpt::socket
 {
 public:
@@ -117,6 +116,9 @@ public:
 	
 	virtual reference<class stream> accept();
 };
+#else
+class socket;
+#endif
 
 
 #ifdef _MPT_QUEUE_H
@@ -143,6 +145,8 @@ public:
 protected:
 	::mpt::queue _d;
 };
+#else
+class queue;
 #endif
 
 } /* end I/O namespace */

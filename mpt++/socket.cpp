@@ -14,6 +14,7 @@
 #include "meta.h"
 
 #include "../mptio/stream.h"
+#include "../mptio/connection.h"
 
 #include "io.h"
 
