@@ -2,13 +2,16 @@
 cmake_minimum_required(VERSION 2.6)
 
 # subdirectory sources
-set(sources mapping.c)
-foreach(dir IN ITEMS layout output values)
+set(sources
+  mapping.c
+  rawdata_create.c
+  rawdata_typeid.c
+)
+foreach(dir IN ITEMS history layout output values)
   aux_source_directory(${dir} sources)
-  
 endforeach(dir)
 
-set(headers ${headers} layout.h values.h)
+set(headers history.h layout.h values.h)
 
 add_library(mptplot SHARED ${sources} libinfo.c)
 set_target_properties(mptplot PROPERTIES VERSION 1.0.0 SOVERSION 1)
