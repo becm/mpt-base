@@ -24,13 +24,12 @@ foreach(dir IN ITEMS ${subdirs})
   set(headers ${dir}.h ${headers})
 endforeach(dir)
 
-# metatype operations defined in core.h
+# operations defined in core.h
 aux_source_directory(misc sources)
-aux_source_directory(log sources)
 
 add_library(mptcore SHARED ${sources} libinfo.c)
 set_target_properties(mptcore PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_include_directories(mptcore PRIVATE .. .)
 
-install(TARGETS mptcore  DESTINATION ${MPT_INSTALL_LIB} EXPORT mpt-targets)
+install(TARGETS mptcore EXPORT mpt-targets DESTINATION ${MPT_INSTALL_LIB})
 install(FILES ${headers} DESTINATION ${MPT_INSTALL_INCLUDE}/mpt)
