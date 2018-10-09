@@ -52,6 +52,15 @@ layout::~layout()
     mpt_string_set(&_alias, 0, 0);
     delete _parse;
 }
+// metatype interface
+int layout::conv(int type, void *ptr) const
+{
+    if (type == to_pointer_id(object::Type)) {
+        if (ptr) *static_cast<const object **>(ptr) = this;
+        return typeinfo<group>::id();
+    }
+    return collection::conv(type, ptr);
+}
 // object interface
 int layout::property(struct property *pr) const
 {
@@ -188,7 +197,7 @@ bool layout::load(logger *out)
     group_relation self(*this);
     clear();
     // add items to layout
-    if (!add_items(conf, &self, out)) {
+    if (!add_items(*this, conf, &self, out)) {
         return false;
     }
     // create graphic representations

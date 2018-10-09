@@ -22,22 +22,21 @@ int main(int argc, char * const argv[])
 	
 	mpt::collection c;
 	mpt::layout::graph g;
+	mpt::identifier id;
 	
-	mpt::item<mpt::metatype> *it;
-	
-	it = c.append(new mpt::layout::graph::axis);
-	it->set_name("ax");
+	id.set_name("ax");
+	c.append(&id, new mpt::layout::graph::axis);
 	
 	// can be used for default element lookup
-	if ((it = g.append(new mpt::reference<mpt::layout::graph::world>::type))) {
-		it->set_name("w1");
-	}
+	id.set_name("w1");
+	g.append(&id, new mpt::reference<mpt::layout::graph::world>::type);
+	
 	// initial values for new world
 	mpt::world w;
 	mpt::mpt_color_parse(&w.color, "red");
 	// no support for refcount, name lookup required
-	it = g.append(new mpt::layout::graph::world(&w));
-	it->set_name("w2");
+	id.set_name("w2");
+	g.append(&id, new mpt::layout::graph::world(&w));
 	
 	// look for specific elements by name
 	if (argc > 1) {

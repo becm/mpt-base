@@ -289,24 +289,21 @@ private:
 	attribute & operator= (const attribute &);
 };
 
-struct node;
 /*! interface to generic groups of metatypes elements */
-class group : public object
+class group
 {
 public:
-	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
-	
 	virtual const ::mpt::item<metatype> *item(size_t pos) const;
-	virtual ::mpt::item<metatype> *append(metatype *);
-	virtual size_t clear(const instance * = 0);
+	virtual metatype *create(const char *, int = -1);
+	virtual int append(const identifier *, metatype *);
+	virtual unsigned long clear(const instance * = 0);
 	virtual bool bind(const relation &from, logger * = logger::default_instance());
-	
-	bool add_items(node *head, const relation *from = 0, logger * = logger::default_instance());
 protected:
 	inline ~group() {}
-	virtual metatype *create(const char *, int = -1);
 };
+
+struct node;
+bool add_items(metatype &, const node *head, const relation *from = 0, logger * = logger::default_instance());
 
 /*! Relation implemetation using Group as current element */
 class group_relation : public relation

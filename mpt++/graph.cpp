@@ -101,6 +101,10 @@ int layout::graph::conv(int type, void *ptr) const
         if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
         return me;
     }
+    if (type == to_pointer_id(object::Type)) {
+        if (ptr) *static_cast<const object **>(ptr) = this;
+        return ::mpt::graph::Type;
+    }
     if (type == to_pointer_id(::mpt::graph::Type)) {
         if (ptr) *static_cast<const ::mpt::graph **>(ptr) = this;
         return object::Type;

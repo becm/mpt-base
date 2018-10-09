@@ -26,31 +26,12 @@ template <> int typeinfo<group>::id()
     }
     return id;
 }
-// object interface for group
-int group::property(struct property *pr) const
-{
-    if (!pr) {
-        return typeinfo<group>::id();
-    }
-    if (!pr->name || *pr->name) {
-        return BadArgument;
-    }
-    pr->name = "group";
-    pr->desc = "mpt item group";
-    pr->val.fmt = 0;
-    pr->val.ptr = 0;
-    return 0;
-}
-int group::set_property(const char *, const metatype *)
-{
-    return BadOperation;
-}
 // generic item group
 size_t group::clear(const instance *)
 {
     return 0;
 }
-item<metatype> *group::append(metatype *)
+int group::append(const identifier *, metatype *)
 {
     return 0;
 }
@@ -63,24 +44,29 @@ bool group::bind(const relation &, logger *)
     return true;
 }
 
-bool group::add_items(node *head, const relation *relation, logger *out)
+bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
 {
-    const char _func[] = "mpt::group::add_items";
+    const char _func[] = "mpt::add_items";
+    group *grp = to.cast<group>();
+    object *obj = to.cast<object>();
+    
+    // no assignable target
+    if (!grp && !obj) {
+        return true;
+    }
 
     for (; head; head = head->next) {
         metatype *from = head->_meta;
 
-        if (from && from->addref()) {
+        if (grp && from && from->addref()) {
             reference<metatype> m;
             m.set_instance(from);
-            ::mpt::item<metatype> *it;
-            if ((it = append(from))) {
+            if (grp->append(&head->ident, from) < 0) {
                 m.detach();
-                it->set_name(head->ident.name());
             }
             else if (out) {
                 out->message(_func, out->Warning, "%s %p: %s",
-                             MPT_tr("group"), this, MPT_tr("failed to add object"));
+                             MPT_tr("group"), grp, MPT_tr("failed to add object"));
             }
             continue;
         }
@@ -95,11 +81,27 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             return false;
         }
         // set property
-        value val;
-        if (from && (val.ptr = mpt_meta_data(from))) {
-            if (set(name, val, out)) {
+        if (obj) {
+            if (!grp) {
+                if (obj->set_property(name, from) >= 0) {
+                    continue;
+                }
+            }
+            if (from) {
+                value val;
+                const char *data;
+                
+                if (from->conv(value::Type, &val) >= 0) {
+                    if (obj->set(name, val, out)) {
+                        continue;
+                    }
+                }
+                data = mpt_meta_data(from);
+                obj->set(name, data, out);
                 continue;
             }
+        }
+        if (!grp) {
             continue;
         }
         // get item type
@@ -115,7 +117,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             continue;
         }
         // create item
-        if (!(from = create(name, len))) {
+        if (!(from = grp->create(name, len))) {
             if (out) {
                 out->message(_func, out->Warning, "%s: %s",
                              MPT_tr("invalid item type"), std::string(name, len).c_str());
@@ -134,7 +136,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             continue;
         }
         // name conflict on same level
-        if (group_relation(*this).find(from->type(), name, len)) {
+        if (group_relation(*grp).find(from->type(), name, len)) {
             if (out) {
                 out->message(_func, out->Warning, "%s: %s",
                              MPT_tr("conflicting item name"), std::string(name, len).c_str());
@@ -149,7 +151,7 @@ bool group::add_items(node *head, const relation *relation, logger *out)
         while ((name = mpt_convert_key(&pos, 0, &len))) {
             metatype *curr;
             if (relation) curr = relation->find(from->type(), name, len);
-            else curr = group_relation(*this).find(from->type(), name, len);
+            else curr = group_relation(*grp).find(from->type(), name, len);
             if (!curr) {
                 if (out) {
                     out->message(_func, out->Error, "%s: '%s': %s",
@@ -171,8 +173,15 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             return false;
         }
         // add item to group
-        ::mpt::item<metatype> *ni = append(from);
-        if (!ni) {
+        identifier id;
+        if (!id.set_name(ident, ilen)) {
+            if (out) {
+                out->message(_func, out->Error, "%s: %s",
+                             MPT_tr("unable add item"), std::string(ident, ilen).c_str());
+            }
+            continue;
+        }
+        if (grp->append(&id, from) < 0) {
             from->unref();
             if (out) {
                 out->message(_func, out->Error, "%s: %s",
@@ -180,62 +189,29 @@ bool group::add_items(node *head, const relation *relation, logger *out)
             }
             continue;
         }
-        ni->set_name(ident, ilen);
-
         // set properties and subitems
-        if (!head->children) continue;
+        if (!head->children) {
+            continue;
+        }
 
         // process child items
-        group *ig;
-        if ((ig = from->cast<group>())) {
-            if (!relation) {
-                if (!(ig->add_items(head->children, relation, out))) {
-                    return false;
-                }
-                continue;
+        group *ig = from->cast<group>();
+        
+        if (!from->cast<object>()) {
+            if (out) {
+                out->message(_func, out->Warning, "%s (%p): %s",
+                             name, from, MPT_tr("element not an object"));
             }
-            group_relation rel(*ig, relation);
-            if (!(ig->add_items(head->children, &rel, out))) {
+        }
+        if (!relation || !ig) {
+            if (!(add_items(*from, head->children, 0, out))) {
                 return false;
             }
             continue;
         }
-        object *obj;
-        if (!(obj = from->cast<object>())) {
-            if (out && head->children) {
-                out->message(_func, out->Warning, "%s (%p): %s",
-                             name, from, MPT_tr("element not an object"));
-            }
-            continue;
-        }
-        // load item properties
-        for (node *sub = head->children; sub; sub = sub->next) {
-            metatype *mt;
-            const char *data;
-
-            if (!(mt = sub->_meta)) {
-                continue;
-            }
-            // skip invalid name
-            if (!(name = mpt_node_ident(sub)) || !*name) {
-                continue;
-            }
-            // try value conversion
-            value val;
-            if (mt->conv(value::Type, &val) >= 0) {
-                if (obj->set(name, val, out)) {
-                    continue;
-                }
-            }
-            if (mt->conv('s', &data) >= 0) {
-                if (obj->set(name, data, out)) {
-                    continue;
-                }
-            }
-            if (out) {
-                out->message(_func, out->Warning, "%s: %s: %s",
-                             MPT_tr("bad value type"), ni->name(), name);
-            }
+        group_relation rel(*ig, relation);
+        if (!(add_items(*from, head->children, &rel, out))) {
+            return false;
         }
     }
     return true;
@@ -295,7 +271,7 @@ int collection::conv(int type, void *ptr) const
 {
     int me = typeinfo<group>::id();
     if (me < 0) {
-        me = object::Type;
+        me = metatype::Type;
     }
     else if (type == to_pointer_id(me)) {
         if (ptr) *static_cast<const group **>(ptr) = this;
@@ -308,10 +284,6 @@ int collection::conv(int type, void *ptr) const
     }
     if (type == to_pointer_id(metatype::Type)) {
         if (ptr) *static_cast<const metatype **>(ptr) = this;
-        return me;
-    }
-    if (type == to_pointer_id(object::Type)) {
-        if (ptr) *static_cast<const object **>(ptr) = this;
         return me;
     }
     return BadType;
@@ -327,9 +299,16 @@ const item<metatype> *collection::item(size_t pos) const
 {
     return _items.get(pos);
 }
-item<metatype> *collection::append(metatype *mt)
+int collection::append(const identifier *id, metatype *mt)
 {
-    return _items.append(mt, 0);
+    ::mpt::item<metatype> *it = _items.append(mt, 0);
+    if (!it) {
+        return BadOperation;
+    }
+    if (id) {
+        *it = *id;
+    }
+    return _items.count();
 }
 size_t collection::clear(const instance *ref)
 {

@@ -361,7 +361,7 @@ public:
 	collection *clone() const __MPT_OVERRIDE;
 	
 	const ::mpt::item<metatype> *item(size_t) const __MPT_OVERRIDE;
-	::mpt::item<metatype> *append(metatype *) __MPT_OVERRIDE;
+	int append(const identifier *, metatype *) __MPT_OVERRIDE;
 	size_t clear(const instance * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
 protected:
@@ -369,7 +369,7 @@ protected:
 };
 
 /*! Represent elements in layout file */
-class layout : public collection
+class layout : public collection, public object
 {
 public:
 	class line;
@@ -379,6 +379,8 @@ public:
 	
 	layout();
 	~layout() __MPT_OVERRIDE;
+	
+	int conv(int , void *) const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
@@ -441,7 +443,7 @@ public:
 };
 
 /*! Container and binding for data to axes */
-class layout::graph : public collection, public ::mpt::graph
+class layout::graph : public collection, public object, public ::mpt::graph
 {
 public:
 	class axis;

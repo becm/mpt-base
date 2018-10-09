@@ -815,7 +815,7 @@ public:
 		if (!(it = this->insert(pos))) {
 			return 0;
 		}
-		if (!id || it->set_name(id, len)) {
+		if (!id || it->identifier::set_name(id, len)) {
 			it->set_instance(t);
 			return it;
 		}

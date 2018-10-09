@@ -2,6 +2,8 @@
  * test config/path object
  */
 
+#include <iostream>
+
 #ifndef MPT_INCLUDE
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
@@ -30,6 +32,14 @@ extern int main(int argc, char *argv[])
 	}
 	if (!lay.load()) {
 		return 3;
+	}
+	for (const mpt::item<mpt::layout::graph> &g : lay.graphs()) {
+		std::cout << g.name() << " {" << std::endl;
+		const mpt::object &o = *g.instance();
+		for (const mpt::property &p : o) {
+			std::cout << "  " << p.name << " = " << p.val << std::endl;
+		}
+		std::cout << "}" << std::endl;
 	}
 	if (!lay.reset()) {
 		mpt::error(__func__, "%s: %s", "unable to reset layout parser", argv[1]);

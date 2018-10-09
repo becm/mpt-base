@@ -721,6 +721,11 @@ class item : public reference<T>, public identifier
 public:
 	item(T *ref = 0) : reference<T>(ref), identifier(sizeof(identifier) + sizeof(_post))
 	{ }
+	inline item &operator =(const identifier &id)
+	{
+		identifier::operator =(id);
+		return *this;
+	}
 protected:
 	char _post[32 - sizeof(identifier) - sizeof(reference<T>)];
 };
