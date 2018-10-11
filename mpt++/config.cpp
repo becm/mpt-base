@@ -158,6 +158,7 @@ configuration::element *configuration::make_element(unique_array<configuration::
 	for (element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
 		if (e->unused()) {
 			if (!unused) unused = e;
+			continue;
 		}
 		if (!e->equal(name.begin(), len)) {
 			continue;
