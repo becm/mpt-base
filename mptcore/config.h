@@ -8,6 +8,7 @@
 
 #ifdef __cplusplus
 # include "array.h"
+# include "output.h"
 #else
 # include "core.h"
 #endif
@@ -103,6 +104,41 @@ MPT_INTERFACE_VPTR(config) {
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
+};
+#endif
+
+#if defined(__cplusplus)
+class group;
+typedef int MPT_TYPE(item_handler)(void *, const item<metatype> *, const group *);
+
+/*! interface to generic groups of metatypes elements */
+class group
+{
+public:
+	virtual int each(item_handler_t *, void *) const;
+	virtual metatype *create(const char *, int = -1);
+	virtual int append(const identifier *, metatype *);
+	virtual unsigned long clear(const instance * = 0);
+	virtual bool bind(const relation &from, logger * = logger::default_instance());
+protected:
+	inline ~group() {}
+};
+
+struct node;
+bool add_items(metatype &, const node *head, const relation *from = 0, logger * = logger::default_instance());
+
+/*! Relation implemetation using Group as current element */
+class group_relation : public relation
+{
+public:
+	inline group_relation(const group &g, const relation *p = 0, char sep = '.') : relation(p), _curr(g), _sep(sep)
+	{ }
+	virtual ~group_relation()
+	{ }
+	metatype *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
+protected:
+	const group &_curr;
+	char _sep;
 };
 #endif
 

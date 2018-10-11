@@ -35,7 +35,7 @@ int group::append(const identifier *, metatype *)
 {
     return 0;
 }
-const item<metatype> *group::item(size_t) const
+int group::each(item_handler_t *, void *) const
 {
     return 0;
 }
@@ -295,9 +295,20 @@ collection *collection::clone() const
     return copy;
 }
 
-const item<metatype> *collection::item(size_t pos) const
+int collection::each(item_handler_t fcn, void *ctx) const
 {
-    return _items.get(pos);
+    int ret = 0;
+    for (const item<metatype> &it : _items) {
+        int curr = fcn(ctx, &it, 0);
+        if (curr < 0) {
+            return curr;
+        }
+        ret |= curr;
+        if (curr & TraverseStop) {
+            return ret;
+        }
+    }
+    return ret;
 }
 int collection::append(const identifier *id, metatype *mt)
 {
@@ -348,55 +359,82 @@ bool collection::bind(const relation &from, logger *out)
 
 
 // Relation search operations
+struct item_match
+{
+    metatype *mt;
+    const char *ident;
+    size_t curr;
+    size_t left;
+    int type;
+    char sep;
+};
+static int find_item(void *ptr, const item<metatype> *it, const group *grp)
+{
+    struct item_match *ctx = static_cast<item_match *>(ptr);
+    if (!it) {
+        return MissingData;
+    }
+    metatype *mt = it->instance();
+    if (mt && !ctx->left && ctx->type > 0) {
+        int val = mt->type();
+        if (val != ctx->type && (val = mt->conv(ctx->type, 0) < 0)) {
+            return 0;
+        }
+    }
+    if (!it->equal(ctx->ident, ctx->curr)) {
+        return 0;
+    }
+    if (!grp && mt) {
+        grp = mt->cast<group>();
+    }
+    if (!ctx->left) {
+        ctx->mt = mt;
+        return TraverseStop | (grp ? TraverseLeafs : TraverseNonLeafs);
+    }
+    if (!grp) {
+        return TraverseLeafs;
+    }
+    struct item_match tmp = *ctx;
+    
+    const char *next = ctx->ident + ctx->left;
+    const char *sep = (char *) memchr(next, ctx->sep, ctx->left);
+    
+    if (!sep) {
+        return BadValue;
+    }
+    tmp.curr = sep - next;
+    tmp.left -= (tmp.curr + 1);
+    tmp.ident = next;
+    
+    int ret = grp->each(find_item, &tmp);
+    if (ret < 0) {
+        return ret;
+    }
+    ret |= TraverseNonLeafs;
+    return ret;
+}
+    
 metatype *group_relation::find(int type, const char *name, int nlen) const
 {
-    const class item<metatype> *c;
+    struct item_match m;
     const char *sep;
 
     if (nlen < 0) nlen = name ? strlen(name) : 0;
 
+    m.mt = 0;
+    m.ident = name;
+    m.curr = nlen;
+    m.left = 0;
     if (_sep && name && (sep = (char *) memchr(name, _sep, nlen))) {
         size_t plen = sep - name;
-        for (int i = 0; (c = _curr.item(i)); ++i) {
-            metatype *m = c->instance();
-            if (!m || !c->equal(name, plen)) {
-                continue;
-            }
-            const group *g;
-            if (!(g = m->cast<group>())) {
-                continue;
-            }
-            if ((m = group_relation(*g, this).find(type, sep + 1, nlen - plen - 1))) {
-                return m;
-            }
-        }
+        m.curr = plen;
+        m.left = nlen - plen - 1;
     }
-    else {
-        for (int i = 0; (c = _curr.item(i)); ++i) {
-            metatype *m;
-            if (!(m = c->instance())) {
-                continue;
-            }
-            if (name && !c->equal(name, nlen)) {
-                continue;
-            }
-            if (type < 0) {
-                return m;
-            }
-            int val;
-            if ((val = m->type()) < 0) {
-                continue;
-            }
-            if (type) {
-                if (type && type != val && (val = m->conv(type, 0)) < 0) {
-                    continue;
-                }
-            }
-            else if (!val) {
-                continue;
-            }
-            return m;
-        }
+    m.type = type;
+    m.sep = _sep;
+    
+    if (_curr.each(find_item, &m) >= 0 && m.mt) {
+        return m.mt;
     }
     return _parent ? _parent->find(type, name, nlen) : 0;
 }
@@ -410,11 +448,11 @@ metatype *node_relation::find(int type, const char *name, int nlen) const
     for (const node *c = _curr->children; c; c = c->next) {
         metatype *m;
         if (!(m = c->_meta)) {
-	    continue;
-	}
-	if (name && !c->ident.equal(name, nlen)) {
-	    continue;
-	}
+            continue;
+        }
+        if (name && !c->ident.equal(name, nlen)) {
+            continue;
+        }
         if (type < 0) {
             return m;
         }

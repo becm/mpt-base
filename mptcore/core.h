@@ -196,7 +196,9 @@ enum MPT_ENUM(TraverseFlags) {
 	MPT_ENUM(TraverseDefault)     = 0x00000020,
 	/* alert on empty/unknown properties */
 	MPT_ENUM(TraverseEmpty)       = 0x00000040,
-	MPT_ENUM(TraverseUnknown)     = 0x00000080
+	MPT_ENUM(TraverseUnknown)     = 0x00000080,
+	/* control traverse operation */
+	MPT_ENUM(TraverseStop)        = 0x00000100
 };
 
 enum MPT_ENUM(TypeErrors) {

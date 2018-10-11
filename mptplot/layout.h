@@ -8,6 +8,7 @@
 
 #ifdef __cplusplus
 # include "meta.h"
+# include "config.h"
 # include "object.h"
 #endif
 
@@ -360,7 +361,7 @@ public:
 	int conv(int, void *) const __MPT_OVERRIDE;
 	collection *clone() const __MPT_OVERRIDE;
 	
-	const ::mpt::item<metatype> *item(size_t) const __MPT_OVERRIDE;
+	int each(item_handler_t *, void *) const __MPT_OVERRIDE;
 	int append(const identifier *, metatype *) __MPT_OVERRIDE;
 	size_t clear(const instance * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
