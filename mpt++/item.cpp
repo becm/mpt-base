@@ -382,10 +382,15 @@ static int find_item(void *ptr, const item<metatype> *it, const group *grp)
 		return MissingData;
 	}
 	metatype *mt = it->instance();
-	if (mt && !ctx->left && ctx->type > 0) {
+	if (mt && !ctx->left && ctx->type >= 0) {
 		int val = mt->type();
+		if (!ctx->type) {
+			if (!val) {
+				return 0;
+			}
+		}
 		if (val != ctx->type && (val = mt->conv(ctx->type, 0) < 0)) {
-		return 0;
+			return 0;
 		}
 	}
 	if (!it->equal(ctx->ident, ctx->curr)) {
