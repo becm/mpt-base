@@ -18,17 +18,17 @@ __MPT_NAMESPACE_BEGIN
  */
 void *metatype::pointer(int type) const
 {
-    if (!type) {
-        type = conv(0, 0);
-    }
-    if (mpt_valsize(type) != 0) {
-        return 0;
-    }
-    void *ptr = 0;
-    if (conv(type, &ptr) < 0) {
-        return 0;
-    }
-    return ptr;
+	if (!type) {
+		type = conv(0, 0);
+	}
+	if (mpt_valsize(type) != 0) {
+		return 0;
+	}
+	void *ptr = 0;
+	if (conv(type, &ptr) < 0) {
+		return 0;
+	}
+	return ptr;
 }
 /*!
  * \ingroup mptMeta
@@ -40,7 +40,7 @@ void *metatype::pointer(int type) const
  */
 const char *metatype::string() const
 {
-    return mpt_meta_data(this, 0);
+	return mpt_meta_data(this, 0);
 }
 /*!
  * \ingroup mptMeta
@@ -55,11 +55,13 @@ const char *metatype::string() const
  */
 metatype *metatype::create(int type, const void *ptr)
 {
-    switch (type) {
-      // integer types
-        case typeinfo<uint8_t>::id(): return new meta_value<uint8_t>(static_cast<const uint8_t *>(ptr));
-      default: return 0;
-    }
+	switch (type) {
+		// integer types
+		case typeinfo<uint8_t>::id():
+			return new meta_value<uint8_t>(static_cast<const uint8_t *>(ptr));
+		default:
+			return 0;
+	}
 }
 
 __MPT_NAMESPACE_END

@@ -9,5 +9,5 @@
 // buffer metatype override
 extern "C" mpt::metatype *mpt_meta_buffer(const mpt::array *a)
 {
-    return new mpt::io::buffer(a ? *a : mpt::array(0));
+	return new mpt::io::buffer(a ? *a : mpt::array(0));
 }

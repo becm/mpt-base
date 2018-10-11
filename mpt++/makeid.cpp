@@ -18,7 +18,7 @@ __MPT_NAMESPACE_BEGIN
  */
 extern int make_id()
 {
-    return mpt_type_generic_new();
+	return mpt_type_generic_new();
 }
 
 __MPT_NAMESPACE_END
