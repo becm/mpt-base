@@ -365,6 +365,11 @@ public:
 	int append(const identifier *, metatype *) __MPT_OVERRIDE;
 	size_t clear(const instance * = 0) __MPT_OVERRIDE;
 	bool bind(const relation &, logger * = logger::default_instance()) __MPT_OVERRIDE;
+	
+	inline span<const item<metatype> > items() const
+	{
+		return _items.elements();
+	}
 protected:
 	item_array<metatype> _items;
 };
