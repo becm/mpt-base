@@ -47,7 +47,8 @@ int main(int argc, char * const argv[])
 	}
 	// bind graph elements
 	mpt::group_relation other(c);
-	g.bind(mpt::group_relation(g, &other));
+	mpt::group_relation rel(g, &other);
+	g.bind(&rel);
 	
 	// add additional world element
 	mpt::item<mpt::layout::graph::data> *d = g.add_world(0, "w3");

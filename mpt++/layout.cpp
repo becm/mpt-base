@@ -124,13 +124,20 @@ int layout::set_property(const char *name, const metatype *src)
 	}
 	return BadArgument;
 }
-bool layout::bind(const relation &rel, logger *out)
+int layout::bind(const relation *rel, logger *out)
 {
 	item_array<metatype> old = _items;
-	if (!collection::bind(rel, out)) {
-		return false;
-	}
+	int ret = 0;
 	
+	if (!rel) {
+		group_relation me(*this);
+		ret = collection::bind(&me, out);
+	} else {
+		ret = collection::bind(rel, out);
+	}
+	if (ret < 0) {
+		return ret;
+	}
 	item_array<graph> arr;
 	
 	for (auto &it : _items) {
@@ -141,24 +148,26 @@ bool layout::bind(const relation &rel, logger *out)
 		}
 		const char *name = it.name();
 		if (!g->addref()) {
-			g = new graph();
-			object *o;
-			if (!(o = mt->cast<object>())) {
+			static const char _func[] = "mpt::layout::bind\0";
+			::mpt::graph *d = mt->cast<::mpt::graph>();
+			object *o = 0;
+			if (!d || !(o = mt->cast<object>())) {
+				const char *msg = MPT_tr("unable to get graph information");
+				if (out) {
+					if (!name || !*name) {
+						out->message(_func, out->Warning, "%s", msg);
+					} else {
+						out->message(_func, out->Warning, "%s: %s", msg, name);
+					}
+				}
 				continue;
 			}
-			if (g->set(*o, out)) {
+			g = new graph(d);
+			
+			if (o && !g->set(*o, out)) {
+				g->unref();
 				continue;
 			}
-			if (!out) {
-				continue;
-			}
-			static const char _func[] = "mpt::Layout::bind\0";
-			const char *msg = MPT_tr("unable to get graph information");
-			if (!name || !*name) {
-				out->message(_func, out->Warning, "%s", msg);
-				continue;
-			}
-			out->message(_func, out->Warning, "%s: %s", msg, name);
 		}
 		if (!arr.append(g, name)) {
 			g->unref();
@@ -172,7 +181,7 @@ bool layout::bind(const relation &rel, logger *out)
 
 bool layout::load(logger *out)
 {
-	static const char _func[] = "mpt::Layout::load\0";
+	static const char _func[] = "mpt::layout::load\0";
 	if (!_parse) {
 		if (out) {
 			out->message(_func, out->Warning, "%s",
@@ -204,7 +213,7 @@ bool layout::load(logger *out)
 		return false;
 	}
 	// create graphic representations
-	if (!bind(self, out)) {
+	if (bind(0, out) < 0) {
 		return false;
 	}
 	return true;

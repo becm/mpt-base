@@ -109,7 +109,7 @@ MPT_INTERFACE_VPTR(config) {
 
 #if defined(__cplusplus)
 class group;
-typedef int MPT_TYPE(item_handler)(void *, const item<metatype> *, const group *);
+typedef int MPT_TYPE(item_handler)(void *, const identifier *, metatype *, const group *);
 
 /*! interface to generic groups of metatypes elements */
 class group
@@ -119,7 +119,7 @@ public:
 	virtual metatype *create(const char *, int = -1);
 	virtual int append(const identifier *, metatype *);
 	virtual unsigned long clear(const instance * = 0);
-	virtual bool bind(const relation &from, logger * = logger::default_instance());
+	virtual int bind(const relation *, logger * = logger::default_instance());
 protected:
 	inline ~group() {}
 };

@@ -187,15 +187,19 @@ static layout::graph::world *make_world(metatype *mt, logger *out, const char *_
 	}
 	return 0;
 }
-bool layout::graph::bind(const relation &rel, logger *out)
+int layout::graph::bind(const relation *rel, logger *out)
 {
-	static const char _func[] = "mpt::Graph::bind";
+	static const char _func[] = "mpt::layout::graph::bind";
 	metatype *mt;
 	const char *names, *curr;
 	size_t len;
+	int ret = 0;
 	
 	item_array<axis> oldaxes = _axes;
 	_axes = item_array< axis>();
+	
+	const group_relation grel(*this);
+	if (!rel) rel = &grel;
 	
 	if (!(names = ::mpt::graph::axes())) {
 		for (auto &it : _items) {
@@ -204,27 +208,31 @@ bool layout::graph::bind(const relation &rel, logger *out)
 				continue;
 			}
 			curr = it.name();
-			if (!a->addref() || add_axis(a, curr)) {
+			if (!a->addref()) {
+				if (out) {
+					out->message(_func, out->Error, "%s: %s",
+					             MPT_tr("could increase axis reference"), curr ? curr : "");
+				}
+				continue;
+			}
+			if (add_axis(a, curr)) {
+				++ret;
 				continue;
 			}
 			a->unref();
 			_axes = oldaxes;
-			if (out) {
-				out->message(_func, out->Error, "%s: %s",
-				             MPT_tr("could not create axis"), curr ? curr : "");
-			}
-			return false;
+			return BadOperation;
 		}
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
-		mt = rel.find(typeinfo<::mpt::axis *>::id(), curr, len);
-		if (!mt) {
+		int id = typeinfo<::mpt::axis *>::id();
+		if (!(mt = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not find axis"), std::string(curr, len).c_str());
 			}
 			_axes = oldaxes;
-			return false;
+			return MissingData;
 		}
 		const char *sep;
 		while ((sep = (char *) memchr(curr, ':', len))) {
@@ -239,8 +247,9 @@ bool layout::graph::bind(const relation &rel, logger *out)
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not assign axis"), std::string(curr, len).c_str());
 			}
-			return false;
+			return BadOperation;
 		}
+		++ret;
 	}
 	item_array<data> oldworlds = _worlds;
 	_worlds = item_array<data>();
@@ -252,7 +261,15 @@ bool layout::graph::bind(const relation &rel, logger *out)
 				continue;
 			}
 			curr = it.name();
-			if (!w->addref() || add_world(w, curr)) {
+			if (!w->addref()) {
+				if (out) {
+					out->message(_func, out->Error, "%s: %s",
+					             MPT_tr("could increase world reference"), curr ? curr : "");
+				}
+				continue;
+			}
+			if (add_world(w, curr)) {
+				++ret;
 				continue;
 			}
 			w->unref();
@@ -262,18 +279,19 @@ bool layout::graph::bind(const relation &rel, logger *out)
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not assign world"), curr ? curr : "<>");
 			}
-			return false;
+			return BadOperation;
 		}
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
-		if (!(mt = rel.find(typeinfo<::mpt::world *>::id(), curr, len))) {
+		int id = typeinfo<::mpt::world *>::id();
+		if (!(mt = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not find world"), std::string(curr, len).c_str());
 			}
 			_axes = oldaxes;
 			_worlds = oldworlds;
-			return false;
+			return MissingData;
 		}
 		const char *sep;
 		while ((sep = (char *) memchr(curr, ':', len))) {
@@ -289,7 +307,7 @@ bool layout::graph::bind(const relation &rel, logger *out)
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not assign world"), std::string(curr, len).c_str());
 			}
-			return false;
+			return BadOperation;
 		}
 	}
 	for (auto &it : _items) {
@@ -297,12 +315,14 @@ bool layout::graph::bind(const relation &rel, logger *out)
 		if (!(mt = it.instance()) || !(g = mt->cast<group>())) {
 			continue;
 		}
-		group_relation gr(*g, &rel);
-		if (!g->bind(gr, out)) {
+		group_relation gr(*g, rel);
+		int curr;
+		if ((curr = g->bind(&gr, out)) < 0) {
 			_axes = oldaxes;
 			_worlds = oldworlds;
-			return false;
+			return curr;
 		}
+		ret += curr;
 	}
 	return true;
 }

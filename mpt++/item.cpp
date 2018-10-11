@@ -39,9 +39,9 @@ int group::each(item_handler_t *, void *) const
 {
 	return 0;
 }
-bool group::bind(const relation &, logger *)
+int group::bind(const relation *, logger *)
 {
-	return true;
+	return 0;
 }
 
 bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
@@ -300,8 +300,8 @@ collection *collection::clone() const
 int collection::each(item_handler_t fcn, void *ctx) const
 {
 	int ret = 0;
-	for (const item<metatype> &it : _items) {
-		int curr = fcn(ctx, &it, 0);
+	for (item<metatype> &it : _items) {
+		int curr = fcn(ctx, &it, it.instance(), 0);
 		if (curr < 0) {
 			return curr;
 		}
@@ -349,19 +349,23 @@ size_t collection::clear(const instance *ref)
 	}
 	return remove;
 }
-bool collection::bind(const relation &from, logger *out)
+int collection::bind(const relation *from, logger *out)
 {
+	int count = 0;
 	for (auto &it : _items) {
 		metatype *curr;
 		group *g;
 		if (!(curr = it.instance()) || !(g = curr->cast<group>())) {
 			continue;
 		}
-		if (!g->bind(group_relation(*g, &from), out)) {
-			return false;
+		int ret;
+		group_relation rel(*g, from);
+		if ((ret = g->bind(&rel, out)) < 0) {
+			return ret;
 		}
+		count += ret;
 	}
-	return true;
+	return count;
 }
 
 
@@ -375,13 +379,12 @@ struct item_match
 	int type;
 	char sep;
 };
-static int find_item(void *ptr, const item<metatype> *it, const group *grp)
+static int find_item(void *ptr, const identifier *id, metatype *mt, const group *grp)
 {
 	struct item_match *ctx = static_cast<item_match *>(ptr);
-	if (!it) {
-		return MissingData;
+	if (!id) {
+		return 0;
 	}
-	metatype *mt = it->instance();
 	if (mt && !ctx->left && ctx->type >= 0) {
 		int val = mt->type();
 		if (!ctx->type) {
@@ -389,11 +392,11 @@ static int find_item(void *ptr, const item<metatype> *it, const group *grp)
 				return 0;
 			}
 		}
-		if (val != ctx->type && (val = mt->conv(ctx->type, 0) < 0)) {
+		if (val != ctx->type && (val = mt->conv(ctx->type, 0)) < 0) {
 			return 0;
 		}
 	}
-	if (!it->equal(ctx->ident, ctx->curr)) {
+	if (!id->equal(ctx->ident, ctx->curr)) {
 		return 0;
 	}
 	if (!grp && mt) {
