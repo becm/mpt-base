@@ -267,8 +267,8 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     }
     mpt_message_read(&tmp, part + 1, buf);
 
-    span<const ::mpt::item<layout::graph> > graphs = lay->graphs();
-    const ::mpt::item<layout::graph> *gi;
+    span<const item<layout::graph> > graphs = lay->graphs();
+    const item<layout::graph> *gi;
     layout::graph *grf = 0;
     if (part) {
         int g = strtol(buf, &end, 0);
@@ -320,7 +320,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
     else if (part >= (ssize_t) sizeof(buf)) {
         return MissingBuffer;
     }
-    span<const ::mpt::item<layout::graph::data> > gd = grf->worlds();
+    span<const item<layout::graph::data> > gd = grf->worlds();
     layout::graph::world *wld = 0;
     if (part) {
         int w = strtol(buf, &end, 0);
@@ -340,7 +340,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
                 max = UINT8_MAX - 1;
             }
             for (size_t i = 0; i < max; ++i) {
-                const ::mpt::item<layout::graph::data> *it = gd.nth(i);
+                const item<layout::graph::data> *it = gd.nth(i);
                 layout::graph::data *ptr;
                 if (it && (ptr = it->instance()) && it->equal(buf, part)) {
                     if ((wld = ptr->world.instance())) {
@@ -394,7 +394,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
 
     return match;
 }
-metatype *graphic::item(message &msg, size_t len) const
+metatype *graphic::get_item(message &msg, size_t len) const
 {
     message tmp = msg;
     ssize_t part;

@@ -292,7 +292,7 @@ item<layout::graph::axis> *layout::graph::add_axis(axis *from, const char *name,
             if (a == it.instance()) return 0; // deny multiple dimensions sharing same transformation
         }
     }
-    ::mpt::item<axis> *it;
+    item<axis> *it;
     if ((it = _axes.append(a, name, nlen))) {
         return it;
     }
@@ -309,7 +309,7 @@ item<layout::graph::data> *layout::graph::add_world(world *from, const char *nam
     } else {
         d = new data(w);
     }
-    ::mpt::item<data> *it;
+    item<data> *it;
     if ((it = _worlds.append(d, name, nlen))) {
         return it;
     }
@@ -373,7 +373,7 @@ bool layout::graph::update_transform(int dim)
     if (dim > 2) {
         return false;
     }
-    ::mpt::item<axis> *it = _axes.get(dim);
+    item<axis> *it = _axes.get(dim);
     axis *a;
 
     if (!it || !(a = it->instance())) {

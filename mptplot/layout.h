@@ -397,7 +397,7 @@ public:
 	virtual bool open(const char *);
 	virtual bool reset();
 	
-	inline span<const ::mpt::item<graph> > graphs() const
+	inline span<const item<graph> > graphs() const
 	{
 		return _graphs.elements();
 	}
@@ -478,13 +478,13 @@ public:
 	
 	bool bind(const relation &from, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
-	virtual ::mpt::item<axis> *add_axis(axis * = 0, const char * = 0, int = -1);
-	inline span<const ::mpt::item<axis> > axes() const
+	virtual item<axis> *add_axis(axis * = 0, const char * = 0, int = -1);
+	inline span<const item<axis> > axes() const
 	{
 		return _axes.elements();
 	}
-	virtual ::mpt::item<data> *add_world(world * = 0, const char * = 0, int = -1);
-	inline span<const ::mpt::item<data> > worlds() const
+	virtual item<data> *add_world(world * = 0, const char * = 0, int = -1);
+	inline span<const item<data> > worlds() const
 	{
 		return _worlds.elements();
 	}
