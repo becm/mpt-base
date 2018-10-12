@@ -238,10 +238,12 @@ public:
 		return _sub.elements();
 	}
 protected:
-	static element *get_element(const unique_array<element> &, path &);
-	static element *make_element(unique_array<element> &, path &);
 	unique_array<element> _sub;
 };
+
+extern configuration::element *query(const unique_array<configuration::element> &, path &);
+extern configuration::element *reserve(unique_array<configuration::element> &, path &);
+
 class configuration::element : public unique_array<configuration::element>, public item<metatype>
 {
 public:

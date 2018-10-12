@@ -121,66 +121,11 @@ metatype *config::global(const path *p)
 	return mpt_config_global(p);
 }
 
-// config with private element store
+// config with element store
 configuration::configuration()
 { }
 configuration::~configuration()
 { }
-// private element access
-configuration::element *configuration::get_element(const unique_array<configuration::element> &arr, path &p)
-{
-	const span<const char> name = p.value();
-	int len;
-	
-	if ((len = mpt_path_next(&p)) < 0) {
-		return 0;
-	}
-	for (element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
-		if (e->unused() || !e->equal(name.begin(), len)) {
-			continue;
-		}
-		if (!p.empty()) {
-			return get_element(*e, p);
-		}
-		return e;
-	}
-	return 0;
-}
-configuration::element *configuration::make_element(unique_array<configuration::element> &arr, path &p)
-{
-	const span<const char> name = p.value();
-	int len;
-	
-	if ((len = mpt_path_next(&p)) < 0) {
-		return 0;
-	}
-	element *unused = 0;
-	for (element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
-		if (e->unused()) {
-			if (!unused) unused = e;
-			continue;
-		}
-		if (!e->equal(name.begin(), len)) {
-			continue;
-		}
-		if (!p.empty()) {
-			return make_element(*e, p);
-		}
-		return e;
-	}
-	if (!unused) {
-		if (!(unused = arr.insert(arr.length()))) {
-			return 0;
-		}
-	}
-	else {
-		unused->resize(0);
-		unused->set_instance(0);
-	}
-	unused->set_name(name.begin(), len);
-	
-	return p.empty() ? unused : make_element(*unused, p);
-}
 // config interface
 int configuration::assign(const path *dest, const value *val)
 {
@@ -194,7 +139,7 @@ int configuration::assign(const path *dest, const value *val)
 	element *curr;
 	
 	if (!val) {
-		if (!(curr = get_element(_sub, p))) {
+		if (!(curr = ::mpt::query(_sub, p))) {
 			return 0;
 		}
 		int type = 0;
@@ -207,7 +152,7 @@ int configuration::assign(const path *dest, const value *val)
 	if (!(m = metatype::create(*val))) {
 		return BadType;
 	}
-	if (!(curr = make_element(_sub, p))) {
+	if (!(curr = reserve(_sub, p))) {
 		m->unref();
 		return BadOperation;
 	}
@@ -224,7 +169,7 @@ const metatype *configuration::query(const path *dest) const
 	path p = *dest;
 	element *curr;
 	
-	if (!(curr = get_element(_sub, p))) {
+	if (!(curr = ::mpt::query(_sub, p))) {
 		return 0;
 	}
 	return curr->instance();
@@ -243,7 +188,7 @@ int configuration::remove(const path *dest)
 	path p = *dest;
 	element *curr;
 	// requested element not found
-	if (!(curr = get_element(_sub, p))) {
+	if (!(curr = ::mpt::query(_sub, p))) {
 		return BadOperation;
 	}
 	curr->resize(0); // remove childen from element
@@ -251,6 +196,62 @@ int configuration::remove(const path *dest)
 	curr->set_instance(0); // remove element data
 	
 	return 0;
+}
+
+// configuration element access
+configuration::element *query(const unique_array<configuration::element> &arr, path &p)
+{
+	const span<const char> name = p.value();
+	int len;
+	
+	if ((len = mpt_path_next(&p)) < 0) {
+		return 0;
+	}
+	for (configuration::element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+		if (e->unused() || !e->equal(name.begin(), len)) {
+			continue;
+		}
+		if (!p.empty()) {
+			return query(*e, p);
+		}
+		return e;
+	}
+	return 0;
+}
+configuration::element *reserve(unique_array<configuration::element> &arr, path &p)
+{
+	const span<const char> name = p.value();
+	int len;
+	
+	if ((len = mpt_path_next(&p)) < 0) {
+		return 0;
+	}
+	configuration::element *unused = 0;
+	for (configuration::element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+		if (e->unused()) {
+			if (!unused) unused = e;
+			continue;
+		}
+		if (!e->equal(name.begin(), len)) {
+			continue;
+		}
+		if (!p.empty()) {
+			return reserve(*e, p);
+		}
+		return e;
+	}
+	if (!unused) {
+		if (!(unused = arr.insert(arr.length()))) {
+			return 0;
+		}
+	}
+	else {
+		unused->resize(0);
+		unused->set_instance(0);
+	}
+	unused->set_name(name.begin(), len);
+	
+	return p.empty() ? unused : reserve(*unused, p);
 }
 
 __MPT_NAMESPACE_END
