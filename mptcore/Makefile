@@ -6,10 +6,14 @@ INC = . ..
 #
 # header to export
 HEADER =\
-	array.h core.h client.h config.h convert.h \
-	event.h message.h meta.h node.h \
+	array.h \
+	client.h collection.h config.h convert.h core.h \
+	event.h \
+	message.h meta.h \
+	node.h \
 	object.h output.h \
-	parse.h queue.h
+	parse.h \
+	queue.h
 #
 # source summary
 SRCS := $(wildcard */*.c)

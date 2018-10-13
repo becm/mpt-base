@@ -12,6 +12,7 @@
 # include "object.h"
 #endif
 
+#include "collection.h"
 #include "values.h"
 
 struct iovec;
@@ -351,15 +352,15 @@ extern void apply_log(point<double> *, const linepart &, const double *, const t
 
 
 
-/*! Group implementation using reference array */
-class collection : public metatype, public group
+/*! Group implementation using metatype item array */
+class item_group : public metatype, public group
 {
 public:
-	virtual ~collection();
+	virtual ~item_group();
 	
 	void unref() __MPT_OVERRIDE;
 	int conv(int, void *) const __MPT_OVERRIDE;
-	collection *clone() const __MPT_OVERRIDE;
+	item_group *clone() const __MPT_OVERRIDE;
 	
 	int each(item_handler_t *, void *) const __MPT_OVERRIDE;
 	int append(const identifier *, metatype *) __MPT_OVERRIDE;
@@ -375,7 +376,7 @@ protected:
 };
 
 /*! Represent elements in layout file */
-class layout : public collection, public object
+class layout : public item_group, public object
 {
 public:
 	class line;
@@ -449,7 +450,7 @@ public:
 };
 
 /*! Container and binding for data to axes */
-class layout::graph : public collection, public object, public ::mpt::graph
+class layout::graph : public item_group, public object, public ::mpt::graph
 {
 public:
 	class axis;

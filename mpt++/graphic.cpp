@@ -476,7 +476,7 @@ metatype *graphic::get_item(message &msg, size_t len) const
 			}
 			// find element by type and name
 			metatype *m;
-			if (!(m = group_relation(*g, 0).find(type, buf, part))) {
+			if (!(m = collection_relation(*g, 0).find(type, buf, part))) {
 				return 0;
 			}
 			// last name part

@@ -114,7 +114,7 @@ int layout::graph::conv(int type, void *ptr) const
 		if (ptr) *static_cast<color *>(ptr) = fg;
 		return me;
 	}
-	return collection::conv(type, ptr);
+	return item_group::conv(type, ptr);
 }
 // object interface
 int layout::graph::property(struct property *prop) const
@@ -198,7 +198,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	item_array<axis> oldaxes = _axes;
 	_axes = item_array< axis>();
 	
-	const group_relation grel(*this);
+	const collection_relation grel(*this);
 	if (!rel) rel = &grel;
 	
 	if (!(names = ::mpt::graph::axes())) {
@@ -315,9 +315,9 @@ int layout::graph::bind(const relation *rel, logger *out)
 		if (!(mt = it.instance()) || !(g = mt->cast<group>())) {
 			continue;
 		}
-		group_relation gr(*g, rel);
+		collection_relation cr(*g, rel);
 		int curr;
-		if ((curr = g->bind(&gr, out)) < 0) {
+		if ((curr = g->bind(&cr, out)) < 0) {
 			_axes = oldaxes;
 			_worlds = oldworlds;
 			return curr;

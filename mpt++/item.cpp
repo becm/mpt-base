@@ -26,23 +26,6 @@ template <> int typeinfo<group>::id()
 	}
 	return id;
 }
-// generic item group
-size_t group::clear(const instance *)
-{
-	return 0;
-}
-int group::append(const identifier *, metatype *)
-{
-	return 0;
-}
-int group::each(item_handler_t *, void *) const
-{
-	return 0;
-}
-int group::bind(const relation *, logger *)
-{
-	return 0;
-}
 
 bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
 {
@@ -136,7 +119,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			continue;
 		}
 		// name conflict on same level
-		if (group_relation(*grp).find(from->type(), name, len)) {
+		if (collection_relation(*grp).find(from->type(), name, len)) {
 			if (out) {
 				out->message(_func, out->Warning, "%s: %s",
 				             MPT_tr("conflicting item name"), std::string(name, len).c_str());
@@ -153,7 +136,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			if (relation) {
 				curr = relation->find(from->type(), name, len);
 			} else {
-				curr = group_relation(*grp).find(from->type(), name, len);
+				curr = collection_relation(*grp).find(from->type(), name, len);
 			}
 			if (!curr) {
 				if (out) {
@@ -211,12 +194,17 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			}
 			continue;
 		}
-		group_relation rel(*ig, relation);
+		collection_relation rel(*ig, relation);
 		if (!(add_items(*from, head->children, &rel, out))) {
 			return false;
 		}
 	}
 	return true;
+}
+// generic item group
+int group::bind(const relation *, logger *)
+{
+	return 0;
 }
 metatype *group::create(const char *type, int nl)
 {
@@ -261,15 +249,15 @@ metatype *group::create(const char *type, int nl)
 	return 0;
 }
 
-// group storing elements in RefArray
-collection::~collection()
+// group storing elements in item array
+item_group::~item_group()
 { }
 
-void collection::unref()
+void item_group::unref()
 {
 	delete this;
 }
-int collection::conv(int type, void *ptr) const
+int item_group::conv(int type, void *ptr) const
 {
 	int me = typeinfo<group>::id();
 	if (me < 0) {
@@ -280,8 +268,12 @@ int collection::conv(int type, void *ptr) const
 		return array::Type;
 	}
 	if (!type) {
-		static const char fmt[] = { array::Type };
-		if (ptr) *static_cast<const char **>(ptr) = fmt;
+		static const uint8_t fmt[] = { collection::Type, array::Type, 0 };
+		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
+		return me;
+	}
+	if (type == to_pointer_id(collection::Type)) {
+		if (ptr) *static_cast<const collection **>(ptr) = this;
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
@@ -290,14 +282,14 @@ int collection::conv(int type, void *ptr) const
 	}
 	return BadType;
 }
-collection *collection::clone() const
+item_group *item_group::clone() const
 {
-	collection *copy = new collection;
+	item_group *copy = new item_group;
 	copy->_items = _items;
 	return copy;
 }
 
-int collection::each(item_handler_t fcn, void *ctx) const
+int item_group::each(item_handler_t fcn, void *ctx) const
 {
 	int ret = 0;
 	for (item<metatype> &it : _items) {
@@ -312,7 +304,7 @@ int collection::each(item_handler_t fcn, void *ctx) const
 	}
 	return ret;
 }
-int collection::append(const identifier *id, metatype *mt)
+int item_group::append(const identifier *id, metatype *mt)
 {
 	item<metatype> *it = _items.append(mt, 0);
 	if (!it) {
@@ -323,7 +315,7 @@ int collection::append(const identifier *id, metatype *mt)
 	}
 	return _items.count();
 }
-size_t collection::clear(const instance *ref)
+size_t item_group::clear(const instance *ref)
 {
 	long remove = 0;
 	if (!ref) {
@@ -349,7 +341,7 @@ size_t collection::clear(const instance *ref)
 	}
 	return remove;
 }
-int collection::bind(const relation *from, logger *out)
+int item_group::bind(const relation *from, logger *out)
 {
 	int count = 0;
 	for (auto &it : _items) {
@@ -359,7 +351,7 @@ int collection::bind(const relation *from, logger *out)
 			continue;
 		}
 		int ret;
-		group_relation rel(*g, from);
+		collection_relation rel(*g, from);
 		if ((ret = g->bind(&rel, out)) < 0) {
 			return ret;
 		}
@@ -379,7 +371,7 @@ struct item_match
 	int type;
 	char sep;
 };
-static int find_item(void *ptr, const identifier *id, metatype *mt, const group *grp)
+static int find_item(void *ptr, const identifier *id, metatype *mt, const collection *sub)
 {
 	struct item_match *ctx = static_cast<item_match *>(ptr);
 	if (!id) {
@@ -399,14 +391,14 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const group 
 	if (!id->equal(ctx->ident, ctx->curr)) {
 		return 0;
 	}
-	if (!grp && mt) {
-		grp = mt->cast<group>();
+	if (!sub && mt) {
+		sub = mt->cast<collection>();
 	}
 	if (!ctx->left) {
 		ctx->mt = mt;
-		return TraverseStop | (grp ? TraverseLeafs : TraverseNonLeafs);
+		return TraverseStop | (sub ? TraverseLeafs : TraverseNonLeafs);
 	}
-	if (!grp) {
+	if (!sub) {
 		return TraverseLeafs;
 	}
 	struct item_match tmp = *ctx;
@@ -421,7 +413,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const group 
 	tmp.left -= (tmp.curr + 1);
 	tmp.ident = next;
 	
-	int ret = grp->each(find_item, &tmp);
+	int ret = sub->each(find_item, &tmp);
 	if (ret < 0) {
 		return ret;
 	}
@@ -429,7 +421,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const group 
 	return ret;
 }
     
-metatype *group_relation::find(int type, const char *name, int nlen) const
+metatype *collection_relation::find(int type, const char *name, int nlen) const
 {
 	struct item_match m;
 	const char *sep;

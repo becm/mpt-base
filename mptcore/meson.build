@@ -25,11 +25,14 @@ endforeach
 
 if not meson.is_subproject()
 install_headers(
-  'array.h', 'client.h', 'config.h',
-  'convert.h', 'core.h', 'event.h',
-  'message.h', 'meta.h', 'node.h',
+  'array.h',
+  'client.h', 'collection.h', 'config.h', 'convert.h', 'core.h',
+  'event.h',
+  'message.h', 'meta.h',
+  'node.h',
   'object.h', 'output.h',
-  'parse.h', 'queue.h',
+  'parse.h',
+  'queue.h',
   subdir : 'mpt')
 endif
 

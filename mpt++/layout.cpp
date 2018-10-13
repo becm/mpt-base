@@ -59,7 +59,7 @@ int layout::conv(int type, void *ptr) const
 		if (ptr) *static_cast<const object **>(ptr) = this;
 		return typeinfo<group>::id();
 	}
-	return collection::conv(type, ptr);
+	return item_group::conv(type, ptr);
 }
 // object interface
 int layout::property(struct property *pr) const
@@ -130,10 +130,10 @@ int layout::bind(const relation *rel, logger *out)
 	int ret = 0;
 	
 	if (!rel) {
-		group_relation me(*this);
-		ret = collection::bind(&me, out);
+		collection_relation me(*this);
+		ret = item_group::bind(&me, out);
 	} else {
-		ret = collection::bind(rel, out);
+		ret = item_group::bind(rel, out);
 	}
 	if (ret < 0) {
 		return ret;
@@ -206,7 +206,7 @@ bool layout::load(logger *out)
 		}
 	}
 	// add items
-	group_relation self(*this);
+	collection_relation self(*this);
 	clear();
 	// add items to layout
 	if (!add_items(*this, conf, &self, out)) {

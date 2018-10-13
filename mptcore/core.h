@@ -137,8 +137,9 @@ enum MPT_ENUM(Types)
 	/* config interface types */
 	MPT_ENUM(TypeObject)         = 0x80,
 	MPT_ENUM(TypeConfig)         = 0x81,
-	/* input interface types */
+	/* collection interface types */
 	MPT_ENUM(TypeIterator)       = 0x82,
+	MPT_ENUM(TypeCollection)     = 0x83,
 	/* output interface types */
 	MPT_ENUM(TypeLogger)         = 0x84,
 	MPT_ENUM(TypeReply)          = 0x85,
@@ -248,7 +249,6 @@ MPT_STRUCT(decode_state)
 };
 typedef ssize_t (*MPT_TYPE(data_encoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
 typedef int (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
-
 
 __MPT_EXTDECL_BEGIN
 

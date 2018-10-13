@@ -20,12 +20,12 @@ int main(int argc, char * const argv[])
 {
 	mtrace();
 	
-	mpt::collection c;
+	mpt::item_group other;
 	mpt::layout::graph g;
 	mpt::identifier id;
 	
 	id.set_name("ax");
-	c.append(&id, new mpt::layout::graph::axis);
+	other.append(&id, new mpt::layout::graph::axis);
 	
 	// can be used for default element lookup
 	id.set_name("w1");
@@ -46,8 +46,8 @@ int main(int argc, char * const argv[])
 		g["axes"] = argv[2];
 	}
 	// bind graph elements
-	mpt::group_relation other(c);
-	mpt::group_relation rel(g, &other);
+	mpt::collection_relation top(other);
+	mpt::collection_relation rel(g, &top);
 	g.bind(&rel);
 	
 	// add additional world element
