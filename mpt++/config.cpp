@@ -145,8 +145,8 @@ int configuration::assign(const path *dest, const value *val)
 		int type = 0;
 		if ((m = curr->instance())) {
 			type = m->type();
+			curr->set_instance(0);
 		}
-		curr->set_instance(0);
 		return type;
 	}
 	if (!(m = metatype::create(*val))) {
