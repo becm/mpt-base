@@ -61,7 +61,7 @@ if(NOT "${MPT_INSTALL_LIB}" STREQUAL "${libdir}")
     endif()
     # local build definition
     if(NOT Mpt_${_up})
-      find_path(Mpt_${_up} "CMakeLists.txt" PATH "${CMAKE_CURRENT_SOURCE_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
+      find_path(Mpt_${_up} "CMakeLists.txt" PATH "${CMAKE_CURRENT_LIST_DIR}/mpt${_comp}" NO_DEFAULT_PATH)
     endif()
     # remote build definition
     if(NOT Mpt_${_up})
