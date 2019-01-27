@@ -493,7 +493,7 @@ MPT_STRUCT(value)
 		uint8_t _fmt[8];
 	};
 	template <typename T>
-	bool consume(T &val)
+	bool first(T &val, bool consume = false)
 	{
 		int type;
 		
@@ -507,16 +507,20 @@ MPT_STRUCT(value)
 				return false;
 			}
 			val = *tmp;
-			++fmt;
-			ptr = tmp + 1;
+			if (consume) {
+				++fmt;
+				ptr = tmp + 1;
+			}
 			return true;
 		}
 		if (type == 's') {
 			val = static_cast<const char *>(ptr);
-			ptr = 0;
+			if (consume) {
+				ptr = 0;
+			}
 			return true;
 		}
-		return BadType;
+		return false;
 	}
 	
 	bool set(const uint8_t *, const void *);
@@ -527,8 +531,6 @@ MPT_STRUCT(value)
 	void *pointer(int = 0) const;
 	const struct iovec *vector(int = 0) const;
 	const struct array *array(int = 0) const;
-	class iterator *iterator() const;
-	bool next();
 #else
 # define MPT_VALUE_INIT { 0, 0 }
 #endif
