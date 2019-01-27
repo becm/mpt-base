@@ -3,6 +3,7 @@
  */
 
 #include "object.h"
+#include "types.h"
 
 #include "meta.h"
 

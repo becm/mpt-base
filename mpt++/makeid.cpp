@@ -2,7 +2,7 @@
  * MPT C++ type identifier
  */
 
-#include "core.h"
+#include "types.h"
 
 __MPT_NAMESPACE_BEGIN
 

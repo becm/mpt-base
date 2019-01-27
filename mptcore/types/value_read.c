@@ -4,12 +4,12 @@
 
 #include <string.h>
 
+#include "types.h"
+
 #include "convert.h"
 
-#include "meta.h"
-
 /*!
- * \ingroup mptParse
+ * \ingroup mptTypes
  * \brief next nonspace character
  * 
  * Get next visible character and advance position.

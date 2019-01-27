@@ -4,10 +4,10 @@
 
 #include <ctype.h>
 
-#include "convert.h"
+#include "types.h"
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief data offset
  * 
  * Get offset for data position.

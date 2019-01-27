@@ -72,7 +72,6 @@ __MPT_NAMESPACE_BEGIN
 MPT_INTERFACE(logger);
 
 MPT_INTERFACE(metatype);
-MPT_INTERFACE(iterator);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
@@ -250,91 +249,10 @@ MPT_STRUCT(decode_state)
 typedef ssize_t (*MPT_TYPE(data_encoder))(MPT_STRUCT(encode_state) *, const struct iovec *, const struct iovec *);
 typedef int (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
-__MPT_EXTDECL_BEGIN
-
-/* set config from environment, files and arguments */
-extern int mpt_init(int , char * const []);
-
-/* get type position from data description */
-extern int mpt_position(const uint8_t *, int);
-/* get position offset from data description */
-extern int mpt_offset(const uint8_t *, int);
-/* get size for registered types */
-extern ssize_t mpt_valsize(int);
-
-/* id for registered named type */
-extern int mpt_type_value(const char *, int);
-/* get name registered type */
-extern const char *mpt_meta_typename(int);
-extern const char *mpt_interface_typename(int);
-/* register extended types */
-extern int mpt_type_meta_new(const char *);
-extern int mpt_type_interface_new(const char *);
-extern int mpt_type_generic_new(void);
-
-/* add user scalar or pointer type */
-extern int mpt_valtype_add(size_t);
-
-/* calculate environment-depending hash for data */
-extern uintptr_t mpt_hash(const void *, int __MPT_DEFPAR(-1));
-/* calculate smdb-hash for data */
-extern uintptr_t mpt_hash_smdb(const void *, int);
-/* calculate djb2-hash for data */
-extern uintptr_t mpt_hash_djb2(const void *, int);
-/* set hash type */
-extern int _mpt_hash_set(const char *);
-
-/* type alias for symbol description */
-extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
-
-__MPT_EXTDECL_END
 
 #ifdef __cplusplus
-extern int make_id();
+extern int convert(const void **, int , void *, int);
 
-inline __MPT_CONST_EXPR int to_pointer_id(int from)
-{
-	return (from < 0)
-		? BadValue
-		: ((from > _TypeGenericMax)
-			? BadType
-			: _TypePointerBase + from);
-}
-inline __MPT_CONST_EXPR int to_reference_id(int from)
-{
-	return (from < 0)
-		? BadValue
-		: ((from > _TypeGenericMax)
-			? BadType
-			: _TypeReferenceBase + from);
-}
-inline __MPT_CONST_EXPR int to_item_id(int from)
-{
-	return (from < 0)
-		? BadValue
-		: ((from > _TypeGenericMax)
-			? BadType
-			: _TypeItemBase + from);
-}
-
-inline __MPT_CONST_EXPR int to_span_id(int from)
-{
-	return (from < 0)
-		? BadValue
-		: ((from > _TypeGenericMax)
-			? BadType
-			: ((MPT_type_isScalar(from) || MPT_type_isExtended(from))
-				? from + _TypeVectorBase - _TypeScalarBase
-				: _TypeSpanBase + from));
-}
-
-inline __MPT_CONST_EXPR uint8_t basetype(int id)
-{
-	return (id >= (MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypeReferenceBase))
-	     && id <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypeReferenceBase)))
-		? TypeMetaRef
-		: ((id < 0 || id > 0xff) ? 0 : id);
-}
 template <typename T>
 class typeinfo
 {
@@ -343,125 +261,8 @@ protected:
 public:
 	static int id();
 };
-template <typename T>
-class typeinfo<T *>
-{
-protected:
-	typeinfo();
-public:
-	static int id()
-	{
-		return to_pointer_id(typeinfo<T>::id());
-	}
-};
-
-/* floating point values */
-template<> inline __MPT_CONST_TYPE int typeinfo<float>::id()       { return 'f'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<double>::id()      { return 'd'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<long double>::id() { return 'e'; }
-/* integer values */
-template<> inline __MPT_CONST_TYPE int typeinfo<int8_t>::id()  { return 'b'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<int16_t>::id() { return 'n'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<int32_t>::id() { return 'i'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<int64_t>::id() { return 'x'; }
-/* unsigned values */
-template<> inline __MPT_CONST_TYPE int typeinfo<uint8_t>::id()  { return 'y'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<uint16_t>::id() { return 'q'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<uint32_t>::id() { return 'u'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<uint64_t>::id() { return 't'; }
-/* string data */
-template<> inline __MPT_CONST_TYPE int typeinfo<char>::id() { return 'c'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<char *>::id() { return 's'; }
-template<> inline __MPT_CONST_TYPE int typeinfo<const char *>::id() { return 's'; }
-
-/*! reduced slice with type but no data reference */
-template <typename T>
-class span
-{
-public:
-	typedef T* iterator;
-	
-	inline span(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
-	{ }
-	
-	inline iterator begin() const
-	{
-		return _base;
-	}
-	inline iterator end() const
-	{
-		return _base + size();
-	}
-	inline long size() const
-	{
-		return _len / sizeof(T);
-	}
-	inline size_t size_bytes() const
-	{
-		return _len;
-	}
-	inline iterator nth(long pos) const
-	{
-		if (pos < 0) {
-			if ((pos += size()) < 0) {
-				return 0;
-			}
-		}
-		else if (pos >= size()) {
-			return 0;
-		}
-		return _base + pos;
-	}
-	bool skip(long l)
-	{
-		if (l < 0 || l > size()) {
-			return false;
-		}
-		_len -= l * sizeof(T);
-		_base += l;
-		return true;
-	}
-	bool trim(long l)
-	{
-		if (l < 0 || l > size()) {
-			return false;
-		}
-		_len -= l * sizeof(T);
-		return true;
-	}
-protected:
-	T *_base;
-	size_t _len;
-};
-
-/* vector-type auto-cast for constant base types */
-template <typename T>
-class typeinfo<span<T> >
-{
-protected:
-	typeinfo();
-public:
-	static int id()
-	{
-		static int _id;
-		if (!_id) {
-			_id = to_span_id(typeinfo<T>::id());
-		}
-		return _id;
-	}
-};
-template <typename T>
-class typeinfo<span<const T> >
-{
-protected:
-	typeinfo();
-public:
-	inline static int id()
-	{
-		return typeinfo<span<T> >::id();
-	}
-};
 #endif
+
 
 /*! generic data type and offset */
 MPT_STRUCT(value)
@@ -537,11 +338,87 @@ MPT_STRUCT(value)
 	const uint8_t *fmt;  /* data format */
 	const void    *ptr;  /* formated data */
 };
+
+__MPT_EXTDECL_BEGIN
+
+/* set config from environment, files and arguments */
+extern int mpt_init(int , char * const []);
+
+/* calculate environment-depending hash for data */
+extern uintptr_t mpt_hash(const void *, int __MPT_DEFPAR(-1));
+/* calculate smdb-hash for data */
+extern uintptr_t mpt_hash_smdb(const void *, int);
+/* calculate djb2-hash for data */
+extern uintptr_t mpt_hash_djb2(const void *, int);
+/* set hash type */
+extern int _mpt_hash_set(const char *);
+
+/* next non-empty character in string */
+extern int mpt_string_nextvis(const char **);
+
+__MPT_EXTDECL_END
+
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<value>::id()
+
+/*! reduced slice with type but no data reference */
+template <typename T>
+class span
 {
-	return value::Type;
-}
+public:
+	typedef T* iterator;
+	
+	inline span(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
+	{ }
+	
+	inline iterator begin() const
+	{
+		return _base;
+	}
+	inline iterator end() const
+	{
+		return _base + size();
+	}
+	inline long size() const
+	{
+		return _len / sizeof(T);
+	}
+	inline size_t size_bytes() const
+	{
+		return _len;
+	}
+	inline iterator nth(long pos) const
+	{
+		if (pos < 0) {
+			if ((pos += size()) < 0) {
+				return 0;
+			}
+		}
+		else if (pos >= size()) {
+			return 0;
+		}
+		return _base + pos;
+	}
+	bool skip(long l)
+	{
+		if (l < 0 || l > size()) {
+			return false;
+		}
+		_len -= l * sizeof(T);
+		_base += l;
+		return true;
+	}
+	bool trim(long l)
+	{
+		if (l < 0 || l > size()) {
+			return false;
+		}
+		_len -= l * sizeof(T);
+		return true;
+	}
+protected:
+	T *_base;
+	size_t _len;
+};
 #endif
 
 /*! wrapper for reference count */
@@ -588,7 +465,6 @@ inline uintptr_t instance::addref()
 {
 	return 0;
 }
-extern int convert(const void **, int , void *, int);
 
 /*! container for reference type pointer */
 template<typename T>
@@ -665,21 +541,6 @@ public:
 protected:
 	T *_ref;
 };
-template <typename T>
-class typeinfo<reference<T> >
-{
-protected:
-	typeinfo();
-public:
-	static int id()
-	{
-		return to_reference_id(typeinfo<T>::id());
-	}
-};
-template <> inline __MPT_CONST_TYPE int typeinfo<reference <metatype> >::id()
-{
-	return TypeMetaRef;
-}
 #endif
 
 /* text identifier for entity */
@@ -732,17 +593,6 @@ public:
 	}
 protected:
 	char _post[32 - sizeof(identifier) - sizeof(reference<T>)];
-};
-template <typename T>
-class typeinfo<item<T> >
-{
-protected:
-	typeinfo();
-public:
-	static int id()
-	{
-		return to_item_id(typeinfo<T>::id());
-	}
 };
 
 /* auto-create wrapped reference */
@@ -823,12 +673,6 @@ extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *, const MPT_STRU
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
 extern void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
 extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
-
-
-/* compare data types */
-extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
-/* read from value */
-extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
 
 
 /* write error message and abort program */

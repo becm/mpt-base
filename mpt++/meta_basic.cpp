@@ -10,6 +10,8 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "meta.h"
 
 __MPT_NAMESPACE_BEGIN

@@ -13,6 +13,7 @@ HEADER =\
 	node.h \
 	object.h output.h \
 	parse.h \
+	types.h \
 	queue.h
 #
 # source summary

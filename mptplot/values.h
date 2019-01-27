@@ -11,6 +11,7 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
+MPT_INTERFACE(iterator);
 MPT_INTERFACE(output);
 
 MPT_STRUCT(node);

@@ -4,6 +4,8 @@
 
 #include "client.h"
 
+#include "types.h"
+
 /*!
  * \ingroup mptClient
  * \brief client type

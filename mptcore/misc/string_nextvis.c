@@ -5,10 +5,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "parse.h"
+#include "core.h"
 
 /*!
- * \ingroup mptParse
+ * \ingroup mptCore
  * \brief next nonspace character
  * 
  * Get next visible character and advance position.

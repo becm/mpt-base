@@ -3,10 +3,10 @@
  *   register extended generic type
  */
 
-#include "core.h"
+#include "types.h"
 
 /*!
- * \ingroup mptCore
+ * \ingroup mptTypes
  * \brief new generic type
  * 
  * Create new type code in dynamic extended range.

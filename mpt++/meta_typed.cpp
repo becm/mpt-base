@@ -2,6 +2,8 @@
  * MPT C++ metatype creator
  */
 
+#include "types.h"
+
 #include "meta.h"
 
 __MPT_NAMESPACE_BEGIN

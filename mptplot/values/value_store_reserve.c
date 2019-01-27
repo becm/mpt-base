@@ -5,6 +5,8 @@
 
 #include <string.h>
 
+#include "types.h"
+
 #include "values.h"
 
 /*!

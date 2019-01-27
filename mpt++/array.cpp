@@ -8,6 +8,7 @@
 
 #include "message.h"
 #include "convert.h"
+#include "types.h"
 #include "meta.h"
 
 

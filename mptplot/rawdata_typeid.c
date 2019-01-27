@@ -2,6 +2,8 @@
  * raw data interface registration.
  */
 
+#include "types.h"
+
 #include "values.h"
 
 /*!

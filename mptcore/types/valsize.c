@@ -3,6 +3,8 @@
  * mpt type registry
  */
 
+#include "types.h"
+
 #include "../mptplot/layout.h"
 #include "../mptio/connection.h"
 
@@ -74,7 +76,7 @@ static size_t types[MPT_ENUM(_TypeScalarSize)];
 static int types_count = 0;
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief get size of registered type
  * 
  * Get size of builtin or user type registered by mpt_valtype_add()
@@ -140,7 +142,7 @@ extern ssize_t mpt_valsize(int type)
 }
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief register new type
  * 
  * register new user type to use with mpt_valsize()

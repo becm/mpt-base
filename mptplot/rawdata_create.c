@@ -12,6 +12,7 @@
 
 #include "meta.h"
 #include "message.h"
+#include "types.h"
 
 #include "values.h"
 

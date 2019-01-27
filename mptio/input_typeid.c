@@ -2,8 +2,9 @@
  * register input with type system.
  */
 
-#include "notify.h"
+#include "types.h"
 
+#include "notify.h"
 
 /*!
  * \ingroup mptNotify

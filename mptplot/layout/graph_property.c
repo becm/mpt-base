@@ -11,6 +11,7 @@
 #include <float.h> /* for FLT_MAX */
 
 #include "meta.h"
+#include "types.h"
 #include "object.h"
 
 #include "layout.h"

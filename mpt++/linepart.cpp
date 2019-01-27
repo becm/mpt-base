@@ -8,6 +8,8 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "values.h"
 
 __MPT_NAMESPACE_BEGIN

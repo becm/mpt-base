@@ -11,6 +11,7 @@
 # include <cstring>
 # include <cstdlib>
 # include "output.h"
+# include "types.h"
 #else
 # include "core.h"
 #endif

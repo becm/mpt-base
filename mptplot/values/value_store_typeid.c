@@ -3,8 +3,9 @@
  *    register value store with type system
  */
 
-#include "values.h"
+#include "types.h"
 
+#include "values.h"
 
 /*!
  * \ingroup mptValues

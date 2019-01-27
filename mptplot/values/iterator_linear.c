@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #include "convert.h"
+#include "types.h"
 #include "meta.h"
 #include "parse.h"
 

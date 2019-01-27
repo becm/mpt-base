@@ -7,6 +7,7 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
 #include "message.h"
 
 #include "values.h"

@@ -5,11 +5,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "types.h"
 #include "meta.h"
 
-#include "convert.h"
-
 #include "../mptplot/layout.h"
+
+#include "convert.h"
 
 /*!
  * \ingroup mptConvert

@@ -5,10 +5,10 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "core.h"
+#include "types.h"
 
 /*!
- * \ingroup mptCore
+ * \ingroup mptTypes
  * \brief proxy reference types
  * 
  * Create metatype proxy to library instance.

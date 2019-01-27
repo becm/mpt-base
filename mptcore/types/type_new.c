@@ -9,10 +9,10 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "meta.h"
 #include "array.h"
-
-#include "convert.h"
 
 static MPT_STRUCT(array) interface_names = MPT_ARRAY_INIT;
 static MPT_STRUCT(array) metatype_names  = MPT_ARRAY_INIT;
@@ -123,7 +123,7 @@ static int getArrayId(const MPT_STRUCT(array) *arr, const char *name, int len)
 
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief get metatype name
  * 
  * Get name for previously registered metatype.
@@ -151,7 +151,7 @@ extern const char *mpt_meta_typename(int type)
 	return name;
 }
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief get interface name
  * 
  * Get name for builtin or previously registered interface.
@@ -183,7 +183,7 @@ extern const char *mpt_interface_typename(int type)
 }
 
 /*!
- * \ingroup mptCore
+ * \ingroup mptTypes
  * \brief get type for name
  * 
  * Get name for previously registered type name.
@@ -251,7 +251,7 @@ extern int mpt_type_value(const char *name, int len)
 }
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief register metatype
  * 
  * Register name for new global metatype.
@@ -285,7 +285,7 @@ extern int mpt_type_meta_new(const char *name)
 	return id;
 }
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief register object
  * 
  * Register new interface type to use with mpt_valsize()

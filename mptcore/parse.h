@@ -183,8 +183,6 @@ extern int mpt_parse_node(MPT_STRUCT(node) *, MPT_STRUCT(parser_context) *, cons
 extern int mpt_parse_folder(DIR *, MPT_TYPE(path_handler) , void *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 #endif
 
-extern int mpt_string_nextvis(const char **);
-
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus

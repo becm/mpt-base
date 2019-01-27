@@ -18,6 +18,7 @@ MPT_STRUCT(node);
 MPT_STRUCT(message);
 
 MPT_INTERFACE(metatype);
+MPT_INTERFACE(iterator);
 
 /*! single property information */
 MPT_STRUCT(property)
