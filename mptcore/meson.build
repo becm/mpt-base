@@ -17,7 +17,8 @@ foreach d : [
   'object',
   'output',
   'parse',
-  'queue'
+  'queue',
+  'types'
 ]
   subdir(d)
   core_src += src
