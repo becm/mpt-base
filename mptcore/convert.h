@@ -217,7 +217,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const cha
 extern int mpt_valfmt_get(MPT_STRUCT(value_format) *, const char *);
 #ifdef _MPT_ARRAY_H
 extern int mpt_valfmt_parse(_MPT_ARRAY_TYPE(value_format) *, const char *);
-extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(value_format) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_valfmt_set(_MPT_ARRAY_TYPE(value_format) *, MPT_INTERFACE(convertable) *);
 extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(value_format) *, MPT_STRUCT(value_format));
 #endif
 

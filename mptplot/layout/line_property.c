@@ -31,7 +31,7 @@ extern void mpt_line_init(MPT_STRUCT(line) *line)
 	*line = def_line;
 }
 /* set/get functions */
-static int setPosition(float *val, const MPT_INTERFACE(metatype) *src)
+static int setPosition(float *val, MPT_INTERFACE(convertable) *src)
 {
 	double tmp;
 	int len;
@@ -39,11 +39,11 @@ static int setPosition(float *val, const MPT_INTERFACE(metatype) *src)
 		*val = 0;
 		return 0;
 	}
-	if ((len = src->_vptr->conv(src, 'f', val)) >= 0) {
+	if ((len = src->_vptr->convert(src, 'f', val)) >= 0) {
 		if (!len) *val = 0.0f;
 		return 0;
 	}
-	if ((len = src->_vptr->conv(src, 'd', &tmp)) >= 0) {
+	if ((len = src->_vptr->convert(src, 'd', &tmp)) >= 0) {
 		if (!len) {
 			*val = 0.0f;
 		} else {
@@ -63,7 +63,7 @@ static int setPosition(float *val, const MPT_INTERFACE(metatype) *src)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int len;
 	
@@ -74,15 +74,15 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERF
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLine), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLine), &from)) >= 0) {
 			*li = from ? *from : def_line;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
 			if (!len) li->color = def_line.color;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
 			if (!len) li->attr = def_line.attr;
 			return 0;
 		}
@@ -90,7 +90,7 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, const MPT_INTERF
 	}
 	/* copy from sibling */
 	if (!*name) {
-		if (!src || !(len = src->_vptr->conv(src, MPT_ENUM(TypeLine), li))) {
+		if (!src || !(len = src->_vptr->convert(src, MPT_ENUM(TypeLine), li))) {
 			*li = def_line;
 			return 0;
 		}

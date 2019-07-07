@@ -484,7 +484,7 @@ metatype *graphic::get_item(message &msg, size_t len) const
 				break;
 			}
 			// need group for next path element
-			if (m->conv(type, &g) < 0
+			if (m->convert(type, &g) < 0
 			 || !g) {
 				return 0;
 			}
@@ -496,7 +496,7 @@ metatype *graphic::get_item(message &msg, size_t len) const
 }
 
 // collect references for update trigger
-bool graphic::register_update(const instance *, hint)
+bool graphic::register_update(const convertable *, hint)
 {
 	return true;
 }

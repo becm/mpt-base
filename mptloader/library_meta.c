@@ -24,33 +24,13 @@ struct _mpt_metaProxy
 	uint8_t fmt[2];
 };
 
-static void _proxy_unref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int _proxy_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	struct _mpt_metaProxy *mp = (void *) in;
-	
-	if (__mpt_library_proxy_unref(&mp->_ref)) {
-		return;
-	}
-	if ((in = mp->ptr)) {
-		int type = mp->sym.type;
-		if (MPT_type_isMetatype(type)) {
-			in->_vptr->unref(in);
-		}
-	}
-	mpt_library_detach(&mp->sym.lib);
-	free(mp);
-}
-static uintptr_t _proxy_addref(MPT_INTERFACE(instance) *in)
-{
-	struct _mpt_metaProxy *mp = (void *) in;
-	return __mpt_library_proxy_addref(&mp->_ref);
-}
-static int _proxy_conv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
-{
-	const struct _mpt_metaProxy *mp = (void *) m;
+	const struct _mpt_metaProxy *mp = (void *) val;
 	int mt = mp->sym.type;
 	
-	if (!(m = mp->ptr)) {
+	if (!(val = mp->ptr)) {
 		return MPT_ERROR(BadArgument);
 	}
 	if (!type) {
@@ -72,7 +52,29 @@ static int _proxy_conv(const MPT_INTERFACE(metatype) *m, int type, void *ptr)
 		if (ptr) *((void **) ptr) = mp->ptr;
 		return mt;
 	}
-	return m->_vptr->conv(m, type, ptr);
+	return val->_vptr->convert(val, type, ptr);
+}
+/* metatype interface */
+static void _proxy_unref(MPT_INTERFACE(metatype) *mt)
+{
+	struct _mpt_metaProxy *mp = (void *) mt;
+	
+	if (__mpt_library_proxy_unref(&mp->_ref)) {
+		return;
+	}
+	if ((mt = mp->ptr)) {
+		int type = mp->sym.type;
+		if (MPT_type_isMetatype(type)) {
+			mt->_vptr->unref(mt);
+		}
+	}
+	mpt_library_detach(&mp->sym.lib);
+	free(mp);
+}
+static uintptr_t _proxy_addref(MPT_INTERFACE(metatype) *mt)
+{
+	struct _mpt_metaProxy *mp = (void *) mt;
+	return __mpt_library_proxy_addref(&mp->_ref);
 }
 static MPT_INTERFACE(metatype) *_proxy_clone(const MPT_INTERFACE(metatype) *m)
 {
@@ -100,7 +102,7 @@ static MPT_INTERFACE(metatype) *_proxy_clone(const MPT_INTERFACE(metatype) *m)
 	n->sym.lib = lh;
 	
 	if (!(n->ptr = val.make())) {
-		_proxy_unref((MPT_INTERFACE(instance) *) n);
+		_proxy_unref(&n->_mt);
 		return 0;
 	}
 	return &n->_mt;
@@ -133,8 +135,9 @@ static void msg(MPT_INTERFACE(logger) *info, const char *fcn, int type, const ch
 extern MPT_INTERFACE(metatype) *mpt_library_meta(int type, const char *desc, const char *path, MPT_INTERFACE(logger) *info)
 {
 	static const MPT_INTERFACE_VPTR(metatype) _proxy_ctl = {
-		{ _proxy_unref, _proxy_addref },
-		_proxy_conv,
+		{ _proxy_conv },
+		_proxy_unref,
+		_proxy_addref,
 		_proxy_clone
 	};
 	MPT_STRUCT(libsymbol) sym = MPT_LIBSYMBOL_INIT;

@@ -36,11 +36,11 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	int ret, fdold, fdnew, len;
 	
 	fdold = -1;
-	if ((ret = next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeSocket), &fdold)) < 0) {
+	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeSocket), &fdold)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	obj = 0;
-	if ((ret = next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeObject), &obj)) < 0
+	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeObject), &obj)) < 0
 	    || !obj) {
 		return MPT_ERROR(BadArgument);
 	}
@@ -66,7 +66,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	}
 	/* get new descriptor */
 	fdnew = -1;
-	next->_vptr->meta.conv((void *) next, MPT_ENUM(TypeSocket), &fdnew);
+	next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeSocket), &fdnew);
 	
 	/* distinct instances */
 	if (next != in) {
@@ -74,7 +74,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 			return 0;
 		}
 		/* need separate reference */
-		if (!(next->_vptr->meta.instance.addref((void *) next))) {
+		if (!(next->_vptr->meta.addref((void *) next))) {
 			return MPT_ERROR(BadOperation);
 		}
 	}
@@ -91,7 +91,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	}
 	/* move reference to notifier */
 	if (mpt_notify_add(no, POLLIN, next) < 0) {
-		in->_vptr->meta.instance.unref((void *) in);
+		in->_vptr->meta.unref((void *) in);
 		return MPT_ERROR(BadOperation);
 	}
 	

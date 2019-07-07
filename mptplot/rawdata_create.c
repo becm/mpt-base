@@ -25,38 +25,11 @@ MPT_STRUCT(RawData) {
 	_MPT_ARRAY_TYPE(rawdata_stage) st;
 	long act, max;
 };
- 
-/* reference interface */
-static void rd_unref(MPT_INTERFACE(instance) *in)
+
+/* convertable interface */
+static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, in, _mt);
-	MPT_STRUCT(buffer) *buf;
-	
-	if (mpt_refcount_lower(&rd->_ref)) {
-		return;
-	}
-	if ((buf = rd->st._buf)) {
-		MPT_STRUCT(rawdata_stage) *st = (void *) (buf + 1);
-		size_t i, len = buf->_used/sizeof(*st);
-		
-		for (i = 0; i < len; ++i) {
-			mpt_stage_fini(st + i);
-		}
-		mpt_array_clone(&rd->st, 0);
-	}
-	rd->_mt._vptr = 0;
-	rd->_rd._vptr = 0;
-	free(rd);
-}
-static uintptr_t rd_ref(MPT_INTERFACE(instance) *in)
-{
-	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, in, _mt);
-	return mpt_refcount_raise(&rd->_ref);
-}
-/* metatype interface */
-static int rd_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, mt, _mt);
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, val, _mt);
 	int me = mpt_rawdata_typeid();
 	
 	if (me < 0) {
@@ -81,6 +54,33 @@ static int rd_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return me;
 	}*/
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void rd_unref(MPT_INTERFACE(metatype) *ref)
+{
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
+	MPT_STRUCT(buffer) *buf;
+	
+	if (mpt_refcount_lower(&rd->_ref)) {
+		return;
+	}
+	if ((buf = rd->st._buf)) {
+		MPT_STRUCT(rawdata_stage) *st = (void *) (buf + 1);
+		size_t i, len = buf->_used/sizeof(*st);
+		
+		for (i = 0; i < len; ++i) {
+			mpt_stage_fini(st + i);
+		}
+		mpt_array_clone(&rd->st, 0);
+	}
+	rd->_mt._vptr = 0;
+	rd->_rd._vptr = 0;
+	free(rd);
+}
+static uintptr_t rd_ref(MPT_INTERFACE(metatype) *ref)
+{
+	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
+	return mpt_refcount_raise(&rd->_ref);
 }
 static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -279,8 +279,9 @@ static int rd_stages(const MPT_INTERFACE(rawdata) *ptr)
 extern MPT_INTERFACE(metatype) *mpt_rawdata_create(long max)
 {
 	static const MPT_INTERFACE_VPTR(metatype) meta = {
-		{ rd_unref, rd_ref },
-		rd_conv,
+		{ rd_conv },
+		rd_unref,
+		rd_ref,
 		rd_clone
 	};
 	static const MPT_INTERFACE_VPTR(rawdata) raw = {

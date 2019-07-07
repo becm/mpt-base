@@ -20,32 +20,15 @@ io::buffer::buffer(array const &a)
 }
 io::buffer::~buffer()
 { }
-// reference interface
-void io::buffer::unref()
-{
-	delete this;
-}
-// metatype interface
-io::buffer *io::buffer::clone() const
-{
-	if (_enc) {
-		if (_state.scratch || _state._ctx) {
-			return 0;
-		}
-	}
-	io::buffer *b = new io::buffer(_d);
-	b->_state = _state;
-	b->_enc = _enc;
-	return b;
-}
-int io::buffer::conv(int type, void *ptr) const
+// convertable interface
+int io::buffer::convert(int type, void *ptr)
 {
 	int me = typeinfo<io::interface>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const io::interface **>(ptr) = this;
+		if (ptr) *static_cast<io::interface **>(ptr) = this;
 		return me;
 	}
 	if (!type) {
@@ -54,11 +37,11 @@ int io::buffer::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return me;
 	}
 	if (type == to_pointer_id(iterator::Type)) {
-		if (ptr) *static_cast<const iterator **>(ptr) = this;
+		if (ptr) *static_cast<iterator **>(ptr) = this;
 		return me;
 	}
 	if (type == MPT_type_vector('c')) {
@@ -79,6 +62,23 @@ int io::buffer::conv(int type, void *ptr) const
 		return me;
 	}
 	return BadType;
+}
+// metatype interface
+void io::buffer::unref()
+{
+	delete this;
+}
+io::buffer *io::buffer::clone() const
+{
+	if (_enc) {
+		if (_state.scratch || _state._ctx) {
+			return 0;
+		}
+	}
+	io::buffer *b = new io::buffer(_d);
+	b->_state = _state;
+	b->_enc = _enc;
+	return b;
 }
 // iterator interface
 int io::buffer::get(int type, void *ptr)

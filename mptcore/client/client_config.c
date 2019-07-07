@@ -20,14 +20,14 @@
  */
 extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *info)
 {
-	const MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(convertable) *args;
 	MPT_INTERFACE(iterator) *it;
 	const char *val;
 	int ret;
 	
 	it = 0;
-	if (!(mt = mpt_config_get(0, "mpt.args", '.', 0))
-	    || (ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) <= 0
+	if (!(args = mpt_config_get(0, "mpt.args", '.', 0))
+	    || (ret = args->_vptr->convert(args, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) <= 0
 	    || !it) {
 		return 0;
 	}

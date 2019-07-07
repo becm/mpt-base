@@ -17,7 +17,7 @@
 
 #include "output.h"
 
-static int setHistfile(MPT_STRUCT(logfile) *log, const MPT_INTERFACE(metatype) *src)
+static int setHistfile(MPT_STRUCT(logfile) *log, MPT_INTERFACE(convertable) *src)
 {
 	const char *where = 0;
 	FILE *fd;
@@ -31,7 +31,7 @@ static int setHistfile(MPT_STRUCT(logfile) *log, const MPT_INTERFACE(metatype) *
 		fd = 0;
 	}
 	/* use socket descriptor */
-	else if (src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock) >= 0) {
+	else if (src->_vptr->convert(src, MPT_ENUM(TypeSocket), &sock) >= 0) {
 		if (sock < 0) {
 			fd = 0;
 		}
@@ -44,7 +44,7 @@ static int setHistfile(MPT_STRUCT(logfile) *log, const MPT_INTERFACE(metatype) *
 		}
 	}
 	/* use file path */
-	else if (src->_vptr->conv(src, 's', &where) >= 0) {
+	else if (src->_vptr->convert(src, 's', &where) >= 0) {
 		fd = 0;
 		/* regular file path */
 		if (where && !(fd = fopen(where, "w"))) {
@@ -73,7 +73,7 @@ static int setHistfile(MPT_STRUCT(logfile) *log, const MPT_INTERFACE(metatype) *
  * 
  * \return consumed elements
  */
-extern int mpt_logfile_set(MPT_STRUCT(logfile) *log, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_logfile_set(MPT_STRUCT(logfile) *log, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int ret;
 	if (!name) {
@@ -91,7 +91,7 @@ extern int mpt_logfile_set(MPT_STRUCT(logfile) *log, const char *name, const MPT
 			log->ignore = MPT_LOG(Info);
 			return 0;
 		}
-		if ((ret = src->_vptr->conv(src, 'y', &val)) >= 0) {
+		if ((ret = src->_vptr->convert(src, 'y', &val)) >= 0) {
 			log->ignore = val;
 		}
 		return MPT_ERROR(BadValue);
@@ -102,7 +102,7 @@ extern int mpt_logfile_set(MPT_STRUCT(logfile) *log, const char *name, const MPT
 			log->ignore = MPT_LOG(Info);
 			return 0;
 		}
-		if ((ret = src->_vptr->conv(src, 's', &ign)) >= 0) {
+		if ((ret = src->_vptr->convert(src, 's', &ign)) >= 0) {
 			int lv = mpt_log_level(ign);
 			if (lv < 0) {
 				return lv;

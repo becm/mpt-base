@@ -45,13 +45,8 @@ io::stream::~stream()
 	if (_srm) delete _srm;
 }
 
-// reference interface
-void io::stream::unref()
-{
-	delete this;
-}
-// metatype interface
-int io::stream::conv(int type, void *ptr) const
+// convertable interface
+int io::stream::convert(int type, void *ptr)
 {
 	int me = mpt_input_typeid();
 	
@@ -59,7 +54,7 @@ int io::stream::conv(int type, void *ptr) const
 		me = output::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const input **>(ptr) = this;
+		if (ptr) *static_cast<input **>(ptr) = this;
 		return socket::Type;
 	}
 	if (!type) {
@@ -72,14 +67,24 @@ int io::stream::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return output::Type;
 	}
 	if (type == to_pointer_id(output::Type)) {
-		if (ptr) *static_cast<const output **>(ptr) = this;
+		if (ptr) *static_cast<output **>(ptr) = this;
 		return me;
 	}
 	return BadType;
+}
+// metatype interface
+void io::stream::unref()
+{
+	delete this;
+}
+io::stream *io::stream::clone() const
+{
+	// undefined state for side-effect structures
+	return 0;
 }
 // object interface
 int io::stream::property(struct property *pr) const
@@ -122,7 +127,7 @@ int io::stream::property(struct property *pr) const
 	}
 	return BadArgument;
 }
-int io::stream::set_property(const char *pr, const metatype *src)
+int io::stream::set_property(const char *pr, convertable *src)
 {
 	if (!pr) {
 		if (!_srm) {
@@ -143,7 +148,7 @@ int io::stream::set_property(const char *pr, const metatype *src)
 		if (!src) {
 			l = 0;
 		} else {
-			int ret = src->conv('y', &l);
+			int ret = src->convert(typeinfo<uint8_t>::id(), &l);
 			if (ret < 0) {
 				return ret;
 			}

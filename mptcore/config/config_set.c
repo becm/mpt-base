@@ -27,9 +27,9 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	MPT_STRUCT(value) d;
 	
 	if (!conf) {
-		MPT_INTERFACE(metatype) *gl;;
+		MPT_INTERFACE(metatype) *gl;
 		if (!(gl = mpt_config_global(0))
-		    || gl->_vptr->conv(gl, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0
+		    || MPT_metatype_convert(gl, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0
 		    || !conf) {
 			return MPT_ERROR(BadOperation);
 		}

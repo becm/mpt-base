@@ -29,11 +29,11 @@ bool socket::bind(const char *addr, int listen)
 	return (mpt_bind(this, addr, 0, listen) < 0) ? false : true;
 }
 
-bool socket::set(metatype &src)
+bool socket::set(convertable &src)
 {
 	socket tmp;
 	const char *dst = 0;
-	if (src.conv('s', &dst) < 0) {
+	if (src.convert('s', &dst) < 0) {
 		return false;
 	}
 	if (dst && mpt_connect(&tmp, dst, 0) < 0) {

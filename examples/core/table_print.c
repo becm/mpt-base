@@ -21,15 +21,15 @@
 
 extern int table_print(struct mpt_node *node, void *file, size_t depth)
 {
-	struct mpt_metatype *meta;
+	struct mpt_metatype *mt;
 	const char *id = mpt_node_ident(node);
 	
 	while (depth--) fputc('.', file);
 	if (id) fputs(id, file);
 	
-	if ((meta = node->_meta)) {
+	if ((mt = node->_meta)) {
 		fputc('=', file);
-		if (meta->_vptr->conv(meta, 's', &id) >= 0 && id) {
+		if (MPT_metatype_convert(mt, 's', &id) >= 0 && id) {
 			fputs(id, file);
 		}
 	}

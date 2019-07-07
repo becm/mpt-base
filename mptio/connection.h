@@ -45,7 +45,7 @@ enum MPT_ENUM(SocketFlags) {
 	bool bind(const char *, int = 2);
 	bool open(const char *, const char *mode = "w");
 	
-	bool set(metatype &);
+	bool set(convertable &);
 	bool set(const value *);
 protected:
 #else
@@ -129,7 +129,7 @@ extern int mpt_connection_assign(MPT_STRUCT(connection) *, const MPT_STRUCT(sock
 extern int mpt_connection_open(MPT_STRUCT(connection) *, const char *, const MPT_STRUCT(fdmode) *);
 /* get/set outdata property */
 extern int mpt_connection_get(const MPT_STRUCT(connection) *, MPT_STRUCT(property) *);
-extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int mpt_connection_set(MPT_STRUCT(connection) *, const char *, MPT_INTERFACE(convertable) *);
 
 /* push data to connection */
 extern ssize_t mpt_connection_push(MPT_STRUCT(connection) *, size_t , const void *);

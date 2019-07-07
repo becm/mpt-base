@@ -127,7 +127,7 @@ extern pid_t mpt_stream_pipe(MPT_STRUCT(streaminfo) *, const char *, char *const
 /* change mode (buffering, newline, ...) */
 extern int mpt_stream_setmode(MPT_STRUCT(stream) *, int);
 /* configure stream via converter function */
-extern int mpt_stream_setter(MPT_STRUCT(stream) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_stream_setter(MPT_STRUCT(stream) *, MPT_INTERFACE(convertable) *);
 
 /* connect stream to file/filedescr/process/address/memory */
 extern int mpt_stream_open(MPT_STRUCT(stream) *, const char *, const char *);

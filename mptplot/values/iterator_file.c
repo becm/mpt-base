@@ -26,20 +26,8 @@ struct _iter_fdata
 	uint8_t val[16];
 };
 
-/* reference interface */
-static void fileUnref(MPT_INTERFACE(instance) *in)
-{
-	struct _iter_fdata *d = (void *) (in + 2);
-	fclose(d->fd);
-	free(in);
-}
-static uintptr_t fileRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int fileConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+/* convertable interface */
+static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeFile) };
@@ -50,15 +38,27 @@ static int fileConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
-		if (ptr) *((const void **) ptr) = mt + 1;
+		if (ptr) *((const void **) ptr) = val + 1;
 		return MPT_ENUM(TypeFile);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeFile))) {
-		struct _iter_fdata *d = (void *) (mt + 2);
+		struct _iter_fdata *d = (void *) (val + 2);
 		if (ptr) *((void **) ptr) = d->fd;
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void fileUnref(MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_fdata *d = (void *) (mt + 2);
+	fclose(d->fd);
+	free(mt);
+}
+static uintptr_t fileRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -159,8 +159,9 @@ static int fileReset(MPT_INTERFACE(iterator) *it)
 extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 {
 	static const MPT_INTERFACE_VPTR(metatype) fileMeta = {
-		{ fileUnref, fileRef },
-		fileConv,
+		{ fileConv },
+		fileUnref,
+		fileRef,
 		fileClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) fileIter = {

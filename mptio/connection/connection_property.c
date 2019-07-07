@@ -21,7 +21,7 @@
 #include "connection.h"
 
 
-static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
+static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(convertable) *src)
 {
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	const char *where = 0;
@@ -33,11 +33,11 @@ static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metaty
 	if (con->out.state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(BadOperation);
 	}
-	if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeSocket), &sock)) >= 0
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeSocket), &sock)) >= 0
 	    && (ret = mpt_connection_assign(con, &sock)) >= 0) {
 		return 0;
 	}
-	if ((ret = src->_vptr->conv(src, 's', &where)) < 0) {
+	if ((ret = src->_vptr->convert(src, 's', &where)) < 0) {
 		return ret;
 	}
 	if (!where) {
@@ -50,7 +50,7 @@ static int connectionSet(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metaty
 	return 0;
 }
 /* set encoding for stream */
-static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(metatype) *src)
+static int connectionEncoding(MPT_STRUCT(connection) *con, MPT_INTERFACE(convertable) *src)
 {
 	MPT_TYPE(data_encoder) enc;
 	MPT_TYPE(data_decoder) dec;
@@ -72,7 +72,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(m
 		res = 0;
 	}
 	/* resolve type description */
-	else if ((res = src->_vptr->conv(src, 's', &where)) >= 0) {
+	else if ((res = src->_vptr->convert(src, 's', &where)) >= 0) {
 		val = mpt_encoding_value(where, -1);
 		if (val < 0 || val > UINT8_MAX) {
 			return MPT_ERROR(BadValue);
@@ -80,8 +80,8 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(m
 		rtype = val;
 	}
 	/* explicit encoding code */
-	else if ((res = src->_vptr->conv(src, 'y', &rtype)) < 0) {
-		res = src->_vptr->conv(src, 'i', &val);
+	else if ((res = src->_vptr->convert(src, 'y', &rtype)) < 0) {
+		res = src->_vptr->convert(src, 'i', &val);
 		if (res < 0 || val < 0 || val > UINT8_MAX) {
 			return MPT_ERROR(BadValue);
 		}
@@ -121,7 +121,7 @@ static int connectionEncoding(MPT_STRUCT(connection) *con, const MPT_INTERFACE(m
 	return res;
 }
 /* modify output color flag */
-static int connectionColor(uint8_t *flags, const MPT_INTERFACE(metatype) *src)
+static int connectionColor(uint8_t *flags, MPT_INTERFACE(convertable) *src)
 {
 	char *where;
 	int len;
@@ -131,14 +131,14 @@ static int connectionColor(uint8_t *flags, const MPT_INTERFACE(metatype) *src)
 		*flags &= ~MPT_OUTFLAG(PrintColor);
 		return 0;
 	}
-	if ((len = src->_vptr->conv(src, 's', &where)) >= 0) {
+	if ((len = src->_vptr->convert(src, 's', &where)) >= 0) {
 		if (!where || *where || !strcasecmp(where, "false")) {
 			val = 1;
 		} else {
 			val = 0;
 		}
 	}
-	else if ((len = src->_vptr->conv(src, 'i', &val)) < 0) {
+	else if ((len = src->_vptr->convert(src, 'i', &val)) < 0) {
 		return MPT_ERROR(BadType);
 	}
 	if (val > 0) {
@@ -160,7 +160,7 @@ static int connectionColor(uint8_t *flags, const MPT_INTERFACE(metatype) *src)
  * 
  * \return state of property
  */
-extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_connection_set(MPT_STRUCT(connection) *con, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int ret;
 	if (!name || !*name) {

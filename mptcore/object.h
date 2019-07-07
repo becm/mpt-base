@@ -17,7 +17,6 @@ __MPT_NAMESPACE_BEGIN
 MPT_STRUCT(node);
 MPT_STRUCT(message);
 
-MPT_INTERFACE(metatype);
 MPT_INTERFACE(iterator);
 
 /*! single property information */
@@ -89,7 +88,7 @@ public:
 	node *next_alien(const node *) const;
 	
 	virtual int property(struct property *) const = 0;
-	virtual int set_property(const char *, const metatype * = 0) = 0;
+	virtual int set_property(const char *, convertable * = 0) = 0;
 };
 template<> inline __MPT_CONST_TYPE int typeinfo<object>::id()
 {
@@ -99,13 +98,16 @@ template<> inline __MPT_CONST_TYPE int typeinfo<object>::id()
 MPT_INTERFACE(object);
 MPT_INTERFACE_VPTR(object) {
 	int (*property)(const MPT_INTERFACE(object) *, MPT_STRUCT(property) *);
-	int (*set_property)(MPT_INTERFACE(object) *, const char *, const MPT_INTERFACE(metatype) *);
+	int (*set_property)(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(convertable) *);
 };MPT_INTERFACE(object) {
 	const MPT_INTERFACE_VPTR(object) *_vptr;
 };
 #endif
 
 __MPT_EXTDECL_BEGIN
+
+/* get info for convertable */
+extern int mpt_convertable_info(MPT_INTERFACE(convertable) *, MPT_STRUCT(property) *);
 
 /* get object type name */
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *);
@@ -124,7 +126,7 @@ extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, 
 extern int mpt_object_args(MPT_INTERFACE(object) *, MPT_INTERFACE(iterator) *);
 
 /* set properties matching node identifiers to node values */
-extern int mpt_object_set_property(MPT_INTERFACE(object) *, int , const MPT_STRUCT(identifier) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_object_set_property(MPT_INTERFACE(object) *, int , const MPT_STRUCT(identifier) *, MPT_INTERFACE(convertable) *);
 extern int mpt_object_set_nodes(MPT_INTERFACE(object) *, int , const MPT_STRUCT(node) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* get matching property by name */
@@ -259,11 +261,11 @@ public:
 	bool select(const char * = 0);
 	bool select(int);
 	
-	bool set(const metatype &);
+	bool set(convertable &);
 	bool set(const value &);
 	
 	attribute & operator= (const char *val);
-	attribute & operator= (const metatype &meta);
+	attribute & operator= (convertable &meta);
 	attribute & operator= (const struct property &);
 	
 	inline attribute & operator= (const value &v)

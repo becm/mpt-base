@@ -51,7 +51,7 @@ void mpt_histfmt_reset(MPT_STRUCT(histfmt) *);
 extern void mpt_history_fini(MPT_STRUCT(history) *);
 /* get/set history properties */
 extern int mpt_history_get(const MPT_STRUCT(history) *, MPT_STRUCT(property) *);
-extern int mpt_history_set(MPT_STRUCT(history) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int mpt_history_set(MPT_STRUCT(history) *, const char *, MPT_INTERFACE(convertable) *);
 
 /* push data to history */
 extern ssize_t mpt_history_push(MPT_STRUCT(history) *, size_t , const void *);

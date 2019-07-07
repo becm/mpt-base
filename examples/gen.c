@@ -40,7 +40,7 @@ extern int main(int argc, char *argv[])
 			fputc('\n', stderr);
 			continue;
 		}
-		src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
+		MPT_metatype_convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
 		while (1) {
 			double val;
 			int res;
@@ -62,7 +62,7 @@ extern int main(int argc, char *argv[])
 				break;
 			}
 		}
-		src->_vptr->instance.unref((void *) src);
+		src->_vptr->unref(src);
 		fputc('\n', stdout);
 	}
 	return 0;

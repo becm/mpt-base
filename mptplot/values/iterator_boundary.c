@@ -22,18 +22,8 @@ struct _iter_bdata
 	         pos;
 };
 
-/* reference interface */
-static void iterBoundaryUnref(MPT_INTERFACE(instance) *in)
-{
-	free(in);
-}
-static uintptr_t iterBoundaryRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int iterBoundaryConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+/* convertable interface */
+static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
@@ -44,10 +34,20 @@ static int iterBoundaryConv(const MPT_INTERFACE(metatype) *mt, int type, void *p
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
-		if (ptr) *((void **) ptr) = (void *) (mt + 1);
+		if (ptr) *((void **) ptr) = (void *) (val + 1);
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void iterBoundaryUnref(MPT_INTERFACE(metatype) *mt)
+{
+	free(mt);
+}
+static uintptr_t iterBoundaryRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *iterBoundaryClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -132,8 +132,9 @@ static int iterBoundaryReset(MPT_INTERFACE(iterator) *it)
 extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t len, double left, double inter, double right)
 {
 	static const MPT_INTERFACE_VPTR(metatype) boundaryMeta = {
-		{ iterBoundaryUnref, iterBoundaryRef },
-		iterBoundaryConv,
+		{ iterBoundaryConv },
+		iterBoundaryUnref,
+		iterBoundaryRef,
 		iterBoundaryClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) boundaryIter = {

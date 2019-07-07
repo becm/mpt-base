@@ -28,6 +28,6 @@ extern void mpt_path_fini(MPT_STRUCT(path) *path)
 		return;
 	}
 	--buf;
-	buf->_vptr->instance.unref((void *) buf);
+	buf->_vptr->unref(buf);
 	path->base = 0;
 }

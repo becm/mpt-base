@@ -19,27 +19,27 @@ extern int main(int argc, char *argv[])
 	
 	mpt_path_set(&p, "mpt", -1);
 	mt = mpt_config_global(&p);
-	mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
+	MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
 	
 	if ((i = mpt_config_load(cfg, 0, mpt_log_default())) < 0) {
 		return 1;
 	}
 	if (argc < 2) {
-		mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeNode)), &n);
+		MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeNode)), &n);
 		mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	}
 	for (i = 1; i < argc; ++i) {
-		const MPT_INTERFACE(metatype) *elem;
+		MPT_INTERFACE(convertable) *elem;
 		if (!(elem = mpt_config_get(cfg, argv[i], '.', 0))) {
 			fprintf(stderr, "%s: %s\n", "missing element", argv[i]);
 		} else {
-			const char *val = mpt_meta_data(elem, 0);
+			const char *val = mpt_convertable_data(elem, 0);
 			fprintf(stdout, "%s: %s\n", argv[i], val);
 		}
 	}
 	mpt_path_set(&p, 0, 0);
 	cfg->_vptr->remove(cfg, &p);
-	mt->_vptr->instance.unref((void *) mt);
+	mt->_vptr->unref(mt);
 	
 	return 0;
 }

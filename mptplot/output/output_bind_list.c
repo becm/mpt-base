@@ -41,7 +41,7 @@ extern int mpt_output_bind_list(MPT_INTERFACE(output) *out, const MPT_STRUCT(nod
 		if (!(dest = mpt_node_ident(conf))) {
 			continue;
 		}
-		if (!(meta = conf->_meta) || !(src = mpt_meta_data(meta, 0))) {
+		if (!(meta = conf->_meta) || !(src = mpt_convertable_data((MPT_INTERFACE(convertable) *) meta, 0))) {
 			continue;
 		}
 		mt.cmd = MPT_MESGTYPE(Graphic);

@@ -84,7 +84,7 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int len;
 	
@@ -95,12 +95,12 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, len ? from : 0);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
 			if (!len) gr->fg = def_graph.fg;
 			return 0;
 		}
@@ -114,7 +114,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
@@ -152,7 +152,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		return len;
 	}
 	if (!strcmp(name, "type") || !strcasecmp(name, "gridtype")) {
-		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->grid))) {
+		if (!src || !(len = src->_vptr->convert(src, 'c', &gr->grid))) {
 			gr->grid = def_graph.grid;
 			return 0;
 		}
@@ -163,14 +163,14 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		uint8_t n = 0;
 		int i = 0;
 		
-		if (!src || !(len = src->_vptr->conv(src, 'y', &gr->align))) {
+		if (!src || !(len = src->_vptr->convert(src, 'y', &gr->align))) {
 			gr->align = def_graph.align;
 			return 0;
 		}
 		if (len) {
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
+		if ((len = src->_vptr->convert(src, 's', &v)) < 0) {
 			return len;
 		}
 		if (!len || !v) {
@@ -196,14 +196,14 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		const char *v;
 		uint8_t n = 0;
 		
-		if (!src || !(len = src->_vptr->conv(src, 'y', &gr->clip))) {
+		if (!src || !(len = src->_vptr->convert(src, 'y', &gr->clip))) {
 			gr->clip = def_graph.clip;
 			return 0;
 		}
 		if (len) {
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, 's', &v)) < 0) {
+		if ((len = src->_vptr->convert(src, 's', &v)) < 0) {
 			return len;
 		}
 		if (!len || !v) {
@@ -222,7 +222,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, const MPT_INTE
 		return 0;
 	}
 	if (!strcmp(name, "lpos")) {
-		if (!src || !(len = src->_vptr->conv(src, 'c', &gr->lpos))) {
+		if (!src || !(len = src->_vptr->convert(src, 'c', &gr->lpos))) {
 			gr->lpos = def_graph.lpos;
 			return 0;
 		}

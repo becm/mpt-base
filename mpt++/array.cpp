@@ -261,19 +261,19 @@ void *array::set(size_t len, const void *base)
 	return ptr;
 }
 
-int array::set(metatype &src)
+int array::set(convertable &src)
 {
 	struct ::iovec vec;
 	
-	if (src.conv(TypeVector, &vec) >= 0) {
+	if (src.convert(TypeVector, &vec) >= 0) {
 		return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
 	}
-	if (src.conv(MPT_type_vector('c'), &vec) >= 0) {
+	if (src.convert(MPT_type_vector('c'), &vec) >= 0) {
 		return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
 	}
 	char *data;
 	int len;
-	if ((len = src.conv('s', &data)) < 0) {
+	if ((len = src.convert('s', &data)) < 0) {
 		return len;
 	}
 	if (!len) {

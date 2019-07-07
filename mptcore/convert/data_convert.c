@@ -115,7 +115,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		if ((flen = mpt_valsize(dtype)) < 0) {
 			return flen;
 		}
-		if (mt->_vptr->conv(mt, dtype, dest) <= 0) {
+		if (MPT_metatype_convert(mt, dtype, dest) <= 0) {
 			return MPT_ERROR(BadOperation);
 		}
 		*fptr = from + sizeof(void *);
@@ -137,11 +137,11 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		if ((ptr = dest)) {
 			MPT_INTERFACE(metatype) *old;
 			
-			if (mt && !mt->_vptr->instance.addref((void *) mt)) {
+			if (mt && !mt->_vptr->addref(mt)) {
 				return MPT_ERROR(BadOperation);
 			}
 			if ((old = *ptr)) {
-				old->_vptr->instance.addref((void *) old);
+				old->_vptr->addref(old);
 			}
 			*ptr = mt;
 		}

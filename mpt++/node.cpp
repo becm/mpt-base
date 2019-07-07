@@ -76,7 +76,7 @@ const char *node::data(size_t *len) const
 	if (!_meta) {
 		return 0;
 	}
-	return (const char *) mpt_meta_data(_meta, len);
+	return mpt_convertable_data(_meta, len);
 }
 
 __MPT_NAMESPACE_END

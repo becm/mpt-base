@@ -8,13 +8,15 @@
 
 #include "core.h"
 
-__MPT_NAMESPACE_BEGIN
+#ifndef __cplusplus
+# define MPT_metatype_convert(m, t, d) ((m)->_vptr->convertable.convert((MPT_INTERFACE(convertable) *) (m), t, d))
+#endif
 
-MPT_STRUCT(property);
+__MPT_NAMESPACE_BEGIN
 
 /*! generic metatype interface */
 #ifdef __cplusplus
-MPT_INTERFACE(metatype) : public instance
+MPT_INTERFACE(metatype) : public convertable
 {
 protected:
 	inline ~metatype() {}
@@ -23,47 +25,31 @@ public:
 	
 	class basic;
 	
-	const char *string() const;
-	void *pointer(int) const;
-	
-	inline const uint8_t *types() const
-	{
-		uint8_t *t = 0;
-		return (conv(0, &t) < 0) ? 0 : t;
-	}
-	template <typename T>
-	inline T *cast() const
-	{
-		void *ptr = 0;
-		if (conv(typeinfo<T *>::id(), &ptr) < 0) {
-			return 0;
-		}
-		return static_cast<T *>(ptr);
-	}
-	inline operator const char *() const
-	{
-		return string();
-	}
-	
 	static metatype *create(value);
 	static metatype *create(int, const void *);
 	
-	virtual int conv(int , void *) const = 0;
-	virtual metatype *clone() const;
+	int convert(int , void *) __MPT_OVERRIDE;
 	
-	inline int type() const
-	{ return conv(0, 0); }
+	virtual void unref() = 0;
+	virtual uintptr_t addref();
+	virtual metatype *clone() const = 0;
 };
 template <> inline __MPT_CONST_TYPE int typeinfo<metatype>::id()
 {
 	return metatype::Type;
 }
+
+inline uintptr_t metatype::addref()
+{
+	return 0;
+}
 #else
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
 {
-	MPT_INTERFACE_VPTR(instance) instance;
-	int (*conv)(const MPT_INTERFACE(metatype) *, int , void *);
+	MPT_INTERFACE_VPTR(convertable) convertable;
+	void (*unref)(MPT_INTERFACE(metatype) *);
+	uintptr_t (*addref)(MPT_INTERFACE(metatype) *);
 	MPT_INTERFACE(metatype) *(*clone)(const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(metatype) {
 	const MPT_INTERFACE_VPTR(metatype) *_vptr;
@@ -117,12 +103,12 @@ MPT_INTERFACE_VPTR(iterator)
 MPT_STRUCT(consumable)
 {
 #ifdef __cplusplus
-	inline consumable(const metatype &mt)
+	inline consumable(convertable &val)
 	{
-		if ((_it = mt.cast<iterator>())) {
+		if ((_it = val.cast<iterator>())) {
 			return;
 		}
-		mt.conv(_val.Type, &_val);
+		val.convert(_val.Type, &_val);
 	}
 protected:
 #else
@@ -146,12 +132,6 @@ inline int iterator::reset()
 	return 0;
 }
 
-/* specialize metatype string cast */
-template <> inline const char *metatype::cast<const char>() const
-{
-	return string();
-}
-
 /* basic metatype to support typeinfo */
 class metatype::basic : public metatype
 {
@@ -161,8 +141,9 @@ protected:
 public:
 	basic(size_t post);
 	
+	int convert(int , void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) const __MPT_OVERRIDE;
 	basic *clone() const __MPT_OVERRIDE;
 	
 	bool set(const char *, int);
@@ -184,7 +165,7 @@ public:
 	{
 		delete this;
 	}
-	int conv(int type, void *dest) const __MPT_OVERRIDE
+	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
 		static const int me = typeinfo<T>::id();
 		if (!type) {
@@ -285,14 +266,6 @@ public:
 __MPT_EXTDECL_BEGIN
 
 
-/* log metatype info */
-extern int mpt_meta_info(const MPT_INTERFACE(metatype) *, MPT_STRUCT(property) *);
-
-/* try to log to metatype instance */
-extern int mpt_meta_vlog(const MPT_INTERFACE(metatype) *, const char *, int , const char *, va_list);
-extern int mpt_meta_log(const MPT_INTERFACE(metatype) *, const char *, int , const char *, ... );
-
-
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
 /* set (zero-terminated string) node data */
@@ -304,8 +277,6 @@ extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_metatype_default();
 
-/* get node/metatype text/raw data */
-extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *, size_t *__MPT_DEFPAR(0));
 /* initialize geninfo data */
 extern int _mpt_geninfo_size(size_t);
 extern int _mpt_geninfo_init(void *, size_t);
@@ -323,7 +294,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_
 extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
 
 /* get value and advance source */
-extern int mpt_consumable_setup(MPT_STRUCT(consumable) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_consumable_setup(MPT_STRUCT(consumable) *, MPT_INTERFACE(convertable) *);
 extern int mpt_consume_double(MPT_STRUCT(consumable) *, double *);
 extern int mpt_consume_uint(MPT_STRUCT(consumable) *, uint32_t *);
 extern int mpt_consume_int(MPT_STRUCT(consumable) *, int32_t *);

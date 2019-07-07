@@ -36,15 +36,15 @@ static void printCfg(int depth, const mpt::span<const mpt::configuration::elemen
 extern int main(int argc, char * const argv[])
 {
 	mpt::configuration conf;
-	const mpt::metatype *m;
+	mpt::convertable *val;
 	const char *name;
 	
 	mtrace();
 	
 	if (conf.set("a.value.text", "Der täĸẞŦ")
-	    && (m = conf.get("a.value.text"))) {
-		name = *m;
-		std::cout << typeid(*m).name() << " -> " << name << std::endl;
+	    && (val = conf.get("a.value.text"))) {
+		name = *val;
+		std::cout << typeid(*val).name() << " -> " << name << std::endl;
 	}
 	for (int i = 1; i < argc; ++i) {
 		mpt::mpt_config_load(&conf, argv[i]);

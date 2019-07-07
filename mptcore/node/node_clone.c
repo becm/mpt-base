@@ -23,18 +23,18 @@ extern MPT_STRUCT(node) *mpt_node_clone(const MPT_STRUCT(node) *node)
 	}
 	if (!(copy = mpt_node_new(node->ident._len))) {
 		if (meta) {
-			meta->_vptr->instance.unref((void *) meta);
+			meta->_vptr->unref(meta);
 		}
 		return 0;
 	}
 	if (!mpt_identifier_copy(&copy->ident, &node->ident)) {
 		mpt_node_destroy(copy);
 		if (meta) {
-			meta->_vptr->instance.unref((void *) meta);
+			meta->_vptr->unref(meta);
 		}
 	}
 	if ((tmp = copy->_meta)) {
-		tmp->_vptr->instance.unref((void *) tmp);
+		tmp->_vptr->unref(tmp);
 	}
 	copy->_meta = meta;
 	

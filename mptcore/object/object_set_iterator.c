@@ -4,7 +4,7 @@
 
 #include "object.h"
 
-#include "meta_wrap.h"
+#include "iterator_convert.h"
 
 /*!
  * \ingroup mptObject
@@ -19,15 +19,13 @@
  */
 extern int mpt_object_set_iterator(MPT_INTERFACE(object) *obj, const char *prop, MPT_INTERFACE(iterator) *it)
 {
-	static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
-		{ metaIterUnref, metaIterRef },
-		metaIterConv,
-		metaIterClone
+	static const MPT_INTERFACE_VPTR(convertable) convIterCtl = {
+		iteratorConv
 	};
-	struct wrapIter mt;
+	struct convIter conv;
 	
-	mt._ctl._vptr = &metaIterCtl;
-	mt.it = it;
+	conv._ctl._vptr = &convIterCtl;
+	conv.it = it;
 	
-	return obj->_vptr->set_property(obj, prop, &mt._ctl);
+	return obj->_vptr->set_property(obj, prop, &conv._ctl);
 }

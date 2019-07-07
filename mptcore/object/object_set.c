@@ -24,21 +24,10 @@ struct meta_scalar
 	MPT_STRUCT(scalar) val;
 	char fmt[2];
 };
-/* reference interface */
-static void unref_scalar(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int conv_scalar(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
 {
-	(void) in;
-	MPT_ABORT("unref scalar value interface");
-}
-static uintptr_t addref_scalar(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	MPT_ABORT("ref scalar value interface");
-}
-/* metatype interface */
-static int conv_scalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	const struct meta_scalar *s = (void *) mt;
+	const struct meta_scalar *s = (void *) conv;
 	const void *val = &s->val.val;
 	if (!type) {
 		if (ptr) {
@@ -58,6 +47,17 @@ static int conv_scalar(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	}
 #endif
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void unref_scalar(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	MPT_ABORT("unref scalar value interface");
+}
+static uintptr_t addref_scalar(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	MPT_ABORT("ref scalar value interface");
 }
 static MPT_INTERFACE(metatype) *clone_scalar(const MPT_INTERFACE(metatype) *mt)
 {
@@ -82,8 +82,9 @@ static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, c
 	int ret;
 	if (!(ret = fmt[1])) {
 		static const MPT_INTERFACE_VPTR(metatype) metaValCtl = {
-		    { unref_scalar, addref_scalar },
-		    conv_scalar,
+		    { conv_scalar },
+		    unref_scalar,
+		    addref_scalar,
 		    clone_scalar
 		};
 		struct meta_scalar s;
@@ -95,7 +96,7 @@ static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, c
 			return ret;
 		}
 		s._mt._vptr = &metaValCtl;
-		if ((ret = obj->_vptr->set_property(obj, prop, &s._mt)) >= 0
+		if ((ret = obj->_vptr->set_property(obj, prop, (MPT_INTERFACE(convertable) *) &s._mt)) >= 0
 		    || ret != MPT_ERROR(BadType)) {
 			return ret;
 		}
@@ -121,7 +122,7 @@ extern int mpt_object_vset(MPT_INTERFACE(object) *obj, const char *prop, const c
 		return obj->_vptr->set_property(obj, prop, 0);
 	}
 	if (!fmt[0]) {
-		return obj->_vptr->set_property(obj, prop, mpt_metatype_default());
+		return obj->_vptr->set_property(obj, prop, (MPT_INTERFACE(convertable) *) mpt_metatype_default());
 	}
 	return process_object_format(obj, prop, fmt, va);
 }
@@ -144,7 +145,7 @@ extern int mpt_object_set(MPT_INTERFACE(object) *obj, const char *prop, const ch
 		return obj->_vptr->set_property(obj, prop, 0);
 	}
 	if (!fmt[0]) {
-		return obj->_vptr->set_property(obj, prop, mpt_metatype_default());
+		return obj->_vptr->set_property(obj, prop, (MPT_INTERFACE(convertable) *) mpt_metatype_default());
 	}
 	va_start(va, fmt);
 	ret = process_object_format(obj, prop, fmt, va);

@@ -24,20 +24,8 @@ struct _iter_poly
 	int coeff;
 };
 
-/* reference interface */
-static void iterPolyUnref(MPT_INTERFACE(instance) *in)
-{
-	struct _iter_poly *d = (void *) (in + 2);
-	mpt_array_clone(&d->grid, 0);
-	free(in);
-}
-static uintptr_t iterPolyRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int iterPolyConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+/* convertable interface */
+static int iterPolyConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator) };
@@ -48,10 +36,22 @@ static int iterPolyConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
-		if (ptr) *((const void **) ptr) = mt + 1;
+		if (ptr) *((const void **) ptr) = val + 1;
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void iterPolyUnref(MPT_INTERFACE(metatype) *mt)
+{
+	struct _iter_poly *d = (void *) (mt + 2);
+	mpt_array_clone(&d->grid, 0);
+	free(mt);
+}
+static uintptr_t iterPolyRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *iterPolyClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -163,8 +163,9 @@ static int iterPolyReset(MPT_INTERFACE(iterator) *it)
 extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_ARRAY_TYPE(double) *base)
 {
 	static const MPT_INTERFACE_VPTR(metatype) polyMeta = {
-		{ iterPolyUnref, iterPolyRef },
-		iterPolyConv,
+		{ iterPolyConv },
+		iterPolyUnref,
+		iterPolyRef,
 		iterPolyClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) polyIter = {
@@ -180,7 +181,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	int nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
 	
 	if ((buf = base->_buf)
-	    && !buf->_vptr->instance.addref((void *) buf)) {
+	    && !buf->_vptr->addref(buf)) {
 		return 0;
 	}
 	/* polynom coefficients */
@@ -191,7 +192,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 			if (len <= 0) {
 				if (!nc) {
 					if (buf) {
-						buf->_vptr->instance.unref((void *) buf);
+						buf->_vptr->unref(buf);
 					}
 					errno = EINVAL;
 					return 0;
@@ -221,7 +222,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	}
 	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + nc * sizeof(*coeff)))) {
 		if (buf) {
-			buf->_vptr->instance.unref((void *) buf);
+			buf->_vptr->unref(buf);
 		}
 		return 0;
 	}

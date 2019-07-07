@@ -44,8 +44,9 @@ public:
 	buffer(array const& = array(0));
 	virtual ~buffer();
 	
+	int convert(int , void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) const __MPT_OVERRIDE;
 	buffer *clone() const __MPT_OVERRIDE;
 	
 	int get(int , void *) __MPT_OVERRIDE;
@@ -68,11 +69,13 @@ public:
 	stream(const streaminfo * = 0);
 	virtual ~stream();
 	
+	int convert(int , void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int , void *) const __MPT_OVERRIDE;
+	stream *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 	
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;

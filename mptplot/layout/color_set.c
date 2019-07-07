@@ -59,7 +59,7 @@ extern int mpt_color_setalpha(MPT_STRUCT(color) *col, int alpha)
  * 
  * \return consumed length
  */
-extern int mpt_color_pset(MPT_STRUCT(color) *col, const MPT_INTERFACE(metatype) *src)
+extern int mpt_color_pset(MPT_STRUCT(color) *col, MPT_INTERFACE(convertable) *src)
 {
 	const char *txt;
 	int len;
@@ -69,11 +69,11 @@ extern int mpt_color_pset(MPT_STRUCT(color) *col, const MPT_INTERFACE(metatype) 
 		static const MPT_STRUCT(color) tcol = MPT_COLOR_INIT;
 		return memcmp(&tcol, col, sizeof(*col)) ? 1 : 0;
 	}
-	if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), col)) >= 0) {
+	if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), col)) >= 0) {
 		return 0;
 	}
 	/* parse color name/format  */
-	if ((len = src->_vptr->conv(src, 's', &txt)) >= 0) {
+	if ((len = src->_vptr->convert(src, 's', &txt)) >= 0) {
 		int take;
 		if ((take = mpt_color_parse(col, txt)) < 0) {
 			return MPT_ERROR(BadValue);

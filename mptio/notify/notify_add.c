@@ -27,7 +27,7 @@ static void _input_ref_init(const MPT_STRUCT(type_traits) *info, void *ptr)
 }
 static int _input_ref_copy(void *src, int type, void *dest)
 {
-	MPT_INTERFACE(instance) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
+	MPT_INTERFACE(metatype) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
 	
 	src_ptr = src;
 	dest_ptr = dest;
@@ -47,7 +47,7 @@ static int _input_ref_copy(void *src, int type, void *dest)
 }
 static void _input_ref_fini(void *ptr)
 {
-	MPT_INTERFACE(instance) **ref_ptr, *ref;
+	MPT_INTERFACE(metatype) **ref_ptr, *ref;
 	
 	ref_ptr = ptr;
 	if ((ref = *ref_ptr)) {
@@ -81,7 +81,7 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 		return MPT_ERROR(BadEncoding);
 	}
 	if (!in
-	    || in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeSocket), &sock) < 0
+	    || in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeSocket), &sock) < 0
 	    || !MPT_socket_active(&sock)) {
 		return MPT_ERROR(BadArgument);
 	}
@@ -124,18 +124,18 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	}
 #if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {
-		const MPT_INTERFACE(metatype) *mt;
-		const char *val = 0;
+		MPT_INTERFACE(convertable) *val;
+		const char *choice = 0;
 		int32_t flg = 1;
-		if (!(mt = mpt_config_get(0, "mpt.notify.epoll", '.', 0))) {
+		if (!(val = mpt_config_get(0, "mpt.notify.epoll", '.', 0))) {
 			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
 		}
-		else if (mt->_vptr->conv(mt, 'i', &flg) > 0) {
+		else if (val->_vptr->convert(val, 'i', &flg) > 0) {
 			if (flg) no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
 		}
-		else if (mt->_vptr->conv(mt, 's', &val) < 0
-		         || !val
-		         || strcmp(val, "false")) {
+		else if (val->_vptr->convert(val, 's', &choice) < 0
+		         || !choice
+		         || strcmp(choice, "false")) {
 			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
 		}
 	}
@@ -178,7 +178,7 @@ extern int mpt_notify_clear(MPT_STRUCT(notify) *no, int file)
 			errno = EBADF;
 			return -2;
 		}
-		curr->_vptr->meta.instance.unref((void *) curr);
+		curr->_vptr->meta.unref((void *) curr);
 		*base = 0;
 		if ((buf = no->_wait._buf)) {
 			size_t i, len = buf->_used / sizeof(*base);

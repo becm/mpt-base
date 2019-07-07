@@ -21,7 +21,7 @@
  * 
  * \return error code, skip reason or success
  */
-extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const MPT_STRUCT(identifier) *id, const MPT_INTERFACE(metatype) *val)
+extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const MPT_STRUCT(identifier) *id, MPT_INTERFACE(convertable) *val)
 {
 	const char *name = 0;
 	int ret;
@@ -47,7 +47,7 @@ extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const 
 			return MPT_ENUM(TraverseChange);
 		}
 		/* use text parser for string content */
-		if ((ret = val->_vptr->conv(val, 's', &str)) >= 0) {
+		if ((ret = val->_vptr->convert(val, 's', &str)) >= 0) {
 			ret = mpt_object_set_string(obj, name, ret ? str : 0, 0);
 		} else {
 			ret = obj->_vptr->set_property(obj, name, val);

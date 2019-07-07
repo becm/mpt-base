@@ -42,7 +42,7 @@ extern int mpt_lattr_set(MPT_STRUCT(lineattr) *attr, int width, int style, int s
 	return 0;
 }
 
-static int lattr_pset(unsigned char *val, const MPT_INTERFACE(metatype) *src, int def[3])
+static int lattr_pset(unsigned char *val, MPT_INTERFACE(convertable) *src, int def[3])
 {
 	int len;
 	uint8_t sym;
@@ -51,9 +51,9 @@ static int lattr_pset(unsigned char *val, const MPT_INTERFACE(metatype) *src, in
 		*val = def[0];
 		return 0;
 	}
-	if ((len = src->_vptr->conv(src, 'y', &sym)) < 0) {
+	if ((len = src->_vptr->convert(src, 'y', &sym)) < 0) {
 		int32_t tmp = *val;
-		if ((len = src->_vptr->conv(src, 'i', &tmp)) < 0) {
+		if ((len = src->_vptr->convert(src, 'i', &tmp)) < 0) {
 			return len;
 		}
 		if (tmp < 0 || tmp > UINT8_MAX) {
@@ -84,7 +84,7 @@ static int lattr_pset(unsigned char *val, const MPT_INTERFACE(metatype) *src, in
  * 
  * \return consumed data length
  */
-extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *attr, MPT_INTERFACE(convertable) *src)
 {
 	int def[3] = { 0, 0, MPT_ENUM(SymbolTypeMax) };
 	return lattr_pset(&attr->symbol, src, def);
@@ -100,7 +100,7 @@ extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(meta
  * 
  * \return consumed data length
  */
-extern int mpt_lattr_size(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_lattr_size(MPT_STRUCT(lineattr) *attr, MPT_INTERFACE(convertable) *src)
 {
 	int def[3] = { 10, 0, MPT_ENUM(SymbolSizeMax) };
 	return lattr_pset(&attr->size, src, def);
@@ -116,7 +116,7 @@ extern int mpt_lattr_size(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metaty
  * 
  * \return consumed data length
  */
-extern int mpt_lattr_style(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_lattr_style(MPT_STRUCT(lineattr) *attr, MPT_INTERFACE(convertable) *src)
 {
 	int def[3] = { 1, 0, MPT_ENUM(LineStyleMax) };
 	return lattr_pset(&attr->style, src, def);
@@ -132,7 +132,7 @@ extern int mpt_lattr_style(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metat
  * 
  * \return consumed data length
  */
-extern int mpt_lattr_width(MPT_STRUCT(lineattr) *attr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_lattr_width(MPT_STRUCT(lineattr) *attr, MPT_INTERFACE(convertable) *src)
 {
 	int def[3] = { 1, 0, MPT_ENUM(LineWidthMax) };
 	return lattr_pset(&attr->width, src, def);

@@ -35,7 +35,7 @@ extern MPT_STRUCT(node) *mpt_node_destroy(MPT_STRUCT(node) *node)
 	mpt_node_clear(node);
 	
 	if ((meta = node->_meta)) {
-		meta->_vptr->instance.unref((void *) meta);
+		meta->_vptr->unref(meta);
 	}
 	mpt_identifier_set(&node->ident, 0, 0);
 	

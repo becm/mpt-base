@@ -57,10 +57,6 @@ void value_apply::set(const struct range &r, int flg)
 }
 
 // interface for transformation
-void transform::unref()
-{
-	delete this;
-}
 int transform::dimensions() const
 {
 	return 0;

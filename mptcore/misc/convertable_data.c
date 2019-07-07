@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/uio.h>
 
-#include "meta.h"
+#include "core.h"
 
 /*!
  * \ingroup mptMeta
@@ -15,21 +15,21 @@
  *  1) character vector (if len pointer supplied)
  *  2) generic string pointer
  * 
- * \param      meta data source
- * \param[out] len  length of raw data
+ * \param      val data source
+ * \param[out] len length of raw data
  * 
  * \return start of string
  */
-extern const char *mpt_meta_data(const MPT_INTERFACE(metatype) *meta, size_t *len)
+extern const char *mpt_convertable_data(MPT_INTERFACE(convertable) *val, size_t *len)
 {
 	struct iovec vec;
 	const char *base;
 	
-	if (len && meta->_vptr->conv(meta, MPT_type_vector('c'), &vec) >= 0) {
+	if (len && val->_vptr->convert(val, MPT_type_vector('c'), &vec) >= 0) {
 		*len = vec.iov_len;
 		return vec.iov_base;
 	}
-	if (meta->_vptr->conv(meta, 's', &base) >= 0) {
+	if (val->_vptr->convert(val, 's', &base) >= 0) {
 		if (len) *len = base ? strlen(base) : 0;
 		return base;
 	}

@@ -27,7 +27,7 @@
  * 
  * \return consumed elements
  */
-extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int ret;
 	if (!name) {

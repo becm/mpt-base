@@ -83,15 +83,15 @@ layout::graph::graph(const ::mpt::graph *from)
 }
 layout::graph::~graph()
 { }
-// metatype interface
-int layout::graph::conv(int type, void *ptr) const
+// convertable interface
+int layout::graph::convert(int type, void *ptr)
 {
 	int me = typeinfo<graph>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const graph **>(ptr) = this;
+		if (ptr) *static_cast<graph **>(ptr) = this;
 		return me;
 	}
 	if (!type) {
@@ -103,18 +103,29 @@ int layout::graph::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
+		if (ptr) *static_cast<object **>(ptr) = this;
 		return ::mpt::graph::Type;
 	}
 	if (type == to_pointer_id(::mpt::graph::Type)) {
-		if (ptr) *static_cast<const ::mpt::graph **>(ptr) = this;
+		if (ptr) *static_cast<::mpt::graph **>(ptr) = this;
 		return object::Type;
 	}
 	if (type == color::Type) {
 		if (ptr) *static_cast<color *>(ptr) = fg;
 		return me;
 	}
-	return item_group::conv(type, ptr);
+	return item_group::convert(type, ptr);
+}
+// metatype interface
+layout::graph *layout::graph::clone() const
+{
+	graph *val = new graph(this);
+	
+	val->_gtr = _gtr;
+	val->_axes = _axes;
+	val->_worlds = _worlds;
+	
+	return val;
 }
 // object interface
 int layout::graph::property(struct property *prop) const
@@ -124,7 +135,7 @@ int layout::graph::property(struct property *prop) const
 	}
 	return mpt_graph_get(this, prop);
 }
-int layout::graph::set_property(const char *prop, const metatype *src)
+int layout::graph::set_property(const char *prop, convertable *src)
 {
 	int ret = mpt_graph_set(this, prop, src);
 	
@@ -348,17 +359,19 @@ item<layout::graph::axis> *layout::graph::add_axis(axis *from, const char *name,
 }
 item<layout::graph::data> *layout::graph::add_world(world *from, const char *name, int nlen)
 {
-	data *d;
 	world *w;
-	
 	if (!(w = from)) {
-		d = new data(w = new world);
-	} else {
-		d = new data(w);
+		w = new world();
 	}
+	data *d = new reference<data>::type();
+	
 	item<data> *it;
 	if ((it = _worlds.append(d, name, nlen))) {
+		d->world.set_instance(w);
 		return it;
+	}
+	if (!from) {
+		w->unref();
 	}
 	d->unref();
 	return 0;
@@ -516,18 +529,14 @@ layout::graph::axis::axis(AxisFlags type) : ::mpt::axis(type)
 { }
 layout::graph::axis::~axis()
 { }
-void layout::graph::axis::unref()
-{
-	delete this;
-}
-int layout::graph::axis::conv(int type, void *ptr) const
+int layout::graph::axis::convert(int type, void *ptr)
 {
 	int me = typeinfo<axis>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const axis **>(ptr) = this;
+		if (ptr) *static_cast<axis **>(ptr) = this;
 		return me;
 	}
 	if (!type) {
@@ -539,24 +548,32 @@ int layout::graph::axis::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return me;
 	}
 	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
+		if (ptr) *static_cast<object **>(ptr) = this;
 		return ::mpt::axis::Type;
 	}
 	if (type == to_pointer_id(::mpt::axis::Type)) {
-		if (ptr) *static_cast<const ::mpt::axis **>(ptr) = this;
+		if (ptr) *static_cast<::mpt::axis **>(ptr) = this;
 		return object::Type;
 	}
 	return BadType;
+}
+void layout::graph::axis::unref()
+{
+	delete this;
+}
+layout::graph::axis *layout::graph::axis::clone() const
+{
+	return new axis(this);
 }
 int layout::graph::axis::property(struct property *prop) const
 {
 	return mpt_axis_get(this, prop);
 }
-int layout::graph::axis::set_property(const char *prop, const metatype *src)
+int layout::graph::axis::set_property(const char *prop, convertable *src)
 {
 	return mpt_axis_set(this, prop, src);
 }
@@ -596,18 +613,14 @@ layout::graph::world::world(int c)
 }
 layout::graph::world::~world()
 { }
-void layout::graph::world::unref()
-{
-	delete this;
-}
-int layout::graph::world::conv(int type, void *ptr) const
+int layout::graph::world::convert(int type, void *ptr)
 {
 	int me = typeinfo<world>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const world **>(ptr) = this;
+		if (ptr) *static_cast<world **>(ptr) = this;
 		return me;
 	}
 	if (!type) {
@@ -619,15 +632,15 @@ int layout::graph::world::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return me;
 	}
 	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
+		if (ptr) *static_cast<object **>(ptr) = this;
 		return ::mpt::world::Type;
 	}
 	if (type == to_pointer_id(::mpt::world::Type)) {
-		if (ptr) *static_cast<const ::mpt::world **>(ptr) = this;
+		if (ptr) *static_cast<::mpt::world **>(ptr) = this;
 		return object::Type;
 	}
 	if (type == color::Type) {
@@ -640,20 +653,24 @@ int layout::graph::world::conv(int type, void *ptr) const
 	}
 	return BadType;
 }
+void layout::graph::world::unref()
+{
+	delete this;
+}
+layout::graph::world *layout::graph::world::clone() const
+{
+	return new world(this);
+}
 int layout::graph::world::property(struct property *prop) const
 {
 	return mpt_world_get(this, prop);
 }
-int layout::graph::world::set_property(const char *prop, const metatype *src)
+int layout::graph::world::set_property(const char *prop, convertable *src)
 {
 	return mpt_world_set(this, prop, src);
 }
 // graph data operations
 layout::graph::data::data(class world *w) : world(w)
 { }
-void layout::graph::data::unref()
-{
-	delete this;
-}
 
 __MPT_NAMESPACE_END

@@ -39,5 +39,5 @@ extern const char *mpt_node_ident(const MPT_STRUCT(node) *node)
  */
 extern const char *mpt_node_data(const MPT_STRUCT(node) *node, size_t *len)
 {
-	return (node && node->_meta) ? mpt_meta_data(node->_meta, len) : 0;
+	return (node && node->_meta) ? mpt_convertable_data((MPT_INTERFACE(convertable) *) node->_meta, len) : 0;
 }

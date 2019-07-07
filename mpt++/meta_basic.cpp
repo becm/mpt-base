@@ -17,7 +17,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // default conversion
-int metatype::conv(int type, void *ptr) const
+int metatype::convert(int type, void *ptr)
 {
 	void **dest = (void **) ptr;
 	
@@ -42,7 +42,7 @@ void metatype::basic::unref()
 {
 	free(this);
 }
-int metatype::basic::conv(int type, void *ptr) const
+int metatype::basic::convert(int type, void *ptr)
 {
 	return _mpt_geninfo_conv(this + 1, type, ptr);
 }

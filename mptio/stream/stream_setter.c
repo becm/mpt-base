@@ -22,19 +22,21 @@
  * \retval 0  default value
  * \retval <0 error
  */
-extern int mpt_stream_setter(MPT_STRUCT(stream) *stream, const MPT_INTERFACE(metatype) *src)
+extern int mpt_stream_setter(MPT_STRUCT(stream) *stream, MPT_INTERFACE(convertable) *src)
 {
 	const char *path, *arg = 0;
 	int len, how;
 	
 	if (!src) {
-		if (_mpt_stream_fread(&stream->_info) >= 0)
+		if (_mpt_stream_fread(&stream->_info) >= 0) {
 			return (_mpt_stream_fwrite(&stream->_info) >= 0) ? 3 : 1;
+		}
 		return (_mpt_stream_fwrite(&stream->_info) >= 0) ? 2 : 0;
 	}
 	
-	if ((len = src->_vptr->conv(src, 's', &path)) < 0)
+	if ((len = src->_vptr->convert(src, 's', &path)) < 0) {
 		return -1;
+	}
 	
 	if (path && (arg = strchr(path, ':'))) {
 		const char *tmp = arg+1;
@@ -42,8 +44,9 @@ extern int mpt_stream_setter(MPT_STRUCT(stream) *stream, const MPT_INTERFACE(met
 		path = tmp;
 	}
 	
-	if ((how = mpt_stream_open(stream, path, arg)) < 0)
+	if ((how = mpt_stream_open(stream, path, arg)) < 0) {
 		return -2;
+	}
 	
 	return len;
 }

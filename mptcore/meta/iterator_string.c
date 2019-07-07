@@ -141,20 +141,10 @@ static int parseReset(MPT_INTERFACE(iterator) *ctl)
 	}
 	return 1;
 }
-/* reference interface */
-static void parseUnref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int parseConv(MPT_INTERFACE(convertable) *val, int type, void *dest)
 {
-	free(in);
-}
-static uintptr_t parseRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
-{
-	struct parseIterator *it = (void *) (mt + 1);
+	struct parseIterator *it = (void *) (val + 1);
 	
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
@@ -187,6 +177,16 @@ static int parseConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	return MPT_ERROR(BadType);
 }
+/* metatype interface */
+static void parseUnref(MPT_INTERFACE(metatype) *mt)
+{
+	free(mt);
+}
+static uintptr_t parseRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
 static MPT_INTERFACE(metatype) *parseClone(const MPT_INTERFACE(metatype) *mt)
 {
 	struct parseIterator *it = (void *) (mt + 1);
@@ -201,7 +201,7 @@ static MPT_INTERFACE(metatype) *parseClone(const MPT_INTERFACE(metatype) *mt)
 }
 
 /*!
- * \ingroup mptObject
+ * \ingroup mptMeta
  * \brief set object property
  * 
  * Set property data to value.
@@ -214,8 +214,9 @@ static MPT_INTERFACE(metatype) *parseClone(const MPT_INTERFACE(metatype) *mt)
 extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char *sep)
 {
 	static const MPT_INTERFACE_VPTR(metatype) ctlMeta = {
-		{ parseUnref, parseRef },
-		parseConv,
+		{ parseConv },
+		parseUnref,
+		parseRef,
 		parseClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) ctlIter = {

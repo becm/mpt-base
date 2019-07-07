@@ -5,7 +5,9 @@
 #include "object.h"
 #include "convert.h"
 
-#include "meta_wrap.h"
+#include "meta.h"
+
+#include "iterator_convert.h"
 
 struct objectParam
 {
@@ -14,9 +16,9 @@ struct objectParam
 	MPT_STRUCT(value) val;
 };
 
-static int metaIterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int iteratorValueConv(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
 {
-	const struct wrapIter *base = (void *) mt;
+	const struct convIter *base = (void *) conv;
 	const MPT_STRUCT(value) *val = (void *) (base + 1);
 	int ret;
 	
@@ -32,7 +34,7 @@ static int metaIterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *
 		if (ptr) *((MPT_STRUCT(value) *) ptr) = *val;
 		return MPT_ENUM(TypeIterator);
 	}
-	if ((ret = metaIterConv(mt, type, ptr)) >= 0) {
+	if ((ret = iteratorConv(conv, type, ptr)) >= 0) {
 		return ret;
 	}
 	if (!val->fmt || !val->ptr || !val->fmt[0] || val->fmt[1]) {
@@ -44,24 +46,22 @@ static int metaIterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *
 }
 static int processIterator(void *ptr, MPT_INTERFACE(iterator) *it)
 {
-	static const MPT_INTERFACE_VPTR(metatype) metaIterCtl = {
-		{ metaIterUnref, metaIterRef },
-		metaIterValueConv,
-		metaIterClone
+	static const MPT_INTERFACE_VPTR(convertable) convIterCtl = {
+		iteratorValueConv
 	};
 	struct objectParam *par = ptr;
 	MPT_INTERFACE(object) *obj = par->obj;
 	
 	struct {
-		struct wrapIter base;
+		struct convIter base;
 		MPT_STRUCT(value) v;
-	} mt;
+	} conv;
 	
-	mt.base._ctl._vptr = &metaIterCtl;
-	mt.base.it = it;
-	mt.v = par->val;
+	conv.base._ctl._vptr = &convIterCtl;
+	conv.base.it = it;
+	conv.v = par->val;
 	
-	return obj->_vptr->set_property(obj, par->prop, &mt.base._ctl);
+	return obj->_vptr->set_property(obj, par->prop, &conv.base._ctl);
 }
 /*!
  * \ingroup mptObject

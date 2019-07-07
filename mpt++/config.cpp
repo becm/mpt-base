@@ -100,7 +100,7 @@ bool config::set(const char *p, const char *val, int sep)
 	value tmp(val);
 	return assign(&where, &tmp) < 0 ? false : true;
 }
-const metatype *config::get(const char *base, int sep, int len)
+convertable *config::get(const char *base, int sep, int len) const
 {
 	path to;
 	to.set(base, len, sep, 0);
@@ -159,7 +159,7 @@ int configuration::assign(const path *dest, const value *val)
 	curr->set_instance(m);
 	return m->type();
 }
-const metatype *configuration::query(const path *dest) const
+convertable *configuration::query(const path *dest) const
 {
 	// no 'self' element(s)
 	if (!dest || dest->empty()) {

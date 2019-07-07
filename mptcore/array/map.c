@@ -82,9 +82,9 @@ extern void *_mpt_memmap(size_t len, void *base)
 	return (base == MAP_FAILED) ? 0 : base;
 }
 /* reference interface */
-static void _mpt_buffer_map_unref(MPT_INTERFACE(instance) *in)
+static void _mpt_buffer_map_unref(MPT_INTERFACE(buffer) *ref)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, in, _buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
 	const MPT_STRUCT(type_traits) *info;
 	void (*fini)(void *);
 	size_t size;
@@ -104,9 +104,9 @@ static void _mpt_buffer_map_unref(MPT_INTERFACE(instance) *in)
 	}
 	munmap(buf, buf->_total);
 }
-static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(instance) *in)
+static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(buffer) *ref)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, in, _buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
 	return mpt_refcount_raise(&buf->_ref);
 }
 static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *ptr, size_t len)
@@ -173,9 +173,10 @@ static int _mpt_buffer_map_shared(const MPT_STRUCT(buffer) *ptr)
 extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len)
 {
 	static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_map_vptr = {
-		{ _mpt_buffer_map_unref, _mpt_buffer_map_ref },
-		_mpt_buffer_map_detach,
-		_mpt_buffer_map_shared
+		_mpt_buffer_map_shared,
+		_mpt_buffer_map_unref,
+		_mpt_buffer_map_ref,
+		_mpt_buffer_map_detach
 	};
 	MPT_STRUCT(bufferData) *buf;
 	size_t align;

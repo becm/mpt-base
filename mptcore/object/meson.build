@@ -1,5 +1,6 @@
 # meson.build.gen: *.c
 src = files(
+  'convertable_info.c',
   'message_properties.c',
   'object_args.c',
   'object_foreach.c',

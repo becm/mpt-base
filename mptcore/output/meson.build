@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'ansi_code.c',
+  'convertable_log.c',
   'log.c',
   'log_default.c',
   'log_identifier.c',

@@ -29,7 +29,7 @@
 extern int mpt_config_reply(MPT_INTERFACE(reply_context) *rc, const MPT_INTERFACE(config) *cfg, int sep, const MPT_STRUCT(message) *msg)
 {
 	MPT_STRUCT(array) arr = MPT_ARRAY_INIT;
-	const MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(convertable) *val;
 	MPT_STRUCT(message) tmp;
 	int ret;
 	
@@ -48,14 +48,14 @@ extern int mpt_config_reply(MPT_INTERFACE(reply_context) *rc, const MPT_INTERFAC
 	}
 	tmp = *msg;
 	ret = 0;
-	while ((mt = mpt_config_message_next(cfg, sep, &tmp))) {
+	while ((val = mpt_config_message_next(cfg, sep, &tmp))) {
 		const char *txt;
 		size_t len;
 		
-		txt = mpt_meta_data(mt, 0);
+		txt = mpt_convertable_data(val, 0);
 		
 		if (!rc) {
-			int type = mt->_vptr->conv(mt, 0, 0);
+			int type = val->_vptr->convert(val, 0, 0);
 			if (txt) {
 				mpt_log(0, __func__, MPT_LOG(Debug), "%s (%d): %s",
 				        MPT_tr("config value"), type, txt);

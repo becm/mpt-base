@@ -53,31 +53,31 @@ static MPT_STRUCT(node) *make_global(const MPT_STRUCT(path) *dest)
 }
 
 /* reference interface */
-static void configUnref(MPT_INTERFACE(instance) *in)
+static void configUnref(MPT_INTERFACE(metatype) *mt)
 {
-	MPT_STRUCT(configRoot) *c = (void *) in;
+	MPT_STRUCT(configRoot) *c = (void *) mt;
 	mpt_path_fini(&c->base);
 	free(c);
 }
-static uintptr_t configRef(MPT_INTERFACE(instance) *in)
+static uintptr_t configRef(MPT_INTERFACE(metatype) *mt)
 {
-	(void) in;
+	(void) mt;
 	return 0;
 }
 /* special operations for static global instance */
-static void configTopUnref(MPT_INTERFACE(instance) *in)
+static void configTopUnref(MPT_INTERFACE(metatype) *mt)
 {
-	(void) in;
+	(void) mt;
 }
-static uintptr_t configTopRef(MPT_INTERFACE(instance) *in)
+static uintptr_t configTopRef(MPT_INTERFACE(metatype) *mt)
 {
-	(void) in;
+	(void) mt;
 	return 1;
 }
 /* metatype interface */
-static int configConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int configConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	const MPT_STRUCT(configRoot) *c = (void *) mt;
+	const MPT_STRUCT(configRoot) *c = (void *) val;
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
 		if (ptr) {
@@ -107,14 +107,14 @@ static MPT_INTERFACE(metatype) *configClone(const MPT_INTERFACE(metatype) *mt)
 	return mpt_config_global(&c->base);
 }
 /* config interface */
-static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
+static MPT_INTERFACE(convertable) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
 	const MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
 	MPT_INTERFACE(metatype) *mt;
 	MPT_STRUCT(node) *n;
 	
 	if (!path) {
-		return &c->_mt;
+		return (MPT_INTERFACE(convertable) *) &c->_mt;
 	}
 	if (!(n = nodeGlobal)) {
 		return 0;
@@ -137,7 +137,7 @@ static const MPT_INTERFACE(metatype) *configQuery(const MPT_INTERFACE(config) *c
 		}
 		mt = n->_meta;
 	}
-	return mt ? mt : mpt_metatype_default();
+	return (MPT_INTERFACE(convertable) *) (mt ? mt : mpt_metatype_default());
 }
 static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
@@ -177,7 +177,7 @@ static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 	mt = n->_meta;
 	
 	/* return data type identifier */
-	return mt ? mt->_vptr->conv(mt, 0, 0) : 0;
+	return mt ? MPT_metatype_convert(mt, 0, 0) : 0;
 }
 static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
 {
@@ -198,7 +198,7 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 		if (!path) {
 			MPT_INTERFACE(metatype) *mt;
 			if ((mt = b->_meta)) {
-				mt->_vptr->instance.unref((void *) mt);
+				mt->_vptr->unref(mt);
 				b->_meta = 0;
 			}
 			return 0;
@@ -246,8 +246,9 @@ static int configRemove(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path
 extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 {
 	static const MPT_INTERFACE_VPTR(metatype) configMeta = {
-		{ configUnref, configRef },
-		configConv,
+		{ configConv },
+		configUnref,
+		configRef,
 		configClone
 	};
 	static const MPT_INTERFACE_VPTR(config) configCfg = {
@@ -260,9 +261,10 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	
 	if (!path) {
 		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
-			{ configTopUnref, configTopRef },
-			configConv,
-			configClone,
+			{ configConv },
+			configTopUnref,
+			configTopRef,
+			configClone
 		};
 		static MPT_STRUCT(configRoot) global = {
 			{ &configMeta },

@@ -27,22 +27,10 @@ struct socketInput {
 	int nl;
 };
 
-/* reference interface */
-static void socket_unref(MPT_INTERFACE(instance) *in)
-{
-	struct socketInput *sd = (void *) in;
-	mpt_bind(&sd->sock, 0, 0, 0);
-	free(sd);
-}
-static uintptr_t socket_addref(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
 /* metatype interface */
-static int socket_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int socket_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	struct socketInput *sd = (void *) mt;
+	struct socketInput *sd = (void *) val;
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
@@ -67,6 +55,18 @@ static int socket_conv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	}
 	return MPT_ERROR(BadType);
 }
+/* reference interface */
+static void socket_unref(MPT_INTERFACE(metatype) *mt)
+{
+	struct socketInput *sd = (void *) mt;
+	mpt_bind(&sd->sock, 0, 0, 0);
+	free(sd);
+}
+static uintptr_t socket_addref(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
 static MPT_INTERFACE(metatype) *socket_clone(const MPT_INTERFACE(metatype) *mt)
 {
 	(void) mt;
@@ -90,7 +90,7 @@ static int socket_next(MPT_INTERFACE(input) *in, int what)
 		return -1;
 	}
 	if (mpt_notify_add(sd->no, POLLIN, srm) < 0) {
-		srm->_vptr->meta.instance.unref((void *) srm);
+		srm->_vptr->meta.unref((void *) srm);
 		return -1;
 	}
 	/* single connection mode */
@@ -122,8 +122,9 @@ static int socket_dispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd
 extern int mpt_notify_bind(MPT_STRUCT(notify) *no, const char *dest, int nl)
 {
 	static const MPT_INTERFACE_VPTR(input) socketInput = {
-		{ { socket_unref, socket_addref },
-		  socket_conv,
+		{ { socket_conv },
+		  socket_unref,
+		  socket_addref,
 		  socket_clone
 		},
 		socket_next,

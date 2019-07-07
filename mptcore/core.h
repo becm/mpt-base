@@ -441,31 +441,58 @@ protected:
 
 /* basic unref interface */
 #ifdef __cplusplus
-MPT_INTERFACE(instance)
+MPT_INTERFACE(convertable)
 {
 protected:
-	inline ~instance() { }
+	inline ~convertable() { }
 public:
-	virtual void unref() = 0;
-	virtual uintptr_t addref();
+	const char *string();
+	void *pointer(int);
+	
+	inline const uint8_t *types()
+	{
+		uint8_t *t = 0;
+		return (convert(0, &t) < 0) ? 0 : t;
+	}
+	inline int type()
+	{
+		return convert(0, 0);
+	}
+	
+	template <typename T>
+	inline T *cast()
+	{
+		void *ptr = 0;
+		if (convert(typeinfo<T *>::id(), &ptr) < 0) {
+			return 0;
+		}
+		return static_cast<T *>(ptr);
+	}
+	inline operator const char *()
+	{
+		return string();
+	}
+	
+	virtual int convert(int , void *) = 0;
 };
-#else
-MPT_INTERFACE(instance);
-MPT_INTERFACE_VPTR(instance)
+
+/* specialize convertable string cast */
+template <> inline const char *convertable::cast<const char>()
 {
-	void (*unref)(MPT_INTERFACE(instance) *);
-	uintptr_t (*addref)(MPT_INTERFACE(instance) *);
-}; MPT_INTERFACE(instance) {
-	const MPT_INTERFACE_VPTR(instance) *_vptr;
+	return string();
+}
+
+#else
+MPT_INTERFACE(convertable);
+MPT_INTERFACE_VPTR(convertable)
+{
+	int (*convert)(MPT_INTERFACE(convertable) *, int , void *);
+}; MPT_INTERFACE(convertable) {
+	const MPT_INTERFACE_VPTR(convertable) *_vptr;
 };
 #endif
 
 #ifdef __cplusplus
-inline uintptr_t instance::addref()
-{
-	return 0;
-}
-
 /*! container for reference type pointer */
 template<typename T>
 class reference
@@ -659,6 +686,9 @@ __MPT_EXTDECL_BEGIN
 /* reference counter operations */
 extern uintptr_t mpt_refcount_raise(MPT_STRUCT(refcount) *);
 extern uintptr_t mpt_refcount_lower(MPT_STRUCT(refcount) *);
+
+/* get convertable text/raw data */
+extern const char *mpt_convertable_data(MPT_INTERFACE(convertable) *, size_t *__MPT_DEFPAR(0));
 
 
 /* get file/socket properties from string */

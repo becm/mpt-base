@@ -35,7 +35,7 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 		}
 		b->_typeinfo = &info;
 		if (!(dest = mpt_buffer_insert(b, 0, pos + 1))) {
-			b->_vptr->instance.unref((void *) b);
+			b->_vptr->unref(b);
 			return MPT_ERROR(MissingBuffer);
 		}
 		if (path->base) {

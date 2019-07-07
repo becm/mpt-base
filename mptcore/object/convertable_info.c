@@ -5,23 +5,21 @@
 #include "object.h"
 #include "types.h"
 
-#include "meta.h"
-
 /*!
- * \ingroup mptMeta
+ * \ingroup mptCore
  * \brief metatype info
  * 
- * Get metatype instance description.
+ * Fill property with convertable instance description.
  * 
- * \param mt  metatype instance
+ * \param val metatype instance
  * \param pr  property data
  */
-int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
+int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *pr)
 {
 	const char *desc;
 	int code;
 	
-	code = mt->_vptr->conv(mt, 0, 0);
+	code = val->_vptr->convert(val, 0, 0);
 	
 	if ((code < 0) || !pr) {
 		return code;
@@ -39,7 +37,7 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 		pr->name = "";
 		pr->desc = 0;
 		/* object specific name */
-		if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
+		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
 		    && obj
 		    && (obj->_vptr->property(obj, pr) >= 0)
 		    && pr->name) {
@@ -48,12 +46,12 @@ int mpt_meta_info(const MPT_INTERFACE(metatype) *mt, MPT_STRUCT(property) *pr)
 		} else {
 			pr->desc = desc;
 			pr->name = MPT_tr("interface");
-			mt->_vptr->conv(mt, MPT_ENUM(TypeValue), &pr->val);
+			val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
 		}
 		return code;
 	}
 	/* generic instance */
-	mt->_vptr->conv(mt, MPT_ENUM(TypeValue), &pr->val);
+	val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
 	
 	/* output typecode */
 	if ((desc = mpt_meta_typename(code)) && !*desc) {

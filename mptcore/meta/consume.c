@@ -43,7 +43,7 @@ static int solverNext(MPT_STRUCT(consumable) *val, void *dest, int type, size_t 
 			if (!(mt = *((MPT_INTERFACE(metatype) **) val->_val.ptr))) {
 				return MPT_ERROR(BadType);
 			}
-			if ((ret = mt->_vptr->conv(mt, type, dest)) < 0) {
+			if ((ret = MPT_metatype_convert(mt, type, dest)) < 0) {
 				return ret;
 			}
 			len = sizeof(mt);

@@ -76,7 +76,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value) val)
 	    || _mpt_geninfo_set(mt + 1, src, len) >= 0) {
 		return mt;
 	}
-	mt->_vptr->instance.unref((void *) mt);
+	mt->_vptr->unref(mt);
 	errno = EINVAL;
 	return 0;
 }

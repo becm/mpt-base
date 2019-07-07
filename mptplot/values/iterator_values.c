@@ -18,20 +18,10 @@ struct _iter_sdata
 	double curr;       /* current iterator value */
 };
 
-/* reference interface */
-static void iterValueUnref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int iterValueConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	free(in);
-}
-static uintptr_t iterValueRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	const struct _iter_sdata *d = (void *) (mt + 2);
+	const struct _iter_sdata *d = (void *) (val + 2);
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
 		if (ptr) {
@@ -41,7 +31,7 @@ static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
-		if (ptr) *((const void **) ptr) = mt + 1;
+		if (ptr) *((const void **) ptr) = val + 1;
 		return 's';
 	}
 	if (type == 's') {
@@ -49,6 +39,16 @@ static int iterValueConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void iterValueUnref(MPT_INTERFACE(metatype) *mt)
+{
+	free(mt);
+}
+static uintptr_t iterValueRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *iterValueClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -136,8 +136,9 @@ static int iterValueReset(MPT_INTERFACE(iterator) *it)
 extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 {
 	static const MPT_INTERFACE_VPTR(metatype) valueMeta = {
-		{ iterValueUnref, iterValueRef },
-		iterValueConv,
+		{ iterValueConv },
+		iterValueUnref,
+		iterValueRef,
 		iterValueClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) valueIter = {

@@ -125,7 +125,7 @@ int debug(const char *, const char *, ... );
 
 int println(const char *, ... );
 
-int log(const metatype *, const char *, int , const char *, ... );
+int log(convertable *, const char *, int , const char *, ... );
 #endif
 
 /* log file target */
@@ -158,7 +158,7 @@ extern int mpt_logfile_log(MPT_STRUCT(logfile) *, const char *, int , const char
 extern ssize_t mpt_logfile_push(MPT_STRUCT(logfile) *, size_t , const void *);
 /* get/set logfile properties */
 extern int mpt_logfile_get(const MPT_STRUCT(logfile) *, MPT_STRUCT(property) *);
-extern int mpt_logfile_set(MPT_STRUCT(logfile) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int mpt_logfile_set(MPT_STRUCT(logfile) *, const char *, MPT_INTERFACE(convertable) *);
 
 /* determine output print flags */
 extern int mpt_output_flags(uint8_t arg, int min);
@@ -168,9 +168,20 @@ extern const char *mpt_ansi_code(uint8_t);
 extern const char *mpt_ansi_reset(void);
 
 
+/* try to log to metatype instance */
+extern int mpt_convertable_vlog(MPT_INTERFACE(convertable) *, const char *, int , const char *, va_list);
+extern int mpt_convertable_log(MPT_INTERFACE(convertable) *, const char *, int , const char *, ... );
+
+
 /* push (error) message to output */
 extern int mpt_output_vlog(MPT_INTERFACE(output) *, const char *, int , const char *, va_list);
 extern int mpt_output_log(MPT_INTERFACE(output) *, const char *, int , const char *, ... );
+
+/* push log message */
+extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
+/* get default logger instance */
+extern MPT_INTERFACE(logger) *mpt_log_default(void);
+
 
 /* push double values to output */
 extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int);
@@ -180,12 +191,6 @@ extern int mpt_output_values(MPT_INTERFACE(output) *, int , const double *, int)
 extern MPT_INTERFACE(input) *mpt_output_remote(void);
 /* create local output instance */
 extern MPT_INTERFACE(metatype) *mpt_output_local(void);
-
-
-/* push log message */
-extern int mpt_log(MPT_INTERFACE(logger) *, const char *, int , const char *, ... );
-/* get default logger instance */
-extern MPT_INTERFACE(logger) *mpt_log_default(void);
 
 
 /* set default logger options */

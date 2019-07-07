@@ -7,7 +7,6 @@
 #define _MPT_LAYOUT_H  @INTERFACE_VERSION@
 
 #ifdef __cplusplus
-# include "meta.h"
 # include "config.h"
 # include "object.h"
 #endif
@@ -253,34 +252,34 @@ __MPT_EXTDECL_BEGIN
 /* color assignments */
 extern int mpt_color_parse(MPT_STRUCT(color) *, const char *);
 extern int mpt_color_html (MPT_STRUCT(color) *, const char *);
-extern int mpt_color_pset (MPT_STRUCT(color) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_color_pset (MPT_STRUCT(color) *, MPT_INTERFACE(convertable) *);
 extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
 extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
 /* operations on layout elements */
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
-extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(convertable) *);
 
 extern void mpt_graph_init(MPT_STRUCT(graph) *, const MPT_STRUCT(graph) *__MPT_DEFPAR(0));
 extern void mpt_graph_fini(MPT_STRUCT(graph) *);
 extern int  mpt_graph_get (const MPT_STRUCT(graph) *, MPT_STRUCT(property) *);
-extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(convertable) *);
 
 extern void mpt_axis_init(MPT_STRUCT(axis) *, const MPT_STRUCT(axis) *__MPT_DEFPAR(0));
 extern void mpt_axis_fini(MPT_STRUCT(axis) *);
 extern int  mpt_axis_get (const MPT_STRUCT(axis) *, MPT_STRUCT(property) *);
-extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(convertable) *);
 
 extern void mpt_world_init(MPT_STRUCT(world) *, const MPT_STRUCT(world) *__MPT_DEFPAR(0));
 extern void mpt_world_fini(MPT_STRUCT(world) *);
 extern int  mpt_world_get (const MPT_STRUCT(world) *, MPT_STRUCT(property) *);
-extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(convertable) *);
 
 extern void mpt_text_init(MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
 extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
-extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, const MPT_INTERFACE(metatype) *);
+extern int  mpt_text_set (MPT_STRUCT(text) *, const char *, MPT_INTERFACE(convertable) *);
 
 /* set axis type and lenth */
 extern void mpt_axis_setx(MPT_STRUCT(axis) *, double);
@@ -288,14 +287,14 @@ extern void mpt_axis_sety(MPT_STRUCT(axis) *, double);
 extern void mpt_axis_setz(MPT_STRUCT(axis) *, double);
 
 /* assign line attributes */
-extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
-extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, const MPT_INTERFACE(metatype) *);
+extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
+extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
+extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
+extern int mpt_lattr_size  (MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
 extern int mpt_lattr_set(MPT_STRUCT(lineattr) *, int , int , int , int);
 
 /* change string data */
-extern int mpt_string_pset(char **, const MPT_INTERFACE(metatype) *);
+extern int mpt_string_pset(char **, MPT_INTERFACE(convertable) *);
 extern int mpt_string_set(char **, const char *, int __MPT_DEFPAR(-1));
 
 /* create pline representation for axis ticks */
@@ -358,13 +357,14 @@ class item_group : public metatype, public group
 public:
 	virtual ~item_group();
 	
+	int convert(int, void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int, void *) const __MPT_OVERRIDE;
 	item_group *clone() const __MPT_OVERRIDE;
 	
 	int each(item_handler_t *, void *) const __MPT_OVERRIDE;
 	int append(const identifier *, metatype *) __MPT_OVERRIDE;
-	size_t clear(const instance * = 0) __MPT_OVERRIDE;
+	size_t clear(const metatype * = 0) __MPT_OVERRIDE;
 	int bind(const relation *, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
 	inline span<const item<metatype> > items() const
@@ -387,10 +387,10 @@ public:
 	layout();
 	~layout() __MPT_OVERRIDE;
 	
-	int conv(int , void *) const __MPT_OVERRIDE;
+	int convert(int , void *) __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 	
 	int bind(const relation *, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
@@ -429,11 +429,13 @@ public:
 	line(const ::mpt::line *from = 0);
 	virtual ~line();
 	
+	int convert(int, void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int, void *) const __MPT_OVERRIDE;
+	line *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype * = 0) __MPT_OVERRIDE;
+	int set_property(const char *, convertable * = 0) __MPT_OVERRIDE;
 };
 
 class layout::text : public metatype, public object, public ::mpt::text
@@ -442,11 +444,13 @@ public:
 	text(const ::mpt::text *from = 0);
 	virtual ~text();
 	
+	int convert(int, void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int, void *) const __MPT_OVERRIDE;
+	text *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 };
 
 /*! Container and binding for data to axes */
@@ -456,26 +460,31 @@ public:
 	class axis;
 	class world;
 	class transform;
-	class data : public instance
+	class data
 	{
 	public:
 		data(class world *w = 0);
-		virtual ~data()
-		{ }
 		
-		void unref() __MPT_OVERRIDE;
+		/* required for reference */
+		virtual void unref() = 0;
+		virtual uintptr_t addref() = 0;
 		
 		reference<class world> world;
 		reference<class cycle> cycle;
+	protected:
+		virtual ~data()
+		{ }
 	};
 	
 	graph(const ::mpt::graph * = 0);
 	~graph() __MPT_OVERRIDE;
 	
-	int conv(int, void *) const __MPT_OVERRIDE;
+	int convert(int, void *) __MPT_OVERRIDE;
+	
+	graph *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 	
 	int bind(const relation *, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
@@ -506,7 +515,7 @@ protected:
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
-class layout::graph::transform : public ::mpt::transform
+class layout::graph::transform : public reference<::mpt::transform>::type
 {
 public:
 	struct data : public value_apply
@@ -536,11 +545,13 @@ public:
 	axis(AxisFlags type);
 	virtual ~axis();
 	
+	int convert(int, void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int, void *) const __MPT_OVERRIDE;
+	axis *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 };
 
 class layout::graph::world : public metatype, public object, public ::mpt::world
@@ -550,11 +561,13 @@ public:
 	world(const ::mpt::world *);
 	virtual ~world();
 	
+	int convert(int, void *) __MPT_OVERRIDE;
+	
 	void unref() __MPT_OVERRIDE;
-	int conv(int, void *) const __MPT_OVERRIDE;
+	world *clone() const __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
-	int set_property(const char *, const metatype *) __MPT_OVERRIDE;
+	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 };
 
 #endif

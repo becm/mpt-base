@@ -75,12 +75,12 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				value val;
 				const char *data;
 				
-				if (from->conv(value::Type, &val) >= 0) {
+				if (from->convert(value::Type, &val) >= 0) {
 					if (obj->set(name, val, out)) {
 						continue;
 					}
 				}
-				data = mpt_meta_data(from);
+				data = mpt_convertable_data(from);
 				obj->set(name, data, out);
 				continue;
 			}
@@ -251,21 +251,14 @@ metatype *group::create(const char *type, int nl)
 }
 
 // group storing elements in item array
-item_group::~item_group()
-{ }
-
-void item_group::unref()
-{
-	delete this;
-}
-int item_group::conv(int type, void *ptr) const
+int item_group::convert(int type, void *ptr)
 {
 	int me = typeinfo<group>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const group **>(ptr) = this;
+		if (ptr) *static_cast<group **>(ptr) = this;
 		return array::Type;
 	}
 	if (!type) {
@@ -274,14 +267,21 @@ int item_group::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(collection::Type)) {
-		if (ptr) *static_cast<const collection **>(ptr) = this;
+		if (ptr) *static_cast<collection **>(ptr) = this;
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return me;
 	}
 	return BadType;
+}
+item_group::~item_group()
+{ }
+
+void item_group::unref()
+{
+	delete this;
 }
 item_group *item_group::clone() const
 {
@@ -316,7 +316,7 @@ int item_group::append(const identifier *id, metatype *mt)
 	}
 	return _items.count();
 }
-size_t item_group::clear(const instance *ref)
+size_t item_group::clear(const metatype *ref)
 {
 	long remove = 0;
 	if (!ref) {
@@ -326,7 +326,7 @@ size_t item_group::clear(const instance *ref)
 	}
 	long empty = 0;
 	for (auto &it : _items) {
-		instance *curr = it.instance();
+		metatype *curr = it.instance();
 		if (!curr) {
 			++empty;
 			continue;
@@ -385,7 +385,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const collec
 				return 0;
 			}
 		}
-		if (val != ctx->type && (val = mt->conv(ctx->type, 0)) < 0) {
+		if (val != ctx->type && (val = mt->convert(ctx->type, 0)) < 0) {
 			return 0;
 		}
 	}
@@ -470,7 +470,7 @@ metatype *node_relation::find(int type, const char *name, int nlen) const
 			continue;
 		}
 		if (type) {
-			if (type != val && (val = m->conv(type, 0)) < 0) {
+			if (type != val && (val = m->convert(type, 0)) < 0) {
 				continue;
 			}
 		}

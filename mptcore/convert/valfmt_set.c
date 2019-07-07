@@ -20,7 +20,7 @@
  * 
  * \return consumed length
  */
-extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *src)
 {
 	MPT_INTERFACE(iterator) *it;
 	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
@@ -42,7 +42,7 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 	}
 	/* get elements from iterator */
 	it = 0;
-	if ((ret = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) > 0
+	if ((ret = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) > 0
 	    && it
 	    && (curr  = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
 		if (!curr) {
@@ -67,9 +67,9 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, const MPT_INTERFACE(metatype) 
 		while (curr > 0);
 	}
 	/* get elements from value */
-	else if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeValue), &val)) < 0) {
+	else if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValue), &val)) < 0) {
 		const char *from = 0;
-		if ((ret = src->_vptr->conv(src, 's', &from)) < 0) {
+		if ((ret = src->_vptr->convert(src, 's', &from)) < 0) {
 			return ret;
 		}
 		if (ret && (ret = mpt_valfmt_parse(&tmp, from)) < 0) {

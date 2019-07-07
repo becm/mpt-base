@@ -47,13 +47,13 @@ static int print_message(const char *fcn, int type, const char *fmt, va_list va)
  * 
  * \return log operation result
  */
-int log(const metatype *mt, const char *fcn, int type, const char *fmt, ...)
+int log(convertable *dest, const char *fcn, int type, const char *fmt, ...)
 {
 	va_list va;
 	if (fmt) va_start(va, fmt);
 	int ret;
-	if (mt) {
-		ret = mpt_meta_vlog(mt, fcn, type | logger::LogFunction, fmt, va);
+	if (dest) {
+		ret = mpt_convertable_vlog(dest, fcn, type | logger::LogFunction, fmt, va);
 	} else {
 		ret = print_message(fcn, type, fmt, va);
 	}
@@ -224,24 +224,6 @@ message_store::message_store(metatype *next) : reference<metatype>(next), _act(0
 { }
 message_store::~message_store()
 { }
-static int log_meta(const metatype *mt, const char *from, int type, const char *fmt, va_list arg)
-{
-	logger *l;
-	if (!mt) {
-		if (!(l = mpt_log_default())) {
-			return 0;
-		}
-		return l->log(from, type, fmt, arg);
-	}
-	if ((l = mt->cast<logger>())) {
-		return l->log(from, type, fmt, arg);
-	}
-	output *o;
-	if ((o = mt->cast<output>())) {
-		return mpt_output_vlog(o, from, type, fmt, arg);
-	}
-	return BadType;
-}
 int message_store::log(const char *from, int type, const char *fmt, va_list arg)
 {
 	int save = 0, pass = 0, code = 0x7f & type;
@@ -264,7 +246,7 @@ int message_store::log(const char *from, int type, const char *fmt, va_list arg)
 	// fast-track without argument list copy
 	if (!save) {
 		if (mt && pass) {
-			return log_meta(mt, from, type, fmt, arg);
+			return mpt_convertable_vlog(mt, from, type, fmt, arg);
 		}
 		return 0;
 	}
@@ -273,7 +255,7 @@ int message_store::log(const char *from, int type, const char *fmt, va_list arg)
 		va_list tmp;
 		// use copy to keep data for storage operation
 		va_copy(tmp, arg);
-		ret = log_meta(mt, from, type, fmt, arg);
+		ret = mpt_convertable_vlog(mt, from, type, fmt, arg);
 		va_end(tmp);
 	}
 	entry m;

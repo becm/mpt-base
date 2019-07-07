@@ -5,6 +5,7 @@ cxx_src = files(
   'array.cpp',
   'client.cpp',
   'config.cpp',
+  'convertable.cpp',
   'event.cpp',
   'identifier.cpp',
   'io.cpp', 'io_buffer.cpp', 'io_queue.cpp',

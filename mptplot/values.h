@@ -8,6 +8,10 @@
 
 #include "array.h"
 
+#ifdef __cplusplus
+# include "meta.h"
+#endif
+
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
@@ -339,7 +343,7 @@ extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT
 extern void mpt_value_apply_init(MPT_STRUCT(value_apply) *, int __MPT_DEFPAR(-1));
 
 /* set point data */
-extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, const MPT_INTERFACE(metatype) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
+extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, MPT_INTERFACE(convertable) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
 /* consume range data */
 extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);
@@ -370,11 +374,9 @@ size_t maxsize(span<const value_store>, int = -1);
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
 
-class transform : public instance
+class transform
 {
 public:
-	void unref() __MPT_OVERRIDE;
-	
 	virtual int dimensions() const = 0;
 	
 	virtual linepart part(unsigned , const double *, int) const;
@@ -456,7 +458,7 @@ protected:
 
 template<> int typeinfo<polyline::point>::id();
 
-class cycle : public instance, public rawdata
+class cycle : public metatype, public rawdata
 {
 public:
 	enum Flags {
@@ -479,8 +481,10 @@ public:
 	protected:
 		polyline _values;
 	};
-	/* instance interface */
-	void unref() __MPT_OVERRIDE;
+	
+	/* metatype interface */
+	void unref();
+	cycle *clone() const;
 	
 	/* basic raw data interface */
 	int modify(unsigned , int , const void *, size_t , const valdest * = 0) __MPT_OVERRIDE;

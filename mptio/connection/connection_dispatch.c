@@ -120,9 +120,9 @@ int streamWrapper(void *ptr, const MPT_STRUCT(message) *msg)
 		rc = 0;
 		rd = 0;
 		if (ctx
-		    && ctx->_vptr->conv(ctx, MPT_type_pointer(MPT_ENUM(TypeReplyData)), &rd) >= 0
+		    && MPT_metatype_convert(ctx, MPT_type_pointer(MPT_ENUM(TypeReplyData)), &rd) >= 0
 		    && rd) {
-			ctx->_vptr->conv(ctx, MPT_type_pointer(MPT_ENUM(TypeReply)), &rc);
+			MPT_metatype_convert(ctx, MPT_type_pointer(MPT_ENUM(TypeReply)), &rc);
 		}
 		if ((ev.reply = rc) && mpt_reply_set(rd, idlen, id) < 0) {
 			mpt_log(0, _func, MPT_LOG(Error), "%s: %s",
@@ -270,9 +270,9 @@ extern int mpt_connection_dispatch(MPT_STRUCT(connection) *con, MPT_TYPE(event_h
 		rc = 0;
 		rd = 0;
 		if (ctx
-		    && ctx->_vptr->conv(ctx, MPT_type_pointer(MPT_ENUM(TypeReplyData)), &rd) >= 0
+		    && MPT_metatype_convert(ctx, MPT_type_pointer(MPT_ENUM(TypeReplyData)), &rd) >= 0
 		    && rd) {
-			ctx->_vptr->conv(ctx, MPT_type_pointer(MPT_ENUM(TypeReply)), &rc);
+			MPT_metatype_convert(ctx, MPT_type_pointer(MPT_ENUM(TypeReply)), &rc);
 		}
 		if ((ev.reply = rc) && mpt_reply_set(rd, ilen, data) < 0) {
 			mpt_log(0, _func, MPT_LOG(Error), "%s: %s",

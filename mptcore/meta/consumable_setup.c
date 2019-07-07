@@ -12,16 +12,16 @@
  * Convert metatype to consumable data type.
  * 
  * \param val  consumable data
- * \param mt   source metatype
+ * \param src  source convertable
  * 
  * \return conversion result
  */
-extern int mpt_consumable_setup(MPT_STRUCT(consumable) *val, const MPT_INTERFACE(metatype) *mt)
+extern int mpt_consumable_setup(MPT_STRUCT(consumable) *val, MPT_INTERFACE(convertable) *src)
 {
 	MPT_STRUCT(value) tmp;
 	int ret;
 	
-	if ((ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeIterator)), &val->_it)) >= 0) {
+	if ((ret = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &val->_it)) >= 0) {
 		val->_val.fmt = 0;
 		val->_val.ptr = 0;
 		if (!val->_it) {
@@ -29,7 +29,7 @@ extern int mpt_consumable_setup(MPT_STRUCT(consumable) *val, const MPT_INTERFACE
 		}
 		return MPT_ENUM(TypeIterator);
 	}
-	if ((ret = mt->_vptr->conv(mt, MPT_ENUM(TypeValue), &tmp)) >= 0) {
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValue), &tmp)) >= 0) {
 		if (tmp.fmt && !tmp.ptr) {
 			return MPT_ERROR(BadValue);
 		}
@@ -37,7 +37,7 @@ extern int mpt_consumable_setup(MPT_STRUCT(consumable) *val, const MPT_INTERFACE
 		val->_val = tmp;
 		return MPT_ENUM(TypeValue);
 	}
-	if ((ret = mt->_vptr->conv(mt, 's', &val->_val.ptr)) >= 0) {
+	if ((ret = src->_vptr->convert(src, 's', &val->_val.ptr)) >= 0) {
 		val->_it = 0;
 		val->_val.fmt = 0;
 		return 's';

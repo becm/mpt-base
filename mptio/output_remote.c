@@ -47,27 +47,10 @@ static int remote_infile(const MPT_STRUCT(out_data) *od)
 	}
 	return _mpt_stream_fread(&srm->_info);
 }
-/* reference interface */
-static void remoteUnref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int remoteConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
-	uintptr_t c;
-	if ((c = mpt_refcount_lower(&od->_ref))) {
-		return;
-	}
-	mpt_connection_fini(&od->con);
-	free(od);
-}
-static uintptr_t remoteRef(MPT_INTERFACE(instance) *in)
-{
-	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, in, _in);
-	
-	return mpt_refcount_raise(&od->_ref);
-}
-/* metatype interface */
-static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
+	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, val, _in);
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
@@ -110,6 +93,23 @@ static int remoteConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return me;
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void remoteUnref(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
+	uintptr_t c;
+	if ((c = mpt_refcount_lower(&od->_ref))) {
+		return;
+	}
+	mpt_connection_fini(&od->con);
+	free(od);
+}
+static uintptr_t remoteRef(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, mt, _in);
+	
+	return mpt_refcount_raise(&od->_ref);
 }
 static MPT_INTERFACE(metatype) *remoteClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -202,7 +202,7 @@ static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 	}
 	return mpt_connection_get(&od->con, pr);
 }
-static int remoteSetProperty(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src) {
+static int remoteSetProperty(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(convertable) *src) {
 	static const char _fcn[] = "mpt::output::setProperty";
 	
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _obj);
@@ -352,8 +352,9 @@ static int remoteLog(MPT_INTERFACE(logger) *log, const char *from, int type, con
 extern MPT_INTERFACE(input) *mpt_output_remote()
 {
 	static const MPT_INTERFACE_VPTR(input) remoteInput = {
-		{ { remoteUnref, remoteRef },
-		  remoteConv,
+		{ { remoteConv },
+		  remoteUnref,
+		  remoteRef,
 		  remoteClone
 		},
 		remoteNext,

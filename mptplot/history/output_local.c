@@ -29,36 +29,15 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	MPT_INTERFACE(output) *out;
 	out = 0;
 	if (!(mt = lo->pass)
-	    || mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) < 0) {
+	    || MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) < 0) {
 		return 0;
 	}
 	return out;
 }
-/* reference interface */
-static void localUnref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int localConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	MPT_STRUCT(local_output) *lo = (void *) in;
-	
-	/* remove active reference */
-	if (mpt_refcount_lower(&lo->ref)) {
-		return;
-	}
-	mpt_history_fini(&lo->hist);
-	
-	if ((in = (void *) lo->pass)) {
-		in->_vptr->unref(in);
-	}
-	free(lo);
-}
-uintptr_t localRef(MPT_INTERFACE(instance) *in)
-{
-	MPT_STRUCT(local_output) *lo = (void *) in;
-	return mpt_refcount_raise(&lo->ref);
-}
-/* metatype interface */
-static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	MPT_STRUCT(local_output) *lo = (void *) mt;
+	MPT_STRUCT(local_output) *lo = (void *) val;
 	
 	if (!type) {
 		static const uint8_t fmt[] = {
@@ -96,6 +75,27 @@ static int localConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 	}
 	return MPT_ERROR(BadType);
 }
+/* metatype interface */
+static void localUnref(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(local_output) *lo = (void *) mt;
+	
+	/* remove active reference */
+	if (mpt_refcount_lower(&lo->ref)) {
+		return;
+	}
+	mpt_history_fini(&lo->hist);
+	
+	if ((mt = (void *) lo->pass)) {
+		mt->_vptr->unref(mt);
+	}
+	free(lo);
+}
+uintptr_t localRef(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(local_output) *lo = (void *) mt;
+	return mpt_refcount_raise(&lo->ref);
+}
 static MPT_INTERFACE(metatype) *localClone(const MPT_INTERFACE(metatype) *mt)
 {
 	(void) mt;
@@ -120,7 +120,7 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 	}
 	return mpt_history_get(&lo->hist, pr);
 }
-static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTERFACE(metatype) *src)
+static int localSet(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	MPT_STRUCT(local_output) *lo = MPT_baseaddr(local_output, obj, _obj);
 	int ret;
@@ -137,25 +137,25 @@ static int localSet(MPT_INTERFACE(object) *obj, const char *name, const MPT_INTE
 		}
 		/* get modifyable instance pointer */
 		mt = 0;
-		if ((ret = src->_vptr->conv(src, MPT_ENUM(TypeMetaPtr), &mt)) < 0) {
+		if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeMetaPtr), &mt)) < 0) {
 			return ret;
 		}
 		if (!mt) {
 			return MPT_ERROR(BadValue);
 		}
 		out = 0;
-		if ((ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out)) < 0) {
+		if ((ret = MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out)) < 0) {
 			return ret;
 		}
 		/* avoid circular redirection */
 		if (!out || out == &lo->_out) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!mt->_vptr->instance.addref((void *) mt)) {
+		if (!mt->_vptr->addref(mt)) {
 			return MPT_ERROR(BadOperation);
 		}
 		if ((old = lo->pass)) {
-			old->_vptr->instance.unref((void *) old);
+			old->_vptr->unref(old);
 		}
 		lo->pass = mt;
 		return ret;
@@ -248,8 +248,9 @@ static int localLog(MPT_INTERFACE(logger) *log, const char *from, int type, cons
 extern MPT_INTERFACE(metatype) *mpt_output_local(void)
 {
 	static const MPT_INTERFACE_VPTR(metatype) localMeta = {
-		{ localUnref, localRef },
-		localConv,
+		{ localConv },
+		localUnref,
+		localRef,
 		localClone
 	};
 	static const MPT_INTERFACE_VPTR(object) localObject = {

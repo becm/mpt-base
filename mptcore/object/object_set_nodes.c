@@ -47,7 +47,7 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 		val = conf->children ? MPT_ENUM(TraverseNonLeafs) : MPT_ENUM(TraverseLeafs);
 		
 		if ((val & match)) {
-			val = mpt_object_set_property(obj, match, &conf->ident, conf->_meta);
+			val = mpt_object_set_property(obj, match, &conf->ident, (MPT_INTERFACE(convertable) *) conf->_meta);
 			if (!val) {
 				++proc;
 			}
@@ -94,8 +94,8 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 			continue;
 		}
 		if (val == MPT_ERROR(BadType)) {
-			const MPT_INTERFACE(metatype) *mt = conf->_meta;
-			val = mt ? mt->_vptr->conv(mt, 0, 0) : 0;
+			MPT_INTERFACE(metatype) *mt = conf->_meta;
+			val = mt ? MPT_metatype_convert(mt, 0, 0) : 0;
 			if (name) {
 				static const char *err = MPT_tr("bad property type");
 				if (isalnum(val)) {

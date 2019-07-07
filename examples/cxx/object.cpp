@@ -79,13 +79,13 @@ extern int main(int , char * const [])
 	std::cout << d.f0() << std::endl;
 	
 	mpt::configuration config;
-	const mpt::metatype *mt;
-	if ((mt = config.get(0))) {
-		std::cout << "base type: " << typeid(*mt).name() << std::endl;
+	mpt::convertable *val;
+	if ((val = config.get(0))) {
+		std::cout << "base type: " << typeid(*val).name() << std::endl;
 	}
 	config.set("next", "val");
-	if ((mt = config.get("next"))) {
-		std::cout << "next type: " << typeid(*mt).name() << std::endl;
+	if ((val = config.get("next"))) {
+		std::cout << "next type: " << typeid(*val).name() << std::endl;
 	}
 	mpt::layout::line *li = new mpt::reference<mpt::layout::line>::type;
 	mpt::layout::graph::axis *ax = new mpt::reference<mpt::layout::graph::axis>::type;

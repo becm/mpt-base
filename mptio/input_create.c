@@ -66,10 +66,10 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 		
 		val.ptr = ctl;
 		
-		if (in->_vptr->meta.conv((void *) in, MPT_ENUM(TypeObject), &obj) < 0
+		if (in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeObject), &obj) < 0
 		    || !obj
 		    || mpt_object_set_value(obj, 0, &val) < 0) {
-			in->_vptr->meta.instance.unref((void *) in);
+			in->_vptr->meta.unref((void *) in);
 			errno = EINVAL;
 			return 0;
 		}

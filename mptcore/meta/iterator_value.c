@@ -131,7 +131,7 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		if (!(mt = *((MPT_INTERFACE(metatype) **) it->val.ptr))) {
 			return MPT_ERROR(BadValue);
 		}
-		return mt->_vptr->conv(mt, type, dest);
+		return MPT_metatype_convert(mt, type, dest);
 	}
 	/* copy scalar or untracked pointer data */
 	if (type == ftype
@@ -221,18 +221,8 @@ extern int mpt_process_value(MPT_STRUCT(value) *val, int (*proc)(void *, MPT_INT
 	return ret;
 }
 
-/* reference interface */
-static void valUnref(MPT_INTERFACE(instance) *in)
-{
-	free(in);
-}
-static uintptr_t valRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int valConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
+/* convertable interface */
+static int valConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 {
 	struct valSource *it = (void *) (mt + 1);
 	if (!type) {
@@ -252,6 +242,16 @@ static int valConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 		return MPT_ENUM(TypeIterator);
 	}
 	return MPT_ERROR(BadType);
+}
+/* reference interface */
+static void valUnref(MPT_INTERFACE(metatype) *mt)
+{
+	free(mt);
+}
+static uintptr_t valRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *valClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -273,8 +273,9 @@ static MPT_INTERFACE(metatype) *valClone(const MPT_INTERFACE(metatype) *mt)
 extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value) val, int pos)
 {
 	static const MPT_INTERFACE_VPTR(metatype) valMeta = {
-		{ valUnref, valRef },
-		valConv,
+		{ valConv },
+		valUnref,
+		valRef,
 		valClone
 	};
 	MPT_INTERFACE(metatype) *mt;

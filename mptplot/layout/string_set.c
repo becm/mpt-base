@@ -61,7 +61,7 @@ extern int mpt_string_set(char **ptr, const char *data, int len)
  * 
  * \return consumed/changed value
  */
-extern int mpt_string_pset(char **ptr, const MPT_INTERFACE(metatype) *src)
+extern int mpt_string_pset(char **ptr, MPT_INTERFACE(convertable) *src)
 {
 	struct iovec vec;
 	int len;
@@ -69,14 +69,14 @@ extern int mpt_string_pset(char **ptr, const MPT_INTERFACE(metatype) *src)
 	if (!src) {
 		return (ptr && *ptr) ? strlen(*ptr) : 0;
 	}
-	if ((len = src->_vptr->conv(src, MPT_type_vector('c'), &vec)) > 0) {
+	if ((len = src->_vptr->convert(src, MPT_type_vector('c'), &vec)) > 0) {
 		if ((len = mpt_string_set(ptr, vec.iov_base, vec.iov_len)) < 0) {
 			return len;
 		}
 		return 0;
 	}
 	vec.iov_base = 0;
-	if ((len = src->_vptr->conv(src, 's', &vec.iov_base)) < 0) {
+	if ((len = src->_vptr->convert(src, 's', &vec.iov_base)) < 0) {
 		return len;
 	}
 	if (!len || !vec.iov_base) {

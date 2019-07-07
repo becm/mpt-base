@@ -53,13 +53,13 @@ layout::~layout()
 	delete _parse;
 }
 // metatype interface
-int layout::conv(int type, void *ptr) const
+int layout::convert(int type, void *ptr)
 {
 	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
+		if (ptr) *static_cast<object **>(ptr) = this;
 		return typeinfo<group>::id();
 	}
-	return item_group::conv(type, ptr);
+	return item_group::convert(type, ptr);
 }
 // object interface
 int layout::property(struct property *pr) const
@@ -98,7 +98,7 @@ int layout::property(struct property *pr) const
 	}
 	return BadArgument;
 }
-int layout::set_property(const char *name, const metatype *src)
+int layout::set_property(const char *name, convertable *src)
 {
 	int len;
 	
@@ -283,11 +283,7 @@ layout::line::line(const ::mpt::line *from)
 }
 layout::line::~line()
 { }
-void layout::line::unref()
-{
-	delete this;
-}
-int layout::line::conv(int type, void *ptr) const
+int layout::line::convert(int type, void *ptr)
 {
 	int me = typeinfo<line>::id();
 	if (me < 0) {
@@ -323,14 +319,23 @@ int layout::line::conv(int type, void *ptr) const
 	}
 	return BadType;
 }
+void layout::line::unref()
+{
+	delete this;
+}
+layout::line *layout::line::clone() const
+{
+	return new line(this);
+}
 int layout::line::property(struct property *prop) const
 {
 	return mpt_line_get(this, prop);
 }
-int layout::line::set_property(const char *name, const metatype *src)
+int layout::line::set_property(const char *name, convertable *src)
 {
 	return mpt_line_set(this, name, src);
 }
+
 // text data operations
 text::text()
 {
@@ -371,18 +376,14 @@ layout::text::text(const ::mpt::text *from)
 }
 layout::text::~text()
 { }
-void layout::text::unref()
-{
-	delete this;
-}
-int layout::text::conv(int type, void *ptr) const
+int layout::text::convert(int type, void *ptr)
 {
 	int me = typeinfo<text>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const text **>(ptr) = this;
+		if (ptr) *static_cast<text **>(ptr) = this;
 		return me;
 	}
 	if (!type) {
@@ -394,11 +395,11 @@ int layout::text::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
+		if (ptr) *static_cast<object **>(ptr) = this;
 		return ::mpt::text::Type;
 	}
 	if (type == to_pointer_id(::mpt::text::Type)) {
-		if (ptr) *static_cast<const ::mpt::text **>(ptr) = this;
+		if (ptr) *static_cast<::mpt::text **>(ptr) = this;
 		return object::Type;
 	}
 	if (type == color::Type) {
@@ -407,11 +408,19 @@ int layout::text::conv(int type, void *ptr) const
 	}
 	return BadType;
 }
+void layout::text::unref()
+{
+	delete this;
+}
+layout::text *layout::text::clone() const
+{
+	return new text(this);
+}
 int layout::text::property(struct property *prop) const
 {
 	return mpt_text_get(this, prop);
 }
-int layout::text::set_property(const char *prop, const metatype *src)
+int layout::text::set_property(const char *prop, convertable *src)
 {
 	return mpt_text_set(this, prop, src);
 }

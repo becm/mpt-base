@@ -7,16 +7,7 @@
 
 #include "meta.h"
 
-static void genMetaUnref(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-}
-static uintptr_t genMetaRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 1;
-}
-static int genMetaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
+static int genMetaConv(MPT_INTERFACE(convertable) *meta, int type, void *ptr)
 {
 	void **dest = ptr;
 	
@@ -30,6 +21,15 @@ static int genMetaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		return 0;
 	}
 	return MPT_ERROR(BadType);
+}
+static void genMetaUnref(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+}
+static uintptr_t genMetaRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 1;
 }
 static MPT_INTERFACE(metatype) *genMetaClone(const MPT_INTERFACE(metatype) *meta)
 {
@@ -47,8 +47,9 @@ static MPT_INTERFACE(metatype) *genMetaClone(const MPT_INTERFACE(metatype) *meta
 extern MPT_INTERFACE(metatype) *mpt_metatype_default()
 {
 	static const MPT_INTERFACE_VPTR(metatype) ctl = {
-		{ genMetaUnref, genMetaRef },
-		genMetaConv,
+		{ genMetaConv },
+		genMetaUnref,
+		genMetaRef,
 		genMetaClone
 	};
 	static MPT_INTERFACE(metatype) mt = { &ctl };

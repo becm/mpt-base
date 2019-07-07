@@ -27,10 +27,12 @@ public:
 	client();
 	virtual ~client() { }
 	
-	void unref() __MPT_OVERRIDE;
-	int process(uintptr_t , mpt::iterator *) __MPT_OVERRIDE;
+	int convert(int , void *) __MPT_OVERRIDE;
 	
-	int conv(int , void *) const __MPT_OVERRIDE;
+	void unref() __MPT_OVERRIDE;
+	client *clone() const __MPT_OVERRIDE;
+	
+	int process(uintptr_t , mpt::iterator *) __MPT_OVERRIDE;
 protected:
 	mpt::reference<mpt::metatype> _mt;
 };
@@ -38,7 +40,7 @@ client::client()
 {
 	mpt::metatype *mt = mpt::mpt_output_remote();
 	mpt::property pr;
-	mpt::mpt_meta_info(mt, &pr);
+	mpt::mpt_convertable_info(mt, &pr);
 	mpt::debug(__func__, "%s: %s", pr.name, pr.desc);
 	mpt::object *o;
 	if (mt && (o = mt->cast<mpt::object>())) {
@@ -46,22 +48,26 @@ client::client()
 	}
 	_mt.set_instance(mt);
 }
-int client::process(uintptr_t , mpt::iterator *)
+int client::convert(int type, void *ptr)
 {
-	return mpt::event::Terminate;
+	metatype *mt;
+	int ret;
+	if ((mt = _mt.instance()) && (ret = mt->convert(type, ptr)) > 0) {
+		return Type;
+	}
+	return client::convert(type, ptr);
 }
 void client::unref()
 {
 	delete this;
 }
-int client::conv(int type, void *ptr) const
+client *client::clone() const
 {
-	metatype *mt;
-	int ret;
-	if ((mt = _mt.instance()) && (ret = mt->conv(type, ptr)) > 0) {
-		return Type;
-	}
-	return client::conv(type, ptr);
+	return new client();
+}
+int client::process(uintptr_t , mpt::iterator *)
+{
+	return mpt::event::Terminate;
 }
 
 static int do_command(void *ptr, mpt::event *ev)
@@ -99,9 +105,9 @@ int main(int argc, char * const argv[])
 	
 	mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 	
-	const mpt::metatype *mt;
-	if ((mt = mpt::config::global()->cast<mpt::config>()->get("mpt.args"))) {
-		mpt::iterator *it = mt->cast<mpt::iterator>();
+	mpt::convertable *val;
+	if ((val = mpt::config::global()->cast<mpt::config>()->get("mpt.args"))) {
+		mpt::iterator *it = val->cast<mpt::iterator>();
 		const char *arg;
 		while (it->consume(arg)) {
 			std::cerr << arg << std::endl;

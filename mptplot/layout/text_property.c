@@ -73,7 +73,7 @@ extern void mpt_text_init(MPT_STRUCT(text) *tx, const MPT_STRUCT(text) *from)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int len;
 	
@@ -84,7 +84,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, len ? from : 0);
 			return 0;
@@ -92,7 +92,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
 			if (!len) tx->color = def_text.color;
 			return 0;
 		}
@@ -106,7 +106,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return 0;
@@ -129,14 +129,14 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		return mpt_string_pset(&tx->_font, src);
 	}
 	if (!strcasecmp(name, "x")) {
-		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.x))) {
+		if (!src || !(len = src->_vptr->convert(src, 'f', &tx->pos.x))) {
 			tx->pos.x = def_text.pos.x;
 			return 0;
 		}
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "y")) {
-		if (!src || !(len = src->_vptr->conv(src, 'f', &tx->pos.y))) {
+		if (!src || !(len = src->_vptr->convert(src, 'f', &tx->pos.y))) {
 			tx->pos.y = def_text.pos.y;
 			return 0;
 		}
@@ -154,21 +154,21 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, const MPT_INTERF
 		return mpt_color_pset(&tx->color, src);
 	}
 	if (!strcasecmp(name, "size")) {
-		if (!src || !(len = src->_vptr->conv(src, 'y', &tx->size))) {
+		if (!src || !(len = src->_vptr->convert(src, 'y', &tx->size))) {
 			tx->size = def_text.size;
 			return 0;
 		}
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "align")) {
-		if (!src || !(len = src->_vptr->conv(src, 'c', &tx->align))) {
+		if (!src || !(len = src->_vptr->convert(src, 'c', &tx->align))) {
 			tx->align = def_text.align;
 			return 0;
 		}
 		return len < 0 ? len : 0;
 	}
 	if (!strcasecmp(name, "angle")) {
-		if (!src || !(len = src->_vptr->conv(src, 'd', &tx->angle))) {
+		if (!src || !(len = src->_vptr->convert(src, 'd', &tx->angle))) {
 			tx->angle = def_text.angle;
 			return 0;
 		}

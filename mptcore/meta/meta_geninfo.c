@@ -7,19 +7,10 @@
 
 #include "meta.h"
 
-static void metaUnref(MPT_INTERFACE(instance) *in)
-{
-	free(in);
-}
-static uintptr_t metaRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
 /* metatype interface */
-static int metaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
+static int metaConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	const void *info = meta + 1;
+	const void *info = val + 1;
 	void **dest = ptr;
 	
 	if (!type) {
@@ -28,10 +19,19 @@ static int metaConv(const MPT_INTERFACE(metatype) *meta, int type, void *ptr)
 		return 0;
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
-		if (dest) *dest = (void *) meta;
+		if (dest) *dest = (void *) val;
 		return 0;
 	}
 	return _mpt_geninfo_conv(info, type, ptr);
+}
+static void metaUnref(MPT_INTERFACE(metatype) *in)
+{
+	free(in);
+}
+static uintptr_t metaRef(MPT_INTERFACE(metatype) *in)
+{
+	(void) in;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -52,8 +52,9 @@ static MPT_INTERFACE(metatype) *metaClone(const MPT_INTERFACE(metatype) *mt)
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t post)
 {
 	static const MPT_INTERFACE_VPTR(metatype) _vptr_control = {
-		{ metaUnref, metaRef },
-		metaConv,
+		{ metaConv },
+		metaUnref,
+		metaRef,
 		metaClone
 	};
 	MPT_INTERFACE(metatype) *mt;

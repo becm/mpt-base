@@ -52,11 +52,11 @@ int main(int argc, const char *argv[])
 			struct mpt_object *obj = 0;
 			int err;
 			
-			if (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
+			if (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
 			    && obj) {
 				fputs(object_name(obj), out);
 			}
-			if ((err = mt->_vptr->conv(mt, 0, &types)) >= 0) {
+			if ((err = MPT_metatype_convert(mt, 0, &types)) >= 0) {
 				fprintf(out, ": 0x%02x", err);
 				if (types) {
 					fputs(" >", out);
@@ -66,7 +66,7 @@ int main(int argc, const char *argv[])
 				}
 			}
 			fputs("\n", out);
-			mt->_vptr->instance.unref((void *) mt);
+			mt->_vptr->unref(mt);
 		}
 		sym = *(++argv);
 	}

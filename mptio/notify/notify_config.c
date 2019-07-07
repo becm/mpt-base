@@ -21,7 +21,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 {
 	static const char con[] = "mpt.connect";
 	static const char bind[] = "mpt.listen";
-	const MPT_INTERFACE(metatype) *mt;
+	MPT_INTERFACE(convertable) *val;
 	MPT_INTERFACE(input) *in;
 	const char *ctl;
 	int off, ret, ncon;
@@ -29,11 +29,11 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 	off = cfg ? 4 : 0;
 	
 	ncon = 0;
-	if ((mt = mpt_config_get(cfg, con + off, '.', 0))) {
+	if ((val = mpt_config_get(cfg, con + off, '.', 0))) {
 		in = 0;
 		ctl = 0;
-		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {
-			if (!in || !in->_vptr->meta.instance.addref((void *) in)) {
+		if (val->_vptr->convert(val, mpt_input_typeid(), &in) >= 0) {
+			if (!in || !in->_vptr->meta.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid connection reference");
 				return in ? MPT_ERROR(BadOperation) : MPT_ERROR(BadValue);
@@ -44,7 +44,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 				++ncon;
 			}
 		}
-		else if (mt->_vptr->conv(mt, 's', &ctl) < 0) {
+		else if (val->_vptr->convert(val, 's', &ctl) < 0) {
 			return MPT_ERROR(BadType);
 		}
 		else if (ctl) {
@@ -57,11 +57,11 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 			}
 		}
 	}
-	if ((mt = mpt_config_get(cfg, bind + off, '.', 0))) {
+	if ((val = mpt_config_get(cfg, bind + off, '.', 0))) {
 		in = 0;
 		ctl = 0;
-		if (mt->_vptr->conv(mt, mpt_input_typeid(), &in) >= 0) {
-			if (!in || !in->_vptr->meta.instance.addref((void *) in)) {
+		if (val->_vptr->convert(val, mpt_input_typeid(), &in) >= 0) {
+			if (!in || !in->_vptr->meta.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid input reference");
 				ret = in ? MPT_ERROR(BadOperation) : MPT_ERROR(BadValue);
@@ -70,7 +70,7 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 				ret = mpt_notify_add(no, POLLIN, in);
 			}
 		}
-		else if (mt->_vptr->conv(mt, 's', &ctl) < 0) {
+		else if (val->_vptr->convert(val, 's', &ctl) < 0) {
 			ret = MPT_ERROR(BadType);
 		}
 		else if (!ctl) {

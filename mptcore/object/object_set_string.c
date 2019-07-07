@@ -18,16 +18,7 @@ struct wrapIter
 	const char *val, *sep;
 };
 
-static void metaIterUnref(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-}
-static uintptr_t metaIterRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
+static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 {
 	struct wrapIter *it = (void *) mt;
 	if (!type) {
@@ -50,7 +41,7 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 				}
 				it->src = src;
 			}
-			return src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), dest);
+			return MPT_metatype_convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), dest);
 		}
 		return 's';
 	}
@@ -77,6 +68,15 @@ static int metaIterConv(const MPT_INTERFACE(metatype) *mt, int type, void *dest)
 	}
 	return 0;
 }
+static void metaIterUnref(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+}
+static uintptr_t metaIterRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
+}
 static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 {
 	(void) mt;
@@ -97,8 +97,9 @@ static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
 extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, const char *val, const char *sep)
 {
 	static const MPT_INTERFACE_VPTR(metatype) ctl = {
-		{ metaIterUnref, metaIterRef },
-		metaIterConv,
+		{ metaIterConv },
+		metaIterUnref,
+		metaIterRef,
 		metaIterClone
 	};
 	MPT_INTERFACE(metatype) *src;
@@ -109,9 +110,9 @@ extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, c
 	mt.src = 0;
 	mt.val = val;
 	mt.sep = sep;
-	ret = obj->_vptr->set_property(obj, name, &mt._ctl);
+	ret = obj->_vptr->set_property(obj, name, (MPT_INTERFACE(convertable) *) &mt._ctl);
 	if ((src = mt.src)) {
-		src->_vptr->instance.unref((void *) src);
+		src->_vptr->unref(src);
 	}
 	return ret;
 }

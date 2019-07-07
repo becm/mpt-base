@@ -51,14 +51,14 @@ static config *clientConfig()
  * 
  * \return conversion result
  */
-int client::conv(int type, void *ptr) const
+int client::convert(int type, void *ptr)
 {
 	int me = typeinfo<client>::id();
 	if (me < 0) {
 		me = metatype::Type;
 	}
 	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<const client **>(ptr) = this;
+		if (ptr) *static_cast<client **>(ptr) = this;
 		return config::Type;
 	}
 	if (!type) {
@@ -71,7 +71,7 @@ int client::conv(int type, void *ptr) const
 		return me;
 	}
 	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<const metatype **>(ptr) = this;
+		if (ptr) *static_cast<metatype **>(ptr) = this;
 		return config::Type;
 	}
 	return BadType;

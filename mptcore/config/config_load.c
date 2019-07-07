@@ -77,17 +77,19 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 	mt = 0;
 	if (!cfg) {
 		MPT_STRUCT(path) p = MPT_PATH_INIT;
+		MPT_INTERFACE(convertable) *val;
 		mpt_path_set(&p, "mpt", -1);
 		if (!(mt = mpt_config_global(&p))) {
 			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
 			        MPT_tr("failed to access mpt config"));
 			return MPT_ERROR(BadOperation);
 		}
-		if ((ret = mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg)) < 0
+		val = (MPT_INTERFACE(convertable) *) mt;
+		if ((ret = val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg)) < 0
 		    || !cfg) {
 			mpt_log(log, __func__, MPT_LOG(Fatal), "%s",
 			        MPT_tr("bad global config element"));
-			mt->_vptr->instance.unref((void *) mt);
+			mt->_vptr->unref(mt);
 			return MPT_ERROR(BadType);
 		}
 	}
@@ -122,7 +124,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		int err;
 		if (!(src.src.arg = fdopen(fd, "r"))) {
 			if (mt) {
-				mt->_vptr->instance.unref((void *) mt);
+				mt->_vptr->unref(mt);
 			}
 			return 0;
 		}
@@ -149,7 +151,7 @@ extern int mpt_config_load(MPT_INTERFACE(config) *cfg, const char *root, MPT_INT
 		}
 	}
 	if (mt) {
-		mt->_vptr->instance.unref((void *) mt);
+		mt->_vptr->unref(mt);
 	}
 	close(dir);
 	return ret;

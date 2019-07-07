@@ -22,18 +22,8 @@ struct _iter_ldata
 	         pos;
 };
 
-/* reference interface */
-static void iterUnref(MPT_INTERFACE(instance) *in)
-{
-	free(in);
-}
-static uintptr_t iterRef(MPT_INTERFACE(instance) *in)
-{
-	(void) in;
-	return 0;
-}
-/* metatype interface */
-static int iterConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+/* convertable interface */
+static int iterConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator) };
@@ -44,10 +34,20 @@ static int iterConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return MPT_ENUM(TypeIterator);
 	}
 	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
-		if (ptr) *((const void **) ptr) = mt + 1;
+		if (ptr) *((const void **) ptr) = val + 1;
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void iterUnref(MPT_INTERFACE(metatype) *mt)
+{
+	free(mt);
+}
+static uintptr_t iterRef(MPT_INTERFACE(metatype) *mt)
+{
+	(void) mt;
+	return 0;
 }
 static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -105,8 +105,9 @@ static int iterReset(MPT_INTERFACE(iterator) *it)
 	return d->elem;
 }
 static const MPT_INTERFACE_VPTR(metatype) _vptr_linear_meta = {
-	{ iterUnref, iterRef },
-	iterConv,
+	{ iterConv },
+	iterUnref,
+	iterRef,
 	iterClone
 };
 static const MPT_INTERFACE_VPTR(iterator) _vptr_linear_iter = {

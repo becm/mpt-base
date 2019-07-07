@@ -58,6 +58,17 @@ void cycle::unref()
 {
 	delete this;
 }
+cycle *cycle::clone() const
+{
+	cycle *ret = new cycle();
+	
+	ret->_stages = _stages;
+	ret->_act = _act;
+	ret->_max_dimensions = _max_dimensions;
+	ret->_flags = _flags;
+	
+	return ret;
+}
 
 int cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
 {

@@ -59,25 +59,10 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 	(void) ctx;
 	return 0;
 }
-/* reference interface */
-static void streamUnref(MPT_INTERFACE(instance) *in)
+/* convertable interface */
+static int streamConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	MPT_STRUCT(streamInput) *srm = (void *) in;
-	if (mpt_refcount_lower(&srm->ref)) {
-		return;
-	}
-	(void) mpt_stream_close(&srm->data);
-	free(srm);
-}
-static uintptr_t streamRef(MPT_INTERFACE(instance) *in)
-{
-	MPT_STRUCT(streamInput) *srm = (void *) in;
-	return mpt_refcount_raise(&srm->ref);
-}
-/* metatype interface */
-static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
-{
-	MPT_STRUCT(streamInput) *srm = (void *) mt;
+	MPT_STRUCT(streamInput) *srm = (void *) val;
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
@@ -101,6 +86,21 @@ static int streamConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
 		return me;
 	}
 	return MPT_ERROR(BadType);
+}
+/* metatype interface */
+static void streamUnref(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(streamInput) *srm = (void *) mt;
+	if (mpt_refcount_lower(&srm->ref)) {
+		return;
+	}
+	(void) mpt_stream_close(&srm->data);
+	free(srm);
+}
+static uintptr_t streamRef(MPT_INTERFACE(metatype) *mt)
+{
+	MPT_STRUCT(streamInput) *srm = (void *) mt;
+	return mpt_refcount_raise(&srm->ref);
 }
 static MPT_INTERFACE(metatype) *streamClone(const MPT_INTERFACE(metatype) *mt)
 {
@@ -243,8 +243,9 @@ static int streamDispatch(MPT_INTERFACE(input) *in, MPT_TYPE(event_handler) cmd,
 extern MPT_INTERFACE(input) *mpt_stream_input(const MPT_STRUCT(socket) *from, int mode, int code, size_t idlen)
 {
 	static const MPT_INTERFACE_VPTR(input) streamInput = {
-		{ { streamUnref, streamRef },
-		  streamConv,
+		{ { streamConv },
+		  streamUnref,
+		  streamRef,
 		  streamClone
 		},
 		streamNext,

@@ -104,7 +104,7 @@ extern void mpt_dispatch_fini(MPT_STRUCT(dispatch) *disp)
 		disp->_err.arg = 0;
 	}
 	if ((ctx = disp->_ctx)) {
-		ctx->_vptr->instance.unref((void *) ctx);
+		ctx->_vptr->unref(ctx);
 		disp->_ctx = 0;
 	}
 }

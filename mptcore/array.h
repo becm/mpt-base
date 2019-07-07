@@ -40,11 +40,13 @@ MPT_STRUCT(type_traits)
 
 /*! header for data segment */
 #ifdef __cplusplus
-MPT_STRUCT(buffer) : public instance
+MPT_STRUCT(buffer)
 {
 public:
-	virtual buffer *detach(size_t);
 	virtual int shared() const = 0;
+	virtual void unref() = 0;
+	virtual uintptr_t addref() = 0;
+	virtual buffer *detach(size_t) = 0;
 	
 	bool copy(const buffer &);
 	
@@ -69,9 +71,10 @@ protected:
 MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
 {
-	MPT_INTERFACE_VPTR(instance) instance;
-	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, size_t);
 	int (*shared)(const MPT_STRUCT(buffer) *);
+	void (*unref)(MPT_STRUCT(buffer) *);
+	uintptr_t (*addref)(MPT_STRUCT(buffer) *);
+	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, size_t);
 }; MPT_STRUCT(buffer)
 {
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
@@ -127,7 +130,7 @@ MPT_STRUCT(array)
 	bool set(const reference<buffer> &);
 	
 	int set(value);
-	int set(metatype &);
+	int set(convertable &);
 	int printf(const char *fmt, ... );
 	
 	array & operator=  (const array &);

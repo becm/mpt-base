@@ -73,7 +73,7 @@ extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRU
 		continue;
 	}
 	if (mt) {
-		mt->_vptr->instance.unref((void *) mt);
+		mt->_vptr->unref(mt);
 	}
 	return 0;
 }

@@ -47,13 +47,14 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->instance.unref((void *) conf);
+			conf->_vptr->unref(conf);
 		}
 		return 0;
 	}
 	cfg = 0;
 	if (conf) {
-		if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		MPT_INTERFACE(convertable) *val = (MPT_INTERFACE(convertable) *) conf;
+		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -92,7 +93,7 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->instance.unref((void *) conf);
+			conf->_vptr->unref(conf);
 		}
 		return 0;
 	}
@@ -105,7 +106,8 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		MPT_INTERFACE(convertable) *val = (MPT_INTERFACE(convertable) *) conf;
+		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -142,7 +144,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	
 	if (!ev) {
 		if (conf) {
-			conf->_vptr->instance.unref((void *) conf);
+			conf->_vptr->unref(conf);
 		}
 		return 0;
 	}
@@ -160,7 +162,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	/* require valid config for replace */
 	cfg = 0;
-	if (conf->_vptr->conv(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+	if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 	    || !cfg) {
 		ret = MPT_ERROR(BadOperation);
 	} else {
@@ -168,7 +170,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	/* unref global config */
 	if (!ptr) {
-		conf->_vptr->instance.unref((void *) conf);
+		conf->_vptr->unref(conf);
 	}
 	if (ret < 0) {
 		return MPT_event_fail(ev, ret, MPT_tr("failed to set global config"));
@@ -207,7 +209,7 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		        errMesg(), id, "set");
 		return MPT_ERROR(BadOperation);
 	}
-	if (mt && !mt->_vptr->instance.addref((void *) mt)) {
+	if (mt && !mt->_vptr->addref(mt)) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %" PRIxPTR,
 		        MPT_tr("unable to assign config query"), mt);
 		return 1;
@@ -217,11 +219,11 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "get");
 		if (mt) {
-			mt->_vptr->instance.unref((void *) mt);
+			mt->_vptr->unref(mt);
 		}
 		return 1;
 	}
-	if (mt && !mt->_vptr->instance.addref((void *) mt)) {
+	if (mt && !mt->_vptr->addref(mt)) {
 		mpt_log(0, __func__, MPT_LOG(Warning), "%s: %" PRIxPTR,
 		        MPT_tr("unable to assign conditiona config assign"), mt);
 		return 2;
@@ -231,7 +233,7 @@ extern int mpt_dispatch_param(MPT_STRUCT(dispatch) *dsp, MPT_INTERFACE(metatype)
 		mpt_log(0, __func__, MPT_LOG(Error), "%s: %" PRIxPTR " (%s)",
 		        errMesg(), id, "cond");
 		if (mt) {
-			mt->_vptr->instance.unref((void *) mt);
+			mt->_vptr->unref(mt);
 		}
 		return 2;
 	}

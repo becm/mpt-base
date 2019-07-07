@@ -65,7 +65,7 @@ extern void mpt_world_fini(MPT_STRUCT(world) *wld)
  * \param name property name
  * \param src  value source
  */
-extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INTERFACE(metatype) *src)
+extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE(convertable) *src)
 {
 	int len;
 	
@@ -75,7 +75,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -83,11 +83,11 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		if ((len = mpt_string_pset(&wld->_alias, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
 			if (!len) wld->color = def_world.color;
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
 			if (!len) wld->attr = def_world.attr;
 			return 0;
 		}
@@ -101,7 +101,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 			mpt_world_fini(wld);
 			return 0;
 		}
-		if ((len = src->_vptr->conv(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -109,7 +109,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, const MPT_INT
 		return MPT_ERROR(BadType);
 	}
 	if (!strcasecmp(name, "cyc") || !strcasecmp(name, "cycles")) {
-		if (!src || !(len = src->_vptr->conv(src, 'u', &wld->cyc))) {
+		if (!src || !(len = src->_vptr->convert(src, 'u', &wld->cyc))) {
 			wld->cyc = def_world.cyc;
 			return 0;
 		}

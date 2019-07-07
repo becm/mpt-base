@@ -17,13 +17,13 @@
 # define mtrace()
 #endif
 
-class graphic : public mpt::graphic, public mpt::updates<const mpt::instance *, mpt::graphic::hint>
+class graphic : public mpt::graphic, public mpt::updates<const mpt::convertable *, mpt::graphic::hint>
 {
 public:
-	bool register_update(const mpt::instance *, hint) __MPT_OVERRIDE;
+	bool register_update(const mpt::convertable *, hint) __MPT_OVERRIDE;
 	void dispatch_updates() __MPT_OVERRIDE;
 };
-bool graphic::register_update(const mpt::instance *r, hint h)
+bool graphic::register_update(const mpt::convertable *r, hint h)
 {
 	return add(r, h);
 }

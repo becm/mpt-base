@@ -71,9 +71,9 @@ static void contextDetach(MPT_STRUCT(reply_context_defer) *ctx)
 	free(ctx);
 }
 /* reference interface */
-static void contextUnref(MPT_INTERFACE(instance) *in)
+static void contextUnref(MPT_INTERFACE(metatype) *mt)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, in, _mt);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, mt, _mt);
 	
 	if (mpt_refcount_lower(&ctx->ref)) {
 		ctx->reply.send = 0;
@@ -85,15 +85,15 @@ static void contextUnref(MPT_INTERFACE(instance) *in)
 	free(ctx);
 }
 /* reference interface */
-static uintptr_t contextRef(MPT_INTERFACE(instance) *in)
+static uintptr_t contextRef(MPT_INTERFACE(metatype) *mt)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, in, _mt);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, mt, _mt);
 	return mpt_refcount_raise(&ctx->ref);
 }
 /* metatype interface */
-static int contextConv(const MPT_INTERFACE(metatype) *mt, int type, void *ptr)
+static int contextConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, mt, _mt);
+	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, val, _mt);
 	
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeReply), MPT_ENUM(TypeReplyData), 0 };
@@ -187,8 +187,9 @@ static MPT_INTERFACE(reply_context_detached) *contextDefer(MPT_STRUCT(reply_cont
 extern MPT_INTERFACE(metatype) *mpt_reply_deferrable(size_t len, int (*send)(void *, const MPT_STRUCT(reply_data) *, const MPT_STRUCT(message) *), void *ptr)
 {
 	static const MPT_INTERFACE_VPTR(metatype) replyMeta = {
-		{ contextUnref, contextRef },
-		contextConv,
+		{ contextConv },
+		contextUnref,
+		contextRef,
 		contextClone
 	};
 	static const MPT_INTERFACE_VPTR(reply_context) replyCtx = {

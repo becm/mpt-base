@@ -107,9 +107,9 @@ bool object::set(const object &from, logger *out)
 object::attribute::attribute(object &obj) : _obj(obj)
 { }
 // assignment operation for metatypes
-object::attribute & object::attribute::operator= (const metatype &meta)
+object::attribute & object::attribute::operator= (convertable &val)
 {
-	if (_prop.name && !set(meta)) {
+	if (_prop.name && !set(val)) {
 		_prop.name = 0;
 	}
 	return *this;
@@ -143,12 +143,12 @@ bool object::attribute::select(int pos)
 	_prop = pr;
 	return true;
 }
-bool object::attribute::set(const metatype &src)
+bool object::attribute::set(convertable &val)
 {
 	if (!_prop.name) {
 		return false;
 	}
-	if (_obj.set_property(_prop.name, &src) < 0) {
+	if (_obj.set_property(_prop.name, &val) < 0) {
 		return false;
 	}
 	if (_obj.property(&_prop) < 0) _prop.name = 0;
@@ -195,13 +195,13 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
 		}
 		::mpt::property pr(head->ident.name());
 		property(&pr);
-		const metatype *mt;
+		metatype *mt;
 		static const uint8_t metafmt[] = { TypeMetaRef, 0 };
 		pr.val.fmt = metafmt;
 		pr.val.ptr = &mt;
 		if ((mt = head->_meta)) {
-			if (mt->conv(pr.val.Type, &pr.val) < 0
-			 && mt->conv('s', &pr.val.ptr) >= 0) {
+			if (mt->convert(pr.val.Type, &pr.val) < 0
+			 && mt->convert('s', &pr.val.ptr) >= 0) {
 				pr.val.fmt = 0;
 			}
 		}

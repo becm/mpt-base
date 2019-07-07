@@ -21,7 +21,7 @@
  * 
  * \return config element if exists
  */
-extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
+extern MPT_INTERFACE(convertable) *mpt_config_get(const MPT_INTERFACE(config) *conf, const char *dest, int sep, int assign)
 {
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	
@@ -29,7 +29,7 @@ extern const MPT_INTERFACE(metatype) *mpt_config_get(const MPT_INTERFACE(config)
 		MPT_INTERFACE(metatype) *mt;
 		
 		if (!(mt = mpt_config_global(0))
-		    || (mt->_vptr->conv(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0)
+		    || (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0)
 		    || !conf) {
 			return 0;
 		}

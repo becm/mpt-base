@@ -30,7 +30,7 @@ public:
 	enum { Type = TypeCollection };
 	
 	virtual int each(item_handler_t *, void *) const = 0;
-	virtual unsigned long clear(const instance * = 0) = 0;
+	virtual unsigned long clear(const metatype * = 0) = 0;
 };
 template<> inline __MPT_CONST_TYPE int typeinfo<collection>::id()
 {
@@ -39,7 +39,7 @@ template<> inline __MPT_CONST_TYPE int typeinfo<collection>::id()
 #else
 MPT_INTERFACE_VPTR(collection) {
 	int (*each)(const MPT_INTERFACE(collection) *, MPT_TYPE(item_handler), void *);
-	unsigned long (*clear)(MPT_INTERFACE(collection) *, const MPT_INTERFACE(instance) *);
+	unsigned long (*clear)(MPT_INTERFACE(collection) *, const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(collection) {
 	const MPT_INTERFACE_VPTR(collection) *_vptr;
 };
