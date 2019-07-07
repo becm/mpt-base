@@ -105,6 +105,10 @@ extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(id
 		free(id->_base);
 		id->_base = 0;
 	}
+	if (dest != id->_val) {
+		memset(id->_val, 0, sizeof(id->_val));
+		id->_base = dest;
+	}
 	id->_len  = from->_len;
 	id->_type = from->_type;
 	
