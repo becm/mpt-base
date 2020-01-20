@@ -15,7 +15,7 @@
 #include "object.h"
 
 /*!
- * \ingroup mptSolver
+ * \ingroup mptObject
  * \brief set solver properties
  * 
  * Set parameters from configuration elements.
@@ -111,8 +111,8 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT
 					mpt_log(info, __func__, MPT_LOG(Error), "%s: %s: %c",
 					        pr.name, err, val);
 				} else {
-					mpt_log(info, __func__, MPT_LOG(Error), "%s.%s: %s: 0x%x",
-					        pr.name, name, err, val);
+					mpt_log(info, __func__, MPT_LOG(Error), "%s: %s: 0x%x",
+					        pr.name, err, val);
 				}
 			}
 			continue;
