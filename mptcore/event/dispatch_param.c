@@ -53,8 +53,7 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		MPT_INTERFACE(convertable) *val = (MPT_INTERFACE(convertable) *) conf;
-		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -106,8 +105,7 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		MPT_INTERFACE(convertable) *val = (MPT_INTERFACE(convertable) *) conf;
-		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}

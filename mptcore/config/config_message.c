@@ -17,7 +17,6 @@ static MPT_INTERFACE(config) *getGlobal(MPT_INTERFACE(metatype) **glob, const ch
 {
 	MPT_INTERFACE(config) *cfg;
 	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(convertable) *conv;
 	
 	if (!(mt = mpt_config_global(0))) {
 		mpt_log(0, _func, MPT_LOG(Error), "%s",
@@ -25,8 +24,7 @@ static MPT_INTERFACE(config) *getGlobal(MPT_INTERFACE(metatype) **glob, const ch
 		return 0;
 	}
 	cfg = 0;
-	conv = (MPT_INTERFACE(convertable) *) mt;
-	if (conv->_vptr->convert(conv, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+	if (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
 	    || !cfg) {
 		mpt_log(0, _func, MPT_LOG(Error), "%s",
 		        MPT_tr("no interface for global config"));
