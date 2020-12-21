@@ -28,8 +28,10 @@ LDFLAGS ?= '-hlib${LIB}.so.${SHLIB_MAJOR}' -zorigin -rpath=\$$ORIGIN $(LDDIRS:%=
 LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS}
 LINK ?= ${CC} ${CFLAGS}
 #
-# path to library without type suffix
+# library targets
 LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
+LIB_STATIC = ${LIB_FULLNAME}.a
+LIB_SHARED = ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 #
 # general library rules
 .PHONY: shared devel static install
@@ -38,20 +40,20 @@ install : ${LIB_FULLNAME}.so
 static : ${LIB_FULLNAME}.a
 devel : install header
 
-${LIB_FULLNAME}.a : ${STATIC_OBJS} ${LIB_FULLNAME}.a(${STATIC_OBJS})
+${LIB_STATIC} : ${LIB_STATIC}(${STATIC_OBJS})
 	${AR} sU '${@}'
 
-${LIB_FULLNAME}.a(%.o) : %.o
+${LIB_STATIC}(%.o) : %.o
 	install -d '${@D}'
 	${AR} SU${ARFLAGS} '${@}' $?
 
 ${LIB_FULLNAME}.so : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
-	cd '${@D}'; ln -fs '${@F}.${SHLIB_MAJOR}' '${@F}'
+	cd '${@D}'; ln -fs '${?F}' '${@F}'
 
-${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
-	cd '${@D}'; ln -fs '${@F}.${SHLIB_MINOR}.${SHLIB_TEENY}' '${@F}'
+${LIB_FULLNAME}.so.${SHLIB_MAJOR} : ${LIB_SHARED}
+	cd '${@D}'; ln -fs '${?F}' '${@F}'
 
-${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY} : ${SHLIB_OBJS}
+${LIB_SHARED} : ${SHLIB_OBJS}
 	install -d '${@D}'
 	${LINK} -o '${@}' ${SHLIB_OBJS} ${LINK_FLAGS}
 
