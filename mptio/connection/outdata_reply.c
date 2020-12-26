@@ -2,11 +2,6 @@
  * dispatch event or reply from connection input
  */
 
-/* request format definitions */
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
-#include <stdlib.h>
 #include <string.h>
 
 #include <sys/types.h>

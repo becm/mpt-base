@@ -2,7 +2,7 @@
  * dispatch event or reply from connection input
  */
 
-/* request format definitions */
+/* request format definitions ("PRI?...") */
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

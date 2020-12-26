@@ -2,16 +2,6 @@
  * dispatch event or reply from connection input
  */
 
-/* request format definitions */
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
-#include <stdlib.h>
-#include <string.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
 #include "message.h"
 #include "stream.h"
 
@@ -32,7 +22,13 @@ extern int mpt_stream_reply(MPT_STRUCT(stream) *srm, size_t len, const void *val
 			}
 			return ret;
 		}
-		len += mpt_message_length(msg);
+		len += ret;
+		if (ret < (ssize_t) mpt_message_length(msg)) {
+			if (len) {
+				mpt_stream_push(srm, 1, 0);
+			}
+			return MPT_ERROR(MissingBuffer);
+		}
 	}
 	if ((ret = mpt_stream_push(srm, 0, 0)) < 0) {
 		if (len) {

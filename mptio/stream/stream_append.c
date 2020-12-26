@@ -5,8 +5,6 @@
 #include <sys/uio.h>
 
 #include "message.h"
-#include "event.h"
-#include "queue.h"
 
 #include "stream.h"
 
@@ -47,7 +45,7 @@ extern ssize_t mpt_stream_append(MPT_STRUCT(stream) *srm, const MPT_STRUCT(messa
 			base += curr;
 			continue;
 		}
-		if (!clen) {
+		if (!clen--) {
 			return total;
 		}
 		base = cont->iov_base;
