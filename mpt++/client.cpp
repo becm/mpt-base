@@ -16,10 +16,15 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int typeinfo<client>::id()
+template <> int type_properties<client *>::id()
 {
 	return mpt_client_typeid();
 }
+template <> const struct type_traits *type_properties<client *>::traits()
+{
+	return type_traits(id());
+}
+
 static void unrefConfig()
 {
 	if (cfg) {
@@ -38,7 +43,7 @@ static config *clientConfig()
 		}
 		atexit(unrefConfig);
 	}
-	return cfg->cast<config>();
+	return typecast<config>(*cfg);
 }
 /*!
  * \ingroup mptClient
@@ -53,40 +58,38 @@ static config *clientConfig()
  */
 int client::convert(int type, void *ptr)
 {
-	int me = typeinfo<client>::id();
+	int me = type_properties<client *>::id();
 	if (me < 0) {
-		me = metatype::Type;
+		me = TypeMetaPtr;
 	}
-	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<client **>(ptr) = this;
-		return config::Type;
+	else if (assign(this, type, ptr)) {
+		return TypeConfigPtr;
 	}
 	if (!type) {
-		static const uint8_t fmt[] = { config::Type, 0 };
+		static const uint8_t fmt[] = { TypeConfigPtr, 0 };
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
-	if (type == to_pointer_id(config::Type)) {
+	int cfg = type_properties<class config *>::id();
+	if ((cfg > 0) && (type == cfg)) {
 		if (ptr) *static_cast<class config **>(ptr) = clientConfig();
 		return me;
 	}
-	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<metatype **>(ptr) = this;
-		return config::Type;
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
+		return TypeConfigPtr;
 	}
 	return BadType;
 }
 
 /*!
  * \ingroup mptClient
- * \brief convert from client
+ * \brief dispatch event to client
  * 
- * Get interfaces and data from client
+ * Process command type messages.
  * 
- * \param type  target type code
- * \param ptr   conversion target address
+ * \param ev  event to process
  * 
- * \return conversion result
+ * \return dispatch opertation result
  */
 int client::dispatch(event *ev)
 {

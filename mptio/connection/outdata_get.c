@@ -4,6 +4,7 @@
  */
 
 #include "object.h"
+#include "types.h"
 
 #include "connection.h"
 
@@ -21,10 +22,10 @@ extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *
 	const char *name;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
 	if ((name = pr->name) && !*name) {
-		static const uint8_t fmt[2] = { MPT_ENUM(TypeSocket), 0 };
+		static const uint8_t fmt[2] = { MPT_ENUM(TypeUnixSocket), 0 };
 		
 		pr->name = "outdata";
 		pr->desc = "output data context";

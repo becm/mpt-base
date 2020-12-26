@@ -31,6 +31,9 @@ public:
 protected:
 	inline ~client() { }
 };
+template <> int type_properties<client *>::id();
+template <> const MPT_STRUCT(type_traits) *type_properties<client *>::traits();
+
 #else
 # define MPT_CLIENT_LOG_STATUS MPT_LOG(Debug2)
 MPT_INTERFACE(client);

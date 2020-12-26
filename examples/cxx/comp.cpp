@@ -32,8 +32,8 @@ static int print_message(mpt::input *in, mpt::event *ev)
 	msg = *ev->msg;
 	total = msg.length();
 	
-	int32_t file = -1;
-	in->convert(mpt::TypeSocket, &file);
+	int file = -1;
+	in->convert(mpt::TypeUnixSocket, &file);
 	msg.read(sizeof(mt), &mt);
 	printf("file: %d, size: %d, { cmd: %d, arg: %d }\n",
 	       file, total, mt.cmd, mt.cmd);

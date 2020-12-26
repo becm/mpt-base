@@ -4,6 +4,8 @@
 
 #include <stdarg.h>
 
+#include "types.h"
+
 #include "output.h"
 
 __MPT_NAMESPACE_BEGIN
@@ -34,14 +36,14 @@ int mpt_convertable_vlog(MPT_INTERFACE(convertable) *dest, const char *src, int 
 		return log->_vptr->log(log, src, type, fmt, va);
 	}
 	log = 0;
-	if (dest->_vptr->convert(dest, MPT_type_pointer(MPT_ENUM(TypeLogger)), &log) > 0) {
+	if (dest->_vptr->convert(dest, MPT_ENUM(TypeLoggerPtr), &log) > 0) {
 		if (!log) {
 			return 0;
 		}
 		return log->_vptr->log(log, src, type, fmt, va);
 	}
 	out = 0;
-	if (dest->_vptr->convert(dest, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) > 0) {
+	if (dest->_vptr->convert(dest, MPT_ENUM(TypeOutputPtr), &out) > 0) {
 		if (!out) {
 			return 0;
 		}

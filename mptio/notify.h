@@ -23,6 +23,13 @@ protected:
 	inline ~input()
 	{ }
 };
+template<> int type_properties<input *>::id();
+template<> inline const struct type_traits *type_properties<input *>::traits() {
+	return type_traits(id());
+}
+
+template<> const struct type_traits *type_properties<reference<input> >::traits();
+
 # else
 MPT_INTERFACE(input);
 MPT_INTERFACE_VPTR(input) {
@@ -93,6 +100,8 @@ extern int mpt_loop(MPT_STRUCT(notify) *);
 
 /* id for registered input metatype */
 extern int mpt_input_typeid(void);
+/* type traits for input reference */
+extern const MPT_STRUCT(type_traits) *mpt_input_reference_traits();
 
 /* create input for connect string */
 extern MPT_INTERFACE(input) *mpt_input_create(const char *);

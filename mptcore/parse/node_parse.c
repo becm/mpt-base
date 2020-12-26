@@ -7,6 +7,7 @@
 #include "meta.h"
 #include "node.h"
 #include "output.h"
+#include "types.h"
 
 #include "parse.h"
 
@@ -51,7 +52,7 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	}
 	else {
 		char * const *ptr = val->ptr;
-		if (val->fmt[0] == MPT_ENUM(TypeFile)) {
+		if (val->fmt[0] == MPT_ENUM(TypeFilePtr)) {
 			fname = 0;
 			if (!(parse.src.arg = *ptr)) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));

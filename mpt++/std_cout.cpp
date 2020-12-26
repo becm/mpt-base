@@ -22,11 +22,11 @@ std::ostream &operator<<(std::ostream &o, const mpt::value &v)
 }
 template <> std::ostream &operator<< <char>(std::ostream &o, mpt::span<char> p)
 {
-	writeOutStream(&o, p.begin(), p.size());
+	o.write(p.begin(), p.size());
 	return o;
 }
 template <> std::ostream &operator<< <const char>(std::ostream &o, mpt::span<const char> p)
 {
-	writeOutStream(&o, p.begin(), p.size());
+	o.write(p.begin(), p.size());
 	return o;
 }

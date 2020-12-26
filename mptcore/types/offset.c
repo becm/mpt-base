@@ -28,27 +28,18 @@ extern int mpt_offset(const uint8_t *fmt, int pos)
 		return 0;
 	}
 	while ((curr = *fmt++)) {
-		int len;
+		const MPT_STRUCT(type_traits) *traits;
 		
 		if (isspace(curr)) {
 			continue;
 		}
-		if (curr == MPT_ENUM(TypeArray)) {
-			len = sizeof(void *);
-		}
-		else if (curr == MPT_ENUM(TypeMetaRef)) {
-			len = sizeof(void *);
-		}
-		else if ((len = mpt_valsize(curr)) < 0) {
+		if (!(traits = mpt_type_traits(curr))) {
 			if (!pos) {
 				return off;
 			}
-			return len;
+			return MPT_ERROR(BadType);
 		}
-		else if (!len) {
-			len = sizeof(void *);
-		}
-		off += len;
+		off += traits->size;
 		
 		if (pos > 0 && !--pos) {
 			return off;

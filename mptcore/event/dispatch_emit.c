@@ -7,6 +7,7 @@
 #include "meta.h"
 #include "message.h"
 #include "output.h"
+#include "types.h"
 
 #include "event.h"
 
@@ -60,7 +61,7 @@ extern int mpt_dispatch_emit(MPT_STRUCT(dispatch) *disp, MPT_STRUCT(event) *ev)
 	if (!ev->reply) {
 		MPT_INTERFACE(metatype) *mt;
 		if ((mt = disp->_ctx)) {
-			MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeReply)), &ev->reply);
+			MPT_metatype_convert(mt, MPT_ENUM(TypeReplyPtr), &ev->reply);
 		}
 	}
 	/* execute resolved command */

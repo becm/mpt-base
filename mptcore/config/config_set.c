@@ -3,6 +3,7 @@
 #include <errno.h>
 
 #include "meta.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -29,7 +30,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	if (!conf) {
 		MPT_INTERFACE(metatype) *gl;
 		if (!(gl = mpt_config_global(0))
-		    || MPT_metatype_convert(gl, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0
+		    || MPT_metatype_convert(gl, MPT_ENUM(TypeConfigPtr), &conf) < 0
 		    || !conf) {
 			return MPT_ERROR(BadOperation);
 		}
@@ -40,7 +41,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 		(void) mpt_path_set(&where, path, -1);
 	}
 	if (!val) {
-		return conf->_vptr->assign(conf, &where, 0);
+		return conf->_vptr->remove(conf, &where);
 	}
 	d.fmt = 0;
 	d.ptr = val;

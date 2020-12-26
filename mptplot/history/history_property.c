@@ -10,6 +10,7 @@
 #include "array.h"
 #include "convert.h"
 #include "object.h"
+#include "types.h"
 
 #include "values.h"
 
@@ -76,7 +77,7 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 	int len;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeFile);
+		return MPT_ENUM(TypeFilePtr);
 	}
 	if (!(name = pr->name)) {
 		pos = (intptr_t) pr->desc;

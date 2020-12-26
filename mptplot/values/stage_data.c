@@ -6,39 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "types.h"
+
 #include "values.h"
-
-static int _value_store_type = 0;
-
-static void _value_store_init(const MPT_STRUCT(type_traits) *info, void *ptr)
-{
-	memset(ptr, 0, info->size);
-}
-
-static int _value_store_copy(void *src, int type, void *dest)
-{
-	const MPT_STRUCT(value_store) *from = src;
-	MPT_STRUCT(value_store) *to = dest;
-	
-	if (type == MPT_ENUM(TypeArray)) {
-		return mpt_array_clone(&to->_d, &from->_d);
-	}
-	if (type != _value_store_type) {
-		return MPT_ERROR(BadType);
-	}
-	if ((type = mpt_array_clone(&to->_d, &from->_d)) < 0) {
-		return type;
-	}
-	to->_flags = from->_flags;
-	to->_code  = from->_code;
-	
-	return 0;
-}
-static void _value_store_fini(void *ptr)
-{
-	MPT_STRUCT(value_store) *val = ptr;
-	mpt_array_clone(&val->_d, 0);
-}
 
 /*!
  * \ingroup mptPlot
@@ -54,33 +24,29 @@ static void _value_store_fini(void *ptr)
 extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, unsigned dim)
 {
 	MPT_STRUCT(buffer) *buf = st->_d._buf;
+	const MPT_STRUCT(type_traits) *traits;
 	MPT_STRUCT(value_store) *val;
 	unsigned max = 0, used = 0;
 	
-	if (!_value_store_type) {
-		_value_store_type = mpt_value_store_typeid();
-	}
-	if (_value_store_type < 0) {
-		errno = EBADSLT;
-		return 0;
-	}
-	
-	/* existing buffer must be valied */
-	if (buf) {
-		const MPT_STRUCT(type_traits) *info;
-		if (!(info = buf->_typeinfo)
-		    || info->type != _value_store_type) {
-			errno = EBADSLT;
-			return 0;
-		}
-		used = buf->_used / sizeof(*val);
-		max  = used;
-	}
 	/* not allowed to extend dimensions */
 	if (st->_max_dimensions
 	    && (dim >= st->_max_dimensions)) {
 		errno = ENOMEM;
 		return 0;
+	}
+	/* array element traits for value store */
+	if (!(traits = mpt_value_store_traits())) {
+		errno = EBADSLT;
+		return 0;
+	}
+	/* existing buffer must be valied */
+	if (buf) {
+		if (traits != buf->_content_traits) {
+			errno = EBADSLT;
+			return 0;
+		}
+		used = buf->_used / sizeof(*val);
+		max  = used;
 	}
 	if (dim < used) {
 		max = used * sizeof(*val);
@@ -88,18 +54,21 @@ extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		max = (dim + 1) * sizeof(*val);
 	}
 	if (!buf) {
-		MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(*val, MPT_ENUM(TypeArray));
-		
-		info.init = _value_store_init;
-		info.copy = _value_store_copy;
-		info.fini = _value_store_fini;
-		info.type = _value_store_type;
-		
-		if (!(buf = _mpt_buffer_alloc(max, &info))) {
+		if (!(buf = _mpt_buffer_alloc(max))) {
 			return 0;
 		}
-		val = memset(buf + 1, 0, max);
-		return val + dim;
+		buf->_content_traits = traits;
+		if (!(val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val)))) {
+			buf->_vptr->unref(buf);
+			return 0;
+		}
+		if ((traits->init(val, 0) < 0)) {
+			errno = ENOTSUP;
+			buf->_vptr->unref(buf);
+			return 0;
+		}
+		st->_d._buf = buf;
+		return val;
 	}
 	if (!(buf = buf->_vptr->detach(buf, max))) {
 		return 0;
@@ -110,7 +79,9 @@ extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		val = (void *) (buf + 1);
 		return val + dim;
 	}
-	/* init function executed on insert */
-	val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val));
+	/* execute init function for inserted data */
+	if ((val = mpt_buffer_insert(buf, dim * sizeof(*val), sizeof(*val)))) {
+		traits->init(val, 0);
+	}
 	return val;
 }

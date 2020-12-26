@@ -78,105 +78,6 @@ MPT_INTERFACE(metatype);
 #define MPT_offset(s,e)       ((size_t) &(((MPT_STRUCT(s) *) 0)->e))
 #define MPT_baseaddr(t,p,m)   ((MPT_STRUCT(t) *) (((int8_t *) (p)) - MPT_offset(t,m)))
 
-enum MPT_ENUM(Types)
-{
-	/* system types */
-	MPT_ENUM(TypeSocket)        = 0x1,   /* SOH */
-	/* system pointer types */
-	MPT_ENUM(TypeFile)          = 0x4,   /* EOT */
-	MPT_ENUM(TypeAddress)       = 0x5,   /* ENQ */
-	
-	/* format types (scalar) */
-	MPT_ENUM(TypeValFmt)        = 0x8,   /* BS '\b' */
-	MPT_ENUM(TypeValue)         = 0x9,   /* HT '\t' */
-	MPT_ENUM(TypeProperty)      = 0xa,   /* LF '\n' */
-	MPT_ENUM(TypeCommand)       = 0xb,   /* FF '\v' */
-	
-	/* special pointer types */
-	MPT_ENUM(TypeNode)          = 0xc,   /* FF '\f' */
-	MPT_ENUM(TypeReplyData)     = 0xd,   /* CR '\r' */
-	
-	/* reserve range for layout types */
-#define MPT_type_isLayout(v)       ((v) >= 0x10 && (v) <= 0x1f)
-	
-	/* reserve ranges for special/format types */
-#define MPT_type_isSpecial(v)     (((v) >= 0x20 && (v) <= 0x3f) \
-                                || ((v) >= 0x5b && (v) <= 0x5f) \
-                                || ((v) >= 0x7b && (v) <= 0x7f))
-	/* range for generic base types */
-	MPT_ENUM(_TypeVectorBase)    = 0x40,
-	MPT_ENUM(_TypeVectorMax)     = 0x5a,
-#define MPT_type_isVector(v)      ((v) >= MPT_ENUM(_TypeVectorBase) && (v) < MPT_ENUM(_TypeVectorMax))
-	MPT_ENUM(TypeVector)         = '@',  /* 0x40: generic data */
-#define MPT_type_vector(v)        (MPT_type_isScalar(v) || MPT_type_isExtended(v) \
-                                 ? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
-                                 : 0)
-	MPT_ENUM(_TypeScalarBase)    = 0x60,
-	MPT_ENUM(_TypeScalarMax)     = 0x7a,
-	MPT_ENUM(_TypeScalarSize)    = MPT_ENUM(_TypeScalarBase) - MPT_ENUM(_TypeVectorBase),
-#define MPT_type_isScalar(v)      ((v) >= MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax))
-#define MPT_type_isExtended(v)    ((v) >= (MPT_ENUM(_TypeDynamic) + MPT_ENUM(_TypeScalarBase)) && (v) < 0x100)
-	
-	/* scalar types ('a'..'z') */
-	MPT_ENUM(TypeArray)          = 'a',   /* array content */
-	MPT_ENUM(TypeMetaRef)        = 'm',   /* generic metatype reference */
-#define MPT_type_fromVector(v)    (((v) == MPT_ENUM(_TypeVectorBase)) \
-                                 ? 0 \
-                                 : (MPT_type_isVector(v) || MPT_type_isExtended((v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase)) \
-                                  ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
-                                  : MPT_ERROR(BadType)))
-	
-#define MPT_type_isBasic(v)  (MPT_type_isScalar(v) \
-                           || MPT_type_isVector(v) \
-                           || MPT_type_isLayout(v))
-	
-	/* range for type allocations */
-	MPT_ENUM(_TypeDynamic)       = 0x80,
-	
-	/* config interface types */
-	MPT_ENUM(TypeObject)         = 0x80,
-	MPT_ENUM(TypeConfig)         = 0x81,
-	/* collection interface types */
-	MPT_ENUM(TypeIterator)       = 0x82,
-	MPT_ENUM(TypeCollection)     = 0x83,
-	/* output interface types */
-	MPT_ENUM(TypeLogger)         = 0x84,
-	MPT_ENUM(TypeReply)          = 0x85,
-	MPT_ENUM(TypeOutput)         = 0x86,
-	/* other interface types */
-	MPT_ENUM(TypeSolver)         = 0x88,
-	/* range for dynamic interfaces */
-	MPT_ENUM(_TypeInterfaceBase) = MPT_ENUM(_TypeDynamic) + 0x10,
-	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeDynamic) + 0x3f,
-#define MPT_type_isInterface(v)   ((v) >= MPT_ENUM(_TypeDynamic) \
-                                && (v) < MPT_ENUM(_TypeInterfaceMax))
-	
-	/* range for metatype and extensions */
-	MPT_ENUM(_TypeMetaBase)      = 0x0100,
-	MPT_ENUM(_TypeMetaMax)       = 0x01ff,
-#define MPT_type_isMetatype(v)    ((v) >= MPT_ENUM(_TypeMetaBase) && (v) <= (MPT_ENUM(_TypeMetaMax)))
-	/* range for generic type extensions */
-	MPT_ENUM(_TypeGenericBase)   = 0x0200,
-	MPT_ENUM(_TypeGenericMax)    = 0x0fff,
-	
-	/* automatic range types */
-	MPT_ENUM(_TypePointerBase)   = 0x1000,
-#define MPT_type_pointer(v)       (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypePointerBase) : MPT_ERROR(BadType))
-	MPT_ENUM(_TypeReferenceBase) = 0x2000,
-#define MPT_type_reference(v)     (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeReferenceBase) : MPT_ERROR(BadType))
-	MPT_ENUM(_TypeItemBase)      = 0x3000,
-#define MPT_type_item(v)          (((v) > 0 && (v) <= (int) MPT_ENUM(_TypeGenericMax)) ? (v) + MPT_ENUM(_TypeItemBase) : MPT_ERROR(BadType))
-	
-	/* combined regular types */
-	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypePointerBase),
-#define MPT_type_isMetaPtr(v)     (((v) >= MPT_ENUM(TypeMetaPtr) && (v) <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypePointerBase))))
-#define MPT_type_isMetaRef(v)     ((v) >= (MPT_ENUM(_TypeMetaBase) + MPT_ENUM(_TypeReferenceBase)) \
-                                && (v) <= (MPT_ENUM(_TypeMetaMax) + MPT_ENUM(_TypeReferenceBase)))
-	
-	MPT_ENUM(_TypeSpanBase)      = 0x4000,
-	
-	MPT_ENUM(_TypeUserMin)       = 0x10000
-};
 
 /* tree and list operation flags */
 enum MPT_ENUM(TraverseFlags) {
@@ -250,26 +151,10 @@ typedef ssize_t (*MPT_TYPE(data_encoder))(MPT_STRUCT(encode_state) *, const stru
 typedef int (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct iovec *, size_t);
 
 
-#ifdef __cplusplus
-extern int convert(const void **, int , void *, int);
-
-template <typename T>
-class typeinfo
-{
-protected:
-	typeinfo();
-public:
-	static int id();
-};
-#endif
-
-
 /*! generic data type and offset */
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
-	enum { Type = TypeValue };
-	
 	inline value(const char *v = 0) : fmt(0), ptr(v)
 	{ }
 	
@@ -293,43 +178,11 @@ MPT_STRUCT(value)
 	protected:
 		uint8_t _fmt[8];
 	};
-	template <typename T>
-	bool first(T &val, bool consume = false)
-	{
-		int type;
-		
-		if ((type = typeinfo<T>::id()) <= 0) {
-			return false;
-		}
-		if (fmt) {
-			const T *tmp;
-			if (type != *fmt
-			    || !(tmp = static_cast<const T *>(ptr))) {
-				return false;
-			}
-			val = *tmp;
-			if (consume) {
-				++fmt;
-				ptr = tmp + 1;
-			}
-			return true;
-		}
-		if (type == 's') {
-			val = static_cast<const char *>(ptr);
-			if (consume) {
-				ptr = 0;
-			}
-			return true;
-		}
-		return false;
-	}
 	
 	bool set(const uint8_t *, const void *);
 	value &operator =(const char *);
 	
 	const char *string() const;
-	const void *scalar(int) const;
-	void *pointer(int = 0) const;
 	const struct iovec *vector(int = 0) const;
 	const struct array *array(int = 0) const;
 #else
@@ -359,6 +212,7 @@ extern int mpt_string_nextvis(const char **);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
+extern int convert(const void **, int , void *, int);
 
 /*! reduced slice with type but no data reference */
 template <typename T>
@@ -368,6 +222,8 @@ public:
 	typedef T* iterator;
 	
 	inline span(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
+	{ }
+	inline span() : _base(0), _len(0)
 	{ }
 	
 	inline iterator begin() const
@@ -447,7 +303,6 @@ protected:
 	inline ~convertable() { }
 public:
 	const char *string();
-	void *pointer(int);
 	
 	inline const uint8_t *types()
 	{
@@ -458,16 +313,6 @@ public:
 	{
 		return convert(0, 0);
 	}
-	
-	template <typename T>
-	inline T *cast()
-	{
-		void *ptr = 0;
-		if (convert(typeinfo<T *>::id(), &ptr) < 0) {
-			return 0;
-		}
-		return static_cast<T *>(ptr);
-	}
 	inline operator const char *()
 	{
 		return string();
@@ -475,12 +320,6 @@ public:
 	
 	virtual int convert(int , void *) = 0;
 };
-
-/* specialize convertable string cast */
-template <> inline const char *convertable::cast<const char>()
-{
-	return string();
-}
 
 #else
 MPT_INTERFACE(convertable);
@@ -620,30 +459,6 @@ public:
 	}
 protected:
 	char _post[32 - sizeof(identifier) - sizeof(reference<T>)];
-};
-
-/* auto-create wrapped reference */
-template <typename T>
-class container : protected reference<T>
-{
-public:
-	inline container(T *ref = 0) : reference<T>(ref)
-	{ }
-	inline container(const reference<T> &ref) : reference<T>(ref)
-	{ }
-	virtual ~container()
-	{ }
-	virtual const reference<T> &ref()
-	{
-		if (!reference<T>::_ref) {
-			reference<T>::_ref = new typename reference<T>::type;
-		}
-		return *this;
-	}
-	inline T *instance() const
-	{
-		return reference<T>::instance();
-	}
 };
 
 /*! interface to search objects in tree */

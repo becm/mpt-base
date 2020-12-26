@@ -4,6 +4,7 @@
 
 #include "object.h"
 #include "convert.h"
+#include "types.h"
 
 #include "meta.h"
 
@@ -23,16 +24,16 @@ static int iteratorValueConv(MPT_INTERFACE(convertable) *conv, int type, void *p
 	int ret;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_ENUM(TypeValue), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
 		if (ptr) *((MPT_STRUCT(value) *) ptr) = *val;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if ((ret = iteratorConv(conv, type, ptr)) >= 0) {
 		return ret;

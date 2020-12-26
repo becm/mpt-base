@@ -19,17 +19,6 @@
 
 using namespace mpt;
 
-namespace mpt {
-template <> int typeinfo<reference<metatype> *>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
-}
-
 extern int main(int , char * const [])
 {
 	mtrace();

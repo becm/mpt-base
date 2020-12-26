@@ -15,29 +15,11 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<map<laydest, reference<cycle> >::entry>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
-template <> int typeinfo<mapping>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
-template <> int typeinfo<laydest>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
+template class type_properties<map<laydest, reference<cycle> >::entry>;
+
+template <> const struct type_traits *type_properties<laydest>::traits() {
+	static const struct type_traits traits(sizeof(laydest));
+	return &traits;
 }
 
 // add data mapping

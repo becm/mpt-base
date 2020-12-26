@@ -10,6 +10,7 @@
 #endif
 
 #include "convert.h"
+#include "types.h"
 
 #include "meta.h"
 
@@ -31,14 +32,14 @@ static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 #ifdef MPT_NO_CONVERT
 	if (va->s.type == type) {
 		if (ptr) memcpy(ptr, val, va->s.len);
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 #else
 	if ((type = mpt_data_convert(&val, va->s.type, ptr, type)) < 0) {
 		return type;
 	}
-	return MPT_ENUM(TypeIterator);
+	return MPT_ENUM(TypeIteratorPtr);
 #endif
 }
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)

@@ -11,6 +11,7 @@
 
 #include "meta.h"
 #include "object.h"
+#include "types.h"
 
 #include "notify.h"
 
@@ -36,11 +37,11 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	int ret, fdold, fdnew, len;
 	
 	fdold = -1;
-	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeSocket), &fdold)) < 0) {
+	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeUnixSocket), &fdold)) < 0) {
 		return MPT_ERROR(BadArgument);
 	}
 	obj = 0;
-	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeObject), &obj)) < 0
+	if ((ret = next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeObjectPtr), &obj)) < 0
 	    || !obj) {
 		return MPT_ERROR(BadArgument);
 	}
@@ -66,7 +67,7 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	}
 	/* get new descriptor */
 	fdnew = -1;
-	next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeSocket), &fdnew);
+	next->_vptr->meta.convertable.convert((void *) next, MPT_ENUM(TypeUnixSocket), &fdnew);
 	
 	/* distinct instances */
 	if (next != in) {

@@ -36,6 +36,7 @@
 
 extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 {
+	const MPT_STRUCT(type_traits) *traits;
 	const uint8_t *from = *fptr;
 	int flen, dlen;
 	
@@ -47,10 +48,9 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		
 		/* special content on buffer */
 		if ((b = arr->_buf)) {
-			const MPT_STRUCT(type_traits) *info = 0;
+			traits = b->_content_traits;
 			content = -1;
-			if ((info = b->_typeinfo)
-			    && (!(content = info->type))) {
+			if (traits && ((content = mpt_type_id(traits)) < 0)) {
 				return MPT_ERROR(BadValue);
 			}
 		}
@@ -77,7 +77,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			if (dest) *txt = b ? (void *) (b + 1) : 0;
 			return sizeof(*txt);
 		}
-		if ((dtype = MPT_type_vector(dtype)) >= 0) {
+		if ((dtype = MPT_type_toVector(dtype)) >= 0) {
 			struct iovec *vec;
 			/* require matching types */
 			if (dtype != content) {
@@ -112,8 +112,9 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		if (!mt) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((flen = mpt_valsize(dtype)) < 0) {
-			return flen;
+		if (!(traits = mpt_type_traits(dtype))
+		 || !(flen = traits->size)) {
+			return MPT_ERROR(BadType);
 		}
 		if (MPT_metatype_convert(mt, dtype, dest) <= 0) {
 			return MPT_ERROR(BadOperation);
@@ -123,7 +124,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	}
 	/* special metatype processing */
 	if (ftype == MPT_ENUM(TypeMetaRef)
-	 || MPT_type_isMetaRef(ftype)) {
+	 || MPT_type_isMetaPtr(ftype)) {
 		MPT_INTERFACE(metatype) **ptr;
 		MPT_INTERFACE(metatype) *mt = *((MPT_INTERFACE(metatype) * const *) from);
 		
@@ -149,8 +150,9 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		return sizeof(*ptr);
 	}
 	/* check input type size */
-	if ((flen = mpt_valsize(ftype)) < 0) {
-		return MPT_ERROR(BadArgument);
+	if (!(traits = mpt_type_traits(dtype))
+	 || !(flen = traits->size)) {
+		return MPT_ERROR(BadType);
 	}
 	/* pointer type */
 	else if (!flen) {
@@ -165,8 +167,9 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		return flen;
 	}
 	/* check output type size */
-	if ((dlen = mpt_valsize(dtype)) < 0) {
-		return MPT_ERROR(BadArgument);
+	if (!(traits = mpt_type_traits(dtype))
+	 || !(dlen = traits->size)) {
+		return MPT_ERROR(BadType);
 	}
 	/* advance source only */
 	if (!dest) {
@@ -416,7 +419,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 #endif
 	  default:
 		/* vector conversion */
-		if (MPT_type_vector(dtype)) {
+		if (MPT_type_toVector(dtype)) {
 			struct iovec *vec = dest;
 			
 			/* copy vector data */

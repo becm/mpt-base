@@ -8,6 +8,7 @@
 
 #include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(object.h)
+#include MPT_INCLUDE(types.h)
 
 #include MPT_INCLUDE(loader.h)
 
@@ -52,7 +53,7 @@ int main(int argc, const char *argv[])
 			struct mpt_object *obj = 0;
 			int err;
 			
-			if (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
+			if (MPT_metatype_convert(mt, MPT_ENUM(TypeObjectPtr), &obj) >= 0
 			    && obj) {
 				fputs(object_name(obj), out);
 			}

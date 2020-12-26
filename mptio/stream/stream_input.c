@@ -14,6 +14,7 @@
 #include "message.h"
 #include "convert.h"
 #include "output.h"
+#include "types.h"
 
 #include "connection.h"
 #include "notify.h"
@@ -66,23 +67,23 @@ static int streamConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(_TypeMetaBase);
+		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == MPT_type_pointer(me)) {
+	else if (type == me) {
 		if (ptr) *((void **) ptr) = &srm->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeUnixSocket), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = &srm->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
-	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) ((MPT_STRUCT(socket) *) ptr)->_id = _mpt_stream_fread(&srm->data._info);
+	if (type == MPT_ENUM(TypeUnixSocket)) {
+		if (ptr) *((int *) ptr) = _mpt_stream_fread(&srm->data._info);
 		return me;
 	}
 	return MPT_ERROR(BadType);

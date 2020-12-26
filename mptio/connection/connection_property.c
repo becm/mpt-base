@@ -15,6 +15,7 @@
 #include "convert.h"
 #include "message.h"
 #include "event.h"
+#include "types.h"
 
 #include "stream.h"
 
@@ -23,8 +24,8 @@
 
 static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(convertable) *src)
 {
-	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	const char *where = 0;
+	int sock = -1;
 	int ret;
 	
 	if (!src) {
@@ -33,9 +34,12 @@ static int connectionSet(MPT_STRUCT(connection) *con, MPT_INTERFACE(convertable)
 	if (con->out.state & MPT_OUTFLAG(Active)) {
 		return MPT_ERROR(BadOperation);
 	}
-	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeSocket), &sock)) >= 0
-	    && (ret = mpt_connection_assign(con, &sock)) >= 0) {
-		return 0;
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeUnixSocket), &sock)) >= 0) {
+		MPT_STRUCT(socket) sd = MPT_SOCKET_INIT;
+		sd._id = sock;
+		if ((ret = mpt_connection_assign(con, &sd)) >= 0) {
+			return 0;
+		}
 	}
 	if ((ret = src->_vptr->convert(src, 's', &where)) < 0) {
 		return ret;
@@ -196,7 +200,7 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 	intptr_t pos = -1, id;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
 	if (!(name = pr->name)) {
 		pos = (intptr_t) pr->desc;
@@ -206,7 +210,7 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->desc = "interface to output data";
 		/* socket is active */
 		if (MPT_socket_active(&con->out.sock)) {
-			static const uint8_t fmt[] = { MPT_ENUM(TypeSocket), 0 };
+			static const uint8_t fmt[] = { MPT_ENUM(TypeUnixSocket), 0 };
 			pr->val.fmt = fmt;
 			pr->val.ptr = &con->out.sock;
 			return 1;

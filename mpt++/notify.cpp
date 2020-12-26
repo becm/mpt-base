@@ -9,9 +9,12 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<input>::id()
-{
+template <> int type_properties<input *>::id() {
 	return mpt_input_typeid();
+}
+
+template<> inline const struct type_traits *type_properties<reference<input> >::traits() {
+	return mpt_input_reference_traits();
 }
 
 // input operations

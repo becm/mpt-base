@@ -6,6 +6,7 @@
 
 #include MPT_INCLUDE(meta.h)
 #include MPT_INCLUDE(convert.h)
+#include MPT_INCLUDE(types.h)
 
 #include MPT_INCLUDE(values.h)
 
@@ -40,7 +41,7 @@ extern int main(int argc, char *argv[])
 			fputc('\n', stderr);
 			continue;
 		}
-		MPT_metatype_convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
+		MPT_metatype_convert(src, MPT_ENUM(TypeIteratorPtr), &it);
 		while (1) {
 			double val;
 			int res;

@@ -14,7 +14,7 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 %_static : LDLIBS=-lmpt
 
 # special test arguments
-test_ident : ARGS=1020 1021
+test_ident : ARGS=28 29 252 253
 test_environ : ARGS='mpt_*'
 test_coding : ARGS=cobs
 test_config : ARGS=prefix.lib

@@ -9,6 +9,7 @@
 #include "output.h"
 #include "object.h"
 #include "convert.h"
+#include "types.h"
 
 #include "stream.h"
 #include "connection.h"
@@ -66,7 +67,7 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 		
 		val.ptr = ctl;
 		
-		if (in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeObject), &obj) < 0
+		if (in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeObjectPtr), &obj) < 0
 		    || !obj
 		    || mpt_object_set_value(obj, 0, &val) < 0) {
 			in->_vptr->meta.unref((void *) in);

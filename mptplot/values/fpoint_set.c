@@ -3,6 +3,7 @@
  */
 
 #include "meta.h"
+#include "types.h"
 
 #include "layout.h"
 
@@ -27,7 +28,7 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, MPT_INTERFACE(convertable) *sr
 		return 0;
 	}
 	it = 0;
-	if ((ret = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) < 0) {
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeIteratorPtr), &it)) < 0) {
 		MPT_STRUCT(value) val = MPT_VALUE_INIT;
 		
 		if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValue), &val)) < 0) {

@@ -5,19 +5,12 @@
 #include <sys/uio.h>
 
 #include "node.h"
-#include "array.h"
+
 #include "config.h"
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<configuration::element>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
+template class type_properties<configuration::element>;
 
 // non-trivial path operations
 array::content *path::array_content() const

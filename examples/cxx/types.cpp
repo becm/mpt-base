@@ -22,7 +22,7 @@
 	template <typename T>
 	bool set(const T *t)
 	{
-		if (!t || !value::format::set(mpt::basetype(mpt::typeinfo<T>::id()))) {
+		if (!t || !value::format::set(mpt::basetype(mpt::type_properties<T>::id()))) {
 			return false;
 		}
 		return value::set(*this, t);
@@ -36,20 +36,21 @@
 template <typename T>
 void print()
 {
-	int sid = mpt::typeinfo<mpt::span <T> >::id();
-	std::cout << mpt::typeinfo<T>::id() << ' ';
+	int id = mpt::type_properties<T>::id();
+	int sid = mpt::type_properties<mpt::span<const T> >::id();
+	std::cout << id << ' ';
 	std::cout << '<' << mpt::basetype(sid) << '>' << ' ';
-	std::cout << sid << std::endl;
+	std::cout << std::endl;
 }
 template <typename T>
 uint8_t type(const T &)
 {
-	return mpt::basetype(mpt::typeinfo<T>::id());
+	return mpt::basetype(mpt::type_properties<T>::id());
 }
 
 extern int main(int, char *[])
 {
-	static const uint8_t fmt[] = { mpt::basetype(mpt::typeinfo<mpt::array>::id()), 0 };
+	static const uint8_t fmt[] = { mpt::basetype(mpt::type_properties<mpt::array>::id()), 0 };
 	mtrace();
 	Value v;
 	
@@ -58,8 +59,9 @@ extern int main(int, char *[])
 	print<int>();
 	print<float>();
 	print<mpt::array>();
-	print<mpt::metatype>();
+	//print<mpt::metatype>();
 	print<mpt::metatype *>();
+	print<int *>();
 	print<mpt::reference<mpt::metatype> >();
 	
 	long l = -5;

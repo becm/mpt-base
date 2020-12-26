@@ -7,6 +7,7 @@
 
 #include "meta.h"
 #include "object.h"
+#include "types.h"
 
 #include "history.h"
 
@@ -29,7 +30,7 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	MPT_INTERFACE(output) *out;
 	out = 0;
 	if (!(mt = lo->pass)
-	    || MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out) < 0) {
+	    || MPT_metatype_convert(mt, MPT_ENUM(TypeOutputPtr), &out) < 0) {
 		return 0;
 	}
 	return out;
@@ -41,37 +42,36 @@ static int localConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	
 	if (!type) {
 		static const uint8_t fmt[] = {
-			MPT_ENUM(TypeObject),
-			MPT_ENUM(TypeLogger),
-			MPT_ENUM(TypeOutput),
-			MPT_ENUM(TypeFile),
+			MPT_ENUM(TypeObjectPtr),
+			MPT_ENUM(TypeLoggerPtr),
+			MPT_ENUM(TypeOutputPtr),
+			MPT_ENUM(TypeFilePtr),
 			0
 		};
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
-			return 0;
 		}
-		return MPT_ENUM(TypeObject);
+		return MPT_ENUM(TypeMetaPtr);
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = lo->pass;
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeObject))) {
+	if (type == MPT_ENUM(TypeObjectPtr)) {
 		if (ptr) *((void **) ptr) = &lo->_obj;
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeOutput))) {
+	if (type == MPT_ENUM(TypeOutputPtr)) {
 		if (ptr) *((void **) ptr) = &lo->_out;
-		return MPT_ENUM(TypeObject);
+		return MPT_ENUM(TypeObjectPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeLogger))) {
+	if (type == MPT_ENUM(TypeLoggerPtr)) {
 		if (ptr) *((void **) ptr) = &lo->_log;
-		return MPT_ENUM(TypeObject);
+		return MPT_ENUM(TypeObjectPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeFile))) {
+	if (type == MPT_ENUM(TypeFilePtr)) {
 		if (ptr) *((void **) ptr) = lo->hist.info.file;
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
 	return MPT_ERROR(BadType);
 }
@@ -108,7 +108,7 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 	const char *name;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
 	if ((name = pr->name) && !*name) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeMetaRef), 0 };
@@ -144,7 +144,7 @@ static int localSet(MPT_INTERFACE(object) *obj, const char *name, MPT_INTERFACE(
 			return MPT_ERROR(BadValue);
 		}
 		out = 0;
-		if ((ret = MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeOutput)), &out)) < 0) {
+		if ((ret = MPT_metatype_convert(mt, MPT_ENUM(TypeOutputPtr), &out)) < 0) {
 			return ret;
 		}
 		/* avoid circular redirection */

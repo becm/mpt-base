@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "meta.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -29,7 +30,7 @@ extern MPT_INTERFACE(convertable) *mpt_config_get(const MPT_INTERFACE(config) *c
 		MPT_INTERFACE(metatype) *mt;
 		
 		if (!(mt = mpt_config_global(0))
-		    || (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0)
+		    || (MPT_metatype_convert(mt, MPT_ENUM(TypeConfigPtr), &conf) < 0)
 		    || !conf) {
 			return 0;
 		}

@@ -54,10 +54,10 @@ enum MPT_ENUM(LayoutTypes) {
 	MPT_ENUM(TypeLine)      = 0x12,  /* DC2 */
 	
 	/* layout pointer types */
-	MPT_ENUM(TypeText)      = 0x14,  /* DC4 */
-	MPT_ENUM(TypeAxis)      = 0x15,  /* NAK */
-	MPT_ENUM(TypeWorld)     = 0x16,  /* SYN */
-	MPT_ENUM(TypeGraph)     = 0x17   /* ETB */
+	MPT_ENUM(TypeTextPtr)   = 0x14,  /* DC4 */
+	MPT_ENUM(TypeAxisPtr)   = 0x15,  /* NAK */
+	MPT_ENUM(TypeWorldPtr)  = 0x16,  /* SYN */
+	MPT_ENUM(TypeGraphPtr)  = 0x17   /* ETB */
 };
 
 /* argb standard color */
@@ -67,8 +67,6 @@ MPT_STRUCT(color)
 	inline color(int r = 0, int g = 0, int b = 0, int a = 255) :
 	             alpha(a), red(r), green(g), blue(b)
 	{ }
-	
-	enum { Type = TypeColor };
 #else
 # define MPT_COLOR_INIT  { 0xff, 0, 0, 0 }
 #endif
@@ -85,8 +83,6 @@ MPT_STRUCT(lineattr)
 	inline lineattr(int s = 1, int w = 1, int sym = 0, int sze = 10) :
 	                style(s), width(w), symbol(sym), size(sze)
 	{ }
-	
-	enum { Type = TypeLineAttr };
 #else
 # define MPT_LINEATTR_INIT  { 1, 1, 0, 10 }
 #endif
@@ -101,8 +97,6 @@ MPT_STRUCT(line)
 {
 #ifdef __cplusplus
 	line();
-	
-	enum { Type = TypeLine };
 #endif
 	MPT_STRUCT(color)    color;  /* line colour */
 	MPT_STRUCT(lineattr) attr;   /* symbol type/size describe type */
@@ -118,8 +112,6 @@ MPT_STRUCT(axis)
 	axis & operator= (axis const &);
 	axis(axis const &);
 	~axis();
-	
-	enum { Type = TypeAxis };
 	
 	inline const char *title() const
 	{
@@ -152,8 +144,6 @@ MPT_STRUCT(world)
 	world(world const &);
 	~world();
 	
-	enum { Type = TypeWorld };
-	
 	inline const char *alias() const
 	{
 		return _alias;
@@ -178,8 +168,6 @@ MPT_STRUCT(graph)
 	graph & operator= (graph const &);
 	graph(graph const &);
 	~graph();
-	
-	enum { Type = TypeGraph };
 	
 	inline const char *axes() const
 	{
@@ -216,8 +204,6 @@ MPT_STRUCT(text)
 	text & operator= (text const &);
 	text(const text &);
 	~text();
-	
-	enum { Type = TypeText };
 	
 	bool set_value(const char *);
 	inline const char *value() const
@@ -306,33 +292,53 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 class parser;
 
-template <> inline __MPT_CONST_TYPE int typeinfo<color>::id()
-{
-	return color::Type;
+template <> inline __MPT_CONST_TYPE int type_properties<color>::id() {
+	return TypeColor;
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<lineattr>::id()
-{
-	return lineattr::Type;
+template <> inline const struct type_traits *type_properties<color>::traits() {
+	return type_traits(id());
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<line>::id()
-{
-	return line::Type;
+
+template <> inline __MPT_CONST_TYPE int type_properties<lineattr>::id() {
+	return TypeLineAttr;
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<axis>::id()
-{
-	return axis::Type;
+template <> inline const struct type_traits *type_properties<lineattr>::traits() {
+	return type_traits(id());
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<world>::id()
-{
-	return world::Type;
+
+template <> inline __MPT_CONST_TYPE int type_properties<line>::id() {
+	return TypeLine;
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<graph>::id()
-{
-	return graph::Type;
+template <> inline const struct type_traits *type_properties<line *>::traits() {
+	return type_traits(id());
 }
-template <> inline __MPT_CONST_TYPE int typeinfo<text>::id()
-{
-	return text::Type;
+
+template <> inline __MPT_CONST_TYPE int type_properties<axis *>::id() {
+	return TypeAxisPtr;
+}
+template <> inline const struct type_traits *type_properties<axis *>::traits() {
+	return type_traits(id());
+}
+
+template <> inline __MPT_CONST_TYPE int type_properties<world *>::id() {
+	return TypeWorldPtr;
+}
+template <> inline const struct type_traits *type_properties<world *>::traits() {
+	return type_traits(id());
+}
+
+template <> inline __MPT_CONST_TYPE int type_properties<graph *>::id() {
+	return TypeGraphPtr;
+}
+template <> inline const struct type_traits *type_properties<graph *>::traits() {
+	return type_traits(id());
+}
+
+template <> inline __MPT_CONST_TYPE int type_properties<text *>::id() {
+	return TypeTextPtr;
+}
+template <> inline const struct type_traits *type_properties<text *>::traits() {
+	return type_traits(id());
 }
 
 template <typename S>
@@ -515,7 +521,7 @@ protected:
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
-class layout::graph::transform : public reference<::mpt::transform>::type
+class layout::graph::transform : public reference< ::mpt::transform>::type
 {
 public:
 	struct data : public value_apply

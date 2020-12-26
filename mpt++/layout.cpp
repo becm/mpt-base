@@ -18,27 +18,10 @@ template class reference<layout>;
 template class reference<layout::line>;
 template class reference<layout::text>;
 
-template <> int typeinfo<layout>::id()
+template <> int type_properties<layout *>::id()
 {
 	static int id = 0;
 	if (!id && (id = mpt_type_meta_new("layout")) < 0) {
-		id = mpt_type_meta_new(0);
-	}
-	return id;
-}
-
-template <> int typeinfo<layout::line>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = mpt_type_meta_new(0);
-	}
-	return id;
-}
-template <> int typeinfo<layout::text>::id()
-{
-	static int id = 0;
-	if (!id) {
 		id = mpt_type_meta_new(0);
 	}
 	return id;
@@ -55,9 +38,9 @@ layout::~layout()
 // metatype interface
 int layout::convert(int type, void *ptr)
 {
-	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<object **>(ptr) = this;
-		return typeinfo<group>::id();
+	if (assign(static_cast<object *>(this), type, ptr)) {
+		int type = type_properties<group *>::id();
+		return type < 0 ? TypeMetaPtr : type;
 	}
 	return item_group::convert(type, ptr);
 }
@@ -65,7 +48,7 @@ int layout::convert(int type, void *ptr)
 int layout::property(struct property *pr) const
 {
 	if (!pr) {
-		return typeinfo<layout>::id();
+		return type_properties<layout *>::id();
 	}
 	const char *name = pr->name;
 	int pos = -1;
@@ -143,15 +126,15 @@ int layout::bind(const relation *rel, logger *out)
 	for (auto &it : _items) {
 		metatype *mt;
 		graph *g;
-		if (!(mt = it.instance()) || !(g = mt->cast<graph>())) {
+		if (!(mt = it.instance()) || !(g = typecast<graph>(*mt))) {
 			continue;
 		}
 		const char *name = it.name();
 		if (!g->addref()) {
 			static const char _func[] = "mpt::layout::bind\0";
-			::mpt::graph *d = mt->cast<::mpt::graph>();
+			::mpt::graph *d = typecast< ::mpt::graph>(*mt);
 			object *o = 0;
-			if (!d || !(o = mt->cast<object>())) {
+			if (!d || !(o = typecast<object>(*mt))) {
 				const char *msg = MPT_tr("unable to get graph information");
 				if (out) {
 					if (!name || !*name) {
@@ -279,42 +262,41 @@ layout::line::line(const ::mpt::line *from)
 	if (!from) {
 		return;
 	}
-	*static_cast<::mpt::line *>(this) = *from;
+	*static_cast< ::mpt::line *>(this) = *from;
 }
 layout::line::~line()
 { }
 int layout::line::convert(int type, void *ptr)
 {
-	int me = typeinfo<line>::id();
+	int me = type_properties<line *>::id();
 	if (me < 0) {
-		me = metatype::Type;
+		me = TypeMetaPtr;
 	}
-	else if (type == to_pointer_id(me)) {
+	else if (type == me) {
 		if (ptr) *static_cast<const line **>(ptr) = this;
 		return me;
 	}
+	
 	if (!type) {
 		static const uint8_t fmt[] = {
-			object::Type,
-			::mpt::line::Type, color::Type, lineattr::Type, 0
+			TypeObjectPtr,
+			TypeLine, TypeColor, TypeLineAttr,
+			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
-	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<const object **>(ptr) = this;
-		return ::mpt::line::Type;
+	
+	if (assign(static_cast<object *>(this), type, ptr)) {
+		return TypeLine;
 	}
-	if (type == to_pointer_id(::mpt::line::Type)) {
-		if (ptr) *static_cast<const ::mpt::line **>(ptr) = this;
-		return object::Type;
+	if (assign(static_cast< ::mpt::line>(*this), type, ptr)) {
+		return TypeObjectPtr;
 	}
-	if (type == to_pointer_id(color::Type)) {
-		if (ptr) *static_cast<const struct color **>(ptr) = &color;
+	if (assign(&color, type, ptr)) {
 		return me;
 	}
-	if (type == to_pointer_id(lineattr::Type)) {
-		if (ptr) *static_cast<const lineattr **>(ptr) = &attr;
+	if (assign(&attr, type, ptr)) {
 		return me;
 	}
 	return BadType;
@@ -372,41 +354,38 @@ layout::text::text(const ::mpt::text *from)
 	if (!from) {
 		return;
 	}
-	*static_cast<::mpt::text *>(this) = *from;
+	*static_cast< ::mpt::text *>(this) = *from;
 }
 layout::text::~text()
 { }
 int layout::text::convert(int type, void *ptr)
 {
-	int me = typeinfo<text>::id();
+	int me = type_properties<text *>::id();
 	if (me < 0) {
-		me = metatype::Type;
+		me = TypeMetaPtr;
 	}
-	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<text **>(ptr) = this;
+	else if (assign(static_cast<text *>(this), type, ptr)) {
 		return me;
 	}
 	if (!type) {
 		static const uint8_t fmt[] = {
-			object::Type,
-			::mpt::text::Type, color::Type, 0
+			TypeObjectPtr,
+			TypeTextPtr, TypeColor,
+			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
-	if (type == to_pointer_id(object::Type)) {
-		if (ptr) *static_cast<object **>(ptr) = this;
-		return ::mpt::text::Type;
+	if (assign(static_cast<object *>(this), type, ptr)) {
+		return TypeTextPtr;
 	}
-	if (type == to_pointer_id(::mpt::text::Type)) {
-		if (ptr) *static_cast<::mpt::text **>(ptr) = this;
-		return object::Type;
+	if (assign(static_cast< ::mpt::text *>(this), type, ptr)) {
+		return TypeObjectPtr;
 	}
-	if (type == color::Type) {
-		if (ptr) *static_cast<struct color *>(ptr) = color;
+	if (assign(color, type, ptr)) {
 		return me;
 	}
-	return BadType;
+	return MPT_ERROR(BadType);
 }
 void layout::text::unref()
 {

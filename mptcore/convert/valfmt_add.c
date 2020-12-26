@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "array.h"
+#include "types.h"
 
 #include "convert.h"
 /*!
@@ -22,24 +23,26 @@
  */
 extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(value_format) *arr, MPT_STRUCT(value_format) fmt)
 {
-	const MPT_STRUCT(type_traits) *info;
+	const MPT_STRUCT(type_traits) *traits = mpt_type_traits(MPT_ENUM(TypeValFmt));
 	MPT_STRUCT(buffer) *b;
 	MPT_STRUCT(value_format) *dest;
 	long len;
 	
+	if (!traits) {
+		return MPT_ERROR(BadOperation);
+	}
+	
 	if (!(b = arr->_buf)) {
-		static const MPT_STRUCT(type_traits) _valfmt_info = MPT_TYPETRAIT_INIT(MPT_STRUCT(value_format), MPT_ENUM(TypeValFmt));
-		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt), 0))) {
+		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt)))) {
 			return MPT_ERROR(BadOperation);
 		}
 		memcpy(b + 1, &fmt, sizeof(fmt));
-		b->_typeinfo = &_valfmt_info;
 		b->_used = sizeof(fmt);
+		b->_content_traits = traits;
 		arr->_buf = b;
 		return 1;
 	}
-	if (!(info = b->_typeinfo)
-	    || info->type != MPT_ENUM(TypeValFmt)) {
+	if (traits != b->_content_traits) {
 		return MPT_ERROR(BadType);
 	}
 	len = b->_used / sizeof(fmt);

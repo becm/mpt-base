@@ -10,6 +10,7 @@
 
 #include "meta.h"
 #include "convert.h"
+#include "types.h"
 
 #include "object.h"
 
@@ -51,7 +52,7 @@ static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		it->restore = 0;
 		return 's';
 	}
-	if (type == MPT_type_vector('c')) {
+	if (type == MPT_type_toVector('c')) {
 		while (isspace(*txt)) ++txt;
 		while (!isspace(*txt)) ++txt;
 		it->restore = (char *) txt;
@@ -147,19 +148,19 @@ static int parseConv(MPT_INTERFACE(convertable) *val, int type, void *dest)
 	struct parseIterator *it = (void *) (val + 1);
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
 		if (dest) {
 			*((const uint8_t **) dest) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == 's') {
 		*((const char **) dest) = (char *) (it + 1);
 		return 's';
 	}
 	if (type == MPT_ENUM(TypeVector)
-	    || type == MPT_type_vector('c')) {
+	    || type == MPT_type_toVector('c')) {
 		struct iovec *vec;
 		if ((vec = dest)) {
 			vec->iov_base = it + 1;
@@ -171,7 +172,7 @@ static int parseConv(MPT_INTERFACE(convertable) *val, int type, void *dest)
 		}
 		return 's';
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (dest) *((void **) dest) = it;
 		return 's';
 	}

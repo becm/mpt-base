@@ -35,7 +35,7 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	if (!(b = arr->_buf)) {
 		uint8_t *base;
 		len += pos;
-		if (!(b = _mpt_buffer_alloc(len, 0))) {
+		if (!(b = _mpt_buffer_alloc(len))) {
 			return 0;
 		}
 		arr->_buf = b;

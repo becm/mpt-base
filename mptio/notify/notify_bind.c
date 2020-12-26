@@ -17,6 +17,7 @@
 
 #include "connection.h"
 #include "stream.h"
+#include "types.h"
 
 #include "notify.h"
 
@@ -34,22 +35,22 @@ static int socket_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(_TypeMetaBase);
+		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == MPT_type_pointer(me)) {
+	else if (type == me) {
 		if (ptr) *((void **) ptr) = &sd->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeSocket), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeUnixSocket), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((void **) ptr) = &sd->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
-	if (type == MPT_ENUM(TypeSocket)) {
+	if (type == MPT_ENUM(TypeUnixSocket)) {
 		if (ptr) *((MPT_STRUCT(socket) *) ptr) = sd->sock;
 		return me;
 	}

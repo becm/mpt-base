@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "types.h"
+
 #include "values.h"
 
 /*!
@@ -21,32 +23,29 @@
  */
 extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 {
-	const MPT_STRUCT(type_traits) *info;
+	const MPT_STRUCT(type_traits) *traits = mpt_type_traits('d');
 	MPT_STRUCT(buffer) *buf;
 	uint8_t *data;
 	size_t add;
 	long used;
 	
 	if (!(buf = arr->_buf)) {
-		static const MPT_STRUCT(type_traits) _values_double_info = MPT_TYPETRAIT_INIT(double, 'd');
 		if (len < 0) {
 			errno = EINVAL;
 			return 0;
 		}
 		add = len * sizeof(double);
-		if (!(buf = _mpt_buffer_alloc(add, 0))) {
+		if (!(buf = _mpt_buffer_alloc(add))) {
 			return 0;
 		}
 		arr->_buf = buf;
-		
-		buf->_typeinfo = &_values_double_info;
 		buf->_used = add;
+		buf->_content_traits = traits;
 		
 		return memset(buf + 1, 0, add);
 	}
-	/* use raw data buffer */
-	if (!(info = buf->_typeinfo)
-	    || info->type != 'd') {
+	/* require typed buffer data */
+	if (traits != buf->_content_traits) {
 		errno = EBADSLT;
 		return 0;
 	}

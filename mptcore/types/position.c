@@ -32,7 +32,7 @@ extern int mpt_position(const uint8_t *fmt, int match)
 	if (!match) {
 		while ((curr = fmt[pos])) {
 			if (!isspace(curr)
-			    && (curr = mpt_valsize(curr)) < 0) {
+			    && !mpt_type_traits(curr)) {
 				return pos;
 			}
 			++pos;
@@ -53,12 +53,12 @@ extern int mpt_position(const uint8_t *fmt, int match)
 			continue;
 		}
 		/* current is vector entry */
-		if ((stype = MPT_type_fromVector(curr)) >= 0) {
+		if ((stype = MPT_type_toScalar(curr)) >= 0) {
 			if (stype == 'c' && match == 's') {
 				return pos;
 			}
 			/* identical/genertic target type */
-			curr = MPT_type_fromVector(match);
+			curr = MPT_type_toScalar(match);
 			if (!curr || curr == stype) {
 				return pos;
 			}
@@ -69,7 +69,7 @@ extern int mpt_position(const uint8_t *fmt, int match)
 		if (curr == MPT_ENUM(TypeArray)) {
 			/* wide match from array to vector,
 			 * need deep compare for actual datatype */
-			if ((curr = MPT_type_fromVector(match)) >= 0) {
+			if ((curr = MPT_type_toScalar(match)) >= 0) {
 				return pos;
 			}
 			++pos;

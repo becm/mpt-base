@@ -7,6 +7,7 @@
 
 #include "array.h"
 #include "message.h"
+#include "types.h"
 
 #include "client.h"
 
@@ -43,7 +44,7 @@ extern int mpt_client_command(MPT_INTERFACE(client) *cl, const MPT_STRUCT(messag
 		id = mpt_hash(cmd, strlen(cmd));
 	}
 	it = 0;
-	ret = MPT_metatype_convert(arg, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it);
+	ret = MPT_metatype_convert(arg, MPT_ENUM(TypeIteratorPtr), &it);
 	
 	ret = cl->_vptr->process(cl, id, it);
 	arg->_vptr->unref(arg);

@@ -10,6 +10,8 @@
 
 #include <sys/mman.h>
 
+#include "types.h"
+
 #include "array.h"
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
@@ -85,21 +87,21 @@ extern void *_mpt_memmap(size_t len, void *base)
 static void _mpt_buffer_map_unref(MPT_INTERFACE(buffer) *ref)
 {
 	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
-	const MPT_STRUCT(type_traits) *info;
+	const MPT_STRUCT(type_traits) *traits;
 	void (*fini)(void *);
 	size_t size;
 	if (mpt_refcount_lower(&buf->_ref)) {
 		return;
 	}
-	if ((info = buf->_buf._typeinfo)
-	    && (fini = info->fini)
-	    && (size = info->size)) {
+	if ((traits = buf->_buf._content_traits)
+	    && (fini = traits->fini)
+	    && (size = traits->size)) {
 		size_t len = buf->_buf._size;
 		len -= len % size;
 		uint8_t *ptr = (void *) (buf + 1);
-		size_t i;
-		for (i = 0; i < len; i += size) {
-			fini(ptr + i);
+		size_t pos;
+		for (pos = 0; pos < len; pos += size) {
+			fini(ptr + pos);
 		}
 	}
 	munmap(buf, buf->_total);
@@ -118,7 +120,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *ptr, size_
 		return &buf->_buf;
 	}
 	/* only detach raw buffer */
-	if (buf->_buf._typeinfo) {
+	if (buf->_buf._content_traits) {
 		return 0;
 	}
 	/* align to originating segment size */
@@ -147,7 +149,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *ptr, size_
 		memcpy(next + 1, buf + 1, old);
 	}
 	next->_buf._vptr = buf->_buf._vptr;
-	next->_buf._typeinfo = 0;
+	next->_buf._content_traits = 0;
 	next->_buf._used = old;
 	next->_buf._size = len;
 	
@@ -203,7 +205,7 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len)
 	buf->_total = len;
 	
 	buf->_buf._vptr = &_mpt_buffer_map_vptr;
-	buf->_buf._typeinfo  = 0;
+	buf->_buf._content_traits  = 0;
 	buf->_buf._size = len - sizeof(*buf);
 	buf->_buf._used = 0;
 	

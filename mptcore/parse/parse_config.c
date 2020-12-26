@@ -1,8 +1,9 @@
 
 #include <sys/uio.h>
 
-#include "node.h"
 #include "config.h"
+#include "types.h"
+
 #include "parse.h"
 
 /*!
@@ -24,7 +25,7 @@ extern int mpt_parse_config(MPT_TYPE(input_parser) next, void *npar, MPT_STRUCT(
 	
 	/* accuire next path element */
 	while ((ret = next(npar, parse, &path)) > 0) {
-		static const uint8_t fmt[] = { MPT_type_vector('c'), 0 };
+		static const uint8_t fmt[] = { MPT_type_toVector('c'), 0 };
 		MPT_STRUCT(value) val;
 		struct iovec vec;
 		

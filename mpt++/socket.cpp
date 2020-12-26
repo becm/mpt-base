@@ -73,7 +73,7 @@ io::socket::socket(struct ::mpt::socket *from)
 	if (!from) {
 		return;
 	}
-	*static_cast<::mpt::socket *>(this) = *from;
+	*static_cast< ::mpt::socket *>(this) = *from;
 	new (from) ::mpt::socket;
 }
 io::socket::~socket()

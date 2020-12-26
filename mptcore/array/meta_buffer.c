@@ -10,6 +10,7 @@
 
 #include "convert.h"
 #include "array.h"
+#include "types.h"
 
 #include "meta.h"
 
@@ -46,18 +47,18 @@ static int bufferConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_type_vector('c'), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_type_toVector('c'), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return MPT_ENUM(TypeArray);
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = &m->_it;
 		return MPT_ENUM(TypeArray);
 	}
-	if (type == MPT_type_vector('c')
+	if (type == MPT_type_toVector('c')
 	    || type == MPT_ENUM(TypeVector)) {
 		struct iovec *vec;
 		if ((vec = ptr)) {
@@ -70,7 +71,7 @@ static int bufferConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 				vec->iov_len = 0;
 			}
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 }
@@ -157,12 +158,12 @@ static int bufferConvArgs(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return MPT_ENUM(TypeArray);
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == 's') {
 		if (ptr) {
@@ -172,9 +173,9 @@ static int bufferConvArgs(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 			}
 			*((const void **) ptr) = buf;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) {
 			MPT_STRUCT(buffer) *buf = m->s._a._buf;
 			if (buf && m->s._off < buf->_used) {

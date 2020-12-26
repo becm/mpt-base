@@ -8,6 +8,7 @@
 #include "meta.h"
 #include "output.h"
 #include "message.h"
+#include "types.h"
 
 #include "event.h"
 
@@ -96,20 +97,20 @@ static int contextConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, val, _mt);
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeReply), MPT_ENUM(TypeReplyData), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeReplyPtr), MPT_ENUM(TypeReplyDataPtr), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeReply);
+		return MPT_ENUM(TypeReplyPtr);
 	}
-	if (type == MPT_ENUM(TypeReply)) {
+	if (type == MPT_ENUM(TypeReplyPtr)) {
 		if (ptr) *((void **) ptr) = &ctx->_ctx;
-		return MPT_ENUM(TypeReplyData);
+		return MPT_ENUM(TypeReplyDataPtr);
 	}
-	if (type == MPT_ENUM(TypeReplyData)) {
+	if (type == MPT_ENUM(TypeReplyDataPtr)) {
 		if (ptr) *((void **) ptr) = &ctx->_ctx;
-		return MPT_ENUM(TypeReply);
+		return MPT_ENUM(TypeReplyPtr);
 	}
 	return MPT_ERROR(BadType);
 }

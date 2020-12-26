@@ -7,9 +7,9 @@
 #include <sys/uio.h>
 
 #include "meta.h"
-#include "array.h"
 #include "message.h"
 #include "output.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -24,7 +24,7 @@ static MPT_INTERFACE(config) *getGlobal(MPT_INTERFACE(metatype) **glob, const ch
 		return 0;
 	}
 	cfg = 0;
-	if (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+	if (MPT_metatype_convert(mt, MPT_ENUM(TypeConfigPtr), &cfg) < 0
 	    || !cfg) {
 		mpt_log(0, _func, MPT_LOG(Error), "%s",
 		        MPT_tr("no interface for global config"));
@@ -54,7 +54,7 @@ static int setConfig(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(valu
  */
 extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*proc)(void *ptr, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *), void *ctx)
 {
-	static const uint8_t fmt[] = { MPT_type_vector('c'), 0 };
+	static const uint8_t fmt[] = { MPT_type_toVector('c'), 0 };
 	MPT_INTERFACE(metatype) *glob;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(message) tmp;

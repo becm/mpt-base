@@ -17,26 +17,8 @@ __MPT_NAMESPACE_BEGIN
 template class reference<cycle>;
 template class reference_array<cycle>;
 
-template <> int typeinfo<cycle>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
-template <> int typeinfo<cycle::stage>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
-}
-template <> int typeinfo<value_store>::id()
-{
-	return mpt_value_store_typeid();
-}
+template class type_properties<reference<cycle> >;
+template class type_properties<cycle::stage>;
 
 value_store *rawdata_stage::values(long dim)
 {
@@ -75,14 +57,17 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 	if (_max_dimensions && dim >= _max_dimensions) {
 		return BadArgument;
 	}
-	int esize;
-	if ((esize = mpt_valsize(type)) <= 0) {
+	const struct type_traits *source_traits;
+	if (!(source_traits = type_traits(type))) {
 		return BadType;
 	}
-	if (len % esize) {
+	if (len % source_traits->size) {
 		return MissingData;
 	}
-	len /= esize;
+	len /= source_traits->size;
+	if ((SIZE_MAX / sizeof(double)) < len) {
+		return BadArgument;
+	}
 	int nc;
 	if (!vd || !(nc = vd->cycle)) {
 		nc = _act;
@@ -104,49 +89,50 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 	}
 	long off = vd ? vd->offset : 0;
 	double *ptr;
-	if (!(ptr = static_cast<double *>(val->reserve(typeinfo<double>::id(), len * sizeof(double), off)))) {
+	if (!(ptr = val->reserve<double>(len, off))) {
 		return BadOperation;
 	}
 	if (!src) {
 		memset(ptr, 0, len * sizeof(double));
 	}
-	else switch (type) {
-		case typeinfo<long double>::id():
-			copy(len, static_cast<const long double *>(src), ptr);
-			break;
-		case typeinfo<double>::id():
-			memcpy(ptr, src, len * sizeof(double));
-			break;
-		case typeinfo<float>::id():
-			copy(len, static_cast<const float *>(src), ptr);
-			break;
-		
-		case typeinfo<int8_t>::id():
-			copy(len, static_cast<const int8_t  *>(src), ptr);
-			break;
-		case typeinfo<int16_t>::id():
-			copy(len, static_cast<const int16_t *>(src), ptr);
-			break;
-		case typeinfo<int32_t>::id():
-			copy(len, static_cast<const int32_t *>(src), ptr);
-			break;
-		case typeinfo<int64_t>::id():
-			copy(len, static_cast<const int64_t *>(src), ptr);
-			break;
-		
-		case typeinfo<uint8_t>::id():
-			copy(len, static_cast<const uint8_t  *>(src), ptr);
-			break;
-		case typeinfo<uint16_t>::id():
-			copy(len, static_cast<const uint16_t *>(src), ptr);
-			break;
-		case typeinfo<uint32_t>::id():
-			copy(len, static_cast<const uint32_t *>(src), ptr);
-			break;
-		case typeinfo<uint64_t>::id():
-			copy(len, static_cast<const uint64_t *>(src), ptr);
-			break;
-		default:
+	
+	else if (source_traits == type_properties<long double>::traits()) {
+		copy(len, static_cast<const long double *>(src), ptr);
+	}
+	else if (source_traits == type_properties<double>::traits()) {
+		memcpy(ptr, src, len * sizeof(double));
+	}
+	else if (source_traits == type_properties<float>::traits()) {
+		copy(len, static_cast<const float *>(src), ptr);
+	}
+	
+	else if (source_traits == type_properties<int8_t>::traits()) {
+		copy(len, static_cast<const int8_t  *>(src), ptr);
+	}
+	else if (source_traits == type_properties<int16_t>::traits()) {
+		copy(len, static_cast<const int16_t *>(src), ptr);
+	}
+	else if (source_traits == type_properties<int32_t>::traits()) {
+		copy(len, static_cast<const int32_t *>(src), ptr);
+	}
+	else if (source_traits == type_properties<int64_t>::traits()) {
+		copy(len, static_cast<const int64_t *>(src), ptr);
+	}
+	
+	else if (source_traits == type_properties<uint8_t>::traits()) {
+		copy(len, static_cast<const uint8_t  *>(src), ptr);
+	}
+	else if (source_traits == type_properties<uint16_t>::traits()) {
+		copy(len, static_cast<const uint16_t *>(src), ptr);
+	}
+	else if (source_traits == type_properties<uint32_t>::traits()) {
+		copy(len, static_cast<const uint32_t *>(src), ptr);
+	}
+	else if (source_traits == type_properties<uint64_t>::traits()) {
+		copy(len, static_cast<const uint64_t *>(src), ptr);
+	}
+	
+	else {
 		return BadType;
 	}
 	// update dimension and invalidate view
@@ -170,16 +156,25 @@ int cycle::values(unsigned dim, struct iovec *vec, int nc) const
 	if (!(val = st->rawdata_stage::values(dim))) {
 		return BadValue;
 	}
-	if (vec) {
-		if (val->type()) {
-			vec->iov_base = (void *) val->base();
-			vec->iov_len  = val->element_count() * val->element_size();
-		} else {
-			vec->iov_base = 0;
-			vec->iov_len  = 0;
+	const array::content *d;
+	int type = 0;
+	if ((d = val->data())) {
+		if ((type = type_id(d->content_traits())) < 0) {
+			type = 0;
+		}
+		if (!d) {
+			d = 0;
+		}
+		else if (vec) {
+			vec->iov_base = d->data();
+			vec->iov_len  = d->length();
 		}
 	}
-	return val->type() + (val->flags() & ~0xff);
+	if (vec && !d) {
+		vec->iov_base = 0;
+		vec->iov_len  = 0;
+	}
+	return type + (val->flags() & ~0xff);
 }
 int cycle::advance()
 {

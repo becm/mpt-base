@@ -31,10 +31,11 @@ void graphic::dispatch_updates()
 {
 	for (auto &e : elements()) {
 		const mpt::layout *l = dynamic_cast<const mpt::layout *>(e.data);
-		if (l) {
-			std::cout << l->alias() << ": " << e.hint << std::endl;
+		const char *name;
+		if (l && (name = l->alias())) {
+			std::cout << e.hint << ": " << l->alias() << '(' << e.data << ')' << std::endl;
 		} else {
-			std::cout << e.data << ": " << e.hint << std::endl;
+			std::cout << e.hint << ": " << e.data << std::endl;
 		}
 		e.invalidate();
 	}

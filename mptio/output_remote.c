@@ -16,6 +16,7 @@
 
 #include "meta.h"
 #include "message.h"
+#include "types.h"
 
 #include "object.h"
 #include "output.h"
@@ -54,17 +55,17 @@ static int remoteConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(_TypeMetaBase);
+		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == MPT_type_pointer(me)) {
+	else if (type == me) {
 		if (ptr) *((const void **) ptr) = &od->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
 	if (!type) {
 		static const uint8_t fmt[] = {
-			MPT_ENUM(TypeObject),
-			MPT_ENUM(TypeOutput),
-			MPT_ENUM(TypeLogger),
+			MPT_ENUM(TypeObjectPtr),
+			MPT_ENUM(TypeOutputPtr),
+			MPT_ENUM(TypeLoggerPtr),
 			0
 		};
 		if (ptr) {
@@ -74,21 +75,21 @@ static int remoteConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
 		if (ptr) *((const void **) ptr) = &od->_in;
-		return MPT_ENUM(TypeSocket);
+		return MPT_ENUM(TypeUnixSocket);
 	}
-	if (type == MPT_ENUM(TypeSocket)) {
-		if (ptr) ((MPT_STRUCT(socket) *) ptr)->_id = remote_infile(od);
+	if (type == MPT_ENUM(TypeUnixSocket)) {
+		if (ptr) *((int *) ptr) = remote_infile(od);
 		return me;
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeObject))) {
+	if (type == MPT_ENUM(TypeObjectPtr)) {
 		if (ptr) *((const void **) ptr) = &od->_obj;
 		return me;
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeOutput))) {
+	if (type == MPT_ENUM(TypeOutputPtr)) {
 		if (ptr) *((const void **) ptr) = &od->_out;
-		return MPT_ENUM(TypeObject);
+		return me;
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeLogger))) {
+	if (type == MPT_ENUM(TypeLoggerPtr)) {
 		if (ptr) *((const void **) ptr) = &od->_log;
 		return me;
 	}
@@ -189,10 +190,10 @@ static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 	MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, obj, _obj);
 	
 	if (!pr) {
-		return MPT_ENUM(TypeOutput);
+		return MPT_ENUM(TypeOutputPtr);
 	}
 	if (pr->name && !*pr->name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeSocket), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeUnixSocket), 0 };
 		pr->name = "output";
 		pr->desc = "generic output interface";
 		pr->val.fmt = fmt;

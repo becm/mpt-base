@@ -4,6 +4,8 @@
 
 #include <string.h>
 
+#include "types.h"
+
 #include "array.h"
 
 /*!
@@ -20,7 +22,7 @@
  */
 ssize_t mpt_buffer_cut(MPT_STRUCT(buffer) *buf, size_t off, size_t len)
 {
-	const MPT_STRUCT(type_traits) *info;
+	const MPT_STRUCT(type_traits) *traits;
 	uint8_t *pos;
 	size_t keep;
 	
@@ -39,15 +41,15 @@ ssize_t mpt_buffer_cut(MPT_STRUCT(buffer) *buf, size_t off, size_t len)
 	pos = ((uint8_t *) (buf + 1)) + off;
 	
 	/* invalidate data to cut */
-	if ((info = buf->_typeinfo)) {
+	if ((traits = buf->_content_traits)) {
 		void (*fini)(void *);
 		size_t size;
-		if (!(size = info->size)
+		if (!(size = traits->size)
 		    || off % size
 		    || len % size) {
 			return MPT_ERROR(BadArgument);
 		}
-		if ((fini = info->fini)) {
+		if ((fini = traits->fini)) {
 			size_t i;
 			for (i = 0; i < len; i += size) {
 				fini(pos + i);

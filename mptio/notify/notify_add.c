@@ -11,6 +11,7 @@
 #include "array.h"
 #include "config.h"
 
+#include "types.h"
 #include "connection.h"
 
 #include "notify.h"
@@ -18,43 +19,6 @@
 #if defined(__linux__)
 # include <sys/epoll.h>
 #endif
-
-static int _input_type = 0;
-
-static void _input_ref_init(const MPT_STRUCT(type_traits) *info, void *ptr)
-{
-	memset(ptr, 0, info->size);
-}
-static int _input_ref_copy(void *src, int type, void *dest)
-{
-	MPT_INTERFACE(metatype) **src_ptr, *src_ref, **dest_ptr, *dest_ref;
-	
-	src_ptr = src;
-	dest_ptr = dest;
-	
-	if (type != MPT_type_reference(_input_type)) {
-		return MPT_ERROR(BadType);
-	}
-	if ((src_ref = *src_ptr)
-	    && !(src_ref->_vptr->addref(src_ref))) {
-		return MPT_ERROR(BadOperation);
-	}
-	if ((dest_ref = *dest_ptr)) {
-		dest_ref->_vptr->unref(dest_ref);
-	}
-	*dest_ptr = src_ref;
-	return src_ref ? 1 : 0;
-}
-static void _input_ref_fini(void *ptr)
-{
-	MPT_INTERFACE(metatype) **ref_ptr, *ref;
-	
-	ref_ptr = ptr;
-	if ((ref = *ref_ptr)) {
-		ref->_vptr->unref(ref);
-		*ref_ptr = 0;
-	}
-}
 
 /*!
  * \ingroup mptNotify
@@ -69,48 +33,35 @@ static void _input_ref_fini(void *ptr)
  */
 extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input) *in)
 {
-	const MPT_STRUCT(type_traits) *info;
+	static const MPT_STRUCT(type_traits) *traits = 0;
 	MPT_STRUCT(buffer) *buf;
 	MPT_INTERFACE(input) **base;
 	MPT_STRUCT(socket) sock = MPT_SOCKET_INIT;
 	
-	if (!_input_type) {
-		_input_type = mpt_input_typeid();
+	if (!traits && !(traits = mpt_input_reference_traits())) {
+		return MPT_ERROR(BadOperation);
 	}
-	if (_input_type < 0) {
-		return MPT_ERROR(BadEncoding);
-	}
+	
 	if (!in
-	    || in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeSocket), &sock) < 0
+	    || in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeUnixSocket), &sock) < 0
 	    || !MPT_socket_active(&sock)) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* create new buffer */
 	if (!(buf = no->_slot._buf)) {
-		MPT_STRUCT(type_traits) info;
-		size_t len;
-		
-		memset(&info, 0, sizeof(info));
-		info.init = _input_ref_init;
-		info.copy = _input_ref_copy;
-		info.fini = _input_ref_fini;
-		
-		info.type = MPT_type_reference(_input_type);
-		info.size = sizeof(*base);
-		info.base = MPT_ENUM(TypeMetaRef);
-		
-		len = (sock._id + 1) * sizeof(*base);
-		if (!(buf = _mpt_buffer_alloc(len, &info))) {
+		size_t len = (sock._id + 1) * sizeof(*base);
+		if (!(buf = _mpt_buffer_alloc(len))) {
 			return 0;
 		}
 		buf->_used = len;
+		buf->_content_traits = traits;
 		base = memset(buf + 1, 0, len);
 		base += sock._id;
 		
 		no->_slot._buf = buf;
 	}
-	/* reject incompatible data */
-	else if (!(info = buf->_typeinfo) || info->type != MPT_type_reference(_input_type)) {
+	/* only accept own buffer */
+	else if (buf->_content_traits != traits) {
 		return MPT_ERROR(BadType);
 	}
 	/* reserve matching position */

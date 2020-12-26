@@ -24,8 +24,6 @@ MPT_STRUCT(property)
 {
 #ifdef __cplusplus
 public:
-	enum { Type = TypeProperty };
-	
 	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
 	{ }
 	inline property(const char *n, const uint8_t *f, const void *d) : name(n), desc(0)
@@ -42,8 +40,11 @@ public:
 	MPT_STRUCT(value) val; /* element value */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<property>::id() {
-	return property::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<property>::id() {
+	return TypeProperty;
+}
+template <> inline const struct type_traits *type_properties<property>::traits() {
+	return type_traits(id());
 }
 #endif
 typedef int (*MPT_TYPE(property_handler))(void *, const MPT_STRUCT(property) *);
@@ -55,8 +56,6 @@ MPT_INTERFACE(object)
 protected:
 	inline ~object() {}
 public:
-	enum { Type = TypeObject };
-	
 	class iterator;
 	class const_iterator;
 	class attribute;
@@ -90,9 +89,11 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int set_property(const char *, convertable * = 0) = 0;
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<object>::id()
-{
-	return object::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<object *>::id() {
+	return TypeObjectPtr;
+}
+template <> inline const struct type_traits *type_properties<object *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(object);
@@ -278,7 +279,7 @@ public:
 	{
 		value::format fmt;
 		value val;
-		fmt.set(typeinfo<T>::id());
+		fmt.set(type_properties<T>::id());
 		val.set(fmt, &v);
 		if (!set(val)) {
 			_prop.name = 0;

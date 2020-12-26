@@ -3,6 +3,8 @@
  *   set consumable data from matching metatype conversion
  */
 
+#include "types.h"
+
 #include "meta.h"
 
 /*!
@@ -21,13 +23,13 @@ extern int mpt_consumable_setup(MPT_STRUCT(consumable) *val, MPT_INTERFACE(conve
 	MPT_STRUCT(value) tmp;
 	int ret;
 	
-	if ((ret = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &val->_it)) >= 0) {
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeIteratorPtr), &val->_it)) >= 0) {
 		val->_val.fmt = 0;
 		val->_val.ptr = 0;
 		if (!val->_it) {
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValue), &tmp)) >= 0) {
 		if (tmp.fmt && !tmp.ptr) {

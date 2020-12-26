@@ -35,14 +35,14 @@ extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *ba
 		return 0;
 	}
 	if (!(b = arr->_buf)) {
-		if (!(b = _mpt_buffer_alloc(len, 0))) {
+		if (!(b = _mpt_buffer_alloc(len))) {
 			return 0;
 		}
 		used = 0;
 		arr->_buf = b;
 	}
 	/* require raw buffer to append data */
-	else if (b->_typeinfo) {
+	else if (b->_content_traits) {
 		errno = EINVAL;
 		return 0;
 	}

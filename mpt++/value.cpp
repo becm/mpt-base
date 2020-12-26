@@ -77,38 +77,6 @@ const char *value::string() const
 	const void *str = ptr;
 	return mpt_data_tostring(&str, *fmt, 0);
 }
-const void *value::scalar(int type) const
-{
-	/* incompatible type */
-	int from;
-	if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
-		return 0;
-	}
-	/* exact scalar type */
-	if (type && type != from) {
-		return 0;
-	}
-	/* regular and user scalar type */
-	if (mpt_valsize(from) <= 0) {
-		return 0;
-	}
-	return ptr;
-}
-void *value::pointer(int type) const
-{
-	int from;
-	/* incompatible type */
-	if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
-		return 0;
-	}
-	if (type && type != from) {
-		return 0;
-	}
-	if (mpt_valsize(from) != 0) {
-		return 0;
-	}
-	return *reinterpret_cast<void * const *>(ptr);
-}
 const struct iovec *value::vector(int type) const
 {
 	int from;
@@ -116,7 +84,7 @@ const struct iovec *value::vector(int type) const
 		return 0;
 	}
 	/* bad source type */
-	if ((from = MPT_type_fromVector(from)) < 0) {
+	if ((from = MPT_type_toScalar(from)) < 0) {
 		return 0;
 	}
 	/* invald content type */
@@ -128,10 +96,10 @@ const struct iovec *value::vector(int type) const
 const array *value::array(int type) const
 {
 	int from;
-	if (!ptr || !fmt || type < 0 || !(from = (uint8_t) *fmt)) {
+	if (!ptr || !fmt || !(from = (uint8_t) *fmt)) {
 		return 0;
 	}
-	/* type out of range */
+	/* invalid source type */
 	if (from != MPT_ENUM(TypeArray)) {
 		return 0;
 	}
@@ -140,9 +108,11 @@ const array *value::array(int type) const
 		return arr;
 	}
 	const array::content *d;
-	const type_traits *info;
-	if ((d = arr->data()) && (info = d->typeinfo()) && type == info->type) {
-		return arr;
+	if ((d = arr->data())) {
+		const struct type_traits *traits = d->content_traits();
+		if (traits && (type == type_id(traits))) {
+			return arr;
+		}
 	}
 	return 0;
 }

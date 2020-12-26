@@ -19,8 +19,7 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<group>::id()
-{
+template <> int type_properties<group *>::id() {
 	static int id = 0;
 	if (!id && (id = mpt_type_interface_new("group")) < 0) {
 		id = mpt_type_interface_new(0);
@@ -28,11 +27,21 @@ template <> int typeinfo<group>::id()
 	return id;
 }
 
+template <> const struct type_traits *type_properties<group *>::traits()
+{
+	static const struct type_traits *traits = type_traits(id());
+	if (!traits) {
+		static const struct type_traits private_traits(sizeof(group *));
+		traits = &private_traits;
+	}
+	return traits;
+}
+
 bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
 {
 	const char _func[] = "mpt::add_items";
-	group *grp = to.cast<group>();
-	object *obj = to.cast<object>();
+	group *grp = typecast<group>(to);
+	object *obj = typecast<object>(to);
 	
 	// no assignable target
 	if (!grp && !obj) {
@@ -75,7 +84,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				value val;
 				const char *data;
 				
-				if (from->convert(value::Type, &val) >= 0) {
+				if (from->convert(type_properties<value>::id(), &val) >= 0) {
 					if (obj->set(name, val, out)) {
 						continue;
 					}
@@ -148,7 +157,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				return false;
 			}
 			object *obj, *src;
-			if ((src = curr->cast<object>()) && (obj = from->cast<object>())) {
+			if ((src = typecast<object>(*curr)) && (obj = typecast<object>(*from))) {
 				obj->set(*src, out);
 				continue;
 			}
@@ -181,9 +190,9 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			continue;
 		}
 		// process child items
-		group *ig = from->cast<group>();
+		group *ig = typecast<group>(*from);
 		
-		if (!from->cast<object>()) {
+		if (!typecast<object>(*from)) {
 			if (out) {
 				out->message(_func, out->Warning, "%s (%p): %s",
 				             name, from, MPT_tr("element not an object"));
@@ -253,26 +262,22 @@ metatype *group::create(const char *type, int nl)
 // group storing elements in item array
 int item_group::convert(int type, void *ptr)
 {
-	int me = typeinfo<group>::id();
-	if (me < 0) {
-		me = metatype::Type;
-	}
-	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<group **>(ptr) = this;
-		return array::Type;
-	}
+	int me = type_properties<group *>::id();
+	
 	if (!type) {
-		static const uint8_t fmt[] = { collection::Type, array::Type, 0 };
+		static const uint8_t fmt[] = { TypeCollectionPtr, TypeArray, 0 };
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
-		return me;
+		return me > 0 ? me : TypeCollectionPtr;
 	}
-	if (type == to_pointer_id(collection::Type)) {
-		if (ptr) *static_cast<collection **>(ptr) = this;
-		return me;
+	
+	if (assign(static_cast<group *>(this), type, ptr)) {
+		return TypeArray;
 	}
-	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<metatype **>(ptr) = this;
-		return me;
+	if (assign(static_cast<collection *>(this), type, ptr)) {
+		return me > 0 ? me : TypeArray;
+	}
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
+		return me > 0 ? me : TypeCollectionPtr;
 	}
 	return BadType;
 }
@@ -348,7 +353,7 @@ int item_group::bind(const relation *from, logger *out)
 	for (auto &it : _items) {
 		metatype *curr;
 		group *g;
-		if (!(curr = it.instance()) || !(g = curr->cast<group>())) {
+		if (!(curr = it.instance()) || !(g = typecast<group>(*curr))) {
 			continue;
 		}
 		int ret;
@@ -393,7 +398,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const collec
 		return 0;
 	}
 	if (!sub && mt) {
-		sub = mt->cast<collection>();
+		sub = typecast<collection>(*mt);
 	}
 	if (!ctx->left) {
 		ctx->mt = mt;

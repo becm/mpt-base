@@ -26,11 +26,10 @@ int metatype::convert(int type, void *ptr)
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
-	if (type != to_pointer_id(Type)) {
-		return BadType;
+	if (assign(this, type, ptr)) {
+		return type;
 	}
-	if (dest) *dest = const_cast<metatype *>(this);
-	return type;
+	return BadType;
 }
 
 // basic metatype
@@ -49,7 +48,7 @@ int metatype::basic::convert(int type, void *ptr)
 metatype::basic *metatype::basic::clone() const
 {
 	struct iovec vec;
-	if (_mpt_geninfo_conv(this + 1, MPT_type_vector('c') , &vec) <= 0) {
+	if (_mpt_geninfo_conv(this + 1, MPT_type_toVector('c') , &vec) <= 0) {
 		errno = EINVAL;
 		return 0;
 	}

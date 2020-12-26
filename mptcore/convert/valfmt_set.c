@@ -29,20 +29,23 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 	int ret, curr;
 	
 	if (!src) {
-		const MPT_STRUCT(type_traits) *info;
+		static const MPT_STRUCT(type_traits) *traits = 0;
 		const MPT_STRUCT(buffer) *buf;
 		if (!(buf = arr->_buf)) {
 			return 0;
 		}
-		if (!(info = buf->_typeinfo)
-		    || info->type != MPT_ENUM(TypeValFmt)) {
+		/* initialize traits binding */
+		if (!traits || (!(traits = mpt_type_traits(MPT_ENUM(TypeValFmt))))) {
+			return MPT_ERROR(BadOperation);
+		}
+		if (buf->_content_traits != traits) {
 			return MPT_ERROR(BadType);
 		}
 		return buf->_used / sizeof(fmt);
 	}
 	/* get elements from iterator */
 	it = 0;
-	if ((ret = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) > 0
+	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeIteratorPtr), &it)) > 0
 	    && it
 	    && (curr  = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
 		if (!curr) {

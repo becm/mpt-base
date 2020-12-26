@@ -10,7 +10,6 @@ cxx_src = files(
   'identifier.cpp',
   'io.cpp', 'io_buffer.cpp', 'io_queue.cpp',
   'logger.cpp',
-  'makeid.cpp',
   'message.cpp',
   'meta_create.cpp', 'meta_basic.cpp', 'meta_typed.cpp', 'meta_buffer.cpp',
   'node.cpp',
@@ -20,6 +19,7 @@ cxx_src = files(
   'queue.cpp',
   'refcount_wrap.cpp',
   'std_cout.cpp',
+  'type_traits_wrap.cpp',
   'value.cpp',
   'value_store.cpp',
 )

@@ -27,14 +27,14 @@ MPT_INTERFACE(collection)
 protected:
 	inline ~collection() { }
 public:
-	enum { Type = TypeCollection };
-	
 	virtual int each(item_handler_t *, void *) const = 0;
 	virtual unsigned long clear(const metatype * = 0) = 0;
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<collection>::id()
-{
-	return collection::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id() {
+	return TypeCollectionPtr;
+}
+template <> inline const struct type_traits *type_properties<collection *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE_VPTR(collection) {

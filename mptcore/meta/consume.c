@@ -5,6 +5,8 @@
 
 #include <string.h>
 
+#include "types.h"
+
 #include "meta.h"
 
 static int solverNext(MPT_STRUCT(consumable) *val, void *dest, int type, size_t len)

@@ -24,7 +24,7 @@ extern int main(int , char * const [])
 	
 	metatype *m = mpt_iterator_create("1 2 3");
 	
-	iterator *it = m->cast<iterator>();
+	iterator *it = typecast<iterator>(*m);
 	
 	double val;
 	while (it->consume<double>(val)) {

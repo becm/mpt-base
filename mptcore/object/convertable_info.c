@@ -2,8 +2,9 @@
  * log metatype info.
  */
 
-#include "object.h"
 #include "types.h"
+
+#include "object.h"
 
 /*!
  * \ingroup mptCore
@@ -37,7 +38,7 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 		pr->name = "";
 		pr->desc = 0;
 		/* object specific name */
-		if (val->_vptr->convert(val, MPT_type_pointer(MPT_ENUM(TypeObject)), &obj) >= 0
+		if (val->_vptr->convert(val, MPT_ENUM(TypeObjectPtr), &obj) >= 0
 		    && obj
 		    && (obj->_vptr->property(obj, pr) >= 0)
 		    && pr->name) {

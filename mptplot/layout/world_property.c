@@ -75,7 +75,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeWorldPtr), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -101,7 +101,7 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 			mpt_world_fini(wld);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeWorld)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeWorldPtr), &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -193,7 +193,7 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeWorld);
+		return MPT_ENUM(TypeWorldPtr);
 	}
 	/* property by position */
 	if (!pr->name) {

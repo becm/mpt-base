@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#include "types.h"
+
 #include "meta.h"
 
 /* metatype interface */

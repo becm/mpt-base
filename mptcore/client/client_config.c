@@ -4,6 +4,7 @@
 
 #include "meta.h"
 #include "output.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -27,7 +28,7 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 	
 	it = 0;
 	if (!(args = mpt_config_get(0, "mpt.args", '.', 0))
-	    || (ret = args->_vptr->convert(args, MPT_type_pointer(MPT_ENUM(TypeIterator)), &it)) <= 0
+	    || (ret = args->_vptr->convert(args, MPT_ENUM(TypeIteratorPtr), &it)) <= 0
 	    || !it) {
 		return 0;
 	}

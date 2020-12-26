@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "convert.h"
+#include "types.h"
 #include "meta.h"
 
 #include "values.h"
@@ -23,20 +24,20 @@ static int iterValueConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	const struct _iter_sdata *d = (void *) (val + 2);
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 'd';
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = val + 1;
 		return 's';
 	}
 	if (type == 's') {
 		if (ptr) *((const char **) ptr) = (char *) d + 1;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 }

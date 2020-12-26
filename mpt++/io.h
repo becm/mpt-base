@@ -37,6 +37,7 @@ public:
 	virtual int getchar();
 };
 
+
 /* metatype extension to encode array */
 class buffer : public metatype, public iterator, public interface, public encode_array
 {
@@ -153,6 +154,9 @@ class queue;
 #endif
 
 } /* end I/O namespace */
+
+template<> int type_properties<io::interface *>::id();
+template<> const struct type_traits *type_properties<io::interface *>::traits();
 
 #ifdef _MPT_QUEUE_H
 template <typename T>
@@ -281,10 +285,6 @@ public:
 protected:
 	reference<instance> _d;
 };
-#endif
-
-#ifdef _MPT_STREAM_H
-template <> int typeinfo<io::stream>::id();
 #endif
 
 __MPT_NAMESPACE_END

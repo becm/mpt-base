@@ -44,7 +44,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 			return MPT_ERROR(MissingData);
 		}
 		if ((b = arr->_d._buf)
-		    && b->_typeinfo) {
+		    && b->_content_traits) {
 			return MPT_ERROR(BadType);
 		}
 		max = arr->_state.done + arr->_state.scratch;
@@ -67,12 +67,12 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 			return MPT_ERROR(BadArgument);
 		}
 		/* use initial data size */
-		if (!(b = _mpt_buffer_alloc(add, 0))) {
+		if (!(b = _mpt_buffer_alloc(add))) {
 			return MPT_ERROR(BadOperation);
 		}
 		arr->_d._buf = b;
 	}
-	else if (b->_typeinfo) {
+	else if (b->_content_traits) {
 		return MPT_ERROR(BadType);
 	}
 	else if (!(b = b->_vptr->detach(b, max + add))) {

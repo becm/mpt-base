@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "core.h"
 
 /*!
@@ -25,7 +27,7 @@ extern const char *mpt_convertable_data(MPT_INTERFACE(convertable) *val, size_t 
 	struct iovec vec;
 	const char *base;
 	
-	if (len && val->_vptr->convert(val, MPT_type_vector('c'), &vec) >= 0) {
+	if (len && val->_vptr->convert(val, MPT_type_toVector('c'), &vec) >= 0) {
 		*len = vec.iov_len;
 		return vec.iov_base;
 	}

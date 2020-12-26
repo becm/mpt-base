@@ -63,7 +63,11 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 			return cont ? cont : adv;
 		}
 		else {
-			data = ((uint8_t *) data) + mpt_valsize(*fmt);
+			const MPT_STRUCT(type_traits) *traits = mpt_type_traits(*fmt);
+			if (!traits || !traits->size) {
+				return cont ? cont : MPT_ERROR(BadType);
+			}
+			data = ((uint8_t *) data) + traits->size;
 			txt = buf;
 		}
 		if ((cont && (curr = save(dest, " ", 1)) < 1)

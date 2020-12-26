@@ -4,7 +4,7 @@
 # collect source files
 io_src = files(
   'connect.c',
-  'input_typeid.c',
+  'input_traits.c',
   'output_remote.c'
 )
 foreach d : [ 'connection', 'notify', 'stream' ]

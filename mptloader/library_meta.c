@@ -8,6 +8,7 @@
 #include "meta.h"
 #include "object.h"
 #include "output.h"
+#include "types.h"
 
 #include "loader.h"
 
@@ -37,15 +38,11 @@ static int _proxy_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		if (ptr) *((void **) ptr) = (char *) mp->fmt;
 		return mt;
 	}
-	if (type == MPT_type_pointer(mt)) {
-		if (ptr) *((void **) ptr) = mp->ptr;
-		return mt;
-	}
 	if (type == 's') {
 		if (ptr) *((const void **) ptr) = mp + 1;
 		return mt;
 	}
-	if (!MPT_type_isMetatype(mt)) {
+	if (!MPT_type_isMetaPtr(mt)) {
 		return MPT_ERROR(BadType);
 	}
 	if (type == MPT_ENUM(TypeMetaPtr)) {
@@ -64,7 +61,7 @@ static void _proxy_unref(MPT_INTERFACE(metatype) *mt)
 	}
 	if ((mt = mp->ptr)) {
 		int type = mp->sym.type;
-		if (MPT_type_isMetatype(type)) {
+		if (MPT_type_isMetaPtr(type)) {
 			mt->_vptr->unref(mt);
 		}
 	}

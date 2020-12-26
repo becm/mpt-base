@@ -2,7 +2,7 @@
  * wrap iterator in convertable.
  */
 
-#include "core.h"
+#include "types.h"
 
 struct convIter
 {
@@ -15,16 +15,16 @@ static int iteratorConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 	const struct convIter *wr = (void *) mt;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (dest) {
 			*((const uint8_t **) dest) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (dest) *((const void **) dest) = wr->it;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 }

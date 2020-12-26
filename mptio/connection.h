@@ -31,8 +31,6 @@ enum MPT_ENUM(SocketFlags) {
 	MPT_SOCKETFLAG(Stream) = 0x4
 };
 #ifdef __cplusplus
-	enum { Type = TypeSocket };
-	
 	inline socket(int fd = -1) : _id(fd)
 	{ }
 	~socket();
@@ -56,11 +54,6 @@ MPT_STRUCT(socket)
 #endif
 	int32_t  _id;     /* socket descriptor */
 };
-#ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<socket>::id() {
-	return socket::Type;
-}
-#endif
 
 MPT_STRUCT(outdata)
 {

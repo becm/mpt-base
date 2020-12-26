@@ -15,6 +15,7 @@
 #include "convert.h"
 #include "meta.h"
 #include "parse.h"
+#include "types.h"
 
 #include "values.h"
 
@@ -30,21 +31,21 @@ struct _iter_fdata
 static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeFile) };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_ENUM(TypeFilePtr) };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = val + 1;
-		return MPT_ENUM(TypeFile);
+		return MPT_ENUM(TypeFilePtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeFile))) {
+	if (type == MPT_ENUM(TypeFilePtr)) {
 		struct _iter_fdata *d = (void *) (val + 2);
 		if (ptr) *((void **) ptr) = d->fd;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 }
@@ -109,7 +110,7 @@ static int fileGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 			memcpy(ptr, d->val, len);
 		}
 		d->type = type;
-		return MPT_ENUM(TypeFile);
+		return MPT_ENUM(TypeFilePtr);
 	}
 	else if (d->type < 0) {
 		return 0;
@@ -135,7 +136,7 @@ static int fileAdvance(MPT_INTERFACE(iterator) *it)
 		return 0;
 	}
 	d->type = 0;
-	return MPT_ENUM(TypeFile);
+	return MPT_ENUM(TypeFilePtr);
 }
 static int fileReset(MPT_INTERFACE(iterator) *it)
 {

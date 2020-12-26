@@ -19,6 +19,7 @@ MPT_INTERFACE(iterator);
 MPT_INTERFACE(output);
 
 MPT_STRUCT(node);
+MPT_STRUCT(type_traits);
 
 /* primitive type point/transformation structure */
 #ifdef __cplusplus
@@ -41,7 +42,8 @@ struct point
 	
 	T x, y;
 };
-template<> int typeinfo<point<double> >::id();
+template<> int type_properties<point<double> >::id();
+template<> const MPT_STRUCT(type_traits) *type_properties<point<double> >::traits();
 
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
@@ -141,31 +143,45 @@ public:
 	};
 	inline value_store() : _flags(0), _code(0)
 	{ }
-	void *reserve(int , size_t , long = 0);
+	void *reserve(const struct type_traits *, size_t , long = 0);
 	void set_modified(bool mod = true);
-	size_t element_size() const;
 	long element_count() const;
-	int type() const;
 	
 	inline int flags() const
 	{
 		return _flags;
 	}
-	inline const void *base() const
+	inline const array::content *data() const
 	{
-		const array::content *d = _d.data();
-		return d ? (d + 1) : 0;
+		return _d.data();
+	}
+	template <typename T>
+	T *reserve(unsigned long len, long pos = 0)
+	{
+		static const struct type_traits *traits = 0;
+		static int type;
+		if (!traits) {
+			traits = type_properties<T>::traits();
+			type = type_properties<T>::id();
+		}
+		void *ptr = reserve(traits, len * sizeof(T), pos);
+		if (ptr) {
+			_type = type;
+			_code = 0;
+		}
+		return static_cast<T *>(ptr);
 	}
 protected:
 #else
 # define MPT_VALUE_STORE_INIT { MPT_ARRAY_INIT, 0, 0 }
 #endif
 	MPT_STRUCT(array) _d;
-	uint16_t _flags;
+	uint16_t _type;
+	uint8_t  _flags;
 	uint8_t  _code;
 };
 #ifdef __cplusplus
-template<> int typeinfo<value_store>::id();
+template<> const MPT_STRUCT(type_traits) *type_properties<value_store>::traits();
 #endif
 
 MPT_STRUCT(rawdata_stage)
@@ -190,9 +206,6 @@ MPT_STRUCT(rawdata_stage)
 	_MPT_ARRAY_TYPE(value_store) _d;
 	uint8_t _max_dimensions;
 };
-#ifdef __cplusplus
-template<> int typeinfo<rawdata_stage>::id();
-#endif
 
 /* part of MPT world */
 #ifdef __cplusplus
@@ -208,7 +221,6 @@ public:
 protected:
 	inline ~rawdata() { }
 };
-template<> int typeinfo<rawdata>::id();
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
@@ -317,13 +329,12 @@ extern int mpt_values_file(FILE *, long , long , double *);
 #endif
 
 /* type identifiers for special array and stage data */
-extern int mpt_value_store_typeid(void);
-extern int mpt_rawdata_stage_typeid(void);
+extern const MPT_STRUCT(type_traits) *mpt_value_store_traits(void);
 /* multi dimension data operations */
 extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
-extern void mpt_stage_fini(MPT_STRUCT(rawdata_stage) *);
+extern const MPT_STRUCT(type_traits) *mpt_stage_traits(void);
 /* reserve data for value segment */
-extern void *mpt_value_store_reserve(MPT_STRUCT(array) *, int , size_t, long);
+extern void *mpt_value_store_reserve(MPT_STRUCT(array) *, const MPT_STRUCT(type_traits) *, size_t, long);
 /* set dimensions to defined size */
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
 
@@ -369,7 +380,17 @@ extern int mpt_layout_open(MPT_INTERFACE(output) *, const char *, const char *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-size_t maxsize(span<const value_store>, int = -1);
+long maxsize(span<const value_store>, const struct type_traits * = 0);
+
+template <typename T>
+inline int modify(rawdata &rd, unsigned dim, const span<const T> &data, const valdest * dest = 0)
+{
+	static int type = 0;
+	if (type <= 0 && ((type = type_properties<T>::id()) < 0)) {
+		return BadValue;
+	}
+	return rd.modify(dim, type, data.begin(), data.size() * sizeof(T), dest);
+}
 
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
@@ -456,7 +477,11 @@ protected:
 	typed_array<point> _values;
 };
 
-template<> int typeinfo<polyline::point>::id();
+# if __cplusplus < 201103L
+template<> inline const MPT_STRUCT(type_traits) *type_properties<polyline::point>::traits() {
+	return type_properties<point<double> >::traits();
+}
+# endif
 
 class cycle : public metatype, public rawdata
 {
@@ -483,8 +508,8 @@ public:
 	};
 	
 	/* metatype interface */
-	void unref();
-	cycle *clone() const;
+	void unref() __MPT_OVERRIDE;
+	cycle *clone() const __MPT_OVERRIDE;
 	
 	/* basic raw data interface */
 	int modify(unsigned , int , const void *, size_t , const valdest * = 0) __MPT_OVERRIDE;

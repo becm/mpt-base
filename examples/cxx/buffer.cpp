@@ -22,7 +22,7 @@
 template <typename T>
 uint8_t type(const T &)
 {
-	return mpt::basetype(mpt::typeinfo<T>::id());
+	return mpt::basetype(mpt::type_properties<T>::id());
 }
 
 const char txt[] = "fdsgfdgm dfkhndn djgkh d hdfhsjdfgh df gh dir";
@@ -49,7 +49,7 @@ extern int main(int argc, char * const argv[])
 	for (int i = 0; i < argc; ++i) {
 		buf.write(1, argv[i], strlen(argv[i]) + 1);
 	}
-	char *v;
+	const char *v;
 	if ((v = std::strrchr(*argv, '/'))) {
 		buf.shift(v + 1 - *argv);
 	}

@@ -8,6 +8,7 @@
 #include MPT_INCLUDE(output.h)
 #include MPT_INCLUDE(config.h)
 #include MPT_INCLUDE(parse.h)
+#include MPT_INCLUDE(types.h)
 
 extern int main(int argc, char *argv[])
 {
@@ -19,13 +20,13 @@ extern int main(int argc, char *argv[])
 	
 	mpt_path_set(&p, "mpt", -1);
 	mt = mpt_config_global(&p);
-	MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg);
+	MPT_metatype_convert(mt, MPT_ENUM(TypeConfigPtr), &cfg);
 	
 	if ((i = mpt_config_load(cfg, 0, mpt_log_default())) < 0) {
 		return 1;
 	}
 	if (argc < 2) {
-		MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeNode)), &n);
+		MPT_metatype_convert(mt, MPT_ENUM(TypeNodePtr), &n);
 		mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
 	}
 	for (i = 1; i < argc; ++i) {

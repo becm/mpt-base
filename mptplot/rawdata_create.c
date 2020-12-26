@@ -33,9 +33,9 @@ static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	int me = mpt_rawdata_typeid();
 	
 	if (me < 0) {
-		me = MPT_ENUM(_TypeMetaBase);
+		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == MPT_type_pointer(me)) {
+	else if (type == me) {
 		if (ptr) *((const void **) ptr) = &rd->_rd;
 		return me;
 	}
@@ -59,22 +59,11 @@ static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 static void rd_unref(MPT_INTERFACE(metatype) *ref)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ref, _mt);
-	MPT_STRUCT(buffer) *buf;
 	
 	if (mpt_refcount_lower(&rd->_ref)) {
 		return;
 	}
-	if ((buf = rd->st._buf)) {
-		MPT_STRUCT(rawdata_stage) *st = (void *) (buf + 1);
-		size_t i, len = buf->_used/sizeof(*st);
-		
-		for (i = 0; i < len; ++i) {
-			mpt_stage_fini(st + i);
-		}
-		mpt_array_clone(&rd->st, 0);
-	}
-	rd->_mt._vptr = 0;
-	rd->_rd._vptr = 0;
+	mpt_array_clone(&rd->st, 0);
 	free(rd);
 }
 static uintptr_t rd_ref(MPT_INTERFACE(metatype) *ref)
@@ -90,74 +79,113 @@ static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)
 /* raw data interface */
 static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
 {
+	const MPT_STRUCT(type_traits) *traits;
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
-	const MPT_STRUCT(type_traits) *info;
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(value_store) *val;
-	size_t pos = 0;
+	size_t value_pos;
 	void *dest;
-	long nc;
+	uint32_t nc = 0, cycles;
+	
+	if (!(traits = mpt_stage_traits())) {
+		return MPT_ERROR(BadOperation);
+	}
 	
 	if (!vd || !(nc = vd->cycle)) {
 		nc = rd->act;
 	}
-	if (!(buf = rd->st._buf)
-	    || nc >= (long) (buf->_used / sizeof(*st))) {
+	
+	if (!(buf = rd->st._buf)) {
+		buf = _mpt_buffer_alloc(nc * traits->size);
+		buf->_content_traits = traits;
+		cycles = 0;
+	}
+	else {
+		cycles = buf->_used / traits->size;
+	}
+	
+	if (nc >= (long) (cycles)) {
 		if (!rd->max || nc >= rd->max) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!(st = mpt_array_slice(&rd->st, nc * sizeof(*st), sizeof(*st)))) {
+		if (!(st = mpt_array_slice(&rd->st, nc * traits->size, traits->size))) {
 			return MPT_ERROR(BadOperation);
 		}
-		memset(st, 0, sizeof(*st));
 	}
 	else {
 		st = (void *) (buf + 1);
 		st += nc;
 	}
-	if (vd) {
-		pos = vd->offset;
-	}
+	
+	value_pos = vd ? vd->offset : 0;
+	
 	if (!(val = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
 	if (!(buf = val->_d._buf)) {
-		MPT_STRUCT(type_traits) info;
-		memset(&info, 0, sizeof(info));
-		ssize_t size;
+		long count = 0;
+		int code;
 		
-		if (type > 0xff || (size = mpt_valsize(type)) < 0) {
+		if (!(traits = mpt_type_traits(type))) {
 			return MPT_ERROR(BadType);
 		}
-		info.size = size;
-		info.type = type;
-		info.base = type;
+		if (len && !src && traits->fini) {
+			return MPT_ERROR(BadArgument);
+		}
 		
-		pos *= size;
-		if (!(buf = _mpt_buffer_alloc(pos + len, &info))) {
+		value_pos *= traits->size;
+		if (!(buf = _mpt_buffer_alloc(value_pos + len))) {
 			return MPT_ERROR(BadOperation);
 		}
-		type = mpt_msgvalfmt_code(type);
-		val->_code = type < 0 ? 0 : type;
+		buf->_content_traits = traits;
+		if (value_pos && !(dest = mpt_buffer_insert(buf, value_pos, len))) {
+			buf->_vptr->unref(buf);
+			return MPT_ERROR(BadValue);
+		}
+		if (len) {
+			if (!src) {
+				memset(dest, 0, len);
+				count = len / traits->size;
+			}
+			else if ((count = mpt_buffer_set(val->_d._buf, traits, value_pos, src, len)) < 0) {
+				buf->_vptr->unref(buf);
+				return count;
+			}
+		}
 		
-		dest = memset(buf + 1, 0, pos);
-		dest = ((uint8_t *) dest) + pos;
+		code = mpt_msgvalfmt_code(type);
+		
+		val->_d._buf = buf;
+		val->_type = type;
+		val->_code = code < 0 ? 0 : code;
+		
+		return count;
 	}
-	else if (!(info = buf->_typeinfo)) {
+	
+	if (type != val->_type) {
 		return MPT_ERROR(BadArgument);
 	}
-	else if (info->type != type) {
-		return MPT_ERROR(BadType);
-	}
-	else if (!(dest = mpt_array_slice(&val->_d, pos, len))) {
+	if (!(traits = buf->_content_traits)) {
 		return MPT_ERROR(BadOperation);
 	}
+	if (len && !src && traits->fini) {
+		return MPT_ERROR(BadArgument);
+	}
+	
+	value_pos *= traits->size;
+	if (!(dest = mpt_array_slice(&val->_d, value_pos, len))) {
+		return MPT_ERROR(BadOperation);
+	}
+	
 	if (len) {
-		if (src) {
-			memcpy(dest, src, len);
-		} else {
+		long count;
+		if (!src) {
+			/* only reachable for trivial data types */
 			memset(dest, 0, len);
+		}
+		else if ((count = mpt_buffer_set(val->_d._buf, traits, value_pos, src, len)) < 0) {
+			return count;
 		}
 		val->_flags |= 0x1;
 	}
@@ -189,7 +217,6 @@ static int rd_advance(MPT_INTERFACE(rawdata) *ptr)
 static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iovec *vec, int nc)
 {
 	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
-	const MPT_STRUCT(type_traits) *info;
 	const MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	const MPT_STRUCT(value_store) *val;
@@ -214,18 +241,12 @@ static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iov
 	if (!(buf = val->_d._buf)) {
 		return 0;
 	}
-	if (!(info = buf->_typeinfo)
-	    || (type = info->type) <= 0) {
+	if ((type = mpt_type_id(buf->_content_traits)) <= 0) {
 		return MPT_ERROR(BadType);
 	}
 	if (vec) {
-		if ((buf = val->_d._buf)) {
-			vec->iov_base = (void *) (buf + 1);
-			vec->iov_len  = buf->_used;
-		} else {
-			vec->iov_base = 0;
-			vec->iov_len  = 0;
-		}
+		vec->iov_base = (void *) (buf + 1);
+		vec->iov_len  = buf->_used;
 	}
 	return type;
 }

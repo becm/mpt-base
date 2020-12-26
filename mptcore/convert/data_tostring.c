@@ -5,11 +5,13 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 #include <sys/uio.h>
 
 #include "meta.h"
 #include "array.h"
+#include "types.h"
 
 #include "convert.h"
 
@@ -45,7 +47,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	}
 	/* data is text array */
 	if (type == MPT_ENUM(TypeArray)) {
-		const MPT_STRUCT(type_traits) *info;
+		static const MPT_STRUCT(type_traits) *traits= 0;
 		const MPT_STRUCT(array) *arr = *from;
 		MPT_STRUCT(buffer) *b;
 		
@@ -54,8 +56,12 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			if (len) *len = 0;
 			return def;
 		}
-		if (!(info = b->_typeinfo)
-		    || info->type != 'c') {
+		/* initialize traits binding */
+		if (!traits || (!(traits = mpt_type_traits('c')))) {
+			errno = ENOTSUP;
+			return 0;
+		}
+		if (b->_content_traits != traits) {
 			return 0;
 		}
 		base = (void *) (b + 1);
@@ -72,7 +78,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		return (char *) (b + 1);
 	}
 	/* data is text vector */
-	if (type == MPT_type_vector('c')) {
+	if (type == MPT_type_toVector('c')) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;

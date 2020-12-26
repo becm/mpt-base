@@ -34,8 +34,6 @@ MPT_STRUCT(node)
 	
 	static node *create(const char * = 0, int = -1);
 	static node *create(size_t);
-	
-	enum { Type = TypeNode };
 #else
 # define MPT_NODE_INIT { 0, 0, 0, 0, 0, MPT_IDENTIFIER_INIT }
 #endif
@@ -48,9 +46,11 @@ MPT_STRUCT(node)
 };
 
 #if defined(__cplusplus)
-template<> inline __MPT_CONST_TYPE int typeinfo<node>::id()
-{
-	return node::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<node *>::id() {
+	return TypeNodePtr;
+}
+template <> inline const struct type_traits *type_properties<node *>::traits() {
+	return type_traits(id());
 }
 #endif
 

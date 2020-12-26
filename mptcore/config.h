@@ -79,8 +79,6 @@ MPT_INTERFACE(config)
 protected:
 	inline ~config() { }
 public:
-	enum { Type = TypeConfig };
-	
 	int environ(const char *match = "mpt_*", int sep = '_', char * const env[] = 0);
 	void del(const char *path, int sep = '.', int len = -1);
 	bool set(const char *path, const char *value = 0, int sep = '.');
@@ -92,9 +90,11 @@ public:
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<config>::id()
-{
-	return config::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<config *>::id() {
+	return TypeConfigPtr;
+}
+template <> inline const struct type_traits *type_properties<config *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(config);

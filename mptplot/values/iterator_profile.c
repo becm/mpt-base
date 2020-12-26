@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include "types.h"
 #include "convert.h"
 
 #include "values.h"
@@ -72,7 +73,7 @@ static int getValues(double *val, int len, const char *ptr)
  */
 extern MPT_INTERFACE(metatype) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(double) *arr, const char *desc)
 {
-	const MPT_STRUCT(type_traits) *info;
+	const MPT_STRUCT(type_traits) *traits = mpt_type_traits('d');
 	MPT_STRUCT(buffer) *buf;
 	long len;
 	int match;
@@ -80,9 +81,9 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_profile(const _MPT_ARRAY_TYPE(doubl
 	if (!desc) {
 		return mpt_iterator_values(0);
 	}
-	if (!(buf = arr->_buf)
-	    || !(info = buf->_typeinfo)
-	    || info->type != 'd'
+	if (!traits
+	    || !(buf = arr->_buf)
+	    || (traits != buf->_content_traits)
 	    || !(len = buf->_used / sizeof(double))) {
 		errno = EINVAL;
 		return 0;

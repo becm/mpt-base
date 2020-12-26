@@ -1,12 +1,11 @@
 # Makefile: MPT C++ library example programs
 #
-CXX11_TARGETS = config map object
+CXX11_TARGETS = config map object layout
 TESTS = \
 	${CXX11_TARGETS} \
 	array \
 	buffer \
 	iter \
-	layout \
 	output \
 	queue \
 	types
@@ -28,7 +27,6 @@ iter : LDLIBS+=-lmptplot
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt++ -lmpt
 %_static : CPPFLAGS+=-D_STATIC
-types : LDLIBS+=-lmptcore
 
 # special test arguments
 test_config : ARGS=${MPT_PREFIX}
@@ -36,4 +34,4 @@ test_layout : ARGS=layout.lay
 test_buffer : ARGS=1 2 3
 
 # default to C++11 standard
-$(CXX11_TARGETS:%=%.o) : CPPFLAGS+=-std=c++11
+${CXX11_TARGETS} $(CXX11_TARGETS:%=%_static) : CXXFLAGS+=-std=c++11

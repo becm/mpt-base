@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #include "convert.h"
+#include "types.h"
 #include "meta.h"
 #include "parse.h"
 
@@ -26,14 +27,14 @@ struct _iter_bdata
 static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 'd';
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((void **) ptr) = (void *) (val + 1);
 		return 'd';
 	}

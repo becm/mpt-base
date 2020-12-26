@@ -6,6 +6,7 @@
 #include <fnmatch.h>
 
 #include "meta.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -39,7 +40,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		MPT_INTERFACE(metatype) *mt;
 		
 		if (!(mt = mpt_config_global(0))
-		    || (MPT_metatype_convert(mt, MPT_type_pointer(MPT_ENUM(TypeConfig)), &conf) < 0)
+		    || (MPT_metatype_convert(mt, MPT_ENUM(TypeConfigPtr), &conf) < 0)
 		    || !conf) {
 			return MPT_ERROR(BadOperation);
 		}

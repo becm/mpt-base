@@ -6,8 +6,9 @@
 
 #include <sys/uio.h>
 
-#include "convert.h"
 #include "meta.h"
+#include "convert.h"
+#include "types.h"
 
 #include "object.h"
 
@@ -22,14 +23,14 @@ static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 {
 	struct wrapIter *it = (void *) mt;
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), 's', 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
 		if (dest) {
 			*((const uint8_t **) dest) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (dest) {
 			MPT_INTERFACE(metatype) *src;
 			if (!it->val || !*it->val) {
@@ -41,11 +42,11 @@ static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 				}
 				it->src = src;
 			}
-			return MPT_metatype_convert(src, MPT_type_pointer(MPT_ENUM(TypeIterator)), dest);
+			return MPT_metatype_convert(src, MPT_ENUM(TypeIteratorPtr), dest);
 		}
 		return 's';
 	}
-	if (type == MPT_type_vector('c')) {
+	if (type == MPT_type_toVector('c')) {
 		struct iovec *vec;
 		if ((vec = dest)) {
 			vec->iov_base = (void *) it->val;

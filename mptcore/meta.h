@@ -6,7 +6,11 @@
 #ifndef _MPT_META_H
 #define _MPT_META_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#ifdef __cplusplus
+# include "types.h"
+#else
+# include "core.h"
+#endif
 
 #ifndef __cplusplus
 # define MPT_metatype_convert(m, t, d) ((m)->_vptr->convertable.convert((MPT_INTERFACE(convertable) *) (m), t, d))
@@ -19,10 +23,9 @@ __MPT_NAMESPACE_BEGIN
 MPT_INTERFACE(metatype) : public convertable
 {
 protected:
-	inline ~metatype() {}
+	inline ~metatype()
+	{ }
 public:
-	enum { Type = _TypeMetaBase };
-	
 	class basic;
 	
 	static metatype *create(value);
@@ -34,9 +37,18 @@ public:
 	virtual uintptr_t addref();
 	virtual metatype *clone() const = 0;
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<metatype>::id()
-{
-	return metatype::Type;
+template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id() {
+	return TypeMetaPtr;
+}
+template <> inline const struct type_traits *type_properties<metatype *>::traits() {
+	return type_traits(id());
+}
+
+template <> inline __MPT_CONST_TYPE int type_properties<reference<metatype> >::id() {
+	return TypeMetaRef;
+}
+template <> inline const struct type_traits *type_properties<reference<metatype> >::traits() {
+	return type_traits(id());
 }
 
 inline uintptr_t metatype::addref()
@@ -63,8 +75,6 @@ MPT_INTERFACE(iterator)
 protected:
 	inline ~iterator() {}
 public:
-	enum { Type = TypeIterator };
-	
 	virtual int get(int, void *) = 0;
 	virtual int advance();
 	virtual int reset();
@@ -72,8 +82,12 @@ public:
 	template <typename T>
 	bool consume(T &val)
 	{
+		int type = type_properties<T>::id();
+		if (type <= 0) {
+			return false;
+		}
 		T tmp;
-		if (get(typeinfo<T>::id(), &tmp) <= 0) {
+		if (get(type, &tmp) <= 0) {
 			return false;
 		}
 		if (advance() < 0) {
@@ -83,9 +97,11 @@ public:
 		return true;
 	}
 };
-template <> inline __MPT_CONST_TYPE int typeinfo<iterator>::id()
-{
-	return iterator::Type;
+template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id() {
+	return TypeIteratorPtr;
+}
+template <> inline const struct type_traits *type_properties<iterator *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(iterator);
@@ -105,10 +121,10 @@ MPT_STRUCT(consumable)
 #ifdef __cplusplus
 	inline consumable(convertable &val)
 	{
-		if ((_it = val.cast<iterator>())) {
+		if ((_it = typecast<iterator>(val))) {
 			return;
 		}
-		val.convert(_val.Type, &_val);
+		val.convert(type_properties<value>::id(), &_val);
 	}
 protected:
 #else
@@ -167,7 +183,7 @@ public:
 	}
 	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
-		static const int me = typeinfo<T>::id();
+		static const int me = type_properties<T>::id();
 		if (!type) {
 			if (dest) {
 				*static_cast<const uint8_t **>(dest) = 0;
@@ -189,15 +205,17 @@ public:
 protected:
 	T _val;
 };
-template <typename T>
-class typeinfo<meta_value<T> >
+template<typename T>
+class type_properties<meta_value<T> *>
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static int id()
-	{
-		return metatype::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return TypeMetaPtr;
+	}
+	static inline const struct type_traits *traits(void) {
+		return type_traits(id());
 	}
 };
 
@@ -244,21 +262,23 @@ public:
 	}
 	inline static int content()
 	{
-		return typeinfo<T>::id();
+		return type_properties<T>::id();
 	}
 protected:
 	span<const T> _d;
 	int _pos;
 };
 template <typename T>
-class typeinfo<source<T> >
+class type_properties<source<T> *>
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static int id()
-	{
-		return iterator::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return TypeIteratorPtr;
+	}
+	static inline const struct type_traits *traits(void) {
+		return type_traits(id());
 	}
 };
 #endif

@@ -14,13 +14,9 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<point<double> >::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
+template <> const struct type_traits *type_properties<point<double> >::traits() {
+	static const struct type_traits traits(sizeof(point<double>));
+	return &traits;
 }
 
 int apply_data(point<double> *dest, const span<const linepart> &pts, const transform &tr, span<const value_store> st)
@@ -31,6 +27,7 @@ int apply_data(point<double> *dest, const span<const linepart> &pts, const trans
 	int plen = pts.size();
 	
 	dim = tr.dimensions();
+	const struct type_traits *traits = type_properties<double>::traits();
 	
 	for (int i = 0; i < dim; i++) {
 		const value_store *val;
@@ -38,15 +35,15 @@ int apply_data(point<double> *dest, const span<const linepart> &pts, const trans
 		if (!(val = st.nth(i))) {
 			continue;
 		}
-		const double *from = 0;
-		long max;
-		if (val->type() != typeinfo<double>::id()) {
+		const array::content *d = val->data();
+		if (!d || (traits != d->content_traits())) {
 			continue;
 		};
-		from = static_cast<__decltype(from)>(val->base());
-		if ((max = val->element_count()) <= 0) {
+		long max;
+		if (!(max = d->length() / traits->size)) {
 			continue;
 		}
+		const double *from = static_cast<__decltype(from)>(d->data());
 		linepart tmp;
 		point<double> *to = dest;
 		
@@ -84,17 +81,21 @@ int apply_data(point<double> *dest, const span<const linepart> &pts, const trans
 
 bool polyline::set(const transform &tr, span<const value_store> src)
 {
+	const struct type_traits *traits = type_properties<double>::traits();
+	
 	// generate parts data
-	long max = maxsize(src, typeinfo<double>::id());
+	long max = maxsize(src, traits);
 	if (!max || !_vis.set(max)) {
 		return false;
 	}
 	const value_store *val = src.begin();
 	for (long i = 0, max = src.size(); i < max; ++i) {
-		if (val->type() != typeinfo<double>::id()) {
+		const array::content *d = val->data();
+		if (!d || d->content_traits() != traits) {
 			continue;
 		}
-		_vis.apply(tr, i, span<const double>(static_cast<const double *>(val->base()), val->element_count()));
+		long length = d->length() / traits->size;
+		_vis.apply(tr, i, span<const double>(static_cast<const double *>(d->data()), length));
 		++val;
 	}
 	// prepare target data

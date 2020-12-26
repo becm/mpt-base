@@ -3,6 +3,8 @@
 #include <limits.h>
 #include <string.h>
 
+#include "types.h"
+
 #include "array.h"
 #include "config.h"
 
@@ -29,11 +31,9 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	
 	/* need new storage */
 	if (!(b = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
-		static const MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(char, 'c');
-		if (!(b = _mpt_buffer_alloc(pos + 1, 0))) {
+		if (!(b = _mpt_buffer_alloc(pos + 1))) {
 			return MPT_ERROR(BadOperation);
 		}
-		b->_typeinfo = &info;
 		if (!(dest = mpt_buffer_insert(b, 0, pos + 1))) {
 			b->_vptr->unref(b);
 			return MPT_ERROR(MissingBuffer);

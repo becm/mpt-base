@@ -18,15 +18,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<io::stream>::id()
-{
-	static int id;
-	if (!id && (id = mpt_type_meta_new("stream")) < 0) {
-		id = mpt_type_meta_new(0);
-	}
-	return id;
-}
-
 // stream class
 io::stream::stream(const streaminfo *from) : _srm(0), _cid(0), _inputFile(-1), _idlen(0)
 {
@@ -48,30 +39,29 @@ io::stream::~stream()
 // convertable interface
 int io::stream::convert(int type, void *ptr)
 {
-	int me = mpt_input_typeid();
+	int me = type_properties<io::interface *>::id();
 	
 	if (me < 0) {
-		me = output::Type;
+		if ((me = mpt_input_typeid()) < 0) {
+			me = TypeOutputPtr;
+		}
 	}
-	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<input **>(ptr) = this;
-		return socket::Type;
+	else if (assign(static_cast<io::interface *>(this), type, ptr)) {
+		return TypeUnixSocket;
 	}
 	if (!type) {
-		static const uint8_t fmt[] = { output::Type, socket::Type, 0 };
+		static const uint8_t fmt[] = { TypeOutputPtr, TypeUnixSocket, 0 };
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
-	if (type == socket::Type) {
+	if (type == TypeUnixSocket) {
 		if (ptr) *reinterpret_cast<int *>(ptr) = _inputFile;
 		return me;
 	}
-	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<metatype **>(ptr) = this;
-		return output::Type;
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
+		return TypeOutputPtr;
 	}
-	if (type == to_pointer_id(output::Type)) {
-		if (ptr) *static_cast<output **>(ptr) = this;
+	if (assign(static_cast<output *>(this), type, ptr)) {
 		return me;
 	}
 	return BadType;
@@ -92,7 +82,7 @@ int io::stream::property(struct property *pr) const
 	int me = mpt_input_typeid();
 	
 	if (me < 0) {
-		me = output::Type;
+		me = TypeOutputPtr;
 	}
 	if (!pr) {
 		return me;
@@ -108,7 +98,7 @@ int io::stream::property(struct property *pr) const
 	else {
 		// get stream interface types
 		if (!*name) {
-			static const uint8_t fmt[] = { output::Type, 0 };
+			static const uint8_t fmt[] = { TypeOutputPtr, 0 };
 			pr->name = "stream";
 			pr->desc = "interfaces to stream data";
 			pr->val.fmt = fmt;
@@ -148,7 +138,7 @@ int io::stream::set_property(const char *pr, convertable *src)
 		if (!src) {
 			l = 0;
 		} else {
-			int ret = src->convert(typeinfo<uint8_t>::id(), &l);
+			int ret = src->convert(type_properties<uint8_t>::id(), &l);
 			if (ret < 0) {
 				return ret;
 			}
@@ -289,14 +279,14 @@ public:
 				warning(_func, "%s", MPT_tr("no reply context"));
 				break;
 			}
-			if (!(rd = ctx->cast<reply_data>())) {
+			if (!(rd = typecast<reply_data>(*ctx))) {
 				break;
 			}
 			if (!rd->set(idlen, id)) {
 				error(_func, "%s", MPT_tr("reply context unusable"));
 				return BadOperation;
 			}
-			rc = ctx->cast<reply_context>();
+			rc = typecast<reply_context>(*ctx);
 			break;
 		}
 		ev.reply = rc;

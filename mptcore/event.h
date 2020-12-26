@@ -16,8 +16,6 @@ MPT_STRUCT(notify);
 MPT_STRUCT(reply_data)
 {
 #ifdef __cplusplus
-	enum { Type = TypeReplyData };
-	
 	reply_data(size_t len);
 	
 	inline bool active() const
@@ -33,9 +31,11 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<reply_data>::id()
-{
-	return reply_data::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<reply_data *>::id() {
+	return TypeReplyDataPtr;
+}
+template <> inline const struct type_traits *type_properties<reply_data *>::traits() {
+	return type_traits(id());
 }
 
 class reply_context_detached
@@ -58,8 +58,6 @@ MPT_INTERFACE_VPTR(reply_context_detached) {
 class reply_context
 {
 public:
-	enum { Type = TypeReply };
-	
 	enum {
 		MaxSize = 0x100
 	};
@@ -70,9 +68,11 @@ protected:
 	inline ~reply_context()
 	{ }
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<reply_context>::id()
-{
-	return reply_context::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<reply_context *>::id() {
+	return TypeReplyPtr;
+}
+template <> inline const struct type_traits *type_properties<reply_context *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(reply_context);
@@ -142,8 +142,6 @@ MPT_STRUCT(command)
 private:
 	command & operator =(const command &from); /* disable copy */
 public:
-	enum { Type = TypeCommand };
-	
 	inline command() : id(0), cmd(0), arg(0)
 	{ }
 	inline ~command()
@@ -245,9 +243,11 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<command>::id()
-{
-	return command::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<command>::id() {
+	return TypeCommand;
+}
+template <> inline const struct type_traits *type_properties<command>::traits() {
+	return type_traits(id());
 }
 
 class MessageSource : public reply_context

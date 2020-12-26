@@ -14,13 +14,9 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<linepart>::id()
-{
-	static int id = 0;
-	if (!id) {
-		id = make_id();
-	}
-	return id;
+template <> const struct type_traits *type_properties<linepart>::traits() {
+	static const struct type_traits traits(sizeof(linepart));
+	return &traits;
 }
 
 // partial line value

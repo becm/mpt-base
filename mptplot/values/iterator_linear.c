@@ -26,14 +26,14 @@ struct _iter_ldata
 static int iterConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator) };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 'd';
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = val + 1;
 		return 'd';
 	}

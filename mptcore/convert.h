@@ -8,7 +8,11 @@
 
 #include <sys/uio.h>
 
-#include "core.h"
+#ifdef __cplusplus
+# include "output.h"
+#else
+# include "core.h"
+#endif
 
 #if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
 # define _MPT_FLOAT_EXTENDED_H
@@ -79,8 +83,6 @@ MPT_STRUCT(scalar)
 MPT_STRUCT(value_format)
 {
 public:
-	enum { Type = TypeValFmt };
-	
 	inline value_format() : flags(0), width(0), dec(6)
 	{ }
 # define MPT_VALFMT(x)  x
@@ -116,9 +118,11 @@ MPT_STRUCT(strdest)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int typeinfo<value_format>::id()
-{
-	return value_format::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<value_format>::id() {
+	return TypeValFmt;
+}
+template <> inline const struct type_traits *type_properties<value_format>::traits() {
+	return type_traits(id());
 }
 
 float swapOrder(float);

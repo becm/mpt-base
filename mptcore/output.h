@@ -6,7 +6,11 @@
 #ifndef _MPT_OUTPUT_H
 #define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
-#include "core.h"
+#ifdef __cplusplus
+# include "types.h"
+#else
+# include "core.h"
+#endif
 
 __MPT_NAMESPACE_BEGIN
 
@@ -20,8 +24,6 @@ MPT_INTERFACE(output)
 protected:
 	inline ~output() {}
 public:
-	enum { Type = TypeOutput };
-	
 	virtual ssize_t push(size_t, const void *) = 0;
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
@@ -44,9 +46,11 @@ enum MPT_OUTFLAG(Flags) {
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<output>::id()
-{
-	return output::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<output *>::id() {
+	return TypeOutputPtr;
+}
+template<> inline const struct type_traits *type_properties<output *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(output);
@@ -70,8 +74,6 @@ MPT_INTERFACE(logger)
 protected:
 	inline ~logger() {}
 public:
-	enum { Type = TypeLogger };
-	
 	int message(const char *, int , const char *, ...);
 	
 	static logger *default_instance();
@@ -104,9 +106,11 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<logger>::id()
-{
-	return logger::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<logger *>::id() {
+	return TypeLoggerPtr;
+}
+template<> inline const struct type_traits *type_properties<logger *>::traits() {
+	return type_traits(id());
 }
 #else
 MPT_INTERFACE(logger);

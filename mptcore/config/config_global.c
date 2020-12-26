@@ -6,6 +6,7 @@
 #include "node.h"
 #include "meta.h"
 #include "object.h"
+#include "types.h"
 
 #include "config.h"
 
@@ -79,25 +80,25 @@ static int configConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	const MPT_STRUCT(configRoot) *c = (void *) val;
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeConfig), MPT_ENUM(TypeNode), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeConfigPtr), MPT_ENUM(TypeNodePtr), 0 };
 		if (ptr) {
 			*((const uint8_t **) ptr) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeConfig);
+		return MPT_ENUM(TypeConfigPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeConfig))) {
+	if (type == MPT_ENUM(TypeConfigPtr)) {
 		if (ptr) *((const void **) ptr) = &c->_cfg;
-		return MPT_ENUM(TypeNode);
+		return MPT_ENUM(TypeNodePtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeNode))) {
+	if (type == MPT_ENUM(TypeNodePtr)) {
 		if (!c->base.len) {
 			return MPT_ERROR(BadValue);
 		}
 		if (ptr) {
 			*((void **) ptr) = make_global(&c->base);
 		}
-		return MPT_ENUM(TypeConfig);
+		return MPT_ENUM(TypeConfigPtr);
 	}
 	return MPT_ERROR(BadType);
 }

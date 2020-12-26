@@ -109,7 +109,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(co
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeAxis)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeAxisPtr), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;
@@ -127,7 +127,7 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(co
 			mpt_axis_fini(ax);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeAxisPtr), &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;
@@ -251,7 +251,7 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeAxis);
+		return MPT_ENUM(TypeAxisPtr);
 	}
 	/* property by position */
 	if (!pr->name) {

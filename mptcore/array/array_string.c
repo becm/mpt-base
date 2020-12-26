@@ -6,6 +6,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "types.h"
+
 #include "array.h"
 
 /*!
@@ -20,7 +22,7 @@
  */
 extern char *mpt_array_string(MPT_STRUCT(array) *arr)
 {
-	const MPT_STRUCT(type_traits) *info;
+	static const MPT_STRUCT(type_traits) *traits = 0;
 	MPT_STRUCT(buffer) *buf;
 	char *str, *sep;
 	size_t len;
@@ -30,7 +32,11 @@ extern char *mpt_array_string(MPT_STRUCT(array) *arr)
 		return 0;
 	}
 	/* accept character data only */
-	if (!(info = buf->_typeinfo) || info->type != 'c') {
+	if (!traits || (!(traits = mpt_type_traits('c')))) {
+		errno = ENOTSUP;
+		return 0;
+	}
+	if (buf->_content_traits != traits) {
 		errno = EINVAL;
 		return 0;
 	}

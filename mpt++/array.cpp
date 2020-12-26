@@ -62,9 +62,21 @@ bool swap(span<void *> s, long p1, long p2)
 	return true;
 }
 // buffer storage implementation
-buffer *buffer::create(size_t len, const type_traits *info)
+buffer *buffer::create(size_t len, const struct type_traits *traits)
 {
-	return _mpt_buffer_alloc(len, info);
+	buffer *b = _mpt_buffer_alloc(len);
+	if (b) {
+		b->_content_traits = traits;
+	}
+	return b;
+}
+buffer *buffer::create_unique(size_t len, const struct type_traits *traits)
+{
+	buffer *b = _mpt_buffer_alloc_unique(len);
+	if (b) {
+		b->_content_traits = traits;
+	}
+	return b;
 }
 buffer *buffer::detach(size_t)
 {
@@ -92,7 +104,16 @@ bool buffer::move(buffer &from)
 }
 bool buffer::copy(const buffer &from)
 {
-	return mpt_buffer_copy(this, &from) >= 0;
+	if (&from == this) {
+		return true;
+	}
+	if (mpt_buffer_set(this, from._content_traits, 0, &from + 1, from._used) < 0) {
+		return false;
+	}
+	if (from._used < _used) {
+		trim(_used - from._used);
+	}
+	return true;
 }
     
 bool buffer::skip(size_t len)
@@ -102,17 +123,18 @@ bool buffer::skip(size_t len)
 	}
 	size_t post = _used - len;
 	uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1));
-	if (_typeinfo) {
+	const struct type_traits *traits;
+	if ((traits = content_traits())) {
 		size_t size;
-		if (!(size = _typeinfo->size)
+		if (!(size = traits->size)
 		 || len % size) {
 			return false;
 		}
 		void (*fini)(void *);
-		if ((fini = _typeinfo->fini)) {
-		for (size_t i = 0; i < len; i += size) {
-			fini(base + i);
-		}
+		if ((fini = traits->fini)) {
+			for (size_t i = 0; i < len; i += size) {
+				fini(base + i);
+			}
 		}
 	}
 	std::memmove(base, base + len, post);
@@ -126,15 +148,16 @@ bool buffer::trim(size_t len)
 	}
 	size_t used = _used;
 	len = used - len;
-	if (_typeinfo) {
+	const struct type_traits *traits = content_traits();
+	if (traits) {
 		size_t size;
-		if (!(size = _typeinfo->size)
+		if (!(size = traits->size)
 		 || used % size
 		 || len % size) {
 			return false;
 		}
 		void (*fini)(void *);
-		if ((fini = _typeinfo->fini)) {
+		if ((fini = traits->fini)) {
 			uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1)) + len;
 			for (size_t i = len; i < used; i += size) {
 				fini(base + i);
@@ -152,19 +175,13 @@ void *buffer::append(size_t len)
 		return 0;
 	}
 	uint8_t *base = static_cast<uint8_t *>(static_cast<void *>(this + 1)) + used;
-	const type_traits *info;
-	if ((info = _typeinfo)) {
+	const struct type_traits *traits;
+	if ((traits = content_traits())) {
 		size_t size;
-		if (!(size = info->size)
+		if (!(size = traits->size)
 		 || used % size
 		 || len % size) {
 			return 0;
-		}
-		void (*init)(const type_traits *, void *);
-		if ((init = info->init)) {
-			for (size_t i = 0; i < len; i += size) {
-				init(info, base + i);
-			}
 		}
 	}
 	_used += len;
@@ -173,6 +190,9 @@ void *buffer::append(size_t len)
 // simple array data implementation
 bool array::content::set_length(size_t len)
 {
+	if (content_traits()) {
+		return false;
+	}
 	if (len > _size) {
 		return false;
 	}
@@ -205,7 +225,7 @@ array &array::operator= (const array &a)
 bool array::set(const reference<buffer> &a)
 {
 	buffer *b;
-	if ((b = a.instance()) && b->typeinfo()) {
+	if ((b = a.instance()) && b->content_traits()) {
 		return false;
 	}
 	_buf = reinterpret_cast<const reference<content> &>(a);
@@ -230,7 +250,7 @@ void *array::set(size_t len, const void *base)
 	if ((d = _buf.instance())) {
 		size_t used;
 		/* incompatible target buffer */
-		if (d->typeinfo() || d->shared()) {
+		if (d->content_traits() || d->shared()) {
 			d = 0;
 		}
 		else if (len <= (used = d->length())) {
@@ -241,7 +261,7 @@ void *array::set(size_t len, const void *base)
 			d = 0;
 		}
 	}
-	if (d) {
+	if (!d) {
 		if (!(d = static_cast<content *>(buffer::create(len)))) {
 			return 0;
 		}
@@ -268,7 +288,7 @@ int array::set(convertable &src)
 	if (src.convert(TypeVector, &vec) >= 0) {
 		return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
 	}
-	if (src.convert(MPT_type_vector('c'), &vec) >= 0) {
+	if (src.convert(MPT_type_toVector('c'), &vec) >= 0) {
 		return (set(vec.iov_len, vec.iov_base)) ? 0 : BadOperation;
 	}
 	char *data;
@@ -324,14 +344,15 @@ int array::set(value val)
 		int ret;
 		/* print number data */
 		if ((ret = mpt_number_print(buf, sizeof(buf), value_format(), *val.fmt, val.ptr)) >= 0) {
+			const MPT_STRUCT(type_traits) *traits;
 			if (!mpt_array_append(&a, ret, buf)) {
 				return BadOperation;
 			}
-			if ((ret = mpt_valsize(*val.fmt)) < 0) {
+			if (!(traits = type_traits(*val.fmt))) {
 				return BadType;
 			}
 			++val.fmt;
-			val.ptr = ((uint8_t *) val.ptr) + ret;
+			val.ptr = ((uint8_t *) val.ptr) + traits->size;
 			continue;
 		}
 		break;
@@ -352,7 +373,7 @@ void *array::insert(size_t off, size_t len, const void *data)
 	
 	/* compatibility check */
 	if ((d = _buf.instance())
-	 && !d->typeinfo()
+	 && !d->content_traits()
 	 && !d->shared()) {
 		dest = d->insert(off, len);
 	}

@@ -14,6 +14,9 @@
 #include "meta.h"
 #include "message.h"
 #include "object.h"
+#include "types.h"
+
+#include "mptio/connection.h"
 
 #include "output.h"
 
@@ -31,7 +34,7 @@ static int setHistfile(MPT_STRUCT(logfile) *log, MPT_INTERFACE(convertable) *src
 		fd = 0;
 	}
 	/* use socket descriptor */
-	else if (src->_vptr->convert(src, MPT_ENUM(TypeSocket), &sock) >= 0) {
+	else if (src->_vptr->convert(src, MPT_ENUM(TypeUnixSocket), &sock) >= 0) {
 		if (sock < 0) {
 			fd = 0;
 		}
@@ -130,13 +133,13 @@ extern int mpt_logfile_get(const MPT_STRUCT(logfile) *log, MPT_STRUCT(property) 
 	intptr_t pos = -1, id;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeFile);
+		return MPT_ENUM(TypeFilePtr);
 	}
 	if (!(name = pr->name)) {
 		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeFile), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeFilePtr), 0 };
 		pr->name = "logfile";
 		pr->desc = MPT_tr("log message target");
 		pr->val.fmt = fmt;
@@ -145,7 +148,7 @@ extern int mpt_logfile_get(const MPT_STRUCT(logfile) *log, MPT_STRUCT(property) 
 	}
 	id = 0;
 	if (name ? (!strcasecmp(name, "file")) : pos == id++) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeFile), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeFilePtr), 0 };
 		pr->name = "file";
 		pr->desc = MPT_tr("output file descriptor");
 		pr->val.fmt = fmt;

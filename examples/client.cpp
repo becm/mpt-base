@@ -43,7 +43,7 @@ client::client()
 	mpt::mpt_convertable_info(mt, &pr);
 	mpt::debug(__func__, "%s: %s", pr.name, pr.desc);
 	mpt::object *o;
-	if (mt && (o = mt->cast<mpt::object>())) {
+	if (mt && (o = mpt::typecast<mpt::object>(*mt))) {
 		o->set(0, "w:client.out");
 	}
 	_mt.set_instance(mt);
@@ -53,7 +53,7 @@ int client::convert(int type, void *ptr)
 	metatype *mt;
 	int ret;
 	if ((mt = _mt.instance()) && (ret = mt->convert(type, ptr)) > 0) {
-		return Type;
+		return mpt::type_properties<mpt::client *>::id();
 	}
 	return client::convert(type, ptr);
 }
@@ -72,7 +72,7 @@ int client::process(uintptr_t , mpt::iterator *)
 
 static int do_command(void *ptr, mpt::event *ev)
 {
-	auto *c = static_cast<mpt::client *>(ptr);
+	mpt::client *c = static_cast<mpt::client *>(ptr);
 	if (!ev) {
 		return 0;
 	}
@@ -106,8 +106,8 @@ int main(int argc, char * const argv[])
 	mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 	
 	mpt::convertable *val;
-	if ((val = mpt::config::global()->cast<mpt::config>()->get("mpt.args"))) {
-		mpt::iterator *it = val->cast<mpt::iterator>();
+	if ((val = mpt::typecast<mpt::config>(*mpt::config::global())->get("mpt.args"))) {
+		mpt::iterator *it = mpt::typecast<mpt::iterator>(*val);
 		const char *arg;
 		while (it->consume(arg)) {
 			std::cerr << arg << std::endl;

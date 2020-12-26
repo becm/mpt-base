@@ -2,6 +2,8 @@
  * MPT C++ buffer implementation
  */
 
+#include <cerrno>
+
 #include <sys/uio.h>
 
 #include "message.h"
@@ -23,28 +25,25 @@ io::buffer::~buffer()
 // convertable interface
 int io::buffer::convert(int type, void *ptr)
 {
-	int me = typeinfo<io::interface>::id();
+	int me = type_properties<io::interface *>::id();
 	if (me < 0) {
-		me = metatype::Type;
-	}
-	else if (type == to_pointer_id(me)) {
-		if (ptr) *static_cast<io::interface **>(ptr) = this;
-		return me;
+		me = TypeMetaPtr;
 	}
 	if (!type) {
-		static const uint8_t types[] = { iterator::Type, MPT_type_vector('c'), 's', 0 };
+		static const uint8_t types[] = { TypeIteratorPtr, MPT_type_toVector('c'), 's', 0 };
 		if (ptr) *static_cast<const uint8_t **>(ptr) = types;
 		return me;
 	}
-	if (type == to_pointer_id(metatype::Type)) {
-		if (ptr) *static_cast<metatype **>(ptr) = this;
+	if (assign(static_cast<io::interface *>(this), type, ptr)) {
 		return me;
 	}
-	if (type == to_pointer_id(iterator::Type)) {
-		if (ptr) *static_cast<iterator **>(ptr) = this;
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
 		return me;
 	}
-	if (type == MPT_type_vector('c')) {
+	if (assign(static_cast<iterator *>(this), type, ptr)) {
+		return me;
+	}
+	if (type == MPT_type_toVector('c')) {
 		struct iovec *vec;
 		if ((vec = static_cast<struct iovec *>(ptr))) {
 			span<uint8_t> d = data();
@@ -84,9 +83,9 @@ io::buffer *io::buffer::clone() const
 int io::buffer::get(int type, void *ptr)
 {
 	if (!type) {
-		int me = typeinfo<io::interface>::id();
+		int me = type_properties<io::interface *>::id();
 		mpt_slice_get(0, type, ptr);
-		return me < 0 ? array::Type : me;
+		return me < 0 ? type_properties<array>::id() : me;
 	}
 	if (_state.scratch) {
 		return message::InProgress;
@@ -97,8 +96,8 @@ int io::buffer::get(int type, void *ptr)
 	if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
 		return type;
 	}
-	int me = typeinfo<io::interface>::id();
-	return me < 0 ? metatype::Type : me;
+	int me = type_properties<io::interface *>::id();
+	return me < 0 ? TypeMetaPtr : me;
 }
 int io::buffer::advance()
 {

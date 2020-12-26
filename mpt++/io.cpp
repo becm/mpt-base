@@ -6,13 +6,17 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int typeinfo<io::interface>::id()
+template <> int type_properties<io::interface *>::id()
 {
 	static int id = 0;
 	if (!id) {
 		id = mpt_type_interface_new("io");
 	}
 	return id;
+}
+template<> const MPT_STRUCT(type_traits) *type_properties<io::interface *>::traits()
+{
+	return type_traits(id());
 }
 
 // generic I/O operations

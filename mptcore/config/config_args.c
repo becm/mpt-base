@@ -7,6 +7,7 @@
 #include "meta.h"
 #include "object.h"
 #include "output.h"
+#include "types.h"
 
 #include "config.h"
 

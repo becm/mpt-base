@@ -19,24 +19,9 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(slice);
+MPT_STRUCT(type_traits);
 
 MPT_INTERFACE(metatype);
-
-MPT_STRUCT(type_traits)
-{
-#ifdef __cplusplus
-	inline type_traits() : init(0), copy(0), fini(0), type(0), size(0), base(0)
-	{ }
-#else
-# define MPT_TYPETRAIT_INIT(t, i)  { 0, 0, 0,  (i), sizeof(t), (i) }
-#endif
-	void   (*init)(const MPT_STRUCT(type_traits) *, void *);
-	int    (*copy)(void *, int , void *);
-	void   (*fini)(void *);
-	int      type;
-	uint16_t size;
-	uint8_t  base;
-};
 
 /*! header for data segment */
 #ifdef __cplusplus
@@ -57,13 +42,14 @@ public:
 	void *append(size_t);
 	void *insert(size_t , size_t);
 	
-	inline const type_traits *typeinfo() const
+	inline const struct type_traits *content_traits() const
 	{
-		return _typeinfo;
+		return _content_traits;
 	}
-	static buffer *create(size_t , const type_traits * = 0);
+	static buffer *create(size_t , const struct type_traits * = 0);
+	static buffer *create_unique(size_t , const struct type_traits * = 0);
 protected:
-	inline buffer() : _typeinfo(0), _size(0), _used(0)
+	inline buffer() : _content_traits(0), _size(0), _used(0)
 	{ }
 	inline ~buffer()
 	{ }
@@ -79,7 +65,7 @@ MPT_INTERFACE_VPTR(buffer)
 {
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
 #endif
-	const MPT_STRUCT(type_traits) *_typeinfo;
+	const MPT_STRUCT(type_traits) *_content_traits;
 	size_t _size;
 	size_t _used;
 };
@@ -108,8 +94,6 @@ MPT_STRUCT(array)
 		inline ~content()
 		{ }
 	};
-	enum { Type = TypeArray };
-	
 	array(array const&);
 	array(size_t = 0);
 	
@@ -179,8 +163,11 @@ protected:
 
 
 #ifdef __cplusplus
-template <> inline __MPT_CONST_TYPE int typeinfo<array>::id() {
-	return array::Type;
+template<> inline __MPT_CONST_TYPE int type_properties<array>::id() {
+	return TypeArray;
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<array>::traits() {
+	return type_traits(id());
 }
 
 /*! reference to buffer segment */
@@ -279,9 +266,7 @@ extern void MPT_COPY_FCN(int pts, const MPT_COPY_ST *src, int lds, MPT_COPY_DT *
 template<typename SRC, typename DST>
 extern void copy(long pts, const SRC *src, DST *dest)
 {
-	long i;
-	
-	for (i = 0; i < pts; i++) {
+	for (long i = 0; i < pts; i++) {
 		dest[i] = src[i];
 	}
 }
@@ -306,7 +291,7 @@ extern void mpt_copy_df(int , const double *, int , float  *, int);
 
 /* iterator with buffer data */
 extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *);
-/* treat first string segment as metatype vvalue */
+/* treat first string segment as metatype value */
 extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *);
 
 /* array manipulation */
@@ -322,7 +307,7 @@ extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *, size_t , size_t);
 /* remove data from buffer */
 extern ssize_t mpt_buffer_cut(MPT_STRUCT(buffer) *, size_t , size_t);
 /* copy buffer content */
-extern long mpt_buffer_copy(MPT_STRUCT(buffer) *, const MPT_STRUCT(buffer) *);
+extern long mpt_buffer_set(MPT_STRUCT(buffer) *, const MPT_STRUCT(type_traits) *, size_t , const void *, size_t);
 /* get data element */
 extern void *mpt_buffer_data(const MPT_STRUCT(buffer) *, size_t , size_t);
 
@@ -352,7 +337,8 @@ extern size_t mpt_array_compact(void **, size_t);
 extern size_t mpt_array_move(void *, size_t , size_t , size_t);
 
 /* buffer resizing backends */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t, const MPT_STRUCT(type_traits) * __MPT_DEFPAR(0));
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t);
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc_unique(size_t);
 extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t);
 
 /* bit operations */
@@ -366,7 +352,7 @@ __MPT_EXTDECL_END
 inline void *array::base() const
 {
 	content *d = _buf.instance();
-	if (!d || d->typeinfo()) {
+	if (!d || d->content_traits()) {
 		return 0;
 	}
 	return d->data();
@@ -374,12 +360,12 @@ inline void *array::base() const
 inline size_t array::length() const
 {
 	content *d = _buf.instance();
-	return (d && !d->typeinfo()) ? d->length() : 0;
+	return (d && !d->content_traits()) ? d->length() : 0;
 }
 inline size_t array::left() const
 {
 	content *d = _buf.instance();
-	return (d && !d->typeinfo()) ? d->left() : 0;
+	return (d && !d->content_traits()) ? d->left() : 0;
 }
 inline bool array::shared() const
 {
@@ -467,7 +453,7 @@ public:
 	content<T> *detach(size_t len) __MPT_OVERRIDE
 	{
 		size_t align = len % sizeof(T);
-		buffer *b = buffer::create(len - align, _typeinfo);
+		buffer *b = buffer::create(len - align, _content_traits);
 		if (b && !b->copy(*this)) {
 			b->unref();
 			return 0;
@@ -495,20 +481,11 @@ public:
 		if (set < _used) {
 			return buffer::trim(_used - set);
 		}
-		size_t used = _used;
-		uint8_t *ptr = static_cast<uint8_t *>(buffer::append(set - used));
-		if (!ptr) {
-			return false;
-		}
-		if (!_typeinfo || !_typeinfo->init) {
-			set -= used;
-			for (size_t pos = 0; pos < set; pos += sizeof(T)) {
-				new (ptr + pos) T();
-			}
-		}
-		return true;
+		/* data before offset gets initialized */
+		uint8_t *ptr = static_cast<uint8_t *>(buffer::insert(set, 0));
+		return ptr ? true : false;
 	}
-	T *insert(long pos)
+	bool insert(long pos, const T &val)
 	{
 		if (pos < 0) {
 			pos += _used / sizeof(T);
@@ -516,16 +493,27 @@ public:
 				return 0;
 			}
 		}
+		/* inserted data is NOT initialized */
 		void *ptr = buffer::insert(pos * sizeof(T), sizeof(T));
 		if (!ptr) {
-			return 0;
+			return false;
 		}
-		if (!_typeinfo || !_typeinfo->init) {
-			return new (ptr) T;
+		const struct type_traits *traits = content_traits();
+		if (traits && traits->init && (traits->init(ptr, &val) >= 0)) {
+			return true;
 		}
-		return static_cast<T *>(ptr);
+		new (ptr) T(val);
+		return true;
+	}
+	static content<T> *create(long len)
+	{
+		return static_cast<content<T> *>(buffer::create(len * sizeof(T), type_properties<T>::traits()));
 	}
 protected:
+	inline content()
+	{
+		_content_traits = type_properties<T>::traits();
+	}
 	inline ~content()
 	{ }
 };
@@ -537,25 +525,12 @@ class unique_array
 public:
 	typedef T* iterator;
 	
-	static const type_traits &typeinfo()
-	{
-		static type_traits info;
-		
-		if (info.init) {
-			return info;
-		}
-		info.init = _data_init;
-		info.fini = _data_fini;
-		info.size = sizeof(T);
-		info.type = ::mpt::typeinfo<T>::id();
-		return info;
-	}
 	unique_array(long len = 0)
 	{
 		if (len) {
-			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
+			content<T> *b = content<T>::create(len);
 			if (b) {
-				_ref.set_instance(static_cast<content<T> *>(b));
+				_ref.set_instance(b);
 				return;
 			}
 		}
@@ -563,15 +538,18 @@ public:
 		{
 		public:
 			inline dummy()
-			{
-				this->_typeinfo = &unique_array::typeinfo();
-			}
+			{ }
 			uintptr_t addref() __MPT_OVERRIDE
 			{
 				return 1;
 			}
 			void unref() __MPT_OVERRIDE
 			{ }
+			content<T> *detach(size_t len) __MPT_OVERRIDE
+			{
+				size_t align = len % sizeof(T);
+				return static_cast<content<T> *>(buffer::create_unique(len - align, this->content_traits()));
+			}
 			virtual ~dummy()
 			{ }
 		};
@@ -615,6 +593,23 @@ public:
 		t[pos] = v;
 		return true;
 	}
+	bool insert(long pos, const T &val)
+	{
+		long len = length();
+		if (pos < 0) {
+			if ((pos += len) < 0) {
+				return 0;
+			}
+		}
+		else if (pos > len) {
+			len = pos;
+		}
+		if (!reserve(len + 1)) {
+			return 0;
+		}
+		content<T> *d = _ref.instance();
+		return d->insert(pos, val);
+	}
 	T *insert(long pos)
 	{
 		long len = length();
@@ -630,7 +625,16 @@ public:
 			return 0;
 		}
 		content<T> *d = _ref.instance();
-		return d->insert(pos);
+		/* inserted raw data is NOT initialized */
+		void *ptr = d->buffer::insert(pos * sizeof(T), sizeof(T));
+		if (!ptr) {
+			return 0;
+		}
+		const struct type_traits *traits = d->content_traits();
+		if (traits && traits->init && traits->init(ptr, 0) >= 0) {
+			return static_cast<T *>(ptr);
+		}
+		return new (ptr) T;
 	}
 	T *get(long pos) const
 	{
@@ -698,26 +702,21 @@ public:
 		return true;
 	}
 protected:
+	inline unique_array(content<T> *ref) : _ref(ref)
+	{ }
 	reference<content<T> > _ref;
-	
-	static void _data_init(const type_traits *, void *ptr)
-	{
-		new (ptr) T;
-	}
-	static void _data_fini(void *ptr)
-	{
-		static_cast<T *>(ptr)->~T();
-	}
 };
 template<typename T>
-class typeinfo<unique_array<T> >
+class type_properties<unique_array<T> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
-	{
-		return array::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static inline const MPT_STRUCT(type_traits) *traits(void) {
+		return type_traits(id());
 	}
 };
 
@@ -725,24 +724,10 @@ template <typename T>
 class typed_array : public unique_array<T>
 {
 public:
-	static const type_traits &typeinfo()
-	{
-		static type_traits info;
-		
-		if (info.init) {
-			return info;
-		}
-		info.init = unique_array<T>::_data_init;
-		info.copy = _data_copy;
-		info.fini = unique_array<T>::_data_fini;
-		info.size = sizeof(T);
-		info.type = ::mpt::typeinfo<T>::id();
-		return info;
-	}
-	typed_array(long len = 0)
+	typed_array(long len = 0) : unique_array<T>(static_cast<content<T> *>(0))
 	{
 		if (len) {
-			buffer *b = buffer::create(len * sizeof(T), &typeinfo());
+			buffer *b = buffer::create(len * sizeof(T), type_properties<T>::traits());
 			if (b) {
 				this->_ref.set_instance(static_cast<content<T> *>(b));
 				return;
@@ -752,9 +737,7 @@ public:
 		{
 		public:
 			inline dummy()
-			{
-				this->_typeinfo = &typed_array::typeinfo();
-			}
+			{ }
 			uintptr_t addref() __MPT_OVERRIDE
 			{
 				return 1;
@@ -772,36 +755,19 @@ public:
 		this->_ref = a._ref;
 		return *this;
 	}
-	bool insert(long pos, const T &v)
-	{
-		T *ptr;
-		if (!(ptr = unique_array<T>::insert(pos))) {
-			return false;
-		}
-		*ptr = v;
-		return true;
-	}
-protected:
-	static int _data_copy(void *src, int type, void *dst)
-	{
-		if (type != typeinfo().type) {
-			return BadType;
-		}
-		T *from = static_cast<T *>(src);
-		T *to = static_cast<T *>(dst);
-		*to = *from;
-		return 0;
-	}
 };
 template<typename T>
-class typeinfo<typed_array<T> >
+class type_properties<typed_array<T> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static const struct type_traits *traits()
 	{
-		return array::Type;
+		return type_properties<array>::traits();
 	}
 };
 
@@ -859,14 +825,16 @@ public:
 	}
 };
 template<typename T>
-class typeinfo<item_array<T> >
+class type_properties<item_array<T> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
-	{
-		return array::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static inline const struct type_traits *traits(void) {
+		return type_traits(id());
 	}
 };
 
@@ -907,14 +875,16 @@ protected:
 	}
 };
 template<typename T>
-class typeinfo<pointer_array<T> >
+class type_properties<pointer_array<T> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
-	{
-		return array::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static inline const struct type_traits *traits(void) {
+		return type_traits(id());
 	}
 };
 
@@ -974,14 +944,16 @@ public:
 	}
 };
 template<typename T>
-class typeinfo<reference_array<T> >
+class type_properties<reference_array<T> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
-	{
-		return array::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static inline const MPT_STRUCT(type_traits) *traits(void) {
+		return type_traits(id());
 	}
 };
 
@@ -1047,9 +1019,11 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_TYPE int typeinfo<message_store::entry>::id()
-{
-	return typeinfo<array>::id();
+template<> inline __MPT_CONST_TYPE int type_properties<message_store::entry>::id() {
+	return type_properties<array>::id();
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<message_store::entry>::traits() {
+	return type_traits(id());
 }
 
 /*! linear search map type */
@@ -1115,14 +1089,16 @@ protected:
 	typed_array<entry> _d;
 };
 template<typename K, typename V>
-class typeinfo<map<K, V> >
+class type_properties<map<K, V> >
 {
 protected:
-	typeinfo();
+	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id()
-	{
-		return array::Type;
+	static inline __MPT_CONST_EXPR int id() {
+		return type_properties<array>::id();
+	}
+	static inline const MPT_STRUCT(type_traits) *traits(void) {
+		return type_traits(id());
 	}
 };
 

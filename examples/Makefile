@@ -6,6 +6,8 @@ TESTS = client graph graphic axis iter gen libassign
 PROGS = readline graphic ${TESTS}
 STATIC = libassign_static
 
+CXXFLAGS += -std=c++98
+
 client_static : CC=${CXX}
 
 DIR_TOP = ${MPT_PREFIX}
@@ -25,8 +27,11 @@ axis iter gen : LDLIBS=-lmptplot -lmptcore
 readline_static : LDLIBS=-lmpt -ldl
 graphic : LDLIBS=-lmpt++
 #
-# object parameters
-client.o : CPPFLAGS+=-std=c++11
+# C++ perror() visibility
+client client_static : CXXFLAGS+=-std=c++11
+# C++ loop features
+graph graph_static : CXXFLAGS+=-std=c++11
+graphic graphic_static : CXXFLAGS+=-std=c++11
 #
 # use C++ linker
 client client_static : CC=${CXX}

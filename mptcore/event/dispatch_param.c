@@ -8,7 +8,7 @@
 #include "message.h"
 #include "output.h"
 #include "config.h"
-
+#include "types.h"
 
 #include "event.h"
 
@@ -53,7 +53,7 @@ static int setEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		if (MPT_metatype_convert(conf, MPT_ENUM(TypeConfigPtr), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -105,7 +105,7 @@ static int getEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	cfg = 0;
 	if (conf) {
-		if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+		if (MPT_metatype_convert(conf, MPT_ENUM(TypeConfigPtr), &cfg) < 0
 		    || !cfg) {
 			return MPT_event_fail(ev, MPT_ERROR(BadValue), MPT_tr("bad config"));
 		}
@@ -160,7 +160,7 @@ static int condEvent(void *ptr, MPT_STRUCT(event) *ev)
 	}
 	/* require valid config for replace */
 	cfg = 0;
-	if (MPT_metatype_convert(conf, MPT_type_pointer(MPT_ENUM(TypeConfig)), &cfg) < 0
+	if (MPT_metatype_convert(conf, MPT_ENUM(TypeConfigPtr), &cfg) < 0
 	    || !cfg) {
 		ret = MPT_ERROR(BadOperation);
 	} else {

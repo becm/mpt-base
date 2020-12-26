@@ -84,7 +84,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeTextPtr), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, len ? from : 0);
 			return 0;
@@ -106,7 +106,7 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeText)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeTextPtr), &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return 0;
@@ -216,7 +216,7 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeText);
+		return MPT_ENUM(TypeTextPtr);
 	}
 	/* property by position */
 	if (!pr->name) {

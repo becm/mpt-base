@@ -20,13 +20,11 @@ __MPT_NAMESPACE_BEGIN
  */
 metatype *metatype::create(int type, const void *ptr)
 {
-	switch (type) {
-		// integer types
-		case typeinfo<uint8_t>::id():
-			return new meta_value<uint8_t>(static_cast<const uint8_t *>(ptr));
-		default:
-			return 0;
+	// integer types
+	if (type == type_properties<uint8_t>::id()) {
+		return new meta_value<uint8_t>(static_cast<const uint8_t *>(ptr));
 	}
+	return 0;
 }
 
 __MPT_NAMESPACE_END

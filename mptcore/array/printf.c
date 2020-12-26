@@ -7,6 +7,8 @@
 
 #include <stdarg.h>
 
+#include "types.h"
+
 #include "array.h"
 
 /*!
@@ -23,6 +25,7 @@
  */
 extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 {
+	const MPT_STRUCT(type_traits) *traits = mpt_type_traits('c');
 	MPT_STRUCT(buffer) *buf;
 	va_list tmp;
 	int rval;
@@ -30,11 +33,10 @@ extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 	size_t len, size, used;
 	
 	if (!(buf = arr->_buf)) {
-		static const MPT_STRUCT(type_traits) info = MPT_TYPETRAIT_INIT(char, 'c');
-		if (!(buf = _mpt_buffer_alloc(64, 0))) {
+		if (!(buf = _mpt_buffer_alloc(64))) {
 			return MPT_ERROR(BadOperation);
 		}
-		buf->_typeinfo = &info;
+		buf->_content_traits = traits;
 		arr->_buf = buf;
 		size = buf->_size;
 		used = 0;
@@ -42,8 +44,7 @@ extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 	}
 	/* require raw or character data buffer */
 	else {
-		const MPT_STRUCT(type_traits) *info;
-		if (!(info = buf->_typeinfo) || info->type != 'c') {
+		if (buf->_content_traits != traits) {
 			return MPT_ERROR(BadType);
 		}
 		size = buf->_size;

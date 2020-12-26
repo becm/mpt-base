@@ -46,11 +46,12 @@ extern int mpt_value_read(MPT_STRUCT(value) *val, const char *fmt, void *dest)
 	}
 	take = 0;
 	while ((curr = fmt[len]) && curr == desc[len]) {
-		if ((curr = mpt_valsize(curr)) < 0) {
+		const MPT_STRUCT(type_traits) *traits = mpt_type_traits(curr);
+		if (!traits) {
 			break;
 		}
 		++len;
-		take += curr;
+		take += traits->size;
 	}
 	if (take && dest) {
 		val->fmt += len;

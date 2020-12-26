@@ -15,8 +15,9 @@ SHLIB_OBJS = libinfo.o ${OBJS}
 LINK = ${CXX} ${CXXFLAGS}
 LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
-# require C++11 for compilation
-NEED_CXX_11 = cycle.o item.o graph.o layout.o linepart.o mapping.o meta_typed.o polyline.o
+# special C++ features for compilation
+NEED_CXX_AUTO = graph.o item.o layout.o linepart.o mapping.o
+NEED_CXX_VA_COPY = logger.o
 #
 # source summary
 SRCS := $(wildcard *.cpp)
@@ -27,7 +28,8 @@ DIR_TOP = ${MPT_PREFIX}
 DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
-${NEED_CXX_11} : CPPFLAGS+=-std=c++11
+CXXFLAGS += -std=c++98
+${NEED_CXX_AUTO} ${NEED_CXX_VA_COPY} : CXXFLAGS+=-std=c++11
 #
 # additional dependencies
 graphic.o mapping.o io_* : ${HEADER}

@@ -8,6 +8,7 @@
 #include <sys/uio.h>
 
 #include "meta.h"
+#include "types.h"
 
 #include "layout.h"
 
@@ -69,7 +70,7 @@ extern int mpt_string_pset(char **ptr, MPT_INTERFACE(convertable) *src)
 	if (!src) {
 		return (ptr && *ptr) ? strlen(*ptr) : 0;
 	}
-	if ((len = src->_vptr->convert(src, MPT_type_vector('c'), &vec)) > 0) {
+	if ((len = src->_vptr->convert(src, MPT_type_toVector('c'), &vec)) > 0) {
 		if ((len = mpt_string_set(ptr, vec.iov_base, vec.iov_len)) < 0) {
 			return len;
 		}

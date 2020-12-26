@@ -60,7 +60,7 @@ static int fromText(const MPT_STRUCT(value) *val, int type, void *dest)
 		}
 	}
 	/* convert from character array */
-	else if (*val->fmt == MPT_type_vector('c')) {
+	else if (*val->fmt == MPT_type_toVector('c')) {
 		const struct iovec *vec = val->ptr;
 		/* target is vector type */
 		if (type == *val->fmt
@@ -134,25 +134,21 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		return MPT_metatype_convert(mt, type, dest);
 	}
 	/* copy scalar or untracked pointer data */
-	if (type == ftype
-	 && MPT_type_isBasic(ftype)) {
-		int len;
-		if ((len = mpt_valsize(ftype)) < 0) {
-			return MPT_ERROR(BadArgument);
+	if (type == ftype) {
+		const MPT_STRUCT(type_traits) *traits = mpt_type_traits(ftype);
+		if (traits && !traits->init && !traits->fini) {
+			if (dest) {
+				memcpy(dest, it->val.ptr, traits->size);
+			}
+			return ftype;
 		}
-		if (!len) {
-			len = sizeof(void *);
-		}
-		if (dest) {
-			memcpy(dest, it->val.ptr, len);
-		}
-		return ftype;
 	}
 	return fromText(&it->val, type, dest);
 }
 static int valAdvance(MPT_INTERFACE(iterator) *ctl)
 {
 	struct valSource *it = (void *) ctl;
+	const MPT_STRUCT(type_traits) *traits;
 	int adv;
 	
 	if (!it->val.fmt) {
@@ -167,11 +163,9 @@ static int valAdvance(MPT_INTERFACE(iterator) *ctl)
 		it->val.ptr = 0;
 		return 0;
 	}
-	if ((adv = mpt_valsize(adv)) < 0) {
+	if (!(traits = mpt_type_traits(adv))
+	 || !(adv = traits->size)) {
 		return MPT_ERROR(BadType);
-	}
-	if (!adv) {
-		adv = sizeof(void *);
 	}
 	it->val.ptr = ((uint8_t *) it->val.ptr) + adv;
 	++it->val.fmt;
@@ -226,20 +220,20 @@ static int valConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 {
 	struct valSource *it = (void *) (mt + 1);
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIterator), MPT_ENUM(TypeValue), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_ENUM(TypeValue), 0 };
 		if (dest) {
 			*((const uint8_t **) dest) = fmt;
 			return 0;
 		}
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_type_pointer(MPT_ENUM(TypeIterator))) {
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (dest) *((void **) dest) = &it->_it;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeValue);
 	}
 	if (type == MPT_ENUM(TypeValue)) {
 		if (dest) *((MPT_STRUCT(value) *) dest) = it->save;
-		return MPT_ENUM(TypeIterator);
+		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
 }
@@ -306,15 +300,16 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value) val, int po
 	vpos = 0;
 	curr = 0;
 	while ((type = fmt[flen++])) {
-		if ((type = mpt_valsize(type)) < 0) {
+		const MPT_STRUCT(type_traits) *traits = mpt_type_traits(type);
+		if (!traits) {
 			errno = EINVAL;
 			return 0;
 		}
 		if (curr < pos) {
 			++curr;
-			vpos += type;
+			vpos += traits->size;
 		}
-		vlen += type;
+		vlen += traits->size;
 	}
 	/* create iterator with local format and data */
 	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + flen + vlen))) {

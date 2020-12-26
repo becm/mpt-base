@@ -4,6 +4,7 @@
 
 #include <string.h>
 
+#include "types.h"
 #include "output.h"
 
 #include "array.h"
@@ -60,9 +61,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 	avail = 0;
 	
 	if ((buf = sl->_a._buf)) {
-		const MPT_STRUCT(type_traits) *info;
-		if ((info = buf->_typeinfo)
-		    && info->type != 'c') {
+		if (buf->_content_traits) {
 			return MPT_ERROR(BadType);
 		}
 		used = buf->_used;
@@ -121,7 +120,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		}
 	}
 	/* get space for needed data size */
-	while (!(next = _mpt_buffer_alloc(sl->_len + nblk * size, 0))) {
+	while (!(next = _mpt_buffer_alloc(sl->_len + nblk * size))) {
 		if (!(nblk /= 2)) {
 			return MPT_ERROR(BadOperation);
 		}

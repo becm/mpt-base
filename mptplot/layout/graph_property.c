@@ -74,6 +74,8 @@ extern void mpt_graph_init(MPT_STRUCT(graph) *gr, const MPT_STRUCT(graph) *from)
 	}
 	*gr = def_graph;
 }
+
+
 /*!
  * \ingroup mptPlot
  * \brief set graph properties
@@ -95,7 +97,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeGraphPtr), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, len ? from : 0);
 			return 0;
@@ -114,7 +116,7 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_type_pointer(MPT_ENUM(TypeGraph)), &from)) >= 0) {
+		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeGraphPtr), &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
@@ -292,7 +294,7 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeGraph);
+		return MPT_ENUM(TypeGraphPtr);
 	}
 	/* property by position */
 	if (!pr->name) {

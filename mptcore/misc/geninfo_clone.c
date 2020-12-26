@@ -7,6 +7,8 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "meta.h"
 
 /*!
@@ -21,7 +23,7 @@
  */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *info)
 {
-	static const uint8_t vecfmt[] = { MPT_type_vector('c'), 0 };
+	static const uint8_t vecfmt[] = { MPT_type_toVector('c'), 0 };
 	MPT_STRUCT(value) val;
 	struct iovec vec;
 	int len;
