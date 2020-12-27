@@ -89,6 +89,9 @@ public:
 	virtual convertable *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
+	
+	class root;
+	class item;
 };
 template<> inline __MPT_CONST_TYPE int type_properties<config *>::id() {
 	return TypeConfigPtr;
@@ -187,29 +190,28 @@ inline span<const char> path::value() const
 	return span<const char>(base + off, len);
 }
 /* config with private element store */
-class configuration : public config
+class config::root : public config
 {
 public:
-	configuration();
-	virtual ~configuration();
+	root();
+	virtual ~root();
 	
 	convertable *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
 	
-	class element;
-	inline span<const element> elements() const
+	inline span<const item> items() const
 	{
 		return _sub.elements();
 	}
 protected:
-	unique_array<element> _sub;
+	unique_array<item> _sub;
 };
 
-extern configuration::element *query(const unique_array<configuration::element> &, path &);
-extern configuration::element *reserve(unique_array<configuration::element> &, path &);
+extern config::item *query(const unique_array<config::item> &, path &);
+extern config::item *reserve(unique_array<config::item> &, path &);
 
-class configuration::element : public unique_array<configuration::element>, public item<metatype>
+class config::item : public unique_array<config::item>, public ::mpt::item<metatype>
 {
 public:
 	inline bool unused()
@@ -217,7 +219,7 @@ public:
 		return _len == 0;
 	}
 private:
-	element & operator =(const element &from);
+	item & operator =(const item &from);
 };
 #endif
 

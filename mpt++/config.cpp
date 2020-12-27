@@ -10,7 +10,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template class type_properties<configuration::element>;
+template class type_properties<config::root>;
+template class type_properties<config::item>;
 
 // non-trivial path operations
 array::content *path::array_content() const
@@ -114,22 +115,22 @@ metatype *config::global(const path *p)
 	return mpt_config_global(p);
 }
 
-// config with element store
-configuration::configuration()
+// config with item store
+config::root::root()
 { }
-configuration::~configuration()
+config::root::~root()
 { }
 // config interface
-int configuration::assign(const path *dest, const value *val)
+int config::root::assign(const path *dest, const value *val)
 {
-	// no 'self' element(s)
+	// no 'self' or 'root' element(s)
 	if (!dest || dest->empty()) {
 		return BadArgument;
 	}
 	// find existing
 	path p = *dest;
 	metatype *m;
-	element *curr;
+	item *curr;
 	
 	if (!val) {
 		if (!(curr = ::mpt::query(_sub, p))) {
@@ -152,7 +153,7 @@ int configuration::assign(const path *dest, const value *val)
 	curr->set_instance(m);
 	return m->type();
 }
-convertable *configuration::query(const path *dest) const
+convertable *config::root::query(const path *dest) const
 {
 	// no 'self' element(s)
 	if (!dest || dest->empty()) {
@@ -160,14 +161,14 @@ convertable *configuration::query(const path *dest) const
 	}
 	// find existing
 	path p = *dest;
-	element *curr;
+	item *curr;
 	
 	if (!(curr = ::mpt::query(_sub, p))) {
 		return 0;
 	}
 	return curr->instance();
 }
-int configuration::remove(const path *dest)
+int config::root::remove(const path *dest)
 {
 	// clear root element
 	if (!dest) {
@@ -179,7 +180,7 @@ int configuration::remove(const path *dest)
 		return 0;
 	}
 	path p = *dest;
-	element *curr;
+	item *curr;
 	// requested element not found
 	if (!(curr = ::mpt::query(_sub, p))) {
 		return BadOperation;
@@ -192,7 +193,7 @@ int configuration::remove(const path *dest)
 }
 
 // configuration element access
-configuration::element *query(const unique_array<configuration::element> &arr, path &p)
+config::item *query(const unique_array<config::item> &arr, path &p)
 {
 	const span<const char> name = p.value();
 	int len;
@@ -200,7 +201,7 @@ configuration::element *query(const unique_array<configuration::element> &arr, p
 	if ((len = mpt_path_next(&p)) < 0) {
 		return 0;
 	}
-	for (configuration::element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+	for (config::item *e = arr.begin(), *to = arr.end(); e < to; ++e) {
 		if (e->unused() || !e->equal(name.begin(), len)) {
 			continue;
 		}
@@ -211,7 +212,7 @@ configuration::element *query(const unique_array<configuration::element> &arr, p
 	}
 	return 0;
 }
-configuration::element *reserve(unique_array<configuration::element> &arr, path &p)
+config::item *reserve(unique_array<config::item> &arr, path &p)
 {
 	const span<const char> name = p.value();
 	int len;
@@ -219,8 +220,8 @@ configuration::element *reserve(unique_array<configuration::element> &arr, path 
 	if ((len = mpt_path_next(&p)) < 0) {
 		return 0;
 	}
-	configuration::element *unused = 0;
-	for (configuration::element *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+	config::item *unused = 0;
+	for (config::item *e = arr.begin(), *to = arr.end(); e < to; ++e) {
 		if (e->unused()) {
 			if (!unused) unused = e;
 			continue;
