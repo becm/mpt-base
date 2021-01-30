@@ -18,11 +18,11 @@ static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node
 	/* get starting position */
 	start = getnode(first, (pos > 0) ? 1 : 0, node);
 	
-	/* get requested position */
-	if (start && (pos != 0 || pos != 1)) {
-		tmp = getnode(start, pos, node);
-	} else {
+	/* location is start position */
+	if (!start || pos == 0 || pos == 1) {
 		tmp = start;
+	} else {
+		tmp = getnode(start, pos, node);
 	}
 	/* swap insertion order and set position (first/last) if not found */
 	if (!tmp) {
