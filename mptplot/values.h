@@ -41,10 +41,18 @@ struct point
 	inline bool operator ==(const point &p) const
 	{ return x == p.x && y == p.y; }
 	
-	inline point & operator +=(const point &p) const
-	{ return x += p.x; y += p.y; return *this; }
-	inline point & operator -=(const point &p) const
-	{ return x -= p.x; y -= p.y; return *this; }
+	inline point & operator +=(const point &p)
+	{
+		x += p.x;
+		y += p.y;
+		return *this;
+	}
+	inline point & operator -=(const point &p)
+	{
+		x -= p.x;
+		y -= p.y;
+		return *this;
+	}
 	
 	T x, y;
 };

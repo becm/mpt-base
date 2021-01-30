@@ -448,9 +448,9 @@ const struct value_apply *layout::graph::transform_part(int dim) const
 		case 0:
 			return &t->_dim[0];
 		case 1:
-			return &t->_dim[0];
+			return &t->_dim[1];
 		case 2:
-			return &t->_dim[0];
+			return &t->_dim[2];
 		default:
 			return 0;
 	}
@@ -465,9 +465,9 @@ int layout::graph::transform_flags(int dim) const
 		case 0:
 			return t->_dim[0]._flags;
 		case 1:
-			return t->_dim[0]._flags;
+			return t->_dim[1]._flags;
 		case 2:
-			return t->_dim[0]._flags;
+			return t->_dim[2]._flags;
 		default:
 			return 0;
 	}
