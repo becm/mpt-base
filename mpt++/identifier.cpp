@@ -12,6 +12,11 @@ identifier::identifier(size_t total)
 {
 	mpt_identifier_init(this, total);
 }
+identifier::identifier(const identifier &id)
+{
+	mpt_identifier_init(this, sizeof(*this));
+	mpt_identifier_copy(this, &id);
+}
 bool identifier::equal(const char *name, int nlen) const
 {
 	return mpt_identifier_compare(this, name, nlen) ? false : true;

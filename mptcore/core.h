@@ -414,6 +414,7 @@ MPT_STRUCT(identifier)
 {
 #ifdef __cplusplus
 	identifier(size_t = sizeof(identifier));
+	identifier(const identifier &);
 	inline ~identifier()
 	{
 		set_name(0, 0);

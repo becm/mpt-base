@@ -18,7 +18,7 @@ template class reference<layout::graph>;
 template class reference<layout::graph::axis>;
 template class reference<layout::graph::world>;
 template class reference<layout::graph::data>;
-template class reference<class layout::graph::transform>;
+template class reference<class layout::graph::transform3>;
 
 template <> int type_properties<layout::graph *>::id()
 {
@@ -392,7 +392,7 @@ const transform &layout::graph::transform()
 	if ((t = _gtr.instance())) {
 		return *t;
 	} else {
-		static const class transform def;
+		static const class transform3 def;
 		return def;
 	}
 }
@@ -414,9 +414,9 @@ bool layout::graph::update_transform(int dim)
 	if (!it || !(a = it->instance())) {
 		return false;
 	}
-	class transform *t;
+	class transform3 *t;
 	if (!(t = _gtr.instance())) {
-		t = new class transform;
+		t = new class transform3;
 		_gtr.set_instance(t);
 	}
 	int type;
@@ -440,7 +440,7 @@ bool layout::graph::update_transform(int dim)
 }
 const struct value_apply *layout::graph::transform_part(int dim) const
 {
-	const class transform *t;
+	const class transform3 *t;
 	if (!(t = _gtr.instance())) {
 		return 0;
 	}
@@ -457,7 +457,7 @@ const struct value_apply *layout::graph::transform_part(int dim) const
 }
 int layout::graph::transform_flags(int dim) const
 {
-	const class transform *t;
+	const class transform3 *t;
 	if (!(t = _gtr.instance())) {
 		return 0;
 	}

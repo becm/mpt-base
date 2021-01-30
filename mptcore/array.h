@@ -525,6 +525,10 @@ class unique_array
 public:
 	typedef T* iterator;
 	
+	inline unique_array(const unique_array &a) : _ref(0)
+	{
+		_ref = a._ref;
+	}
 	unique_array(long len = 0)
 	{
 		if (len) {
@@ -724,6 +728,8 @@ template <typename T>
 class typed_array : public unique_array<T>
 {
 public:
+	typed_array(const typed_array &a) : unique_array<T>(a)
+	{ }
 	typed_array(long len = 0) : unique_array<T>(static_cast<content<T> *>(0))
 	{
 		if (len) {
@@ -778,6 +784,13 @@ class item_array : public unique_array<item<T> >
 public:
 	inline item_array(size_t len = 0) : unique_array<item<T> >(len)
 	{ }
+	inline item_array(const item_array &a) : unique_array<item<T> >(a)
+	{ }
+	inline item_array & operator=(const item_array &a)
+	{
+		this->_ref = a._ref;
+		return *this;
+	}
 	item<T> *append(T *t, const char *id, int len = -1)
 	{
 		item<T> *it;
@@ -812,9 +825,13 @@ public:
 			}
 			++len;
 			if (!space) continue;
-			space->~item<T>();
-			memcpy(space, pos, sizeof(*space));
-			memset(pos, 0, sizeof(*pos));
+#if __cplusplus >= 201103L
+			*space = std::move(*pos);
+#else
+			space->operator = (static_cast<const identifier &>(*pos));
+			space->set_instance(pos->detach());
+#endif
+			pos->~item<T>();
 			++space;
 		}
 		if (!space) {

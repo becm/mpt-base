@@ -465,7 +465,7 @@ class layout::graph : public item_group, public object, public ::mpt::graph
 public:
 	class axis;
 	class world;
-	class transform;
+	class transform3;
 	class data
 	{
 	public:
@@ -515,13 +515,13 @@ public:
 	bool update_transform(int dim = -1);
 	
 protected:
-	reference<class transform> _gtr;
+	reference<class transform3> _gtr;
 	item_array<axis> _axes;
 	item_array<data> _worlds;
 };
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
-class layout::graph::transform : public reference< ::mpt::transform>::type
+class layout::graph::transform3 : public reference< ::mpt::transform>::type
 {
 public:
 	struct data : public value_apply
@@ -531,8 +531,8 @@ public:
 		struct range limit;
 	};
 	
-	transform();
-	~transform() __MPT_OVERRIDE;
+	transform3();
+	~transform3() __MPT_OVERRIDE;
 	
 	int dimensions() const __MPT_OVERRIDE;
 	

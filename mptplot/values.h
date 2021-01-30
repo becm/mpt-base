@@ -32,6 +32,12 @@ struct point
 	{ }
 	inline point(const point &from) : x(from.x), y(from.y)
 	{ }
+	inline point &operator =(const point &p)
+	{
+		x = p.x;
+		y = p.y;
+		return *this;
+	}
 	inline bool operator ==(const point &p) const
 	{ return x == p.x && y == p.y; }
 	

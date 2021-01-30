@@ -252,6 +252,7 @@ class object::attribute
 {
 public:
 	attribute(object &);
+	attribute(const attribute &);
 	
 	inline operator const struct property&() const
 	{ return _prop; }
