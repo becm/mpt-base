@@ -56,6 +56,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fm
 			}
 			break;
 		}
+		/* fall through */
 	    case 'y':
 		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu8, wd, *((uint8_t*)arg));
@@ -80,6 +81,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fm
 			}
 			break;
 		}
+		/* fall through */
 	    case 'q':
 		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu16, wd, *((uint16_t*)arg));
@@ -104,6 +106,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fm
 			}
 			break;
 		}
+		/* fall through */
 	    case 'u':
 		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu32, wd, *((uint32_t*)arg));
@@ -128,6 +131,7 @@ extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fm
 			}
 			break;
 		}
+		/* fall through */
 	    case 't':
 		if (!(flg & MPT_VALFMT(IntFlags))) {
 			len = snprintf(dest, left, "%*" PRIu64, wd, *((uint64_t*)arg));

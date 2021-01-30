@@ -89,8 +89,8 @@ extern int mpt_position(const uint8_t *fmt, int match)
 		  case 'x': if (match == 'x') return pos; break;
 		  case 's': if (match == 's') return pos; break;
 		  /* float types (accept better precision) */
-		  case 'f': if (match == 'f') return pos;
-		  case 'd': if (match == 'd' || match == 'f') return pos;
+		  case 'f': if (match == 'f') return pos; /* fall through */
+		  case 'd': if (match == 'd' || match == 'f') return pos; /* fall through */
 		  case 'e': if (match == 'e' || match == 'd' || match == 'f') return pos;
 		  default:;
 		}

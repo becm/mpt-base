@@ -61,7 +61,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 			}
 			return (buf->_used = used) ? (int) (used / sizeof(curr)) : act;
 		}
-		slot = (MPT_INTERFACE(input) **) epv;
+		slot = (MPT_INTERFACE(input) **) (buf + 1);
 		
 		for (i = 0, fdmax = 0; i < act; i++) {
 			if (!(ret = what & epv[i].events)) {
@@ -77,7 +77,7 @@ extern int mpt_notify_wait(MPT_STRUCT(notify) *no, int what, int timeout)
 			}
 			if (ret) slot[fdmax++] = curr;
 		}
-		buf->_used = fdmax * sizeof(void*);
+		buf->_used = fdmax * sizeof(*slot);
 		
 		return fdmax;
 	}

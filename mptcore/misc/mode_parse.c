@@ -178,16 +178,19 @@ static void lineSeparator(MPT_STRUCT(fdmode) *mode, const char **pos)
 	switch (**pos) {
 	  case 'N': case 'W':
 		mode->stream |= MPT_STREAMFLAG(FlushLine);
+		/* fall through */
 	  case 'n': case 'w':
 		mode->lsep = MPT_ENUM(NewlineNet);
 		break;
 	  case 'U':
 		mode->stream |= MPT_STREAMFLAG(FlushLine);
+		/* fall through */
 	  case 'u':
 		mode->lsep = MPT_ENUM(NewlineUnix);
 		break;
 	  case 'M':
 		mode->stream |= MPT_STREAMFLAG(FlushLine);
+		/* fall through */
 	  case 'm':
 		mode->lsep = MPT_ENUM(NewlineMac);
 		break;
@@ -244,6 +247,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			return 1;
 		case 'M':
 			sm.stream |= MPT_STREAMFLAG(ForceMap);
+			/* fall through */
 		case 'm':
 			sm.stream |= MPT_STREAMFLAG(ReadMap);
 			sm.param.file.open |= O_RDONLY;
@@ -251,6 +255,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			break;
 		case 'R':
 			sm.param.file.open |= O_NONBLOCK;
+			/* fall through */
 		case 'r':
 			lineSeparator(&sm, &end);
 			if (*end == '+') {
@@ -265,6 +270,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			break;
 		case 'A':
 			sm.param.file.open |= O_NONBLOCK;
+			/* fall through */
 		case 'a':
 			lineSeparator(&sm, &end);
 			sm.param.file.open |= O_APPEND | O_CREAT;
@@ -280,6 +286,7 @@ extern int mpt_mode_parse(MPT_STRUCT(fdmode) *smode, const char *mode)
 			break;
 		case 'W':
 			sm.param.file.open |= O_NONBLOCK;
+			/* fall through */
 		case 'w':
 			lineSeparator(&sm, &end);
 			sm.param.file.open |= O_CREAT;

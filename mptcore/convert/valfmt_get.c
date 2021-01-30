@@ -45,11 +45,11 @@ extern int mpt_valfmt_get(MPT_STRUCT(value_format) *ptr, const char *src)
 	}
 	
 	switch (tolower(*pos)) {
-	  case 'f': fmt.dec = 6;
+	  case 'f': fmt.dec = 6; /* fall through */
 	  case 'g': ++pos; break;
-	  case 'a': fmt.flags |= MPT_VALFMT(Scientific);
+	  case 'a': fmt.flags |= MPT_VALFMT(Scientific); /* fall through */
 	  case 'x': fmt.flags |= MPT_VALFMT(NumberHex); ++pos; break;
-	  case 'o': fmt.flags |= MPT_VALFMT(IntOctal);
+	  case 'o': fmt.flags |= MPT_VALFMT(IntOctal); /* fall through */
 	  case 'e': fmt.flags |= MPT_VALFMT(Scientific); ++pos; break;
 	  default:
 		if (!isdigit(*pos)) {

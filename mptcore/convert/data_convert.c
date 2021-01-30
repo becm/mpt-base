@@ -189,16 +189,22 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			*((char *) dest) = *((char *) from);
 			break;
 		}
+		/* fall through */
 	  case 'b':
 		switch (dtype) {
 		  case 'c': if (!isgraph(*((int8_t *) from))) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'y': if (*((int8_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'b': *((int8_t *) dest) = *((int8_t *) from); break;
 		  case 'q': if (*((int8_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'n': *((int16_t *) dest) = *((int8_t *) from); break;
 		  case 'u': if (*((int8_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'i': *((int32_t *) dest) = *((int8_t *) from); break;
 		  case 't': if (*((int8_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'x': *((int32_t *) dest) = *((int8_t *) from); break;
 		  
 		  case 'f': *((float *) dest) = *((int8_t *) from); break;
@@ -240,10 +246,13 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'y': if (*((int16_t *) from) < 0 || *((int16_t *) from) > UINT8_MAX) return MPT_ERROR(BadValue);
 		            *((uint8_t *) dest) = *((int16_t *) from); break;
 		  case 'q': if (*((int16_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'n': *((int16_t *) dest) = *((int16_t *) from); break;
 		  case 'u': if (*((int16_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'i': *((int32_t *) dest) = *((int16_t *) from); break;
 		  case 't': if (*((int16_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'x': *((int64_t *) dest) = *((int16_t *) from); break;
 		  
 		  case 'f': *((float *) dest) = *((int16_t *) from); break;
@@ -263,6 +272,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'y': if (*((uint16_t *) from) > UINT8_MAX) return MPT_ERROR(BadValue);
 			    *((uint8_t *) dest) = *((uint16_t *) from); break;
 		  case 'h': if (*((uint16_t *) from) > INT16_MAX) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'q': *((uint16_t *) dest) = *((uint16_t *) from); break;
 		  case 'u':
 		  case 'i': *((int32_t *) dest) = *((uint16_t *) from); break;
@@ -280,6 +290,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	  case 'i':
 		switch (dtype) {
 		  case 'c': if (!isgraph(*((int32_t *) from))) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'b': if (*((int32_t *) from) < INT8_MIN || *((int32_t *) from) > INT8_MAX) return MPT_ERROR(BadValue);
 		            *((int8_t *) dest) = *((int32_t *) from); break;
 		  case 'y': if (*((int32_t *) from) < 0 || *((int32_t *) from) > UINT8_MAX) return MPT_ERROR(BadValue);
@@ -289,8 +300,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'q': if (*((int32_t *) from) < 0 || *((int32_t *) from) > UINT16_MAX) return MPT_ERROR(BadValue);
 		            *((uint16_t *) dest) = *((int32_t *) from); break;
 		  case 'u': if (*((int32_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'i': *((int32_t *) dest) = *((int32_t *) from); break;
 		  case 't': if (*((int32_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'x': *((int64_t *) dest) = *((int32_t *) from); break;
 		  
 		  case 'f': *((float *) dest) = *((int32_t *) from); break;
@@ -314,6 +327,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'q': if (*((uint32_t *) from) > UINT16_MAX) return MPT_ERROR(BadValue);
 		            *((int16_t *) dest) = *((uint32_t *) from); break;
 		  case 'i': if (*((uint32_t *) from) > INT32_MAX) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'u': *((uint32_t *) dest) = *((uint32_t *) from); break;
 		  case 't':
 		  case 'x': *((int64_t *) dest) = *((uint32_t *) from); break;
@@ -343,10 +357,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'u': if (*((int64_t *) from) < 0 || *((int64_t *) from) > UINT32_MAX) return MPT_ERROR(BadValue);
 		            *((uint32_t *) dest) = *((int64_t *) from); break;
 		  case 't': if (*((int64_t *) from) < 0) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 'x': *((int64_t *) dest) = *((int64_t *) from); break;
 		  
 		  case 'f': *((float *) dest) = *((int64_t *) from); break;
-		  case 'D':
 		  case 'd': *((double *) dest) = *((int64_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
 		  case 'e': *((long double *) dest) = *((int64_t *) from); break;
@@ -371,10 +385,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 		  case 'u': if (*((uint64_t *) from) > UINT32_MAX) return MPT_ERROR(BadValue);
 		            *((uint32_t *) dest) = *((uint64_t *) from); break;
 		  case 'x': if (*((uint64_t *) from) > INT64_MAX) return MPT_ERROR(BadValue);
+		  /* fall through */
 		  case 't': *((int64_t *) dest) = *((uint64_t *) from); break;
 		  
 		  case 'f': *((float *) dest) = *((uint64_t *) from); break;
-		  case 'D':
 		  case 'd': *((double *) dest) = *((uint64_t *) from); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
 		  case 'e': *((long double *) dest) = *((uint64_t *) from); break;
