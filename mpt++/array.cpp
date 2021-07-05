@@ -449,7 +449,7 @@ bool slice::trim(ssize_t len)
 	_len -= len;
 	return true;
 }
-int slice::set(metatype &src)
+int slice::set(convertable &src)
 {
 	int len = array::set(src);
 	if (len < 0) {

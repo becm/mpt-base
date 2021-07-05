@@ -26,10 +26,11 @@ extern int main(int , char * const [])
 	typed_array<reference<metatype> *> d;
 	pointer_array<reference<metatype> > p;
 	typed_array<reference<metatype> > a;
-	typed_array<metatype *> v;
+	unique_array<metatype *> v;
 	
-	a.insert(1, new meta_value<double>(2));
+	a.insert(1, new reference<meta_value<double> >::type());
 	p.insert(0, a.get(1));
+	v.insert(4, a.get(1)->instance());
 	
 	d = p;
 	

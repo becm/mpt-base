@@ -119,8 +119,8 @@ MPT_STRUCT(array)
 	
 	array & operator=  (const array &);
 	array & operator=  (const slice &);
-	array & operator+= (const array &);
-	array & operator+= (const slice &);
+	array & operator+= (const content &);
+	array & operator+= (const span<uint8_t> &);
 	array & operator=  (struct ::iovec const&);
 	array & operator+= (struct ::iovec const&);
 protected:
@@ -181,7 +181,7 @@ struct slice : array
 	span<uint8_t> data() const;
 	
 	ssize_t write(size_t , const void *, size_t);
-	int set(metatype &);
+	int set(convertable &);
 	
 	bool shift(ssize_t);
 	bool trim (ssize_t);
@@ -386,15 +386,14 @@ inline array &array::operator= (slice const& from)
 	set(d.size(), d.begin());
 	return *this;
 }
-inline array &array::operator+= (array const& from)
+inline array &array::operator+= (content const& from)
 {
-	append(from.length(), from.base());
+	append(from.length(), from.data());
 	return *this;
 }
-inline array &array::operator+= (slice const& from)
+inline array &array::operator+= (span<uint8_t> const& from)
 {
-	span<uint8_t> d = from.data();
-	append(d.size(), d.begin());
+	append(from.size(), from.begin());
 	return *this;
 }
 inline slice::slice(array const& a) : array(a), _off(0)
@@ -446,24 +445,9 @@ public:
 	{
 		return begin() + length();
 	}
-	uintptr_t addref() __MPT_OVERRIDE
-	{
-		return 0;
-	}
-	content<T> *detach(size_t len) __MPT_OVERRIDE
-	{
-		size_t align = len % sizeof(T);
-		buffer *b = buffer::create(len - align, _content_traits);
-		if (b && !b->copy(*this)) {
-			b->unref();
-			return 0;
-		}
-		return static_cast<content<T> *>(b);
-	}
-	int shared() const __MPT_OVERRIDE
-	{
-		return 0;
-	}
+	
+	content<T> *detach(size_t len) __MPT_OVERRIDE = 0;
+	
 	inline long length() const
 	{
 		return _used / sizeof(T);
@@ -499,8 +483,8 @@ public:
 			return false;
 		}
 		const struct type_traits *traits = content_traits();
-		if (traits && traits->init && (traits->init(ptr, &val) >= 0)) {
-			return true;
+		if (traits && traits->init) {
+			return traits->init(ptr, &val) >= 0;
 		}
 		new (ptr) T(val);
 		return true;
@@ -531,24 +515,21 @@ public:
 	}
 	unique_array(long len = 0)
 	{
-		if (len) {
-			content<T> *b = content<T>::create(len);
-			if (b) {
-				_ref.set_instance(b);
-				return;
-			}
-		}
 		class dummy : public content<T>
 		{
 		public:
 			inline dummy()
 			{ }
+			int shared() const __MPT_OVERRIDE
+			{
+				return 0;
+			}
+			void unref() __MPT_OVERRIDE
+			{ }
 			uintptr_t addref() __MPT_OVERRIDE
 			{
 				return 1;
 			}
-			void unref() __MPT_OVERRIDE
-			{ }
 			content<T> *detach(size_t len) __MPT_OVERRIDE
 			{
 				size_t align = len % sizeof(T);
@@ -558,7 +539,9 @@ public:
 			{ }
 		};
 		static dummy _dummy;
-		_ref.set_instance(&_dummy);
+		content<T> *data = &_dummy;
+		if (len > 0) data = data->detach(len * sizeof(T));
+		_ref.set_instance(data ? data : &_dummy);
 	}
 	inline iterator begin() const
 	{
@@ -635,8 +618,8 @@ public:
 			return 0;
 		}
 		const struct type_traits *traits = d->content_traits();
-		if (traits && traits->init && traits->init(ptr, 0) >= 0) {
-			return static_cast<T *>(ptr);
+		if (traits && traits->init) {
+			return traits->init(ptr, 0) >= 0;
 		}
 		return new (ptr) T;
 	}
@@ -732,29 +715,33 @@ public:
 	{ }
 	typed_array(long len = 0) : unique_array<T>(static_cast<content<T> *>(0))
 	{
-		if (len) {
-			buffer *b = buffer::create(len * sizeof(T), type_properties<T>::traits());
-			if (b) {
-				this->_ref.set_instance(static_cast<content<T> *>(b));
-				return;
-			}
-		}
 		class dummy : public content<T>
 		{
 		public:
 			inline dummy()
 			{ }
+			int shared() const __MPT_OVERRIDE
+			{
+				return 0;
+			}
+			void unref() __MPT_OVERRIDE
+			{ }
 			uintptr_t addref() __MPT_OVERRIDE
 			{
 				return 1;
 			}
-			void unref() __MPT_OVERRIDE
-			{ }
+			content<T> *detach(size_t len) __MPT_OVERRIDE
+			{
+				size_t align = len % sizeof(T);
+				return static_cast<content<T> *>(buffer::create(len - align, this->content_traits()));
+			}
 			virtual ~dummy()
 			{ }
 		};
 		static dummy _dummy;
-		this->_ref.set_instance(&_dummy);
+		content<T> *data = &_dummy;
+		if (len > 0) data = data->detach(len * sizeof(T));
+		this->_ref.set_instance(data ? data : &_dummy);
 	}
 	inline typed_array & operator=(const typed_array &a)
 	{
