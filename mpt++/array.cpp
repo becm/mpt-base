@@ -314,27 +314,19 @@ int array::set(value val)
 	const char *base;
 	size_t len;
 	if (!(fmt = val.fmt)) {
-		if (!(base = (const char *) val.ptr)) {
-		len = 0;
-		} else {
-		len = strlen(base);
-		}
-		if (!mpt_array_append(this, len, base)) {
-			return BadOperation;
-		}
-		return len;
+		base = (const char *) val.ptr;
+		len = base ? strlen(base) + 1 : 0;
+		return set(len, base) ? 0 : BadOperation;
 	}
 	array a;
 	while (*val.fmt) {
-		/* insert space element */
-		if (fmt != val.fmt) {
-			if (!mpt_array_append(&a, 1, "\0")) {
-				return BadOperation;
-			}
-		}
 		/* copy string value */
 		if ((base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
 			if (!mpt_array_append(&a, len, base)) {
+				return BadOperation;
+			}
+			/* insert space element */
+			if (!mpt_array_append(&a, 1, "\0")) {
 				return BadOperation;
 			}
 			++val.fmt;
@@ -345,11 +337,15 @@ int array::set(value val)
 		/* print number data */
 		if ((ret = mpt_number_print(buf, sizeof(buf), value_format(), *val.fmt, val.ptr)) >= 0) {
 			const MPT_STRUCT(type_traits) *traits;
+			if (!(traits = type_traits(*val.fmt))) {
+				return BadType;
+			}
 			if (!mpt_array_append(&a, ret, buf)) {
 				return BadOperation;
 			}
-			if (!(traits = type_traits(*val.fmt))) {
-				return BadType;
+			/* insert space element */
+			if (!mpt_array_append(&a, 1, "\0")) {
+				return BadOperation;
 			}
 			++val.fmt;
 			val.ptr = ((uint8_t *) val.ptr) + traits->size;

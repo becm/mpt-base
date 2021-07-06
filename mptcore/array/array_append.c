@@ -13,14 +13,15 @@
  * \brief append data to array
  * 
  * Push raw data to array, resize if needed.
- * Use data null pointer to add zeroed data.
+ * If data pointer is null, added data is zeroed.
  * 
  * Target buffer may not contain type information.
- * To not initialize target area reserve new data after
- * buffer end with mpt_array_slice().
+ * 
+ * To only reserve new data area at buffer end
+ * use \ref mpt_array_slice.
  * 
  * \param arr  array descriptor
- * \param len  length to append
+ * \param len  length of data to append
  * \param base data to append
  * 
  * \return appended data start address
@@ -31,9 +32,6 @@ extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *ba
 	size_t used;
 	void *dest;
 	
-	if (!len) {
-		return 0;
-	}
 	if (!(b = arr->_buf)) {
 		if (!(b = _mpt_buffer_alloc(len))) {
 			return 0;
@@ -58,6 +56,10 @@ extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *ba
 		arr->_buf = b;
 	}
 	dest = ((uint8_t *)(b + 1)) + used;
+	if (!len) {
+		return dest;
+	}
+	
 	b->_used = used + len;
 	
 	if (base) {
