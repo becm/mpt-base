@@ -46,9 +46,8 @@ if with_shared
     install : with_core)
 
   if with_core
-    pkg.generate(
+    pkg.generate(core_lib,
       description : 'mpt core library',
-      libraries : core_lib,
       version : '1.0.0',
       name : 'mptcore')
   endif

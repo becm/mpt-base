@@ -26,9 +26,8 @@ if with_shared
     install : with_plot)
   
   if with_plot
-    pkg.generate(
+    pkg.generate(plot_lib,
       description : 'mpt plotting library',
-      libraries : plot_lib,
       requires_private : 'mptcore',
       version : '1.0.0',
       name : 'mptplot')

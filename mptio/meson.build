@@ -27,9 +27,8 @@ if with_shared
     install : with_io)
 
   if with_io
-    pkg.generate(
+    pkg.generate(io_lib,
       description : 'mpt I/O library',
-      libraries : io_lib,
       requires_private : 'mptcore',
       version : '1.0.0',
       name : 'mptio')

@@ -12,7 +12,7 @@ devel : sub_devel
 install : sub_install
 shared : sub_shared
 test : examples_test
-examples_test : install
+examples_test : devel
 clear : examples_clear sub_clear
 clean : examples_clean sub_clean
 static : "${DIR_LIB}/libmpt.a" static++

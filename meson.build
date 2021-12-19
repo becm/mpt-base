@@ -1,10 +1,14 @@
 # mpt-base/meson.build
 # build definitions for mpt
 
-project('mpt', 'c', default_options : [
-  'cpp_std=c++11',
-  'c_std=c11'
-])
+project('mpt', 'c',
+#  version : '0.0.1'
+  default_options : [
+    'cpp_std=c++11',
+    'c_std=c11'
+  ],
+  meson_version : '>= 0.47',
+)
 
 pkg = import('pkgconfig')
 
@@ -29,17 +33,17 @@ endif
 if not meson.is_subproject()
   gitcommand = find_program('git', required : false)
   if gitcommand.found()
-    git = run_command(gitcommand, 'status', '--porcelain')
+    git = run_command(gitcommand, 'status', '--porcelain', check : true)
   endif
   if is_variable('git') and git.returncode() == 0 and git.stdout().strip() == ''
-    git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h')
+    git = run_command(gitcommand, 'show', '-s', '--pretty=format:%h', check : true)
     if git.returncode() == 0
       git = '__VCS_TAG__="git:' + git.stdout().strip() + '"'
       add_global_arguments('-D' + git, language : 'c')
       add_global_arguments('-D' + git, language : 'cpp')
     endif
   else
-    iso = run_command('date', '+%F')
+    iso = run_command('date', '+%F', check : true)
     if iso.returncode() == 0
       iso = '__ISO_DATE__="' + iso.stdout().strip() + '"'
       add_global_arguments('-D' + iso, language : 'c')

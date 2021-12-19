@@ -3,6 +3,11 @@
 
 test_defines = [ '-DMPT_INCLUDE(x)=#x' ]
 
+# location of dynamic loaded library
+dir_libs_test = join_paths(meson.current_build_dir(), '..', 'mptplot')
+# location of MPT Lua modules
+dir_lua_modules = join_paths(meson.current_source_dir(), '..', 'lua')
+
 if with_core
   subdir('core')
 endif
@@ -55,7 +60,8 @@ if with_shared and with_loader
     executable('libassign', 'libassign.c',
       c_args: test_defines,
       dependencies: load),
-    env: [ 'MPT_PREFIX_LIB=' + join_paths(meson.build_root(), 'mptplot') ])
+    # use runtime from meson build location
+    env: [ 'MPT_PREFIX_LIB=' + dir_libs_test ])
 endif
 
 if with_io
@@ -68,8 +74,8 @@ endif
 
 if with_lua
   test('lua interpreter',
-    executable('interp', join_paths('lua', 'main.c'),
-      c_args: test_defines + [ '-D__MPT_BUILD_LUA_PATH="' + join_paths(meson.source_root(), 'lua') + '"' ],
+    executable('interp' + lua_version, join_paths('lua', 'main.c'),
+      c_args: test_defines + [ '-D__MPT_BUILD_LUA_PATH="' + dir_lua_modules + '"' ],
       dependencies: lua),
     args: [ join_paths(meson.current_source_dir(), 'lua', 'user.lua')])
 endif

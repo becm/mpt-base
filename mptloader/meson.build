@@ -9,7 +9,7 @@ load_src = files(
   'readline.c'
 )
 if not meson.is_subproject()
-install_headers('loader.h', subdir : 'mpt')
+  install_headers('loader.h', subdir : 'mpt')
 endif
 
 # use headers from core library
@@ -30,9 +30,8 @@ if with_shared
     install : with_loader)
 
   if with_loader
-    pkg.generate(
+    pkg.generate(load_lib,
       description : 'mpt loader operations',
-      libraries : load_lib,
       version : '1.0.0',
       name : 'mptloader')
   endif

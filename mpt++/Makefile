@@ -32,7 +32,8 @@ CXXFLAGS += -std=c++98
 ${NEED_CXX_AUTO} ${NEED_CXX_VA_COPY} : CXXFLAGS+=-std=c++11
 #
 # additional dependencies
-graphic.o mapping.o io_* : ${HEADER}
+graphic.o mapping.o : graphic.h
+io.o io_* : io.h
 libinfo.o : ../libinfo.h ../version.h
 #
 # remove library info object

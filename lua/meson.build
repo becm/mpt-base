@@ -2,24 +2,19 @@
 # build definition for mpt LUA library
 
 # need to modify target prefix
-lua_lmod = run_command('pkg-config',
-  '--define-variable=prefix=' + get_option('prefix'),
-  '--variable=INSTALL_LMOD',
-  'lua' + get_option('lua')).stdout().strip()
+lua_lmod = lua.get_pkgconfig_variable('INSTALL_LMOD',
+  define_variable: [ 'prefix', get_option('prefix') ]
+)
 
 # get_compile_args() not exported by dependency object
 lua_cflags = run_command('pkg-config',
   '--cflags',
-  'lua' + get_option('lua')).stdout().strip()
+  'lua' + get_option('lua'),
+  check : true
+).stdout().strip()
 
 # use pkgconfig wrapper if available
-if meson.version() >= '0.36'
-  lua_version = lua.get_pkgconfig_variable('major_version')
-else
-  lua_version = run_command('pkg-config',
-    '--variable=major_version',
-    'lua' + get_option('lua')).stdout().strip()
-endif
+lua_version = lua.get_pkgconfig_variable('major_version')
 
 if not meson.is_subproject()
   install_data('mpt.lua', install_dir : lua_lmod)

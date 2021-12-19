@@ -16,6 +16,11 @@ test('queue operations',
     cpp_args: test_defines,
     dependencies: cxx)
 )
+test('type assignments',
+  executable('types', 'types.cpp',
+    cpp_args: test_defines,
+    dependencies: cxx)
+)
 # require C++ I/O components
 if with_io
   test('buffer rotation',
