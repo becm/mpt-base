@@ -17,11 +17,13 @@
  * \retval 0   bit already set
  * \retval >0  bit modified
  */
-extern int mpt_bitmap_set(uint8_t *base, size_t len, size_t pos)
+extern int mpt_bitmap_set(uint8_t *base, size_t len, long pos)
 {
 	size_t off;
 	
-	if ((off = pos / 8) >= len) return -2;
+	if (pos < 0 || (off = pos / 8) >= len) {
+		return MPT_ERROR(MissingBuffer);
+	}
 	pos = pos % 8;
 	
 	if (base[off] & 1<<pos) return 0;
@@ -43,11 +45,13 @@ extern int mpt_bitmap_set(uint8_t *base, size_t len, size_t pos)
  * \retval 0   bit already not set
  * \retval >0  bit modified
  */
-extern int mpt_bitmap_unset(uint8_t *base, size_t len, size_t pos)
+extern int mpt_bitmap_unset(uint8_t *base, size_t len, long pos)
 {
 	size_t off;
 	
-	if ((off = pos / 8) >= len) return -2;
+	if (pos < 0 || (off = pos / 8) >= len) {
+		return MPT_ERROR(MissingBuffer);
+	}
 	pos = pos % 8;
 	
 	if (!(base[off] & 1<<pos)) return 0;
@@ -69,11 +73,13 @@ extern int mpt_bitmap_unset(uint8_t *base, size_t len, size_t pos)
  * \retval 0   bit is unset
  * \retval 1   bit is set
  */
-extern int mpt_bitmap_get(const uint8_t *base, size_t len, size_t pos)
+extern int mpt_bitmap_get(const uint8_t *base, size_t len, long pos)
 {
 	size_t off;
 	
-	if ((off = pos / 8) >= len) return -2;
+	if (pos < 0 || (off = pos / 8) >= len) {
+		return MPT_ERROR(MissingBuffer);
+	}
 	pos = pos % 8;
 	
 	return (base[off] & 1<<pos) ? 1 : 0;

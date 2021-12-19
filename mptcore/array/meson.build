@@ -1,6 +1,7 @@
 # meson.build.gen: *.c
 src = files(
   'array_append.c',
+  'array_clone.c',
   'array_compact.c',
   'array_insert.c',
   'array_message.c',

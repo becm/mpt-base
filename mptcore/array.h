@@ -333,7 +333,7 @@ extern char *mpt_array_string(MPT_STRUCT(array) *);
 extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *, size_t len, const void *data);
 
 /* pointer/metatype array */
-extern size_t mpt_array_compact(void **, size_t);
+extern long mpt_array_compact(void **, long);
 extern size_t mpt_array_move(void *, size_t , size_t , size_t);
 
 /* buffer resizing backends */
@@ -342,9 +342,9 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_alloc_unique(size_t);
 extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t);
 
 /* bit operations */
-extern int mpt_bitmap_set(uint8_t *, size_t , size_t);
-extern int mpt_bitmap_unset(uint8_t *, size_t , size_t);
-extern int mpt_bitmap_get(const uint8_t *, size_t , size_t);
+extern int mpt_bitmap_set(uint8_t *, size_t , long);
+extern int mpt_bitmap_unset(uint8_t *, size_t , long);
+extern int mpt_bitmap_get(const uint8_t *, size_t , long);
 
 __MPT_EXTDECL_END
 
@@ -618,8 +618,8 @@ public:
 			return 0;
 		}
 		const struct type_traits *traits = d->content_traits();
-		if (traits && traits->init) {
-			return traits->init(ptr, 0) >= 0;
+		if (traits && traits->init && traits->init(ptr, 0) >= 0) {
+			return static_cast<T *>(ptr);
 		}
 		return new (ptr) T;
 	}

@@ -1,5 +1,6 @@
 /*!
- * compact array
+ * MPT core library
+ *   compact generic pointer array
  */
 
 #include "array.h"
@@ -11,15 +12,15 @@
  * Move non-zero pointers to beginning of array
  * while preserving order.
  * 
- * \param base	array containing pointers
- * \param len	number of elements in array
+ * \param base  array containing pointers
+ * \param len   number of elements in array
  * 
  * \return used elements
  */
-extern size_t mpt_array_compact(void **base, size_t len)
+extern long mpt_array_compact(void **base, long len)
 {
-	void	**to, **end;
-	size_t	rem;
+	void **to, **end;
+	long rem;
 	
 	/* loop borders */
 	end = base + len;
