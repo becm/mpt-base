@@ -93,11 +93,11 @@ public:
 	class root;
 	class item;
 };
-template<> inline __MPT_CONST_TYPE int type_properties<config *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<config *>::id(bool) {
 	return TypeConfigPtr;
 }
 template <> inline const struct type_traits *type_properties<config *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(config);

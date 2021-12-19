@@ -30,11 +30,11 @@ public:
 	virtual int each(item_handler_t *, void *) const = 0;
 	virtual unsigned long clear(const metatype * = 0) = 0;
 };
-template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id(bool) {
 	return TypeCollectionPtr;
 }
 template <> inline const struct type_traits *type_properties<collection *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE_VPTR(collection) {

@@ -46,11 +46,11 @@ enum MPT_OUTFLAG(Flags) {
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int type_properties<output *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<output *>::id(bool) {
 	return TypeOutputPtr;
 }
 template<> inline const struct type_traits *type_properties<output *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(output);
@@ -106,11 +106,11 @@ enum MPT_ENUM(LogFlags)
 };
 #ifdef __cplusplus
 };
-template<> inline __MPT_CONST_TYPE int type_properties<logger *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<logger *>::id(bool) {
 	return TypeLoggerPtr;
 }
 template<> inline const struct type_traits *type_properties<logger *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(logger);

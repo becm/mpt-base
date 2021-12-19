@@ -21,7 +21,7 @@ __MPT_NAMESPACE_BEGIN
 metatype *metatype::create(int type, const void *ptr)
 {
 	// integer types
-	if (type == type_properties<uint8_t>::id()) {
+	if (type == type_properties<uint8_t>::id(true)) {
 		return new meta_value<uint8_t>(static_cast<const uint8_t *>(ptr));
 	}
 	return 0;

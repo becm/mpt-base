@@ -6,13 +6,16 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int type_properties<io::interface *>::id()
+template <> int type_properties<io::interface *>::id(bool obtain)
 {
 	static int _valtype = 0;
 	int type;
 	/* already a registerd type */
 	if ((type = _valtype) > 0) {
 		return type;
+	}
+	if (!obtain) {
+		return BadType;
 	}
 	/* register named of fallback type */
 	if ((type = mpt_type_interface_new("mpt.io")) < 0) {
@@ -24,7 +27,7 @@ template <> int type_properties<io::interface *>::id()
 template <> const struct type_traits *type_properties<io::interface *>::traits()
 {
 	static const struct type_traits *traits = 0;
-	if (!traits && !(traits = type_traits::get(id()))) {
+	if (!traits && !(traits = type_traits::get(id(true)))) {
 		static const struct type_traits fallback(sizeof(io::interface *));
 		traits = &fallback;
 	}

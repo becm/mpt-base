@@ -292,53 +292,53 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 class parser;
 
-template <> inline __MPT_CONST_TYPE int type_properties<color>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<color>::id(bool) {
 	return TypeColor;
 }
 template <> inline const struct type_traits *type_properties<color>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<lineattr>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<lineattr>::id(bool) {
 	return TypeLineAttr;
 }
 template <> inline const struct type_traits *type_properties<lineattr>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<line>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<line>::id(bool) {
 	return TypeLine;
 }
 template <> inline const struct type_traits *type_properties<line *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<axis *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<axis *>::id(bool) {
 	return TypeAxisPtr;
 }
 template <> inline const struct type_traits *type_properties<axis *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<world *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<world *>::id(bool) {
 	return TypeWorldPtr;
 }
 template <> inline const struct type_traits *type_properties<world *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<graph *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<graph *>::id(bool) {
 	return TypeGraphPtr;
 }
 template <> inline const struct type_traits *type_properties<graph *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<text *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<text *>::id(bool) {
 	return TypeTextPtr;
 }
 template <> inline const struct type_traits *type_properties<text *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 template <typename S>

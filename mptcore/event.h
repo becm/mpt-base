@@ -31,11 +31,11 @@ protected:
 };
 /* message reply dispatcher */
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<reply_data *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<reply_data *>::id(bool) {
 	return TypeReplyDataPtr;
 }
 template <> inline const struct type_traits *type_properties<reply_data *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 class reply_context_detached
@@ -68,11 +68,11 @@ protected:
 	inline ~reply_context()
 	{ }
 };
-template<> inline __MPT_CONST_TYPE int type_properties<reply_context *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<reply_context *>::id(bool) {
 	return TypeReplyPtr;
 }
 template <> inline const struct type_traits *type_properties<reply_context *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(reply_context);
@@ -243,11 +243,11 @@ extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<command>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<command>::id(bool) {
 	return TypeCommand;
 }
 template <> inline const struct type_traits *type_properties<command>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 class MessageSource : public reply_context

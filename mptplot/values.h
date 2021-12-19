@@ -56,7 +56,7 @@ struct point
 	
 	T x, y;
 };
-template<> int type_properties<point<double> >::id();
+template<> int type_properties<point<double> >::id(bool);
 template<> const MPT_STRUCT(type_traits) *type_properties<point<double> >::traits();
 
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
@@ -177,14 +177,13 @@ public:
 	T *reserve(unsigned long len, long pos = 0)
 	{
 		static const struct type_traits *traits = 0;
-		static int type;
 		if (!traits) {
 			traits = type_properties<T>::traits();
-			type = type_properties<T>::id();
 		}
 		void *ptr = reserve(traits, len * sizeof(T), pos);
 		if (ptr) {
-			_type = type;
+			/* type ID registration may happen during runtime */
+			_type = type_properties<T>::id(false);
 			_code = 0;
 		}
 		return static_cast<T *>(ptr);
@@ -404,7 +403,7 @@ template <typename T>
 inline int modify(rawdata &rd, unsigned dim, const span<const T> &data, const valdest * dest = 0)
 {
 	static int type = 0;
-	if (type <= 0 && ((type = type_properties<T>::id()) < 0)) {
+	if (type <= 0 && ((type = type_properties<T>::id(true)) < 0)) {
 		return BadValue;
 	}
 	return rd.modify(dim, type, data.begin(), data.size() * sizeof(T), dest);

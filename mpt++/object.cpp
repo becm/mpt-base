@@ -200,7 +200,7 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
 		pr.val.fmt = metafmt;
 		pr.val.ptr = &mt;
 		if ((mt = head->_meta)) {
-			if (mt->convert(type_properties<value>::id(), &pr.val) < 0
+			if (mt->convert(type_properties<value>::id(true), &pr.val) < 0
 			 && mt->convert('s', &pr.val.ptr) >= 0) {
 				pr.val.fmt = 0;
 			}

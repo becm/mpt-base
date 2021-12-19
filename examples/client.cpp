@@ -53,7 +53,7 @@ int client::convert(int type, void *ptr)
 	metatype *mt;
 	int ret;
 	if ((mt = _mt.instance()) && (ret = mt->convert(type, ptr)) > 0) {
-		return mpt::type_properties<mpt::client *>::id();
+		return mpt::type_properties<mpt::client *>::id(true);
 	}
 	return client::convert(type, ptr);
 }

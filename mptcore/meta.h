@@ -37,18 +37,18 @@ public:
 	virtual uintptr_t addref();
 	virtual metatype *clone() const = 0;
 };
-template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id(bool) {
 	return TypeMetaPtr;
 }
 template <> inline const struct type_traits *type_properties<metatype *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<reference<metatype> >::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<reference<metatype> >::id(bool) {
 	return TypeMetaRef;
 }
 template <> inline const struct type_traits *type_properties<reference<metatype> >::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 inline uintptr_t metatype::addref()
@@ -82,7 +82,7 @@ public:
 	template <typename T>
 	bool consume(T &val)
 	{
-		int type = type_properties<T>::id();
+		int type = type_properties<T>::id(true);
 		if (type <= 0) {
 			return false;
 		}
@@ -97,11 +97,11 @@ public:
 		return true;
 	}
 };
-template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id() {
+template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
 	return TypeIteratorPtr;
 }
 template <> inline const struct type_traits *type_properties<iterator *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(iterator);
@@ -124,7 +124,7 @@ MPT_STRUCT(consumable)
 		if ((_it = typecast<iterator>(val))) {
 			return;
 		}
-		val.convert(type_properties<value>::id(), &_val);
+		val.convert(type_properties<value>::id(true), &_val);
 	}
 protected:
 #else
@@ -171,9 +171,13 @@ template <typename T>
 class meta_value : public metatype
 {
 public:
-	inline meta_value(const T *val = 0) : _val(val ? *val : 0)
+	inline meta_value(const T *val = 0) :
+		_val(val ? *val : 0),
+		_valtype(type_properties<T>::id(true))
 	{ }
-	inline meta_value(const T &val) : _val(val)
+	inline meta_value(const T &val) :
+		_val(val),
+		_valtype(type_properties<T>::id(true))
 	{ }
 	virtual ~meta_value()
 	{ }
@@ -183,7 +187,7 @@ public:
 	}
 	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
-		static const int me = type_properties<T>::id();
+		static const int me = type_properties<T>::id(true);
 		if (!type) {
 			if (dest) {
 				*static_cast<const uint8_t **>(dest) = 0;
@@ -204,6 +208,7 @@ public:
 	}
 protected:
 	T _val;
+	const int _valtype;
 };
 template<typename T>
 class type_properties<meta_value<T> *>
@@ -274,11 +279,11 @@ class type_properties<source<T> *>
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
+	static inline __MPT_CONST_EXPR int id(bool) {
 		return TypeIteratorPtr;
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 #endif

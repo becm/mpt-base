@@ -46,11 +46,11 @@ MPT_STRUCT(node)
 };
 
 #if defined(__cplusplus)
-template<> inline __MPT_CONST_TYPE int type_properties<node *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<node *>::id(bool) {
 	return TypeNodePtr;
 }
 template <> inline const struct type_traits *type_properties<node *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #endif
 

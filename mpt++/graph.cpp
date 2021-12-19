@@ -20,16 +20,24 @@ template class reference<layout::graph::world>;
 template class reference<layout::graph::data>;
 template class reference<class layout::graph::transform3>;
 
-template <> int type_properties<layout::graph *>::id()
+template <> int type_properties<layout::graph *>::id(bool obtain)
 {
-	static int id = 0;
-	if (!id && (id = mpt_type_meta_new("graph")) < 0) {
-		id = mpt_type_meta_new(0);
+	static int _valtype = 0;
+	int type;
+	
+	if ((type = _valtype) > 0) {
+		return type;
 	}
-	return id;
+	if (!obtain) {
+		return BadType;
+	}
+	if ((type = mpt_type_meta_new("graph")) < 0) {
+		type = mpt_type_meta_new(0);
+	}
+	return _valtype = type;
 }
 template <> const struct type_traits *type_properties<layout::graph *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 // graph data operations
@@ -64,7 +72,7 @@ layout::graph::~graph()
 // convertable interface
 int layout::graph::convert(int type, void *ptr)
 {
-	int me = type_properties<graph *>::id();
+	int me = type_properties<graph *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
@@ -106,7 +114,7 @@ layout::graph *layout::graph::clone() const
 int layout::graph::property(struct property *prop) const
 {
 	if (!prop) {
-		return type_properties<graph *>::id();
+		return type_properties<graph *>::id(true);
 	}
 	return mpt_graph_get(this, prop);
 }
@@ -211,7 +219,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 		}
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
-		int id = type_properties< ::mpt::axis *>::id();
+		int id = type_properties< ::mpt::axis *>::id(true);
 		if (!(mt = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
@@ -269,7 +277,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 		}
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
-		int id = type_properties< ::mpt::world *>::id();
+		int id = type_properties< ::mpt::world *>::id(true);
 		if (!(mt = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
@@ -506,7 +514,7 @@ layout::graph::axis::~axis()
 { }
 int layout::graph::axis::convert(int type, void *ptr)
 {
-	int me = type_properties<axis *>::id();
+	int me = type_properties<axis *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
@@ -587,7 +595,7 @@ layout::graph::world::~world()
 { }
 int layout::graph::world::convert(int type, void *ptr)
 {
-	int me = type_properties<world *>::id();
+	int me = type_properties<world *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}

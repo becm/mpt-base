@@ -16,13 +16,20 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int type_properties<client *>::id()
+template <> int type_properties<client *>::id(bool obtain)
 {
-	return mpt_client_typeid();
+	int _valtype = 0;
+	if (_valtype > 0) {
+		return _valtype;
+	}
+	if (!obtain) {
+		return BadType;
+	}
+	return _valtype = mpt_client_typeid();
 }
 template <> const struct type_traits *type_properties<client *>::traits()
 {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 static void unrefConfig()
@@ -58,7 +65,7 @@ static config *clientConfig()
  */
 int client::convert(int type, void *ptr)
 {
-	int me = type_properties<client *>::id();
+	int me = type_properties<client *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
@@ -70,7 +77,7 @@ int client::convert(int type, void *ptr)
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
-	int cfg = type_properties<class config *>::id();
+	int cfg = type_properties<class config *>::id(true);
 	if ((cfg > 0) && (type == cfg)) {
 		if (ptr) *static_cast<class config **>(ptr) = clientConfig();
 		return me;

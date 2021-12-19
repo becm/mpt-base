@@ -40,11 +40,11 @@ public:
 	MPT_STRUCT(value) val; /* element value */
 };
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<property>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<property>::id(bool) {
 	return TypeProperty;
 }
 template <> inline const struct type_traits *type_properties<property>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #endif
 typedef int (*MPT_TYPE(property_handler))(void *, const MPT_STRUCT(property) *);
@@ -89,11 +89,11 @@ public:
 	virtual int property(struct property *) const = 0;
 	virtual int set_property(const char *, convertable * = 0) = 0;
 };
-template<> inline __MPT_CONST_TYPE int type_properties<object *>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<object *>::id(bool) {
 	return TypeObjectPtr;
 }
 template <> inline const struct type_traits *type_properties<object *>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 #else
 MPT_INTERFACE(object);
@@ -280,7 +280,7 @@ public:
 	{
 		value::format fmt;
 		value val;
-		fmt.set(type_properties<T>::id());
+		fmt.set(type_properties<T>::id(true));
 		val.set(fmt, &v);
 		if (!set(val)) {
 			_prop.name = 0;

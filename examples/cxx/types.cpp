@@ -22,7 +22,7 @@ struct Value : public mpt::value, public mpt::value::format
 	template <typename T>
 	bool set(const T *t)
 	{
-		if (!t || !value::format::set(mpt::type_properties<T>::id())) {
+		if (!t || !value::format::set(mpt::type_properties<T>::id(true))) {
 			return false;
 		}
 		return value::set(*this, t);
@@ -36,9 +36,9 @@ struct Value : public mpt::value, public mpt::value::format
 template <typename T>
 void print()
 {
-	int id = mpt::type_properties<T>::id();
-	int sid = mpt::type_properties<mpt::span<const T> >::id();
-	int mid = mpt::type_properties<mpt::span<T> >::id();
+	int id = mpt::type_properties<T>::id(true);
+	int sid = mpt::type_properties<mpt::span<const T> >::id(true);
+	int mid = mpt::type_properties<mpt::span<T> >::id(true);
 	uint8_t bid = mpt::basetype(id);
 	uint8_t bsid = mpt::basetype(sid);
 	std::cout << id  << ' ' << '<' << bid  << '>' << ' ';
@@ -48,17 +48,17 @@ void print()
 template <typename T>
 int type_id(const T &)
 {
-	return mpt::type_properties<T>::id();
+	return mpt::type_properties<T>::id(true);
 }
 template <typename T>
 uint8_t base(const T &)
 {
-	return mpt::basetype(mpt::type_properties<T>::id());
+	return mpt::basetype(mpt::type_properties<T>::id(true));
 }
 
 extern int main(int, char *[])
 {
-	static const uint8_t fmt[] = { mpt::basetype(mpt::type_properties<mpt::array>::id()), 0 };
+	static const uint8_t fmt[] = { mpt::basetype(mpt::type_properties<mpt::array>::id(true)), 0 };
 	mtrace();
 	Value v;
 	

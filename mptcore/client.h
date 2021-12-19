@@ -31,7 +31,7 @@ public:
 protected:
 	inline ~client() { }
 };
-template <> int type_properties<client *>::id();
+template <> int type_properties<client *>::id(bool);
 template <> const MPT_STRUCT(type_traits) *type_properties<client *>::traits();
 
 #else

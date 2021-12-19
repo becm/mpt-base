@@ -160,10 +160,13 @@ public:
 		return &traits;
 	}
 	
-	static int id() {
+	static int id(bool obtain) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
+		}
+		if (!obtain) {
+			return BadType;
 		}
 		return _valtype = type_traits::add(*traits());
 	}
@@ -193,10 +196,13 @@ public:
 		return &traits;
 	}
 	
-	static int id() {
+	static int id(bool obtain) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
+		}
+		if (!obtain) {
+			return BadType;
 		}
 		return _valtype = type_traits::add(*traits());
 	}
@@ -213,22 +219,25 @@ public:
 		if (traits) {
 			return traits;
 		}
-		int type = id();
+		int type = id(true);
 		if (type < 0 || !(traits = type_traits::get(type))) {
 			traits = get_traits();
 		}
 		return traits;
 	}
 	
-	static int id() {
+	static int id(bool obtain) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
 		}
 		/* use vector IDs for builtin types */
-		int type = type_properties<T>::id();
+		int type = type_properties<T>::id(false);
 		if ((type = MPT_type_toVector(type)) > 0) {
 			return _valtype = type;
+		}
+		if (!obtain) {
+			return BadType;
 		}
 		return _valtype = type_traits::add(*get_traits());
 	}
@@ -242,7 +251,8 @@ private:
 
 template<typename T>
 bool assign(const T &from, int type, void *ptr) {
-	if (type != type_properties<T>::id()) {
+	/* bad arg or type ID registration error */
+	if (type <= 0 || type != type_properties<T>::id(true)) {
 		return false;
 	}
 	if (ptr) {
@@ -254,7 +264,7 @@ bool assign(const T &from, int type, void *ptr) {
 template<typename T>
 inline T *typecast(convertable &src) {
 	T *ptr = 0;
-	int type = type_properties<T *>::id();
+	int type = type_properties<T *>::id(true);
 	if ((type > 0)
 	 && (src.convert(type, &ptr) < 0)) {
 		ptr = 0;
@@ -269,48 +279,48 @@ template <> inline const char *typecast<const char>(convertable &src) {
 }
 
 /* floating point values */
-template<> inline __MPT_CONST_TYPE int type_properties<float>::id()       { return 'f'; }
-template<> inline __MPT_CONST_TYPE int type_properties<double>::id()      { return 'd'; }
-template<> inline __MPT_CONST_TYPE int type_properties<long double>::id() { return 'e'; }
+template<> inline __MPT_CONST_TYPE int type_properties<float>::id(bool)       { return 'f'; }
+template<> inline __MPT_CONST_TYPE int type_properties<double>::id(bool)      { return 'd'; }
+template<> inline __MPT_CONST_TYPE int type_properties<long double>::id(bool) { return 'e'; }
 /* integer values */
-template<> inline __MPT_CONST_TYPE int type_properties<int8_t>::id()  { return 'b'; }
-template<> inline __MPT_CONST_TYPE int type_properties<int16_t>::id() { return 'n'; }
-template<> inline __MPT_CONST_TYPE int type_properties<int32_t>::id() { return 'i'; }
-template<> inline __MPT_CONST_TYPE int type_properties<int64_t>::id() { return 'x'; }
+template<> inline __MPT_CONST_TYPE int type_properties<int8_t>::id(bool)  { return 'b'; }
+template<> inline __MPT_CONST_TYPE int type_properties<int16_t>::id(bool) { return 'n'; }
+template<> inline __MPT_CONST_TYPE int type_properties<int32_t>::id(bool) { return 'i'; }
+template<> inline __MPT_CONST_TYPE int type_properties<int64_t>::id(bool) { return 'x'; }
 /* unsigned values */
-template<> inline __MPT_CONST_TYPE int type_properties<uint8_t>::id()  { return 'y'; }
-template<> inline __MPT_CONST_TYPE int type_properties<uint16_t>::id() { return 'q'; }
-template<> inline __MPT_CONST_TYPE int type_properties<uint32_t>::id() { return 'u'; }
-template<> inline __MPT_CONST_TYPE int type_properties<uint64_t>::id() { return 't'; }
+template<> inline __MPT_CONST_TYPE int type_properties<uint8_t>::id(bool)  { return 'y'; }
+template<> inline __MPT_CONST_TYPE int type_properties<uint16_t>::id(bool) { return 'q'; }
+template<> inline __MPT_CONST_TYPE int type_properties<uint32_t>::id(bool) { return 'u'; }
+template<> inline __MPT_CONST_TYPE int type_properties<uint64_t>::id(bool) { return 't'; }
 /* string data */
-template<> inline __MPT_CONST_TYPE int type_properties<char>::id() { return 'c'; }
-template<> inline __MPT_CONST_TYPE int type_properties<const char *>::id() { return 's'; }
+template<> inline __MPT_CONST_TYPE int type_properties<char>::id(bool) { return 'c'; }
+template<> inline __MPT_CONST_TYPE int type_properties<const char *>::id(bool) { return 's'; }
 
 
 /* floating point values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<float>::traits()       { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<double>::traits()      { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<long double>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<float>::traits()       { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<double>::traits()      { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<long double>::traits() { return type_traits::get(id(true)); }
 /* integer values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int8_t>::traits()  { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int16_t>::traits() { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int32_t>::traits() { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int64_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int8_t>::traits()  { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int16_t>::traits() { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int32_t>::traits() { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int64_t>::traits() { return type_traits::get(id(true)); }
 /* unsigned values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint8_t>::traits()  { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint16_t>::traits() { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint32_t>::traits() { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint64_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint8_t>::traits()  { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint16_t>::traits() { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint32_t>::traits() { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint64_t>::traits() { return type_traits::get(id(true)); }
 /* string data */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<char>::traits() { return type_traits::get(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<char>::traits() { return type_traits::get(id(true)); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::traits() { return type_traits::get(id(true)); }
 
 
-template<> inline __MPT_CONST_TYPE int type_properties<value>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<value>::id(bool) {
 	return TypeValue;
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 #endif /* __cplusplus */

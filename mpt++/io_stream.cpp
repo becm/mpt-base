@@ -39,7 +39,7 @@ io::stream::~stream()
 // convertable interface
 int io::stream::convert(int type, void *ptr)
 {
-	int me = type_properties<io::interface *>::id();
+	int me = type_properties<io::interface *>::id(true);
 	
 	if (me < 0) {
 		if ((me = mpt_input_typeid()) < 0) {
@@ -138,7 +138,7 @@ int io::stream::set_property(const char *pr, convertable *src)
 		if (!src) {
 			l = 0;
 		} else {
-			int ret = src->convert(type_properties<uint8_t>::id(), &l);
+			int ret = src->convert(type_properties<uint8_t>::id(true), &l);
 			if (ret < 0) {
 				return ret;
 			}

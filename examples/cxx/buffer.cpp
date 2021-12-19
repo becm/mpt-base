@@ -22,7 +22,7 @@
 template <typename T>
 uint8_t type(const T &)
 {
-	return mpt::basetype(mpt::type_properties<T>::id());
+	return mpt::basetype(mpt::type_properties<T>::id(true));
 }
 
 const char txt[] = "fdsgfdgm dfkhndn djgkh d hdfhsjdfgh df gh dir";

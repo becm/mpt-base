@@ -18,13 +18,21 @@ template class reference<layout>;
 template class reference<layout::line>;
 template class reference<layout::text>;
 
-template <> int type_properties<layout *>::id()
+template <> int type_properties<layout *>::id(bool obtain)
 {
-	static int id = 0;
-	if (!id && (id = mpt_type_meta_new("layout")) < 0) {
-		id = mpt_type_meta_new(0);
+	static int _valtype = 0;
+	int type;
+	
+	if ((type = _valtype) > 0) {
+		return type;
 	}
-	return id;
+	if (!obtain) {
+		return BadType;
+	}
+	if ((type = mpt_type_meta_new("layout")) < 0) {
+		type = mpt_type_meta_new(0);
+	}
+	return _valtype = type;
 }
 
 // layout extension
@@ -39,7 +47,7 @@ layout::~layout()
 int layout::convert(int type, void *ptr)
 {
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		int type = type_properties<group *>::id();
+		int type = type_properties<group *>::id(true);
 		return type < 0 ? TypeMetaPtr : type;
 	}
 	return item_group::convert(type, ptr);
@@ -48,7 +56,7 @@ int layout::convert(int type, void *ptr)
 int layout::property(struct property *pr) const
 {
 	if (!pr) {
-		return type_properties<layout *>::id();
+		return type_properties<layout *>::id(true);
 	}
 	const char *name = pr->name;
 	int pos = -1;
@@ -268,7 +276,7 @@ layout::line::~line()
 { }
 int layout::line::convert(int type, void *ptr)
 {
-	int me = type_properties<line *>::id();
+	int me = type_properties<line *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
@@ -360,7 +368,7 @@ layout::text::~text()
 { }
 int layout::text::convert(int type, void *ptr)
 {
-	int me = type_properties<text *>::id();
+	int me = type_properties<text *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}

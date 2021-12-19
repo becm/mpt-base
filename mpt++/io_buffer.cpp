@@ -25,7 +25,7 @@ io::buffer::~buffer()
 // convertable interface
 int io::buffer::convert(int type, void *ptr)
 {
-	int me = type_properties<io::interface *>::id();
+	int me = type_properties<io::interface *>::id(true);
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
@@ -82,10 +82,11 @@ io::buffer *io::buffer::clone() const
 // iterator interface
 int io::buffer::get(int type, void *ptr)
 {
+	int me = type_properties<io::interface *>::id(true);
+	
 	if (!type) {
-		int me = type_properties<io::interface *>::id();
 		mpt_slice_get(0, type, ptr);
-		return me < 0 ? type_properties<array>::id() : me;
+		return me < 0 ? type_properties<array>::id(true) : me;
 	}
 	if (_state.scratch) {
 		return message::InProgress;
@@ -96,7 +97,6 @@ int io::buffer::get(int type, void *ptr)
 	if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
 		return type;
 	}
-	int me = type_properties<io::interface *>::id();
 	return me < 0 ? TypeMetaPtr : me;
 }
 int io::buffer::advance()

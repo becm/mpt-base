@@ -155,7 +155,7 @@ class queue;
 
 } /* end I/O namespace */
 
-template<> int type_properties<io::interface *>::id();
+template<> int type_properties<io::interface *>::id(bool);
 template<> const struct type_traits *type_properties<io::interface *>::traits();
 
 #ifdef _MPT_QUEUE_H

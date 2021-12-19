@@ -163,11 +163,11 @@ protected:
 
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<array>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<array>::id(bool) {
 	return TypeArray;
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<array>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 /*! reference to buffer segment */
@@ -699,11 +699,11 @@ class type_properties<unique_array<T> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 
@@ -755,12 +755,12 @@ class type_properties<typed_array<T> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static const struct type_traits *traits()
 	{
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 
@@ -834,11 +834,11 @@ class type_properties<item_array<T> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 
@@ -884,11 +884,11 @@ class type_properties<pointer_array<T> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 
@@ -953,11 +953,11 @@ class type_properties<reference_array<T> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 
@@ -1023,11 +1023,11 @@ protected:
 		uint8_t type;
 	};
 };
-template<> inline __MPT_CONST_TYPE int type_properties<message_store::entry>::id() {
-	return type_properties<array>::id();
+template<> inline __MPT_CONST_TYPE int type_properties<message_store::entry>::id(bool obtain) {
+	return type_properties<array>::id(obtain);
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<message_store::entry>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 /*! linear search map type */
@@ -1098,11 +1098,11 @@ class type_properties<map<K, V> >
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
-		return type_properties<array>::id();
+	static inline __MPT_CONST_EXPR int id(bool obtain) {
+		return type_properties<array>::id(obtain);
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 

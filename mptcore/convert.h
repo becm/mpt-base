@@ -118,11 +118,11 @@ MPT_STRUCT(strdest)
 };
 
 #ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<value_format>::id() {
+template<> inline __MPT_CONST_TYPE int type_properties<value_format>::id(bool) {
 	return TypeValFmt;
 }
 template <> inline const struct type_traits *type_properties<value_format>::traits() {
-	return type_traits::get(id());
+	return type_traits::get(id(true));
 }
 
 float swapOrder(float);

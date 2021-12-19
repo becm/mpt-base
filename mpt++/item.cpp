@@ -19,18 +19,26 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int type_properties<group *>::id() {
-	static int id = 0;
-	if (!id && (id = mpt_type_interface_new("group")) < 0) {
-		id = mpt_type_interface_new(0);
+template <> int type_properties<group *>::id(bool obtain) {
+	static int _valtype = 0;
+	int type;
+	
+	if ((type = _valtype) > 0) {
+		return type;
 	}
-	return id;
+	if (!obtain) {
+		return BadType;
+	}
+	if ((type = mpt_type_interface_new("group")) < 0) {
+		type = mpt_type_interface_new(0);
+	}
+	return _valtype = type;
 }
 
 template <> const struct type_traits *type_properties<group *>::traits()
 {
 	static const struct type_traits *traits = 0;
-	if (!traits && !(traits = type_traits::get(id()))) {
+	if (!traits && !(traits = type_traits::get(id(true)))) {
 		static const struct type_traits private_traits(sizeof(group *));
 		traits = &private_traits;
 	}
@@ -84,7 +92,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				value val;
 				const char *data;
 				
-				if (from->convert(type_properties<value>::id(), &val) >= 0) {
+				if (from->convert(type_properties<value>::id(true), &val) >= 0) {
 					if (obj->set(name, val, out)) {
 						continue;
 					}
@@ -262,7 +270,7 @@ metatype *group::create(const char *type, int nl)
 // group storing elements in item array
 int item_group::convert(int type, void *ptr)
 {
-	int me = type_properties<group *>::id();
+	int me = type_properties<group *>::id(true);
 	
 	if (!type) {
 		static const uint8_t fmt[] = { TypeCollectionPtr, TypeArray, 0 };
