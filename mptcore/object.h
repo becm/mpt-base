@@ -44,7 +44,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<property>::id() {
 	return TypeProperty;
 }
 template <> inline const struct type_traits *type_properties<property>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #endif
 typedef int (*MPT_TYPE(property_handler))(void *, const MPT_STRUCT(property) *);
@@ -93,7 +93,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<object *>::id() {
 	return TypeObjectPtr;
 }
 template <> inline const struct type_traits *type_properties<object *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE(object);

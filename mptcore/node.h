@@ -50,7 +50,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<node *>::id() {
 	return TypeNodePtr;
 }
 template <> inline const struct type_traits *type_properties<node *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #endif
 

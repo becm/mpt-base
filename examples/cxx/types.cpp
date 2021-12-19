@@ -17,12 +17,12 @@
 # define mtrace()
 #endif
 
- struct Value : public mpt::value, public mpt::value::format
+struct Value : public mpt::value, public mpt::value::format
 {
 	template <typename T>
 	bool set(const T *t)
 	{
-		if (!t || !value::format::set(mpt::basetype(mpt::type_properties<T>::id()))) {
+		if (!t || !value::format::set(mpt::type_properties<T>::id())) {
 			return false;
 		}
 		return value::set(*this, t);
@@ -38,12 +38,20 @@ void print()
 {
 	int id = mpt::type_properties<T>::id();
 	int sid = mpt::type_properties<mpt::span<const T> >::id();
-	std::cout << id << ' ';
-	std::cout << '<' << mpt::basetype(sid) << '>' << ' ';
-	std::cout << std::endl;
+	int mid = mpt::type_properties<mpt::span<T> >::id();
+	uint8_t bid = mpt::basetype(id);
+	uint8_t bsid = mpt::basetype(sid);
+	std::cout << id  << ' ' << '<' << bid  << '>' << ' ';
+	std::cout << sid << ' ' << '<' << bsid << '>' << ' ';
+	std::cout << mid << std::endl;
 }
 template <typename T>
-uint8_t type(const T &)
+int type_id(const T &)
+{
+	return mpt::type_properties<T>::id();
+}
+template <typename T>
+uint8_t base(const T &)
 {
 	return mpt::basetype(mpt::type_properties<T>::id());
 }
@@ -54,16 +62,23 @@ extern int main(int, char *[])
 	mtrace();
 	Value v;
 	
-	std::cout << fmt << std::endl;
+	int type = mpt::type_traits::add(mpt::type_traits(8));
+	
+	std::cout << "array: " << fmt << std::endl;
+	std::cout << std::hex;
 	
 	print<int>();
 	print<float>();
 	print<mpt::array>();
+	print<mpt::unique_array<double>>();
+	print<mpt::typed_array<double>>();
 	//print<mpt::metatype>();
 	print<mpt::metatype *>();
 	print<int *>();
 	print<mpt::reference<mpt::metatype> >();
+	print<const mpt::reference<mpt::metatype> >();
 	
+	std::cout << "generic: " << type << std::endl;
 	long l = -5;
 	v.set(&l);
 	std::cout << "long(" << v.type() << ") = " << v << std::endl;
@@ -73,16 +88,16 @@ extern int main(int, char *[])
 	std::cout << "ulong(" << v.type() << ") = " << v << std::endl;
 	
 	float f(5);
-	std::cout << "float(" << type(f) << ") = " << f << std::endl;
+	std::cout << "float(" << type_id(f) << ") = " << f << std::endl;
 	double d(5);
-	std::cout << "double(" << type(d) << ") = " << d << std::endl;
+	std::cout << "double(" << type_id(d) << ") = " << d << std::endl;
 // 	mpt::float80 r = d;
 // 	std::cout << "float80(" << type(r) << ") = " << r << std::endl;
 	long double e = 5;
-	std::cout << "long double(" << type(e) << ") = " << e << std::endl;
+	std::cout << "long double(" << type_id(e) << ") = " << e << std::endl;
 	
-	mpt::span<double> t(&d, 1);
-	std::cout << "span<" << type(d) <<">(" << type(t) << ") = " << t << std::endl;
+	mpt::span<const double> t(&d, 1);
+	std::cout << "span<" << type_id(d) <<">(" << type_id(t) << ") = " << t << std::endl;
 	v.set(&t);
 	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 }

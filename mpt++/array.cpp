@@ -337,7 +337,7 @@ int array::set(value val)
 		/* print number data */
 		if ((ret = mpt_number_print(buf, sizeof(buf), value_format(), *val.fmt, val.ptr)) >= 0) {
 			const MPT_STRUCT(type_traits) *traits;
-			if (!(traits = type_traits(*val.fmt))) {
+			if (!(traits = type_traits::get(*val.fmt))) {
 				return BadType;
 			}
 			if (!mpt_array_append(&a, ret, buf)) {

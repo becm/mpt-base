@@ -300,58 +300,6 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 
 /*!
  * \ingroup mptTypes
- * \brief get ID of registered type
- * 
- * Get type ID of builtin or registered user type.
- * 
- * \param type  type identifier
- * 
- * \return type ID code for registered type
- */
-extern int mpt_type_id(const MPT_STRUCT(type_traits) *traits)
-{
-	int i;
-	
-	if ((traits > &static_ptypes[0].traits)
-	 && (traits < &static_ptypes[MPT_arrsize(static_ptypes)].traits)) {
-		int *ptr = (void *) (traits + 1);
-		return *ptr;
-	}
-	if ((traits > &iovec_types[0])
-	 && (traits < &iovec_types[MPT_arrsize(iovec_types)])) {
-		ssize_t offset = traits - &iovec_types[0];
-		return MPT_ENUM(_TypeVectorBase) + offset;
-	}
-	
-	for (i = 0; i < interface_pos; i++) {
-		const struct type_entry *curr = interface_types[i];
-		if (curr && traits == &curr->traits) {
-			return MPT_ENUM(_TypeInterfaceBase) + i;
-		}
-	}
-	
-	for (i = 0; i < dynamic_pos; i++) {
-		const MPT_STRUCT(type_traits) *curr = dynamic_types[i];
-		if (curr == traits) {
-			return MPT_ENUM(_TypeDynamicBase) + i;
-		}
-	}
-	
-	if (!meta_types) {
-		_meta_init();
-	}
-	for (i = 0; i < meta_pos; i++) {
-		const struct type_entry *curr = meta_types[i];
-		if (curr && traits == &curr->traits) {
-			return MPT_ENUM(_TypeMetaPtrBase) + i;
-		}
-	}
-	
-	return MPT_ERROR(BadArgument);
-}
-
-/*!
- * \ingroup mptTypes
  * \brief get interface name
  * 
  * Get name for builtin or previously registered interface.

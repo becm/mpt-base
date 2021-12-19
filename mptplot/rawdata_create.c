@@ -214,13 +214,11 @@ static int rd_advance(MPT_INTERFACE(rawdata) *ptr)
 	return act;
 }
 
-static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iovec *vec, int nc)
+static const MPT_STRUCT(value_store) *rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, int nc)
 {
 	const MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	const MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
-	const MPT_STRUCT(value_store) *val;
-	int type;
 	
 	/* query type of raw data */
 	if (!(buf = rd->st._buf)) {
@@ -231,24 +229,11 @@ static int rd_values(const MPT_INTERFACE(rawdata) *ptr, unsigned dim, struct iov
 	}
 	/* cycle does not exist */
 	if (nc >= (int) (buf->_used / sizeof(*st))) {
-		return MPT_ERROR(BadValue);
+		return 0;
 	}
 	/* get existing cycle dimension data */
 	st = (void *) (buf + 1);
-	if (!(val = mpt_stage_data(st + nc, dim))) {
-		return MPT_ERROR(BadValue);
-	}
-	if (!(buf = val->_d._buf)) {
-		return 0;
-	}
-	if ((type = mpt_type_id(buf->_content_traits)) <= 0) {
-		return MPT_ERROR(BadType);
-	}
-	if (vec) {
-		vec->iov_base = (void *) (buf + 1);
-		vec->iov_len  = buf->_used;
-	}
-	return type;
+	return mpt_stage_data(st + nc, dim);
 }
 
 static int rd_dimensions(const MPT_INTERFACE(rawdata) *ptr, int part)

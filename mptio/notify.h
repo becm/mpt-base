@@ -25,7 +25,7 @@ protected:
 };
 template<> int type_properties<input *>::id();
 template<> inline const struct type_traits *type_properties<input *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template<> const struct type_traits *type_properties<reference<input> >::traits();

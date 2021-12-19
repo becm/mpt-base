@@ -58,7 +58,7 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 		return BadArgument;
 	}
 	const struct type_traits *source_traits;
-	if (!(source_traits = type_traits(type))) {
+	if (!(source_traits = type_traits::get(type))) {
 		return BadType;
 	}
 	if (len % source_traits->size) {
@@ -140,41 +140,20 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 	st->invalidate();
 	return val->flags();
 }
-int cycle::values(unsigned dim, struct iovec *vec, int nc) const
+const MPT_STRUCT(value_store) *cycle::values(unsigned dim, int nc) const
 {
 	if (_max_dimensions && dim >= _max_dimensions) {
-		return BadArgument;
+		errno = EINVAL;
+		return 0;
 	}
 	if (nc < 0) {
 		nc = _act;
 	}
 	stage *st;
 	if (!(st = _stages.get(nc))) {
-		return BadValue;
+		return 0;
 	}
-	const value_store *val;
-	if (!(val = st->rawdata_stage::values(dim))) {
-		return BadValue;
-	}
-	const array::content *d;
-	int type = 0;
-	if ((d = val->data())) {
-		if ((type = type_id(d->content_traits())) < 0) {
-			type = 0;
-		}
-		if (!d) {
-			d = 0;
-		}
-		else if (vec) {
-			vec->iov_base = d->data();
-			vec->iov_len  = d->length();
-		}
-	}
-	if (vec && !d) {
-		vec->iov_base = 0;
-		vec->iov_len  = 0;
-	}
-	return type + (val->flags() & ~0xff);
+	return st->rawdata_stage::values(dim);
 }
 int cycle::advance()
 {

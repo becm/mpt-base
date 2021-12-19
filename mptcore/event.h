@@ -35,7 +35,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<reply_data *>::id() {
 	return TypeReplyDataPtr;
 }
 template <> inline const struct type_traits *type_properties<reply_data *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 class reply_context_detached
@@ -72,7 +72,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<reply_context *>::id() {
 	return TypeReplyPtr;
 }
 template <> inline const struct type_traits *type_properties<reply_context *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE(reply_context);
@@ -247,7 +247,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<command>::id() {
 	return TypeCommand;
 }
 template <> inline const struct type_traits *type_properties<command>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 class MessageSource : public reply_context

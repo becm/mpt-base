@@ -296,49 +296,49 @@ template <> inline __MPT_CONST_TYPE int type_properties<color>::id() {
 	return TypeColor;
 }
 template <> inline const struct type_traits *type_properties<color>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<lineattr>::id() {
 	return TypeLineAttr;
 }
 template <> inline const struct type_traits *type_properties<lineattr>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<line>::id() {
 	return TypeLine;
 }
 template <> inline const struct type_traits *type_properties<line *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<axis *>::id() {
 	return TypeAxisPtr;
 }
 template <> inline const struct type_traits *type_properties<axis *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<world *>::id() {
 	return TypeWorldPtr;
 }
 template <> inline const struct type_traits *type_properties<world *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<graph *>::id() {
 	return TypeGraphPtr;
 }
 template <> inline const struct type_traits *type_properties<graph *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<text *>::id() {
 	return TypeTextPtr;
 }
 template <> inline const struct type_traits *type_properties<text *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <typename S>

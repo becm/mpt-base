@@ -8,15 +8,27 @@ __MPT_NAMESPACE_BEGIN
 
 template <> int type_properties<io::interface *>::id()
 {
-	static int id = 0;
-	if (!id) {
-		id = mpt_type_interface_new("io");
+	static int _valtype = 0;
+	int type;
+	/* already a registerd type */
+	if ((type = _valtype) > 0) {
+		return type;
 	}
-	return id;
+	/* register named of fallback type */
+	if ((type = mpt_type_interface_new("mpt.io")) < 0) {
+		type = mpt_type_interface_new(0);
+	}
+	return _valtype = type;
 }
-template<> const MPT_STRUCT(type_traits) *type_properties<io::interface *>::traits()
+
+template <> const struct type_traits *type_properties<io::interface *>::traits()
 {
-	return type_traits(id());
+	static const struct type_traits *traits = 0;
+	if (!traits && !(traits = type_traits::get(id()))) {
+		static const struct type_traits fallback(sizeof(io::interface *));
+		traits = &fallback;
+	}
+	return traits;
 }
 
 // generic I/O operations

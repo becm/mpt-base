@@ -50,7 +50,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<output *>::id() {
 	return TypeOutputPtr;
 }
 template<> inline const struct type_traits *type_properties<output *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE(output);
@@ -110,7 +110,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<logger *>::id() {
 	return TypeLoggerPtr;
 }
 template<> inline const struct type_traits *type_properties<logger *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE(logger);

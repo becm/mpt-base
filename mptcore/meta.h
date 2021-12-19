@@ -41,14 +41,14 @@ template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id() {
 	return TypeMetaPtr;
 }
 template <> inline const struct type_traits *type_properties<metatype *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<reference<metatype> >::id() {
 	return TypeMetaRef;
 }
 template <> inline const struct type_traits *type_properties<reference<metatype> >::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 inline uintptr_t metatype::addref()
@@ -101,7 +101,7 @@ template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id() {
 	return TypeIteratorPtr;
 }
 template <> inline const struct type_traits *type_properties<iterator *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE(iterator);
@@ -215,7 +215,7 @@ public:
 		return TypeMetaPtr;
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 
@@ -278,7 +278,7 @@ public:
 		return TypeIteratorPtr;
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 #endif

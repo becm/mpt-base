@@ -91,6 +91,10 @@ MPT_STRUCT(type_traits)
 	inline type_traits(size_t _size, void (*_fini)(void *) = 0, int (*_init)(void *, const void *) = 0)
 		: init(_init), fini(_fini), size(_size)
 	{ }
+	static int add_basic(size_t);
+	static int add(const type_traits &);
+	
+	static const type_traits *get(int);
 #else
 # define MPT_TYPETRAIT_INIT(t)  { 0, 0, (t) }
 #endif
@@ -110,7 +114,6 @@ extern int mpt_offset(const uint8_t *, int);
 
 /* query type mappings */
 extern const MPT_STRUCT(type_traits) *mpt_type_traits(int);
-extern int mpt_type_id(const MPT_STRUCT(type_traits) *);
 
 /* id for registered named type */
 extern int mpt_type_value(const char *, int);
@@ -134,8 +137,6 @@ extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-extern int type_id(const type_traits *);
-extern const struct type_traits *type_traits(int);
 
 inline uint8_t basetype(int org) {
 	if (org <= 0) {
@@ -160,7 +161,11 @@ public:
 	}
 	
 	static int id() {
-		return type_id(traits());
+		static int _valtype = 0;
+		if (_valtype > 0) {
+			return _valtype;
+		}
+		return _valtype = type_traits::add(*traits());
 	}
 private:
 	type_properties();
@@ -189,7 +194,11 @@ public:
 	}
 	
 	static int id() {
-		return type_id(traits());
+		static int _valtype = 0;
+		if (_valtype > 0) {
+			return _valtype;
+		}
+		return _valtype = type_traits::add(*traits());
 	}
 private:
 	type_properties();
@@ -204,27 +213,30 @@ public:
 		if (traits) {
 			return traits;
 		}
-		int type = type_properties<T>::id();
-		if (((type = MPT_type_toVector(type)) < 0)
-		 || !(traits = type_traits(type))) {
-			static const struct type_traits span_traits(sizeof(span<T>));
-			traits = &span_traits;
+		int type = id();
+		if (type < 0 || !(traits = type_traits::get(type))) {
+			traits = get_traits();
 		}
 		return traits;
 	}
 	
 	static int id() {
-		static int valtype = 0;
-		if (!valtype) {
-			int type;
-			if ((type = type_id(traits())) > 0) {
-				valtype = type;
-			}
-			return type;
+		static int _valtype = 0;
+		if (_valtype > 0) {
+			return _valtype;
 		}
-		return valtype;
+		/* use vector IDs for builtin types */
+		int type = type_properties<T>::id();
+		if ((type = MPT_type_toVector(type)) > 0) {
+			return _valtype = type;
+		}
+		return _valtype = type_traits::add(*get_traits());
 	}
 private:
+	static const type_traits *get_traits() {
+		static const struct type_traits span_traits(sizeof(span<T>));
+		return &span_traits;
+	}
 	type_properties();
 };
 
@@ -243,7 +255,7 @@ template<typename T>
 inline T *typecast(convertable &src) {
 	T *ptr = 0;
 	int type = type_properties<T *>::id();
-	if ((type >= 0)
+	if ((type > 0)
 	 && (src.convert(type, &ptr) < 0)) {
 		ptr = 0;
 	}
@@ -276,29 +288,29 @@ template<> inline __MPT_CONST_TYPE int type_properties<const char *>::id() { ret
 
 
 /* floating point values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<float>::traits()       { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<double>::traits()      { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<long double>::traits() { return type_traits(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<float>::traits()       { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<double>::traits()      { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<long double>::traits() { return type_traits::get(id()); }
 /* integer values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int8_t>::traits()  { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int16_t>::traits() { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int32_t>::traits() { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<int64_t>::traits() { return type_traits(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int8_t>::traits()  { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int16_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int32_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<int64_t>::traits() { return type_traits::get(id()); }
 /* unsigned values */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint8_t>::traits()  { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint16_t>::traits() { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint32_t>::traits() { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<uint64_t>::traits() { return type_traits(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint8_t>::traits()  { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint16_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint32_t>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<uint64_t>::traits() { return type_traits::get(id()); }
 /* string data */
-template<> inline const MPT_STRUCT(type_traits) *type_properties<char>::traits() { return type_traits(id()); }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::traits() { return type_traits(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<char>::traits() { return type_traits::get(id()); }
+template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::traits() { return type_traits::get(id()); }
 
 
 template<> inline __MPT_CONST_TYPE int type_properties<value>::id() {
 	return TypeValue;
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 #endif /* __cplusplus */

@@ -29,8 +29,8 @@ template <> int type_properties<group *>::id() {
 
 template <> const struct type_traits *type_properties<group *>::traits()
 {
-	static const struct type_traits *traits = type_traits(id());
-	if (!traits) {
+	static const struct type_traits *traits = 0;
+	if (!traits && !(traits = type_traits::get(id()))) {
 		static const struct type_traits private_traits(sizeof(group *));
 		traits = &private_traits;
 	}

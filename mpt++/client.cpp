@@ -22,7 +22,7 @@ template <> int type_properties<client *>::id()
 }
 template <> const struct type_traits *type_properties<client *>::traits()
 {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 static void unrefConfig()

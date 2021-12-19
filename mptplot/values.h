@@ -165,6 +165,10 @@ public:
 	{
 		return _flags;
 	}
+	inline int type() const
+	{
+		return _type;
+	}
 	inline const array::content *data() const
 	{
 		return _d.data();
@@ -229,7 +233,7 @@ public:
 	virtual int modify(unsigned , int , const void *, size_t , const valdest * = 0) = 0;
 	virtual int advance() = 0;
 	
-	virtual int values(unsigned , struct iovec * = 0, int = -1) const = 0;
+	virtual const MPT_STRUCT(value_store) *values(unsigned , int = -1) const = 0;
 	virtual long dimension_count(int = -1) const = 0;
 	virtual long stage_count() const = 0;
 protected:
@@ -241,7 +245,7 @@ MPT_INTERFACE_VPTR(rawdata) {
 	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , const MPT_STRUCT(valdest) *);
 	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
-	int (*values)(const MPT_INTERFACE(rawdata) *, unsigned , struct iovec *, int);
+	const MPT_STRUCT(value_store) *(*values)(const MPT_INTERFACE(rawdata) *, unsigned , int);
 	int (*dimension_count)(const MPT_INTERFACE(rawdata) *, int);
 	int (*stage_count)(const MPT_INTERFACE(rawdata) *);
 }; MPT_INTERFACE(rawdata) {
@@ -529,7 +533,7 @@ public:
 	int modify(unsigned , int , const void *, size_t , const valdest * = 0) __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
 	
-	int values(unsigned , struct iovec * = 0, int = -1) const __MPT_OVERRIDE;
+	const MPT_STRUCT(value_store) *values(unsigned , int = -1) const __MPT_OVERRIDE;
 	long dimension_count(int = -1) const __MPT_OVERRIDE;
 	long stage_count() const __MPT_OVERRIDE;
 	

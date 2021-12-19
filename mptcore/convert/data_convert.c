@@ -43,17 +43,11 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 	/* special array processing */
 	if (ftype == MPT_ENUM(TypeArray)) {
 		const MPT_STRUCT(array) *arr = (void *) from;
-		MPT_STRUCT(buffer) *b;
-		int content = 0;
+		MPT_STRUCT(buffer) *b = arr->_buf;
+		
+		traits = b ? b->_content_traits : 0;
 		
 		/* special content on buffer */
-		if ((b = arr->_buf)) {
-			traits = b->_content_traits;
-			content = -1;
-			if (traits && ((content = mpt_type_id(traits)) < 0)) {
-				return MPT_ERROR(BadValue);
-			}
-		}
 		if (ftype == dtype) {
 			if (dest
 			    && mpt_array_clone(dest, b ? arr : 0) < 0) {
@@ -66,7 +60,7 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			const char **txt = dest;
 			const char *s;
 			
-			if (content && content != 'c') {
+			if (traits != mpt_type_traits('c')) {
 				return MPT_ERROR(BadType);
 			}
 			if (b && !(s = memchr(b + 1, 0, b->_used))) {
@@ -77,10 +71,10 @@ extern int mpt_data_convert(const void **fptr, int ftype, void *dest, int dtype)
 			if (dest) *txt = b ? (void *) (b + 1) : 0;
 			return sizeof(*txt);
 		}
-		if ((dtype = MPT_type_toVector(dtype)) >= 0) {
+		if ((dtype = MPT_type_toScalar(dtype)) >= 0) {
 			struct iovec *vec;
 			/* require matching types */
-			if (dtype != content) {
+			if (!traits || (traits != mpt_type_traits(dtype))) {
 				return MPT_ERROR(BadType);
 			}
 			if ((vec = dest)) {

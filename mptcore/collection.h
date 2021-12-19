@@ -34,7 +34,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id() {
 	return TypeCollectionPtr;
 }
 template <> inline const struct type_traits *type_properties<collection *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 #else
 MPT_INTERFACE_VPTR(collection) {

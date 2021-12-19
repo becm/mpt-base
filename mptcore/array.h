@@ -167,7 +167,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<array>::id() {
 	return TypeArray;
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<array>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 /*! reference to buffer segment */
@@ -703,7 +703,7 @@ public:
 		return type_properties<array>::id();
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 
@@ -760,7 +760,7 @@ public:
 	}
 	static const struct type_traits *traits()
 	{
-		return type_properties<array>::traits();
+		return type_traits::get(id());
 	}
 };
 
@@ -838,7 +838,7 @@ public:
 		return type_properties<array>::id();
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 
@@ -888,7 +888,7 @@ public:
 		return type_properties<array>::id();
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 
@@ -957,7 +957,7 @@ public:
 		return type_properties<array>::id();
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 
@@ -1027,7 +1027,7 @@ template<> inline __MPT_CONST_TYPE int type_properties<message_store::entry>::id
 	return type_properties<array>::id();
 }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<message_store::entry>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 /*! linear search map type */
@@ -1102,7 +1102,7 @@ public:
 		return type_properties<array>::id();
 	}
 	static inline const MPT_STRUCT(type_traits) *traits(void) {
-		return type_traits(id());
+		return type_traits::get(id());
 	}
 };
 

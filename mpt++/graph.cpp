@@ -29,7 +29,7 @@ template <> int type_properties<layout::graph *>::id()
 	return id;
 }
 template <> const struct type_traits *type_properties<layout::graph *>::traits() {
-	return type_traits(id());
+	return type_traits::get(id());
 }
 
 // graph data operations
@@ -197,7 +197,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 			if (!a->addref()) {
 				if (out) {
 					out->message(_func, out->Error, "%s: %s",
-					             MPT_tr("could increase axis reference"), curr ? curr : "");
+					             MPT_tr("failed to increase axis reference"), curr ? curr : "");
 				}
 				continue;
 			}
@@ -250,7 +250,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 			if (!w->addref()) {
 				if (out) {
 					out->message(_func, out->Error, "%s: %s",
-					             MPT_tr("could increase world reference"), curr ? curr : "");
+					             MPT_tr("failed to increase world reference"), curr ? curr : "");
 				}
 				continue;
 			}

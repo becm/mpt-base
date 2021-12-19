@@ -110,7 +110,7 @@ const array *value::array(int type) const
 	const array::content *d;
 	if ((d = arr->data())) {
 		const struct type_traits *traits = d->content_traits();
-		if (traits && (type == type_id(traits))) {
+		if (traits && (type_traits::get(type) == traits)) {
 			return arr;
 		}
 	}
