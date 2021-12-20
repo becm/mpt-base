@@ -27,7 +27,7 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 	int  (*init)(void *, const void *);
 	void (*fini)(void *);
 	uint8_t *ptr;
-	size_t end;
+	size_t end, used;
 	size_t elem_size;
 	
 	if ((SIZE_MAX - pos) < len) {
@@ -80,19 +80,35 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 	else if (init != src_traits->init) {
 		return MPT_ERROR(BadType);
 	}
-	
+	used = buf->_used;
 	if (!src_data) {
 		/* block termination of non-trivial content */
 		if (init || fini) {
 			return MPT_ERROR(BadArgument);
 		}
-		memset(ptr, 0, len);
+		if (used < pos) {
+			len += pos - used;
+			pos = used;
+		}
+		buf->_used = pos + len;
+		memset(ptr + pos, 0, len);
 		return len / elem_size;
 	}
-	
+	/* initialize prepending data */
+	if (init) {
+		for (; used < pos; used += elem_size) {
+			if (init(ptr + used, 0) < 0) {
+				buf->_used = used;
+				return MPT_ERROR(BadOperation);
+			}
+		}
+	}
+	else if (used < pos) {
+		memset(ptr + used, 0, pos - used);
+	}
 	/* terminate required target data */
-	if (fini && (pos < buf->_used)) {
-		size_t off, clear_end = buf->_used - pos;
+	if (fini && (pos < used)) {
+		size_t off, clear_end = used - pos;
 		if (clear_end >= len) {
 			clear_end = end;
 		}
