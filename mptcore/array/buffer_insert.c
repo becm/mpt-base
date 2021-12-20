@@ -47,6 +47,10 @@ extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *buf, size_t pos, size_t len)
 		errno = EINVAL;
 		return 0;
 	}
+	if (MPT_ENUM(BufferImmutable) & buf->_vptr->get_flags(buf)) {
+		errno = ENOTSUP;
+		return 0;
+	}
 	/* require aligned values */
 	size = 0;
 	init = 0;

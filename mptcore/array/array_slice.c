@@ -27,6 +27,7 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 	const MPT_STRUCT(type_traits) *traits;
 	MPT_STRUCT(buffer) *buf;
 	size_t total, used, size;
+	int flags;
 	
 	/* invalid argument combination */
 	if (len > (SIZE_MAX - off)) {
@@ -37,7 +38,7 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 	
 	/* new raw buffer */
 	if (!(buf = arr->_buf)) {
-		if (!(buf = _mpt_buffer_alloc(total))) {
+		if (!(buf = _mpt_buffer_alloc(total, 0))) {
 			return 0;
 		}
 		buf->_used = total;
@@ -60,8 +61,12 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 			return 0;
 		}
 	}
-	/* insufficient private space */
-	if (total > buf->_size || buf->_vptr->shared(buf)) {
+	
+	flags = buf->_vptr->get_flags(buf);
+	/* require sufficent private space */
+	if (total > buf->_size
+	 || (MPT_ENUM(BufferImmutable) & flags)
+	 || (MPT_ENUM(BufferShared) & flags)) {
 		/* make private copy */
 		if (!(buf = buf->_vptr->detach(buf, size))) {
 			return 0;

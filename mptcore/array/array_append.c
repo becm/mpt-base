@@ -33,7 +33,7 @@ extern void *mpt_array_append(MPT_STRUCT(array) *arr, size_t len, const void *ba
 	void *dest;
 	
 	if (!(b = arr->_buf)) {
-		if (!(b = _mpt_buffer_alloc(len))) {
+		if (!(b = _mpt_buffer_alloc(len, 0))) {
 			return 0;
 		}
 		used = 0;

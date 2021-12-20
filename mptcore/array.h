@@ -23,12 +23,27 @@ MPT_STRUCT(type_traits);
 
 MPT_INTERFACE(metatype);
 
+/* tree and list operation flags */
+enum MPT_ENUM(BufferFlags) {
+	/* capabilities */
+	MPT_ENUM(BufferNoCopy)       = 0x02,
+	MPT_ENUM(BufferImmutable)    = 0x01,
+	
+	MPT_ENUM(BufferFlagsUser)    = 0xff,
+	
+	/* dynamic state flags */
+	MPT_ENUM(BufferShared)       = 0x0100,
+	
+	/* static memory information */
+	MPT_ENUM(BufferMapped)       = 0x010000
+};
+
 /*! header for data segment */
 #ifdef __cplusplus
 MPT_STRUCT(buffer)
 {
 public:
-	virtual int shared() const = 0;
+	virtual uint32_t get_flags() const = 0;
 	virtual void unref() = 0;
 	virtual uintptr_t addref() = 0;
 	virtual buffer *detach(size_t) = 0;
@@ -46,6 +61,12 @@ public:
 	{
 		return _content_traits;
 	}
+	inline int shared() {
+		return get_flags() & BufferShared;
+	}
+	inline int immutable() {
+		return get_flags() & BufferImmutable;
+	}
 	static buffer *create(size_t , const struct type_traits * = 0);
 	static buffer *create_unique(size_t , const struct type_traits * = 0);
 protected:
@@ -57,7 +78,7 @@ protected:
 MPT_STRUCT(buffer);
 MPT_INTERFACE_VPTR(buffer)
 {
-	int (*shared)(const MPT_STRUCT(buffer) *);
+	uint32_t (*get_flags)(const MPT_STRUCT(buffer) *);
 	void (*unref)(MPT_STRUCT(buffer) *);
 	uintptr_t (*addref)(MPT_STRUCT(buffer) *);
 	MPT_STRUCT(buffer) *(*detach)(MPT_STRUCT(buffer) *, size_t);
@@ -337,9 +358,8 @@ extern long mpt_array_compact(void **, long);
 extern size_t mpt_array_move(void *, size_t , size_t , size_t);
 
 /* buffer resizing backends */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t);
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc_unique(size_t);
-extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t);
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t, int __MPT_DEFPAR(0));
+extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t, int __MPT_DEFPAR(0));
 
 /* bit operations */
 extern int mpt_bitmap_set(uint8_t *, size_t , long);
@@ -520,9 +540,9 @@ public:
 		public:
 			inline dummy()
 			{ }
-			int shared() const __MPT_OVERRIDE
+			uint32_t get_flags() const __MPT_OVERRIDE
 			{
-				return 0;
+				return BufferImmutable | BufferShared | BufferNoCopy;
 			}
 			void unref() __MPT_OVERRIDE
 			{ }
@@ -720,9 +740,9 @@ public:
 		public:
 			inline dummy()
 			{ }
-			int shared() const __MPT_OVERRIDE
+			uint32_t get_flags() const __MPT_OVERRIDE
 			{
-				return 0;
+				return BufferImmutable | BufferShared;
 			}
 			void unref() __MPT_OVERRIDE
 			{ }

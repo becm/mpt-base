@@ -97,7 +97,7 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const 
 	}
 	
 	if (!(buf = rd->st._buf)) {
-		buf = _mpt_buffer_alloc(nc * traits->size);
+		buf = _mpt_buffer_alloc(nc * traits->size, 0);
 		buf->_content_traits = traits;
 		cycles = 0;
 	}
@@ -135,7 +135,7 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const 
 		}
 		
 		value_pos *= traits->size;
-		if (!(buf = _mpt_buffer_alloc(value_pos + len))) {
+		if (!(buf = _mpt_buffer_alloc(value_pos + len, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		buf->_content_traits = traits;

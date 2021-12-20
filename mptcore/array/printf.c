@@ -33,7 +33,7 @@ extern int mpt_vprintf(MPT_STRUCT(array) *arr, const char *format, va_list args)
 	size_t len, size, used;
 	
 	if (!(buf = arr->_buf)) {
-		if (!(buf = _mpt_buffer_alloc(64))) {
+		if (!(buf = _mpt_buffer_alloc(64, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		buf->_content_traits = traits;

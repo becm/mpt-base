@@ -35,7 +35,7 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	if (!(b = arr->_buf)) {
 		uint8_t *base;
 		len += pos;
-		if (!(b = _mpt_buffer_alloc(len))) {
+		if (!(b = _mpt_buffer_alloc(len, 0))) {
 			return 0;
 		}
 		arr->_buf = b;
@@ -52,7 +52,7 @@ extern void *mpt_array_insert(MPT_STRUCT(array) *arr, size_t pos, size_t len)
 	}
 	/* sufficient private space */
 	if ((used + len) <= b->_size
-	    && !b->_vptr->shared(b)) {
+	    && !(b->_vptr->get_flags(b) & MPT_ENUM(BufferShared))) {
 		return mpt_buffer_insert(b, pos, len);
 	}
 	if (!(b = b->_vptr->detach(b, used + len))) {

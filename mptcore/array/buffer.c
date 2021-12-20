@@ -42,7 +42,7 @@ MPT_STRUCT(bufferData)
 {
 	MPT_STRUCT(refcount) _ref;
 	size_t _psize;
-	int _nocopy;
+	int _flags;
 	
 	/* align memory boundary */
 	uint8_t _pad[8 * sizeof(void *)
@@ -54,8 +54,6 @@ MPT_STRUCT(bufferData)
 	
 	MPT_STRUCT(buffer) buf;
 };
-static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *, size_t);
-static MPT_STRUCT(bufferData) *_mpt_buffer_alloc_base(size_t);
 
 /* reference interface */
 static void _mpt_buffer_alloc_unref(MPT_INTERFACE(buffer) *val)
@@ -85,20 +83,16 @@ static uintptr_t _mpt_buffer_alloc_ref(MPT_INTERFACE(buffer) *val)
 	return mpt_refcount_raise(&buf->_ref);
 }
 /* buffer interface */
-static int _mpt_buffer_alloc_shared(const MPT_STRUCT(buffer) *ptr)
+static uint32_t _mpt_buffer_alloc_flags(const MPT_STRUCT(buffer) *ptr)
 {
 	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, buf);
-	return buf->_ref._val > 1 ? 1 : 0;
+	int flags = buf->_ref._val > 1 ? MPT_ENUM(BufferShared) : 0;
+	return flags | buf->_flags;
 }
-static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
-	_mpt_buffer_alloc_shared,
-	_mpt_buffer_alloc_unref,
-	_mpt_buffer_alloc_ref,
-	_mpt_buffer_alloc_detach
-};
 static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, size_t len)
 {
-	MPT_STRUCT(bufferData) *next, *buf = MPT_baseaddr(bufferData, ptr, buf);
+	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, buf);
+	MPT_STRUCT(buffer) *next;
 	const MPT_STRUCT(type_traits) *traits;
 	size_t add;
 	
@@ -116,25 +110,27 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 	}
 	/* no modification required */
 	if (buf->_ref._val < 2) {
-		if (len <= buf->buf._size) {
+		if (len <= buf->buf._size
+		 && !(buf->_flags & MPT_ENUM(BufferImmutable))) {
 			return &buf->buf;
 		}
 	}
 	/* block copy of data */
-	else if (buf->_nocopy && buf->buf._used) {
+	else if ((buf->_flags & MPT_ENUM(BufferNoCopy)) && buf->buf._used) {
+		errno = ENOTSUP;
 		return 0;
 	}
-	
-	if (!(next = _mpt_buffer_alloc_base(len))) {
+	/* clear immutability flag on clone */
+	if (!(next = _mpt_buffer_alloc(len, buf->_flags & ~MPT_ENUM(BufferImmutable)))) {
 		return 0;
 	}
-	next->buf._content_traits = traits;
+	next->_content_traits = traits;
 	
 	/* require content copy */
 	if (mpt_refcount_lower(&buf->_ref)) {
 		const MPT_STRUCT(buffer) *src = &buf->buf;
-		if (mpt_buffer_set(&next->buf, src->_content_traits, 0, src + 1, src->_used) < 0) {
-			_mpt_buffer_alloc_unref(&next->buf);
+		if (mpt_buffer_set(next, src->_content_traits, 0, src + 1, src->_used) < 0) {
+			_mpt_buffer_alloc_unref(next);
 			return 0;
 		}
 	}
@@ -158,13 +154,31 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 			}
 		}
 		memcpy(next + 1, buf + 1, add);
-		next->buf._used = add;
+		next->_used = add;
 		free(buf);
 	}
-	return &next->buf;
+	return next;
 }
-static MPT_STRUCT(bufferData) *_mpt_buffer_alloc_base(size_t len)
+
+/*!
+ * \ingroup mptArray
+ * \brief buffer data
+ * 
+ * Raw data buffer with malloc resize modifier.
+ * 
+ * \param len    requested new buffer size
+ * \param flags  static user flags
+ * 
+ * \return new buffer sattisfying (at least) size
+ */
+extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len, int flags)
 {
+	static const MPT_INTERFACE_VPTR(buffer) _mpt_buffer_vptr = {
+		_mpt_buffer_alloc_flags,
+		_mpt_buffer_alloc_unref,
+		_mpt_buffer_alloc_ref,
+		_mpt_buffer_alloc_detach
+	};
 	MPT_STRUCT(bufferData) *b;
 	
 	/* get buffer increase size (<page table) */
@@ -180,54 +194,12 @@ static MPT_STRUCT(bufferData) *_mpt_buffer_alloc_base(size_t len)
 	}
 	b->_ref._val = 1;
 	b->_psize = _mpt_buffer_alloc_psize;
-	b->_nocopy = 0;
+	b->_flags = flags & MPT_ENUM(BufferFlagsUser);
 	
 	b->buf._vptr = &_mpt_buffer_vptr;
 	b->buf._content_traits = 0;
 	b->buf._size = len - sizeof(*b);
 	b->buf._used = 0;
-	
-	return b;
-}
-
-/*!
- * \ingroup mptArray
- * \brief buffer data
- * 
- * Raw data buffer with malloc resize modifier.
- * 
- * \param size    requested new buffer size
- * \param traits  type traits for content elements
- * 
- * \return new buffer sattisfying (at least) size
- */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len)
-{
-	MPT_STRUCT(bufferData) *b = _mpt_buffer_alloc_base(len);
-	
-	return b ? &b->buf : 0;
-}
-
-/*!
- * \ingroup mptArray
- * \brief buffer data
- * 
- * Raw data buffer with malloc resize modifier.
- * Allow only one instance of data.
- * 
- * \param size    requested new buffer size
- * \param traits  type traits for content elements
- * 
- * \return new buffer sattisfying (at least) size
- */
-extern MPT_STRUCT(buffer) *_mpt_buffer_alloc_unique(size_t len)
-{
-	MPT_STRUCT(bufferData) *b = _mpt_buffer_alloc_base(len);
-	
-	if (!b) {
-		return 0;
-	}
-	b->_nocopy = 1;
 	
 	return &b->buf;
 }

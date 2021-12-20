@@ -72,7 +72,7 @@ buffer *buffer::create(size_t len, const struct type_traits *traits)
 }
 buffer *buffer::create_unique(size_t len, const struct type_traits *traits)
 {
-	buffer *b = _mpt_buffer_alloc_unique(len);
+	buffer *b = _mpt_buffer_alloc(len, BufferNoCopy);
 	if (b) {
 		b->_content_traits = traits;
 	}

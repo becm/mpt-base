@@ -54,7 +54,7 @@ extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *st, un
 		max = (dim + 1) * sizeof(*val);
 	}
 	if (!buf) {
-		if (!(buf = _mpt_buffer_alloc(max))) {
+		if (!(buf = _mpt_buffer_alloc(max, 0))) {
 			return 0;
 		}
 		buf->_content_traits = traits;

@@ -99,7 +99,8 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		return avail / nblk;
 	}
 	/* fast data append path */
-	if (buf && !buf->_vptr->shared(buf)) {
+	if (buf
+	 && !((buf->_vptr->get_flags(buf)) & (MPT_ENUM(BufferImmutable) | MPT_ENUM(BufferShared)))) {
 		size_t off;
 		if (!nblk) {
 			return 0;
@@ -120,7 +121,7 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		}
 	}
 	/* get space for needed data size */
-	while (!(next = _mpt_buffer_alloc(sl->_len + nblk * size))) {
+	while (!(next = _mpt_buffer_alloc(sl->_len + nblk * size, 0))) {
 		if (!(nblk /= 2)) {
 			return MPT_ERROR(BadOperation);
 		}

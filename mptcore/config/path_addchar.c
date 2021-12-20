@@ -26,12 +26,13 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	MPT_STRUCT(buffer) *b;
 	uint8_t *dest;
 	size_t off, pos;
+	int flags;
 	
 	pos = path->off + path->len;
 	
 	/* need new storage */
 	if (!(b = (void *) path->base) || !(path->flags & MPT_PATHFLAG(HasArray))) {
-		if (!(b = _mpt_buffer_alloc(pos + 1))) {
+		if (!(b = _mpt_buffer_alloc(pos + 1, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		if (!(dest = mpt_buffer_insert(b, 0, pos + 1))) {
@@ -50,7 +51,9 @@ extern int mpt_path_addchar(MPT_STRUCT(path) *path, int val)
 	off = (--b)->_used;
 	
 	/* modify local copy */
-	if (!b->_vptr->shared(b)) {
+	flags = b->_vptr->get_flags(b);
+	if (!(MPT_ENUM(BufferShared) & flags)
+	 && !(MPT_ENUM(BufferImmutable) & flags)) {
 		dest = (uint8_t *) (b + 1);
 		/* can reuse last existing value */
 		if ((pos < off) && !(path->flags & MPT_PATHFLAG(KeepPost))) {
@@ -90,6 +93,7 @@ extern int mpt_path_delchar(MPT_STRUCT(path) *path)
 {
 	MPT_STRUCT(buffer) *buf;
 	size_t len, used;
+	int flags;
 	
 	/* need new storage */
 	if (!(buf = (void *) path->base)) {
@@ -101,11 +105,21 @@ extern int mpt_path_delchar(MPT_STRUCT(path) *path)
 	}
 	len = path->off + path->len;
 	--buf;
-	
 	/* intersects with used data */
 	if ((used = buf->_used) <= len) {
 		return MPT_ERROR(MissingData);
 	}
+	/* check permission on buffer */
+	flags = buf->_vptr->get_flags(buf);
+	if (MPT_ENUM(BufferShared) & flags
+	 || MPT_ENUM(BufferImmutable) & flags) {
+		/* make private copy */
+		if (!(buf = buf->_vptr->detach(buf, used))) {
+			return 0;
+		}
+		path->base = (void *) (buf + 1);
+	}
+	/* remove character from buffer */
 	buf->_used = --used;
 	
 	return path->base[used];

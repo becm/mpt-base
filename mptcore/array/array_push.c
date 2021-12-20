@@ -1,6 +1,6 @@
 /*!
  * MPT core library
- *   encode/add data to 
+ *   add data to encode array
  */
 
 #include <string.h>
@@ -67,7 +67,7 @@ extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *arr, size_t len, const v
 			return MPT_ERROR(BadArgument);
 		}
 		/* use initial data size */
-		if (!(b = _mpt_buffer_alloc(add))) {
+		if (!(b = _mpt_buffer_alloc(add, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		arr->_d._buf = b;

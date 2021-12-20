@@ -62,7 +62,7 @@ extern void *mpt_value_store_reserve(MPT_STRUCT(array) *arr, const MPT_STRUCT(ty
 		return mpt_array_slice(arr, pos, len);
 	}
 	
-	if (!(buf = _mpt_buffer_alloc(pos + len))) {
+	if (!(buf = _mpt_buffer_alloc(pos + len, 0))) {
 		return 0;
 	}
 	buf->_content_traits = traits;

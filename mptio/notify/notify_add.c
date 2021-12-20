@@ -50,7 +50,7 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	/* create new buffer */
 	if (!(buf = no->_slot._buf)) {
 		size_t len = (sock._id + 1) * sizeof(*base);
-		if (!(buf = _mpt_buffer_alloc(len))) {
+		if (!(buf = _mpt_buffer_alloc(len, 0))) {
 			return 0;
 		}
 		buf->_used = len;

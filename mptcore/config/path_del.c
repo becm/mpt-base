@@ -90,6 +90,7 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 	MPT_STRUCT(array) arr;
 	size_t used, len = path->off + path->len;
 	char *base;
+	int flags;
 	
 	if (!(arr._buf = (void *) path->base)) {
 		return len ? -2 : 0;
@@ -107,7 +108,9 @@ extern int mpt_path_invalidate(MPT_STRUCT(path) *path)
 		return 0;
 	}
 	/* can modify local copy */
-	if (!arr._buf->_vptr->shared(arr._buf)) {
+	flags = arr._buf->_vptr->get_flags(arr._buf);
+	if (!(MPT_ENUM(BufferShared) & flags)
+	 && !(MPT_ENUM(BufferImmutable) & flags)) {
 		path->flags &= ~MPT_PATHFLAG(KeepPost);
 		arr._buf->_used = len;
 		((char *) path->base)[len] = 0;

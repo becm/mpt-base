@@ -33,7 +33,7 @@ extern int mpt_valfmt_add(_MPT_UARRAY_TYPE(value_format) *arr, MPT_STRUCT(value_
 	}
 	
 	if (!(b = arr->_buf)) {
-		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt)))) {
+		if (!(b = _mpt_buffer_alloc(8 * sizeof(fmt), 0))) {
 			return MPT_ERROR(BadOperation);
 		}
 		memcpy(b + 1, &fmt, sizeof(fmt));

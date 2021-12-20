@@ -35,7 +35,7 @@ extern double *mpt_values_prepare(_MPT_ARRAY_TYPE(double) *arr, long len)
 			return 0;
 		}
 		add = len * sizeof(double);
-		if (!(buf = _mpt_buffer_alloc(add))) {
+		if (!(buf = _mpt_buffer_alloc(add, 0))) {
 			return 0;
 		}
 		arr->_buf = buf;
