@@ -140,7 +140,12 @@ extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *sl, size_t nblk, const void *f
 		} else {
 			memset(ptr, 0, total);
 		}
+		pos += total;
 	}
+	sl->_a._buf = next;
+	sl->_off = 0;
+	sl->_len = pos;
+	next->_used = pos;
 	if (buf) {
 		buf->_vptr->unref(buf);
 	}
