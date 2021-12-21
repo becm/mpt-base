@@ -8,7 +8,8 @@ TESTS = \
 	iter \
 	output \
 	queue \
-	types
+	types \
+	values
 
 PROGS = comp ${TESTS}
 LDLIBS = -lmpt++

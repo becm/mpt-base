@@ -89,7 +89,7 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 	}
 	long off = vd ? vd->offset : 0;
 	double *ptr;
-	if (!(ptr = val->reserve<double>(len, off))) {
+	if (!(ptr = static_cast<double *>(val->reserve(len + off, *type_properties<double>::traits())))) {
 		return BadOperation;
 	}
 	if (!src) {

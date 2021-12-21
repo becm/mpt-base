@@ -155,9 +155,9 @@ public:
 	enum Flags {
 		ValueChange = 1
 	};
-	inline value_store() : _flags(0), _code(0)
+	inline value_store() : _type(0), _flags(0)
 	{ }
-	void *reserve(const struct type_traits *, size_t , long = 0);
+	void *reserve(long , const struct type_traits &);
 	void set_modified(bool mod = true);
 	long element_count() const;
 	
@@ -174,28 +174,30 @@ public:
 		return _d.data();
 	}
 	template <typename T>
-	T *reserve(unsigned long len, long pos = 0)
+	T *set(const span<T> &data, long pos = 0)
 	{
 		static const struct type_traits *traits = 0;
-		if (!traits) {
-			traits = type_properties<T>::traits();
+		if (!traits && !(traits = type_properties<T>::traits())) {
+			return 0;
 		}
-		void *ptr = reserve(traits, len * sizeof(T), pos);
+		void *ptr = set(*traits, data.size() * sizeof(T), data.begin(), pos);
 		if (ptr) {
-			/* type ID registration may happen during runtime */
-			_type = type_properties<T>::id(false);
-			_code = 0;
+			/* type ID registration may take place during runtime */
+			int type = type_properties<T>::id(false);
+			if (type > 0) {
+				_type = type;
+			}
 		}
 		return static_cast<T *>(ptr);
 	}
 protected:
+	void *set(const struct type_traits &, size_t , const void *, long = 0);
 #else
 # define MPT_VALUE_STORE_INIT { MPT_ARRAY_INIT, 0, 0 }
 #endif
 	MPT_STRUCT(array) _d;
 	uint16_t _type;
 	uint8_t  _flags;
-	uint8_t  _code;
 };
 #ifdef __cplusplus
 template<> const MPT_STRUCT(type_traits) *type_properties<value_store>::traits();
@@ -350,8 +352,6 @@ extern const MPT_STRUCT(type_traits) *mpt_value_store_traits(void);
 /* multi dimension data operations */
 extern MPT_STRUCT(value_store) *mpt_stage_data(MPT_STRUCT(rawdata_stage) *, unsigned);
 extern const MPT_STRUCT(type_traits) *mpt_stage_traits(void);
-/* reserve data for value segment */
-extern void *mpt_value_store_reserve(MPT_STRUCT(array) *, const MPT_STRUCT(type_traits) *, size_t, long);
 /* set dimensions to defined size */
 extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFPAR(0));
 

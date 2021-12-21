@@ -16,7 +16,6 @@ src = files(
   'stage_data.c',
   'stage_traits.c',
   'value_apply_init.c',
-  'value_store_reserve.c',
   'value_store_traits.c',
   'values_bound.c',
   'values_file.c',

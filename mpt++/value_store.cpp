@@ -35,11 +35,15 @@ void value_store::set_modified(bool set)
 		_flags &= ~ValueChange;
 	}
 }
-
-void *value_store::reserve(const struct type_traits *traits, size_t len, long off)
+void *value_store::reserve(long count, const struct type_traits &traits)
 {
-	return mpt_value_store_reserve(&_d, traits, len, off);
+	return mpt_array_reserve(&_d, count, &traits);
 }
+void *value_store::set(const struct type_traits &traits, size_t len, const void *data, long pos)
+{
+	return mpt_array_set(&_d, &traits, len, data, pos);
+}
+
 long maxsize(span<const value_store> sl, const struct type_traits *traits)
 {
 	const value_store *val = sl.begin();

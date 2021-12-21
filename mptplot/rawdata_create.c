@@ -79,115 +79,58 @@ static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)
 /* raw data interface */
 static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
 {
-	const MPT_STRUCT(type_traits) *traits;
+	const MPT_STRUCT(type_traits) *traits, *stage_traits;
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
 	MPT_STRUCT(value_store) *val;
-	size_t value_pos;
 	void *dest;
 	uint32_t nc = 0, cycles;
 	
-	if (!(traits = mpt_stage_traits())) {
+	/* get traits for data type */
+	if (!(traits = mpt_type_traits(type))) {
+		return MPT_ERROR(BadType);
+	}
+	if (!(stage_traits = mpt_stage_traits())) {
 		return MPT_ERROR(BadOperation);
 	}
-	
+	/* determine target stage by cayle offset */
 	if (!vd || !(nc = vd->cycle)) {
 		nc = rd->act;
 	}
+	/* check target cycle limits */
+	buf = rd->st._buf;
+	cycles = buf ? buf->_used / stage_traits->size : 0;
 	
-	if (!(buf = rd->st._buf)) {
-		buf = _mpt_buffer_alloc(nc * traits->size, 0);
-		buf->_content_traits = traits;
-		cycles = 0;
-	}
-	else {
-		cycles = buf->_used / traits->size;
-	}
-	
-	if (nc >= (long) (cycles)) {
-		if (!rd->max || nc >= rd->max) {
+	/* hard limit on cycle count */
+	if (rd->max) {
+		if (nc >= rd->max) {
 			return MPT_ERROR(BadValue);
 		}
-		if (!(st = mpt_array_slice(&rd->st, nc * traits->size, traits->size))) {
+	}
+	/* soft restriction: no holes in cycles */
+	else if (nc > cycles) {
+		return MPT_ERROR(BadValue);
+	}
+	/* initialize buffer */
+	if (!buf) {
+		if (!(buf = _mpt_buffer_alloc((nc + 1) * stage_traits->size, 0))) {
 			return MPT_ERROR(BadOperation);
 		}
+		buf->_content_traits = stage_traits;
+		rd->st._buf = buf;
 	}
-	else {
-		st = (void *) (buf + 1);
-		st += nc;
+	/* reserve stage data */
+	if (!(st = mpt_array_slice(&rd->st, nc * stage_traits->size, stage_traits->size))) {
+		return MPT_ERROR(BadOperation);
 	}
-	
-	value_pos = vd ? vd->offset : 0;
-	
+	/* get value store for dimension */
 	if (!(val = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!(buf = val->_d._buf)) {
-		long count = 0;
-		int code;
-		
-		if (!(traits = mpt_type_traits(type))) {
-			return MPT_ERROR(BadType);
-		}
-		if (len && !src && traits->fini) {
-			return MPT_ERROR(BadArgument);
-		}
-		
-		value_pos *= traits->size;
-		if (!(buf = _mpt_buffer_alloc(value_pos + len, 0))) {
-			return MPT_ERROR(BadOperation);
-		}
-		buf->_content_traits = traits;
-		if (value_pos && !(dest = mpt_buffer_insert(buf, value_pos, len))) {
-			buf->_vptr->unref(buf);
-			return MPT_ERROR(BadValue);
-		}
-		if (len) {
-			if (!src) {
-				memset(dest, 0, len);
-				count = len / traits->size;
-			}
-			else if ((count = mpt_buffer_set(val->_d._buf, traits, value_pos, src, len)) < 0) {
-				buf->_vptr->unref(buf);
-				return count;
-			}
-		}
-		
-		code = mpt_msgvalfmt_code(type);
-		
-		val->_d._buf = buf;
-		val->_type = type;
-		val->_code = code < 0 ? 0 : code;
-		
-		return count;
-	}
-	
-	if (type != val->_type) {
-		return MPT_ERROR(BadArgument);
-	}
-	if (!(traits = buf->_content_traits)) {
+	/* assign new data */
+	if (!(dest = mpt_array_set(&val->_d, traits, len, src, vd ? vd->offset : 0))) {
 		return MPT_ERROR(BadOperation);
-	}
-	if (len && !src && traits->fini) {
-		return MPT_ERROR(BadArgument);
-	}
-	
-	value_pos *= traits->size;
-	if (!(dest = mpt_array_slice(&val->_d, value_pos, len))) {
-		return MPT_ERROR(BadOperation);
-	}
-	
-	if (len) {
-		long count;
-		if (!src) {
-			/* only reachable for trivial data types */
-			memset(dest, 0, len);
-		}
-		else if ((count = mpt_buffer_set(val->_d._buf, traits, value_pos, src, len)) < 0) {
-			return count;
-		}
-		val->_flags |= 0x1;
 	}
 	return val->_flags;
 }

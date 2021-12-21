@@ -23,7 +23,6 @@ static int _value_store_init(void *dest, const void *src)
 		}
 		to->_type  = from->_type;
 		to->_flags = from->_flags;
-		to->_code  = from->_code;
 		return from->_d._buf ? 1 : 0;
 	}
 	

@@ -7,6 +7,8 @@ src = files(
   'array_message.c',
   'array_push.c',
   'array_reduce.c',
+  'array_reserve.c',
+  'array_set.c',
   'array_slice.c',
   'array_string.c',
   'bitmap.c',
