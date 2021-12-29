@@ -373,6 +373,12 @@ extern int mpt_type_value(const char *name, int len)
 	if (!name || !len || !*name) {
 		return MPT_ERROR(BadArgument);
 	}
+	if (!meta_types) {
+		_meta_init();
+	}
+	if (!interface_types) {
+		_interfaces_init();
+	}
 	/* exact length match for names */
 	if (len >= 0) {
 		for (i = 0; i < meta_pos; i++) {
