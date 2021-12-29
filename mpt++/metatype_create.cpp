@@ -23,7 +23,7 @@ __MPT_NAMESPACE_BEGIN
  * 
  * \return new metatype
  */
-metatype *metatype::create(value val)
+metatype *metatype::create(const value &val)
 {
 	const char *src = static_cast<const char *>(val.ptr);
 	size_t len;
@@ -34,7 +34,7 @@ metatype *metatype::create(value val)
 	}
 	/* simple empty value */
 	else if (!val.fmt[0]) {
-		return metatype::basic::create(0, 0);
+		return metatype::basic_instance::create(0, 0);
 	}
 	// single value payload only
 	else if (val.fmt[1]) {
@@ -44,11 +44,11 @@ metatype *metatype::create(value val)
 	// extended text format
 	else if (!(src = mpt_data_tostring((const void **) &src, *val.fmt, &len))) {
 		// dispatch to typed metatype creator
-		return create(*val.fmt, val.ptr);
+		return generic_instance::create(*val.fmt, val.ptr);
 	}
 	// compatible small generic metatype
 	if (len < std::numeric_limits<uint8_t>::max()) {
-		metatype *m = metatype::basic::create(src, len);
+		metatype *m = metatype::basic_instance::create(src, len);
 		if (m) {
 			return m;
 		}

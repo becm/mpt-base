@@ -6,13 +6,13 @@ TESTS = client graph graphic axis iter gen libassign
 PROGS = readline graphic ${TESTS}
 STATIC = libassign_static
 
-CXXFLAGS += -std=c++98
-
 client_static : CC=${CXX}
 
 DIR_TOP = ${MPT_PREFIX}
 include ../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
+
+CXXFLAGS += -std=c++98
 
 libassign : libassign.o
 libassign : LDLIBS=-lmptloader

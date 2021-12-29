@@ -26,10 +26,10 @@ protected:
 	inline ~metatype()
 	{ }
 public:
-	class basic;
+	class basic_instance;
+	class generic_instance;
 	
-	static metatype *create(value);
-	static metatype *create(int, const void *);
+	static metatype *create(const value &);
 	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
@@ -149,35 +149,51 @@ inline int iterator::reset()
 }
 
 /* basic metatype to support typeinfo */
-class metatype::basic : public metatype
+class metatype::basic_instance : public metatype
 {
 protected:
-	inline ~basic()
+	inline ~basic_instance()
 	{ }
+	basic_instance(size_t post);
 public:
-	basic(size_t post);
-	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
-	basic *clone() const __MPT_OVERRIDE;
+	basic_instance *clone() const __MPT_OVERRIDE;
 	
 	bool set(const char *, int);
 	
-	static basic *create(const char *, int);
+	static basic_instance *create(const char *, int);
+};
+/* data metatype with typed content */
+class metatype::generic_instance : public metatype
+{
+public:
+	static generic_instance *create(int, const void *);
+	
+	int convert(int , void *) __MPT_OVERRIDE;
+	
+	uintptr_t addref() __MPT_OVERRIDE;
+	void unref() __MPT_OVERRIDE;
+	generic_instance *clone() const __MPT_OVERRIDE;
+private:
+	refcount _ref;
+protected:
+	generic_instance(const type_traits *, int );
+	static generic_instance *create(int, const type_traits *, const void *);
+	virtual ~generic_instance();
+	void *_val;
+	const type_traits *_traits;
+	unsigned int _valtype;
 };
 /* generic implementation for metatype */
 template <typename T>
 class meta_value : public metatype
 {
 public:
-	inline meta_value(const T *val = 0) :
-		_val(val ? *val : 0),
-		_valtype(type_properties<T>::id(true))
+	inline meta_value(const T *val = 0) : _val(val ? *val : 0)
 	{ }
-	inline meta_value(const T &val) :
-		_val(val),
-		_valtype(type_properties<T>::id(true))
+	inline meta_value(const T &val) : _val(val)
 	{ }
 	virtual ~meta_value()
 	{ }
@@ -187,11 +203,15 @@ public:
 	}
 	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
-		static const int me = type_properties<T>::id(true);
+		int me = value_id();
 		if (!type) {
 			if (dest) {
 				*static_cast<const uint8_t **>(dest) = 0;
 			}
+			return me;
+		}
+		if (type == TypeMetaPtr) {
+			*static_cast<metatype **>(dest) = this;
 			return me;
 		}
 		if (type != me) {
@@ -202,13 +222,23 @@ public:
 		}
 		return me;
 	}
-	meta_value *clone() const __MPT_OVERRIDE
+	metatype *clone() const __MPT_OVERRIDE
 	{
 		return new meta_value(_val);
 	}
+	static int value_id() {
+		static int _valtype = 0;
+		if (_valtype > 0) {
+			return _valtype;
+		}
+		int type = type_properties<T>::id(true);
+		if (type < 0) {
+			type = TypeMetaPtr;
+		}
+		return _valtype = type;
+	}
 protected:
 	T _val;
-	const int _valtype;
 };
 template<typename T>
 class type_properties<meta_value<T> *>
