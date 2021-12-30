@@ -58,13 +58,16 @@ uint8_t base(const T &)
 
 extern int main(int, char *[])
 {
-	static const uint8_t fmt[] = { mpt::basetype(mpt::type_properties<mpt::array>::id(true)), 0 };
+	static const uint8_t fmt[] = {
+		mpt::basetype(mpt::type_properties<long>::id(true)),
+		0
+	};
 	mtrace();
 	Value v;
 	
 	int type = mpt::type_traits::add(mpt::type_traits(8));
 	
-	std::cout << "array: " << fmt << std::endl;
+	std::cout << "long: " << fmt << std::endl;
 	std::cout << std::hex;
 	
 	print<int>();
@@ -78,7 +81,46 @@ extern int main(int, char *[])
 	print<mpt::reference<mpt::metatype> >();
 	print<const mpt::reference<mpt::metatype> >();
 	
-	std::cout << "generic: " << type << std::endl;
+	std::cout << "generic: " << type << " … ";
+	while (true) {
+		int curr = mpt::type_traits::add(mpt::type_traits(1));
+		if (curr < 0) {
+			std::cout << type << std::endl;
+			break;
+		}
+		type = curr;
+	}
+	type = mpt::type_traits::get("meta");
+	std::cout << "meta: " << type << " … ";
+	while (true) {
+		int curr = mpt::type_traits::add_metatype(0);
+		if (curr < 0) {
+			std::cout << type << std::endl;
+			break;
+		}
+		type = curr;
+	}
+	type = mpt::type_traits::get("convertable");
+	std::cout << "interface: " << type << " … ";
+	while (true) {
+		int curr = mpt::type_traits::add_interface(0);
+		if (curr < 0) {
+			std::cout << type << std::endl;
+			break;
+		}
+		type = curr;
+	}
+	type = mpt::type_traits::add_basic(24);
+	std::cout << "dyn_basic: " << type << " … ";
+	while (true) {
+		int curr = mpt::type_traits::add_basic(8);
+		if (curr < 0) {
+			std::cout << type << std::endl;
+			break;
+		}
+		type = curr;
+	}
+	
 	long l = -5;
 	v.set(&l);
 	std::cout << "long(" << v.type() << ") = " << v << std::endl;

@@ -126,12 +126,12 @@ static int valGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	if (!(ftype = *it->val.fmt)) {
 		return 0;
 	}
-	if (ftype == MPT_ENUM(TypeMetaRef)) {
-		MPT_INTERFACE(metatype) *mt;
-		if (!(mt = *((MPT_INTERFACE(metatype) **) it->val.ptr))) {
+	if (ftype == MPT_ENUM(TypeConvertablePtr)) {
+		MPT_INTERFACE(convertable) *conv;
+		if (!(conv = *((MPT_INTERFACE(convertable) **) it->val.ptr))) {
 			return MPT_ERROR(BadValue);
 		}
-		return MPT_metatype_convert(mt, type, dest);
+		return conv->_vptr->convert(conv, type, dest);
 	}
 	/* copy scalar or untracked pointer data */
 	if (type == ftype) {

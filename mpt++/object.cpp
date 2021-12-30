@@ -196,7 +196,7 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
 		::mpt::property pr(head->ident.name());
 		property(&pr);
 		metatype *mt;
-		static const uint8_t metafmt[] = { TypeMetaRef, 0 };
+		static const uint8_t metafmt[] = { TypeConvertablePtr, 0 };
 		pr.val.fmt = metafmt;
 		pr.val.ptr = &mt;
 		if ((mt = head->_meta)) {

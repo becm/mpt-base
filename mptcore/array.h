@@ -184,11 +184,20 @@ protected:
 
 
 #ifdef __cplusplus
+template<> inline __MPT_CONST_TYPE int type_properties<buffer *>::id(bool) {
+	return TypeBufferPtr;
+}
+template<> inline const type_traits *type_properties<buffer *>::traits() {
+	static const type_traits *traits = 0;
+	return traits ? traits : (traits = type_traits::get(id(true)));
+}
+
 template<> inline __MPT_CONST_TYPE int type_properties<array>::id(bool) {
 	return TypeArray;
 }
-template<> inline const MPT_STRUCT(type_traits) *type_properties<array>::traits() {
-	return type_traits::get(id(true));
+template<> inline const type_traits *type_properties<array>::traits() {
+	static const type_traits *traits = 0;
+	return traits ? traits : (traits = type_traits::get(id(true)));
 }
 
 /*! reference to buffer segment */
@@ -295,6 +304,9 @@ template<> void copy<double, double>(long pts, const double *, double *);
 #endif
 
 __MPT_EXTDECL_BEGIN
+
+/* array type information */
+extern const MPT_STRUCT(type_traits) *mpt_array_traits(void);
 
 /* get range of array */
 extern void mpt_drange(double  *, int , const double  *, int);

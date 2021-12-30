@@ -320,6 +320,8 @@ public:
 
 __MPT_EXTDECL_BEGIN
 
+/* meta reference type information */
+extern const MPT_STRUCT(type_traits) *mpt_meta_reference_traits(void);
 
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));

@@ -11,6 +11,7 @@ src = files(
   'array_set.c',
   'array_slice.c',
   'array_string.c',
+  'array_traits.c',
   'bitmap.c',
   'buffer.c',
   'buffer_cut.c',

@@ -40,7 +40,7 @@ static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return me;
 	}
 	if (!type) {
-		static const char fmt[] = { MPT_ENUM(TypeArray), 0 };
+		static const char fmt[] = { MPT_ENUM(TypeBufferPtr), 0 };
 		if (ptr) *((const char **) ptr) = fmt;
 		return me;
 	}

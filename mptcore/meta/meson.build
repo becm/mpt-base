@@ -6,6 +6,7 @@ src = files(
   'iterator_value.c',
   'meta_geninfo.c',
   'meta_new.c',
+  'meta_reference_traits.c',
   'meta_set.c',
   'metatype_default.c',
 )

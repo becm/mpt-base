@@ -111,7 +111,7 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutputPtr);
 	}
 	if ((name = pr->name) && !*name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeMetaRef), 0 };
+		static const uint8_t fmt[] = { MPT_ENUM(TypeConvertablePtr), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("local data output");
 		pr->val.fmt = fmt;

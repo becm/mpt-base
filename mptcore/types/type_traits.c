@@ -21,46 +21,6 @@
 #define basic_type(t, s) { MPT_TYPETRAIT_INIT(s), (t) }
 #define pointer_type(t)  { MPT_TYPETRAIT_INIT(sizeof(void *)), (t) }
 
-static void _array_fini(void *ptr)
-{
-	MPT_STRUCT(array) *arr = ptr;
-	MPT_STRUCT(buffer) *buf = arr->_buf;
-	if (buf) {
-		buf->_vptr->unref(buf);
-	}
-}
-static int _array_init(void *ptr, const void *src)
-{
-	MPT_STRUCT(array) *arr = ptr;
-	MPT_STRUCT(buffer) *buf = 0;
-	if (src && (buf = ((const MPT_STRUCT(array) *) src)->_buf)) {
-		if (!buf->_vptr->addref(buf)) {
-			return MPT_ERROR(BadOperation);
-		}
-	}
-	arr->_buf = buf;
-	return buf ? 1 : 0;
-}
-
-static void _mref_fini(void *ptr)
-{
-	MPT_INTERFACE(metatype) *mt = *((void **) ptr);
-	if (mt) {
-		mt->_vptr->unref(mt);
-	}
-}
-static int _mref_init(void *ptr, const void *src)
-{
-	MPT_INTERFACE(metatype) *mt = 0;
-	if (src && (mt = *((MPT_INTERFACE(metatype) * const *) src))) {
-		if (!mt->_vptr->addref(mt)) {
-			return MPT_ERROR(BadOperation);
-		}
-	}
-	*((void **) ptr) = mt;
-	return mt ? 1 : 0;
-}
-
 static const struct {
 	const MPT_STRUCT(type_traits) traits;
 	int type;
@@ -116,34 +76,39 @@ static const struct {
 	basic_type('e', sizeof(long double)),
 #endif
 	/* string types */
-	pointer_type('s'),
-	
-	/* reference types */
-	{ { _array_init, _array_fini, sizeof(MPT_STRUCT(array))  }, MPT_ENUM(TypeArray) },
-	{ { _mref_init,  _mref_fini,  sizeof(MPT_STRUCT(void *)) }, MPT_ENUM(TypeMetaRef) },
+	pointer_type('s')
 };
 
 static const struct {
 	const char *name;
 	int type;
 } core_interfaces[] = {
-	/* option interface types */
-	{ "object",   MPT_ENUM(TypeObjectPtr)   },
-	{ "config",   MPT_ENUM(TypeConfigPtr)   },
-	/* input interface types */
-	{ "iterator", MPT_ENUM(TypeIteratorPtr) },
+	{ "convertable", MPT_ENUM(TypeConvertablePtr) },
 	/* output interfaces */
-	{ "logger",   MPT_ENUM(TypeLoggerPtr)   },
-	{ "reply",    MPT_ENUM(TypeReplyPtr)    },
-	{ "output",   MPT_ENUM(TypeOutputPtr)   },
+	{ "logger",      MPT_ENUM(TypeLoggerPtr)      },
+	{ "reply",       MPT_ENUM(TypeReplyPtr)       },
+	{ "output",      MPT_ENUM(TypeOutputPtr)      },
+	/* config interface types */
+	{ "object",      MPT_ENUM(TypeObjectPtr)      },
+	{ "config",      MPT_ENUM(TypeConfigPtr)      },
+	/* input interface types */
+	{ "iterator",    MPT_ENUM(TypeIteratorPtr)    },
+	{ "collection",  MPT_ENUM(TypeCollectionPtr)  },
 	/* other interfaces */
-	{ "solver",   MPT_ENUM(TypeSolverPtr)   },
+	{ "solver",      MPT_ENUM(TypeSolverPtr)      },
 };
 
 struct type_entry
 {
 	MPT_STRUCT(type_traits) traits;
 	const char *name;
+};
+
+struct generic_traits_chunk
+{
+	const MPT_STRUCT(type_traits) *traits[30];
+	struct generic_traits_chunk *next;
+	uint8_t used;
 };
 
 static MPT_STRUCT(type_traits)  iovec_types[MPT_ENUM(_TypeVectorSize)];
@@ -156,6 +121,8 @@ static int interface_pos = 0;
 
 static struct type_entry **meta_types = 0;
 static int meta_pos = 0;
+
+static struct generic_traits_chunk *generic_types = 0;
 
 
 static void _dynamic_fini(void) {
@@ -228,6 +195,17 @@ static void _interfaces_init(void) {
 	atexit(_interfaces_fini);
 }
 
+static void _generic_types_fini()
+{
+	struct generic_traits_chunk *group = generic_types;
+	generic_types = 0;
+	while (group) {
+		struct generic_traits_chunk *curr = group;
+		group = group->next;
+		free(curr);
+	}
+}
+
 /*!
  * \ingroup mptTypes
  * \brief get traits for registered type
@@ -240,6 +218,8 @@ static void _interfaces_init(void) {
  */
 extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 {
+	const struct generic_traits_chunk *group;
+	
 	/* bad type value */
 	if (type < 0) {
 		return 0;
@@ -285,6 +265,14 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 		return 0;
 	}
 	
+	switch (type) {
+		case MPT_ENUM(TypeArray):
+			return mpt_array_traits();
+		case MPT_ENUM(TypeMetaRef):
+			return mpt_meta_reference_traits();
+		default:;
+	}
+	
 	if (MPT_type_isMetaPtr(type)) {
 		const struct type_entry *entry;
 		
@@ -293,6 +281,16 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 		}
 		entry = meta_types[type - MPT_ENUM(_TypeMetaPtrBase)];
 		return entry ? &entry->traits : 0;
+	}
+	
+	type -= MPT_ENUM(_TypeValueAdd);
+	group = generic_types;
+	while (group) {
+		if (type < group->used) {
+			return group->traits[type];
+		}
+		type -= MPT_arrsize(group->traits);
+		group = group->next;
 	}
 	
 	return 0;
@@ -427,6 +425,59 @@ extern int mpt_type_value(const char *name, int len)
 
 /*!
  * \ingroup mptTypes
+ * \brief register generic type
+ * 
+ * Register new type with free-form traits.
+ * 
+ * \return type code of new generic type
+ */
+extern int mpt_type_add(const MPT_STRUCT(type_traits) *traits)
+{
+	struct generic_traits_chunk *curr;
+	int pos = MPT_ENUM(_TypeValueAdd);
+	
+	/* must have valid size */
+	if (!traits || !traits->size) {
+		return MPT_ERROR(BadArgument);
+	}
+	/* create initial traits chunk */
+	if (!(curr = generic_types)) {
+		if (!(curr = malloc(sizeof(*generic_types)))) {
+			return MPT_ERROR(BadOperation);
+		}
+		curr->next = 0;
+		curr->used = 0;
+		generic_types = curr;
+		atexit(_generic_types_fini);
+	}
+	/* find available traits chunk entry */
+	while (curr->used == MPT_arrsize(curr->traits)) {
+		struct generic_traits_chunk *next;
+		pos += MPT_arrsize(curr->traits);
+		/* append new empty chunk */
+		if (!(next = curr->next)) {
+			if (pos > MPT_ENUM(_TypeValueMax)) {
+				return MPT_ERROR(BadType);
+			}
+			if (!(next = malloc(sizeof(*next)))) {
+				return MPT_ERROR(BadOperation);
+			}
+			next->next = 0;
+			next->used = 0;
+			curr->next = next;
+		}
+		curr = next;
+	}
+	pos += curr->used;
+	if (pos > MPT_ENUM(_TypeValueMax)) {
+		return MPT_ERROR(BadType);
+	}
+	curr->traits[curr->used++] = traits;
+	return pos;
+}
+
+/*!
+ * \ingroup mptTypes
  * \brief register new type
  * 
  * register new user type to use with mpt_type_traits()
@@ -435,10 +486,10 @@ extern int mpt_type_value(const char *name, int len)
  * 
  * \return type code of new user type
  */
-extern int mpt_type_generic_new(const MPT_STRUCT(type_traits) *traits)
+extern int mpt_type_basic_add(size_t size)
 {
-	if (!traits || !traits->size) {
-		return MPT_ERROR(BadArgument);
+	if (!size) {
+		size = sizeof(void *);
 	}
 	if (!dynamic_types) {
 		dynamic_types = calloc(MPT_ENUM(_TypeDynamicSize), sizeof(*dynamic_types));
@@ -448,7 +499,8 @@ extern int mpt_type_generic_new(const MPT_STRUCT(type_traits) *traits)
 		atexit(_dynamic_fini);
 	}
 	if (dynamic_pos < MPT_ENUM(_TypeDynamicSize)) {
-		dynamic_types[dynamic_pos] = traits;
+		const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(size);
+		memcpy(&dynamic_types[dynamic_pos], &traits, sizeof(*dynamic_types));
 		return MPT_ENUM(_TypeDynamicBase) + dynamic_pos++;
 	}
 	
@@ -500,7 +552,7 @@ extern int mpt_type_meta_new(const char *name)
 	}
 	meta_types[meta_pos] = elem;
 	
-	return MPT_ENUM(_TypeMetaPtrBase) + meta_pos;
+	return MPT_ENUM(_TypeMetaPtrBase) + meta_pos++;
 }
 /*!
  * \ingroup mptTypes

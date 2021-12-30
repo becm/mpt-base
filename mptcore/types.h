@@ -13,22 +13,24 @@ __MPT_NAMESPACE_BEGIN
 enum MPT_ENUM(Types)
 {
 	/* system types */
-	MPT_ENUM(TypeUnixSocket)    = 0x1,   /* SOH */
+	MPT_ENUM(TypeUnixSocket)     = 0x1,   /* SOH */
 	/* system pointer types */
-	MPT_ENUM(TypeFilePtr)       = 0x4,   /* EOT */
-	MPT_ENUM(TypeAddressPtr)    = 0x5,   /* ENQ */
+	MPT_ENUM(TypeFilePtr)        = 0x4,   /* EOT */
+	MPT_ENUM(TypeAddressPtr)     = 0x5,   /* ENQ */
 	
 	/* special pointer types */
-	MPT_ENUM(TypeReplyDataPtr)  = 0x8,  /* BS */
-	MPT_ENUM(TypeNodePtr)       = 0x9,  /* HT' */
+	MPT_ENUM(TypeReplyDataPtr)   = 0x8,   /* BS */
+	MPT_ENUM(TypeNodePtr)        = 0x9,   /* HT' */
+	MPT_ENUM(TypeBufferPtr)      = 0xb,   /* ENQ */
 	
 	/* reserve 0x10..0x17 for layout types */
 	
 	/* format types (scalar) */
-	MPT_ENUM(TypeValFmt)        = 0x18,  /* CAN */
-	MPT_ENUM(TypeValue)         = 0x19,  /* EM  */
-	MPT_ENUM(TypeProperty)      = 0x1a,  /* SUB */
-	MPT_ENUM(TypeCommand)       = 0x1b,  /* ESC */
+	MPT_ENUM(TypeValFmt)         = 0x18,  /* CAN */
+	MPT_ENUM(TypeValue)          = 0x19,  /* EM  */
+	MPT_ENUM(TypeProperty)       = 0x1a,  /* SUB */
+	MPT_ENUM(TypeCommand)        = 0x1b,  /* ESC */
+	MPT_ENUM(_TypeCoreSize)      = 0x20,
 	
 	/* range for generic base types */
 	MPT_ENUM(_TypeVectorBase)    = 0x40,
@@ -36,21 +38,19 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeVectorSize)    = 0x20,
 #define MPT_type_isVector(v)      ((v) >= MPT_ENUM(_TypeVectorBase) && (v) < MPT_ENUM(_TypeVectorMax))
 #define MPT_type_toVector(v)      (MPT_type_isScalar(v) \
-                                 ? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
-                                 : MPT_ERROR(BadType))
+		? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
+		: MPT_ERROR(BadType))
 	MPT_ENUM(_TypeScalarBase)    = 0x60,
 	MPT_ENUM(_TypeScalarMax)     = 0x7a,
 	MPT_ENUM(_TypeScalarSize)    = 0x20,
 #define MPT_type_isScalar(v)      ((v) >= MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax))
 #define MPT_type_toScalar(v)      (MPT_type_isVector(v) \
-                                 ? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
-                                 : MPT_ERROR(BadType))
-
+		? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
+		: MPT_ERROR(BadType))
+	
 	/* vector types ('@'..'Z') */
-	MPT_ENUM(TypeVector)         = '@',  /* 0x40: generic data */
+	MPT_ENUM(TypeVector)         = '@',   /* 0x40: generic data */
 	/* scalar types ('a'..'z') */
-	MPT_ENUM(TypeArray)          = 'a',   /* array content */
-	MPT_ENUM(TypeMetaRef)        = 'm',   /* generic metatype reference */
 	
 	/* conversion interface */
 	MPT_ENUM(TypeConvertablePtr) = 0x80,
@@ -79,10 +79,21 @@ enum MPT_ENUM(Types)
 #define MPT_type_isDynamic(v)     ((v) >= MPT_ENUM(_TypeDynamicBase) && (v) <= MPT_ENUM(_TypeDynamicMax))
 	
 	MPT_ENUM(_TypeMetaPtrBase)   = 0x100,
-	MPT_ENUM(_TypeMetaPtrMax)    = 0x1ff,
-	MPT_ENUM(_TypeMetaPtrSize)   = 0x100,
+	MPT_ENUM(_TypeMetaPtrMax)    = 0xfff,
+	MPT_ENUM(_TypeMetaPtrSize)   = 0xf00,
 #define MPT_type_isMetaPtr(v)     ((v) >= MPT_ENUM(_TypeMetaPtrBase) && (v) <= MPT_ENUM(_TypeMetaPtrMax))
-	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaPtrBase)
+	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaPtrBase),
+	
+	/* generic complex types */
+	MPT_ENUM(_TypeValueBase)     = 0x1000,
+	/* static types with non-trivial content */
+	MPT_ENUM(TypeIdentifier)     = 0x1000,
+	MPT_ENUM(TypeMetaRef)        = 0x1001,
+	MPT_ENUM(TypeArray)          = 0x1002,
+	/* dynamic types with non-trivial content */
+	MPT_ENUM(_TypeValueAdd)      = 0x1100,
+	MPT_ENUM(_TypeValueMax)      = 0x3fff,
+	MPT_ENUM(_TypeValueSize)     = 0x3000
 };
 
 MPT_STRUCT(type_traits)
@@ -94,7 +105,11 @@ MPT_STRUCT(type_traits)
 	static int add_basic(size_t);
 	static int add(const type_traits &);
 	
+	static int add_interface(const char * = 0);
+	static int add_metatype(const char * = 0);
+	
 	static const type_traits *get(int);
+	static int get(const char *, int = -1);
 #else
 # define MPT_TYPETRAIT_INIT(t)  { 0, 0, (t) }
 #endif
@@ -123,7 +138,8 @@ extern const char *mpt_interface_typename(int);
 /* register additional types */
 extern int mpt_type_meta_new(const char *);
 extern int mpt_type_interface_new(const char *);
-extern int mpt_type_generic_new(const MPT_STRUCT(type_traits) *);
+extern int mpt_type_add(const MPT_STRUCT(type_traits) *);
+extern int mpt_type_basic_add(size_t);
 
 /* type alias for symbol description */
 extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
@@ -138,17 +154,14 @@ __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 
-inline uint8_t basetype(int org) {
-	if (org <= 0) {
-		return 0;
-	}
-	if (org <= _TypeDynamicMax) {
-		return org;
-	}
-	if (org <= _TypeMetaPtrMax) {
-		return TypeConvertablePtr;
-	}
-	return 0;
+inline __MPT_CONST_TYPE uint8_t basetype(int org) {
+	return (org < 0)
+		? 0
+		: (org <= _TypeDynamicMax)
+			? org
+			: (MPT_type_isMetaPtr(org))
+				? TypeConvertablePtr
+				: 0;
 }
 
 template<typename T>

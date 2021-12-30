@@ -66,7 +66,7 @@ extern int mpt_position(const uint8_t *fmt, int match)
 			continue;
 		}
 		/* current is array */
-		if (curr == MPT_ENUM(TypeArray)) {
+		if (curr == MPT_ENUM(TypeBufferPtr)) {
 			/* wide match from array to vector,
 			 * need deep compare for actual datatype */
 			if ((curr = MPT_type_toScalar(match)) >= 0) {

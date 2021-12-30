@@ -38,17 +38,17 @@ static int solverNext(MPT_STRUCT(consumable) *val, void *dest, int type, size_t 
 			return 0;
 		}
 		if (fmt != type) {
-			MPT_INTERFACE(metatype) *mt;
-			if (fmt != MPT_ENUM(TypeMetaRef)) {
+			MPT_INTERFACE(convertable) *conv;
+			if (fmt != MPT_ENUM(TypeConvertablePtr)) {
 				return MPT_ERROR(BadType);
 			}
-			if (!(mt = *((MPT_INTERFACE(metatype) **) val->_val.ptr))) {
-				return MPT_ERROR(BadType);
+			if (!(conv = *((MPT_INTERFACE(convertable) **) val->_val.ptr))) {
+				return MPT_ERROR(BadValue);
 			}
-			if ((ret = MPT_metatype_convert(mt, type, dest)) < 0) {
+			if ((ret = conv->_vptr->convert(conv, type, dest)) < 0) {
 				return ret;
 			}
-			len = sizeof(mt);
+			len = sizeof(conv);
 		}
 		else if (dest) {
 			memcpy(dest, val->_val.ptr, len);

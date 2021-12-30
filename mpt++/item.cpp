@@ -273,9 +273,9 @@ int item_group::convert(int type, void *ptr)
 	int me = type_properties<group *>::id(true);
 	
 	if (!type) {
-		static const uint8_t fmt[] = { TypeCollectionPtr, TypeArray, 0 };
+		static const uint8_t fmt[] = { TypeCollectionPtr, 0 };
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
-		return me > 0 ? me : TypeCollectionPtr;
+		return me > 0 ? me : TypeArray;
 	}
 	
 	if (assign(static_cast<group *>(this), type, ptr)) {
