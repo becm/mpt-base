@@ -37,8 +37,7 @@ bool object::set(const char *name, const value &val, logger *out)
 	const char *str;
 	int ret;
 	if (!(str = val.string())) {
-		value tmp = val;
-		ret = mpt_object_set_value(this, name, &tmp);
+		ret = mpt_object_set_value(this, name, &val);
 	} else {
 		ret = mpt_object_set_string(this, name, str, 0);
 	}
@@ -52,11 +51,6 @@ bool object::set(const char *name, const value &val, logger *out)
 	if (property(&pr) < 0) {
 		pr.name = "object";
 	}
-	pr.val.fmt = val.fmt;
-	if (!(pr.val.ptr = val.ptr)) {
-		pr.val.fmt = 0;
-		pr.val.ptr = "";
-	}
 	
 	const char *err;
 	if (ret == BadArgument) {
@@ -68,23 +62,30 @@ bool object::set(const char *name, const value &val, logger *out)
 		}
 		return false;
 	}
+	err = 0;
 	if (ret == BadValue) {
 		err = MPT_tr("bad property value");
-		if (name) {
-			out->message(_fname, out->Error, "%s: %s.%s = \"%s\"", err, pr.name, name, pr.val.ptr);
-		} else {
-			out->message(_fname, out->Error, "%s: %s = \"%s\"", err, pr.name, pr.val.ptr);
-		}
-		return false;
 	}
-	if (ret == BadType) {
+	else if (ret == BadType) {
 		err = MPT_tr("bad property type");
-		if (name) {
-			out->message(_fname, out->Error, "%s: %s.%s = <%s>", err, pr.name, name, pr.val.fmt);
-		} else {
-			out->message(_fname, out->Error, "%s: %s = <%s>", err, pr.name, pr.val.fmt);
+	}
+	
+	if (err) {
+		if (str) {
+			if (name) {
+				out->message(_fname, out->Error, "%s: %s.%s = \"%s\"", err, pr.name, name, str);
+			} else {
+				out->message(_fname, out->Error, "%s: %s = \"%s\"", err, pr.name, str);
+			}
 		}
-		return false;
+		else {
+			int type = val.type_id();
+			if (name) {
+				out->message(_fname, out->Error, "%s: %s.%s = <%d>", err, pr.name, name, type);
+			} else {
+				out->message(_fname, out->Error, "%s: %s = <%s>", err, pr.name, type);
+			}
+		}
 	}
 	return false;
 }
@@ -196,14 +197,13 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
 		::mpt::property pr(head->ident.name());
 		property(&pr);
 		metatype *mt;
-		static const uint8_t metafmt[] = { TypeConvertablePtr, 0 };
-		pr.val.fmt = metafmt;
-		pr.val.ptr = &mt;
 		if ((mt = head->_meta)) {
+			const char *str = 0;
 			if (mt->convert(type_properties<value>::id(true), &pr.val) < 0
-			 && mt->convert('s', &pr.val.ptr) >= 0) {
-				pr.val.fmt = 0;
+			 && mt->convert('s', &str) >= 0) {
+				pr.val.set(str);
 			}
+			pr.val.set(TypeConvertablePtr, &head->_meta);
 		}
 		if (proc(pdata, &pr) < 0) {
 			return head;

@@ -26,14 +26,14 @@ MPT_STRUCT(property)
 public:
 	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
 	{ }
-	inline property(const char *n, const uint8_t *f, const void *d) : name(n), desc(0)
+	inline property(const char *n, int t, const void *d) : name(n), desc(0)
 	{
-		val.set(f, d);
+		val.set(t, d);
 	}
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
 #else
-# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT }
+# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT(0, 0) }
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */
@@ -119,7 +119,7 @@ extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(property_h
 /* set object property to match argument */
 extern int mpt_object_set_iterator(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
 extern int mpt_object_set_string(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
-extern int mpt_object_set_value(MPT_INTERFACE(object) *, const char *, MPT_STRUCT(value) *);
+extern int mpt_object_set_value(MPT_INTERFACE(object) *, const char *, const MPT_STRUCT(value) *);
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
 
@@ -132,6 +132,8 @@ extern int mpt_object_set_nodes(MPT_INTERFACE(object) *, int , const MPT_STRUCT(
 
 /* get matching property by name */
 extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
+/* copy property content */
+extern void mpt_property_copy(MPT_STRUCT(property) *, const MPT_STRUCT(property) *);
 /* process properties according to mask */
 extern int mpt_properties_foreach(int (*)(void *, MPT_STRUCT(property) *), void *, MPT_TYPE(property_handler) , void *, int __MPT_DEFPAR(-1));
 
@@ -278,10 +280,8 @@ public:
 	template <typename T>
 	attribute & operator= (const T &v)
 	{
-		value::format fmt;
 		value val;
-		fmt.set(type_properties<T>::id(true));
-		val.set(fmt, &v);
+		val.set(type_properties<T>::id(true), &v);
 		if (!set(val)) {
 			_prop.name = 0;
 		}

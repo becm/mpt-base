@@ -146,17 +146,23 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 	int len;
 	
 	if (val) {
-		const char *str;
 		uint32_t iter;
-		if (val->fmt) {
+		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
+			MPT_INTERFACE(iterator) *it = *((MPT_INTERFACE(iterator) * const *) val->ptr);
 			int cont;
-			if ((len = mpt_value_read(val, "u", &iter)) <= 0) {
+			if ((len = it->_vptr->get(it, 'u', &iter)) <= 0) {
 				errno = EINVAL;
 				return 0;
 			}
-			if ((cont = mpt_value_read(val, "ddd", &it)) < 1) {
-				errno = EINVAL;
-				return 0;
+			cont = 0;
+			if ((len = it->_vptr->get(it, 'd', &fd.base)) > 0) {
+				cont = 1;
+				if ((len = it->_vptr->get(it, 'd', &fd.fact)) > 0) {
+					cont = 2;
+					if ((len = it->_vptr->get(it, 'd', &fd.init)) > 0) {
+						cont = 3;
+					}
+				}
 			}
 			if (cont < 2) {
 				if (fd.base < DBL_MIN) {
@@ -168,7 +174,8 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 			len += cont;
 			fd.elem = iter + 1;
 		}
-		else if ((str = val->ptr)) {
+		else if (val->type == 's') {
+			const char *str = *((const char **) val->ptr);
 			int c;
 			if ((c = mpt_string_nextvis(&str)) != '(') {
 				errno = EINVAL;

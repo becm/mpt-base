@@ -36,7 +36,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 		}
 		obj = 0;
 		if ((MPT_metatype_convert(old, MPT_ENUM(TypeObjectPtr), &obj)) >= 0
-	            && obj) {
+		 && obj) {
 			int err;
 			if (val) {
 				MPT_STRUCT(value) tmp = *val;
@@ -71,7 +71,7 @@ extern int mpt_meta_set(MPT_INTERFACE(metatype) **mptr, const MPT_STRUCT(value) 
 		ret = 0;
 	}
 	/* create new metatype for data */
-	else if (!(mt = mpt_meta_new(*val))) {
+	else if (!(mt = mpt_meta_new(val))) {
 		return MPT_ERROR(BadOperation);
 	}
 	else if ((ret = MPT_metatype_convert(mt, 0, 0)) < 0) {

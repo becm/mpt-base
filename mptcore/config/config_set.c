@@ -43,8 +43,7 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	if (!val) {
 		return conf->_vptr->remove(conf, &where);
 	}
-	d.fmt = 0;
-	d.ptr = val;
+	MPT_value_set_string(&d, val);
 	
 	return conf->_vptr->assign(conf, &where, &d);
 }

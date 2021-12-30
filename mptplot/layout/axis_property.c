@@ -226,16 +226,16 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(co
 extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 {
 	static const MPT_STRUCT(property) elem[] = {
-		{"title",     "axis title",              { (uint8_t *) "s",  (void *) MPT_offset(axis, _title)} },
-		{"begin",     "axis start value",        { (uint8_t *) "d",  (void *) MPT_offset(axis, begin)} },
-		{"end",       "axis end value",          { (uint8_t *) "d",  (void *) MPT_offset(axis, end)} },
-		{"tlen",      "relative tick length ",   { (uint8_t *) "f",  (void *) MPT_offset(axis, tlen)} },
-		{"exponent",  "label exponent",          { (uint8_t *) "n",  (void *) MPT_offset(axis, exp)} },
-		{"intervals", "intervals between ticks", { (uint8_t *) "y",  (void *) MPT_offset(axis, intv)} },
-		{"subtick",   "intermediate ticks",      { (uint8_t *) "y",  (void *) MPT_offset(axis, sub)} },
-		{"decimals",  "decimal places",          { (uint8_t *) "y",  (void *) MPT_offset(axis, dec)} },
-		{"lpos",      "label direction",         { (uint8_t *) "c",  (void *) MPT_offset(axis, lpos)} },
-		{"tpos",      "title direction",         { (uint8_t *) "c",  (void *) MPT_offset(axis, tpos)} },
+		{"title",     "axis title",              MPT_VALUE_INIT('s',  (void *) MPT_offset(axis, _title)) },
+		{"begin",     "axis start value",        MPT_VALUE_INIT('d',  (void *) MPT_offset(axis, begin)) },
+		{"end",       "axis end value",          MPT_VALUE_INIT('d',  (void *) MPT_offset(axis, end)) },
+		{"tlen",      "relative tick length ",   MPT_VALUE_INIT('f',  (void *) MPT_offset(axis, tlen)) },
+		{"exponent",  "label exponent",          MPT_VALUE_INIT('n',  (void *) MPT_offset(axis, exp)) },
+		{"intervals", "intervals between ticks", MPT_VALUE_INIT('y',  (void *) MPT_offset(axis, intv)) },
+		{"subtick",   "intermediate ticks",      MPT_VALUE_INIT('y',  (void *) MPT_offset(axis, sub)) },
+		{"decimals",  "decimal places",          MPT_VALUE_INIT('y',  (void *) MPT_offset(axis, dec)) },
+		{"lpos",      "label direction",         MPT_VALUE_INIT('c',  (void *) MPT_offset(axis, lpos)) },
+		{"tpos",      "title direction",         MPT_VALUE_INIT('c',  (void *) MPT_offset(axis, tpos)) },
 	};
 	static const uint8_t format[] = {
 		's',
@@ -264,8 +264,8 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "axis";
 		pr->desc = "mpt axis data";
-		pr->val.fmt = format;
-		pr->val.ptr = ax;
+		pr->val.type = 0;
+		pr->val.ptr  = format;
 		
 		return ax && memcmp(ax, &def_axis, sizeof(*ax)) ? 1 : 0;
 	}
@@ -277,17 +277,17 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	pr->desc = elem[pos].desc;
 	
 	if (!ax) {
-		pr->val = elem[pos].val;
-		return 0;
+		pr->val.type = elem[pos].val.type;
+		pr->val.ptr  = elem[pos].val.ptr;
+		return pos;
 	}
 	
 	if ((pos == 5) && (ax->format & MPT_ENUM(TransformLg))) {
 		static const char desc[] = "log\0";
-		pr->val.fmt = 0;
-		pr->val.ptr = desc;
+		MPT_value_set_string(&pr->val, desc);
 	} else {
-		pr->val.fmt = elem[pos].val.fmt;
-		pr->val.ptr = ((uint8_t *) ax) + (intptr_t) elem[pos].val.ptr;
+		pr->val.type = elem[pos].val.type;
+		pr->val.ptr  = ((uint8_t *) ax) + (intptr_t) elem[pos].val.ptr;
 	}
 	return mpt_value_compare(&pr->val, ((uint8_t *) &def_axis) + (intptr_t) elem[pos].val.ptr);
 }

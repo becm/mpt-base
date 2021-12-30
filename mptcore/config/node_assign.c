@@ -39,7 +39,7 @@ extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **base, const MPT_STRU
 	
 	/* create metatype for value */
 	mt = 0;
-	if (val && !(mt = mpt_meta_new(*val))) {
+	if (val && !(mt = mpt_meta_new(val))) {
 		return 0;
 	}
 	/* require path elements */

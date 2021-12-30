@@ -13,8 +13,10 @@
 
 static int printm(void *out, const struct mpt_property *prop)
 {
-	if (prop->val.fmt) return fprintf(out, "%s: <%s> %p\n", prop->name, prop->val.fmt, prop->val.ptr);
-	return fprintf(out, "%s = %s;\n", prop->name, (char *) prop->val.ptr);
+	const void *ptr = prop->val.ptr;
+	const char *str = mpt_data_tostring(&ptr, prop->val.type, 0);
+	if (!str) return fprintf(out, "%s: <%d> %p\n", prop->name, prop->val.type, prop->val.ptr);
+	return fprintf(out, "%s = %s;\n", prop->name, str);
 }
 static int getter(void *addr, struct mpt_property *pr)
 {

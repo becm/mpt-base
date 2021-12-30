@@ -31,6 +31,7 @@ extern int main(int argc, char *argv[])
 		return 2;
 	}
 	if (!lay.load()) {
+		mpt::error(__func__, "%s: %s", "unable to load layout", argv[1]);
 		return 3;
 	}
 	for (const mpt::item<mpt::layout::graph> &g : lay.graphs()) {

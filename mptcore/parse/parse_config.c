@@ -25,15 +25,13 @@ extern int mpt_parse_config(MPT_TYPE(input_parser) next, void *npar, MPT_STRUCT(
 	
 	/* accuire next path element */
 	while ((ret = next(npar, parse, &path)) > 0) {
-		static const uint8_t fmt[] = { MPT_type_toVector('c'), 0 };
 		MPT_STRUCT(value) val;
 		struct iovec vec;
 		
 		vec.iov_base = (char *) (path.base + path.off + path.len);
 		vec.iov_len  = parse->valid;
 		
-		val.fmt = fmt;
-		val.ptr = &vec;
+		MPT_value_set_data(&val, MPT_type_toVector('c'), &vec);
 		
 		/* save to configuration */
 		if (save(ctx, &path, ret & MPT_PARSEFLAG(Data) ? &val : 0, parse->prev, ret) < 0) {

@@ -34,7 +34,6 @@ include ../mpt.lib.mk
 #
 # additional dependencies
 ${OBJS} : ${HEADER}
-object/object_set_value.o object/object_set_iterator.o : object/iterator_convert.h
 libinfo.o : ../libinfo.h ../version.h
 #
 # remove library info object

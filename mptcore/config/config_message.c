@@ -54,7 +54,6 @@ static int setConfig(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(valu
  */
 extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*proc)(void *ptr, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *), void *ctx)
 {
-	static const uint8_t fmt[] = { MPT_type_toVector('c'), 0 };
 	MPT_INTERFACE(metatype) *glob;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(message) tmp;
@@ -120,8 +119,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 	vec.iov_base = (char *) p.base + p.off + p.len;
 	vec.iov_len  = all - p.off - p.len;
 	
-	val.fmt = fmt;
-	val.ptr = &vec;
+	MPT_value_set_data(&val, MPT_type_toVector('c'), &vec);
 	
 	ret = proc(ctx, &p, &val);
 	

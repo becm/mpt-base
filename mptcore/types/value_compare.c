@@ -20,17 +20,17 @@
  */
 extern int mpt_value_compare(const MPT_STRUCT(value) *val, const void *cmp)
 {
+	const MPT_STRUCT(type_traits) *traits;
 	int pos;
 	
-	if (!val->fmt) {
-		pos = strcmp(val->ptr, cmp);
+	if (!(traits = mpt_type_traits(val->type))) {
+		return MPT_ERROR(BadType);
 	}
-	else if ((pos = mpt_offset(val->fmt, -1)) <= 0) {
-		return pos;
+	if (!(pos = traits->size)) {
+		return 0;
 	}
-	else if (!(pos = memcmp(val->ptr, cmp, pos))) {
-		return pos;
-	}
+	pos = memcmp(val->ptr, cmp, pos);
+	
 	return pos < 0 ? -pos : pos;
 }
 

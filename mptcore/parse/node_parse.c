@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <sys/uio.h>
 
 #include "meta.h"
 #include "node.h"
@@ -43,53 +44,47 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 		}
 		len = 0;
 	}
-	else if (!val->fmt) {
-		if (!(fname = val->ptr)) {
-			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name argument"));
-			return MPT_ERROR(BadArgument);
-		}
-		len = 1;
-	}
 	else {
 		char * const *ptr = val->ptr;
-		if (val->fmt[0] == MPT_ENUM(TypeFilePtr)) {
+		/* direct file access */
+		if (val->type == MPT_ENUM(TypeFilePtr)) {
 			fname = 0;
 			if (!(parse.src.arg = *ptr)) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
 				return MPT_ERROR(BadValue);
 			}
 		}
-		else if (val->fmt[0] == 's') {
+		/* simple file name */
+		else if (val->type == 's') {
 			if (!(fname = *ptr)) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
 				return MPT_ERROR(BadValue);
 			}
 		}
-		else {
-			return MPT_ERROR(BadType);
-		}
-		len = 1;
 		/* additional format info */
-		if (val->fmt[1]) {
-			if (val->fmt[1] != 's') {
+		if (val->type == 'S') {
+			const struct iovec *vec = val->ptr;
+			const char **str = vec->iov_base;
+			int len = vec->iov_len / sizeof(char **);
+			if (len < 1 || !(fname = str[0])) {
+				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
+				return MPT_ERROR(BadValue);
+			}
+			if (len > 1 && !(format = str[1])) {
 				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad format description"));
 				return MPT_ERROR(BadType);
 			}
-			format = ptr[1];
-			len = 2;
-			
 			/* additional name limits */
-			if (val->fmt[2]) {
-				if (val->fmt[2] != 's') {
-					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad name limit"));
-					return MPT_ERROR(BadType);
-				}
+			if (len > 2 && str[2]) {
 				if ((res = mpt_parse_accept(&parse.name, ptr[2])) < 0) {
 					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("bad name limit"), ptr[2]);
 					return MPT_ERROR(BadValue);
 				}
 				len = 3;
 			}
+		}
+		else {
+			return MPT_ERROR(BadType);
 		}
 	}
 	if (fname) {
@@ -109,11 +104,12 @@ extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, 
 	/* replace tree content */
 	if (res >= 0) {
 		MPT_STRUCT(node) root = MPT_NODE_INIT;
-		MPT_STRUCT(value) val = MPT_VALUE_INIT;
 		root.children = old;
 		mpt_node_clear(&root);
 		
-		if ((val.ptr = fname)) {
+		if (fname) {
+			MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
+			MPT_value_set_string(&val, fname);
 			mpt_meta_set(&conf->_meta, &val);
 		}
 		return len;

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 
 /* localisation makro */
 #ifndef MPT_tr
@@ -155,41 +156,49 @@ typedef int (*MPT_TYPE(data_decoder))(MPT_STRUCT(decode_state) *, const struct i
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
-	inline value(const char *v = 0) : fmt(0), ptr(v)
+	inline value() : domain(0), type(0), _bufsize(sizeof(_buf)), _pad(0), ptr(0)
 	{ }
+	value(const value &from);
+	value(const char *v);
 	
-	struct format
+	value &operator=(const value &);
+	
+	inline int type_id() const
 	{
-	public:
-		inline format()
-		{
-			set(0);
-		}
-		bool set(int);
-		
-		inline bool valid() const
-		{
-			return _fmt[0] != 0;
-		}
-		inline operator const uint8_t *() const
-		{
-			return _fmt;
-		}
-	protected:
-		uint8_t _fmt[8];
-	};
+		return domain ? static_cast<int>(BadType) : type;
+	}
+	inline const void *data(int id = 0) const
+	{
+		return (!domain && (!id || (id == type))) ? ptr : 0;
+	}
 	
-	bool set(const uint8_t *, const void *);
+	void clear();
+	bool set(const char *);
+	bool set(int , const void *);
 	value &operator =(const char *);
 	
 	const char *string() const;
 	const struct iovec *vector(int = 0) const;
 	const struct array *array(int = 0) const;
+protected:
 #else
-# define MPT_VALUE_INIT { 0, 0 }
+# define MPT_VALUE_INIT(t, p) { 0, (t), (8 + sizeof(void *)), 0, (p), { 0 } }
+# define MPT_value_set_string(v, s) ( \
+	(v)->domain = 0, \
+	(v)->type = 's', \
+	((const char **) ((v)->_buf))[0] = (s), \
+	(v)->ptr  = (v)->_buf)
+# define MPT_value_set_data(v, t, d) ( \
+	(v)->domain = 0, \
+	(v)->type = (t), \
+	(v)->ptr = memcpy((v)->_buf, (d), sizeof(*(d))))
 #endif
-	const uint8_t *fmt;  /* data format */
-	const void    *ptr;  /* formated data */
+	uint32_t domain;         /* type domain */
+	uint16_t type;           /* type identifier in domain */
+	const uint8_t _bufsize;  /* actual size of buffer area */
+	const uint8_t _pad;      /* padding */
+	const void *ptr;         /* formated data */
+	uint8_t _buf[8 + sizeof(void *)];
 };
 
 __MPT_EXTDECL_BEGIN
@@ -509,6 +518,9 @@ extern const char *mpt_convertable_data(MPT_INTERFACE(convertable) *, size_t *__
 
 /* get file/socket properties from string */
 extern int mpt_mode_parse(MPT_STRUCT(fdmode) *, const char *);
+
+/* copy value content */
+extern int mpt_value_copy(MPT_STRUCT(value) *, const MPT_STRUCT(value) *);
 
 
 /* identifier operations */

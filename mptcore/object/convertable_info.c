@@ -17,6 +17,7 @@
  */
 int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *pr)
 {
+	MPT_INTERFACE(object) *obj = 0;
 	const MPT_STRUCT(named_traits) *traits;
 	int code;
 	
@@ -25,40 +26,37 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 	if ((code < 0) || !pr) {
 		return code;
 	}
-	pr->val.fmt = 0;
-	pr->val.ptr = 0;
-	
-	/* interface instance */
-	if ((traits = mpt_interface_traits(code))) {
-		MPT_INTERFACE(object) *obj = 0;
-		
-		pr->name = "";
-		pr->desc = 0;
-		/* object specific name */
-		if (val->_vptr->convert(val, MPT_ENUM(TypeObjectPtr), &obj) >= 0
-		    && obj
-		    && (obj->_vptr->property(obj, pr) >= 0)
-		    && pr->name) {
-			pr->desc = pr->name;
-			pr->name = "object";
-		} else {
-			pr->desc = traits->name;
+	/* object specific name */
+	if (val->_vptr->convert(val, MPT_ENUM(TypeObjectPtr), &obj) >= 0
+	    && obj
+	    && (obj->_vptr->property(obj, pr) >= 0)) {
+		pr->desc = pr->name;
+		pr->name = "object";
+	}
+	else {
+		/* interface instance */
+		if ((traits = mpt_interface_traits(code))) {
 			pr->name = "interface";
-			val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
+			pr->desc = traits->name;
+			pr->val.type = 0;
 		}
-		return code;
+		/* metatype instance */
+		else if ((traits = mpt_metatype_traits(code))) {
+			pr->name = "metatype";
+			pr->desc = traits->name;
+		}
+		/* generic convertable */
+		else {
+			pr->name = "convertable";
+			pr->desc = 0;
+			pr->val.type = 0;
+		}
+		/* generic instance */
+		if (val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val) < 0) {
+			pr->val.type = 0;
+			pr->val.ptr = 0;
+			memset(pr->val._buf, 0 , pr->val._bufsize);
+		}
 	}
-	/* generic instance */
-	val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
-	
-	/* output typecode */
-	if ((traits = mpt_metatype_traits(code))) {
-		pr->name = "metatype";
-		pr->desc = traits->name;
-		return code;
-	}
-	pr->name = "convertable";
-	pr->desc = 0;
-	
 	return code;
 }

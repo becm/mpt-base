@@ -261,22 +261,22 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
  */
 extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 {
-	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt = MPT_ENUM(TypeColor), pfmt = MPT_ENUM(TypeFloatPoint);
 	static const MPT_STRUCT(property) elem[] = {
-		{"axes",       "axis names to bind",  { (uint8_t *) "s",  (void *) MPT_offset(graph,_axes)} },
-		{"worlds",     "world names to bind", { (uint8_t *) "s",  (void *) MPT_offset(graph,_worlds)} },
+		{"axes",       "axis names to bind",  MPT_VALUE_INIT('s',   (void *) MPT_offset(graph,_axes)) },
+		{"worlds",     "world names to bind", MPT_VALUE_INIT('s',   (void *) MPT_offset(graph,_worlds)) },
 		
-		{"foreground", "foreground color",    { cfmt,             (void *) MPT_offset(graph,fg)} },
-		{"background", "background color",    { cfmt,             (void *) MPT_offset(graph,bg)} },
+		{"foreground", "foreground color",    MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(graph,fg)) },
+		{"background", "background color",    MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(graph,bg)) },
 		
-		{"pos",        "origin point",        { (uint8_t *) "ff", (void *) MPT_offset(graph,pos)} },
-		{"scale",      "scale factor",        { (uint8_t *) "ff", (void *) MPT_offset(graph,scale)} },
+		{"pos",        "origin point",        MPT_VALUE_INIT(pfmt,  (void *) MPT_offset(graph,pos)) },
+		{"scale",      "scale factor",        MPT_VALUE_INIT(pfmt,  (void *) MPT_offset(graph,scale)) },
 		
-		{"grid",       "grid type",           { (uint8_t *) "y",  (void *) MPT_offset(graph,grid)} },
-		{"align",      "axis alignment",      { (uint8_t *) "y",  (void *) MPT_offset(graph,align)} },
-		{"clip",       "clip data display",   { (uint8_t *) "y",  (void *) MPT_offset(graph,clip)} },
+		{"grid",       "grid type",           MPT_VALUE_INIT('y',   (void *) MPT_offset(graph,grid)) },
+		{"align",      "axis alignment",      MPT_VALUE_INIT('y',   (void *) MPT_offset(graph,align)) },
+		{"clip",       "clip data display",   MPT_VALUE_INIT('y',   (void *) MPT_offset(graph,clip)) },
 		
-		{"lpos",       "legend position",     { (uint8_t *) "c",  (void *) MPT_offset(graph,lpos)} }
+		{"lpos",       "legend position",     MPT_VALUE_INIT('c',   (void *) MPT_offset(graph,lpos)) }
 	};
 	static const uint8_t format[] = {
 		's', 's',
@@ -307,8 +307,8 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "graph";
 		pr->desc = "mpt graph data";
-		pr->val.fmt = format;
-		pr->val.ptr = gr;
+		pr->val.type = 0;
+		pr->val.ptr  = format;
 		
 		return gr && memcmp(gr, &def_graph, sizeof(*gr)) ? 1 : 0;
 	}
@@ -317,22 +317,20 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		return pos;
 	}
 	if (!gr) {
-		*pr = elem[pos];
-		pr->val.fmt = (uint8_t *) "";
+		pr->val.type = elem[pos].val.type;
+		pr->val.ptr  = elem[pos].val.ptr;
 		return pos;
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.fmt = elem[pos].val.fmt;
-	pr->val.ptr = ((uint8_t *) gr) + (intptr_t) elem[pos].val.ptr;
+	pr->val.type = elem[pos].val.type;
+	pr->val.ptr  = ((uint8_t *) gr) + (intptr_t) elem[pos].val.ptr;
 	
 	if (!gr) {
 		return 0;
 	}
-	if (!strcmp(elem[pos].name, "clip")
-	    && gr->clip < 8) {
-		pr->val.fmt = 0;
-		pr->val.ptr = axes_clip[gr->clip];
+	if (!strcmp(elem[pos].name, "clip") && gr->clip < 8) {
+		MPT_value_set_string(&pr->val, axes_clip[gr->clip]);
 	}
 	return mpt_value_compare(&pr->val, ((uint8_t *) &def_graph) + (intptr_t) elem[pos].val.ptr);
 }

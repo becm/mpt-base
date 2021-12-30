@@ -93,21 +93,18 @@ int io::stream::property(struct property *pr) const
 	else {
 		// get stream interface types
 		if (!*name) {
-			static const uint8_t fmt[] = { TypeOutputPtr, 0 };
 			pr->name = "stream";
 			pr->desc = "interfaces to stream data";
-			pr->val.fmt = fmt;
-			pr->val.ptr = 0;
+			const output *ptr = static_cast<const output *>(this);
+			pr->val.set(TypeOutputPtr, &ptr);
 			return _srm ? mpt_stream_flags(&_srm->_info) : 0;
 		}
 	}
 	intptr_t id = 0;
 	if (name ? !strcasecmp(name, "idlen") : (pos == id++)) {
-		static const uint8_t fmt[] = "y";
 		pr->name = "idlen";
 		pr->desc = "message id length";
-		pr->val.fmt = fmt;
-		pr->val.ptr = &_idlen;
+		pr->val.set('y', &_idlen);
 		return id;
 	}
 	return BadArgument;

@@ -83,8 +83,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		var++;
 		accept++;
 		
-		d.fmt = 0;
-		d.ptr = end+1;
+		MPT_value_set_string(&d, end + 1);
 		
 		if (conf->_vptr->assign(conf, &path, &d) < 0) {
 			errno = EINVAL;

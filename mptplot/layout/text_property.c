@@ -190,19 +190,19 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
  */
 extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 {
-	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt = MPT_ENUM(TypeColor), pfmt = MPT_ENUM(TypeFloatPoint);
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",  "text color",     { cfmt,             (void *) MPT_offset(text,color) } },
-		{"pos",    "text position",  { (uint8_t *) "ff", (void *) MPT_offset(text, pos) } },
-		{"size",   "text size",      { (uint8_t *) "y",  (void *) MPT_offset(text,size) } },
-		{"align",  "text alignment", { (uint8_t *) "c",  (void *) MPT_offset(text,align) } },
-		{"angle",  "text angle",     { (uint8_t *) "d",  (void *) MPT_offset(text,angle) } },
-		{"value",  "text data",      { (uint8_t *) "s",  (void *) MPT_offset(text,_value) } },
-		{"font",   "text font",      { (uint8_t *) "s",  (void *) MPT_offset(text,_font) } },
+		{"color",  "text color",     MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(text,color)) },
+		{"pos",    "text position",  MPT_VALUE_INIT(pfmt,  (void *) MPT_offset(text, pos)) },
+		{"size",   "text size",      MPT_VALUE_INIT('y',   (void *) MPT_offset(text,size)) },
+		{"align",  "text alignment", MPT_VALUE_INIT('c',   (void *) MPT_offset(text,align)) },
+		{"angle",  "text angle",     MPT_VALUE_INIT('d',   (void *) MPT_offset(text,angle)) },
+		{"value",  "text data",      MPT_VALUE_INIT('s',   (void *) MPT_offset(text,_value)) },
+		{"font",   "text font",      MPT_VALUE_INIT('s',   (void *) MPT_offset(text,_font)) },
 	};
 	static const MPT_STRUCT(property) elem_xy[] = {
-		{"x",  "x start position",  { (uint8_t *) "f", (void *) MPT_offset(text, pos.x)} },
-		{"y",  "y start position",  { (uint8_t *) "f", (void *) MPT_offset(text, pos.y)} }
+		{"x",  "x start position",  MPT_VALUE_INIT('f',  (void *) MPT_offset(text, pos.x)) },
+		{"y",  "y start position",  MPT_VALUE_INIT('f',  (void *) MPT_offset(text, pos.y)) }
 	};
 	static const uint8_t format[] = {
 		's', 's',       /* value, font */
@@ -229,25 +229,30 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "text";
 		pr->desc = "mpt text data";
-		pr->val.fmt = format;
-		pr->val.ptr = tx;
+		pr->val.type = 0;
+		pr->val.ptr  = format;
 		
 		return tx && memcmp(tx, &def_text, sizeof(*tx)) ? 1 : 0;
 	}
 	/* set position independently */
 	else if (!pr->name[1]) {
+		const MPT_STRUCT(property) *from;
 		if (pr->name[0] == 'x') {
-			*pr = elem_xy[0];
+			from = &elem_xy[0];
 			pos = (tx && tx->pos.x == def_text.pos.x) ? 'd' : 0;
 		}
 		else if (pr->name[0] == 'y') {
-			*pr = elem_xy[1];
+			from = &elem_xy[1];
 			pos = (tx && tx->pos.x == def_text.pos.x) ? 'd' : 0;
 		}
 		else {
 			return MPT_ERROR(BadArgument);
 		}
-		pr->val.ptr = ((uint8_t *) tx) + (intptr_t) pr->val.ptr;
+		
+		pr->name = from->name;
+		pr->desc = from->desc;
+		pr->val.type = from->val.type;
+		pr->val.ptr  = ((uint8_t *) tx) + (intptr_t) from->val.ptr;
 		
 		return pos;
 	}
@@ -257,9 +262,9 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.fmt = elem[pos].val.fmt;
+	pr->val.type = elem[pos].val.type;
 	/* adjust base address */
-	pr->val.ptr = ((uint8_t *) tx) + (intptr_t) elem[pos].val.ptr;
+	pr->val.ptr  = ((uint8_t *) tx) + (intptr_t) elem[pos].val.ptr;
 	
 	if (!tx) {
 		return 0;

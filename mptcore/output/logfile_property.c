@@ -139,27 +139,22 @@ extern int mpt_logfile_get(const MPT_STRUCT(logfile) *log, MPT_STRUCT(property) 
 		pos = (intptr_t) pr->desc;
 	}
 	else if (!*name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeFilePtr), 0 };
 		pr->name = "logfile";
 		pr->desc = MPT_tr("log message target");
-		pr->val.fmt = fmt;
-		pr->val.ptr = &log->file;
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeFilePtr), &log->file);
 		return log->file ? 1 : 0;
 	}
 	id = 0;
 	if (name ? (!strcasecmp(name, "file")) : pos == id++) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeFilePtr), 0 };
 		pr->name = "file";
 		pr->desc = MPT_tr("output file descriptor");
-		pr->val.fmt = fmt;
-		pr->val.ptr = &log->file;
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeFilePtr), &log->file);
 		return log->file ? 1 : 0;
 	}
 	if (name ? !strcasecmp(name, "ignore") : pos == id++) {
 		pr->name = "ignore";
 		pr->desc = MPT_tr("output message filter");
-		pr->val.fmt = (uint8_t *) "y";
-		pr->val.ptr = &log->ignore;
+		MPT_value_set_data(&pr->val, 'y', &log->ignore);
 		return log->ignore != MPT_LOG(Info) ? 1 : 0;
 	}
 	return MPT_ERROR(BadArgument);

@@ -62,10 +62,10 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 		return in;
 	}
 	if ((in = mpt_output_remote())) {
-		MPT_STRUCT(value) val = MPT_VALUE_INIT;
+		MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 		MPT_INTERFACE(object) *obj = 0;
 		
-		val.ptr = ctl;
+		MPT_value_set_string(&val, ctl);
 		
 		if (in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeObjectPtr), &obj) < 0
 		    || !obj

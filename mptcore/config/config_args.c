@@ -72,8 +72,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			}
 			p.assign = '=';
 			mpt_path_set(&p, pr.name, end - pr.name);
-			pr.val.fmt = 0;
-			pr.val.ptr = end + 1;
+			MPT_value_set_string(&pr.val, end + 1);
 		}
 		else {
 			if (info) {

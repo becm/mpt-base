@@ -25,13 +25,9 @@ extern int mpt_outdata_get(const MPT_STRUCT(outdata) *od, MPT_STRUCT(property) *
 		return MPT_ENUM(TypeUnixSocket);
 	}
 	if ((name = pr->name) && !*name) {
-		static const uint8_t fmt[2] = { MPT_ENUM(TypeUnixSocket), 0 };
-		
 		pr->name = "outdata";
 		pr->desc = "output data context";
-		pr->val.fmt = fmt;
-		pr->val.ptr = &od->sock;
-		
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeUnixSocket), &od->sock);
 		return MPT_socket_active(&od->sock) ? 1 : 0;
 	}
 	return MPT_ERROR(BadArgument);

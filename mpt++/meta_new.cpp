@@ -6,8 +6,8 @@
 #include "meta.h"
 
 // metatype creator override
-extern "C" mpt::metatype *mpt_meta_new(mpt::value val)
+extern "C" mpt::metatype *mpt_meta_new(const mpt::value *val)
 {
-	return mpt::metatype::create(val);
+	return mpt::metatype::create(*val);
 }
 

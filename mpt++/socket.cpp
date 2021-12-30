@@ -51,20 +51,16 @@ bool socket::set(const value *val)
 		mpt_bind(this, 0, 0, 0);
 		return 0;
 	}
-	if (!val->fmt) {
-		socket tmp;
-		const char *dst;
-		if (!(dst = val->string())
-		 || mpt_connect(&tmp, dst, 0) < 0) {
-			return false;
-		}
-		if (_id) {
-			(void) close(_id);
-		}
-		_id = tmp._id;
-		return true;
+	const char *dst = val->string();
+	socket tmp;
+	if (!dst || mpt_connect(&tmp, dst, 0) < 0) {
+		return false;
 	}
-	return false;
+	if (_id) {
+		(void) close(_id);
+	}
+	_id = tmp._id;
+	return true;
 }
 
 // socket class

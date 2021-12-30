@@ -23,16 +23,13 @@
  */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *info)
 {
-	static const uint8_t vecfmt[] = { MPT_type_toVector('c'), 0 };
 	MPT_STRUCT(value) val;
 	struct iovec vec;
-	int len;
 	
-	if ((len = _mpt_geninfo_conv(info, *vecfmt, &vec)) < 0) {
+	if (_mpt_geninfo_conv(info, MPT_type_toVector('c'), &vec) < 0) {
 		errno = EINVAL;
 		return 0;
 	}
-	val.fmt = vecfmt;
-	val.ptr = &vec;
-	return mpt_meta_new(val);
+	MPT_value_set_data(&val, MPT_type_toVector('c'), &vec);
+	return mpt_meta_new(&val);
 }

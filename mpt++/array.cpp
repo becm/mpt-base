@@ -308,53 +308,49 @@ int array::set(convertable &src)
 	
 	return len;
 }
-int array::set(value val)
+int array::set(const value &val)
 {
-	const uint8_t *fmt;
 	const char *base;
 	size_t len;
-	if (!(fmt = val.fmt)) {
-		base = (const char *) val.ptr;
+	
+	// string data directly
+	if (val.type_id() == 's') {
+		base = val.string();
 		len = base ? strlen(base) + 1 : 0;
 		return set(len, base) ? 0 : BadOperation;
 	}
 	array a;
-	while (*val.fmt) {
-		/* copy string value */
-		if ((base = mpt_data_tostring(&val.ptr, *val.fmt, &len))) {
-			if (!mpt_array_append(&a, len, base)) {
-				return BadOperation;
+	const type_traits *traits;
+	if ((traits = type_traits::get(MPT_type_toScalar(val.type_id())))) {
+		const struct iovec *vec = val.vector(0);
+		int count = 0;
+		if (vec) {
+			count = vec->iov_len / traits->size;
+			void *target = mpt_array_reserve(&a, len, traits);
+			len = count * traits->size;
+			if (target) {
+				if (vec->iov_base) {
+					memcpy(target, vec->iov_base, len);
+				} else {
+					memset(target, 0, len);
+				}
 			}
-			/* insert space element */
-			if (!mpt_array_append(&a, 1, "\0")) {
-				return BadOperation;
-			}
-			++val.fmt;
-			continue;
 		}
-		char buf[256];
-		int ret;
-		/* print number data */
-		if ((ret = mpt_number_print(buf, sizeof(buf), value_format(), *val.fmt, val.ptr)) >= 0) {
-			const MPT_STRUCT(type_traits) *traits;
-			if (!(traits = type_traits::get(*val.fmt))) {
-				return BadType;
-			}
-			if (!mpt_array_append(&a, ret, buf)) {
-				return BadOperation;
-			}
-			/* insert space element */
-			if (!mpt_array_append(&a, 1, "\0")) {
-				return BadOperation;
-			}
-			++val.fmt;
-			val.ptr = ((uint8_t *) val.ptr) + traits->size;
-			continue;
-		}
-		break;
+		mpt_array_clone(this, &a);
+		return len;
 	}
-	mpt_array_clone(this, &a);
-	return val.fmt - fmt;
+	const void *ptr = val.data();
+	if ((base = mpt_data_tostring(&ptr, val.type_id(), &len))) {
+		size_t reserve = len && base[len - 1] ? len + 1 : len;
+		void *target = mpt_array_reserve(&a, reserve, type_traits::get('c'));
+		if (target) {
+			return BadOperation;
+		}
+		memcpy(target, base, len);
+		mpt_array_clone(this, &a);
+		return len;
+	}
+	return BadType;
 }
 void *array::append(size_t len, const void *data)
 {

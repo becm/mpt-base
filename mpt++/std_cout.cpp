@@ -13,11 +13,14 @@ static ssize_t writeOutStream(void *p, const char *str, size_t len)
 
 std::ostream &operator<<(std::ostream &o, const mpt::value &v)
 {
-	if (!v.fmt) {
-		if (v.ptr) o << static_cast<const char *>(v.ptr);
+	if (v.type_id() == 's') {
+		const char *str = v.string();
+		if (str) o << str;
 		return o;
 	}
-	if (*v.fmt) mpt_tostring(&v, writeOutStream, &o);
+	if (v.type_id()) {
+		mpt_tostring(&v, writeOutStream, &o);
+	}
 	return o;
 }
 template <> std::ostream &operator<< <char>(std::ostream &o, mpt::span<char> p)

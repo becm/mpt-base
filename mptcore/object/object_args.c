@@ -44,12 +44,11 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 				return count ? count : MPT_ERROR(BadValue);
 			}
 			/* set non-assign options to default value */
-			pr.val.fmt = 0;
 			if (!(end = strchr(end, '='))) {
-				pr.val.ptr = 0;
+				MPT_value_set_string(&pr.val, 0);
 			} else {
 				size_t len;
-				pr.val.ptr = end + 1;
+				MPT_value_set_string(&pr.val, end + 1);
 				len = end - pr.name;
 				if (len >= sizeof(name)) {
 					return count ? count : MPT_ERROR(MissingBuffer);

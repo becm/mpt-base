@@ -25,26 +25,20 @@ __MPT_NAMESPACE_BEGIN
  */
 metatype *metatype::create(const value &val)
 {
-	const char *src = static_cast<const char *>(val.ptr);
+	const void *ptr = val.data();
+	const char *src;
+	int type = val.type_id();
 	size_t len;
 	
 	// generic text data
-	if (!val.fmt) {
+	if (type == 's') {
+		src = val.string();
 		len = src ? strlen(src) : 0;
 	}
-	/* simple empty value */
-	else if (!val.fmt[0]) {
-		return metatype::basic_instance::create(0, 0);
-	}
-	// single value payload only
-	else if (val.fmt[1]) {
-		errno = EINVAL;
-		return 0;
-	}
 	// extended text format
-	else if (!(src = mpt_data_tostring((const void **) &src, *val.fmt, &len))) {
+	else if (!(src = mpt_data_tostring(&ptr, type, &len))) {
 		// dispatch to typed metatype creator
-		return generic_instance::create(*val.fmt, val.ptr);
+		return generic_instance::create(type, ptr);
 	}
 	// compatible small generic metatype
 	if (len < std::numeric_limits<uint8_t>::max()) {

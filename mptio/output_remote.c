@@ -194,13 +194,11 @@ static int remoteProperty(const MPT_STRUCT(object) *obj, MPT_STRUCT(property) *p
 		return MPT_ENUM(TypeOutputPtr);
 	}
 	if (pr->name && !*pr->name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeUnixSocket), 0 };
 		pr->name = "output";
 		pr->desc = "generic output interface";
-		pr->val.fmt = fmt;
-		pr->val.ptr = &od->con.out.sock;
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeUnixSocket), &od->con.out.sock);
 		
-		return 0;
+		return MPT_socket_active(&od->con.out.sock) ? 1 : 0;
 	}
 	return mpt_connection_get(&od->con, pr);
 }

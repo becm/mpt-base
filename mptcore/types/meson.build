@@ -5,5 +5,4 @@ src = files(
   'position.c',
   'type_traits.c',
   'value_compare.c',
-  'value_read.c',
 )

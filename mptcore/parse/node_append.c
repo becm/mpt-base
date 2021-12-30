@@ -53,7 +53,7 @@ extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *old, const MPT_STRUCT
 	}
 	/* create data for node */
 	mt = 0;
-	if (val && !(mt = mpt_meta_new(*val))) {
+	if (val && !(mt = mpt_meta_new(val))) {
 		return 0;
 	}
 	/* create node with (optional) metadata segment */

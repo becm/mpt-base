@@ -21,7 +21,7 @@
  */
 extern int mpt_properties_foreach(int (*get)(void *, MPT_STRUCT(property) *), void *obj, MPT_TYPE(property_handler) proc, void *data, int match)
 {
-	MPT_STRUCT(property) prop;
+	MPT_STRUCT(property) prop = MPT_PROPERTY_INIT;
 	uintptr_t pos = 0;
 	int err;
 	

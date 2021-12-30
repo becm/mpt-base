@@ -52,23 +52,24 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 		return mpt_iterator_values(conf);
 	}
 	buf[len] = 0;
-	val.fmt = 0;
-	val.ptr = memcpy(buf, conf, len);;
+	
+	val.type = 0;
+	val.ptr = memcpy(buf, conf, len);
 	
 	/* create matching iterators */
 	if (!strcasecmp(buf, "linear")
 	 || !strcasecmp(buf, "lin")) {
-		val.ptr = conf + len;
+		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_linear(&val);
 	}
 	if (!strcasecmp(buf, "factor")
 	 || !strcasecmp(buf, "fact")
 	 || !strcasecmp(buf, "fac")) {
-		val.ptr = conf + len;
+		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_factor(&val);
 	}
 	if (!strcasecmp(buf, "range")) {
-		val.ptr = conf + len;
+		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_range(&val);
 	}
 	/* unknown value iterator type */

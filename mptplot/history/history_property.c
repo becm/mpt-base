@@ -71,7 +71,6 @@ extern int mpt_history_set(MPT_STRUCT(history) *hist, const char *name, MPT_INTE
  */
 extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property) *pr)
 {
-	MPT_STRUCT(property) pc;
 	const char *name;
 	intptr_t pos = -1, id;
 	int len;
@@ -87,29 +86,33 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 	}
 	id = 0;
 	if (name ? (!strcasecmp(name, "format") || !strcasecmp(name, "histfmt") || !strcasecmp(name, "fmt")) :  pos == id++) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeValFmt), 0 };
 		MPT_STRUCT(buffer) *buf;
 		
 		pr->name = "format";
 		pr->desc = MPT_tr("history data output format");
-		pr->val.fmt = fmt;
+		MPT_value_set_string(&pr->val, 0);
+		pr->val.type = MPT_ENUM(TypeValFmt);
 		pr->val.ptr = 0;
 		if (!(buf = hist->fmt._fmt._buf)
 		    || !(len = buf->_used / sizeof(MPT_STRUCT(value_format)))) {
 			return 0;
 		}
-		pr->val.ptr = buf + 1;
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeBufferPtr), &buf);
 		return len;
 	}
-	pc = *pr;
-	if (!name) {
-		pc.desc = (char *) (id - 1);
-	}
-	else if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
-		pc.name = "file";
-	}
-	if ((len = mpt_logfile_get(&hist->info, &pc)) >= 0) {
-		*pr = pc;
+	else {
+		MPT_STRUCT(property) pc = MPT_PROPERTY_INIT;
+		if (!(pc.name = name)) {
+			pc.desc = (char *) (id - 1);
+		}
+		else if (!strcasecmp(name, "history") || !strcasecmp(name, "histfile")) {
+			pc.name = "file";
+		}
+		if ((len = mpt_logfile_get(&hist->info, &pc)) >= 0) {
+			pr->name = pc.name;
+			pr->desc = pc.desc;
+			mpt_value_copy(&pr->val, &pc.val);
+		}
 	}
 	return len;
 }

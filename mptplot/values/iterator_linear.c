@@ -187,34 +187,33 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 	if (!val) {
 		iv = 10;
 	}
-	else {
-		const char *str;
-		if (val->fmt) {
-			if ((ret = mpt_value_read(val, "u", &iv)) < 1
-			 || (ret = mpt_range_set(&r, val)) < 0) {
-				errno = EINVAL;
-				return 0;
-			}
+	else if (val->type == MPT_ENUM(TypeIteratorPtr)) {
+		MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
+		if ((ret = it->_vptr->get(it, 'u', &iv)) < 1
+		 || (ret = mpt_range_set(&r, val)) < 0) {
+			errno = EINVAL;
+			return 0;
 		}
-		else if ((str = val->ptr)) {
-			if ((ret = mpt_string_nextvis(&str)) < 0
-			 || (ret != '(')
-			 || (ret = mpt_cuint32(&iv, str + 1, 0, 0)) < 1) {
+	}
+	else if (val->type == 's') {
+		const char *str = *((char * const *) val->ptr);;
+		if ((ret = mpt_string_nextvis(&str)) < 0
+		 || (ret != '(')
+		 || (ret = mpt_cuint32(&iv, str + 1, 0, 0)) < 1) {
+			errno = EINVAL;
+			return 0;
+		}
+		str += ret + 1;
+		if ((ret = mpt_string_nextvis(&str)) == ':') {
+			if ((ret = parseRange(str + 1, &r)) < 0) {
 				errno = EINVAL;
 				return 0;
 			}
 			str += ret + 1;
-			if ((ret = mpt_string_nextvis(&str)) == ':') {
-				if ((ret = parseRange(str + 1, &r)) < 0) {
-					errno = EINVAL;
-					return 0;
-				}
-				str += ret + 1;
-			}
-			if ((ret = mpt_string_nextvis(&str)) != ')') {
-				errno = EINVAL;
-				return 0;
-			}
+		}
+		if ((ret = mpt_string_nextvis(&str)) != ')') {
+			errno = EINVAL;
+			return 0;
 		}
 	}
 	return mpt_iterator_linear(iv + 1, r.min, r.max);
@@ -242,18 +241,19 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 	if (val) {
 		const char *str;
 		int ret;
-		if (val->fmt) {
+		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
+			MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
 			if ((ret = mpt_range_set(&r, val)) < 0) {
 				errno = EINVAL;
 				return 0;
 			}
 			step = (r.max - r.min) / 10;
-			if ((ret = mpt_value_read(val, "d", &step)) < 0) {
+			if (ret >= 2 && (ret = it->_vptr->get(it, 'd', &step)) < 0) {
 				errno = EINVAL;
 				return 0;
 			}
 		}
-		else if ((str = val->ptr) && *str) {
+		else if ((val->type == 's') && (str = *((const char **) val->ptr))) {
 			if ((ret = mpt_string_nextvis(&str)) < 0
 			 || (ret != '(')) {
 				errno = EINVAL;

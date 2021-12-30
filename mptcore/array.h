@@ -134,7 +134,7 @@ MPT_STRUCT(array)
 	void *set(size_t , const void * = 0);
 	bool set(const reference<buffer> &);
 	
-	int set(value);
+	int set(const value &);
 	int set(convertable &);
 	int printf(const char *fmt, ... );
 	

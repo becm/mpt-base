@@ -115,25 +115,6 @@ MPT_INTERFACE_VPTR(iterator)
 };
 #endif
 
-/*! generic consumable entity */
-MPT_STRUCT(consumable)
-{
-#ifdef __cplusplus
-	inline consumable(convertable &val)
-	{
-		if ((_it = typecast<iterator>(val))) {
-			return;
-		}
-		val.convert(type_properties<value>::id(true), &_val);
-	}
-protected:
-#else
-# define MPT_CONSUMABLE_INIT { 0, MPT_VALUE_INIT }
-#endif
-	MPT_INTERFACE(iterator) *_it;
-	MPT_STRUCT(value) _val;
-};
-
 #ifdef __cplusplus
 inline metatype *metatype::clone() const
 {
@@ -324,7 +305,7 @@ __MPT_EXTDECL_BEGIN
 extern const MPT_STRUCT(type_traits) *mpt_meta_reference_traits(void);
 
 /* create meta type element */
-extern MPT_INTERFACE(metatype) *mpt_meta_new(MPT_STRUCT(value));
+extern MPT_INTERFACE(metatype) *mpt_meta_new(const MPT_STRUCT(value) *);
 /* set (zero-terminated string) node data */
 extern int mpt_meta_set(MPT_INTERFACE(metatype) **, const MPT_STRUCT(value) *);
 
@@ -347,15 +328,7 @@ extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 /* assign to value via iterator */
 extern int mpt_process_value(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
 extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern MPT_INTERFACE(metatype) *mpt_iterator_value(MPT_STRUCT(value), int __MPT_DEFPAR(-1));
 extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
-
-/* get value and advance source */
-extern int mpt_consumable_setup(MPT_STRUCT(consumable) *, MPT_INTERFACE(convertable) *);
-extern int mpt_consume_double(MPT_STRUCT(consumable) *, double *);
-extern int mpt_consume_uint(MPT_STRUCT(consumable) *, uint32_t *);
-extern int mpt_consume_int(MPT_STRUCT(consumable) *, int32_t *);
-extern int mpt_consume_key(MPT_STRUCT(consumable) *, const char **);
 
 
 __MPT_EXTDECL_END

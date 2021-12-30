@@ -17,19 +17,12 @@
 # define mtrace()
 #endif
 
-struct Value : public mpt::value, public mpt::value::format
+struct Value : public mpt::value
 {
 	template <typename T>
-	bool set(const T *t)
+	bool set(const T &t)
 	{
-		if (!t || !value::format::set(mpt::type_properties<T>::id(true))) {
-			return false;
-		}
-		return value::set(*this, t);
-	}
-	uint8_t type() const
-	{
-		return _fmt[0];
+		return value::set(mpt::type_properties<T>::id(true), &t);
 	}
 };
 
@@ -118,11 +111,11 @@ extern int main(int, char *[])
 	
 	long l = -5;
 	v.set(&l);
-	std::cout << "long(" << v.type() << ") = " << v << std::endl;
+	std::cout << "long(" << v.type_id() << ") = " << v << std::endl;
 	
 	unsigned long u = 5;
 	v.set(&u);
-	std::cout << "ulong(" << v.type() << ") = " << v << std::endl;
+	std::cout << "ulong(" << v.type_id() << ") = " << v << std::endl;
 	
 	float f(5);
 	std::cout << "float(" << type_id(f) << ") = " << f << std::endl;
@@ -136,5 +129,5 @@ extern int main(int, char *[])
 	mpt::span<const double> t(&d, 1);
 	std::cout << "span<" << type_id(d) <<">(" << type_id(t) << ") = " << t << std::endl;
 	v.set(&t);
-	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
+	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
 }

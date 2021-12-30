@@ -13,4 +13,5 @@ src = files(
   'process_vararg.c',
   'refcount.c',
   'string_nextvis.c',
+  'value_copy.c',
 )

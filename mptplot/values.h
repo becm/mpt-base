@@ -374,7 +374,7 @@ extern void mpt_value_apply_init(MPT_STRUCT(value_apply) *, int __MPT_DEFPAR(-1)
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, MPT_INTERFACE(convertable) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
 /* consume range data */
-extern int mpt_range_set(MPT_STRUCT(range) *, MPT_STRUCT(value) *);
+extern int mpt_range_set(MPT_STRUCT(range) *, const MPT_STRUCT(value) *);
 
 /* data mapping operations */
 extern int mpt_mapping_add(_MPT_ARRAY_TYPE(mapping) *, const MPT_STRUCT(mapping) *);

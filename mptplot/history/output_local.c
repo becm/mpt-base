@@ -111,11 +111,9 @@ static int localGet(const MPT_INTERFACE(object) *obj, MPT_STRUCT(property) *pr)
 		return MPT_ENUM(TypeOutputPtr);
 	}
 	if ((name = pr->name) && !*name) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeConvertablePtr), 0 };
 		pr->name = "history";
 		pr->desc = MPT_tr("local data output");
-		pr->val.fmt = fmt;
-		pr->val.ptr = &lo->pass;
+		MPT_value_set_data(&pr->val, MPT_ENUM(TypeConvertablePtr), &lo->pass);
 		return lo->pass ? 1 : 0;
 	}
 	return mpt_history_get(&lo->hist, pr);

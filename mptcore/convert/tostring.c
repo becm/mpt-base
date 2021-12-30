@@ -26,56 +26,77 @@
  */
 extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, const char *, size_t), void *dest)
 {
-	const uint8_t *fmt = val->fmt;
-	const void *data = val->ptr;
-	int cont = 0;
+	static const MPT_STRUCT(value_format) vfmt = MPT_VALFMT_INIT;
+	const void *ptr;
+	const char *text;
+	size_t len = 0;
+	int curr, adv;
+	char buf[256];
 	
-	if (!fmt) {
-		if (data && (cont = save(dest, data, strlen(data))) < 0) {
-			return cont;
-		}
-		return 0;
+	/* only default domain is supported */
+	if (val->domain) {
+		return MPT_ERROR(BadType);
 	}
-	if (!data) {
-		return MPT_ERROR(MissingData);
+	/* data is direct text representation */
+	ptr = val->ptr;
+	if ((text = mpt_data_tostring((const void **) ptr, val->type, &len))) {
+		return save(dest, text, len);
 	}
-	while (*fmt) {
-		static const MPT_STRUCT(value_format) vfmt = MPT_VALFMT_INIT;
-		char buf[256];
-		const char *txt;
-		size_t len;
-		int adv, curr;
-		
-		if ((txt = mpt_data_tostring(&data, *fmt, &len))) {
-			adv = len;
+	/* represent color data */
+	if (val->type == MPT_ENUM(TypeColor)) {
+		const MPT_STRUCT(color) *c = val->ptr;
+		if (c->alpha != 0xff) {
+			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
+		} else {
+			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", c->red, c->green, c->blue);
 		}
-		else if (*fmt == MPT_ENUM(TypeColor)) {
-			const MPT_STRUCT(color) *c = data;
-			if (c->alpha != 0xff) {
-				adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
-			} else {
-				adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", c->red, c->green, c->blue);
+		if (adv < 0) {
+			return adv;
+		}
+		return save(dest, buf, len);
+	}
+	/* vector representation in value */
+	if ((curr = MPT_type_toScalar(val->type)) > 0) {
+		const MPT_STRUCT(type_traits) *traits = mpt_type_traits(curr);
+		const struct iovec *vec = val->ptr;
+		int total;
+		if (!traits || !traits->size) {
+			return MPT_ERROR(BadType);
+		}
+		if ((total = save(dest, "[ ", 2)) < 2) {
+			return MPT_ERROR(MissingBuffer);
+		}
+		if (vec) {
+			const uint8_t *data = vec->iov_base;
+			size_t i, size = traits->size, max = vec->iov_len / size;
+			
+			for (i = 0; i < max; i++) {
+				int step;
+				adv = mpt_number_print(buf, sizeof(buf), vfmt, curr, data);
+				if (adv < 0) {
+					break;
+				}
+				data += size;
+				if ((step = save(dest, buf, adv)) < adv) {
+					adv = MPT_ERROR(MissingBuffer);
+					break;
+				}
+				total += step;
+				if ((step = save(dest, " ", 1)) < 1) {
+					adv = MPT_ERROR(MissingBuffer);
+					break;
+				}
+				total += step;
 			}
-			data = c + 1;
-			txt = buf;
 		}
-		else if ((adv = mpt_number_print(buf, sizeof(buf), vfmt, *fmt, data)) < 0) {
-			return cont ? cont : adv;
+		if (adv >= 0 && (adv = save(dest, "]", 1)) > 0) {
+			total += adv;
 		}
-		else {
-			const MPT_STRUCT(type_traits) *traits = mpt_type_traits(*fmt);
-			if (!traits || !traits->size) {
-				return cont ? cont : MPT_ERROR(BadType);
-			}
-			data = ((uint8_t *) data) + traits->size;
-			txt = buf;
-		}
-		if ((cont && (curr = save(dest, " ", 1)) < 1)
-		    || (curr = save(dest, txt, adv)) < adv) {
-			return cont ? cont : curr;
-		}
-		++fmt;
-		++cont;
+		return total;
 	}
-	return 0;
+	/* represent numeric value */
+	if ((adv = mpt_number_print(buf, sizeof(buf), vfmt, val->type, val->ptr)) >= 0) {
+		return save(dest, buf, adv);
+	}
+	return adv;
 }

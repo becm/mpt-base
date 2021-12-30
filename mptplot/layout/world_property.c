@@ -173,15 +173,15 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
  */
 extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 {
-	static const uint8_t cfmt[2] = { MPT_ENUM(TypeColor) };
+	static const uint8_t cfmt = MPT_ENUM(TypeColor);
 	static const MPT_STRUCT(property) elem[] = {
-		{"color",   "world color",   { cfmt,             (void *) MPT_offset(world,color) } },
-		{"cycles",  "cycle count",   { (uint8_t *) "u",  (void *) MPT_offset(world,cyc) } },
-		{"width",   "line width",    { (uint8_t *) "y",  (void *) MPT_offset(world,attr.width) } },
-		{"style",   "line style",    { (uint8_t *) "y",  (void *) MPT_offset(world,attr.style) } },
-		{"symbol",  "symbol type",   { (uint8_t *) "y",  (void *) MPT_offset(world,attr.symbol) } },
-		{"size",    "symbol size",   { (uint8_t *) "y",  (void *) MPT_offset(world,attr.size) } },
-		{"alias",   "display name",  { (uint8_t *) "s",  (void *) MPT_offset(world,_alias) } },
+		{"color",   "world color",   MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(world,color)) },
+		{"cycles",  "cycle count",   MPT_VALUE_INIT('u',   (void *) MPT_offset(world,cyc)) },
+		{"width",   "line width",    MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.width)) },
+		{"style",   "line style",    MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.style)) },
+		{"symbol",  "symbol type",   MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.symbol)) },
+		{"size",    "symbol size",   MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.size)) },
+		{"alias",   "display name",  MPT_VALUE_INIT('s',   (void *) MPT_offset(world,_alias)) },
 	};
 	static const uint8_t format[] = {
 		's',
@@ -206,8 +206,8 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "world";
 		pr->desc = "mpt world data";
-		pr->val.fmt = format;
-		pr->val.ptr = wld;
+		pr->val.type = 0;
+		pr->val.ptr  = format;
 		
 		return wld && memcmp(wld, &def_world, sizeof(*wld)) ? 1 : 0;
 	}
@@ -217,8 +217,8 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.fmt = elem[pos].val.fmt;
-	pr->val.ptr = ((uint8_t *) wld) + (intptr_t) elem[pos].val.ptr;
+	pr->val.type = elem[pos].val.type;
+	pr->val.ptr  = ((uint8_t *) wld) + (intptr_t) elem[pos].val.ptr;
 	
 	if (!wld) {
 		return 0;

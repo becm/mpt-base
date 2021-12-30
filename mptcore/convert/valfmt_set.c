@@ -24,7 +24,7 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 {
 	MPT_INTERFACE(iterator) *it;
 	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
-	MPT_STRUCT(value) val = MPT_VALUE_INIT;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	MPT_STRUCT(value_format) fmt;
 	int ret, curr;
 	
@@ -81,20 +81,11 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 		ret = 0;
 	}
 	/* get elements from value elements */
-	else if (val.fmt) {
-		static const char valfmt[] = { MPT_ENUM(TypeValFmt), 0 };
-		if (!val.ptr) {
-			return MPT_ERROR(BadValue);
-		}
-		while ((curr = mpt_value_read(&val, valfmt, &fmt))) {
-			if (curr < 0) {
-				mpt_array_clone(&tmp, 0);
-				return MPT_ERROR(BadType);
-			}
-			if (mpt_valfmt_add(&tmp, fmt) < 0) {
-				mpt_array_clone(&tmp, 0);
-				return MPT_ERROR(BadOperation);
-			}
+	else if (val.type == MPT_ENUM(TypeValFmt)) {
+		const MPT_STRUCT(value_format) *fptr = val.ptr;
+		if (fptr && (mpt_valfmt_add(&tmp, *fptr) < 0)) {
+			mpt_array_clone(&tmp, 0);
+			return MPT_ERROR(BadOperation);
 		}
 		ret = 0;
 	}

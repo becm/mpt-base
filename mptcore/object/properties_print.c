@@ -6,6 +6,7 @@
 #include <sys/uio.h>
 
 #include "convert.h"
+#include "types.h"
 
 #include "object.h"
 
@@ -33,31 +34,37 @@ static ssize_t saveString(void *ctx, const char *str, size_t len)
 
 static int mprint(void *data, const MPT_STRUCT(property) *prop)
 {
-	char buf[1024];
-	struct iovec vec;
+	const void *ptr;
 	struct outData *par = data;
-	MPT_STRUCT(property) pr = *prop;
-	int len;
 	
-	*buf = 0;
-	
-	if (!pr.val.fmt) {
-		if (!pr.val.ptr) { pr.val.ptr = buf; *buf = 0; }
-		return par->h(par->p, &pr);
+	if (prop && prop->val.type && (ptr = prop->val.ptr)) {
+		char buf[1024];
+		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
+		struct iovec vec;
+		const char *text;
+		size_t avail = 0;
+		int len;
+		pr.name = prop->name;
+		pr.desc = prop->desc;
+		if ((text = mpt_data_tostring(&ptr, prop->val.type, &avail))) {
+			vec.iov_base = (char *) text;
+			vec.iov_len = avail;
+			MPT_value_set_data(&pr.val, MPT_type_toVector('c'), &vec);
+			return par->h(par->p, &pr);
+		}
+		vec.iov_base = buf;
+		vec.iov_len  = sizeof(buf);
+		*buf = 0;
+		
+		if ((len = mpt_tostring(&prop->val, saveString, &vec)) >= 0) {
+			vec.iov_base = buf;
+			vec.iov_len  = sizeof(buf) - vec.iov_len;
+			buf[vec.iov_len++] = 0;
+			MPT_value_set_data(&pr.val, MPT_type_toVector('c'), &vec);
+			return par->h(par->p, &pr);
+		}
 	}
-	if (!pr.val.ptr) {
-		return *pr.val.fmt ? -1 : 0;
-	}
-	vec.iov_base = buf;
-	vec.iov_len  = sizeof(buf);
-	if ((len = mpt_tostring(&pr.val, saveString, &vec))) {
-		return par->h(par->p, prop);
-	}
-	buf[sizeof(buf) - vec.iov_len] = 0;
-	pr.val.ptr = buf;
-	pr.val.fmt = 0;
-	
-	return par->h(par->p, &pr);
+	return par->h(par->p, prop);
 }
 
 /*!
