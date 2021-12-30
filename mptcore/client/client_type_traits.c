@@ -14,11 +14,11 @@
  * 
  * \return id for client metatype
  */
-extern int mpt_client_typeid(void)
+extern const MPT_STRUCT(named_traits) *mpt_client_type_traits(void)
 {
-	static int id = 0;
-	if (!id) {
-		id = mpt_type_meta_new("client");
+	static const MPT_STRUCT(named_traits) *traits = 0;
+	if (!traits) {
+		traits = mpt_type_metatype_add("mpt.client");
 	}
-	return id;
+	return traits;
 }

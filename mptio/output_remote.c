@@ -52,12 +52,13 @@ static int remote_infile(const MPT_STRUCT(out_data) *od)
 static int remoteConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, val, _in);
-	int me = mpt_input_typeid();
+	const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
+	int me;
 	
-	if (me < 0) {
+	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == me) {
+	else if (type == (me = traits->type)) {
 		if (ptr) *((const void **) ptr) = &od->_in;
 		return MPT_ENUM(TypeUnixSocket);
 	}

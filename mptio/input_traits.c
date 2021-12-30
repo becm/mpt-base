@@ -51,18 +51,18 @@ extern const MPT_STRUCT(type_traits) *mpt_input_reference_traits()
 
 /*!
  * \ingroup mptNotify
- * \brief get input type
+ * \brief get input pointer traits
  * 
- * Get or register input reference type.
+ * Get or register input metatype pointer.
  * 
  * \return input id
  */
-extern int mpt_input_typeid(void)
+extern const MPT_STRUCT(named_traits) *mpt_input_type_traits(void)
 {
-	static int id = 0;
+	static const MPT_STRUCT(named_traits) *traits = 0;
 	
-	if (!id) {
-		id = mpt_type_meta_new("input");
+	if (!traits) {
+		traits = mpt_type_metatype_add("mpt.input");
 	}
-	return id;
+	return traits;
 }

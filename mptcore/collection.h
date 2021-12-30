@@ -55,6 +55,8 @@ public:
 	virtual int append(const identifier *, metatype *) = 0;
 	virtual metatype *create(const char *, int = -1);
 	virtual int bind(const relation *, logger * = logger::default_instance());
+	
+	static const named_traits *get_traits();
 };
 
 /*! Relation implemetation using Group as current element */

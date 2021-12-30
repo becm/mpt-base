@@ -9,15 +9,20 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> int type_properties<input *>::id(bool obtain) {
-	static int _valtype = 0;
-	if (_valtype > 0) {
-		return _valtype;
+template <> int type_properties<input *>::id(bool) {
+	static const named_traits *traits = 0;
+	if (traits || (traits = mpt_input_type_traits())) {
+		return traits->type;
 	}
-	if (!obtain) {
-		return BadType;
+	return BadType;
+}
+
+template<> inline const struct type_traits *type_properties<input *>::traits() {
+	static const named_traits *traits = 0;
+	if (traits || (traits = mpt_input_type_traits())) {
+		return &traits->traits;
 	}
-	return _valtype = mpt_input_typeid();
+	return 0;
 }
 
 template<> inline const struct type_traits *type_properties<reference<input> >::traits() {

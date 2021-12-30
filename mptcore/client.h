@@ -50,7 +50,7 @@ MPT_INTERFACE_VPTR(client)
 __MPT_EXTDECL_BEGIN
 
 /* get client id */
-extern int mpt_client_typeid();
+extern const MPT_STRUCT(named_traits) *mpt_client_type_traits();
 
 /* process command message */
 extern int mpt_client_command(MPT_INTERFACE(client) *, const MPT_STRUCT(message) *, int);

@@ -17,7 +17,7 @@
  */
 int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *pr)
 {
-	const char *desc;
+	const MPT_STRUCT(named_traits) *traits;
 	int code;
 	
 	code = val->_vptr->convert(val, 0, 0);
@@ -29,12 +29,9 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 	pr->val.ptr = 0;
 	
 	/* interface instance */
-	if ((desc = mpt_interface_typename(code))) {
+	if ((traits = mpt_interface_traits(code))) {
 		MPT_INTERFACE(object) *obj = 0;
 		
-		if (!*desc) {
-			desc = 0;
-		}
 		pr->name = "";
 		pr->desc = 0;
 		/* object specific name */
@@ -43,10 +40,10 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 		    && (obj->_vptr->property(obj, pr) >= 0)
 		    && pr->name) {
 			pr->desc = pr->name;
-			pr->name = MPT_tr("object");
+			pr->name = "object";
 		} else {
-			pr->desc = desc;
-			pr->name = MPT_tr("interface");
+			pr->desc = traits->name;
+			pr->name = "interface";
 			val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
 		}
 		return code;
@@ -55,11 +52,13 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 	val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val);
 	
 	/* output typecode */
-	if ((desc = mpt_meta_typename(code)) && !*desc) {
-		desc = 0;
+	if ((traits = mpt_metatype_traits(code))) {
+		pr->name = "metatype";
+		pr->desc = traits->name;
+		return code;
 	}
-	pr->name = MPT_tr("metatype");
-	pr->desc = desc;
+	pr->name = "convertable";
+	pr->desc = 0;
 	
 	return code;
 }

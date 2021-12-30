@@ -4,6 +4,7 @@
 
 #include <poll.h>
 
+#include "types.h"
 #include "config.h"
 #include "output.h"
 
@@ -30,9 +31,10 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 	
 	ncon = 0;
 	if ((val = mpt_config_get(cfg, con + off, '.', 0))) {
+		const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
 		in = 0;
 		ctl = 0;
-		if (val->_vptr->convert(val, mpt_input_typeid(), &in) >= 0) {
+		if (traits && (val->_vptr->convert(val, traits->type, &in) >= 0)) {
 			if (!in || !in->_vptr->meta.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid connection reference");
@@ -58,9 +60,10 @@ extern int mpt_notify_config(MPT_STRUCT(notify) *no, const MPT_INTERFACE(config)
 		}
 	}
 	if ((val = mpt_config_get(cfg, bind + off, '.', 0))) {
+		const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
 		in = 0;
 		ctl = 0;
-		if (val->_vptr->convert(val, mpt_input_typeid(), &in) >= 0) {
+		if (traits && (val->_vptr->convert(val, traits->type, &in) >= 0)) {
 			if (!in || !in->_vptr->meta.addref((void *) in)) {
 				mpt_log(0, __func__, MPT_LOG(Error), "%s",
 				        "no valid input reference");

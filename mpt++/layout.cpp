@@ -20,19 +20,27 @@ template class reference<layout::text>;
 
 template <> int type_properties<layout *>::id(bool obtain)
 {
-	static int _valtype = 0;
-	int type;
-	
-	if ((type = _valtype) > 0) {
-		return type;
+	const named_traits *traits = 0;
+	if (traits) {
+		return traits->type;
 	}
 	if (!obtain) {
 		return BadType;
 	}
-	if ((type = mpt_type_meta_new("layout")) < 0) {
-		type = mpt_type_meta_new(0);
+	if ((traits = mpt_type_metatype_add("mpt.layout"))) {
+		return traits->type;
 	}
-	return _valtype = type;
+	return BadOperation;
+}
+
+template <> const struct type_traits *type_properties<layout *>::traits()
+{
+	static const struct type_traits *traits = 0;
+	if (!traits && !(traits = type_traits::get(id(true)))) {
+		static const struct type_traits fallback(sizeof(layout *));
+		traits = &fallback;
+	}
+	return traits;
 }
 
 // layout extension

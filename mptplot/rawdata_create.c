@@ -30,12 +30,13 @@ MPT_STRUCT(RawData) {
 static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, val, _mt);
-	int me = mpt_rawdata_typeid();
+	const MPT_STRUCT(named_traits) *traits = mpt_rawdata_type_traits();
+	int me;
 	
-	if (me < 0) {
+	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == me) {
+	else if (type == (me = traits->type)) {
 		if (ptr) *((const void **) ptr) = &rd->_rd;
 		return me;
 	}

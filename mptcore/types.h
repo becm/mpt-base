@@ -104,12 +104,11 @@ MPT_STRUCT(type_traits)
 	{ }
 	static int add_basic(size_t);
 	static int add(const type_traits &);
+	static const struct named_traits *add_interface(const char * = 0);
+	static const struct named_traits *add_metatype(const char * = 0);
 	
-	static int add_interface(const char * = 0);
-	static int add_metatype(const char * = 0);
-	
-	static const type_traits *get(int);
-	static int get(const char *, int = -1);
+	static const struct type_traits  *get(int);
+	static const struct named_traits *get(const char *, int = -1);
 #else
 # define MPT_TYPETRAIT_INIT(t)  { 0, 0, (t) }
 #endif
@@ -117,6 +116,19 @@ MPT_STRUCT(type_traits)
 	void (* const fini)(void *);
 	const size_t size;
 };
+
+MPT_STRUCT(named_traits)
+{
+#ifdef __cplusplus
+	const type_traits &traits;
+#else
+	const MPT_STRUCT(type_traits) * const traits;
+#endif
+	const char * const name;
+	const uintptr_t type;
+};
+
+typedef int (*MPT_TYPE(data_converter))(const void *, int , void *);
 
 
 __MPT_EXTDECL_BEGIN
@@ -130,14 +142,14 @@ extern int mpt_offset(const uint8_t *, int);
 /* query type mappings */
 extern const MPT_STRUCT(type_traits) *mpt_type_traits(int);
 
-/* id for registered named type */
-extern int mpt_type_value(const char *, int);
-/* get name registered type */
-extern const char *mpt_meta_typename(int);
-extern const char *mpt_interface_typename(int);
+/* traits for registered named types */
+extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *, int);
+extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int);
+extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int);
 /* register additional types */
-extern int mpt_type_meta_new(const char *);
-extern int mpt_type_interface_new(const char *);
+extern int mpt_type_basic_add(size_t);
+extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *);
+extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *);
 extern int mpt_type_add(const MPT_STRUCT(type_traits) *);
 extern int mpt_type_basic_add(size_t);
 
@@ -259,6 +271,28 @@ private:
 		static const struct type_traits span_traits(sizeof(span<T>));
 		return &span_traits;
 	}
+	type_properties();
+};
+template<typename T>
+class type_properties<span<T> >
+{
+public:
+	static const struct type_traits *traits(void) {
+		static const struct type_traits traits(sizeof(span<T>));
+		return &traits;
+	}
+	
+	static int id(bool obtain = false) {
+		static int _valtype = 0;
+		if (_valtype > 0) {
+			return _valtype;
+		}
+		if (!obtain) {
+			return BadType;
+		}
+		return _valtype = type_traits::add(*traits());
+	}
+private:
 	type_properties();
 };
 

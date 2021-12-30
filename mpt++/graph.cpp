@@ -22,19 +22,20 @@ template class reference<class layout::graph::transform3>;
 
 template <> int type_properties<layout::graph *>::id(bool obtain)
 {
-	static int _valtype = 0;
-	int type;
-	
-	if ((type = _valtype) > 0) {
-		return type;
+	static const named_traits *traits = 0;
+	if (traits) {
+		return traits->type;
 	}
 	if (!obtain) {
 		return BadType;
 	}
-	if ((type = mpt_type_meta_new("graph")) < 0) {
-		type = mpt_type_meta_new(0);
+	if ((traits = mpt_type_metatype_add("mpt.graph"))) {
+		return traits->type;
 	}
-	return _valtype = type;
+	if ((traits = mpt_type_metatype_add(0))) {
+		return traits->type;
+	}
+	return BadOperation;
 }
 template <> const struct type_traits *type_properties<layout::graph *>::traits() {
 	return type_traits::get(id(true));

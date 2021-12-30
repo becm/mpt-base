@@ -19,28 +19,38 @@
 
 __MPT_NAMESPACE_BEGIN
 
+const named_traits *group::get_traits()
+{
+	static const named_traits *traits = 0;
+	if (!traits && !(traits = mpt_type_interface_add("mpt.group"))) {
+		traits = mpt_type_interface_add(0);
+	}
+	return traits;
+}
+
 template <> int type_properties<group *>::id(bool obtain) {
-	static int _valtype = 0;
-	int type;
-	
-	if ((type = _valtype) > 0) {
-		return type;
+	static const named_traits *traits = 0;
+	if (traits) {
+		return traits->type;
 	}
-	if (!obtain) {
-		return BadType;
+	if (obtain && !(traits = group::get_traits())) {
+		return BadOperation;
 	}
-	if ((type = mpt_type_interface_new("group")) < 0) {
-		type = mpt_type_interface_new(0);
-	}
-	return _valtype = type;
+	return traits ? traits->type : static_cast<int>(BadType);
 }
 
 template <> const struct type_traits *type_properties<group *>::traits()
 {
 	static const struct type_traits *traits = 0;
-	if (!traits && !(traits = type_traits::get(id(true)))) {
-		static const struct type_traits private_traits(sizeof(group *));
-		traits = &private_traits;
+	if (!traits) {
+		const named_traits *nt = group::get_traits();
+		if (nt) {
+			traits = &nt->traits;
+		}
+		else {
+			static const struct type_traits fallback(sizeof(group *));
+			traits = &fallback;
+		}
 	}
 	return traits;
 }

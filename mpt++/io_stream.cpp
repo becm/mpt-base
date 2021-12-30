@@ -42,9 +42,8 @@ int io::stream::convert(int type, void *ptr)
 	int me = type_properties<io::interface *>::id(true);
 	
 	if (me < 0) {
-		if ((me = mpt_input_typeid()) < 0) {
-			me = TypeOutputPtr;
-		}
+		const named_traits *traits = mpt_input_type_traits();
+		me = traits ? traits->type : type_properties<output *>::id(true);
 	}
 	else if (assign(static_cast<io::interface *>(this), type, ptr)) {
 		return TypeUnixSocket;
@@ -79,13 +78,9 @@ io::stream *io::stream::clone() const
 // object interface
 int io::stream::property(struct property *pr) const
 {
-	int me = mpt_input_typeid();
-	
-	if (me < 0) {
-		me = TypeOutputPtr;
-	}
 	if (!pr) {
-		return me;
+		const named_traits *traits = mpt_input_type_traits();
+		return traits ? traits->type : type_properties<output *>::id(true);
 	}
 	const char *name;
 	intptr_t pos;

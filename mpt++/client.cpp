@@ -16,20 +16,21 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int type_properties<client *>::id(bool obtain)
+template <> int type_properties<client *>::id(bool)
 {
-	int _valtype = 0;
-	if (_valtype > 0) {
-		return _valtype;
+	static const named_traits *traits = 0;
+	if (traits || (traits = mpt_client_type_traits())) {
+		return traits->type;
 	}
-	if (!obtain) {
-		return BadType;
-	}
-	return _valtype = mpt_client_typeid();
+	return BadType;
 }
 template <> const struct type_traits *type_properties<client *>::traits()
 {
-	return type_traits::get(id(true));
+	static const named_traits *traits = 0;
+	if (traits || (traits = mpt_client_type_traits())) {
+		return &traits->traits;
+	}
+	return 0;
 }
 
 static void unrefConfig()

@@ -85,25 +85,25 @@ extern int main(int, char *[])
 		}
 		type = curr;
 	}
-	type = mpt::type_traits::get("meta");
+	type = mpt::type_traits::get("meta")->type;
 	std::cout << "meta: " << type << " … ";
 	while (true) {
-		int curr = mpt::type_traits::add_metatype(0);
-		if (curr < 0) {
+		const mpt::named_traits *curr = mpt::type_traits::add_metatype(0);
+		if (!curr) {
 			std::cout << type << std::endl;
 			break;
 		}
-		type = curr;
+		type = curr->type;
 	}
-	type = mpt::type_traits::get("convertable");
+	type = mpt::type_traits::get("convertable")->type;
 	std::cout << "interface: " << type << " … ";
 	while (true) {
-		int curr = mpt::type_traits::add_interface(0);
-		if (curr < 0) {
+		const mpt::named_traits *curr = mpt::type_traits::add_interface(0);
+		if (!curr) {
 			std::cout << type << std::endl;
 			break;
 		}
-		type = curr;
+		type = curr->type;
 	}
 	type = mpt::type_traits::add_basic(24);
 	std::cout << "dyn_basic: " << type << " … ";

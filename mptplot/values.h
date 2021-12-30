@@ -357,7 +357,7 @@ extern ssize_t mpt_stage_truncate(MPT_STRUCT(rawdata_stage) *, size_t __MPT_DEFP
 
 /* create cycle interface with default data parts */
 extern MPT_INTERFACE(metatype) *mpt_rawdata_create(long __MPT_DEFPAR(-1));
-extern int mpt_rawdata_typeid(void);
+extern const MPT_STRUCT(named_traits) *mpt_rawdata_type_traits(void);
 
 /* create linear part in range */
 extern void mpt_linepart_linear(MPT_STRUCT(linepart) *, const double *, size_t , const MPT_STRUCT(range) *);

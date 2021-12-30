@@ -99,16 +99,16 @@ static const struct {
 	{ "solver",      MPT_ENUM(TypeSolverPtr)      },
 };
 
-struct type_entry
-{
-	MPT_STRUCT(type_traits) traits;
-	const char *name;
-};
-
 struct generic_traits_chunk
 {
 	const MPT_STRUCT(type_traits) *traits[30];
 	struct generic_traits_chunk *next;
+	uint8_t used;
+};
+struct named_traits_chunk
+{
+	MPT_STRUCT(named_traits) *traits[30];
+	struct named_traits_chunk *next;
 	uint8_t used;
 };
 
@@ -119,12 +119,10 @@ static MPT_STRUCT(type_traits) *iovec_types = 0;
 static MPT_STRUCT(type_traits) *dynamic_types = 0;
 static int dynamic_pos = 0;
 
-static struct type_entry **interface_types = 0;
+static MPT_STRUCT(named_traits) **interface_types = 0;
 static int interface_pos = 0;
 
-static struct type_entry **meta_types = 0;
-static int meta_pos = 0;
-
+static struct named_traits_chunk *meta_types = 0;
 static struct generic_traits_chunk *generic_types = 0;
 
 static const MPT_STRUCT(type_traits) pointer_traits = MPT_TYPETRAIT_INIT(sizeof(void *));
@@ -178,42 +176,48 @@ static void _dynamic_fini(void) {
 }
 
 static void _meta_fini(void) {
-	int i;
-	for (i = 0; i < meta_pos; i++) {
-		struct type_entry *traits = meta_types[i];
-		if (traits) {
-			free(traits);
-		}
-	}
-	free(meta_types);
+	struct named_traits_chunk *group = meta_types;
 	meta_types = 0;
+	while (group) {
+		struct named_traits_chunk *curr = group;
+		int i;
+		group = group->next;
+		for (i = 0; i < curr->used; i++) {
+			MPT_STRUCT(named_traits) *entry = curr->traits[i];
+			free(entry);
+		}
+		free(curr);
+	}
 }
 static void _meta_init(void) {
-	struct type_entry *base;
+	MPT_STRUCT(named_traits) *base;
 	
-	if (!(meta_types = calloc(MPT_ENUM(_TypeMetaPtrSize), sizeof(*meta_types)))) {
+	if (!(meta_types = malloc(sizeof(*meta_types)))) {
 		return;
 	}
-	if ((base = malloc(sizeof(*base)))) {
-		static const char base_name[] = "metatype";
-		memcpy(&base->traits, &pointer_traits, sizeof(base->traits));
-		base->name = base_name;
-	}
-	meta_types[meta_pos++] = base;
-	
+	meta_types->used = 0;
 	atexit(_meta_fini);
+	
+	if (!(base = malloc(sizeof(*base) + sizeof(pointer_traits)))) {
+		return;
+	}
+	*((const void **) &base->traits) = memcpy(base + 1, &pointer_traits, sizeof(pointer_traits));
+	*((const char **) &base->name) = "metatype";
+	*((uintptr_t *) &base->type) = MPT_ENUM(_TypeMetaPtrBase);
+	
+	meta_types->traits[0] = base;
+	meta_types->next = 0;
+	meta_types->used = 1;
 }
 
 static void _interfaces_fini(void) {
 	int i;
 	for (i = 0; i < interface_pos; i++) {
-		struct type_entry *traits = interface_types[i];
-		if (traits) {
-			free(traits);
-		}
+		free(interface_types[i]);
 	}
 	free(interface_types);
 	interface_types = 0;
+	interface_pos = 0;
 }
 static void _interfaces_init(void) {
 	size_t i;
@@ -222,13 +226,14 @@ static void _interfaces_init(void) {
 	}
 	for (i = 0; i < MPT_arrsize(core_interfaces); i++) {
 		int pos = core_interfaces[i].type - MPT_ENUM(_TypeInterfaceBase);
-		struct type_entry *elem = interface_types[pos];
+		MPT_STRUCT(named_traits) *elem = interface_types[pos];
 		
-		if (elem || !(elem = malloc(sizeof(*elem)))) {
+		if (elem || !(elem = malloc(sizeof(*elem) + sizeof(pointer_traits)))) {
 			continue;
 		}
-		memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
-		elem->name = core_interfaces[i].name;
+		*((const void **) &elem->traits) = memcpy(elem + 1, &pointer_traits, sizeof(elem->traits));
+		*((const char **) &elem->name) = core_interfaces[i].name;
+		*((uintptr_t *) &elem->type) = MPT_ENUM(_TypeInterfaceBase) + i;
 		
 		interface_types[pos] = elem;
 	}
@@ -291,14 +296,8 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 	}
 	/* interface type */
 	if (MPT_type_isInterface(type)) {
-		const struct type_entry *entry;
-		
-		type -= MPT_ENUM(_TypeInterfaceBase);
-		if (!interface_types) {
-			_interfaces_init();
-		}
-		entry = interface_types[type - MPT_ENUM(_TypeDynamicBase)];
-		return entry ? &entry->traits : 0;
+		const MPT_STRUCT(named_traits) *it = mpt_interface_traits(type);
+		return it ? it->traits : 0;
 	}
 	
 	if (MPT_type_isDynamic(type)) {
@@ -318,13 +317,8 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 	}
 	
 	if (MPT_type_isMetaPtr(type)) {
-		const struct type_entry *entry;
-		
-		if (!meta_types) {
-			_meta_init();
-		}
-		entry = meta_types[type - MPT_ENUM(_TypeMetaPtrBase)];
-		return entry ? &entry->traits : 0;
+		const MPT_STRUCT(named_traits) *it = mpt_metatype_traits(type);
+		return it ? it->traits : 0;
 	}
 	
 	type -= MPT_ENUM(_TypeValueAdd);
@@ -348,9 +342,9 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
  * 
  * \return name for interface ID
  */
-extern const char *mpt_interface_typename(int type)
+extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int type)
 {
-	const struct type_entry *elem;
+	const MPT_STRUCT(named_traits) *elem;
 	
 	if (type > MPT_ENUM(_TypeInterfaceMax)
 	    || type < MPT_ENUM(_TypeInterfaceBase)) {
@@ -358,12 +352,16 @@ extern const char *mpt_interface_typename(int type)
 		return 0;
 	}
 	if (!interface_types) {
+		_interfaces_init();
+	}
+	type -= MPT_ENUM(_TypeInterfaceBase);
+	
+	if (type > interface_pos) {
 		errno = EAGAIN;
 		return 0;
 	}
-	
-	if ((elem = interface_types[type - MPT_ENUM(_TypeInterfaceBase)])) {
-		return elem->name ? elem->name : "";
+	if ((elem = interface_types[type])) {
+		return elem;
 	}
 	errno = EAGAIN;
 	return 0;
@@ -377,22 +375,31 @@ extern const char *mpt_interface_typename(int type)
  * 
  * \return name for interface ID
  */
-extern const char *mpt_meta_typename(int type)
+extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int type)
 {
-	const struct type_entry *elem;
+	const struct named_traits_chunk *ext;
 	
 	if (type > MPT_ENUM(_TypeMetaPtrMax)
-	    || type < MPT_ENUM(_TypeMetaPtrBase)) {
+	 || type < MPT_ENUM(_TypeMetaPtrBase)) {
 		errno = EINVAL;
 		return 0;
 	}
 	if (!meta_types) {
-		errno = EAGAIN;
-		return 0;
+		_meta_init();
 	}
+	type -= MPT_ENUM(_TypeMetaPtrBase);
 	
-	if ((elem = meta_types[type - MPT_ENUM(_TypeMetaPtrBase)])) {
-		return elem->name ? elem->name : "";
+	ext = meta_types;
+	while (ext) {
+		if (type < ext->used) {
+			const MPT_STRUCT(named_traits) *elem = (void *) ext->traits[type];
+			if (!elem) {
+				errno = EINVAL;
+			}
+			return elem;
+		}
+		type -= MPT_arrsize(ext->traits);
+		ext = ext->next;
 	}
 	errno = EAGAIN;
 	return 0;
@@ -402,70 +409,96 @@ extern const char *mpt_meta_typename(int type)
  * \ingroup mptTypes
  * \brief get type for name
  * 
- * Get name for previously registered type name.
+ * Get traits for previously registered named type.
  * Metatype entries take precedence over interfaces.
  * 
  * \return type ID for registered name
  */
-extern int mpt_type_value(const char *name, int len)
+extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *name, int len)
 {
-	const struct type_entry *elem;
+	const struct named_traits_chunk *ext;
+	
 	int i;
 	
 	if (!name || !len || !*name) {
-		return MPT_ERROR(BadArgument);
+		errno = EINVAL;
+		return 0;
 	}
-	if (!meta_types) {
+	/* exact length match for names */
+	if (len >= 0) {
+		if (!(ext = meta_types)) {
+			_meta_init();
+			ext = meta_types;
+		}
+		while (ext) {
+			for (i = 0; i < ext->used; i++) {
+				const MPT_STRUCT(named_traits) *elem = ext->traits[i];
+				if (elem->name
+				 && (len == (int) strlen(elem->name))
+				 && !strncmp(name, elem->name, len)) {
+					return elem;
+				}
+			}
+			ext = ext->next;
+		}
+		if (!interface_types) {
+			_interfaces_init();
+		}
+		for (i = 0; i < interface_pos; i++) {
+			const MPT_STRUCT(named_traits) *elem;
+			if ((elem = interface_types[i])
+			 && elem->name
+			 && (len == (int) strlen(elem->name))
+			 && !strncmp(name, elem->name, len)) {
+				return elem;
+			}
+		}
+		errno = EINVAL;
+		return 0;
+	}
+	/* full names without length limit */
+	if (!(len = strlen(name))) {
+		errno = EINVAL;
+		return 0;
+	}
+	/* resolve shortnames */
+	if (!strcmp(name, "log")) {
+		name = "logger";
+	}
+	else if (!strcmp(name, "iter")) {
+		name = "iterator";
+	}
+	else if (!strcmp(name, "out")) {
+		name = "output";
+	}
+	else if (!strcmp(name, "meta")) {
+		name = "metatype";
+	}
+	if (!(ext = meta_types)) {
 		_meta_init();
+		ext = meta_types;
+	}
+	while (ext) {
+		for (i = 0; i < ext->used; i++) {
+			const MPT_STRUCT(named_traits) *elem = ext->traits[i];
+			if (elem->name && !strcmp(name, elem->name)) {
+				return elem;
+			}
+		}
+		ext = ext->next;
 	}
 	if (!interface_types) {
 		_interfaces_init();
 	}
-	/* exact length match for names */
-	if (len >= 0) {
-		for (i = 0; i < meta_pos; i++) {
-			if ((elem = meta_types[i])
-			 && len == (int) strlen(elem->name)
-			 && !strncmp(name, elem->name, len)) {
-				return MPT_ENUM(_TypeMetaPtrBase) + i;
-			}
-		}
-		for (i = 0; i < interface_pos; i++) {
-			if ((elem = interface_types[i])
-			 && len == (int) strlen(elem->name)
-			 && !strncmp(name, elem->name, len)) {
-				return MPT_ENUM(_TypeInterfaceBase) + i;
-			}
-		}
-		return MPT_ERROR(BadValue);
-	}
-	/* full names without length limit */
-	if (!(len = strlen(name))) {
-		return MPT_ERROR(BadArgument);
-	}
 	for (i = 0; i < interface_pos; i++) {
-		if ((elem = interface_types[i])
-		 && !strncmp(name, elem->name, len)) {
-			return MPT_ENUM(_TypeInterfaceBase) + i;
+		const MPT_STRUCT(named_traits) *elem = interface_types[i];
+		if (elem && elem->name && strcmp(name, elem->name)) {
+			return elem;
 		}
 	}
-	/* shortnames */
-	if (!strcmp(name, "log")) {
-		return MPT_ENUM(TypeLoggerPtr);
-	}
-	if (!strcmp(name, "iter")) {
-		return MPT_ENUM(TypeIteratorPtr);
-	}
-	if (!strcmp(name, "out")) {
-		return MPT_ENUM(TypeOutputPtr);
-	}
-	if (!strcmp(name, "meta")) {
-		return MPT_ENUM(TypeMetaPtr);
-	}
-	return MPT_ERROR(BadValue);
-	
+	errno = EINVAL;
+	return 0;
 }
-
 
 /*!
  * \ingroup mptTypes
@@ -559,42 +592,73 @@ extern int mpt_type_basic_add(size_t size)
  * 
  * \return unique type code
  */
-extern int mpt_type_meta_new(const char *name)
+extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *name)
 {
-	struct type_entry *elem;
+	struct named_traits_chunk *ext;
+	MPT_STRUCT(named_traits) *elem;
+	MPT_STRUCT(type_traits) *traits;
 	size_t nlen = 0;
+	int pos;
 	
-	if (meta_pos >= MPT_ENUM(_TypeMetaPtrSize)) {
-		return MPT_ERROR(MissingBuffer);
+	if (!(ext = meta_types)) {
+		_meta_init();
+		ext = meta_types;
 	}
 	
 	if (name) {
-		int i;
-		for (i = 0; i < meta_pos; i++) {
-			elem = meta_types[i];
-			if (elem && elem->name && !strcmp(elem->name, name)) {
-				return MPT_ERROR(BadValue);
-			}
-		}
 		nlen = strlen(name);
 		if (nlen++ < 4) {
-			return MPT_ERROR(BadValue);
+			errno = EINVAL;
+			return 0;
 		}
+		while (ext) {
+			int i, max;
+			for (i = 0, max = ext->used; i < max; i++) {
+				elem = ext->traits[i];
+				if (elem->name && !strcmp(elem->name, name)) {
+					errno = EINVAL;
+					return 0;
+				}
+			}
+			ext = ext->next;
+		}
+		ext = meta_types;
 	}
+	pos = MPT_ENUM(_TypeMetaPtrBase);
 	
-	if (!(elem = malloc(sizeof(*elem) + nlen))) {
-		return MPT_ERROR(BadOperation);
+	while (ext->used == MPT_arrsize(ext->traits)) {
+		struct named_traits_chunk *next;
+		pos += MPT_arrsize(ext->traits);
+		if (pos > MPT_ENUM(_TypeMetaPtrMax)) {
+			errno = ENOMEM;
+			return 0;
+		}
+		if (!(next = ext->next)) {
+			if (!(next = malloc(sizeof(*next)))) {
+				return 0;
+			}
+			next->next = 0;
+			next->used = 0;
+			ext->next = next;
+		}
+		ext = next;
 	}
-	memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
-	elem->name = name ? memcpy(elem + 1, name, nlen) : 0;
-	
-	
-	if (!meta_types) {
-		_meta_init();
+	pos += ext->used;
+	if (pos > MPT_ENUM(_TypeMetaPtrMax)) {
+		errno = ENOMEM;
+		return 0;
 	}
-	meta_types[meta_pos] = elem;
+	if (!(elem = malloc(sizeof(*elem) + sizeof(pointer_traits) + nlen))) {
+		return 0;
+	}
+	traits = memcpy(elem + 1, &pointer_traits, sizeof(pointer_traits));
+	*((const void **) &elem->traits) = traits;
+	*((const char **) &elem->name) = nlen ? memcpy(traits + 1, name, nlen) : 0;
+	*((uintptr_t *) &elem->type) = pos;
 	
-	return MPT_ENUM(_TypeMetaPtrBase) + meta_pos++;
+	ext->traits[ext->used++] = elem;
+	
+	return elem;
 }
 /*!
  * \ingroup mptTypes
@@ -605,12 +669,18 @@ extern int mpt_type_meta_new(const char *name)
  * 
  * \return type code of new object type
  */
-extern int mpt_type_interface_new(const char *name)
+extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *name)
 {
-	struct type_entry *elem;
+	MPT_STRUCT(named_traits) *elem;
+	MPT_STRUCT(type_traits) *traits;
 	size_t nlen = 0;
 	if (interface_pos >= (MPT_ENUM(_TypeInterfaceSize))) {
-		return MPT_ERROR(MissingBuffer);
+		errno = ENOMEM;
+		return 0;
+	}
+	
+	if (!interface_types) {
+		_interfaces_init();
 	}
 	
 	if (name) {
@@ -618,25 +688,25 @@ extern int mpt_type_interface_new(const char *name)
 		for (i = 0; i < interface_pos; i++) {
 			elem = interface_types[i];
 			if (elem && elem->name && !strcmp(elem->name, name)) {
-				return MPT_ERROR(BadValue);
+				errno = EINVAL;
+				return 0;
 			}
 		}
 		nlen = strlen(name);
 		if (nlen++ < 4) {
-			return MPT_ERROR(BadArgument);
+			errno = EINVAL;
+			return 0;
 		}
 	}
-	if (!(elem = malloc(sizeof(*elem) + nlen))) {
-		return MPT_ERROR(BadOperation);
+	if (!(elem = malloc(sizeof(*elem) + sizeof(pointer_traits) + nlen))) {
+		return 0;
 	}
-	memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
-	elem->name = nlen ? memcpy(elem + 1, name, nlen) : 0;
+	traits = memcpy(elem + 1, &pointer_traits, sizeof(pointer_traits));
+	*((const void **) &elem->traits) = traits;
+	*((const char **) &elem->name) = nlen ? memcpy(traits + 1, name, nlen) : 0;
+	*((uintptr_t*) &elem->type) = MPT_ENUM(_TypeInterfaceBase) + interface_pos;
 	
+	interface_types[interface_pos++] = elem;
 	
-	if (!interface_types) {
-		_interfaces_init();
-	}
-	interface_types[interface_pos] = elem;
-	
-	return MPT_ENUM(_TypeInterfaceBase) + interface_pos++;
+	return elem;
 }

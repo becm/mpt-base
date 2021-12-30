@@ -35,6 +35,8 @@ public:
 	virtual bool seek(int64_t);
 	virtual span<uint8_t> peek(size_t);
 	virtual int getchar();
+	
+	static const named_traits *get_traits();
 };
 
 

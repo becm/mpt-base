@@ -64,12 +64,13 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 static int streamConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) val;
-	int me = mpt_input_typeid();
+	const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
+	int me;
 	
-	if (me < 0) {
+	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);
 	}
-	else if (type == me) {
+	else if (type == (me = traits->type)) {
 		if (ptr) *((void **) ptr) = &srm->_in;
 		return MPT_ENUM(TypeUnixSocket);
 	}

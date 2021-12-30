@@ -4,7 +4,8 @@
 # collect source files
 plot_src = files(
   'mapping.c',
-  'rawdata_typeid.c', 'rawdata_create.c'
+  'rawdata_type_traits.c',
+  'rawdata_create.c'
 )
 foreach d : [ 'history', 'layout', 'values', 'output' ]
   subdir(d)

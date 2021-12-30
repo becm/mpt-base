@@ -24,9 +24,7 @@ protected:
 	{ }
 };
 template<> int type_properties<input *>::id(bool);
-template<> inline const struct type_traits *type_properties<input *>::traits() {
-	return type_traits::get(id(true));
-}
+template<> inline const struct type_traits *type_properties<input *>::traits();
 
 template<> const struct type_traits *type_properties<reference<input> >::traits();
 
@@ -99,7 +97,7 @@ int mpt_notify_connect(MPT_STRUCT(notify) *, const char *);
 extern int mpt_loop(MPT_STRUCT(notify) *);
 
 /* id for registered input metatype */
-extern int mpt_input_typeid(void);
+extern const MPT_STRUCT(named_traits) *mpt_input_type_traits(void);
 /* type traits for input reference */
 extern const MPT_STRUCT(type_traits) *mpt_input_reference_traits();
 

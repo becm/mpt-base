@@ -6,30 +6,39 @@
 
 __MPT_NAMESPACE_BEGIN
 
+const named_traits *io::interface::get_traits()
+{
+	static const named_traits *traits = 0;
+	if (!traits && !(traits = mpt_type_interface_add("mpt.io"))) {
+		traits = mpt_type_interface_add(0);
+	}
+	return traits;
+}
+
 template <> int type_properties<io::interface *>::id(bool obtain)
 {
-	static int _valtype = 0;
-	int type;
-	/* already a registerd type */
-	if ((type = _valtype) > 0) {
-		return type;
+	static const named_traits *traits = 0;
+	if (traits) {
+		return traits->type;
 	}
-	if (!obtain) {
-		return BadType;
+	if (obtain && !(traits = io::interface::get_traits())) {
+		return BadOperation;
 	}
-	/* register named of fallback type */
-	if ((type = mpt_type_interface_new("mpt.io")) < 0) {
-		type = mpt_type_interface_new(0);
-	}
-	return _valtype = type;
+	return traits ? traits->type : static_cast<int>(BadType);
 }
 
 template <> const struct type_traits *type_properties<io::interface *>::traits()
 {
 	static const struct type_traits *traits = 0;
-	if (!traits && !(traits = type_traits::get(id(true)))) {
-		static const struct type_traits fallback(sizeof(io::interface *));
-		traits = &fallback;
+	if (!traits) {
+		const named_traits *nt = io::interface::get_traits();
+		if (nt) {
+			traits = &nt->traits;
+		}
+		else {
+			static const struct type_traits fallback(sizeof(io::interface *));
+			traits = &fallback;
+		}
 	}
 	return traits;
 }

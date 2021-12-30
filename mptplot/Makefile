@@ -10,7 +10,7 @@ HEADER = layout.h values.h
 # source summary
 SRCS := \
 	mapping.c \
-	rawdata_typeid.c rawdata_create.c \
+	rawdata_type_traits.c rawdata_create.c \
 	$(wildcard */*.c)
 #
 # library options

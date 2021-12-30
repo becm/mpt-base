@@ -14,11 +14,11 @@
  * 
  * \return raw data type
  */
-extern int mpt_rawdata_typeid(void)
+extern const MPT_STRUCT(named_traits) *mpt_rawdata_type_traits(void)
 {
-	static int id = 0;
-	if (!id) {
-		id = mpt_type_interface_new("rawdata");
+	const MPT_STRUCT(named_traits) *traits = 0;
+	if (!traits) {
+		traits = mpt_type_interface_add("mpt.rawdata");
 	}
-	return id;
+	return traits;
 }
