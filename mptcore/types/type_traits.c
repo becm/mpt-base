@@ -113,7 +113,7 @@ struct generic_traits_chunk
 
 static MPT_STRUCT(type_traits)  iovec_types[MPT_ENUM(_TypeVectorSize)];
 
-static const MPT_STRUCT(type_traits) **dynamic_types = 0;
+static MPT_STRUCT(type_traits) *dynamic_types = 0;
 static int dynamic_pos = 0;
 
 static struct type_entry **interface_types = 0;
@@ -259,8 +259,8 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 	
 	if (MPT_type_isDynamic(type)) {
 		if (dynamic_types) {
-			const MPT_STRUCT(type_traits) *traits = dynamic_types[type - MPT_ENUM(_TypeDynamicBase)];
-			return (traits && traits->size) ? traits : 0;
+			const MPT_STRUCT(type_traits) *traits = &dynamic_types[type - MPT_ENUM(_TypeDynamicBase)];
+			return traits->size ? traits : 0;
 		}
 		return 0;
 	}
