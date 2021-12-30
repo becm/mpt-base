@@ -113,9 +113,9 @@ MPT_STRUCT(type_traits)
 #else
 # define MPT_TYPETRAIT_INIT(t)  { 0, 0, (t) }
 #endif
-	int  (*init)(void *, const void *);
-	void (*fini)(void *);
-	size_t size;
+	int  (* const init)(void *, const void *);
+	void (* const fini)(void *);
+	const size_t size;
 };
 
 

@@ -18,15 +18,15 @@
 
 #include "types.h"
 
-#define basic_type(t, s) { MPT_TYPETRAIT_INIT(s), (t) }
-#define pointer_type(t)  { MPT_TYPETRAIT_INIT(sizeof(void *)), (t) }
+#define basic_type(t, s) { sizeof(s), (t) }
+#define pointer_type(t)  { sizeof(void *), (t) }
 
 static const struct {
-	const MPT_STRUCT(type_traits) traits;
-	int type;
-} static_ptypes[] = {
+	const uint8_t size, type;
+}
+core_sizes[] = {
 	/* system types (0x1 - 0x3) */
-	basic_type(MPT_ENUM(TypeUnixSocket), sizeof(int)),
+	basic_type(MPT_ENUM(TypeUnixSocket), int),
 	
 	/* system pointer types (0x4 - 0x7) */
 	pointer_type(MPT_ENUM(TypeFilePtr)),
@@ -37,9 +37,9 @@ static const struct {
 	pointer_type(MPT_ENUM(TypeReplyDataPtr)),
 	
 	/* layout value types (0x10 - 0x13) */
-	basic_type(MPT_ENUM(TypeColor),    sizeof(MPT_STRUCT(color))),
-	basic_type(MPT_ENUM(TypeLineAttr), sizeof(MPT_STRUCT(lineattr))),
-	basic_type(MPT_ENUM(TypeLine),     sizeof(MPT_STRUCT(line))),
+	basic_type(MPT_ENUM(TypeColor),    MPT_STRUCT(color)),
+	basic_type(MPT_ENUM(TypeLineAttr), MPT_STRUCT(lineattr)),
+	basic_type(MPT_ENUM(TypeLine),     MPT_STRUCT(line)),
 	
 	/* layout value types (0x14 - 0x17) */
 	pointer_type(MPT_ENUM(TypeAxisPtr)),
@@ -48,35 +48,36 @@ static const struct {
 	pointer_type(MPT_ENUM(TypeGraphPtr)),
 	
 	/* basic value types (0x18 - 0x1f) */
-	basic_type(MPT_ENUM(TypeValFmt),    sizeof(MPT_STRUCT(value_format))),
-	basic_type(MPT_ENUM(TypeValue),     sizeof(MPT_STRUCT(value))),
-	basic_type(MPT_ENUM(TypeProperty),  sizeof(MPT_STRUCT(property))),
-	basic_type(MPT_ENUM(TypeCommand),   sizeof(MPT_STRUCT(command))),
-	
+	basic_type(MPT_ENUM(TypeValFmt),    MPT_STRUCT(value_format)),
+	basic_type(MPT_ENUM(TypeValue),     MPT_STRUCT(value)),
+	basic_type(MPT_ENUM(TypeProperty),  MPT_STRUCT(property)),
+	basic_type(MPT_ENUM(TypeCommand),   MPT_STRUCT(command))
+},
+scalar_sizes[] = {
 	/* basic printable types */
-	basic_type('c', sizeof(char)),
+	basic_type('c', char),
 	
-	basic_type('b', sizeof(int8_t)),
-	basic_type('y', sizeof(uint8_t)),
+	basic_type('b', int8_t),
+	basic_type('y', uint8_t),
 	
-	basic_type('n', sizeof(int16_t)),
-	basic_type('q', sizeof(uint16_t)),
+	basic_type('n', int16_t),
+	basic_type('q', uint16_t),
 	
-	basic_type('i', sizeof(int32_t)),
-	basic_type('u', sizeof(uint32_t)),
+	basic_type('i', int32_t),
+	basic_type('u', uint32_t),
 	
-	basic_type('x', sizeof(int64_t)),
-	basic_type('t', sizeof(uint64_t)),
+	basic_type('x', int64_t),
+	basic_type('t', uint64_t),
 	
 	/* long type maps to equivalent size integer */
 	
-	basic_type('f', sizeof(float)),
-	basic_type('d', sizeof(double)),
+	basic_type('f', float),
+	basic_type('d', double),
 #ifdef _MPT_FLOAT_EXTENDED_H
-	basic_type('e', sizeof(long double)),
+	basic_type('e', long double),
 #endif
 	/* string types */
-	pointer_type('s')
+	pointer_type('s'),
 };
 
 static const struct {
@@ -111,7 +112,9 @@ struct generic_traits_chunk
 	uint8_t used;
 };
 
-static MPT_STRUCT(type_traits)  iovec_types[MPT_ENUM(_TypeVectorSize)];
+static MPT_STRUCT(type_traits) *core_types = 0;
+static MPT_STRUCT(type_traits) *scalar_types = 0;
+static MPT_STRUCT(type_traits) *iovec_types = 0;
 
 static MPT_STRUCT(type_traits) *dynamic_types = 0;
 static int dynamic_pos = 0;
@@ -124,6 +127,49 @@ static int meta_pos = 0;
 
 static struct generic_traits_chunk *generic_types = 0;
 
+static const MPT_STRUCT(type_traits) pointer_traits = MPT_TYPETRAIT_INIT(sizeof(void *));
+
+static void _core_fini(void) {
+	free(core_types);
+	core_types = 0;
+}
+static void _core_init(void) {
+	core_types = calloc(sizeof(*core_types), MPT_ENUM(_TypeCoreSize));
+	size_t i;
+	for (i = 0; i < MPT_arrsize(core_sizes); i++) {
+		int pos = core_sizes[i].type;
+		*((size_t *) &core_types[pos].size) = core_sizes[i].size;
+	}
+	atexit(_core_fini);
+}
+
+static void _scalar_fini(void) {
+	free(scalar_types);
+	iovec_types = 0;
+}
+static void _scalar_init(void) {
+	scalar_types = calloc(sizeof(*scalar_types), MPT_ENUM(_TypeScalarSize));
+	size_t i;
+	for (i = 0; i < MPT_arrsize(scalar_sizes); i++) {
+		int pos = scalar_sizes[i].type - MPT_ENUM(_TypeScalarBase);
+		*((size_t *) &scalar_types[pos].size) = scalar_sizes[i].size;
+	}
+	atexit(_scalar_fini);
+}
+
+static void _iovec_fini(void) {
+	free(iovec_types);
+	iovec_types = 0;
+}
+static void _iovec_init(void) {
+	iovec_types = calloc(sizeof(*iovec_types), MPT_ENUM(_TypeVectorSize));
+	size_t i;
+	for (i = 0; i < MPT_ENUM(_TypeVectorSize); i++) {
+		int pos = scalar_sizes[i].type - MPT_ENUM(_TypeScalarBase);
+		*((size_t *) &iovec_types[pos].size) = sizeof(struct iovec);
+	}
+	atexit(_iovec_fini);
+}
 
 static void _dynamic_fini(void) {
 	free(dynamic_types);
@@ -150,9 +196,7 @@ static void _meta_init(void) {
 	}
 	if ((base = malloc(sizeof(*base)))) {
 		static const char base_name[] = "metatype";
-		base->traits.init = 0;
-		base->traits.fini = 0;
-		base->traits.size = sizeof(void *);
+		memcpy(&base->traits, &pointer_traits, sizeof(base->traits));
 		base->name = base_name;
 	}
 	meta_types[meta_pos++] = base;
@@ -183,9 +227,7 @@ static void _interfaces_init(void) {
 		if (elem || !(elem = malloc(sizeof(*elem)))) {
 			continue;
 		}
-		elem->traits.init = 0;
-		elem->traits.fini = 0;
-		elem->traits.size = sizeof(void *);
+		memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
 		elem->name = core_interfaces[i].name;
 		
 		interface_types[pos] = elem;
@@ -225,25 +267,27 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 		return 0;
 	}
 	/* builtin scalar types */
-	if (type < 0x20 || MPT_type_isScalar(type)) {
-		size_t i;
-		/* basic type */
-		for (i = 0; i < MPT_arrsize(static_ptypes); ++i) {
-			if (type == static_ptypes[i].type) {
-				return &static_ptypes[i].traits;
-			}
+	if (type < MPT_ENUM(_TypeCoreSize)) {
+		if (!core_types) {
+			_core_init();
 		}
-		return 0;
+		return core_types[type].size ? &core_types[type] : 0;
+	}
+	/* generic/typed vector */
+	if (MPT_type_isScalar(type)) {
+		if (!scalar_types) {
+			_scalar_init();
+		}
+		type -= MPT_ENUM(_TypeScalarBase);
+		return scalar_types[type].size ? &scalar_types[type] : 0;
 	}
 	/* generic/typed vector */
 	if (MPT_type_isVector(type)) {
-		MPT_STRUCT(type_traits) *traits = &iovec_types[type - MPT_ENUM(_TypeVectorBase)];
-		if (!traits->size) {
-			traits->init = 0;
-			traits->fini = 0;
-			traits->size = sizeof(struct iovec);
+		if (!iovec_types) {
+			_iovec_init();
 		}
-		return traits;
+		type -= MPT_ENUM(_TypeScalarBase);
+		return iovec_types[type].size ? &iovec_types[type] : 0;
 	}
 	/* interface type */
 	if (MPT_type_isInterface(type)) {
@@ -258,11 +302,11 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 	}
 	
 	if (MPT_type_isDynamic(type)) {
-		if (dynamic_types) {
-			const MPT_STRUCT(type_traits) *traits = &dynamic_types[type - MPT_ENUM(_TypeDynamicBase)];
-			return traits->size ? traits : 0;
+		int pos = type - MPT_ENUM(_TypeDynamicBase);
+		if (pos >= dynamic_pos) {
+			return 0;
 		}
-		return 0;
+		return dynamic_types + pos;
 	}
 	
 	switch (type) {
@@ -541,9 +585,7 @@ extern int mpt_type_meta_new(const char *name)
 	if (!(elem = malloc(sizeof(*elem) + nlen))) {
 		return MPT_ERROR(BadOperation);
 	}
-	elem->traits.init = 0;
-	elem->traits.fini = 0;
-	elem->traits.size = sizeof(void *);
+	memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
 	elem->name = name ? memcpy(elem + 1, name, nlen) : 0;
 	
 	
@@ -587,9 +629,7 @@ extern int mpt_type_interface_new(const char *name)
 	if (!(elem = malloc(sizeof(*elem) + nlen))) {
 		return MPT_ERROR(BadOperation);
 	}
-	elem->traits.init = 0;
-	elem->traits.fini = 0;
-	elem->traits.size = sizeof(void *);
+	memcpy(&elem->traits, &pointer_traits, sizeof(elem->traits));
 	elem->name = nlen ? memcpy(elem + 1, name, nlen) : 0;
 	
 	

@@ -50,11 +50,6 @@ int type_id(const T &)
 {
 	return mpt::type_properties<T>::id(true);
 }
-template <typename T>
-uint8_t base(const T &)
-{
-	return mpt::basetype(mpt::type_properties<T>::id(true));
-}
 
 extern int main(int, char *[])
 {
