@@ -21,6 +21,7 @@
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
+MPT_STRUCT(array);
 
 enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */
@@ -101,6 +102,7 @@ enum MPT_VALFMT(Flags) {
 	MPT_VALFMT(Sign)        = 0x100,  /* print sign */
 	MPT_VALFMT(Left)        = 0x200   /* print left bounded */
 };
+
 #ifndef __cplusplus
 MPT_STRUCT(value_format)
 {
@@ -116,6 +118,8 @@ MPT_STRUCT(strdest)
 	uint8_t change,  /* positions which were changed */
 	        val[7];  /* values before/after reading */
 };
+
+typedef int (*MPT_TYPE(data_converter))(const void *, int , void *);
 
 #ifdef __cplusplus
 template<> inline __MPT_CONST_TYPE int type_properties<value_format>::id(bool) {
@@ -184,6 +188,28 @@ extern int mpt_culong(unsigned long *, const char *, int , const unsigned long [
 
 /* decode (multibyte) utf8 character */
 extern int mpt_cutf8(const char **, size_t);
+
+/* integer converters */
+extern int mpt_data_convert_int8 (const int8_t  *, int , void *);
+extern int mpt_data_convert_int16(const int16_t *, int , void *);
+extern int mpt_data_convert_int32(const int32_t *, int , void *);
+extern int mpt_data_convert_int64(const int64_t *, int , void *);
+/* unsigned integer converters */
+extern int mpt_data_convert_uint8 (const uint8_t  *, int , void *);
+extern int mpt_data_convert_uint16(const uint16_t *, int , void *);
+extern int mpt_data_convert_uint32(const uint32_t *, int , void *);
+extern int mpt_data_convert_uint64(const uint64_t *, int , void *);
+/* floating point converters */
+extern int mpt_data_convert_float32(const float  *, int , void *);
+extern int mpt_data_convert_float64(const double *, int , void *);
+#ifdef _MPT_FLOAT_EXTENDED_H
+extern int mpt_data_convert_exflt(const long double *, int , void *);
+#endif
+extern int mpt_data_convert_array(const MPT_STRUCT(array) *, int , void *);
+
+/* data converter resolution */
+MPT_TYPE(data_converter) mpt_data_converter(int);
+
 
 /* en/decoder selection */
 extern MPT_TYPE(data_encoder) mpt_message_encoder(int);

@@ -128,8 +128,6 @@ MPT_STRUCT(named_traits)
 	const uintptr_t type;
 };
 
-typedef int (*MPT_TYPE(data_converter))(const void *, int , void *);
-
 
 __MPT_EXTDECL_BEGIN
 
