@@ -291,7 +291,7 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
 		if (!iovec_types) {
 			_iovec_init();
 		}
-		type -= MPT_ENUM(_TypeScalarBase);
+		type -= MPT_ENUM(_TypeVectorBase);
 		return iovec_types[type].size ? &iovec_types[type] : 0;
 	}
 	/* interface type */
