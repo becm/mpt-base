@@ -75,26 +75,22 @@ MPT_INTERFACE(iterator)
 protected:
 	inline ~iterator() {}
 public:
-	virtual int get(int, void *) = 0;
+	virtual const struct value *value() = 0;
 	virtual int advance();
 	virtual int reset();
 	
 	template <typename T>
-	bool consume(T &val)
+	bool get(T &val)
 	{
+		const struct value *src = value();
+		if (!src) {
+			return false;
+		}
 		int type = type_properties<T>::id(true);
 		if (type <= 0) {
 			return false;
 		}
-		T tmp;
-		if (get(type, &tmp) <= 0) {
-			return false;
-		}
-		if (advance() < 0) {
-			return false;
-		}
-		val = tmp;
-		return true;
+		return src->convert(type, &val) >= 0;
 	}
 };
 template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
@@ -107,7 +103,7 @@ template <> inline const struct type_traits *type_properties<iterator *>::traits
 MPT_INTERFACE(iterator);
 MPT_INTERFACE_VPTR(iterator)
 {
-	int (*get)(MPT_INTERFACE(iterator) *, int , void *);
+	const MPT_STRUCT(value) *(*value)(MPT_INTERFACE(iterator) *);
 	int (*advance)(MPT_INTERFACE(iterator) *);
 	int (*reset)(MPT_INTERFACE(iterator) *);
 }; MPT_INTERFACE(iterator) {
@@ -329,6 +325,9 @@ extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 extern int mpt_process_value(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
 extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
 extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
+
+/* get value from iterator and advance */
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
 
 
 __MPT_EXTDECL_END

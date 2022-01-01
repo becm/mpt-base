@@ -14,7 +14,7 @@
 
 #include "values.h"
 
-struct _iter_fdata
+struct iterFactorData
 {
 	double   base,  /* iteration base value */
 	         fact,  /* multiplication factor */
@@ -24,9 +24,19 @@ struct _iter_fdata
 	double   curr;  /* current value */
 };
 
+MPT_STRUCT(iteratorFactor)
+{
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(value) val;
+	
+	struct iterFactorData data;
+};
+
 /* convertable interface */
 static int iterFactorConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
+	MPT_STRUCT(iteratorFactor) *d = MPT_baseaddr(iteratorFactor, val, _mt);
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
@@ -36,7 +46,7 @@ static int iterFactorConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((const void **) ptr) = val + 1;
+		if (ptr) *((const void **) ptr) = (void *) (&d->_it);
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
@@ -56,60 +66,49 @@ static MPT_INTERFACE(metatype) *iterFactorClone(const MPT_INTERFACE(metatype) *m
 	MPT_INTERFACE(metatype) *ptr;
 	
 	if ((ptr = _mpt_iterator_factor(0))) {
-		struct _iter_fdata *val, *d;
-		val = (void *) (ptr + 2);
-		d   = (void *) (mt  + 2);
-		*val = *d;
+		MPT_STRUCT(iteratorFactor) *from, *to;
+		from = MPT_baseaddr(iteratorFactor, mt, _mt);
+		to   = MPT_baseaddr(iteratorFactor, ptr, _mt);
+		
+		to->data = from->data;
 	}
 	return ptr;
 }
 /* iterator interface */
-static int iterFactorGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iterFactorValue(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
-	if (!type) {
-		static const uint8_t fmt[] = "df";
-		if (ptr) {
-			*((const uint8_t **) ptr) = fmt;
-		}
-		return d->pos;
-	}
-	if (d->pos >= d->elem) {
+	MPT_STRUCT(iteratorFactor) *d = MPT_baseaddr(iteratorFactor, it, _it);
+	if (d->data.pos >= d->data.elem) {
 		return 0;
 	}
-	if (type == 'd') {
-		if (ptr) *((double *) ptr) = d->curr;
-		return 'd';
-	}
-	if (type == 'f') {
-		if (ptr) *((float *) ptr) = d->curr;
-		return 'd';
-	}
-	return MPT_ERROR(BadType);
+	d->val.domain = 0;
+	d->val.type = 'd';
+	d->val.ptr = memcpy(d->val._buf, &d->data.curr, sizeof(d->data.curr));
+	return &d->val;
 }
 static int iterFactorAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorFactor) *d = MPT_baseaddr(iteratorFactor, it, _it);
 	
-	if (d->pos >= d->elem) {
+	if (d->data.pos >= d->data.elem) {
 		return MPT_ERROR(MissingData);
 	}
-	if (!d->pos++) {
-		d->curr = d->base;
+	if (!d->data.pos++) {
+		d->data.curr = d->data.base;
 	} else {
-		d->curr *= d->fact;
+		d->data.curr *= d->data.fact;
 	}
-	if (d->pos == d->elem) {
+	if (d->data.pos == d->data.elem) {
 		return 0;
 	}
 	return 'd';
 }
 static int iterFactorReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
-	d->pos = 0;
-	d->curr = d->init;
-	return d->elem;
+	MPT_STRUCT(iteratorFactor) *d = MPT_baseaddr(iteratorFactor, it, _it);
+	d->data.pos = 0;
+	d->data.curr = d->data.init;
+	return d->data.elem;
 }
 
 /*!
@@ -136,33 +135,37 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 		iterFactorClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) factorIter = {
-		iterFactorGet,
+		iterFactorValue,
 		iterFactorAdvance,
 		iterFactorReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_fdata fd = { 10.0, 10.0, 0.0, 10, 0, 0.0 };
-	int len;
+	MPT_STRUCT(iteratorFactor) *data;
+	struct iterFactorData fd = { 10.0, 10.0, 0.0, 10, 0, 0.0 };
 	
 	if (val) {
 		uint32_t iter;
 		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
 			MPT_INTERFACE(iterator) *it = *((MPT_INTERFACE(iterator) * const *) val->ptr);
-			int cont;
-			if ((len = it->_vptr->get(it, 'u', &iter)) <= 0) {
+			int cont = 0, ret;
+			
+			if ((ret = mpt_iterator_consume(it, 'u', &iter)) < 0) {
 				errno = EINVAL;
 				return 0;
 			}
-			cont = 0;
-			if ((len = it->_vptr->get(it, 'd', &fd.base)) > 0) {
-				cont = 1;
-				if ((len = it->_vptr->get(it, 'd', &fd.fact)) > 0) {
-					cont = 2;
-					if ((len = it->_vptr->get(it, 'd', &fd.init)) > 0) {
-						cont = 3;
-					}
-				}
+			if (ret > 0) {
+				++cont;
+				ret = mpt_iterator_consume(it, 'd', &fd.base);
+			}
+			if (ret > 0) {
+				++cont;
+				ret = mpt_iterator_consume(it, 'd', &fd.fact);
+			}
+			if (ret > 0) {
+				++cont;
+				ret = mpt_iterator_consume(it, 'd', &fd.init);
+			}
+			if (ret >= 0) {
+				++cont;
 			}
 			if (cont < 2) {
 				if (fd.base < DBL_MIN) {
@@ -171,7 +174,6 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 				}
 				fd.fact = fd.base;
 			}
-			len += cont;
 			fd.elem = iter + 1;
 		}
 		else if (val->type == 's') {
@@ -233,17 +235,19 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 			}
 		}
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(fd)))) {
+	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	mt->_vptr = &factorMeta;
+	data->_mt._vptr = &factorMeta;
+	data->_it._vptr = &factorIter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &factorIter;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	fd.curr = fd.init;
-	memcpy(it + 1, &fd, sizeof(fd));
+	data->data = fd;
+	data->data.curr = data->data.init;
 	
-	return mt;
+	return &data->_mt;
 }
 

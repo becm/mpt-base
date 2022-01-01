@@ -13,8 +13,12 @@
 
 #include "values.h"
 
-struct _iter_sdata
+MPT_STRUCT(iteratorValues)
 {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(value) val;
+	
 	const char *next;  /* next position in string */
 	double curr;       /* current iterator value */
 };
@@ -22,7 +26,7 @@ struct _iter_sdata
 /* convertable interface */
 static int iterValueConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
-	const struct _iter_sdata *d = (void *) (val + 2);
+	MPT_STRUCT(iteratorValues) *d = MPT_baseaddr(iteratorValues, val, _mt);
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
@@ -32,7 +36,7 @@ static int iterValueConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((const void **) ptr) = val + 1;
+		if (ptr) *((const void **) ptr) = &d->_it;
 		return 's';
 	}
 	if (type == 's') {
@@ -53,47 +57,34 @@ static uintptr_t iterValueRef(MPT_INTERFACE(metatype) *mt)
 }
 static MPT_INTERFACE(metatype) *iterValueClone(const MPT_INTERFACE(metatype) *mt)
 {
-	struct _iter_sdata *d = (void *) (mt + 2);
+	MPT_STRUCT(iteratorValues) *d = MPT_baseaddr(iteratorValues, mt, _mt);
 	MPT_INTERFACE(metatype) *ptr;
+	const char *values = (void *) (d + 1);
 	
-	if ((ptr = mpt_iterator_values((void *) (d + 1)))) {
-		struct _iter_sdata *val = (void *) (ptr + 2);
-		size_t diff = d->next - (char *) mt;
-		val->next = ((char *) mt) + diff;
-		val->curr = d->curr;
+	if ((ptr = mpt_iterator_values(values))) {
+		MPT_STRUCT(iteratorValues) *c = MPT_baseaddr(iteratorValues, ptr, _mt);
+		size_t diff = d->next - values;
+		c->next = ((const char *) (c + 1)) + diff;
+		c->curr = d->curr;
 	}
 	return ptr;
 }
 /* iterator interface */
-static int iterValueGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iterValueValue(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_sdata *d = (void *) (it + 1);
-	if (!type) {
-		static const uint8_t fmt[] = "df";
-		if (ptr) {
-			*((const uint8_t **) ptr) = fmt;
-		}
-		return d->next - (char *) (d + 1);
-	}
+	MPT_STRUCT(iteratorValues) *d = MPT_baseaddr(iteratorValues, it, _it);
 	if (!d->next) {
 		return 0;
 	}
-	if (isnan(d->curr)) {
-		return MPT_ERROR(BadValue);
-	}
-	if (type == 'd') {
-		if (ptr) *((double *) ptr) = d->curr;
-		return 's';
-	}
-	if (type == 'f') {
-		if (ptr) *((float *) ptr) = d->curr;
-		return 's';
-	}
-	return MPT_ERROR(BadType);
+	d->val.domain = 0;
+	d->val.type = 'd';
+	d->val.ptr = memcpy(d->val._buf, &d->curr, sizeof(d->curr));
+	
+	return &d->val;
 }
 static int iterValueAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_sdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorValues) *d = MPT_baseaddr(iteratorValues, it, _it);
 	int len;
 	if (!d->next) {
 		return MPT_ERROR(MissingData);
@@ -110,7 +101,7 @@ static int iterValueAdvance(MPT_INTERFACE(iterator) *it)
 }
 static int iterValueReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_sdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorValues) *d = MPT_baseaddr(iteratorValues, it, _it);
 	const char *base = (const char *) (d + 1);
 	int len;
 	if (!(len = mpt_cdouble(&d->curr, base, 0))) {
@@ -143,13 +134,11 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 		iterValueClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) valueIter = {
-		iterValueGet,
+		iterValueValue,
 		iterValueAdvance,
 		iterValueReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_sdata *d;
+	MPT_STRUCT(iteratorValues) *data;
 	size_t len;
 	double flt;
 	int adv;
@@ -165,18 +154,19 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 	}
 	len = strlen(val) + 1;
 	
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + len))) {
+	if (!(data = malloc(sizeof(*data) + len))) {
 		return 0;
 	}
-	mt->_vptr = &valueMeta;
+	data->_mt._vptr = &valueMeta;
+	data->_it._vptr = &valueIter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &valueIter;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	d = (void *) (it + 1);
-	val = memcpy(d + 1, val, len);
-	d->next = val + adv;
-	d->curr = flt;
+	val = memcpy(data + 1, val, len);
+	data->next = val + adv;
+	data->curr = flt;
 	
-	return mt;
+	return &data->_mt;
 }

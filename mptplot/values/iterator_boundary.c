@@ -14,8 +14,12 @@
 
 #include "values.h"
 
-struct _iter_bdata
+MPT_STRUCT(iteratorBoundary)
 {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(value) val;
+	
 	double   left,  /* left boundary value */
 	         inter, /* non-bounday value */
 	         right; /* right boundary value */
@@ -26,6 +30,7 @@ struct _iter_bdata
 /* convertable interface */
 static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
+	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, val, _mt);
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
@@ -35,7 +40,7 @@ static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, int type, void *ptr
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((void **) ptr) = (void *) (val + 1);
+		if (ptr) *((void **) ptr) = (void *) (&d->_it);
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
@@ -52,7 +57,7 @@ static uintptr_t iterBoundaryRef(MPT_INTERFACE(metatype) *mt)
 }
 static MPT_INTERFACE(metatype) *iterBoundaryClone(const MPT_INTERFACE(metatype) *mt)
 {
-	struct _iter_bdata *d = (void *) (mt + 2);
+	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, mt, _mt);
 	MPT_INTERFACE(metatype) *ptr;
 	
 	if ((ptr = mpt_iterator_boundary(d->elem, d->left, d->inter, d->right))) {
@@ -63,46 +68,32 @@ static MPT_INTERFACE(metatype) *iterBoundaryClone(const MPT_INTERFACE(metatype) 
 	return ptr;
 }
 /* iterator interface */
-static int iterBoundaryGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iterBoundaryValue(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_bdata *d = (void *) (it + 1);
-	double val;
+	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, it, _it);
+	const double *val;
 	
-	if (!type) {
-		static const uint8_t fmt[] = "df";
-		if (ptr) {
-			*((const uint8_t **) ptr) = fmt;
-		}
-		return d->pos;
-	}
-	if (d->pos > d->elem) {
-		return MPT_ERROR(MissingData);
-	}
-	if (d->pos == d->elem) {
+	if (d->pos >= d->elem) {
 		return 0;
 	}
 	if (!d->pos) {
-		val = d->left;
+		val = &d->left;
 	}
 	else if (d->pos < (d->elem - 1)) {
-		val = d->inter;
+		val = &d->inter;
 	}
 	else {
-		val = d->right;
+		val = &d->right;
 	}
-	if (type == 'd') {
-		if (ptr) *((double *) ptr) = val;
-		return 'd';
-	}
-	if (type == 'f') {
-		if (ptr) *((float *) ptr) = val;
-		return 'd';
-	}
-	return MPT_ERROR(BadType);
+	d->val.domain = 0;
+	d->val.type = 'd';
+	d->val.ptr = memcpy (d->val._buf, val, sizeof(*val));
+	
+	return &d->val;
 }
 static int iterBoundaryAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_bdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, it, _it);
 	if (d->pos >= d->elem) {
 		return MPT_ERROR(MissingData);
 	}
@@ -113,7 +104,7 @@ static int iterBoundaryAdvance(MPT_INTERFACE(iterator) *it)
 }
 static int iterBoundaryReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_bdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, it, _it);
 	d->pos = 0;
 	return d->elem;
 }
@@ -139,32 +130,31 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t len, double left,
 		iterBoundaryClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) boundaryIter = {
-		iterBoundaryGet,
+		iterBoundaryValue,
 		iterBoundaryAdvance,
 		iterBoundaryReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_bdata *data;
+	MPT_STRUCT(iteratorBoundary) *data;
 	if (len < 2) {
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*data)))) {
+	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	mt->_vptr = &boundaryMeta;
+	data->_mt._vptr = &boundaryMeta;
+	data->_it._vptr = &boundaryIter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &boundaryIter;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	data = (void *) (it + 1);
 	data->left = left;
 	data->inter = inter;
 	data->right = right;
 	data->elem = len;
 	data->pos  = 0;
 	
-	return mt;
+	return &data->_mt;
 }
 

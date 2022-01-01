@@ -53,9 +53,11 @@ extern int main(int argc, char * const argv[])
 	if ((v = std::strrchr(*argv, '/'))) {
 		buf.shift(v + 1 - *argv);
 	}
-	while (buf.get(type(v), &v) > 0) {
+	while (buf.get(v)) {
 		std::cout << v << std::endl;
-		buf.advance();
+		if (!buf.advance()) {
+			break;
+		}
 	}
 	
 	return 0;

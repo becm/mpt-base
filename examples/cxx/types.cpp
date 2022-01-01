@@ -22,7 +22,8 @@ struct Value : public mpt::value
 	template <typename T>
 	bool set(const T &t)
 	{
-		return value::set(mpt::type_properties<T>::id(true), &t);
+		int type = mpt::type_properties<T>::id(true);
+		return type > 0 && value::set(type, &t);
 	}
 };
 
@@ -32,8 +33,8 @@ void print()
 	int id = mpt::type_properties<T>::id(true);
 	int sid = mpt::type_properties<mpt::span<const T> >::id(true);
 	int mid = mpt::type_properties<mpt::span<T> >::id(true);
-	uint8_t bid = mpt::basetype(id);
-	uint8_t bsid = mpt::basetype(sid);
+	int bid = mpt::basetype(id);
+	int bsid = mpt::basetype(sid);
 	std::cout << id  << ' ' << '<' << bid  << '>' << ' ';
 	std::cout << sid << ' ' << '<' << bsid << '>' << ' ';
 	std::cout << mid << std::endl;
@@ -109,25 +110,25 @@ extern int main(int, char *[])
 		type = curr;
 	}
 	
-	long l = -5;
-	v.set(&l);
+	long l = -1;
+	v.set(l);
 	std::cout << "long(" << v.type_id() << ") = " << v << std::endl;
 	
-	unsigned long u = 5;
-	v.set(&u);
+	unsigned long u = 1;
+	v.set(u);
 	std::cout << "ulong(" << v.type_id() << ") = " << v << std::endl;
 	
-	float f(5);
+	float f(sizeof(float));
 	std::cout << "float(" << type_id(f) << ") = " << f << std::endl;
-	double d(5);
-	std::cout << "double(" << type_id(d) << ") = " << d << std::endl;
+	double d[2] = { (sizeof(double)), 1.23 };
+	std::cout << "double(" << type_id(*d) << ") = " << *d << std::endl;
 // 	mpt::float80 r = d;
 // 	std::cout << "float80(" << type(r) << ") = " << r << std::endl;
-	long double e = 5;
+	long double e = sizeof(long double);
 	std::cout << "long double(" << type_id(e) << ") = " << e << std::endl;
 	
-	mpt::span<const double> t(&d, 1);
-	std::cout << "span<" << type_id(d) <<">(" << type_id(t) << ") = " << t << std::endl;
-	v.set(&t);
+	mpt::span<const double> t(d, 2);
+	std::cout << "span<" << type_id(*d) <<">(" << type_id(t) << ") = " << t << std::endl;
+	v.set(t);
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
 }

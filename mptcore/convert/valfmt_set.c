@@ -24,13 +24,12 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 {
 	MPT_INTERFACE(iterator) *it;
 	MPT_STRUCT(array) tmp = MPT_ARRAY_INIT;
-	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	MPT_STRUCT(value_format) fmt;
 	int ret, curr;
 	
 	if (!src) {
 		static const MPT_STRUCT(type_traits) *traits = 0;
-		const MPT_STRUCT(buffer) *buf;
+		MPT_STRUCT(buffer) *buf;
 		if (!(buf = arr->_buf)) {
 			return 0;
 		}
@@ -38,60 +37,67 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 		if (!traits || (!(traits = mpt_type_traits(MPT_ENUM(TypeValFmt))))) {
 			return MPT_ERROR(BadOperation);
 		}
-		if (buf->_content_traits != traits) {
+		if (!buf) {
+			if (!(buf = _mpt_buffer_alloc(0, 0))) {
+				return MPT_ERROR(BadOperation);
+			}
+			buf->_content_traits = traits;
+		}
+		else if (traits != buf->_content_traits) {
 			return MPT_ERROR(BadType);
 		}
-		return buf->_used / sizeof(fmt);
+		else {
+			if ((buf = buf->_vptr->detach(buf, 0))) {
+				return MPT_ERROR(BadOperation);
+			}
+			buf->_used = 0;
+		}
+		return MPT_ENUM(TypeValFmt);
 	}
 	/* get elements from iterator */
 	it = 0;
 	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeIteratorPtr), &it)) > 0
-	    && it
-	    && (curr  = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
-		if (!curr) {
-			mpt_array_clone(arr, 0);
-			return 0;
-		}
+	    && it) {
 		ret = 0;
-		do {
-			if ((curr = it->_vptr->advance(it)) < 0) {
+		while (1) {
+			static const MPT_STRUCT(value_format) def = MPT_VALFMT_INIT;
+			const MPT_STRUCT(value) *val;
+			
+			if (!(val = it->_vptr->value(it))) {
 				break;
 			}
-			if (mpt_valfmt_add(&tmp, fmt) < 0) {
-				mpt_array_clone(&tmp, 0);
-				return MPT_ERROR(BadOperation);
+			fmt = def;
+			if (MPT_type_isConvertable(val->type)) {
+				MPT_INTERFACE(convertable) *elem;
+				if ((elem = *((void * const *) val->ptr))) {
+					elem->_vptr->convert(elem, MPT_ENUM(TypeValFmt), &fmt);
+				}
 			}
-			if (!curr) {
+			else if (val->type == MPT_ENUM(TypeValFmt) && val->ptr) {
+				fmt = *((const MPT_STRUCT(value_format) *) val->ptr);
+			}
+			
+			if ((curr = it->_vptr->advance(it) <= 0)) {
 				break;
 			}
 			++ret;
-			curr = it->_vptr->get(it, MPT_ENUM(TypeValFmt), &fmt);
 		}
-		while (curr > 0);
 	}
-	/* get elements from value */
-	else if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValue), &val)) < 0) {
-		const char *from = 0;
-		if ((ret = src->_vptr->convert(src, 's', &from)) < 0) {
-			return ret;
-		}
-		if (ret && (ret = mpt_valfmt_parse(&tmp, from)) < 0) {
-			return ret;
-		}
-		ret = 0;
-	}
-	/* get elements from value elements */
-	else if (val.type == MPT_ENUM(TypeValFmt)) {
-		const MPT_STRUCT(value_format) *fptr = val.ptr;
-		if (fptr && (mpt_valfmt_add(&tmp, *fptr) < 0)) {
+	/* assign single element */
+	else if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
+		if (mpt_valfmt_add(&tmp, fmt) < 0) {
 			mpt_array_clone(&tmp, 0);
 			return MPT_ERROR(BadOperation);
 		}
 		ret = 0;
 	}
 	/* get elements from string value */
-	else if (val.ptr) {
-		if ((ret = mpt_valfmt_parse(&tmp, val.ptr)) < 0) {
+	else {
+		const char *from = 0;
+		if ((ret = src->_vptr->convert(src, 's', &from)) < 0) {
+			return ret;
+		}
+		if (ret && (ret = mpt_valfmt_parse(&tmp, from)) < 0) {
 			return ret;
 		}
 		ret = 0;

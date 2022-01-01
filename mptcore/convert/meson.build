@@ -8,7 +8,6 @@ src = files(
   'convert_key.c',
   'convert_number.c',
   'convert_string.c',
-  'data_convert.c',
   'data_convert_array.c',
   'data_convert_float.c',
   'data_convert_int.c',
@@ -27,7 +26,6 @@ src = files(
   'float80.c',
   'newline_string.c',
   'number_print.c',
-  'scalar_argv.c',
   'string_dest.c',
   'tostring.c',
   'type_int.c',
@@ -35,4 +33,6 @@ src = files(
   'valfmt_get.c',
   'valfmt_parse.c',
   'valfmt_set.c',
+  'value_argv.c',
+  'value_convert.c',
 )

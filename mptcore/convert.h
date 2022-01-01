@@ -49,36 +49,6 @@ protected:
 	uint8_t _d[10];
 };
 
-MPT_STRUCT(scalar)
-{
-#ifdef __cplusplus
-	inline scalar() : len(0), type(0)
-	{}
-#endif
-	int len;
-	int type;
-	union {
-		int8_t   b;
-		uint8_t   y;
-		int16_t n;
-		uint16_t q;
-		int32_t i;
-		uint32_t u;
-		int64_t x;
-		uint64_t t;
-		
-		long l;
-		
-		float f;
-		double d;
-#ifdef _MPT_FLOAT_EXTENDED_H
-		long double e;
-#endif
-		void *p;
-		struct iovec v;
-	} val;
-};
-
 /* value output format */
 #ifdef __cplusplus
 MPT_STRUCT(value_format)
@@ -145,11 +115,11 @@ extern void mpt_bswap_64(size_t , uint64_t *);
 extern void mpt_bswap_32(size_t , uint32_t *);
 extern void mpt_bswap_16(size_t , uint16_t *);
 
-/* set scalar to next argument */
-extern int mpt_scalar_argv(MPT_STRUCT(scalar) *, int , va_list);
+/* set value to next argument */
+extern int mpt_value_argv(MPT_STRUCT(value) *, int , va_list);
 
 /* get data from pointer and description */
-extern int mpt_data_convert(const void **, int , void *, int );
+extern int mpt_value_convert(const MPT_STRUCT(value) *, int , void *);
 /* get string data */
 extern const char *mpt_data_tostring(const void **, int , size_t *);
 

@@ -43,14 +43,15 @@ extern int main(int argc, char *argv[])
 		}
 		MPT_metatype_convert(src, MPT_ENUM(TypeIteratorPtr), &it);
 		while (1) {
+			const MPT_STRUCT(value) *src;
 			double val;
 			int res;
-			if (!(res = it->_vptr->get(it, 'd', &val))) {
-				fprintf(stderr, "%s: %d\n", "conversion range error", -res);
+			if (!(src = it->_vptr->value(it))) {
+				fprintf(stderr, "%s\n", "value query error");
 				break;
 			}
-			if (res < 0) {
-				fprintf(stderr, "%s: %d\n", "conversion error", -res);
+			if ((res = mpt_value_convert(src, 'd', &val)) < 0) {
+				fprintf(stderr, "%s: %d\n", "conversion range error", -res);
 				break;
 			}
 			fprintf(stdout, "%g ", val);

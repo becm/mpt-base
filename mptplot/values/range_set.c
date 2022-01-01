@@ -28,21 +28,18 @@ extern int mpt_range_set(MPT_STRUCT(range) *r, const MPT_STRUCT(value) *val)
 		if (it) {
 			double min = 0.0, max = 1.0;
 			int len;
-			if ((len = it->_vptr->get(it, 'd', &min)) < 0) {
+			if ((len = mpt_iterator_consume(it, 'd', &min)) < 0) {
 				return len;
 			}
-			if (it->_vptr->advance(it) <= 0) {
+			if (!len) {
 				return MPT_ERROR(MissingData);
 			}
-			if (len > 0 && (len = it->_vptr->get(it, 'd', &max)) > 0) {
-				if (it->_vptr->advance(it) < 0) {
-					return MPT_ERROR(MissingData);
-				}
-				r->min = min;
-				r->max = max;
-				return 2;
+			if ((len = mpt_iterator_consume(it, 'd', &min)) < 0) {
+				return len;
 			}
-			return MPT_ERROR(MissingData);
+			r->min = min;
+			r->max = max;
+			return 2;
 		}
 		r->min = 0.0;
 		r->max = 1.0;

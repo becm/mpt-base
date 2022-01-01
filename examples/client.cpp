@@ -109,8 +109,9 @@ int main(int argc, char * const argv[])
 	if ((val = mpt::typecast<mpt::config>(*mpt::config::global())->get("mpt.args"))) {
 		mpt::iterator *it = mpt::typecast<mpt::iterator>(*val);
 		const char *arg;
-		while (it->consume(arg)) {
+		while (it->get(arg)) {
 			std::cerr << arg << std::endl;
+			it->advance();
 		}
 	}
 }

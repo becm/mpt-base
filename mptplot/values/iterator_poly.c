@@ -18,8 +18,12 @@ struct coeff_poly {
 	double shift, mult;
 };
 
-struct _iter_poly
+MPT_STRUCT(iteratorPolynom)
 {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(value) val;
+	
 	_MPT_ARRAY_TYPE(double) grid;
 	long pos;
 	int coeff;
@@ -28,6 +32,7 @@ struct _iter_poly
 /* convertable interface */
 static int iterPolyConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
+	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, val, _mt);
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
@@ -37,7 +42,7 @@ static int iterPolyConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((const void **) ptr) = val + 1;
+		if (ptr) *((const void **) ptr) = &d->_it;
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	return MPT_ERROR(BadType);
@@ -45,7 +50,7 @@ static int iterPolyConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 /* metatype interface */
 static void iterPolyUnref(MPT_INTERFACE(metatype) *mt)
 {
-	struct _iter_poly *d = (void *) (mt + 2);
+	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, mt, _mt);
 	mpt_array_clone(&d->grid, 0);
 	free(mt);
 }
@@ -60,24 +65,14 @@ static MPT_INTERFACE(metatype) *iterPolyClone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* iterator interface */
-static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iterPolyValue(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_poly *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, it, _it);
 	MPT_STRUCT(buffer) *buf;
-	const struct coeff_poly *coeff = (void *) (d + 1);
 	double sum, val;
 	long max, j;
 	
-	if (!type) {
-		static const uint8_t fmt[] = "d";
-		if (ptr) {
-			*((const uint8_t **) ptr) = fmt;
-		}
-		return d->pos;
-	}
-	if (type != 'd') {
-		return MPT_ERROR(BadType);
-	}
+	/* check limits and set initial value */
 	if ((buf = d->grid._buf)) {
 		const double *src = (void *) (buf + 1);
 		max = buf->_used / sizeof(double);
@@ -92,46 +87,56 @@ static int iterPolyGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 	else {
 		val = d->pos;
 	}
-	if (!ptr) {
-		return 'd';
+	/* reuse calculations of previous call */
+	if (d->val.type) {
+		return &d->val;
 	}
+	/* no coefficients */
 	if (!(max = d->coeff)) {
-		*((double *) ptr) = val;
-		return 'd';
+		sum = val;
 	}
-	for (j = 0, sum = 0.0; j < max; j++) {
-		double prod, tmp = val;
-		int k;
-		
-		tmp += coeff[j].shift;
-		
-		for (k = j + 1, prod = coeff[j].mult; k < max; k++) {
-			prod *= tmp;
+	/* calculate polynom */
+	else {
+		const struct coeff_poly *coeff = (void *) (d + 1);
+		for (j = 0, sum = 0.0; j < max; j++) {
+			double prod, tmp = val;
+			int k;
+			
+			tmp += coeff[j].shift;
+			
+			for (k = j + 1, prod = coeff[j].mult; k < max; k++) {
+				prod *= tmp;
+			}
+			sum += prod;
 		}
-		sum += prod;
 	}
-	*((double *) ptr) = sum;
+	/* assign new value */
+	d->val.domain = 0;
+	d->val.type = 'd';
+	d->val.ptr = memcpy(d->val._buf, &sum, sizeof(sum));
 	
-	return 'd';
+	return &d->val;
 }
 static int iterPolyAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_poly *d = (void *) (it + 1);
-	MPT_STRUCT(buffer) *buf;
+	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, it, _it);
+	const MPT_STRUCT(buffer) *buf;
 	
 	if ((buf = d->grid._buf)) {
 		long max = buf->_used / sizeof(double);
 		if (d->pos >= max) {
 			return MPT_ERROR(BadOperation);
 		}
+		d->val.type = 0;
 		if (++d->pos == max) {
 			return 0;
 		}
 		return 'd';
 	}
 	if (d->pos >= UINT_MAX) {
-		return MPT_ERROR(BadOperation);
+		return MPT_ERROR(MissingData);
 	}
+	d->val.type = 0;
 	if (++d->pos == UINT_MAX) {
 		return 0;
 	}
@@ -139,7 +144,7 @@ static int iterPolyAdvance(MPT_INTERFACE(iterator) *it)
 }
 static int iterPolyReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_poly *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, it, _it);
 	MPT_STRUCT(buffer) *buf;
 	d->pos = 0;
 	if ((buf = d->grid._buf)) {
@@ -170,14 +175,12 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 		iterPolyClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) polyIter = {
-		iterPolyGet,
+		iterPolyValue,
 		iterPolyAdvance,
 		iterPolyReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
+	MPT_STRUCT(iteratorPolynom) *data;
 	MPT_STRUCT(buffer) *buf;
-	struct _iter_poly *d;
 	struct coeff_poly coeff[128];
 	int nc = 0, ns = sizeof(coeff)/sizeof(*coeff);
 	
@@ -221,22 +224,23 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	for ( ; ns < nc; ++ns) {
 		coeff[ns].shift = 0;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d) + nc * sizeof(*coeff)))) {
+	if (!(data = malloc(sizeof(*data) + nc * sizeof(*coeff)))) {
 		if (buf) {
 			buf->_vptr->unref(buf);
 		}
 		return 0;
 	}
-	mt->_vptr = &polyMeta;
+	data->_mt._vptr = &polyMeta;
+	data->_it._vptr = &polyIter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &polyIter;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	d = (void *) (it + 1);
-	d->grid._buf = buf;
-	d->pos = 0;
-	d->coeff = nc;
-	memcpy(d + 1, coeff, nc * sizeof(*coeff));
+	data->grid._buf = buf;
+	data->pos = 0;
+	data->coeff = nc;
+	memcpy(data + 1, coeff, nc * sizeof(*coeff));
 	
-	return mt;
+	return &data->_mt;
 }

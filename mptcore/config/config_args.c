@@ -8,6 +8,7 @@
 #include "object.h"
 #include "output.h"
 #include "types.h"
+#include "convert.h"
 
 #include "config.h"
 
@@ -43,45 +44,67 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 	count = 0;
 	do {
 		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
+		const MPT_STRUCT(value) *val = args->_vptr->value(args);
+		const void *ptr;
+		const char *end;
 		
-		/* get assign target */
-		if ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr)) >= 0) {
-			p.assign = 0;
-			mpt_path_set(&p, pr.name, -1);
-		}
-		else if ((res = args->_vptr->get(args, 's', &pr.name)) >= 0) {
-			const char *end;
-			
-			if (!(end = pr.name)) {
-				++err;
-				if (info) {
-					mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d",
-					        MPT_tr("bad string value"), ++count);
-					continue;
-				}
-				return count ? count : MPT_ERROR(BadValue);
+		if (!val || !(ptr = val->ptr)) {
+			if (info) {
+				mpt_log(info, __func__, MPT_LOG(Error), "%s",
+				        MPT_tr("unable to set default config"));
 			}
-			if (!(end = strchr(end, '='))) {
+			continue;
+		}
+		if (MPT_type_isConvertable(val->type)) {
+			MPT_INTERFACE(convertable) *conv;
+			
+			if (!(conv = *((void * const *) ptr))) {
+				if (info) {
+					mpt_log(info, __func__, MPT_LOG(Error), "%s",
+					        MPT_tr("missing convertable pointer"));
+				}
+				continue;
+			}
+			/* get assign target */
+			else if ((res = conv->_vptr->convert(conv, MPT_ENUM(TypeProperty), &pr)) >= 0 && pr.val.type) {
+				p.assign = 0;
+				mpt_path_set(&p, pr.name, -1);
+			}
+			else if ((res = conv->_vptr->convert(conv, 's', &pr.name)) < 0) {
+				if (info) {
+					mpt_log(info, __func__, MPT_LOG(Error), "%s",
+					        MPT_tr("invalid assinment"));
+				}
+				continue;
+			}
+			else if (!pr.name) {
+				if (info) {
+					mpt_log(info, __func__, MPT_LOG(Error), "%s",
+					        MPT_tr("invalid property name"));
+				}
+				continue;
+			}
+		}
+		else if (!(pr.name = mpt_data_tostring(&ptr, val->type, 0))) {
+			if (info) {
+				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d",
+				        MPT_tr("bad string value"), ++count);
+			}
+			continue;
+		}
+		/* no property type assigned */
+		if (!pr.val.type) {
+			if (!(end = strchr(pr.name, '='))) {
 				++err;
 				if (info) {
 					mpt_log(info, __func__, MPT_LOG(Warning), "%s: %s",
 					        MPT_tr("missing path separator"), pr.name);
-					continue;
 				}
-				return count ? count : MPT_ERROR(BadValue);
+				continue;
 			}
 			p.assign = '=';
 			mpt_path_set(&p, pr.name, end - pr.name);
 			MPT_value_set_string(&pr.val, end + 1);
-		}
-		else {
-			if (info) {
-				int type = args->_vptr->get(args, 0, 0);
-				mpt_log(info, __func__, MPT_LOG(Warning), "%s (%d): %d",
-				        MPT_tr("bad source type"), type, ++count);
-				continue;
-			}
-			return count ? count : MPT_ERROR(BadType);
 		}
 		/* no top level assign */
 		if (!pr.name) {
@@ -89,7 +112,6 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			if (info) {
 				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d",
 				        MPT_tr("missing config path"), ++count);
-				continue;
 			}
 			return count ? count : MPT_ERROR(BadType);
 		}
@@ -97,9 +119,8 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 		if (cfg->_vptr->assign(cfg, &p, &pr.val) < 0) {
 			++err;
 			if (info) {
-				int type = args->_vptr->get(args, 0, 0);
 				mpt_log(info, __func__, MPT_LOG(Error), "%s (%d): %d",
-				        MPT_tr("config assign error"), type, ++count);
+				        MPT_tr("config assign error"), val->type, ++count);
 				continue;
 			}
 			return count ? count : MPT_ERROR(BadValue);

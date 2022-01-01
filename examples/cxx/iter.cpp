@@ -27,8 +27,9 @@ extern int main(int , char * const [])
 	iterator *it = typecast<iterator>(*m);
 	
 	double val;
-	while (it->consume<double>(val)) {
+	while (it->get(val)) {
 		std::cout << val << std::endl;
+		it->advance();
 	}
 	m->unref();
 	

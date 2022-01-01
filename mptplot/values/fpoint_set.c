@@ -4,6 +4,7 @@
 
 #include "meta.h"
 #include "types.h"
+#include "convert.h"
 
 #include "layout.h"
 
@@ -34,24 +35,15 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, MPT_INTERFACE(convertable) *sr
 		}
 	}
 	else {
-		if ((ret = it->_vptr->get(it, 'f', &tmp.x)) < 0) {
-			return MPT_ERROR(BadType);
+		/* first coordinate */
+		if ((ret = mpt_iterator_consume(it, 'f', &tmp.x)) < 0) {
+			return ret;
 		}
 		if (!ret) {
-			*pt = tmp;
-			return 0;
-		}
-		else if ((ret = it->_vptr->advance(it)) < 0) {
-			return ret;
-		}
-		else if ((ret = it->_vptr->get(it, 'f', &tmp.y)) < 0) {
-			return ret;
-		}
-		else if (!ret) {
-			tmp.y = tmp.x;
 			ret = 1;
+			tmp.y = tmp.x;
 		}
-		else if ((ret = it->_vptr->advance(it)) < 0) {
+		else if ((ret = mpt_iterator_consume(it, 'f', &tmp.y)) < 0) {
 			return ret;
 		}
 		else {

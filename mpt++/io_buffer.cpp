@@ -80,24 +80,22 @@ io::buffer *io::buffer::clone() const
 	return b;
 }
 // iterator interface
-int io::buffer::get(int type, void *ptr)
+const struct value *io::buffer::value()
 {
-	int me = type_properties<io::interface *>::id(true);
-	
-	if (!type) {
-		mpt_slice_get(0, type, ptr);
-		return me < 0 ? type_properties<array>::id(true) : me;
+	if (_state.scratch || !_state.done) {
+		return 0;
 	}
-	if (_state.scratch) {
-		return message::InProgress;
+	span<uint8_t> d = data();
+	uint8_t *end;
+	if (!(end = (uint8_t *) memchr(d.begin(), 0, d.size()))) {
+		return 0;
 	}
-	size_t off = _d.length() - _state.done;
-	slice s(_d);
-	s.shift(off);
-	if ((type = mpt_slice_get(&s, type, ptr)) <= 0) {
-		return type;
-	}
-	return me < 0 ? TypeMetaPtr : me;
+	struct iovec vec;
+	vec.iov_base = d.begin(),
+	vec.iov_len = end + 1 - d.begin();
+	// struct iovec is copied to local value buffer
+	_value.set(MPT_type_toVector('c'), &vec);
+	return &_value;
 }
 int io::buffer::advance()
 {

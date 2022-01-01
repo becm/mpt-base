@@ -15,14 +15,21 @@
 #include "object.h"
 
 
-struct parseIterator {
-	MPT_INTERFACE(iterator) ctl;
+MPT_STRUCT(parseIterator) {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	
+	struct {
+		MPT_INTERFACE(convertable) _conv;
+		MPT_STRUCT(value) val;
+	} elem;
+	
 	char *val, *end, *restore, save;
 };
 /* iterator interface */
-static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
+static int parseConvertElement(MPT_INTERFACE(convertable) *conv, int type, void *dest)
 {
-	struct parseIterator *it = (void *) ctl;
+	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, conv, elem._conv);
 	const char *txt;
 	int len;
 	
@@ -43,7 +50,7 @@ static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 		if (it->restore) {
 			it->restore = 0;
 		}
-		return MPT_ERROR(BadValue);
+		return MPT_ERROR(MissingData);
 	}
 	/* return full remaining data */
 	if (type == 's') {
@@ -95,9 +102,14 @@ static int parseGet(MPT_INTERFACE(iterator) *ctl, int type, void *dest)
 	}
 	return 's';
 }
-static int parseAdvance(MPT_INTERFACE(iterator) *ctl)
+static const MPT_STRUCT(value) *parseValue(MPT_INTERFACE(iterator) *ptr)
 {
-	struct parseIterator *it = (void *) ctl;
+	MPT_STRUCT(parseIterator) *d = MPT_baseaddr(parseIterator, ptr, _it);
+	return &d->elem.val;
+}
+static int parseAdvance(MPT_INTERFACE(iterator) *ptr)
+{
+	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, ptr, _it);
 	char *next;
 	size_t len;
 	
@@ -128,9 +140,9 @@ static int parseAdvance(MPT_INTERFACE(iterator) *ctl)
 	}
 	return 's';
 }
-static int parseReset(MPT_INTERFACE(iterator) *ctl)
+static int parseReset(MPT_INTERFACE(iterator) *ptr)
 {
-	struct parseIterator *it = (void *) ctl;
+	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, ptr, _it);
 	
 	if (it->restore) {
 		*it->restore = it->save;
@@ -145,7 +157,7 @@ static int parseReset(MPT_INTERFACE(iterator) *ctl)
 /* convertable interface */
 static int parseConv(MPT_INTERFACE(convertable) *val, int type, void *dest)
 {
-	struct parseIterator *it = (void *) (val + 1);
+	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, val, _mt);
 	
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
@@ -173,7 +185,7 @@ static int parseConv(MPT_INTERFACE(convertable) *val, int type, void *dest)
 		return 's';
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (dest) *((void **) dest) = it;
+		if (dest) *((void **) dest) = &it->_it;
 		return 's';
 	}
 	return MPT_ERROR(BadType);
@@ -190,7 +202,7 @@ static uintptr_t parseRef(MPT_INTERFACE(metatype) *mt)
 }
 static MPT_INTERFACE(metatype) *parseClone(const MPT_INTERFACE(metatype) *mt)
 {
-	struct parseIterator *it = (void *) (mt + 1);
+	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, mt, _mt);
 	const char *ptr;
 	
 	if (it->restore) {
@@ -221,12 +233,15 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char 
 		parseClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) ctlIter = {
-		parseGet,
+		parseValue,
 		parseAdvance,
 		parseReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	struct parseIterator *it;
+	static const MPT_INTERFACE_VPTR(convertable) ctlConv = {
+		parseConvertElement
+	};
+	MPT_STRUCT(parseIterator) *it;
+	MPT_INTERFACE(convertable) *conv;
 	size_t slen, vlen;
 	char *dest;
 	
@@ -242,11 +257,16 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char 
 		vlen = strlen(val);
 	}
 	/* memory for header, constent and string separation/end */
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + slen + vlen + 2))) {
+	if (!(it = malloc(sizeof(*it) + slen + vlen + 2))) {
 		return 0;
 	}
-	mt->_vptr = &ctlMeta;
-	it = (void *) (mt + 1);
+	it->_mt._vptr = &ctlMeta;
+	it->_it._vptr = &ctlIter;
+	
+	conv = &it->elem._conv;
+	*((uint8_t *) &it->elem.val._bufsize) = sizeof(it->elem.val._buf);
+	it->elem._conv._vptr = &ctlConv;
+	MPT_value_set_data(&it->elem.val, MPT_ENUM(TypeConvertablePtr), &conv);
 	
 	/* save separator config */
 	dest = (char *) (it + 1);
@@ -263,11 +283,10 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char 
 	dest[vlen] = '\0';
 	
 	/* setup iterator data */
-	it->ctl._vptr = &ctlIter;
 	it->val = dest;
 	it->end = dest + vlen;
 	it->restore = 0;
 	it->save = 0;
 	
-	return mt;
+	return &it->_mt;
 }

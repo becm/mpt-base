@@ -23,7 +23,8 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 {
 	MPT_INTERFACE(convertable) *args;
 	MPT_INTERFACE(iterator) *it;
-	const char *val;
+	const MPT_STRUCT(value) *val;
+	const char *str;
 	int ret;
 	
 	it = 0;
@@ -33,16 +34,15 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 		return 0;
 	}
 	/* set config file */
-	val = 0;
-	if ((ret = it->_vptr->get(it, 's', &val)) <= 0
-	    || !val) {
+	if (!(val = it->_vptr->value(it)) || val->type != 's') {
 		mpt_log(info, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("bad client config filename"));
 		return ret;
 	}
-	if ((ret = mpt_config_set(cfg, 0, val, 0, 0)) < 0) {
+	str = *(char * const *) val->ptr;
+	if ((ret = mpt_config_set(cfg, 0, str, 0, 0)) < 0) {
 		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
-		        MPT_tr("failed to set client config"), val);
+		        MPT_tr("failed to set client config"), str);
 		return ret;
 	}
 	if (!info) {

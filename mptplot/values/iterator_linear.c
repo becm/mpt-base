@@ -14,8 +14,12 @@
 
 #include "values.h"
 
-struct _iter_ldata
+MPT_STRUCT(iteratorLinear)
 {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(value) val;
+	
 	double   base,  /* current/base value */
 	         step;  /* advance step size */
 	uint32_t elem,  /* number of elements */
@@ -25,6 +29,8 @@ struct _iter_ldata
 /* convertable interface */
 static int iterConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
+	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, val, _mt);
+	
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 0 };
 		if (ptr) {
@@ -34,7 +40,7 @@ static int iterConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((const void **) ptr) = val + 1;
+		if (ptr) *((const void **) ptr) = &d->_it;
 		return 'd';
 	}
 	return MPT_ERROR(BadType);
@@ -51,45 +57,39 @@ static uintptr_t iterRef(MPT_INTERFACE(metatype) *mt)
 }
 static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 {
-	struct _iter_ldata *d = (void *) (mt + 2);
 	MPT_INTERFACE(metatype) *ptr;
 	
 	if ((ptr = _mpt_iterator_range(0))) {
-		struct _iter_ldata *next = (void *) (ptr + 2);
-		*next = *d;
+		MPT_STRUCT(iteratorLinear) *dest, *from;
+		from = MPT_baseaddr(iteratorLinear, mt, _mt);
+		dest = MPT_baseaddr(iteratorLinear, ptr, _mt);
+		
+		dest->base = from->base;
+		dest->step = from->step;
+		dest->elem = from->elem;
+		dest->pos  = from->pos;
 	}
 	return ptr;
 }
 /* iterator interface */
-static int iterGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iterValue(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_ldata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, it, _it);
 	double val;
-	
-	if (!type) {
-		static const uint8_t fmt[] = "df";
-		if (ptr) {
-			*((const uint8_t **) ptr) = fmt;
-		}
-		return d->pos;
-	}
 	if (d->pos >= d->elem) {
-		return MPT_ERROR(MissingData);
+		return 0;
 	}
 	val = d->base + d->pos * d->step;
-	if (type == 'd') {
-		if (ptr) *((double *) ptr) = val;
-		return 'd';
-	}
-	if (type == 'f') {
-		if (ptr) *((float *) ptr) = val;
-		return 'd';
-	}
-	return MPT_ERROR(BadType);
+	
+	d->val.domain = 0;
+	d->val.type = 'd';
+	d->val.ptr = memcpy(d->val._buf, &val, sizeof(val));
+	
+	return &d->val;
 }
 static int iterAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_ldata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, it, _it);
 	if (d->pos >= d->elem) {
 		return MPT_ERROR(MissingData);
 	}
@@ -100,7 +100,7 @@ static int iterAdvance(MPT_INTERFACE(iterator) *it)
 }
 static int iterReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_ldata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, it, _it);
 	d->pos = 0;
 	return d->elem;
 }
@@ -111,7 +111,7 @@ static const MPT_INTERFACE_VPTR(metatype) _vptr_linear_meta = {
 	iterClone
 };
 static const MPT_INTERFACE_VPTR(iterator) _vptr_linear_iter = {
-	iterGet,
+	iterValue,
 	iterAdvance,
 	iterReset
 };
@@ -144,28 +144,28 @@ static int parseRange(const char *from, MPT_STRUCT(range) *r)
  */
 extern MPT_INTERFACE(metatype) *mpt_iterator_linear(uint32_t len, double start, double end)
 {
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_ldata *d;
+	MPT_STRUCT(iteratorLinear) *data;
 	if (len < 2) {
 		errno = EINVAL;
 		return 0;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d)))) {
+	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	mt->_vptr = &_vptr_linear_meta;
+	data->_mt._vptr = &_vptr_linear_meta;
+	data->_it._vptr = &_vptr_linear_iter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &_vptr_linear_iter;
 	
-	d = (void *) (it + 1);
-	d->base = start;
-	d->step = (end - start) / (len - 1);
-	d->elem = len;
-	d->pos  = 0;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	return mt;
+	data->base = start;
+	data->step = (end - start) / (len - 1);
+	data->elem = len;
+	data->pos  = 0;
+	
+	return &data->_mt;
 }
 
 /*!
@@ -189,7 +189,11 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 	}
 	else if (val->type == MPT_ENUM(TypeIteratorPtr)) {
 		MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
-		if ((ret = it->_vptr->get(it, 'u', &iv)) < 1
+		const MPT_STRUCT(value) *val = it->_vptr->value(it);
+		MPT_TYPE(data_converter) conv;
+		
+		if (!(conv = mpt_data_converter(val->type))
+		 || (ret = conv(val->ptr, 'u', &iv)) < 0
 		 || (ret = mpt_range_set(&r, val)) < 0) {
 			errno = EINVAL;
 			return 0;
@@ -231,9 +235,7 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
  */
 extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 {
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_ldata *d;
+	MPT_STRUCT(iteratorLinear) *data;
 	MPT_STRUCT(range) r = { 0.0, 1.0 };
 	double step = 0.1;
 	int iv = 10;
@@ -243,12 +245,13 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 		int ret;
 		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
 			MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
+			
 			if ((ret = mpt_range_set(&r, val)) < 0) {
 				errno = EINVAL;
 				return 0;
 			}
 			step = (r.max - r.min) / 10;
-			if (ret >= 2 && (ret = it->_vptr->get(it, 'd', &step)) < 0) {
+			if (ret >= 2 && ((ret = mpt_iterator_consume(it, 'd', &step)) < 0)) {
 				errno = EINVAL;
 				return 0;
 			}
@@ -284,20 +287,21 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 		}
 		iv = (r.max - r.min) / step;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*d)))) {
+	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	mt->_vptr = &_vptr_linear_meta;
+	data->_mt._vptr = &_vptr_linear_meta;
+	data->_it._vptr = &_vptr_linear_iter;
 	
-	it = (void *) (mt + 1);
-	it->_vptr = &_vptr_linear_iter;
+	data->val.domain = 0;
+	data->val.type = 0;
+	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
 	
-	d = (void *) (it + 1);
-	d->base = r.min;
-	d->step = step;
-	d->elem = iv + 1;
-	d->pos = 0;
+	data->base = r.min;
+	data->step = step;
+	data->elem = iv + 1;
+	data->pos = 0;
 	
-	return mt;
+	return &data->_mt;
 }
 

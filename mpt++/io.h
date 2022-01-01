@@ -52,7 +52,7 @@ public:
 	void unref() __MPT_OVERRIDE;
 	buffer *clone() const __MPT_OVERRIDE;
 	
-	int get(int , void *) __MPT_OVERRIDE;
+	const struct value *value() __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
 	int reset() __MPT_OVERRIDE;
 	
@@ -62,6 +62,8 @@ public:
 	int64_t pos() __MPT_OVERRIDE;
 	bool seek(int64_t) __MPT_OVERRIDE;
 	span<uint8_t> peek(size_t) __MPT_OVERRIDE;
+protected:
+	struct value _value;
 };
 
 #ifdef _MPT_STREAM_H

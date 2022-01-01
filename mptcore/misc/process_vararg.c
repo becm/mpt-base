@@ -19,28 +19,17 @@ struct iteratorVararg
 	MPT_INTERFACE(iterator) _it;
 	const char *fmt;
 	va_list arg;
-	MPT_STRUCT(scalar) s;
+	struct {
+		const char *fmt;
+		va_list arg;
+	} org;
+	MPT_STRUCT(value) val;
 };
 
-static int iteratorVarargGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+static const MPT_STRUCT(value) *iteratorVarargValue(MPT_INTERFACE(iterator) *it)
 {
 	const struct iteratorVararg *va = (void *) it;
-	const void *val = &va->s.val;
-	if (!va->s.len) {
-		return 0;
-	}
-#ifdef MPT_NO_CONVERT
-	if (va->s.type == type) {
-		if (ptr) memcpy(ptr, val, va->s.len);
-		return MPT_ENUM(TypeIteratorPtr);
-	}
-	return MPT_ERROR(BadType);
-#else
-	if ((type = mpt_data_convert(&val, va->s.type, ptr, type)) < 0) {
-		return type;
-	}
-	return MPT_ENUM(TypeIteratorPtr);
-#endif
+	return &va->val;
 }
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 {
@@ -50,20 +39,21 @@ static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 		return MPT_ERROR(MissingData);
 	}
 	if (!(ret = *va->fmt)) {
-		va->fmt = 0;
-		va->s.len = 0;
+		va->val.type = 0;
 		return 0;
 	}
-	if ((ret = mpt_scalar_argv(&va->s, ret, va->arg)) < 0) {
+	if ((ret = mpt_value_argv(&va->val, ret, va->arg)) < 0) {
 		return ret;
 	}
 	++va->fmt;
-	return va->s.type;
+	return va->val.type;
 }
 static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 {
-	(void) it;
-	return MPT_ERROR(BadOperation);
+	struct iteratorVararg *va = (void *) it;
+	va_copy(va->arg, va->org.arg);
+	va->fmt = va->org.fmt;
+	return strlen(va->fmt);
 }
 
 /*!
@@ -82,7 +72,7 @@ static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, MPT_INTERFACE(iterator) *), void *ctx)
 {
 	static const MPT_INTERFACE_VPTR(iterator) ctl = {
-		iteratorVarargGet,
+		iteratorVarargValue,
 		iteratorVarargAdvance,
 		iteratorVarargReset
 	};
@@ -93,12 +83,13 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 		return MPT_ERROR(BadArgument);
 	}
 	va._it._vptr = &ctl;
-	va.s.len = 0;
+	va.val.type = 0;
 	if (!(va.fmt = fmt) || !(ret = *fmt)) {
 		return proc(ctx, &va._it);
 	}
 	va_copy(va.arg, arg);
-	if ((ret = mpt_scalar_argv(&va.s, ret, va.arg)) >= 0) {
+	va_copy(va.org.arg, arg);
+	if ((ret = mpt_value_argv(&va.val, ret, va.arg)) >= 0) {
 		++va.fmt;
 		ret = proc(ctx, &va._it);
 	}

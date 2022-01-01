@@ -163,6 +163,8 @@ MPT_STRUCT(value)
 	
 	value &operator=(const value &);
 	
+	int convert(int , void *) const;
+	
 	inline int type_id() const
 	{
 		return domain ? static_cast<int>(BadType) : type;

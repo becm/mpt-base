@@ -19,8 +19,13 @@
 
 #include "values.h"
 
-struct _iter_fdata
+MPT_STRUCT(iteratorFile)
 {
+	MPT_INTERFACE(metatype) _mt;
+	MPT_INTERFACE(iterator) _it;
+	MPT_INTERFACE(convertable) _conv;
+	MPT_STRUCT(value) value;
+	
 	FILE *fd;
 	int type;
 	int count;
@@ -30,6 +35,8 @@ struct _iter_fdata
 /* convertable interface */
 static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, val, _mt);
+	
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_ENUM(TypeFilePtr) };
 		if (ptr) {
@@ -39,11 +46,10 @@ static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 		return MPT_ENUM(TypeIteratorPtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) *((const void **) ptr) = val + 1;
+		if (ptr) *((const void **) ptr) = &d->_it;
 		return MPT_ENUM(TypeFilePtr);
 	}
 	if (type == MPT_ENUM(TypeFilePtr)) {
-		struct _iter_fdata *d = (void *) (val + 2);
 		if (ptr) *((void **) ptr) = d->fd;
 		return MPT_ENUM(TypeIteratorPtr);
 	}
@@ -52,7 +58,7 @@ static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 /* metatype interface */
 static void fileUnref(MPT_INTERFACE(metatype) *mt)
 {
-	struct _iter_fdata *d = (void *) (mt + 2);
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
 	fclose(d->fd);
 	free(mt);
 }
@@ -66,11 +72,11 @@ static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
 	(void) mt;
 	return 0;
 }
-/* iterator interface */
-static int fileGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
+/* element convertable interface */
+static int fileGet(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
-	const void *src;
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, conv, _conv);
+	MPT_TYPE(data_converter) converter;
 	int ret;
 	
 	if (!type) {
@@ -115,21 +121,26 @@ static int fileGet(MPT_INTERFACE(iterator) *it, int type, void *ptr)
 	else if (d->type < 0) {
 		return 0;
 	}
-	src = d->val;
-	if ((ret = mpt_data_convert(&src, d->type, ptr, type)) < 0) {
-		return ret;
+	if (!(converter = mpt_data_converter(d->type))) {
+		return MPT_ERROR(BadType);
 	}
-	return d->type;
+	return (ret = converter(d->val, type, ptr)) < 0 ? ret : d->type;
+}
+/* iterator interface */
+static const MPT_STRUCT(value) *fileValue(MPT_INTERFACE(iterator) *it)
+{
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, it, _it);
+	return &d->value;
 }
 static int fileAdvance(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, it, _it);
 	if (d->type < 0) {
 		return MPT_ERROR(MissingData);
 	}
 	if (!d->type) {
 		int ret;
-		if ((ret = fileGet(it, 'd', 0)) < 0) {
+		if ((ret = fileGet(&d->_conv, 'd', 0)) < 0) {
 			return ret;
 		}
 		++d->count;
@@ -140,7 +151,7 @@ static int fileAdvance(MPT_INTERFACE(iterator) *it)
 }
 static int fileReset(MPT_INTERFACE(iterator) *it)
 {
-	struct _iter_fdata *d = (void *) (it + 1);
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, it, _it);
 	rewind(d->fd);
 	d->type = 0;
 	d->count = 0;
@@ -166,29 +177,34 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 		fileClone
 	};
 	static const MPT_INTERFACE_VPTR(iterator) fileIter = {
-		fileGet,
+		fileValue,
 		fileAdvance,
 		fileReset
 	};
-	MPT_INTERFACE(metatype) *mt;
-	MPT_INTERFACE(iterator) *it;
-	struct _iter_fdata *data;
+	static const MPT_INTERFACE_VPTR(convertable) fileElem = {
+		fileGet
+	};
+	MPT_STRUCT(iteratorFile) *data;
+	MPT_INTERFACE(convertable) *conv;
 	FILE *file;
 	
 	if (!(file = fdopen(fd, "r"))) {
 		return 0;
 	}
-	if (!(mt = malloc(sizeof(*mt) + sizeof(*it) + sizeof(*data)))) {
+	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	mt->_vptr = &fileMeta;
-	it = (void *) (mt + 1);
-	it->_vptr = &fileIter;
-	data = (void *) (it + 1);
+	data->_mt._vptr = &fileMeta;
+	data->_it._vptr = &fileIter;
+	data->_conv._vptr = &fileElem;
+	
+	conv = &data->_conv;
+	MPT_value_set_data(&data->value, MPT_ENUM(TypeConvertablePtr), &conv);
+	
 	data->fd = file;
 	data->type = 0;
 	data->count = 0;
 	
-	return mt;
+	return &data->_mt;
 }
 

@@ -18,57 +18,6 @@ struct object_property
 	MPT_INTERFACE(object) *obj;
 	const char *prop;
 };
-struct meta_scalar
-{
-	MPT_INTERFACE(metatype) _mt;
-	MPT_STRUCT(scalar) val;
-	char fmt[2];
-};
-/* convertable interface */
-static int conv_scalar(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
-{
-	const struct meta_scalar *s = (void *) conv;
-	const void *val = &s->val.val;
-	if (!type) {
-		if (ptr) {
-			*((const char **) ptr) = s->fmt;
-			return 0;
-		}
-		return s->val.type;
-	}
-#ifdef MPT_NO_CONVERT
-	if (type == s->val.type) {
-		if (ptr && s->val.len) memcpy(ptr, val, s->val.len);
-		return type;
-	}
-#else
-	if (mpt_data_convert(&val, s->val.type, ptr, type) >= 0) {
-		return s->val.type;
-	}
-#endif
-	return MPT_ERROR(BadType);
-}
-/* metatype interface */
-static void unref_scalar(MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
-	MPT_ABORT("unref scalar value interface");
-}
-static uintptr_t addref_scalar(MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
-	MPT_ABORT("ref scalar value interface");
-}
-static MPT_INTERFACE(metatype) *clone_scalar(const MPT_INTERFACE(metatype) *mt)
-{
-	const struct meta_scalar *s = (void *) mt;
-	struct meta_scalar *c;
-	if (!(c = malloc(sizeof(*c)))) {
-		return 0;
-	}
-	*c = *s;
-	return &c->_mt;
-}
 /* set object property from iterator */
 static int process_object_args(void *ptr, MPT_INTERFACE(iterator) *it)
 {
@@ -81,25 +30,12 @@ static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, c
 	struct object_property op;
 	int ret;
 	if (!(ret = fmt[1])) {
-		static const MPT_INTERFACE_VPTR(metatype) metaValCtl = {
-		    { conv_scalar },
-		    unref_scalar,
-		    addref_scalar,
-		    clone_scalar
-		};
-		struct meta_scalar s;
-		va_list cpy;
-		va_copy(cpy, va);
-		ret = mpt_scalar_argv(&s.val, *fmt, cpy);
-		va_end(cpy);
-		if (ret < 0) {
+		/* single value condition */
+		MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
+		if ((ret = mpt_value_argv(&val, *fmt, va)) < 0) {
 			return ret;
 		}
-		s._mt._vptr = &metaValCtl;
-		if ((ret = obj->_vptr->set_property(obj, prop, (MPT_INTERFACE(convertable) *) &s._mt)) >= 0
-		    || ret != MPT_ERROR(BadType)) {
-			return ret;
-		}
+		return mpt_object_set_value(obj, prop, &val);
 	}
 	op.obj = obj;
 	op.prop = prop;

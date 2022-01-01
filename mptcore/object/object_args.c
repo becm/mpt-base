@@ -6,6 +6,7 @@
 
 #include "meta.h"
 #include "types.h"
+#include "convert.h"
 
 #include "object.h"
 
@@ -22,54 +23,60 @@
  */
 extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *args)
 {
-	MPT_STRUCT(property) pr;
-	int res, count;
+	MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
+	const MPT_STRUCT(value) *val;
+	int count;
 	
 	count = 0;
-	while ((res = args->_vptr->get(args, MPT_ENUM(TypeProperty), &pr))) {
-		char name[256];
-		/* use string property */
-		if (res < 0) {
-			const char *end;
+	while ((val = args->_vptr->value(args))) {
+		const void *ptr;
+		int res;
+		
+		if (!val) {
+			break;
+		}
+		pr.name = 0;
+		pr.val.type = 0;
+		ptr = val->ptr;
+		if (MPT_type_isConvertable(val->type)) {
+			MPT_INTERFACE(convertable) *conv = *((void * const *) ptr);
 			
-			/* string on iterator */
-			if ((res = args->_vptr->get(args, 's', &end)) < 0) {
-				return count ? count : res;
+			if (conv->_vptr->convert(conv, MPT_ENUM(TypeProperty), &pr) < 0
+			 || mpt_object_set_value(obj, pr.name, &pr.val) < 0) {
+				pr.val.type = 0;
+				conv->_vptr->convert(conv, 's', &pr.name);
 			}
-			else if (!res) {
-				return count;
-			}
-			/* split property name */
-			if (!(pr.name = end)) {
+		}
+		/* value is not assigned via property */
+		if (!pr.val.type) {
+			char name[256];
+			const char *str;
+			if (!pr.name && !(pr.name = mpt_data_tostring(&ptr, val->type, 0))) {
 				return count ? count : MPT_ERROR(BadValue);
 			}
 			/* set non-assign options to default value */
-			if (!(end = strchr(end, '='))) {
+			if (!(str = strchr(str, '='))) {
 				MPT_value_set_string(&pr.val, 0);
 			} else {
 				size_t len;
-				MPT_value_set_string(&pr.val, end + 1);
-				len = end - pr.name;
+				MPT_value_set_string(&pr.val, str + 1);
+				len = str - pr.name;
 				if (len >= sizeof(name)) {
 					return count ? count : MPT_ERROR(MissingBuffer);
 				}
 				name[len++] = 0;
 				pr.name = memcpy(name, pr.name, len);
 			}
+			/* assign config */
+			if (mpt_object_set_value(obj, pr.name, &pr.val) < 0) {
+				return count ? count : MPT_ERROR(BadValue);
+			}
 		}
-		/* no top level assign */
-		else if (!pr.name) {
-			return count ? count : MPT_ERROR(BadType);
+		if ((res = args->_vptr->advance(args)) <= 0) {
+			return count ? res : count;
 		}
-		if (mpt_object_set_value(obj, pr.name, &pr.val) < 0) {
-			return count ? count : MPT_ERROR(BadValue);
-		}
-		/* assign config */
 		++count;
-		if ((res = args->_vptr->advance(args)) < 0) {
-			return count;
-		}
-	};
+	}
 	return count;
 }
 

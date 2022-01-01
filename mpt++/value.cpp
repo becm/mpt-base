@@ -12,12 +12,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-// conversion wrapper
-int convert(const void **val, int fmt, void *dest, int type)
-{
-	return mpt_data_convert(val, fmt, dest, type);
-}
-
 // byte order adaption
 float swapOrder(float v)
 {
@@ -71,6 +65,11 @@ value &value::operator=(const value &val)
 	return *this;
 }
 
+int value::convert(int type, void *ptr) const
+{
+	return mpt_value_convert(this, type, ptr);
+}
+
 bool value::set(const char *val)
 {
 	if (val) {
@@ -90,9 +89,9 @@ bool value::set(const char *val)
 
 bool value::set(int t, const void *d)
 {
-	const type_traits *traits = type_traits::get(type);
+	const type_traits *traits = type_traits::get(t);
 	
-	if (traits && !traits->fini && !traits->init && traits->size && (traits->size < _bufsize)) {
+	if (traits && !traits->fini && !traits->init && traits->size && (traits->size <= _bufsize)) {
 		if (d) {
 			ptr = memcpy(_buf, d, traits->size);
 		} else {

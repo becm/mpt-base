@@ -83,6 +83,7 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeMetaPtrSize)   = 0xf00,
 #define MPT_type_isMetaPtr(v)     ((v) >= MPT_ENUM(_TypeMetaPtrBase) && (v) <= MPT_ENUM(_TypeMetaPtrMax))
 	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaPtrBase),
+#define MPT_type_isConvertable(v) ((v) == MPT_ENUM(TypeConvertablePtr) || (v) == MPT_ENUM(TypeMetaRef) || MPT_type_isMetaPtr(v))
 	
 	/* generic complex types */
 	MPT_ENUM(_TypeValueBase)     = 0x1000,
