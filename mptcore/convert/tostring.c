@@ -53,7 +53,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		if (adv < 0) {
 			return adv;
 		}
-		return save(dest, buf, len);
+		return save(dest, buf, adv);
 	}
 	/* vector representation in value */
 	if ((curr = MPT_type_toScalar(val->type)) > 0) {
