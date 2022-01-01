@@ -127,6 +127,7 @@ static struct generic_traits_chunk *generic_types = 0;
 
 static const MPT_STRUCT(type_traits) pointer_traits = MPT_TYPETRAIT_INIT(sizeof(void *));
 
+/* core type resources */
 static void _core_fini(void) {
 	free(core_types);
 	core_types = 0;
@@ -140,7 +141,7 @@ static void _core_init(void) {
 	}
 	atexit(_core_fini);
 }
-
+/* scalar type resources */
 static void _scalar_fini(void) {
 	free(scalar_types);
 	iovec_types = 0;
@@ -154,7 +155,7 @@ static void _scalar_init(void) {
 	}
 	atexit(_scalar_fini);
 }
-
+/* vector type resources */
 static void _iovec_fini(void) {
 	free(iovec_types);
 	iovec_types = 0;
@@ -162,19 +163,19 @@ static void _iovec_fini(void) {
 static void _iovec_init(void) {
 	iovec_types = calloc(sizeof(*iovec_types), MPT_ENUM(_TypeVectorSize));
 	size_t i;
-	for (i = 0; i < MPT_ENUM(_TypeVectorSize); i++) {
+	for (i = 0; i < MPT_arrsize(scalar_sizes); i++) {
 		int pos = scalar_sizes[i].type - MPT_ENUM(_TypeScalarBase);
 		*((size_t *) &iovec_types[pos].size) = sizeof(struct iovec);
 	}
 	atexit(_iovec_fini);
 }
-
+/* dynamic basic type resources */
 static void _dynamic_fini(void) {
 	free(dynamic_types);
 	dynamic_types = 0;
 	dynamic_pos = 0;
 }
-
+/* metatype pointer resources */
 static void _meta_fini(void) {
 	struct named_traits_chunk *group = meta_types;
 	meta_types = 0;
@@ -209,7 +210,7 @@ static void _meta_init(void) {
 	meta_types->next = 0;
 	meta_types->used = 1;
 }
-
+/* interface resources */
 static void _interfaces_fini(void) {
 	int i;
 	for (i = 0; i < interface_pos; i++) {
@@ -225,23 +226,22 @@ static void _interfaces_init(void) {
 		return;
 	}
 	for (i = 0; i < MPT_arrsize(core_interfaces); i++) {
-		int pos = core_interfaces[i].type - MPT_ENUM(_TypeInterfaceBase);
-		MPT_STRUCT(named_traits) *elem = interface_types[pos];
+		MPT_STRUCT(named_traits) *elem = interface_types[i];
 		
 		if (elem || !(elem = malloc(sizeof(*elem) + sizeof(pointer_traits)))) {
 			continue;
 		}
 		*((const void **) &elem->traits) = memcpy(elem + 1, &pointer_traits, sizeof(elem->traits));
 		*((const char **) &elem->name) = core_interfaces[i].name;
-		*((uintptr_t *) &elem->type) = MPT_ENUM(_TypeInterfaceBase) + i;
+		*((uintptr_t *) &elem->type) = core_interfaces[i].type;
 		
-		interface_types[pos] = elem;
+		interface_types[i] = elem;
 	}
 	interface_pos = MPT_ENUM(_TypeInterfaceAdd) - MPT_ENUM(_TypeInterfaceBase);
 	
 	atexit(_interfaces_fini);
 }
-
+/* clean up generic types */
 static void _generic_types_fini()
 {
 	struct generic_traits_chunk *group = generic_types;
@@ -492,7 +492,7 @@ extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *name, int le
 	}
 	for (i = 0; i < interface_pos; i++) {
 		const MPT_STRUCT(named_traits) *elem = interface_types[i];
-		if (elem && elem->name && strcmp(name, elem->name)) {
+		if (elem && elem->name && !strcmp(name, elem->name)) {
 			return elem;
 		}
 	}
