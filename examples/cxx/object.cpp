@@ -88,6 +88,8 @@ extern int main(int , char * const [])
 		std::cout << "next type: " << typeid(*val).name() << std::endl;
 	}
 	mpt::layout::line *li = new mpt::reference<mpt::layout::line>::type;
+	
+	
 	mpt::layout::graph::axis *ax = new mpt::reference<mpt::layout::graph::axis>::type;
 	
 	std::cout << "ao: " << ax->type() << std::endl;
@@ -114,6 +116,9 @@ extern int main(int , char * const [])
 	lr["x2"] = 4.6;
 	std::cout << lr["x2"] << std::endl;
 	lr["color"] = "#6666";
+	
+	li->unref();
+	ax->unref();
 	
 	return 0;
 }

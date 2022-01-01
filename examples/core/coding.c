@@ -73,7 +73,7 @@ static void dec(MPT_STRUCT(array) *arr, MPT_TYPE(data_decoder) decode)
 int main(int argc, char * const argv[])
 {
 	struct {
-		uint8_t len, data[255];
+		uint8_t len, data[15];
 	} msg[] = {
 	  { 1, { 0x0 } },
 	  { 4, { 0x11, 0x22, 0x00, 0x33 } },
@@ -132,5 +132,8 @@ int main(int argc, char * const argv[])
 		arr._state.done = arr._state.scratch = 0;
 		mpt_buffer_cut(arr._d._buf, 0, 0);
 	}
+	
+	mpt_encode_array_fini(&arr);
+	
 	return 0;
 }

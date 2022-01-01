@@ -365,6 +365,8 @@ extern char *mpt_array_string(MPT_STRUCT(array) *);
 
 /* add message to array */
 extern ssize_t mpt_array_push(MPT_STRUCT(encode_array) *, size_t len, const void *data);
+/* finalize encode array content */
+extern void mpt_encode_array_fini(MPT_STRUCT(encode_array) *);
 
 /* pointer/metatype array */
 extern long mpt_array_compact(void **, long);

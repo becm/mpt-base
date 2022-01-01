@@ -67,5 +67,7 @@ extern int main(int argc, char *argv[])
 		src->_vptr->unref(src);
 		fputc('\n', stdout);
 	}
+	mpt_array_clone(&arr, 0);
+	
 	return 0;
 }

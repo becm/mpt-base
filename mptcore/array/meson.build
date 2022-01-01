@@ -23,6 +23,7 @@ src = files(
   'copy_df.c',
   'copy_fd.c',
   'drange.c',
+  'encode_array_fini.c',
   'frange.c',
   'irange.c',
   'map.c',

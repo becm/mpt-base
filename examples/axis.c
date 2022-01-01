@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 	
 	mpt_properties_print(getter, &obj, printm, stdout, -1);
 	
+	mpt_axis_fini(&obj);
+	
 	return 0;
 }
 
