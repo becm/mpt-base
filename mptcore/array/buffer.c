@@ -94,11 +94,10 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, buf);
 	MPT_STRUCT(buffer) *next;
 	const MPT_STRUCT(type_traits) *traits;
-	size_t add;
 	
 	/* get real required size */
 	if ((traits = buf->buf._content_traits)) {
-		size_t size;
+		size_t size, add;
 		if (!(size = traits->size)) {
 			return 0;
 		}
@@ -135,7 +134,8 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 		}
 	}
 	/* move data content */
-	else if ((add = buf->buf._used)) {
+	else {
+		size_t add = buf->buf._used;
 		if (add > len) {
 			void (*fini)(void *);
 			if (!traits) {
@@ -146,6 +146,7 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 				size_t pos, esize = traits->size;
 				/* align used data */
 				add -= (add % esize);
+				/* length already aligned in initial fixup */
 				
 				for (pos = len; pos < add; pos += esize) {
 					fini(ptr + pos);
@@ -153,8 +154,12 @@ static MPT_STRUCT(buffer) *_mpt_buffer_alloc_detach(MPT_STRUCT(buffer) *ptr, siz
 				add = len;
 			}
 		}
-		memcpy(next + 1, buf + 1, add);
+		/* copy remaining data to new location */
+		if (add) {
+			memcpy(next + 1, buf + 1, add);
+		}
 		next->_used = add;
+		/* remove old data reference */
 		free(buf);
 	}
 	return next;
