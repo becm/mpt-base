@@ -321,10 +321,6 @@ public:
 	{
 		return convert(0, 0);
 	}
-	inline operator const char *()
-	{
-		return string();
-	}
 	
 	virtual int convert(int , void *) = 0;
 	

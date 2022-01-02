@@ -213,9 +213,11 @@ public:
 	{
 		return _name;
 	}
-	inline const char *operator *() const
+	inline struct property operator *() const
 	{
-		return _name;
+		::mpt::property pr(_pos);
+		_ref.property(&pr);
+		return pr;
 	}
 	bool select(uintptr_t);
 protected:

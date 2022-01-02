@@ -25,7 +25,7 @@ static void printCfg(int depth, const mpt::span<const mpt::config::item> list)
 		mpt::metatype *mt = a.instance();
 		if (mt) {
 			std::cout << " = ";
-			const char *content = *mt;
+			const char *content = mt->string();
 			if (content) std::cout << content;
 		}
 		std::cout << std::endl;
@@ -43,7 +43,7 @@ extern int main(int argc, char * const argv[])
 	
 	if (conf.set("a.value.text", "Der täĸẞŦ")
 	    && (val = conf.get("a.value.text"))) {
-		name = *val;
+		name = val->string();
 		std::cout << typeid(*val).name() << " -> " << name << std::endl;
 	}
 	for (int i = 1; i < argc; ++i) {

@@ -95,7 +95,7 @@ extern int main(int , char * const [])
 	std::cout << "ao: " << ax->type() << std::endl;
 	std::cout << "lo: " << li->type() << std::endl;
 	
-	for (auto &i : *static_cast<const mpt::object *>(li)) {
+	for (auto i : *li) {
 		std::cout << "  " << i.name << " = " << i.val << std::endl;
 	}
 	
