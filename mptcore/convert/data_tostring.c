@@ -33,7 +33,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	static const char def[] = "\0";
 	const char *base;
 	
-	/* simple pointer */
+	/* simple string pointer */
 	if (type == 's') {
 		const char * const *txt = *from;
 		if (!(base = *txt)) {
@@ -45,16 +45,16 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 		*from = txt + 1;
 		return base;
 	}
-	/* data is text array */
-	if (type == MPT_ENUM(TypeArray)) {
+	/* text buffer (pointer or tracked reference) */
+	if (type == MPT_ENUM(TypeArray)
+	 || type == MPT_ENUM(TypeBufferPtr)) {
 		static const MPT_STRUCT(type_traits) *traits= 0;
 		const MPT_STRUCT(array) *arr = *from;
 		MPT_STRUCT(buffer) *b;
 		
 		if (!(b = arr->_buf)) {
-			*from = arr + 1;
-			if (len) *len = 0;
-			return def;
+			errno = ENOTSUP;
+			return 0;
 		}
 		/* initialize traits binding */
 		if (!traits || (!(traits = mpt_type_traits('c')))) {
@@ -62,6 +62,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			return 0;
 		}
 		if (b->_content_traits != traits) {
+			errno = EINVAL;
 			return 0;
 		}
 		base = (void *) (b + 1);
@@ -72,18 +73,20 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			base = def;
 		}
 		else if (!memchr(base, 0, b->_used)) {
+			errno = EINVAL;
 			return 0;
 		}
 		*from = arr + 1;
 		return (char *) (b + 1);
 	}
-	/* data is text vector */
+	/* vector data with text content */
 	if (type == MPT_type_toVector('c')) {
 		const struct iovec *vec = *from;
 		
 		base = vec->iov_base;
 		
 		if (!vec || (vec->iov_len && !base)) {
+			errno = EINVAL;
 			return 0;
 		}
 		if (!base) {
@@ -93,10 +96,12 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			*len = vec->iov_len;
 		}
 		else if (!vec->iov_len || base[vec->iov_len - 1]) {
+			errno = EINVAL;
 			return 0;
 		}
 		*from = vec + 1;
 		return base;
 	}
+	errno = EINVAL;
 	return 0;
 }
