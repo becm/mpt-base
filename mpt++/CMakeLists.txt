@@ -4,23 +4,25 @@ cmake_minimum_required(VERSION 2.6)
 set(sources
   array.cpp
   client.cpp
+  collection.cpp
   config.cpp
+  convertable.cpp
   event.cpp
   identifier.cpp
   io_buffer.cpp io_queue.cpp
   logger.cpp
-  makeid.cpp
   message.cpp
-  meta_basic.cpp meta_buffer.cpp meta_create.cpp meta_new.cpp meta_typed.cpp
-  node_new.cpp
+  meta_buffer.cpp meta_new.cpp
+  metatype_basic_instance.cpp metatype_create.cpp metatype_generic_instance.cpp
   node.cpp
+  node_new.cpp
   object.cpp
-  refcount_wrap.cpp
+  output.cpp
   parse.cpp
   queue.cpp
   refcount_wrap.cpp
   std_cout.cpp
-  value_store.cpp
+  type_traits_wrap.cpp
   value.cpp
 )
 set(linklibs ${Mpt_CORE_LIBRARIES})
@@ -30,8 +32,10 @@ set(headers)
 if(MPT_WITH_PLOT)
   set(sources ${sources}
     cycle.cpp destination.cpp
-    graph.cpp graphic.cpp item.cpp linepart.cpp layout.cpp
+    graph.cpp graphic.cpp item_group.cpp
+    linepart.cpp layout.cpp
     mapping.cpp polyline.cpp transform.cpp
+    value_store.cpp
   )
   list(APPEND includedirs ${Mpt_PLOT_INCLUDE_DIRS})
   list(INSERT linklibs 0 ${Mpt_PLOT_LIBRARIES})

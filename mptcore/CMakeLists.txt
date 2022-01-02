@@ -16,6 +16,7 @@ set(subdirs
   output
   parse
   queue
+  types
 )
 
 # submodules have headers

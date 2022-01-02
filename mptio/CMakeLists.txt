@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.6)
 set(sources
   connect.c
   input_create.c
-  input_typeid.c
+  input_traits.c
   output_remote.c
 )
 foreach(dir IN ITEMS connection notify stream)

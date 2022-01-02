@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 set(sources
   mapping.c
   rawdata_create.c
-  rawdata_typeid.c
+  rawdata_type_traits.c
 )
 foreach(dir IN ITEMS history layout output values)
   aux_source_directory(${dir} sources)
