@@ -32,6 +32,9 @@ find_package(Mpt REQUIRED COMPONENTS ${components})
 
 install(EXPORT mpt-targets DESTINATION share/mpt)
 
+enable_testing()
+add_subdirectory(examples)
+
 set(CPACK_PACKAGE_NAME "mpt-base")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "0")
