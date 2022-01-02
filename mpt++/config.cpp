@@ -83,6 +83,19 @@ bool path::next()
 	return (mpt_path_next(this) < 0) ? false : true;
 }
 
+/*!
+ * \ingroup mptConfig
+ * \brief get config interface traits
+ * 
+ * Get named traits for config pointer data.
+ * 
+ * \return named traits for config pointer
+ */
+const struct named_traits *config::pointer_traits()
+{
+	return mpt_interface_traits(TypeConfigPtr);
+}
+
 // default implementation for config
 bool config::set(const char *p, const char *val, int sep)
 {

@@ -27,6 +27,8 @@ public:
 	
 	static class config &config();
 	
+	static const struct named_traits *pointer_traits();
+	
 	enum { LogStatus = logger::Debug2 };
 protected:
 	inline ~client() { }

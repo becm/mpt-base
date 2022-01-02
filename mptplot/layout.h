@@ -370,8 +370,10 @@ public:
 	item_group *clone() const __MPT_OVERRIDE;
 	
 	int each(item_handler_t *, void *) const __MPT_OVERRIDE;
-	int append(const identifier *, metatype *) __MPT_OVERRIDE;
 	size_t clear(const metatype * = 0) __MPT_OVERRIDE;
+	
+	int append(const identifier *, metatype *) __MPT_OVERRIDE;
+	class metatype *create(const char *, int = -1) __MPT_OVERRIDE;
 	int bind(const relation *, logger * = logger::default_instance()) __MPT_OVERRIDE;
 	
 	inline span<const item<metatype> > items() const

@@ -28,6 +28,8 @@ public:
 	virtual int sync(int = -1) = 0;
 	virtual int await(int (*)(void *, const struct message *) = 0, void * = 0) = 0;
 	
+	static const struct named_traits *pointer_traits();
+	
 	int message(const char *, int, const char *, ... );
 # define MPT_OUTFLAG(x) x
 #else
@@ -77,6 +79,7 @@ public:
 	int message(const char *, int , const char *, ...);
 	
 	static logger *default_instance();
+	static const struct named_traits *pointer_traits();
 	
 	virtual int log(const char *, int, const char *, va_list) = 0;
 # define MPT_LOG(x) x

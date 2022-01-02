@@ -5,10 +5,12 @@ cxx_src = files(
   'array.cpp',
   'client.cpp',
   'config.cpp',
+  'collection.cpp',
   'convertable.cpp',
   'event.cpp',
   'identifier.cpp',
   'io.cpp', 'io_buffer.cpp', 'io_queue.cpp',
+  'iterator.cpp',
   'logger.cpp',
   'message.cpp',
   'meta_buffer.cpp',
@@ -24,7 +26,6 @@ cxx_src = files(
   'std_cout.cpp',
   'type_traits_wrap.cpp',
   'value.cpp',
-  'value_store.cpp',
 )
 
 # creator overrides
@@ -40,12 +41,13 @@ if with_plot
     'destination.cpp',
     'graph.cpp',
     'graphic.cpp',
-    'item.cpp',
+    'item_group.cpp',
     'layout.cpp',
     'linepart.cpp',
     'mapping.cpp',
     'polyline.cpp',
-    'transform.cpp'
+    'transform.cpp',
+    'value_store.cpp'
   )
   cxx += plot
 endif

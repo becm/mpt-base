@@ -245,7 +245,7 @@ public:
 		}
 		int type = id(true);
 		if (type < 0 || !(traits = type_traits::get(type))) {
-			traits = get_traits();
+			traits = _dynamic_traits();
 		}
 		return traits;
 	}
@@ -263,12 +263,12 @@ public:
 		if (!obtain) {
 			return BadType;
 		}
-		return _valtype = type_traits::add(*get_traits());
+		return _valtype = type_traits::add(*_dynamic_traits());
 	}
 private:
-	static const type_traits *get_traits() {
-		static const struct type_traits span_traits(sizeof(span<T>));
-		return &span_traits;
+	static const type_traits *_dynamic_traits() {
+		static const struct type_traits traits(sizeof(span<T>));
+		return &traits;
 	}
 	type_properties();
 };

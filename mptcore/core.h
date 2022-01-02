@@ -223,8 +223,6 @@ extern int mpt_string_nextvis(const char **);
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-extern int convert(const void **, int , void *, int);
-
 /*! reduced slice with type but no data reference */
 template <typename T>
 class span
@@ -330,6 +328,8 @@ public:
 	}
 	
 	virtual int convert(int , void *) = 0;
+	
+	static const struct named_traits *pointer_traits();
 };
 
 #else

@@ -33,5 +33,13 @@ extern int main(int , char * const [])
 	}
 	m->unref();
 	
+	double vals[] = { 1, 2, 3 };
+	source<double> *s = new source<double>(vals, 3);
+	while (s->get(val)) {
+		std::cout << val << std::endl;
+		s->advance();
+	}
+	delete s;
+	
 	return 0;
 }

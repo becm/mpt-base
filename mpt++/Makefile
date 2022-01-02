@@ -16,7 +16,8 @@ LINK = ${CXX} ${CXXFLAGS}
 LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
 # special C++ features for compilation
-NEED_CXX_AUTO = graph.o item.o layout.o linepart.o mapping.o
+NEED_CXX_AUTO = collection.o graph.o item_group.o layout.o linepart.o mapping.o
+NEED_CXX_FREACH = item_group.o
 NEED_CXX_VA_COPY = logger.o
 #
 # source summary

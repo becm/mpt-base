@@ -85,6 +85,7 @@ public:
 	convertable *get(const char *path, int sep = '.', int len = -1) const;
 	
 	static metatype *global(const path * = 0);
+	static const struct named_traits *pointer_traits();
 	
 	virtual convertable *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
@@ -97,7 +98,8 @@ template<> inline __MPT_CONST_TYPE int type_properties<config *>::id(bool) {
 	return TypeConfigPtr;
 }
 template <> inline const struct type_traits *type_properties<config *>::traits() {
-	return type_traits::get(id(true));
+	static const struct type_traits *traits = 0;
+	return traits ? traits : (traits = type_traits::get(id(true)));
 }
 #else
 MPT_INTERFACE(config);

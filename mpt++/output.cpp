@@ -10,6 +10,19 @@
 
 __MPT_NAMESPACE_BEGIN
 
+/*!
+ * \ingroup mptType
+ * \brief get output pointer traits
+ * 
+ * Get named traits for output pointer data.
+ * 
+ * \return named traits for output pointer
+ */
+const struct named_traits *output::pointer_traits()
+{
+	return mpt_interface_traits(TypeOutputPtr);
+}
+
 int output::message(const char *from, int type, const char *fmt, ... )
 {
 	va_list va;

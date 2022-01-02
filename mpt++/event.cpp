@@ -16,6 +16,19 @@
 
 __MPT_NAMESPACE_BEGIN
 
+/*!
+ * \ingroup mptEvent
+ * \brief get reply context interface traits
+ * 
+ * Get named traits for reply context pointer data.
+ * 
+ * \return named traits for reply context pointer
+ */
+const struct named_traits *reply_context::pointer_traits()
+{
+	return mpt_interface_traits(TypeReplyPtr);
+}
+
 // event reply andling
 reply_context_detached *reply_context::defer()
 {

@@ -88,6 +88,8 @@ public:
 	
 	virtual int property(struct property *) const = 0;
 	virtual int set_property(const char *, convertable * = 0) = 0;
+	
+	static const struct named_traits *pointer_traits();
 };
 template<> inline __MPT_CONST_TYPE int type_properties<object *>::id(bool) {
 	return TypeObjectPtr;

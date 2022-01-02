@@ -8,7 +8,7 @@
 
 /*!
  * \ingroup mptClient
- * \brief client type
+ * \brief client properties
  * 
  * Get or register client metatype.
  * 

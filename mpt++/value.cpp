@@ -3,10 +3,7 @@
  *   type ID classification
  */
 
-#include <sys/uio.h>
-
 #include "array.h"
-#include "types.h"
 
 #include "convert.h"
 

@@ -9,6 +9,19 @@
 
 __MPT_NAMESPACE_BEGIN
 
+/*!
+ * \ingroup mptObject
+ * \brief get object interface traits
+ * 
+ * Get named traits for object pointer data.
+ * 
+ * \return named traits for object pointer
+ */
+const struct named_traits *object::pointer_traits()
+{
+	return mpt_interface_traits(TypeObjectPtr);
+}
+
 bool object::const_iterator::select(uintptr_t pos)
 {
 	_prop.name = 0;

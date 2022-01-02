@@ -4,8 +4,6 @@
 
 #include <stdlib.h>
 
-#include <sys/uio.h>
-
 #include "config.h"
 #include "message.h"
 #include "event.h"
@@ -16,10 +14,16 @@ __MPT_NAMESPACE_BEGIN
 
 static metatype *cfg = 0;
 
-template <> int type_properties<client *>::id(bool)
+template <> int type_properties<client *>::id(bool obtain)
 {
 	static const named_traits *traits = 0;
-	if (traits || (traits = mpt_client_type_traits())) {
+	if (traits) {
+		return traits->type;
+	}
+	if (!obtain) {
+		return BadType;
+	}
+	if ((traits = client::pointer_traits())) {
 		return traits->type;
 	}
 	return BadType;
@@ -27,10 +31,23 @@ template <> int type_properties<client *>::id(bool)
 template <> const struct type_traits *type_properties<client *>::traits()
 {
 	static const named_traits *traits = 0;
-	if (traits || (traits = mpt_client_type_traits())) {
+	if (traits || (traits = client::pointer_traits())) {
 		return &traits->traits;
 	}
 	return 0;
+}
+
+/*!
+ * \ingroup mptClient
+ * \brief get client pointer traits
+ * 
+ * Get name traits for client pointer
+ * 
+ * \return named traits for client pointer
+ */
+const struct named_traits *client::pointer_traits()
+{
+	return mpt_client_type_traits();
 }
 
 static void unrefConfig()

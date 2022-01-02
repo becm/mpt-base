@@ -64,6 +64,8 @@ public:
 	
 	virtual int reply(const struct message *) = 0;
 	virtual reply_context_detached *defer();
+	
+	static const struct named_traits *pointer_traits();
 protected:
 	inline ~reply_context()
 	{ }

@@ -79,6 +79,8 @@ public:
 	virtual int advance();
 	virtual int reset();
 	
+	static const struct named_traits *pointer_traits();
+	
 	template <typename T>
 	bool get(T &val)
 	{
@@ -118,11 +120,11 @@ inline metatype *metatype::clone() const
 }
 inline int iterator::advance()
 {
-	return 0;
+	return MissingData;
 }
 inline int iterator::reset()
 {
-	return 0;
+	return BadOperation;
 }
 
 /* basic metatype to support typeinfo */
@@ -239,45 +241,39 @@ public:
 	{ }
 	virtual ~source()
 	{ }
-	int get(int type, void *dest) __MPT_OVERRIDE
+	const struct value *value() __MPT_OVERRIDE
 	{
-		int fmt;
-		if ((fmt = this->content()) < 0) {
-			return BadType;
+		static int type = 0;
+		if (type <= 0 && (type = type_properties<T>::id(true)) <= 0) {
+			return 0;
 		}
 		const T *val = _d.nth(_pos);
-		if (!val) {
-			return MissingData;
-		}
-		type = convert((const void **) &val, fmt, dest, type);
-		if (type < 0) {
-			return type;
-		}
-		return fmt;
+		return (val && _val.set(type, val)) ? &_val : 0;
 	}
 	int advance() __MPT_OVERRIDE
 	{
 		int pos = _pos + 1;
-		if (pos > _d.length()) {
+		if (pos > _d.size()) {
 			return MissingData;
 		}
-		if (pos == _d.length()) {
+		_pos = pos;
+		if (pos == _d.size()) {
 			return 0;
 		}
-		_pos = pos;
-		return content();
+		static int type = 0;
+		if (type <= 0 && (type = type_properties<T>::id(true)) <= 0) {
+			return BadType;
+		}
+		return type;
 	}
 	int reset() __MPT_OVERRIDE
 	{
 		_pos = 0;
 		return _d.size();
-	}
-	inline static int content()
-	{
-		return type_properties<T>::id();
-	}
+	}	
 protected:
 	span<const T> _d;
+	struct value _val;
 	int _pos;
 };
 template <typename T>

@@ -56,12 +56,14 @@ if with_plot
 endif
 
 if with_shared and with_loader
-  test('loader',
-    executable('libassign', 'libassign.c',
-      c_args: test_defines,
-      dependencies: load),
-    # use runtime from meson build location
-    env: [ 'MPT_PREFIX_LIB=' + dir_libs_test ])
+  if with_plot
+    test('loader',
+      executable('libassign', 'libassign.c',
+        c_args: test_defines,
+        dependencies: load),
+      # use runtime from meson build location
+      env: [ 'MPT_PREFIX_LIB=' + dir_libs_test ])
+  endif
 endif
 
 if with_io

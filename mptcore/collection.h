@@ -29,12 +29,15 @@ protected:
 public:
 	virtual int each(item_handler_t *, void *) const = 0;
 	virtual unsigned long clear(const metatype * = 0) = 0;
+	
+	static const struct named_traits *pointer_traits();
 };
 template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id(bool) {
 	return TypeCollectionPtr;
 }
 template <> inline const struct type_traits *type_properties<collection *>::traits() {
-	return type_traits::get(id(true));
+	static const struct type_traits *traits = 0;
+	return traits ? traits : (traits = type_traits::get(id(true)));
 }
 #else
 MPT_INTERFACE_VPTR(collection) {
@@ -53,10 +56,10 @@ protected:
 	inline ~group() {}
 public:
 	virtual int append(const identifier *, metatype *) = 0;
-	virtual metatype *create(const char *, int = -1);
-	virtual int bind(const relation *, logger * = logger::default_instance());
+	virtual metatype *create(const char *, int = -1) = 0;
+	virtual int bind(const relation *, logger * = logger::default_instance()) = 0;
 	
-	static const named_traits *get_traits();
+	static const struct named_traits *pointer_traits();
 };
 
 /*! Relation implemetation using Group as current element */

@@ -35,7 +35,7 @@ static int print_message(const char *fcn, int type, const char *fmt, va_list va)
 
 // logger interfaces
 /*!
- * \ingroup mptMeta
+ * \ingroup mptOutput
  * \brief log to metatype
  * 
  * Select and use log interface for message.
@@ -99,6 +99,20 @@ int println(const char *fmt, ... )
 	int ret = print_message(0, 0, fmt, va);
 	if (fmt) va_end(va);
 	return ret;
+}
+
+
+/*!
+ * \ingroup mptOutput
+ * \brief get log interface traits
+ * 
+ * Get named traits for log pointer data.
+ * 
+ * \return named traits for log pointer
+ */
+const struct named_traits *logger::pointer_traits()
+{
+	return mpt_interface_traits(TypeLoggerPtr);
 }
 logger *logger::default_instance()
 {
