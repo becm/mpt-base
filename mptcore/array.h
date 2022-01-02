@@ -6,6 +6,8 @@
 #ifndef _MPT_ARRAY_H
 #define _MPT_ARRAY_H  @INTERFACE_VERSION@
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 # include <new>
 # include <cstring>

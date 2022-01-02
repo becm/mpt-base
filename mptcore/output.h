@@ -6,6 +6,8 @@
 #ifndef _MPT_OUTPUT_H
 #define _MPT_OUTPUT_H  @INTERFACE_VERSION@
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 # include "types.h"
 #else

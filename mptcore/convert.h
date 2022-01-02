@@ -7,6 +7,7 @@
 #define _MPT_CONVERT_H  @INTERFACE_VERSION@
 
 #include <sys/uio.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 # include "output.h"

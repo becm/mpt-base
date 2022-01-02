@@ -8,7 +8,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <stdarg.h>
 #include <string.h>
 
 /* localisation makro */

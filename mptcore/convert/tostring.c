@@ -66,6 +66,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		if ((total = save(dest, "[ ", 2)) < 2) {
 			return MPT_ERROR(MissingBuffer);
 		}
+		adv = 0;
 		if (vec) {
 			const uint8_t *data = vec->iov_base;
 			size_t i, size = traits->size, max = vec->iov_len / size;

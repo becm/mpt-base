@@ -35,28 +35,25 @@ static ssize_t saveString(void *ctx, const char *str, size_t len)
 static int mprint(void *data, const MPT_STRUCT(property) *prop)
 {
 	const void *ptr;
-	struct outData *par = data;
+	const struct outData *par = data;
+	const char *text;
+	size_t avail = 0;
 	
-	if (prop && prop->val.type && (ptr = prop->val.ptr)) {
+	if (prop 
+	 && prop->val.type
+	 && (ptr = prop->val.ptr)
+	 && !(text = mpt_data_tostring(&ptr, prop->val.type, &avail))) {
 		char buf[1024];
-		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
 		struct iovec vec;
-		const char *text;
-		size_t avail = 0;
 		int len;
-		pr.name = prop->name;
-		pr.desc = prop->desc;
-		if ((text = mpt_data_tostring(&ptr, prop->val.type, &avail))) {
-			vec.iov_base = (char *) text;
-			vec.iov_len = avail;
-			MPT_value_set_data(&pr.val, MPT_type_toVector('c'), &vec);
-			return par->h(par->p, &pr);
-		}
 		vec.iov_base = buf;
 		vec.iov_len  = sizeof(buf);
 		*buf = 0;
 		
 		if ((len = mpt_tostring(&prop->val, saveString, &vec)) >= 0) {
+			MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
+			pr.name = prop->name;
+			pr.desc = prop->desc;
 			vec.iov_base = buf;
 			vec.iov_len  = sizeof(buf) - vec.iov_len;
 			buf[vec.iov_len++] = 0;

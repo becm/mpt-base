@@ -1,8 +1,11 @@
+/*!
+ * MPT core library
+ *   convert string to target type
+ */
 
 #include <ctype.h>
-#include <string.h>
 
-#include "meta.h"
+#include "types.h"
 
 #include "convert.h"
 
@@ -10,7 +13,7 @@
  * \ingroup mptConvert
  * \brief get data from string
  * 
- * convert string data to specified type
+ * Convert string data to specified type
  * 
  * \param from pointer to string data
  * \param type convertion target type
@@ -44,6 +47,15 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 		}
 		/* restore start address */
 		return txt - from;
+	}
+	if (type == MPT_type_toVector('c')) {
+		struct iovec *vec;
+		len = from ? strlen(from) : 0;
+		if ((vec = dest)) {
+			vec->iov_base = (void *) from;
+			vec->iov_len  = from ? len + 1 : 0;
+		}
+		return len;
 	}
 	if (type != 's') {
 		const char *txt = from;

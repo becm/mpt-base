@@ -50,7 +50,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	 || type == MPT_ENUM(TypeBufferPtr)) {
 		static const MPT_STRUCT(type_traits) *traits= 0;
 		const MPT_STRUCT(array) *arr = *from;
-		MPT_STRUCT(buffer) *b;
+		const MPT_STRUCT(buffer) *b;
 		
 		if (!(b = arr->_buf)) {
 			errno = ENOTSUP;
@@ -65,7 +65,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			errno = EINVAL;
 			return 0;
 		}
-		base = (void *) (b + 1);
+		base = (const char *) (b + 1);
 		if (len) {
 			*len = b->_used;
 		}
@@ -77,7 +77,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			return 0;
 		}
 		*from = arr + 1;
-		return (char *) (b + 1);
+		return base;
 	}
 	/* vector data with text content */
 	if (type == MPT_type_toVector('c')) {

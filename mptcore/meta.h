@@ -6,6 +6,8 @@
 #ifndef _MPT_META_H
 #define _MPT_META_H  @INTERFACE_VERSION@
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 # include "types.h"
 #else
