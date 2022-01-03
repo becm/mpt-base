@@ -8,7 +8,7 @@ LIB = lua${LUA}-mpt
 #
 # include lua and MPT core header
 INC_LUA = /usr/include/lua${LUA}
-INC = ${INC_LUA} ${DIR_BASE}mptcore ${DIR_BASE}mptio
+INC = '${INC_LUA}' '${DIR_BASE}mptcore' '${DIR_BASE}mptio'
 #
 # library sources
 SRCS = mpt.c
@@ -30,7 +30,7 @@ CLEAR_FILES += $(SHARE:%=${LUA_SHARE}/%)
 # service targets
 .PHONY : install clear clean test devel shared
 # file creation
-install : $(SHARE:%=${LUA_SHARE}/%)
+devel install shared : $(SHARE:%=${LUA_SHARE}/%)
 
 %_lua${LUA}.o : %.c
 	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}

@@ -8,6 +8,7 @@ PROGS = \
 	${TESTS}
 
 LDLIBS = -lmptio
+INC = '${DIR_BASE}mptio' '${DIR_BASE}mptcore'
 
 # general targets and definitions
 DIR_TOP = ${MPT_PREFIX}

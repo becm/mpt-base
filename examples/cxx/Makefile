@@ -13,6 +13,12 @@ TESTS = \
 
 PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
+INC = '${DIR_BASE}mptcore'
+
+cxx_inc = buffer output queue
+io_inc = buffer comp output queue
+plot_inc = iter layout map object values
+
 
 ${PROGS} $(PROGS:%=%_static) : CC=${CXX}
 
@@ -28,7 +34,12 @@ iter : LDLIBS+=-lmptplot
 comp : LDLIBS+=-lmptio
 %_static : LDLIBS=-lmpt++ -lmpt
 %_static : CPPFLAGS+=-D_STATIC
-
+#
+# additional includes
+$(cxx_inc:%=%) $(cxx_inc:%=%_static) : INC+='${DIR_BASE}mpt++'
+$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${DIR_BASE}mptio'
+$(plot_inc:%=%) $(plot_inc:%=%_static) : INC+='${DIR_BASE}mptplot'
+#
 # special test arguments
 test_config : ARGS=${MPT_PREFIX}
 test_layout : ARGS=layout.lay

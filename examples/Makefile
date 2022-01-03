@@ -2,9 +2,17 @@
 #
 
 DIRS = core io cxx lua
+
 TESTS = client graph graphic axis iter gen libassign
 PROGS = readline graphic ${TESTS}
 STATIC = libassign_static
+
+cxx_inc = graphic
+io_inc = client
+loader_inc = libassign readline
+plot_inc = axis gen graph graphic iter
+
+INC = '${DIR_BASE}mptcore'
 
 client_static : CC=${CXX}
 
@@ -26,6 +34,12 @@ axis iter gen : LDLIBS=-lmptplot -lmptcore
 %_static : LDLIBS=-lmpt++ -lmpt
 readline_static : LDLIBS=-lmpt -ldl
 graphic : LDLIBS=-lmpt++
+#
+# additional includes
+$(cxx_inc:%=%) $(cxx_inc:=%_static) : INC+='${DIR_BASE}mpt++'
+$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${DIR_BASE}mptio'
+$(loader_inc:%=%) $(loader_inc:=%_static) : INC+='${DIR_BASE}mptloader'
+$(plot_inc:%=%) $(plot_inc:=%_static) : INC+='${DIR_BASE}mptplot'
 #
 # C++ perror() visibility
 client client_static : CXXFLAGS+=-std=c++11

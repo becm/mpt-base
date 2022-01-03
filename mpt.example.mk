@@ -1,11 +1,12 @@
 # mpt.example.mk: template for examples
 #
+DEF += 'MPT_INCLUDE(x)=\#x'
+#
 # include global configuration
 DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # preprocessor/compiler flags
-INC ?= '${DIR_INC}'
 CPPWARN  ?= all error
 CPPFLAGS ?= -W $(CPPWARN:%=-W%) $(INC:%=-I%) $(DEF:%=-D%)
 CFLAGS   ?= -g -fstack-protector

@@ -36,9 +36,9 @@ LIB_SHARED = ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 # general library rules
 .PHONY: shared devel static install
 shared : ${LIB_FULLNAME}.so.${SHLIB_MAJOR}
-install : ${LIB_FULLNAME}.so
+devel : ${LIB_FULLNAME}.so
 static : ${LIB_FULLNAME}.a
-devel : install header
+install : header devel
 
 ${LIB_STATIC} : ${LIB_STATIC}(${STATIC_OBJS})
 	${AR} sU '${@}'

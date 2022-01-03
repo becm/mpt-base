@@ -9,9 +9,9 @@ include ../../mpt.config.mk
 
 # include lua and MPT core header
 INC_LUA ?= /usr/include/lua${LUA}
-INC = ${INC_LUA} ${DIR_INC}
-CPPFLAGS = $(INC:%=-I'%')
-CFLAGS = -g
+INC = '${INC_LUA}'
+#CPPFLAGS = $(INC:%=-I%)
+#CFLAGS = -g
 #
 # program sources
 SRCS = main.c
