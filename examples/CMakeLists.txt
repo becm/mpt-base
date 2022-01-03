@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 2.6)
 
 add_compile_options("-DMPT_INCLUDE(x)=#x")
 
+add_subdirectory(core)
+
+if(MPT_WITH_CXX)
+  add_subdirectory(cxx)
+endif(MPT_WITH_CXX)
+
 if(MPT_WITH_CXX)
   if(MPT_WITH_IO)
     add_executable(client client.cpp)
@@ -42,3 +48,11 @@ if(MPT_WITH_PLOT)
     add_test(NAME graphic COMMAND graphic)
   endif(MPT_WITH_CXX)
 endif(MPT_WITH_PLOT)
+
+
+if(MPT_WITH_IO)
+  add_executable(pipe io/pipe.c)
+  target_include_directories(pipe PRIVATE ${Mpt_IO_INCLUDE_DIRS} ${Mpt_CORE_INCLUDE_DIRS})
+  target_link_libraries(pipe mptio)
+  add_test(NAME pipe COMMAND pipe "/bin/ls" "..")
+endif(MPT_WITH_IO)
