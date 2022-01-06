@@ -42,7 +42,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parser_format) *fmt, MPT_STRUCT(par
 		/* option assign condition */
 		if (isspace(curr)) {
 			if (!fmt->assign) {
-				if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, MPT_PARSEFLAG(Option)) < 0) {
+				if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, parse->name.opt) < 0) {
 					return MPT_ERROR(BadType);
 				}
 				if (mpt_path_add(path, parse->valid) < 0) {
@@ -68,7 +68,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parser_format) *fmt, MPT_STRUCT(par
 			}
 		}
 		else if (curr == fmt->assign) {
-			if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, MPT_PARSEFLAG(Option)) < 0) {
+			if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, parse->name.opt) < 0) {
 				return MPT_ERROR(BadType);
 			}
 			if (mpt_path_add(path, parse->valid) < 0) {
@@ -107,7 +107,7 @@ extern int mpt_parse_option(const MPT_STRUCT(parser_format) *fmt, MPT_STRUCT(par
 	}
 	parse->curr = MPT_PARSEFLAG(Data);
 	/* set zero length option name */
-	if (mpt_parse_ncheck(path->base + path->off + path->len, parse->valid, MPT_PARSEFLAG(Data)) < 0) {
+	if (!(parse->name.opt & MPT_NAMEFLAG(Empty))) {
 		return MPT_ERROR(BadType);
 	}
 	return MPT_PARSEFLAG(Data);
