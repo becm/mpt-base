@@ -20,3 +20,13 @@ add_executable(config config.c)
 target_include_directories(config PRIVATE ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(config mptcore)
 add_test(NAME config COMMAND config)
+
+add_executable(parse parse.c)
+target_include_directories(parse PRIVATE ${Mpt_CORE_INCLUDE_DIRS})
+target_link_libraries(parse mptcore)
+# see MPT_NAMEFLAG(Flags) in parse.h for restriction configuration
+add_test(NAME parse_online COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/online.txt" "{*} =;!# `" "Ef")
+add_test(NAME parse_layout COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/layout.txt" "[*] = " "Esnw")
+add_test(NAME parse_layout_alt COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/layout.txt" "[*] = !")
+add_test(NAME parse_subsect COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/subsect.lay" "{*} =;!#" "E")
+add_test(NAME parse_config COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/config.txt" "[ ] = #" "Esc")

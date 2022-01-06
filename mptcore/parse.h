@@ -55,14 +55,14 @@ MPT_STRUCT(parser_allow)
 # define MPT_NAMEFLAG(x) MPT_ENUM(Name##x)
 #endif
 enum MPT_NAMEFLAG(Flags) {
-	MPT_NAMEFLAG(NumStart)  = 0x1,  /* allow numeric initial character */
-	MPT_NAMEFLAG(NumCont)   = 0x2,  /* allow numeric continous character */
-	MPT_NAMEFLAG(Numeral)   = 0x3,
-	MPT_NAMEFLAG(Special)   = 0x4,  /* allow special character */
-	MPT_NAMEFLAG(Space)     = 0x8,  /* allow space characters */
+	MPT_NAMEFLAG(NumStart)  = 0x1,  /* 'f', allow numeric initial character */
+	MPT_NAMEFLAG(NumCont)   = 0x2,  /* 'c', allow numeric continous character */
+	MPT_NAMEFLAG(Numeral)   = 0x3,  /* 'n' */
+	MPT_NAMEFLAG(Special)   = 0x4,  /* 's', allow special character */
+	MPT_NAMEFLAG(Space)     = 0x8,  /* 'w', allow whitespace characters */
 	
-	MPT_NAMEFLAG(Empty)     = 0x10, /* allow empty name */
-	MPT_NAMEFLAG(Binary)    = 0x20  /* allow binary character */
+	MPT_NAMEFLAG(Empty)     = 0x10, /* 'e', allow empty name */
+	MPT_NAMEFLAG(Binary)    = 0x20  /* 'b', allow binary character */
 };
 #ifdef __cplusplus
 	inline parser_allow() : sect(0xff), opt(0xff)

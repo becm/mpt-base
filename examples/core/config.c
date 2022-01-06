@@ -7,7 +7,6 @@
 
 #include MPT_INCLUDE(output.h)
 #include MPT_INCLUDE(config.h)
-#include MPT_INCLUDE(parse.h)
 #include MPT_INCLUDE(types.h)
 
 extern int main(int argc, char *argv[])
@@ -16,7 +15,7 @@ extern int main(int argc, char *argv[])
 	MPT_INTERFACE(config) *cfg;
 	MPT_STRUCT(node) *n;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
-	int i;
+	int ret = 0, i;
 	
 	mpt_path_set(&p, "mpt", -1);
 	mt = mpt_config_global(&p);
@@ -33,6 +32,7 @@ extern int main(int argc, char *argv[])
 		MPT_INTERFACE(convertable) *elem;
 		if (!(elem = mpt_config_get(cfg, argv[i], '.', 0))) {
 			fprintf(stderr, "%s: %s\n", "missing element", argv[i]);
+			++ret;
 		} else {
 			const char *val = mpt_convertable_data(elem, 0);
 			fprintf(stdout, "%s: %s\n", argv[i], val);
@@ -42,5 +42,5 @@ extern int main(int argc, char *argv[])
 	cfg->_vptr->remove(cfg, &p);
 	mt->_vptr->unref(mt);
 	
-	return 0;
+	return ret;
 }

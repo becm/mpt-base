@@ -8,8 +8,8 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(node.h)
-#include MPT_INCLUDE(config.h)
+#include MPT_INCLUDE(meta.h)
+#include MPT_INCLUDE(array.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>

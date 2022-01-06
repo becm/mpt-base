@@ -15,10 +15,8 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(array.h)
 #include MPT_INCLUDE(config.h)
 #include MPT_INCLUDE(parse.h)
-#include MPT_INCLUDE(stream.h)
 
 int main(int argc, char *argv[])
 {
@@ -31,18 +29,29 @@ int main(int argc, char *argv[])
 	mtrace();
 	
 	(void) mpt_config_environ(0, "mpt_*", '_', 0);
+	next = (MPT_TYPE(input_parser)) mpt_parse_format_pre;
 	
-	type = mpt_parse_format(&fmt, argv[1]);
+	parse.src.getc = (int (*)(void *)) mpt_getchar_stdio;
+	parse.src.arg = stdin;
 	
-	if (!(next = mpt_parse_next_fcn(type))) {
-		return 3;
+	if (argc > 1) {
+		if  (!(parse.src.arg = fopen(argv[1], "r"))) {
+			fputs("missing file name\n", stderr);
+			return 2;
+		}
+	}
+	if (argc > 2) {
+		type = mpt_parse_format(&fmt, argv[2]);
+		
+		if (!(next = mpt_parse_next_fcn(type))) {
+			fputs("bad format type\n", stderr);
+			return 3;
+		}
 	}
 	/* explicit flags for allowed names */
-	if (argc > 2 && mpt_parse_accept(&parse.name, argv[2]) < 0) {
+	if (argc > 3 && mpt_parse_accept(&parse.name, argv[3]) < 0) {
 		return 4;
 	}
-	parse.src.getc = (int (*)(void *)) mpt_getchar_stdio;
-	parse.src.arg  = stdin;
 	
 	path.flags = MPT_PATHFLAG(SepBinary);
 	

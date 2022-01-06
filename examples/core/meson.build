@@ -23,3 +23,18 @@ test('config file import',
   executable('config', 'config.c',
     c_args : test_defines,
     dependencies: core))
+
+parse = executable('parse', 'parse.c',
+    c_args : test_defines,
+    dependencies: core)
+# see MPT_NAMEFLAG(Flags) in parse.h for name restriction configuration
+test('parser test', parse,
+  args : [ files('online.txt'), '{*} =;!# `', 'Ef' ])
+test('layout parser', parse,
+  args : [ files('layout.txt'), '[*] = ', 'Esnw' ])
+test('layout parser (alternative settings)', parse,
+  args : [ files('layout.txt'), '[*] = !' ])
+test('section parser', parse,
+  args : [ files('subsect.lay'), '{*} =;!#', 'E' ])
+test('config parser', parse,
+  args : [ files('config.txt'), '[ ] = #', 'Esc' ])
