@@ -3,14 +3,8 @@
  */
 
 #include <stdarg.h>
-#include <inttypes.h>
-
-#ifdef MPT_NO_CONVERT
-# include <string.h>
-#endif
 
 #include "convert.h"
-#include "types.h"
 
 #include "meta.h"
 
@@ -51,8 +45,11 @@ static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 {
 	struct iteratorVararg *va = (void *) it;
-	va_copy(va->arg, va->org.arg);
-	va->fmt = va->org.fmt;
+	const char *fmt = va->org.fmt;
+	if (fmt && *fmt) {
+		va_copy(va->arg, va->org.arg);
+	}
+	va->fmt = fmt;
 	return strlen(va->fmt);
 }
 
@@ -84,6 +81,7 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 	}
 	va._it._vptr = &ctl;
 	va.val.type = 0;
+	*((uint8_t *) &va.val._bufsize) = sizeof(va.val._buf);
 	if (!(va.fmt = fmt) || !(ret = *fmt)) {
 		return proc(ctx, &va._it);
 	}

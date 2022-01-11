@@ -29,6 +29,8 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 	/* object specific name */
 	if (val->_vptr->convert(val, MPT_ENUM(TypeObjectPtr), &obj) >= 0
 	 && obj) {
+		pr->name = "";
+		pr->desc = 0;
 		if ((obj->_vptr->property(obj, pr) >= 0)) {
 			pr->desc = pr->name;
 			pr->name = "object";
