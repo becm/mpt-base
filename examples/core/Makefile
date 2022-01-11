@@ -24,14 +24,14 @@ parse_tests = online layout_1 layout_2 subsect config
 .PHONY : $(parse_tests:%=test_parse_%)
 test : $(parse_tests:%=test_parse_%)
 # see MPT_NAMEFLAG(Flags) in parse.h for name restriction configuration
-test_parse_online :
+test_parse_online : parse
 	./parse online.txt  '{*} =;!# `' 'Ef'
-test_parse_layout_1 :
+test_parse_layout_1 : parse
 	./parse layout.txt  '[*] = ' 'Esnw'
-test_parse_layout_2 :
+test_parse_layout_2 : parse
 	./parse layout.txt  '[*] = !'
-test_parse_subsect :
+test_parse_subsect : parse
 	./parse subsect.lay '{*} =;!#' 'E'
-test_parse_config :
+test_parse_config : parse
 	./parse config.txt  '[ ] = #' 'Esc'
 	

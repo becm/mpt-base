@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-	int i;
+	int ret = 0, i;
 	
 	for (i = 1; i < argc; ++i) {
 		MPT_STRUCT(identifier) *id;
@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
 		}
 		if (!(id = mpt_identifier_new(val))) {
 			fputs("(err)", stdout);
+			++ret;
 			continue;
 		}
 		fprintf(stdout, "%i_%i ", val, 4 + id->_max);
@@ -27,5 +28,5 @@ int main(int argc, char *argv[])
 		free(id);
 	}
 	fputc('\n', stdout);
-	return 0;
+	return ret;
 }

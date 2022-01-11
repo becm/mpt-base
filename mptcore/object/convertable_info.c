@@ -28,35 +28,34 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 	}
 	/* object specific name */
 	if (val->_vptr->convert(val, MPT_ENUM(TypeObjectPtr), &obj) >= 0
-	    && obj
-	    && (obj->_vptr->property(obj, pr) >= 0)) {
-		pr->desc = pr->name;
-		pr->name = "object";
+	 && obj) {
+		if ((obj->_vptr->property(obj, pr) >= 0)) {
+			pr->desc = pr->name;
+			pr->name = "object";
+			return code;
+		}
 	}
+	/* interface instance */
+	if ((traits = mpt_interface_traits(code))) {
+		pr->name = "interface";
+		pr->desc = traits->name;
+	}
+	/* metatype instance */
+	else if ((traits = mpt_metatype_traits(code))) {
+		pr->name = "metatype";
+		pr->desc = traits->name;
+	}
+	/* generic convertable */
 	else {
-		/* interface instance */
-		if ((traits = mpt_interface_traits(code))) {
-			pr->name = "interface";
-			pr->desc = traits->name;
-			pr->val.type = 0;
-		}
-		/* metatype instance */
-		else if ((traits = mpt_metatype_traits(code))) {
-			pr->name = "metatype";
-			pr->desc = traits->name;
-		}
-		/* generic convertable */
-		else {
-			pr->name = "convertable";
-			pr->desc = 0;
-			pr->val.type = 0;
-		}
-		/* generic instance */
-		if (val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val) < 0) {
-			pr->val.type = 0;
-			pr->val.ptr = 0;
-			memset(pr->val._buf, 0 , pr->val._bufsize);
-		}
+		pr->name = "convertable";
+		pr->desc = 0;
+	}
+	/* generic value data */
+	pr->val.type = 0;
+	if (val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val) < 0) {
+		pr->val.type = 0;
+		pr->val.ptr = 0;
+		memset(pr->val._buf, 0 , pr->val._bufsize);
 	}
 	return code;
 }

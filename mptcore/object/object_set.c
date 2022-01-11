@@ -4,10 +4,6 @@
 
 #include <stdlib.h>
 
-#ifdef MPT_NO_CONVERT
-# include <string.h>
-#endif
-
 #include "meta.h"
 #include "convert.h"
 
