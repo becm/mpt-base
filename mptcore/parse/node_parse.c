@@ -3,12 +3,9 @@
  */
 
 #include <stdio.h>
-#include <sys/uio.h>
 
-#include "meta.h"
 #include "node.h"
 #include "output.h"
-#include "types.h"
 
 #include "parse.h"
 
@@ -25,107 +22,45 @@
  * 
  * \return string describing error
  */
-extern int mpt_node_parse(MPT_STRUCT(node) *conf, const MPT_STRUCT(value) *val, MPT_INTERFACE(logger) *log)
+extern int mpt_node_parse(MPT_STRUCT(node) *conf, FILE *file, const char *format, const char *limits, MPT_INTERFACE(logger) *log)
 {
 	MPT_STRUCT(parser_context) parse = MPT_PARSER_INIT;
 	MPT_STRUCT(node) *old;
-	const char *fname, *format;
-	int res, len;
+	int res;
 	
-	format = 0;
-	
+	if (!file) {
+		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
+		return MPT_ERROR(BadArgument);
+	}
+	if (!limits) {
+		limits = "ns";
+	}
 	parse.src.getc = (int (*)()) mpt_getchar_stdio;
-	mpt_parse_accept(&parse.name, "ns");
+	parse.src.arg  = file;
+	if ((res = mpt_parse_accept(&parse.name, limits)) < 0) {
+		if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("bad name limits"), limits);
+		return MPT_ERROR(BadArgument);
+	}
 	
-	if (!val) {
-		if (!(fname = mpt_node_data(conf, 0))) {
-			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("no default filename"));
-			return MPT_ERROR(BadArgument);
-		}
-		len = 0;
-	}
-	else {
-		char * const *ptr = val->ptr;
-		/* direct file access */
-		if (val->type == MPT_ENUM(TypeFilePtr)) {
-			fname = 0;
-			if (!(parse.src.arg = *ptr)) {
-				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file argument"));
-				return MPT_ERROR(BadValue);
-			}
-		}
-		/* simple file name */
-		else if (val->type == 's') {
-			if (!(fname = *ptr)) {
-				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
-				return MPT_ERROR(BadValue);
-			}
-		}
-		/* additional format info */
-		if (val->type == 'S') {
-			const struct iovec *vec = val->ptr;
-			const char **str = vec->iov_base;
-			int len = vec->iov_len / sizeof(char **);
-			if (len < 1 || !(fname = str[0])) {
-				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad file name part"));
-				return MPT_ERROR(BadValue);
-			}
-			if (len > 1 && !(format = str[1])) {
-				if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s", MPT_tr("bad format description"));
-				return MPT_ERROR(BadType);
-			}
-			/* additional name limits */
-			if (len > 2 && str[2]) {
-				if ((res = mpt_parse_accept(&parse.name, ptr[2])) < 0) {
-					if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("bad name limit"), ptr[2]);
-					return MPT_ERROR(BadValue);
-				}
-				len = 3;
-			}
-		}
-		else {
-			return MPT_ERROR(BadType);
-		}
-	}
-	if (fname) {
-		if (!(parse.src.arg = fopen(fname, "r"))) {
-			if (log) mpt_log(log, __func__, MPT_LOG(Error), "%s: %s", MPT_tr("failed to open file"), fname);
-			return MPT_ERROR(BadValue);
-		}
-	}
-	/* clear children to trigger full read */
+	/* clear children to trigger non-merge read */
 	old = conf->children;
 	conf->children = 0;
 	
 	res = mpt_parse_node(conf, &parse, format);
-	if (fname) {
-		fclose(parse.src.arg);
-	}
 	/* replace tree content */
 	if (res >= 0) {
 		MPT_STRUCT(node) root = MPT_NODE_INIT;
 		root.children = old;
 		mpt_node_clear(&root);
 		
-		if (fname) {
-			MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
-			MPT_value_set_string(&val, fname);
-			mpt_meta_set(&conf->_meta, &val);
-		}
-		return len;
+		return res;
 	}
 	/* restore old subtree base */
 	conf->children = old;
 	
-	if (!log) {
-		return res;
-	}
-	if (fname) {
-		(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u: %s",
-		               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line, fname);
-	} else {
-		(void) mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u",
-		               MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
+	if (log) {
+		mpt_log(log, __func__, MPT_LOG(Error), "%s (%x): %s %u",
+		        MPT_tr("parse error"), parse.curr, MPT_tr("line"), (int) parse.src.line);
 	}
 	return res;
 }

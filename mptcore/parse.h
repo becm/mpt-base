@@ -171,8 +171,9 @@ extern int mpt_parse_data(const MPT_STRUCT(parser_format) *, MPT_STRUCT(parser_c
 /* create/modify current node element */
 extern MPT_STRUCT(node) *mpt_node_append(MPT_STRUCT(node) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *, int , int);
 /* set node elements from file */
-extern int mpt_node_parse(MPT_STRUCT(node) *, const MPT_STRUCT(value) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::default_instance()));
-
+#ifdef _STDIO_H
+extern int mpt_node_parse(MPT_STRUCT(node) *, FILE *, const char *, const char *, MPT_INTERFACE(logger) *__MPT_DEFPAR(logger::default_instance()));
+#endif
 /* parse configuration tree */
 extern int mpt_parse_config(MPT_TYPE(input_parser) , void *, MPT_STRUCT(parser_context) *, MPT_TYPE(path_handler), void *);
 /* save config tree to node children */
