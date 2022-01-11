@@ -136,6 +136,7 @@ static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
 			return MPT_ERROR(BadOperation);
 		}
 	}
+	a._buf->_content_traits = mpt_type_traits('c');
 	b = mpt_meta_buffer(&a);
 	mpt_array_clone(&a, 0);
 	

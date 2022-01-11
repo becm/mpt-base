@@ -5,6 +5,7 @@
 #include "meta.h"
 #include "output.h"
 #include "types.h"
+#include "convert.h"
 
 #include "config.h"
 
@@ -34,12 +35,17 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 		return 0;
 	}
 	/* set config file */
-	if (!(val = it->_vptr->value(it)) || val->type != 's') {
+	if (!(val = it->_vptr->value(it))) {
+		mpt_log(info, __func__, MPT_LOG(Info), "%s",
+		        MPT_tr("no client config filename"));
+		return ret;
+	}
+	str = 0;
+	if ((ret = mpt_value_convert(val, 's', &str)) < 0 || !str) {
 		mpt_log(info, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("bad client config filename"));
 		return ret;
 	}
-	str = *(char * const *) val->ptr;
 	if ((ret = mpt_config_set(cfg, 0, str, 0, 0)) < 0) {
 		mpt_log(info, __func__, MPT_LOG(Error), "%s: %s",
 		        MPT_tr("failed to set client config"), str);

@@ -41,7 +41,7 @@ extern int mpt_slice_get(MPT_STRUCT(slice) *s, int type, void *data)
 		return 0;
 	}
 	if (!buf->_content_traits
-	 || (buf->_content_traits != mpt_type_traits(MPT_type_toVector('c')))) {
+	 || (buf->_content_traits != mpt_type_traits('c'))) {
 		return MPT_ERROR(BadType);
 	}
 	/* element base address and range */

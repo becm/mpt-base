@@ -2,11 +2,9 @@
  * print arguments to destination string.
  */
 
-#include <string.h>
 #include <stdio.h>
 
 #include "types.h"
-#include "meta.h"
 
 #include "../mptplot/layout.h"
 
@@ -39,7 +37,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 	}
 	/* data is direct text representation */
 	ptr = val->ptr;
-	if ((text = mpt_data_tostring((const void **) ptr, val->type, &len))) {
+	if ((text = mpt_data_tostring((const void **) &ptr, val->type, &len))) {
 		return save(dest, text, len);
 	}
 	/* represent color data */
