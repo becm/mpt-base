@@ -76,7 +76,9 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 			else if (val->type == MPT_ENUM(TypeValFmt) && val->ptr) {
 				fmt = *((const MPT_STRUCT(value_format) *) val->ptr);
 			}
-			
+			if ((curr = mpt_valfmt_add(&tmp, fmt) < 0)) {
+				return curr;
+			}
 			if ((curr = it->_vptr->advance(it) <= 0)) {
 				break;
 			}
@@ -85,9 +87,9 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 	}
 	/* assign single element */
 	else if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeValFmt), &fmt)) >= 0) {
-		if (mpt_valfmt_add(&tmp, fmt) < 0) {
+		if ((curr = mpt_valfmt_add(&tmp, fmt)) < 0) {
 			mpt_array_clone(&tmp, 0);
-			return MPT_ERROR(BadOperation);
+			return curr;
 		}
 		ret = 0;
 	}

@@ -16,8 +16,6 @@
 #include "object.h"
 #include "types.h"
 
-#include "mptio/connection.h"
-
 #include "output.h"
 
 static int setHistfile(MPT_STRUCT(logfile) *log, MPT_INTERFACE(convertable) *src)

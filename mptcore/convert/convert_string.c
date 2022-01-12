@@ -57,6 +57,9 @@ extern int mpt_convert_string(const char *from, int type, void *dest)
 		}
 		return len;
 	}
+	if (type == MPT_ENUM(TypeValFmt)) {
+		return mpt_valfmt_get(dest, from);
+	}
 	if (type != 's') {
 		const char *txt = from;
 		if (!txt || !*txt) {
