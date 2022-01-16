@@ -207,6 +207,8 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	
 	conv = &m->entry._conv;
 	m->entry._conv._vptr = &convBufferEntry;
+	m->entry.match = 0;
+	m->entry.converter = 0;
 	*((uint8_t *) &m->entry.val._bufsize) = sizeof(m->entry.val._buf);
 	MPT_value_set_data(&m->entry.val, MPT_ENUM(TypeConvertablePtr), &conv);
 	
@@ -323,6 +325,8 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 	m->_it._vptr = &iterBuffer;
 	
 	m->entry._conv._vptr = 0;
+	m->entry.match = 0;
+	m->entry.converter = 0;
 	m->entry.val.type = 0;
 	
 	m->s = s;
