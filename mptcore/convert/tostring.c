@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "types.h"
+#include "object.h"
 
 #include "../mptplot/layout.h"
 
@@ -53,6 +54,65 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		}
 		return save(dest, buf, adv);
 	}
+	if (val->type == MPT_ENUM(TypeObjectPtr)) {
+		static const char sep[] = ", ";
+		const MPT_INTERFACE(object) *obj = *((void * const *) ptr);
+		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
+		uintptr_t pos = 0;
+		int len = 0, ret;
+		pr.name = "";
+		if ((ret = obj->_vptr->property(obj, &pr) < 0)) {
+			return ret;
+		}
+		len = 0;
+		/* type info */
+		if (!pr.name) {
+			pr.name = "object";
+		}
+		if ((ret = save(dest, pr.name, strlen(pr.name))) < 0) {
+			return len;
+		}
+		len += ret;
+		if ((ret = save(dest, ":", 1)) < 0) {
+			return ret;
+		}
+		len += ret;
+		/* object content */
+		if ((len = save(dest, "{", 2)) < 0) {
+			return len;
+		}
+		while (1) {
+			int seplen = pos ? 2 : 1;
+			pr.name = 0;
+			pr.desc = (void *) pos++;
+			if ((ret = obj->_vptr->property(obj, &pr) < 0)) {
+				break;
+			}
+			if (!pr.name) {
+				continue;
+			}
+			if ((ret = save(dest, sep + 2 - seplen, seplen)) < 0) {
+				return ret;
+			}
+			len += ret;
+			if ((ret = save(dest, pr.name, strlen(pr.name))) < 0) {
+				return ret;
+			}
+			len += ret;
+			if ((ret = save(dest, "=", 1)) < 0) {
+				return ret;
+			}
+			len += ret;
+			if ((ret = mpt_tostring(&pr.val, save, dest)) < 0) {
+				return ret;
+			}
+			len += ret;
+		}
+		if ((ret = save(dest, " }", 2)) < 0) {
+			return ret;
+		}
+		return len + ret;
+	}
 	/* vector representation in value */
 	if ((curr = MPT_type_toScalar(val->type)) > 0) {
 		const MPT_STRUCT(type_traits) *traits = mpt_type_traits(curr);
@@ -64,7 +124,6 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		if ((total = save(dest, "[ ", 2)) < 2) {
 			return MPT_ERROR(MissingBuffer);
 		}
-		adv = 0;
 		if (vec) {
 			const uint8_t *data = vec->iov_base;
 			size_t i, size = traits->size, max = vec->iov_len / size;
@@ -73,25 +132,23 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 				int step;
 				adv = mpt_number_print(buf, sizeof(buf), vfmt, curr, data);
 				if (adv < 0) {
-					break;
+					return adv;
 				}
 				data += size;
 				if ((step = save(dest, buf, adv)) < adv) {
-					adv = MPT_ERROR(MissingBuffer);
-					break;
+					return MPT_ERROR(MissingBuffer);
 				}
 				total += step;
 				if ((step = save(dest, " ", 1)) < 1) {
-					adv = MPT_ERROR(MissingBuffer);
-					break;
+					return MPT_ERROR(MissingBuffer);
 				}
 				total += step;
 			}
 		}
-		if (adv >= 0 && (adv = save(dest, "]", 1)) > 0) {
-			total += adv;
+		if ((adv = save(dest, "]", 1)) < 0) {
+			return MPT_ERROR(MissingBuffer);
 		}
-		return total;
+		return total + adv;
 	}
 	/* represent numeric value */
 	if ((adv = mpt_number_print(buf, sizeof(buf), vfmt, val->type, val->ptr)) >= 0) {
