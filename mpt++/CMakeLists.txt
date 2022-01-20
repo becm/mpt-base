@@ -9,7 +9,7 @@ set(sources
   convertable.cpp
   event.cpp
   identifier.cpp
-  io_buffer.cpp io_queue.cpp
+  io.cpp io_buffer.cpp io_queue.cpp
   logger.cpp
   message.cpp
   meta_buffer.cpp meta_new.cpp

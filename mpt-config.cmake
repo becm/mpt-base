@@ -85,6 +85,10 @@ foreach(_comp ${modules})
   
   # use created module
   if(IS_DIRECTORY "${Mpt_${_up}}")
+    # clean names
+    if(${_comp} STREQUAL "cxx")
+      set(_comp "++")
+    endif()
     set(Mpt_${_up}_INCLUDE_DIRS "${Mpt_${_up}}")
     set(Mpt_${_up}_LIBRARIES "mpt${_comp}")
   # use existing library
