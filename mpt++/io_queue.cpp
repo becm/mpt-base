@@ -76,7 +76,7 @@ ssize_t io::queue::read(size_t len, void *d, size_t part)
 	}
 	return len;
 }
-span<uint8_t> io::queue::peek(size_t len)
+span<const uint8_t> io::queue::peek(size_t len)
 {
 	size_t low = 0;
 	void *base = mpt_queue_data(&_d, &low);
@@ -94,7 +94,7 @@ span<uint8_t> io::queue::peek(size_t len)
 		base = _d.base;
 		len = _d.len;
 	}
-	return span<uint8_t>(static_cast<uint8_t *>(base), len);
+	return span<const uint8_t>(static_cast<uint8_t *>(base), len);
 }
 
 __MPT_NAMESPACE_END

@@ -44,9 +44,9 @@ template <> const struct type_traits *type_properties<io::interface *>::traits()
 }
 
 // generic I/O operations
-span<uint8_t> io::interface::peek(size_t)
+span<const uint8_t> io::interface::peek(size_t)
 {
-	return span<uint8_t>(0, 0);
+	return span<const uint8_t>(0, 0);
 }
 int64_t io::interface::pos()
 {

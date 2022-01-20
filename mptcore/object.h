@@ -150,112 +150,6 @@ extern int mpt_properties_print(int (*)(void *, MPT_STRUCT(property) *), void *,
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
-class object::const_iterator
-{
-public:
-	inline const_iterator(const class object &obj) : _ref(obj), _pos(-1)
-	{ }
-	
-	inline const_iterator &operator ++()
-	{
-		if (_pos >= 0 && !select(++_pos)) {
-			clear();
-		}
-		return *this;
-	}
-	inline bool operator ==(const const_iterator &cmp) const
-	{
-		return _pos == cmp._pos;
-	}
-	inline void clear()
-	{
-		_prop.name = 0;
-		_pos = -1;
-	}
-	inline const char *name()
-	{
-		return _prop.name;
-	}
-	inline const struct property &operator *() const
-	{
-		return _prop;
-	}
-	bool select(uintptr_t);
-protected:
-	const class object &_ref;
-	intptr_t _pos;
-	struct ::mpt::property _prop;
-};
-
-class object::iterator
-{
-public:
-	inline iterator(class object &obj) : _ref(obj), _pos(-1), _name(0)
-	{ }
-	
-	inline iterator &operator ++()
-	{
-		if (_pos >= 0 && !select(++_pos)) {
-			clear();
-		}
-		return *this;
-	}
-	inline bool operator ==(const iterator &cmp) const
-	{
-		return _pos == cmp._pos;
-	}
-	inline void clear()
-	{
-		_name = 0;
-		_pos = -1;
-	}
-	inline const char *name()
-	{
-		return _name;
-	}
-	inline struct property operator *() const
-	{
-		::mpt::property pr(_pos);
-		_ref.property(&pr);
-		return pr;
-	}
-	bool select(uintptr_t);
-protected:
-	const class object &_ref;
-	intptr_t _pos;
-	const char *_name;
-};
-
-inline object::iterator object::begin()
-{
-	iterator it(*this);
-	it.select(0);
-	return it;
-}
-inline object::iterator object::end()
-{
-	return iterator(*this);
-}
-
-inline object::const_iterator object::const_begin() const
-{
-	const_iterator it(*this);
-	it.select(0);
-	return it;
-}
-inline object::const_iterator object::const_end() const
-{
-	return const_iterator(*this);
-}
-inline object::const_iterator object::begin() const
-{
-	return const_begin();
-}
-inline object::const_iterator object::end() const
-{
-	return const_end();
-}
-
 class object::attribute
 {
 public:
@@ -299,6 +193,111 @@ protected:
 private:
 	attribute & operator= (const attribute &);
 };
+
+class object::const_iterator
+{
+public:
+	inline const_iterator(const class object &obj) : _ref(obj), _pos(-1)
+	{ }
+	
+	inline const_iterator &operator ++()
+	{
+		if (_pos >= 0 && !select(++_pos)) {
+			clear();
+		}
+		return *this;
+	}
+	inline bool operator ==(const const_iterator &cmp) const
+	{
+		return _pos == cmp._pos;
+	}
+	inline void clear()
+	{
+		_prop.name = 0;
+		_pos = -1;
+	}
+	inline const char *name()
+	{
+		return _prop.name;
+	}
+	inline const struct property &operator *() const
+	{
+		return _prop;
+	}
+	bool select(uintptr_t);
+protected:
+	const class object &_ref;
+	intptr_t _pos;
+	struct ::mpt::property _prop;
+};
+
+class object::iterator
+{
+public:
+	inline iterator(class object &obj) : _attr(obj), _pos(-1)
+	{ }
+	
+	inline iterator &operator ++()
+	{
+		if (_pos >= 0 && !select(++_pos)) {
+			clear();
+		}
+		return *this;
+	}
+	inline bool operator ==(const iterator &cmp) const
+	{
+		return _pos == cmp._pos;
+	}
+	inline void clear()
+	{
+		_pos = -1;
+	}
+	inline const struct attribute &operator *() const
+	{
+		return _attr;
+	}
+	inline bool select(uintptr_t pos)
+	{
+		bool success = _attr.select(pos);
+		if (success) {
+			_pos = pos;
+		}
+		return success;
+	}
+protected:
+	struct attribute _attr;
+	intptr_t _pos;
+};
+
+inline object::iterator object::begin()
+{
+	iterator it(*this);
+	it.select(0);
+	return it;
+}
+inline object::iterator object::end()
+{
+	return iterator(*this);
+}
+
+inline object::const_iterator object::const_begin() const
+{
+	const_iterator it(*this);
+	it.select(0);
+	return it;
+}
+inline object::const_iterator object::const_end() const
+{
+	return const_iterator(*this);
+}
+inline object::const_iterator object::begin() const
+{
+	return const_begin();
+}
+inline object::const_iterator object::end() const
+{
+	return const_end();
+}
 #endif /* C++ */
 
 __MPT_NAMESPACE_END

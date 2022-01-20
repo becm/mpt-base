@@ -37,8 +37,8 @@ void MyQueue::add(char c)
 
 mpt::span<const char> MyQueue::string()
 {
-	mpt::span<uint8_t> d = peek();
-	char *base = reinterpret_cast<char *>(d.begin());
+	mpt::span<const uint8_t> d = peek();
+	const char *base = reinterpret_cast<const char *>(d.begin());
 	return mpt::span<const char>(base, d.size());
 }
 

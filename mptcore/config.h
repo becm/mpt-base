@@ -213,15 +213,13 @@ protected:
 extern config::item *query(const unique_array<config::item> &, path &);
 extern config::item *reserve(unique_array<config::item> &, path &);
 
-class config::item : public unique_array<config::item>, public ::mpt::item<metatype>
+class config::item : public unique_array<config::item>, public reference<metatype>, public identifier
 {
 public:
 	inline bool unused()
 	{
 		return _len == 0;
 	}
-private:
-	item & operator =(const item &from);
 };
 #endif
 

@@ -174,7 +174,7 @@ public:
 	
 	bool push(const struct message &);
 	
-	span<uint8_t> data() const;
+	span<const uint8_t> data() const;
 protected:
 #else
 # define MPT_ENCODE_ARRAY_INIT { 0, MPT_ENCODE_INIT, MPT_ARRAY_INIT }
@@ -210,7 +210,7 @@ struct slice : array
 	slice(array::content * = 0);
 	~slice();
 	
-	span<uint8_t> data() const;
+	span<const uint8_t> data() const;
 	
 	ssize_t write(size_t , const void *, size_t);
 	int set(convertable &);
@@ -419,7 +419,7 @@ inline void *array::prepend(size_t len, const void *data)
 }
 inline array &array::operator= (slice const& from)
 {
-	span<uint8_t> d = from.data();
+	span<const uint8_t> d = from.data();
 	set(d.size(), d.begin());
 	return *this;
 }
@@ -439,10 +439,10 @@ inline slice::slice(array const& a) : array(a), _off(0)
 }
 inline slice::~slice()
 { }
-inline span<uint8_t> slice::data() const
+inline span<const uint8_t> slice::data() const
 {
 	buffer *b = _buf.instance();
-	return span<uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
+	return span<const uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
 }
 long compact(span<void *>);
 long unused(span<void *>);

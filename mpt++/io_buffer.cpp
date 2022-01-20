@@ -18,7 +18,11 @@ __MPT_NAMESPACE_BEGIN
 io::buffer::buffer(array const &a)
 {
 	_d = a;
-	_state.done = _d.length();
+	// access content to avoid type traits check array base/length
+	const array::content *c;
+	if ((c = _d.data())) {
+		_state.done = c->length();
+	}
 }
 io::buffer::~buffer()
 { }
@@ -46,14 +50,14 @@ int io::buffer::convert(int type, void *ptr)
 	if (type == MPT_type_toVector('c')) {
 		struct iovec *vec;
 		if ((vec = static_cast<struct iovec *>(ptr))) {
-			span<uint8_t> d = data();
-			vec->iov_base = d.begin();
+			span<const uint8_t> d = data();
+			vec->iov_base = const_cast<uint8_t *>(d.begin());
 			vec->iov_len = d.size();
 		}
 		return me;
 	}
 	if (type == 's') {
-		span<uint8_t> d = data();
+		span<const uint8_t> d = data();
 		if (!memchr(d.begin(), 0, d.size())) {
 			return BadValue;
 		}
@@ -85,13 +89,13 @@ const struct value *io::buffer::value()
 	if (_state.scratch || !_state.done) {
 		return 0;
 	}
-	span<uint8_t> d = data();
+	span<const uint8_t> d = data();
 	uint8_t *end;
 	if (!(end = (uint8_t *) memchr(d.begin(), 0, d.size()))) {
 		return 0;
 	}
 	struct iovec vec;
-	vec.iov_base = d.begin(),
+	vec.iov_base = const_cast<uint8_t *>(d.begin());
 	vec.iov_len = end + 1 - d.begin();
 	// struct iovec is copied to local value buffer
 	_value.set(MPT_type_toVector('c'), &vec);
@@ -102,7 +106,7 @@ int io::buffer::advance()
 	if (!_state.done) {
 		return MissingData;
 	}
-	span<uint8_t> d = data();
+	span<const uint8_t> d = data();
 	uint8_t *end;
 	if (!(end = (uint8_t *) memchr(d.begin(), 0, d.size()))) {
 		return BadValue;
@@ -119,7 +123,7 @@ int io::buffer::reset()
 // I/O device interface
 ssize_t io::buffer::read(size_t nblk, void *dest, size_t esze)
 {
-	span<uint8_t> d = data();
+	span<const uint8_t> d = data();
 	if (!esze) {
 		if ((size_t) d.size() < nblk) {
 			return MissingData;
@@ -189,7 +193,7 @@ bool io::buffer::seek(int64_t pos)
 	
 	return true;
 }
-span<uint8_t> io::buffer::peek(size_t)
+span<const uint8_t> io::buffer::peek(size_t)
 {
 	return encode_array::data();
 }

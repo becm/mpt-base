@@ -33,12 +33,11 @@ public:
 	
 	virtual int64_t pos();
 	virtual bool seek(int64_t);
-	virtual span<uint8_t> peek(size_t);
+	virtual span<const uint8_t> peek(size_t);
 	virtual int getchar();
 	
 	static const named_traits *get_traits();
 };
-
 
 /* metatype extension to encode array */
 class buffer : public metatype, public iterator, public interface, public encode_array
@@ -61,7 +60,7 @@ public:
 	
 	int64_t pos() __MPT_OVERRIDE;
 	bool seek(int64_t) __MPT_OVERRIDE;
-	span<uint8_t> peek(size_t) __MPT_OVERRIDE;
+	span<const uint8_t> peek(size_t) __MPT_OVERRIDE;
 protected:
 	struct value _value;
 };
@@ -140,7 +139,7 @@ public:
 	ssize_t write(size_t , const void *, size_t) __MPT_OVERRIDE;
 	ssize_t read(size_t , void *, size_t) __MPT_OVERRIDE;
 	
-	span<uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
+	span<const uint8_t> peek(size_t = 0) __MPT_OVERRIDE;
 	
 	/* queue access */
 	virtual bool prepare(size_t);
@@ -272,9 +271,8 @@ public:
 		}
 		if (data) {
 			*data = *t;
-		} else {
-			t->~T();
 		}
+		t->~T();
 		return true;
 	}
 	span<T> elements()
@@ -283,7 +281,7 @@ public:
 		if (!(d = _d.instance())) {
 			return span<T>(0, 0);
 		}
-		span<uint8_t> r = d->peek();
+		span<const uint8_t> r = d->peek();
 		return span<T>((T *) r.begin(), r.size() / sizeof(T));
 	}
 protected:

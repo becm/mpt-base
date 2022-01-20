@@ -95,8 +95,9 @@ extern int main(int , char * const [])
 	std::cout << "ao: " << ax->type() << std::endl;
 	std::cout << "lo: " << li->type() << std::endl;
 	
-	for (auto i : *li) {
-		std::cout << "  " << i.name << " = " << i.val << std::endl;
+	for (const auto &i : *li) {
+		const mpt::property &p = i;
+		std::cout << "  " << p.name << " = " << p.val << std::endl;
 	}
 	
 	mpt::object *obj;

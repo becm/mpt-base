@@ -477,12 +477,16 @@ bool encode_array::prepare(size_t len)
 	_d.set(old);
 	return true;
 }
-span<uint8_t> encode_array::data() const
+span<const uint8_t> encode_array::data() const
 {
-	uint8_t *base = (uint8_t *) _d.base();
-	size_t off = _d.length() - _state.done - _state.scratch;
-	
-	return span<uint8_t>(base + off, _state.done);
+	uint8_t *base = 0;
+	size_t off = 0;
+	const array::content *d;
+	if ((d = _d.data())) {
+		base = (uint8_t *) d->data();
+		off  = d->length() - _state.done - _state.scratch;
+	}
+	return span<const uint8_t>(base + off, _state.done);
 }
 /*!
  * \ingroup mptArray

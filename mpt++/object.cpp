@@ -32,16 +32,6 @@ bool object::const_iterator::select(uintptr_t pos)
 	_pos = pos;
 	return true;
 }
-bool object::iterator::select(uintptr_t pos)
-{
-	::mpt::property pr(pos);
-	if (_ref.property(&pr) < 0) {
-		return false;
-	}
-	_name = pr.name;
-	_pos = pos;
-	return true;
-}
 
 // object assignment
 bool object::set(const char *name, const value &val, logger *out)
