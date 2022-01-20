@@ -209,7 +209,7 @@ extern int mpt_init(int argc, char * const argv[])
 				/* global environment loading (masks granular) */
 				if (env) {
 					mpt_log(0, __func__, MPT_LOG(Warning), "%s",
-					        MPT_tr("global environamet load after specialized"));
+					        MPT_tr("global environmet load after specialized"));
 				}
 				setEnviron(0);
 				continue;

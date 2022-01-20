@@ -29,14 +29,13 @@
  */
 extern int mpt_object_set_nodes(MPT_INTERFACE(object) *obj, int match, const MPT_STRUCT(node) *conf, MPT_INTERFACE(logger) *info)
 {
-	MPT_STRUCT(property) pr;
+	MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
 	int proc = 0;
 	
 	if (!conf) {
 		return 0;
 	}
 	pr.name = "";
-	pr.desc = 0;
 	if (obj->_vptr->property(obj, &pr) < 0 || !pr.name) {
 		pr.name = "object";
 	}

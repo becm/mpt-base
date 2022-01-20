@@ -53,6 +53,8 @@ extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *des
 		case 'x': len = sizeof(int64_t); break;
 		case 't': len = sizeof(uint64_t); break;
 		
+		case 'l': len = sizeof(long); break;
+		
 		case 'f': len = sizeof(float); break;
 		case 'd': len = sizeof(double); break;
 #ifdef _MPT_FLOAT_EXTENDED_H
