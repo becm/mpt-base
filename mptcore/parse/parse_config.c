@@ -21,17 +21,14 @@
 extern int mpt_parse_config(MPT_TYPE(input_parser) next, void *npar, MPT_STRUCT(parser_context) *parse, MPT_TYPE(path_handler) save, void *ctx)
 {
 	MPT_STRUCT(path) path = MPT_PATH_INIT;
+	struct iovec vec;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(MPT_type_toVector('c'), &vec);
 	int ret;
 	
 	/* accuire next path element */
 	while ((ret = next(npar, parse, &path)) > 0) {
-		MPT_STRUCT(value) val;
-		struct iovec vec;
-		
 		vec.iov_base = (char *) (path.base + path.off + path.len);
 		vec.iov_len  = parse->valid;
-		
-		MPT_value_set_data(&val, MPT_type_toVector('c'), &vec);
 		
 		/* save to configuration */
 		if (save(ctx, &path, ret & MPT_PARSEFLAG(Data) ? &val : 0, parse->prev, ret) < 0) {

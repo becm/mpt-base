@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <sys/uio.h>
 
@@ -23,7 +24,7 @@
  */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *info)
 {
-	MPT_STRUCT(value) val;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	struct iovec vec;
 	
 	if (_mpt_geninfo_conv(info, MPT_type_toVector('c'), &vec) < 0) {

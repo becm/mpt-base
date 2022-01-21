@@ -199,6 +199,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 	data->_conv._vptr = &fileElem;
 	
 	conv = &data->_conv;
+	*((uint8_t *) &data->value._bufsize) = sizeof(data->value._buf);
 	MPT_value_set_data(&data->value, MPT_ENUM(TypeConvertablePtr), &conv);
 	
 	data->fd = file;

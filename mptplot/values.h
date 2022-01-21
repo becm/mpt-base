@@ -174,7 +174,7 @@ public:
 		return _d.data();
 	}
 	template <typename T>
-	T *set(const span<T> &data, long pos = 0)
+	T *set(const span<const T> &data, long pos = 0)
 	{
 		static const struct type_traits *traits = 0;
 		if (!traits && !(traits = type_properties<T>::traits())) {
@@ -189,6 +189,15 @@ public:
 			}
 		}
 		return static_cast<T *>(ptr);
+	}
+	template <typename T>
+	T *reserve(long count)
+	{
+		static const struct type_traits *traits = 0;
+		if (!traits && !(traits = type_properties<T>::traits())) {
+			return 0;
+		}
+		return static_cast<T *>(reserve(count, *traits));
 	}
 protected:
 	void *set(const struct type_traits &, size_t , const void *, long = 0);

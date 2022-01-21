@@ -23,7 +23,7 @@
  */
 extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 {
-	MPT_STRUCT(value) val;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	size_t len;
 	char buf[32];
 	char curr;

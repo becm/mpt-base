@@ -53,6 +53,11 @@ if with_plot
       dependencies: cxx),
     args: [ join_paths(meson.current_source_dir(), 'layout.lay') ]
   )
+  test('value storage',
+    executable('value_store', 'value_store.cpp',
+      cpp_args: test_defines,
+      dependencies: cxx)
+  )
   # require C++ plot and I/O components
   if with_io
     test('function output',

@@ -328,6 +328,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 	m->entry.match = 0;
 	m->entry.converter = 0;
 	m->entry.val.type = 0;
+	*((uint8_t *) &m->entry.val._bufsize) = sizeof(m->entry.val._buf);
 	
 	m->s = s;
 	if (a) {

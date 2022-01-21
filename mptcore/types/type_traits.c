@@ -144,7 +144,7 @@ static void _core_init(void) {
 /* scalar type resources */
 static void _scalar_fini(void) {
 	free(scalar_types);
-	iovec_types = 0;
+	scalar_types = 0;
 }
 static void _scalar_init(void) {
 	scalar_types = calloc(sizeof(*scalar_types), MPT_ENUM(_TypeScalarSize));

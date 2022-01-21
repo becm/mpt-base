@@ -57,7 +57,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 	MPT_INTERFACE(metatype) *glob;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	MPT_STRUCT(message) tmp;
-	MPT_STRUCT(value) val;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	struct iovec vec;
 	char buf[1024];
 	size_t all;

@@ -9,7 +9,7 @@ TESTS = \
 	output \
 	queue \
 	types \
-	values
+	value_store
 
 PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
@@ -17,7 +17,7 @@ INC = '${DIR_BASE}mptcore'
 
 cxx_inc = buffer output queue
 io_inc = buffer comp output queue
-plot_inc = iter layout map object values
+plot_inc = iter layout map object value_store
 
 
 ${PROGS} $(PROGS:%=%_static) : CC=${CXX}

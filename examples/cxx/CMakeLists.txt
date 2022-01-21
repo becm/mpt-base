@@ -53,6 +53,11 @@ if(MPT_WITH_PLOT)
   target_link_libraries(layout_cxx mpt++)
   add_test(NAME layout_cxx COMMAND layout_cxx "${CMAKE_CURRENT_SOURCE_DIR}/layout.lay")
   
+  add_executable(value_store_cxx value_store.cpp)
+  target_include_directories(value_store_cxx PRIVATE ${EXAMPLES_CXX_PLOT_INCLUDE})
+  target_link_libraries(value_store_cxx mpt++)
+  add_test(NAME value_store_cxx COMMAND value_store_cxx)
+  
   if (MPT_WITH_IO)
     set(EXAMPLES_CXX_IO_PLOT_INCLUDE ${Mpt_IO_INCLUDE_DIRS} ${EXAMPLES_CXX_PLOT_INCLUDE})
     add_executable(output_cxx output.cpp)

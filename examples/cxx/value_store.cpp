@@ -25,12 +25,11 @@ extern int main(int , char * const [])
 	double v[] = { 1.0, 2.0, 3.0, 4.0 };
 	
 	value_store s;
-	s.set(span<double>(v, 3));
+	s.set(span<const double>(v + 1, 3), 2);
 	
 	std::cout << s.type() << std::endl;
 	
-	double *ptr = static_cast<double *>(s.reserve(5, *type_properties<double>::traits()));
-	ptr[4] = 1.234;
+	double *ptr = s.reserve<double>(8);
 	
-	return 0;
+	return !(ptr[4] == v[3]);
 }
