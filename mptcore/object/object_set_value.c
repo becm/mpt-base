@@ -2,6 +2,8 @@
  * set object data from iterator.
  */
 
+#include <string.h>
+
 #include "object.h"
 #include "convert.h"
 #include "types.h"

@@ -4,6 +4,7 @@
  */
 
 #include <ctype.h>
+#include <string.h>
 
 #include "types.h"
 

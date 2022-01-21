@@ -8,7 +8,6 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <string.h>
 
 /* localisation makro */
 #ifndef MPT_tr

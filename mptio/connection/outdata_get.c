@@ -3,6 +3,8 @@
  *   query parameters of output data
  */
 
+#include <string.h>
+
 #include "object.h"
 #include "types.h"
 

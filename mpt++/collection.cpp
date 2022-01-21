@@ -2,7 +2,7 @@
  * item grouping implementation
  */
 
-#include <string>
+#include <cstring>
 
 #include "node.h"
 #include "convert.h"
