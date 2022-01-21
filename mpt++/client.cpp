@@ -68,7 +68,8 @@ static config *clientConfig()
 		}
 		atexit(unrefConfig);
 	}
-	return typecast<config>(*cfg);
+	config *ret; // type declaration required for `typecast` assignment
+	return ret &= *cfg;
 }
 /*!
  * \ingroup mptClient

@@ -43,7 +43,7 @@ client::client()
 	mpt::mpt_convertable_info(mt, &pr);
 	mpt::debug(__func__, "%s: %s", pr.name, pr.desc);
 	mpt::object *o;
-	if (mt && (o = mpt::typecast<mpt::object>(*mt))) {
+	if (mt && (o &= *mt)) {
 		o->set(0, "w:client.out");
 	}
 	_mt.set_instance(mt);
@@ -105,9 +105,12 @@ int main(int argc, char * const argv[])
 	
 	mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 	
+	mpt::config *cfg;
 	mpt::convertable *val;
-	if ((val = mpt::typecast<mpt::config>(*mpt::config::global())->get("mpt.args"))) {
-		mpt::iterator *it = mpt::typecast<mpt::iterator>(*val);
+	mpt::iterator *it;
+	if ((cfg &= *mpt::config::global())
+	 && (val = cfg->get("mpt.args"))
+	 && (it &= *val)) {
 		const char *arg;
 		while (it->get(arg)) {
 			std::cerr << arg << std::endl;

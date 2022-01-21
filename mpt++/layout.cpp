@@ -139,15 +139,15 @@ int layout::bind(const relation *rel, logger *out)
 	for (auto &it : _items) {
 		metatype *mt;
 		graph *g;
-		if (!(mt = it.instance()) || !(g = typecast<graph>(*mt))) {
+		if (!(mt = it.instance()) || !(g &= *mt)) {
 			continue;
 		}
 		const char *name = it.name();
 		if (!g->addref()) {
 			static const char _func[] = "mpt::layout::bind\0";
-			::mpt::graph *d = typecast< ::mpt::graph>(*mt);
+			::mpt::graph *d;
 			object *o = 0;
-			if (!d || !(o = typecast<object>(*mt))) {
+			if (!(d &= *mt) || !(o &= *mt)) {
 				const char *msg = MPT_tr("unable to get graph information");
 				if (out) {
 					if (!name || !*name) {

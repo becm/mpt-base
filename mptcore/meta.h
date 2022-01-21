@@ -38,6 +38,13 @@ public:
 	virtual void unref() = 0;
 	virtual uintptr_t addref();
 	virtual metatype *clone() const = 0;
+	
+	template <typename T>
+	bool get(T &val)
+	{
+		int type = type_properties<T>::id(true);
+		return (type > 0) && (convert(type, &val) >= 0);
+	}
 };
 template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id(bool) {
 	return TypeMetaPtr;
@@ -87,14 +94,7 @@ public:
 	bool get(T &val)
 	{
 		const struct value *src = value();
-		if (!src) {
-			return false;
-		}
-		int type = type_properties<T>::id(true);
-		if (type <= 0) {
-			return false;
-		}
-		return src->convert(type, &val) >= 0;
+		return src ? src->get(val) : false;
 	}
 };
 template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {

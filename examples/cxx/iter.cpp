@@ -23,23 +23,23 @@ extern int main(int , char * const [])
 	mtrace();
 	
 	metatype *m = mpt_iterator_create("1 2 3");
-	
-	iterator *it = typecast<iterator>(*m);
-	
+	iterator *it;
 	double val;
-	while (it->get(val)) {
-		std::cout << val << std::endl;
-		it->advance();
+	
+	if (it &= *m) {
+		while (it->get(val)) {
+			std::cout << val << std::endl;
+			it->advance();
+		}
 	}
 	m->unref();
 	
 	double vals[] = { 1, 2, 3 };
-	source<double> *s = new source<double>(vals, 3);
-	while (s->get(val)) {
+	source<double> s(vals, 3);
+	while (s.get(val)) {
 		std::cout << val << std::endl;
-		s->advance();
+		s.advance();
 	}
-	delete s;
 	
 	return 0;
 }

@@ -72,9 +72,11 @@ template <> const struct type_traits *type_properties<group *>::traits()
 bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
 {
 	const char _func[] = "mpt::add_items";
-	group *grp = typecast<group>(to);
-	object *obj = typecast<object>(to);
+	group *grp;
+	object *obj;
 	
+	grp &= to;
+	obj &= to;
 	// no assignable target
 	if (!grp && !obj) {
 		return true;
@@ -116,12 +118,12 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				value val;
 				const char *data;
 				
-				if (from->convert(type_properties<value>::id(true), &val) >= 0) {
+				if (from->get(val)) {
 					if (obj->set(name, val, out)) {
 						continue;
 					}
 				}
-				data = mpt_convertable_data(from);
+				data = from->string();
 				obj->set(name, data, out);
 				continue;
 			}
@@ -189,7 +191,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				return false;
 			}
 			object *obj, *src;
-			if ((src = typecast<object>(*curr)) && (obj = typecast<object>(*from))) {
+			if ((src &= *curr) && (obj &= *from)) {
 				obj->set(*src, out);
 				continue;
 			}
@@ -222,9 +224,10 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			continue;
 		}
 		// process child items
-		group *ig = typecast<group>(*from);
-		
-		if (!typecast<object>(*from)) {
+		group *ig;
+		object *curr;
+		ig &= *from;
+		if (!(curr &= *from)) {
 			if (out) {
 				out->message(_func, out->Warning, "%s (%p): %s",
 				             name, from, MPT_tr("element not an object"));
@@ -275,7 +278,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const collec
 		return 0;
 	}
 	if (!sub && mt) {
-		sub = typecast<collection>(*mt);
+		sub &= *mt;
 	}
 	if (!ctx->left) {
 		ctx->mt = mt;

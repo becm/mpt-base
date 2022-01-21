@@ -271,14 +271,14 @@ public:
 				warning(_func, "%s", MPT_tr("no reply context"));
 				break;
 			}
-			if (!(rd = typecast<reply_data>(*ctx))) {
+			if (!(rd &= *ctx)) {
 				break;
 			}
 			if (!rd->set(idlen, id)) {
 				error(_func, "%s", MPT_tr("reply context unusable"));
 				return BadOperation;
 			}
-			rc = typecast<reply_context>(*ctx);
+			rc &= *ctx;
 			break;
 		}
 		ev.reply = rc;

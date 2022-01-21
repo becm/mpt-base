@@ -373,23 +373,6 @@ bool assign(const T &from, int type, void *ptr) {
 	return true;
 }
 
-template<typename T>
-inline T *typecast(convertable &src) {
-	T *ptr = 0;
-	int type = type_properties<T *>::id(true);
-	if ((type > 0)
-	 && (src.convert(type, &ptr) < 0)) {
-		ptr = 0;
-	}
-	return ptr;
-}
-
-
-/* specialize convertable string cast */
-template <> inline const char *typecast<const char>(convertable &src) {
-	return src.string();
-}
-
 /* floating point values */
 template<> inline __MPT_CONST_TYPE int type_properties<float>::id(bool)       { return 'f'; }
 template<> inline __MPT_CONST_TYPE int type_properties<double>::id(bool)      { return 'd'; }
@@ -526,6 +509,21 @@ std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
 }
 template <> std::ostream &operator<<(std::ostream &, mpt::span<char>);
 template <> std::ostream &operator<<(std::ostream &, mpt::span<const char>);
+
+template <typename T>
+T *&operator&=(T *&val, mpt::convertable &from)
+{
+	int type = mpt::type_properties<T *>::id(true);
+	if ((type <= 0) || (from.convert(type, &val) < 0)) {
+		val = 0;
+	}
+	return val;
+}
+template <> inline const char *&operator&=(const char *&to, mpt::convertable &from)
+{
+	to = from.string();
+	return to;
+}
 #endif
 
 #endif /* _MPT_TYPES_H */

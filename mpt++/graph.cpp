@@ -133,11 +133,11 @@ int layout::graph::set_property(const char *prop, convertable *src)
 static layout::graph::axis *make_axis(metatype &mt, logger *out, const char *_func, const char *name, int len)
 {
 	::mpt::axis *d;
-	if ((d = typecast< ::mpt::axis>(mt))) {
+	if ((d &= mt)) {
 		return new layout::graph::axis(d);
 	}
 	object *o;
-	if ((o = typecast<object>(mt))) {
+	if ((o &= mt)) {
 		layout::graph::axis *a = new layout::graph::axis;
 		if (a->set(*o, out)) {
 			return a;
@@ -159,11 +159,11 @@ static layout::graph::axis *make_axis(metatype &mt, logger *out, const char *_fu
 static layout::graph::world *make_world(metatype &mt, logger *out, const char *_func, const char *name, int len)
 {
 	::mpt::world *d;
-	if ((d = typecast< ::mpt::world>(mt))) {
+	if ((d &= mt)) {
 		return new layout::graph::world(d);
 	}
 	object *o;
-	if ((o = typecast<object>(mt))) {
+	if ((o &= mt)) {
 		layout::graph::world *w = new layout::graph::world;
 		if (w->set(*o, out)) {
 			return w;
@@ -199,7 +199,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	if (!(names = ::mpt::graph::axes())) {
 		for (auto &it : _items) {
 			axis *a;
-			if (!(mt = it.instance()) || !(a = typecast<axis>(*mt))) {
+			if (!(mt = it.instance()) || !(a &= *mt)) {
 				continue;
 			}
 			curr = it.name();
@@ -252,7 +252,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	if (!(names = ::mpt::graph::worlds())) {
 		for (auto &it : _items) {
 			world *w;
-			if (!(mt = it.instance()) || !(w = typecast<world>(*mt))) {
+			if (!(mt = it.instance()) || !(w &= *mt)) {
 				continue;
 			}
 			curr = it.name();
@@ -307,7 +307,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	}
 	for (auto &it : _items) {
 		group *g;
-		if (!(mt = it.instance()) || !(g = typecast<group>(*mt))) {
+		if (!(mt = it.instance()) || !(g &= *mt)) {
 			continue;
 		}
 		collection_relation cr(*g, rel);
