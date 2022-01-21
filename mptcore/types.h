@@ -10,6 +10,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
+MPT_STRUCT(value);
+
 enum MPT_ENUM(Types)
 {
 	/* system types */
@@ -155,11 +157,10 @@ extern int mpt_type_basic_add(size_t);
 /* type alias for symbol description */
 extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
 
-
+/* copy value content */
+extern int mpt_value_copy(MPT_STRUCT(value) *, const MPT_STRUCT(value) *);
 /* compare data types */
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
-/* read from value */
-extern int mpt_value_read(MPT_STRUCT(value) *, const char *, void *);
 
 __MPT_EXTDECL_END
 
@@ -211,6 +212,7 @@ private:
 	}
 };
 
+/*! type properties for generic type (fallback) */
 template<typename T>
 class type_properties<T *>
 {
@@ -234,6 +236,69 @@ private:
 	type_properties();
 };
 
+
+/*! vector data compatible to `struct iovec` memory */
+template <typename T>
+class span
+{
+public:
+	typedef T* iterator;
+	
+	inline span(T *a, long len) : _base(len < 0 ? 0 : a), _len(len * sizeof(T))
+	{ }
+	inline span() : _base(0), _len(0)
+	{ }
+	
+	inline iterator begin() const
+	{
+		return _base;
+	}
+	inline iterator end() const
+	{
+		return _base + size();
+	}
+	inline long size() const
+	{
+		return _len / sizeof(T);
+	}
+	inline size_t size_bytes() const
+	{
+		return _len;
+	}
+	inline iterator nth(long pos) const
+	{
+		if (pos < 0) {
+			if ((pos += size()) < 0) {
+				return 0;
+			}
+		}
+		else if (pos >= size()) {
+			return 0;
+		}
+		return _base + pos;
+	}
+	bool skip(long l)
+	{
+		if (l < 0 || l > size()) {
+			return false;
+		}
+		_len -= l * sizeof(T);
+		_base += l;
+		return true;
+	}
+	bool trim(long l)
+	{
+		if (l < 0 || l > size()) {
+			return false;
+		}
+		_len -= l * sizeof(T);
+		return true;
+	}
+protected:
+	T *_base;
+	size_t _len;
+};
+/*! special properties for base type resolution */
 template<typename T>
 class type_properties<span<const T> >
 {
@@ -272,6 +337,7 @@ private:
 	}
 	type_properties();
 };
+/*! special properties to set allways set traits to trivially copyable data */
 template<typename T>
 class type_properties<span<T> >
 {
@@ -371,9 +437,95 @@ template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits(
 
 #endif /* __cplusplus */
 
+/*! generic data type and offset */
+MPT_STRUCT(value)
+{
+#ifdef __cplusplus
+	inline value() : domain(0), type(0), _bufsize(sizeof(_buf)), _pad(0), ptr(0)
+	{ }
+	value(const value &from);
+	value(const char *v);
+	
+	value &operator=(const value &);
+	
+	inline value &operator =(const long double &v) { set(v); return *this; }
+	inline value &operator =(const double   &v) { set(v); return *this; }
+	inline value &operator =(const float    &v) { set(v); return *this; }
+	inline value &operator =(const int64_t  &v) { set(v); return *this; }
+	inline value &operator =(const uint64_t &v) { set(v); return *this; }
+	inline value &operator =(const int32_t  &v) { set(v); return *this; }
+	inline value &operator =(const uint32_t &v) { set(v); return *this; }
+	
+	int convert(int , void *) const;
+	
+	inline int type_id() const
+	{
+		return domain ? static_cast<int>(BadType) : type;
+	}
+	inline const void *data(int id = 0) const
+	{
+		return (!domain && (!id || (id == type))) ? ptr : 0;
+	}
+	
+	void clear();
+	bool set(const char *);
+	bool set(int , const void *);
+	
+	template <typename T>
+	bool set(const T &val)
+	{
+		return set(type_properties<T>::id(true), &val);
+	}
+	template <typename T>
+	bool get(T &val) const
+	{
+		return convert(type_properties<T>::id(true), &val);
+	}
+	
+	const char *string() const;
+	const struct iovec *vector(int = 0) const;
+	const struct array *array(int = 0) const;
+protected:
+#else
+# define MPT_VALUE_INIT(t, p) { 0, (t), (8 + sizeof(void *)), 0, (p), { 0 } }
+# define MPT_value_set_string(v, s) ( \
+	(v)->domain = 0, \
+	(v)->type = 's', \
+	((const char **) ((v)->_buf))[0] = (s), \
+	(v)->ptr  = (v)->_buf)
+# define MPT_value_set_data(v, t, d) ( \
+	(v)->domain = 0, \
+	(v)->type = (t), \
+	(v)->ptr = ((sizeof(*(d)) > (v)->_bufsize)) ? 0 : memcpy((v)->_buf, (d), sizeof(*(d))))
+#endif
+	uint32_t domain;         /* type domain */
+	uint16_t type;           /* type identifier in domain */
+	const uint8_t _bufsize;  /* actual size of buffer area */
+	const uint8_t _pad;      /* padding */
+	const void *ptr;         /* formated data */
+	uint8_t _buf[8 + sizeof(void *)];
+};
+
 __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
+std::ostream &operator<<(std::ostream &, const mpt::value &);
+
+template <typename T>
+std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
+{
+	typename mpt::span<T>::iterator begin = d.begin(), end = d.end();
+	if (begin == end) {
+		return o;
+	}
+	o << *begin;
+	while (++begin != end) {
+		o << ' ' << *begin;
+	}
+	return o;
+}
+template <> std::ostream &operator<<(std::ostream &, mpt::span<char>);
+template <> std::ostream &operator<<(std::ostream &, mpt::span<const char>);
 #endif
 
 #endif /* _MPT_TYPES_H */

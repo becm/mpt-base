@@ -17,6 +17,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
 MPT_STRUCT(array);
+MPT_STRUCT(value);
 MPT_STRUCT(message);
 
 MPT_INTERFACE(iterator);

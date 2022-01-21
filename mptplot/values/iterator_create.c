@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <ctype.h>
 
+#include "types.h"
 #include "convert.h"
 
 #include "values.h"

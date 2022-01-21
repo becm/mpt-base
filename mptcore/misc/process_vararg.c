@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "types.h"
 #include "convert.h"
 
 #include "meta.h"

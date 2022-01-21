@@ -9,4 +9,5 @@ object
 output
 queue
 types
+value
 value_store 

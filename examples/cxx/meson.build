@@ -21,6 +21,11 @@ test('type assignments',
     cpp_args: test_defines,
     dependencies: cxx)
 )
+test('value assignments',
+  executable('value', 'value.cpp',
+    cpp_args: test_defines,
+    dependencies: cxx)
+)
 # require C++ I/O components
 if with_io
   test('buffer rotation',

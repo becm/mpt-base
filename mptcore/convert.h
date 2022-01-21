@@ -23,6 +23,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
 MPT_STRUCT(array);
+MPT_STRUCT(value);
 
 enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */

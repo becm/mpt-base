@@ -23,6 +23,11 @@ target_include_directories(types_cxx PRIVATE ${EXAMPLES_CXX_INCLUDE})
 target_link_libraries(types_cxx mpt++)
 add_test(NAME types_cxx COMMAND types_cxx)
 
+add_executable(value_cxx value.cpp)
+target_include_directories(value_cxx PRIVATE ${EXAMPLES_CXX_INCLUDE})
+target_link_libraries(value_cxx mpt++)
+add_test(NAME value_cxx COMMAND value_cxx)
+
 if(MPT_WITH_IO)
   add_executable(buffer_cxx buffer.cpp)
   target_include_directories(buffer_cxx PRIVATE ${EXAMPLES_CXX_INCLUDE})

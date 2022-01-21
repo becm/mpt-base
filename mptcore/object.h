@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 # include "output.h"
 #else
-# include "core.h"
+# include "types.h"
 #endif
 
 __MPT_NAMESPACE_BEGIN

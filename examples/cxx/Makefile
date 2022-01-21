@@ -9,6 +9,7 @@ TESTS = \
 	output \
 	queue \
 	types \
+	value \
 	value_store
 
 PROGS = comp ${TESTS}

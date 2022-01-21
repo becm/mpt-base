@@ -18,6 +18,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
 MPT_STRUCT(path);
+MPT_STRUCT(value);
 
 /* simple format description */
 MPT_STRUCT(parser_format)

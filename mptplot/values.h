@@ -19,6 +19,7 @@ MPT_INTERFACE(iterator);
 MPT_INTERFACE(output);
 
 MPT_STRUCT(node);
+MPT_STRUCT(value);
 MPT_STRUCT(type_traits);
 
 /* primitive type point/transformation structure */
