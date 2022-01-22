@@ -95,7 +95,8 @@ extern int mpt_value_argv(MPT_STRUCT(value) *val, int fmt, va_list va)
 		default:
 			return MPT_ERROR(BadType);
 	}
-	val->ptr = val->_buf;
+	val->domain = 0;
 	val->type = fmt;
+	val->ptr = val->_buf;
 	return len;
 }

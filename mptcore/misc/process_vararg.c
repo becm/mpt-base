@@ -35,7 +35,6 @@ static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 		return MPT_ERROR(MissingData);
 	}
 	if (!(ret = *va->fmt)) {
-		va->val.type = 0;
 		return 0;
 	}
 	if ((ret = mpt_value_argv(&va->val, ret, va->arg)) < 0) {
