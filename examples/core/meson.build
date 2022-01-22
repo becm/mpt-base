@@ -38,3 +38,8 @@ test('section parser', parse,
   args : [ files('subsect.lay'), '{*} =;!#', 'E' ])
 test('config parser', parse,
   args : [ files('config.txt'), '[ ] = #', 'Esc' ])
+
+test('value assignment and print',
+  executable('value', 'value.c',
+    c_args : test_defines,
+    dependencies: core))

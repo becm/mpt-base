@@ -30,3 +30,8 @@ add_test(NAME parse_layout COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/layout.txt
 add_test(NAME parse_layout_alt COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/layout.txt" "[*] = !")
 add_test(NAME parse_subsect COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/subsect.lay" "{*} =;!#" "E")
 add_test(NAME parse_config COMMAND parse "${CMAKE_CURRENT_SOURCE_DIR}/config.txt" "[ ] = #" "Esc")
+
+add_executable(value value.c)
+target_include_directories(value PRIVATE ${Mpt_CORE_INCLUDE_DIRS})
+target_link_libraries(value mptcore)
+add_test(NAME value COMMAND value)

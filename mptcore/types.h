@@ -134,12 +134,6 @@ MPT_STRUCT(named_traits)
 
 __MPT_EXTDECL_BEGIN
 
-/* get type position from data description */
-extern int mpt_position(const uint8_t *, int);
-/* get position offset from data description */
-extern int mpt_offset(const uint8_t *, int);
-
-
 /* query type mappings */
 extern const MPT_STRUCT(type_traits) *mpt_type_traits(int);
 

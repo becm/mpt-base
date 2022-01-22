@@ -1,6 +1,6 @@
 # Makefile: MPT core library example programs
 #
-TESTS = coding config ident environ
+TESTS = coding config ident environ value
 PROGS = parse ${TESTS}
 
 LDLIBS = -lmptcore
@@ -34,4 +34,3 @@ test_parse_subsect : parse
 	./parse subsect.lay '{*} =;!#' 'E'
 test_parse_config : parse
 	./parse config.txt  '[ ] = #' 'Esc'
-	
