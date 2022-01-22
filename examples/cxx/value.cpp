@@ -1,5 +1,6 @@
 /*!
- * test array type compatibility
+ * MPT C++ library
+ *   value handling in C++
  */
 
 #include <iostream>

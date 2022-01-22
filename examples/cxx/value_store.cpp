@@ -1,5 +1,6 @@
 /*!
- * test array type compatibility
+ * MPT plot library
+ *   type-safe value_store assignments
  */
 
 #include <iostream>
@@ -22,14 +23,21 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	double v[] = { 1.0, 2.0, 3.0, 4.0 };
-	
 	value_store s;
-	s.set(span<const double>(v + 1, 3), 2);
 	
-	std::cout << s.type() << std::endl;
+	// set values at specified offset
+	double v[] = { 1.0, 2.0, 3.14, 4e-123 };
+	double *ptr = s.set(span<const double>(v + 1, 3), 2);
 	
-	double *ptr = s.reserve<double>(8);
+	// content type is defined
+	std::cout << static_cast<char>(s.type()) << "@[" << span<const double>(ptr - 2, s.element_count())  << ']' << std::endl;
 	
-	return !(ptr[4] == v[3]);
+	// same type area extension
+	ptr = s.reserve<double>(8);
+	std::cout << static_cast<char>(s.type()) << "@[" << span<const double>(ptr, s.element_count())  << ']' << std::endl;
+	
+	// conflicting type reserve fails
+	int *iptr = s.reserve<int>(3);
+	
+	return !(ptr && ptr[4] == v[3] && !iptr);
 }

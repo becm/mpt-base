@@ -331,7 +331,7 @@ private:
 	}
 	type_properties();
 };
-/*! special properties to set allways set traits to trivially copyable data */
+/*! set traits to trivially copyable data */
 template<typename T>
 class type_properties<span<T> >
 {
@@ -468,12 +468,11 @@ protected:
 # define MPT_value_set_string(v, s) ( \
 	(v)->domain = 0, \
 	(v)->type = 's', \
-	((const char **) ((v)->_buf))[0] = (s), \
-	(v)->ptr  = (v)->_buf)
+	(v)->ptr = (sizeof(void *) > (v)->_bufsize) ? 0 : (*((const char **) (v)->_buf) = (s), (v)->_buf))
 # define MPT_value_set_data(v, t, d) ( \
 	(v)->domain = 0, \
 	(v)->type = (t), \
-	(v)->ptr = ((sizeof(*(d)) > (v)->_bufsize)) ? 0 : memcpy((v)->_buf, (d), sizeof(*(d))))
+	(v)->ptr = (sizeof(*(d)) > (v)->_bufsize) ? 0 : memcpy((v)->_buf, (d), sizeof(*(d))))
 #endif
 	uint32_t domain;         /* type domain */
 	uint16_t type;           /* type identifier in domain */

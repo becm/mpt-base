@@ -36,22 +36,28 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	/* simple string pointer */
 	if (type == 's') {
 		const char * const *txt = *from;
-		if (!(base = *txt)) {
+		if (!txt || !(base = *txt)) {
 			base = def;
 		}
 		if (len) {
 			*len = strlen(base);
 		}
-		*from = txt + 1;
+		if (txt) {
+			*from = txt + 1;
+		}
 		return base;
 	}
 	/* text buffer (pointer or tracked reference) */
 	if (type == MPT_ENUM(TypeArray)
 	 || type == MPT_ENUM(TypeBufferPtr)) {
 		static const MPT_STRUCT(type_traits) *traits= 0;
-		const MPT_STRUCT(array) *arr = *from;
+		const MPT_STRUCT(array) *arr;
 		const MPT_STRUCT(buffer) *b;
 		
+		if (!(arr = *from)) {
+			errno = EINVAL;
+			return 0;
+		}
 		if (!(b = arr->_buf)) {
 			errno = ENOTSUP;
 			return 0;
@@ -83,13 +89,15 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 	if (type == MPT_type_toVector('c')) {
 		const struct iovec *vec = *from;
 		
-		base = vec->iov_base;
-		
-		if (!vec || (vec->iov_len && !base)) {
+		if (!vec) {
 			errno = EINVAL;
 			return 0;
 		}
-		if (!base) {
+		if (!(base = vec->iov_base)) {
+			if (vec->iov_len) {
+				errno = EINVAL;
+				return 0;
+			}
 			base = def;
 		}
 		if (len) {

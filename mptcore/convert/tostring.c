@@ -39,13 +39,15 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 	}
 	/* data is direct text representation */
 	ptr = val->ptr;
-	if ((text = mpt_data_tostring((const void **) &ptr, val->type, &len))) {
+	if ((text = mpt_data_tostring(&ptr, val->type, &len))) {
 		return save(dest, text, len);
 	}
 	/* represent color data */
 	if (val->type == MPT_ENUM(TypeColor)) {
-		const MPT_STRUCT(color) *c = val->ptr;
-		if (c->alpha != 0xff) {
+		const MPT_STRUCT(color) *c;
+		if (!(c = val->ptr)) {
+			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", 0, 0, 0);
+		} else if (c->alpha != 0xff) {
 			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
 		} else {
 			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", c->red, c->green, c->blue);
@@ -56,34 +58,43 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		return save(dest, buf, adv);
 	}
 	if (val->type == MPT_ENUM(TypeObjectPtr)) {
-		static const char sep[] = ", ";
 		const MPT_INTERFACE(object) *obj = *((void * const *) ptr);
 		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
-		uintptr_t pos = 0;
-		int len = 0, ret;
+		uintptr_t pos;
+		int len, ret, first;
+		
+		if (!obj) {
+			return MPT_ERROR(MissingData);
+		}
+		/* object content */
+		if ((first = save(dest, "{", 1)) < 0) {
+			return first;
+		}
 		pr.name = "";
 		if ((ret = obj->_vptr->property(obj, &pr) < 0)) {
 			return ret;
 		}
 		len = 0;
-		/* type info */
-		if (!pr.name) {
-			pr.name = "object";
+		/* nested type info */
+		if (pr.name && strcmp(pr.name, "object")) {
+			if ((ret = save(dest, " _=\"", 4)) < 0) {
+				return ret;
+			}
+			len += ret;
+			if ((ret = save(dest, pr.name, strlen(pr.name))) < 0) {
+				return ret;
+			}
+			len += ret;
+			if ((ret = save(dest, "\"", 1)) < 0) {
+				return ret;
+			}
+			len += ret;
 		}
-		if ((ret = save(dest, pr.name, strlen(pr.name))) < 0) {
-			return len;
-		}
-		len += ret;
-		if ((ret = save(dest, ":", 1)) < 0) {
-			return ret;
-		}
-		len += ret;
-		/* object content */
-		if ((len = save(dest, "{", 2)) < 0) {
-			return len;
-		}
+		/* properties queried by index */
+		pos = 0;
 		while (1) {
-			int seplen = pos ? 2 : 1;
+			static const char sep[] = ", ";
+			int seplen = len ? 2 : 1;
 			pr.name = 0;
 			pr.desc = (void *) pos++;
 			if ((ret = obj->_vptr->property(obj, &pr) < 0)) {
@@ -112,7 +123,7 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 		if ((ret = save(dest, " }", 2)) < 0) {
 			return ret;
 		}
-		return len + ret;
+		return first + len + ret;
 	}
 	/* vector representation in value */
 	if ((curr = MPT_type_toScalar(val->type)) > 0) {
