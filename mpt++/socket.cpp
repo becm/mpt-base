@@ -80,7 +80,7 @@ int io::socket::assign(const value *val)
 	return (::mpt::socket::set(val)) ? (val ? 1 : 0) : BadOperation;
 }
 
-reference<io::stream> io::socket::accept()
+reference<io::stream::input> io::socket::accept()
 {
 	int sock;
 	
@@ -94,7 +94,7 @@ reference<io::stream> io::socket::accept()
 	}
 	info.set_flags(::mpt::stream::Buffer);
 	
-	class io::stream *s = new io::stream(&info);
+	class io::stream::input *s = io::stream::input::create(&info);
 	
 	return s;
 }

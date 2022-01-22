@@ -4,15 +4,14 @@
 
 #include <inttypes.h>
 
-#include <cstdio>
 #include <limits>
+#include <cstdio>
 
 #include <sys/uio.h>
 
 #include "message.h"
 
 #include "../mptio/stream.h"
-#include "../mptio/connection.h"
 
 #include "io.h"
 
@@ -36,45 +35,6 @@ io::stream::~stream()
 	if (_srm) delete _srm;
 }
 
-// convertable interface
-int io::stream::convert(int type, void *ptr)
-{
-	int me = type_properties<io::interface *>::id(true);
-	
-	if (me < 0) {
-		const named_traits *traits = mpt_input_type_traits();
-		me = traits ? traits->type : type_properties<output *>::id(true);
-	}
-	else if (assign(static_cast<io::interface *>(this), type, ptr)) {
-		return TypeUnixSocket;
-	}
-	if (!type) {
-		static const uint8_t fmt[] = { TypeOutputPtr, TypeUnixSocket, 0 };
-		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
-		return me;
-	}
-	if (type == TypeUnixSocket) {
-		if (ptr) *reinterpret_cast<int *>(ptr) = _inputFile;
-		return me;
-	}
-	if (assign(static_cast<metatype *>(this), type, ptr)) {
-		return TypeOutputPtr;
-	}
-	if (assign(static_cast<output *>(this), type, ptr)) {
-		return me;
-	}
-	return BadType;
-}
-// metatype interface
-void io::stream::unref()
-{
-	delete this;
-}
-io::stream *io::stream::clone() const
-{
-	// undefined state for side-effect structures
-	return 0;
-}
 // object interface
 int io::stream::property(struct property *pr) const
 {
@@ -210,98 +170,80 @@ bool io::stream::seek(int64_t pos)
 	}
 	return true;
 }
-// input interface
-int io::stream::next(int what)
+
+io::stream::dispatch::dispatch(stream &s, event_handler_t c, void *a) : srm(s), cmd(c), arg(a)
+{ }
+int io::stream::dispatch::process(const struct message *msg) const
 {
-	if (!_srm) {
-		return BadArgument;
+	static const char _func[] = "mpt::io::stream::dispatch";
+	struct event ev;
+	int ret;
+	
+	if (!msg || !(ret = srm._idlen)) {
+		ev.msg = msg;
+		return cmd(arg, &ev);
 	}
-	int ret = mpt_stream_poll(_srm, what, 0);
-	if (ret < 0) {
-		_inputFile = -1;
+	uint8_t id[__UINT8_MAX__];
+	uint8_t idlen = ret;
+	
+	struct message tmp = *msg;
+	if (tmp.read(idlen, id) < idlen) {
+		error(_func, "%s", MPT_tr("message id incomplete"));
+	}
+	if (id[0] & 0x80) {
+		command *ans;
+		uint64_t rid;
+		id[0] &= 0x7f;
+		if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0 || ret > (int) sizeof(ans->id)) {
+			error(_func, "%s", MPT_tr("bad reply id"));
+			return BadValue;
+		}
+		if ((ans = srm._wait.get(rid))) {
+			int ret = ans->cmd(ans->arg, &tmp);
+			ans->cmd = 0;
+			return ret;
+		}
+		error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
+		return BadValue;
+	}
+	reply_data *rd = 0;
+	reply_context *rc = 0;
+	for (uint8_t i = 0; i < idlen; ++i) {
+		if (!id[i]) {
+			continue;
+		}
+		metatype *ctx;
+		if (!(ctx = srm._ctx.instance())) {
+			warning(_func, "%s", MPT_tr("no reply context"));
+			break;
+		}
+		if (!(rd &= *ctx)) {
+			break;
+		}
+		if (!rd->set(idlen, id)) {
+			error(_func, "%s", MPT_tr("reply context unusable"));
+			return BadOperation;
+		}
+		rc &= *ctx;
+		break;
+	}
+	ev.reply = rc;
+	ev.msg = &tmp;
+	ret = cmd(arg, &ev);
+	if (rc && rd && rd->active()) {
+		struct msgtype mt(msgtype::Answer, ret);
+		struct message msg(&mt, sizeof(mt));
+		rc->reply(&msg);
 	}
 	return ret;
 }
-class io::stream::dispatch
+
+int io::stream::dispatch::stream_dispatch(void *ptr, const struct message *msg)
 {
-public:
-	dispatch(stream &s, event_handler_t c, void *a) : srm(s), cmd(c), arg(a)
-	{ }
-	int process(const struct message *msg)
-	{
-		static const char _func[] = "mpt::io::stream::dispatch";
-		struct event ev;
-		int ret;
-		
-		if (!msg || !(ret = srm._idlen)) {
-			ev.msg = msg;
-			return cmd(arg, &ev);
-		}
-		uint8_t id[__UINT8_MAX__];
-		uint8_t idlen = ret;
-		
-		struct message tmp = *msg;
-		if (tmp.read(idlen, id) < idlen) {
-			error(_func, "%s", MPT_tr("message id incomplete"));
-		}
-		if (id[0] & 0x80) {
-			command *ans;
-			uint64_t rid;
-			id[0] &= 0x7f;
-			if ((ret = mpt_message_buf2id(id, idlen, &rid)) < 0 || ret > (int) sizeof(ans->id)) {
-				error(_func, "%s", MPT_tr("bad reply id"));
-				return BadValue;
-			}
-			if ((ans = srm._wait.get(rid))) {
-				int ret = ans->cmd(ans->arg, &tmp);
-				ans->cmd = 0;
-				return ret;
-			}
-			error(_func, "%s (id = %08" PRIx64 ")", MPT_tr("unknown reply id"), rid);
-			return BadValue;
-		}
-		reply_data *rd = 0;
-		reply_context *rc = 0;
-		for (uint8_t i = 0; i < idlen; ++i) {
-			if (!id[i]) {
-				continue;
-			}
-			metatype *ctx;
-			if (!(ctx = srm._ctx.instance())) {
-				warning(_func, "%s", MPT_tr("no reply context"));
-				break;
-			}
-			if (!(rd &= *ctx)) {
-				break;
-			}
-			if (!rd->set(idlen, id)) {
-				error(_func, "%s", MPT_tr("reply context unusable"));
-				return BadOperation;
-			}
-			rc &= *ctx;
-			break;
-		}
-		ev.reply = rc;
-		ev.msg = &tmp;
-		ret = cmd(arg, &ev);
-		if (rc && rd && rd->active()) {
-			struct msgtype mt(msgtype::Answer, ret);
-			struct message msg(&mt, sizeof(mt));
-			rc->reply(&msg);
-		}
-		return ret;
-	}
-protected:
-	io::stream &srm;
-	event_handler_t cmd;
-	void *arg;
-};
-static int stream_dispatch(void *ptr, const struct message *msg)
-{
-	class io::stream::dispatch *sd = reinterpret_cast<class io::stream::dispatch *>(ptr);
+	const class dispatch *sd = reinterpret_cast<class dispatch *>(ptr);
 	return sd->process(msg);
 }
-int io::stream::dispatch(event_handler_t cmd, void *arg)
+int io::stream::dispatch(const class dispatch &sd)
 {
 	if (!_srm) {
 		return BadArgument;
@@ -313,8 +255,7 @@ int io::stream::dispatch(event_handler_t cmd, void *arg)
 		}
 		return 0;
 	}
-	class dispatch sd(*this, cmd, arg);
-	return mpt_stream_dispatch(_srm, stream_dispatch, &sd);
+	return mpt_stream_dispatch(_srm, dispatch::stream_dispatch, const_cast<class dispatch *>(&sd));
 }
 
 ssize_t io::stream::push(size_t len, const void *src)

@@ -19,6 +19,12 @@
 
 using namespace mpt;
 
+template <typename T>
+int type(const T &)
+{
+	return type_properties<T>::id(true);
+}
+
 extern int main(int , char * const [])
 {
 	mtrace();
@@ -26,13 +32,19 @@ extern int main(int , char * const [])
 	typed_array<reference<metatype> *> d;
 	pointer_array<reference<metatype> > p;
 	typed_array<reference<metatype> > a;
-	unique_array<metatype *> v;
+	unique_array<metatype *> u;
 	
 	a.insert(1, new reference<meta_value<double> >::type());
 	p.insert(0, a.get(1));
-	v.insert(4, a.get(1)->instance());
+	u.insert(4, a.get(1)->instance());
 	
 	d = p;
+	
+	typed_array<double> v;
+	v.insert(3, 4);
+	v.set(2, 1);
+	std::cout << type(v) << '>' << type(v.elements());
+	std::cout << ": " << v.elements() << std::endl;
 	
 	return 0;
 }

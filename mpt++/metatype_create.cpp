@@ -48,8 +48,8 @@ metatype *metatype::create(const value &val)
 		}
 	}
 	// create buffer-backed text metatype
-	io::buffer *b;
-	if ((b = new mpt::io::buffer)) {
+	io::buffer::metatype *b;
+	if ((b = mpt::io::buffer::metatype::create(0))) {
 		if (b->push(len, src) < 0) {
 			b->unref();
 			return 0;

@@ -9,11 +9,16 @@ set(sources
   convertable.cpp
   event.cpp
   identifier.cpp
-  io.cpp io_buffer.cpp io_queue.cpp
+  io.cpp
+  io_buffer.cpp io_buffer_metatype.cpp
+  io_queue.cpp
   logger.cpp
   message.cpp
-  meta_buffer.cpp meta_new.cpp
-  metatype_basic_instance.cpp metatype_create.cpp metatype_generic_instance.cpp
+  meta_buffer.cpp
+  meta_new.cpp
+  metatype_basic_instance.cpp
+  metatype_create.cpp
+  metatype_generic_instance.cpp
   node.cpp
   node_new.cpp
   object.cpp
@@ -31,10 +36,16 @@ set(headers)
 
 if(MPT_WITH_PLOT)
   set(sources ${sources}
-    cycle.cpp destination.cpp
-    graph.cpp graphic.cpp item_group.cpp
-    linepart.cpp layout.cpp
-    mapping.cpp polyline.cpp transform.cpp
+    cycle.cpp
+    destination.cpp
+    graph.cpp
+    graphic.cpp
+    item_group.cpp
+    linepart.cpp
+    layout.cpp
+    mapping.cpp
+    polyline.cpp
+    transform.cpp
     value_store.cpp
   )
   list(APPEND includedirs ${Mpt_PLOT_INCLUDE_DIRS})
@@ -44,8 +55,10 @@ endif(MPT_WITH_PLOT)
 
 if(MPT_WITH_IO)
   set(sources ${sources}
-    io.cpp io_stream.cpp
-    notify.cpp socket.cpp stream.cpp
+    io_stream.cpp io_stream_input.cpp
+    notify.cpp
+    socket.cpp
+    stream.cpp
   )
   list(APPEND includedirs ${Mpt_IO_INCLUDE_DIRS})
   list(INSERT linklibs 0 ${Mpt_IO_LIBRARIES})

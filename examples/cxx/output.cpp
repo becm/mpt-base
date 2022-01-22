@@ -21,7 +21,7 @@ extern int main(int , char * const [])
 {
 	mtrace();
 	
-	io::stream *out = new io::stream;
+	io::stream::input *out = io::stream::input::create();
 	
 	out->open("/dev/stdout", "w");
 	

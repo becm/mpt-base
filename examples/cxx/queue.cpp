@@ -28,11 +28,11 @@ public:
 
 void MyQueue::add(const char *txt, int len)
 {
-	mpt::io::queue::push((const void *) txt, (len < 0) ? std::strlen(txt) : len);
+	push((const void *) txt, (len < 0) ? std::strlen(txt) : len);
 }
 void MyQueue::add(char c)
 {
-	mpt::io::queue::push(&c, 1);
+	push(&c, 1);
 }
 
 mpt::span<const char> MyQueue::string()
@@ -55,8 +55,8 @@ extern int main(int argc, char * const argv[])
 	std::cout << p.elements() << std::endl;
 	
 	
-	mpt::pipe<int> i(5, 8);
-	std::cout << i.elements() << std::endl;
+	mpt::pipe<int> iq(5, 8);
+	std::cout << iq.elements() << std::endl;
 	
 	mpt::pipe<char> cq('a', 4);
 	cq.push('b');

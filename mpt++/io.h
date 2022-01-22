@@ -40,16 +40,13 @@ public:
 };
 
 /* metatype extension to encode array */
-class buffer : public metatype, public iterator, public interface, public encode_array
+class buffer : public iterator, public interface, public encode_array
 {
 public:
 	buffer(array const& = array(0));
 	virtual ~buffer();
 	
-	int convert(int , void *) __MPT_OVERRIDE;
-	
-	void unref() __MPT_OVERRIDE;
-	buffer *clone() const __MPT_OVERRIDE;
+	class metatype;
 	
 	const struct value *value() __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
@@ -65,18 +62,25 @@ protected:
 	struct value _value;
 };
 
+class buffer::metatype : public ::mpt::metatype, public buffer
+{
+public:
+	static metatype *create(const array *);
+	
+	int convert(int , void *) __MPT_OVERRIDE;
+	metatype *clone() const __MPT_OVERRIDE;
+protected:
+	metatype(const array &);
+};
 #ifdef _MPT_STREAM_H
 /* message extension for stream data */
-class stream : public input, public object, public output, public interface
+class stream : public object, public output, public interface
 {
 public:
 	stream(const streaminfo * = 0);
 	virtual ~stream();
 	
-	int convert(int , void *) __MPT_OVERRIDE;
-	
-	void unref() __MPT_OVERRIDE;
-	stream *clone() const __MPT_OVERRIDE;
+	class input;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, convertable *) __MPT_OVERRIDE;
@@ -84,9 +88,6 @@ public:
 	ssize_t push(size_t , const void *) __MPT_OVERRIDE;
 	int sync(int = -1) __MPT_OVERRIDE;
 	int await(int (*)(void *, const struct message *) = 0, void * = 0) __MPT_OVERRIDE;
-	
-	int next(int) __MPT_OVERRIDE;
-	int dispatch(event_handler_t , void *) __MPT_OVERRIDE;
 	
 	ssize_t write(size_t , const void *, size_t part = 1) __MPT_OVERRIDE;
 	ssize_t read(size_t , void *, size_t part = 1) __MPT_OVERRIDE;
@@ -98,8 +99,6 @@ public:
 	bool open(void *, size_t , int = ::mpt::stream::Read);
 	
 	virtual void close();
-	
-	class dispatch;
 protected:
 	::mpt::stream *_srm;
 	command::array _wait;
@@ -107,6 +106,32 @@ protected:
 	uintptr_t _cid;
 	int _inputFile;
 	uint8_t _idlen;
+	
+	class dispatch
+	{
+	public:
+		dispatch(io::stream &, event_handler_t c, void *);
+		int process(const struct message *msg) const;
+		static int stream_dispatch(void *, const struct message *);
+	protected:
+		io::stream &srm;
+		event_handler_t cmd;
+		void *arg;
+	};
+	int dispatch(const class dispatch &);
+};
+class stream::input : public ::mpt::input, public stream
+{
+public:
+	static input *create(const streaminfo * = 0);
+	
+	int convert(int , void *) __MPT_OVERRIDE;
+	::mpt::input *clone() const __MPT_OVERRIDE;
+	
+	int next(int) __MPT_OVERRIDE;
+	int dispatch(event_handler_t , void *) __MPT_OVERRIDE;
+protected:
+	input(const streaminfo *);
 };
 #else
 class stream;
@@ -121,7 +146,7 @@ public:
 	
 	int assign(const value *);
 	
-	virtual reference<class stream> accept();
+	virtual reference<class stream::input> accept();
 };
 #else
 class socket;

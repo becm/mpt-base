@@ -9,7 +9,9 @@ cxx_src = files(
   'convertable.cpp',
   'event.cpp',
   'identifier.cpp',
-  'io.cpp', 'io_buffer.cpp', 'io_queue.cpp',
+  'io.cpp',
+  'io_buffer.cpp', 'io_buffer_metatype.cpp',
+  'io_queue.cpp',
   'iterator.cpp',
   'logger.cpp',
   'message.cpp',
@@ -54,8 +56,9 @@ endif
 
 if with_io
   cxx_src += files(
-    'io_stream.cpp',
+    'io_stream.cpp', 'io_stream_input.cpp',
     'notify.cpp',
+    'socket.cpp',
     'stream.cpp'
   )
   cxx += io
