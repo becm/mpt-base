@@ -21,10 +21,10 @@
  * \ingroup mptConvert
  * \brief convert data 
  * 
- * apply known/allowed convertion between different data types.
+ * Apply known/allowed conversion to target data.
  * 
  * \param val   source data
- * \param type  source data type
+ * \param type  target data type
  * \param dest  destination pointer
  * 
  * \retval mpt::BadArgument unknown source/target type

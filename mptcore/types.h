@@ -99,6 +99,26 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeValueSize)     = 0x3000
 };
 
+MPT_STRUCT(float80)
+{
+#ifdef __cplusplus
+public:
+	inline float80() {}
+	inline float80(long double v) { *this = v; }
+	
+	float80 &operator =(long double);
+	operator long double () const;
+protected:
+#endif
+#if __BYTE_ORDER == __BIG_ENDIAN || __FLOAT_WORD_ORDER == __BIG_ENDIAN
+	int16_t _prefix;
+	uint8_t _mantissa[8];
+#else
+	uint8_t _mantissa[8];
+	int16_t _prefix;
+#endif
+};
+
 MPT_STRUCT(type_traits)
 {
 #ifdef __cplusplus
@@ -133,6 +153,11 @@ MPT_STRUCT(named_traits)
 
 
 __MPT_EXTDECL_BEGIN
+
+/* extended double representations */
+extern void mpt_float80_decode(long , const MPT_STRUCT(float80) *, long double *);
+extern void mpt_float80_encode(long , const long double *, MPT_STRUCT(float80) *);
+extern int mpt_float80_compare(const MPT_STRUCT(float80) *, const MPT_STRUCT(float80) *);
 
 /* query type mappings */
 extern const MPT_STRUCT(type_traits) *mpt_type_traits(int);

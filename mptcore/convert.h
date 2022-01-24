@@ -24,6 +24,7 @@ __MPT_NAMESPACE_BEGIN
 MPT_INTERFACE(metatype);
 MPT_STRUCT(array);
 MPT_STRUCT(value);
+MPT_STRUCT(float80);
 
 enum MPT_ENUM(EncodingType) {
 	MPT_ENUM(EncodingCommand)      = 0x1,   /* terminate by zero byte */
@@ -35,20 +36,6 @@ enum MPT_ENUM(NewlineTypes) {
 	MPT_ENUM(NewlineMac)  = 0x1,  /* MacOS line separation */
 	MPT_ENUM(NewlineUnix) = 0x2,  /* UNIX line separation */
 	MPT_ENUM(NewlineNet)  = 0x3   /* network/Windows line separation */
-};
-
-MPT_STRUCT(float80)
-{
-#ifdef __cplusplus
-public:
-	inline float80() {}
-	inline float80(long double v) { *this = v; }
-	
-	float80 &operator =(long double);
-	long double value() const;
-protected:
-#endif
-	uint8_t _d[10];
 };
 
 /* value output format */
@@ -108,14 +95,11 @@ float80 swapOrder(float80);
 
 __MPT_EXTDECL_BEGIN
 
-/* extended double conversions */
-extern void mpt_float80_decode(size_t , const MPT_STRUCT(float80) *, long double *);
-extern void mpt_float80_encode(size_t , const long double *, MPT_STRUCT(float80) *);
 /* byte order conversion */
-extern void mpt_bswap_80(size_t , MPT_STRUCT(float80) *);
-extern void mpt_bswap_64(size_t , uint64_t *);
-extern void mpt_bswap_32(size_t , uint32_t *);
-extern void mpt_bswap_16(size_t , uint16_t *);
+extern void mpt_bswap_80(long , MPT_STRUCT(float80) *);
+extern void mpt_bswap_64(long , uint64_t *);
+extern void mpt_bswap_32(long , uint32_t *);
+extern void mpt_bswap_16(long , uint16_t *);
 
 /* set value to next argument */
 extern int mpt_value_argv(MPT_STRUCT(value) *, int , va_list);
@@ -237,13 +221,6 @@ extern int mpt_newline_native(void);
 __MPT_EXTDECL_END
 
 __MPT_NAMESPACE_END
-
-#ifdef __cplusplus
-inline std::ostream &operator<<(std::ostream &o, const mpt::float80 &f)
-{
-	return o << static_cast<double>(f.value());
-}
-#endif
 
 #endif /* _MPT_CONVERT_H */
 

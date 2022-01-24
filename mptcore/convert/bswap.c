@@ -17,6 +17,8 @@
 # include <byteswap.h>
 #endif
 
+#include "types.h"
+
 #include "convert.h"
 
 /*!
@@ -28,14 +30,18 @@
  * \param len number of elements
  * \param val start address of data
  */
-extern void mpt_bswap_80(size_t len, MPT_STRUCT(float80) *val)
+extern void mpt_bswap_80(long len, MPT_STRUCT(float80) *val)
 {
-	while (len--) {
-		size_t i;
-		uint8_t tmp[sizeof(*val)], *ptr = (val++)->_d;
-		for (i = 0; i < sizeof(tmp); i++) tmp[i] = ptr[i];
-		for (i = 0; i < sizeof(tmp); i++) ptr[i] = tmp[sizeof(tmp)-1-i];
-		++val;
+	long i;
+	for (i = 0; i < len; ++i) {
+		uint8_t tmp[sizeof(*val)], *ptr = (uint8_t *) val++;
+		unsigned pos;
+		for (pos = 0; pos < sizeof(tmp); pos++) {
+			tmp[pos] = ptr[pos];
+		}
+		for (pos = 0; pos < sizeof(tmp); pos++) {
+			ptr[pos] = tmp[sizeof(tmp) - 1 - pos];
+		}
 	}
 }
 /*!
@@ -47,9 +53,9 @@ extern void mpt_bswap_80(size_t len, MPT_STRUCT(float80) *val)
  * \param len number of elements
  * \param val start address of data
  */
-extern void mpt_bswap_64(size_t len, uint64_t *val)
+extern void mpt_bswap_64(long len, uint64_t *val)
 {
-	size_t i;
+	long i;
 	
 	for (i = 0; i < len; ++i) {
 		val[i] = bswap_64(val[i]);
@@ -64,9 +70,9 @@ extern void mpt_bswap_64(size_t len, uint64_t *val)
  * \param len number of elements
  * \param val start address of data
  */
-extern void mpt_bswap_32(size_t len, uint32_t *val)
+extern void mpt_bswap_32(long len, uint32_t *val)
 {
-	size_t i;
+	long i;
 	
 	for (i = 0; i < len; ++i) {
 		val[i] = bswap_32(val[i]);
@@ -81,9 +87,9 @@ extern void mpt_bswap_32(size_t len, uint32_t *val)
  * \param len number of elements
  * \param val start address of data
  */
-extern void mpt_bswap_16(size_t len, uint16_t *val)
+extern void mpt_bswap_16(long len, uint16_t *val)
 {
-	size_t i;
+	long i;
 	
 	for (i = 0; i < len; ++i) {
 		val[i] = bswap_16(val[i]);

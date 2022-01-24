@@ -23,7 +23,6 @@ src = files(
   'encode_string.c',
   'encoder.c',
   'encoding.c',
-  'float80.c',
   'newline_string.c',
   'number_print.c',
   'string_dest.c',

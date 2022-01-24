@@ -17,16 +17,6 @@
 # define mtrace()
 #endif
 
-struct Value : public mpt::value
-{
-	template <typename T>
-	bool set(const T &t)
-	{
-		int type = mpt::type_properties<T>::id(true);
-		return type > 0 && value::set(type, &t);
-	}
-};
-
 template <typename T>
 void print()
 {
@@ -52,7 +42,7 @@ extern int main(int, char *[])
 		0
 	};
 	mtrace();
-	Value v;
+	mpt::value v;
 	
 	int type = mpt::type_traits::add(mpt::type_traits(8));
 	
@@ -71,6 +61,8 @@ extern int main(int, char *[])
 	print<const mpt::reference<mpt::metatype> >();
 	
 	std::cout << "generic: " << type << " … ";
+	mpt::float80 r;
+	type_id(r); // register type before slot depletion by loop
 	while (true) {
 		int curr = mpt::type_traits::add(mpt::type_traits(1));
 		if (curr < 0) {
@@ -111,24 +103,28 @@ extern int main(int, char *[])
 	}
 	
 	long l = -1;
-	v.set(l);
+	v = l;
 	std::cout << "long(" << v.type_id() << ") = " << v << std::endl;
 	
 	unsigned long u = 1;
-	v.set(u);
+	v = u;
 	std::cout << "ulong(" << v.type_id() << ") = " << v << std::endl;
 	
-	float f(sizeof(float));
+	float f(1.0f / 3);
 	std::cout << "float(" << type_id(f) << ") = " << f << std::endl;
-	double d[2] = { (sizeof(double)), 1.23 };
-	std::cout << "double(" << type_id(*d) << ") = " << *d << std::endl;
-// 	mpt::float80 r = d;
-// 	std::cout << "float80(" << type(r) << ") = " << r << std::endl;
-	long double e = sizeof(long double);
+	double d = 1.0/3;
+	std::cout << "double(" << type_id(d) << ") = " << d << std::endl;
+	r = -1.0L / 3;
+	std::cout << "float80(" << type_id(r) << ") = " << r << std::endl;
+	long double e = 1.0L / 3;
 	std::cout << "long double(" << type_id(e) << ") = " << e << std::endl;
 	
-	mpt::span<const double> t(d, 2);
-	std::cout << "span<" << type_id(*d) <<">(" << type_id(t) << ") = " << t << std::endl;
+	mpt::span<const double> t(&d, 1);
+	std::cout << "span<" << type_id(*t.begin()) <<">(" << type_id(t) << ") = " << t << std::endl;
 	v.set(t);
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
+	v = r; // auto-convert to native long double
+	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
+	
+	return !(r == -e);
 }

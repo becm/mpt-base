@@ -32,7 +32,7 @@ float80 &float80::operator= (long double val)
 	mpt_float80_encode(1, &val, this);
 	return *this;
 }
-long double float80::value() const
+float80::operator long double() const
 {
 	long double v = 0;
 	mpt_float80_decode(1, this, &v);
@@ -127,7 +127,7 @@ const struct iovec *value::vector(int to) const
 	if (to < 0) {
 		return MPT_type_isVector(type) ? vec : 0;
 	}
-	// raw type only
+	// raw data only
 	if (to == 0) {
 		return (type == TypeVector) ? vec : 0;
 	}
@@ -149,7 +149,7 @@ const array *value::array(int to) const
 	}
 	const array::content *d = arr->data();
 	const struct type_traits *traits = d ? d->content_traits() : 0;
-	// raw type may not have data traits
+	// raw data may not have type traits
 	if (!to) {
 		return traits ? 0 : arr;
 	}
