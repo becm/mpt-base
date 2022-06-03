@@ -32,7 +32,7 @@ bool identifier::set_name(const char *name, int nlen)
 }
 const char *identifier::name() const
 {
-	if (_type != 'c') {
+	if (_charset != UTF8) {
 		return 0;
 	}
 	return static_cast<const char *>(mpt_identifier_data(this));

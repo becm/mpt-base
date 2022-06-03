@@ -299,9 +299,12 @@ protected:
 #endif
 
 /* text identifier for entity */
+
+/* value output format */
+#ifdef __cplusplus
 MPT_STRUCT(identifier)
 {
-#ifdef __cplusplus
+public:
 	identifier(size_t = sizeof(identifier));
 	identifier(const identifier &);
 	inline ~identifier()
@@ -323,13 +326,40 @@ MPT_STRUCT(identifier)
 	{
 		return 4 + _max;
 	}
+# define MPT_CHARSET(x)  x
+#else
+# define MPT_CHARSET(x)  MPT_ENUM(Charset##x)
+#endif
+
+enum MPT_CHARSET(Types) {
+	/* character codepoints */
+	MPT_CHARSET(UTF8)       = 0x1,    /* 1-byte UTF encoding */
+	MPT_CHARSET(UTF16)      = 0x2,    /* 2-byte UTF encoding */
+	MPT_CHARSET(UTF32)      = 0x3,    /* 4-byte UTF encoding */
+	
+	/* arbitrary length hash types */
+	MPT_CHARSET(HASH4)      = 0x4,    /*  4byte type-ID plus value */
+	MPT_CHARSET(HASH8)      = 0x5,    /* 12byte type-ID plus value */
+	/* arbitrary length identifier types */
+	MPT_CHARSET(ID4)        = 0x6,    /*  4byte type-ID plus value */
+	MPT_CHARSET(ID8)        = 0x7,    /* 12byte type-ID plus value */
+	
+	MPT_CHARSET(FixedSize)  = 0x100,
+	MPT_CHARSET(ASCII)      = MPT_CHARSET(UTF8)  | MPT_CHARSET(FixedSize),
+	MPT_CHARSET(UCS2)       = MPT_CHARSET(UTF16) | MPT_CHARSET(FixedSize),
+	
+	MPT_CHARSET(Extended)   = 0xf0    /* non-builtin character set */
+};
+#ifdef __cplusplus
 protected:
 #else
+MPT_STRUCT(identifier)
+{
 # define MPT_IDENTIFIER_INIT   { 0, 0, 0, { 0 }, 0 }
 # define MPT_IDENTIFIER_HSIZE  4
 #endif
 	uint16_t _len;
-	uint8_t  _type;
+	uint8_t  _charset;
 	uint8_t  _max;
 	char     _val[4];
 	char    *_base;

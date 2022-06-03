@@ -30,7 +30,7 @@
 		cid  = mpt_identifier_data(&curr->ident);
 		clen = curr->ident._len;
 		if (idlen == clen
-		    && curr->ident._type == 'c'
+		    && curr->ident._charset == MPT_CHARSET(UTF8)
 		    && (!idlen || !memcmp(ident, cid, idlen - 1))) {
 			return (MPT_STRUCT(node) *) curr;
 		}

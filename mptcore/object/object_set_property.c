@@ -28,7 +28,7 @@ extern int mpt_object_set_property(MPT_INTERFACE(object) *obj, int match, const 
 	
 	/* get current identifier */
 	if (id && id->_len) {
-		if (id->_type != 'c') {
+		if (id->_charset != MPT_CHARSET(UTF8)) {
 			return MPT_ERROR(BadEncoding);
 		}
 		if (!(name = mpt_identifier_data(id))) {

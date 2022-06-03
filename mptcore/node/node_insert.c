@@ -46,7 +46,7 @@ static void node_insert(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node
 static MPT_STRUCT(node) *node_locate(const MPT_STRUCT(node) *first, int pos, const MPT_STRUCT(node) *node)
 {
 	const char *ident = mpt_identifier_data(&node->ident);
-	return mpt_node_locate(first, pos, ident, node->ident._len, node->ident._type);
+	return mpt_node_locate(first, pos, ident, node->ident._len, node->ident._charset);
 }
 /* insert node on absolute position in list */
 extern MPT_STRUCT(node) *mpt_gnode_add(MPT_STRUCT(node) *first, int pos, MPT_STRUCT(node) *node)

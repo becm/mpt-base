@@ -67,7 +67,7 @@ extern void mpt_identifier_init(MPT_STRUCT(identifier) *id, size_t len)
 	}
 	/* initial header values */
 	id->_len = 0;
-	id->_type = 0;
+	id->_charset = 0;
 	id->_max = len;
 	memset(id->_val, 0, len);
 }
@@ -110,7 +110,7 @@ extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(id
 		id->_base = dest;
 	}
 	id->_len  = from->_len;
-	id->_type = from->_type;
+	id->_charset = from->_charset;
 	
 	return dest;
 }
@@ -131,32 +131,35 @@ extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *id, const MPT_STRUCT(id
 extern void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, int len)
 {
 	char *dest, *addr;
-	int nlen = 0;
+	int nlen = len;
+	int charset = 0;
 	
 	/* set name data */
 	if (name) {
 		if (len < 0) {
 			len = strlen(name);
 		}
-		nlen = len++;
+		/* check _charset for base set */
+		charset = MPT_CHARSET(UTF8);
+		nlen = len + 1;
 	}
 	/* max length exceeded */
-	if (len < 0 || len > UINT16_MAX) {
+	if (len < 0 || nlen > UINT16_MAX) {
 		return 0;
 	}
-	/* length exceeds local size */
-	if (len > id->_max) {
-		if (!(addr = malloc(len))) {
+	/* length exceeds reserved size */
+	if (nlen > id->_max) {
+		if (!(addr = malloc(nlen))) {
 			return 0;
 		}
 		/* copy name content */
-		if (nlen) {
-			memcpy(addr, name, nlen);
-			addr[nlen] = 0;
-			id->_type = 'c';
+		if (name) {
+			memcpy(addr, name, len);
+			if (nlen > len) {
+				addr[len] = 0;
+			}
 		} else {
-			memset(addr, 0, len);
-			id->_type = 0;
+			memset(addr, 0, nlen);
 		}
 		/* clear old allocation */
 		if ((id->_len > id->_max) && id->_base) {
@@ -164,18 +167,20 @@ extern void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, in
 		}
 		/* set new name content address */
 		memset(id->_val, 0, id->_max);
-		id->_len = len;
+		id->_len = nlen;
 		id->_base = addr;
+		
+		id->_charset = charset;
 		
 		return addr;
 	}
 	/* local data sufficient */
 	addr = (id->_len > id->_max) ? id->_base : 0;
-	if (nlen) {
-		int post = id->_max - nlen;
-		dest = memcpy(id->_val, name, nlen);
+	if (len) {
+		int post = id->_max - len;
+		dest = memcpy(id->_val, name, len);
 		if (post) {
-			memset(id->_val + nlen, 0, post);
+			memset(id->_val + len, 0, post);
 		}
 	} else {
 		dest = memset(id->_val, 0, id->_max);
@@ -184,8 +189,8 @@ extern void *mpt_identifier_set(MPT_STRUCT(identifier) *id, const char *name, in
 	if (addr) {
 		free(addr);
 	}
-	id->_len  = len;
-	id->_type = name ? 'c' : 0;
+	id->_len  = nlen;
+	id->_charset = charset;
 	
 	return dest;
 }
@@ -211,6 +216,9 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *
 	const char *base = id->_val;
 	int i;
 	
+	if (name && (id->_charset != MPT_CHARSET(UTF8))) {
+		return MPT_ERROR(BadType);
+	}
 	if (nlen < 0) {
 		if (!name) {
 			return MPT_ERROR(BadArgument);
@@ -219,9 +227,6 @@ extern int mpt_identifier_compare(const MPT_STRUCT(identifier) *id, const char *
 	}
 	if (!nlen && !id->_len) {
 		return 0;
-	}
-	if (name && id->_type != 'c') {
-		return MPT_ERROR(BadType);
 	}
 	if ((nlen + 1) != id->_len) {
 		return MPT_ERROR(MissingData);
@@ -265,7 +270,7 @@ extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *id, const MPT_ST
 	const char *cmpbase;
 	int diff;
 	
-	if ((diff = id->_type - cmp->_type)) {
+	if ((diff = id->_charset - cmp->_charset)) {
 		return diff;
 	}
 	if ((diff = id->_len - cmp->_len)) {

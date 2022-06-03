@@ -18,7 +18,7 @@
  */
 extern const char *mpt_node_ident(const MPT_STRUCT(node) *node)
 {
-	if (!node->ident._len || node->ident._type != 'c') {
+	if (!node->ident._len || node->ident._charset != MPT_CHARSET(UTF8)) {
 		return 0;
 	}
 	return mpt_identifier_data(&node->ident);
