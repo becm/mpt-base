@@ -323,11 +323,13 @@ int array::set(const value &val)
 	const type_traits *traits;
 	if ((traits = type_traits::get(MPT_type_toScalar(val.type_id())))) {
 		const struct iovec *vec = val.vector(0);
-		int count = 0;
+		len = 0;
 		if (vec) {
-			count = vec->iov_len / traits->size;
-			void *target = mpt_array_reserve(&a, len, traits);
-			len = count * traits->size;
+			len = vec->iov_len;
+			if (!mpt_array_reserve(&a, len, traits)) {
+				return BadOperation;
+			}
+			void *target = mpt_array_slice(&a, len, 0);
 			if (target) {
 				if (vec->iov_base) {
 					memcpy(target, vec->iov_base, len);
@@ -342,11 +344,14 @@ int array::set(const value &val)
 	const void *ptr = val.data();
 	if ((base = mpt_data_tostring(&ptr, val.type_id(), &len))) {
 		size_t reserve = len && base[len - 1] ? len + 1 : len;
-		void *target = mpt_array_reserve(&a, reserve, type_traits::get('c'));
-		if (target) {
+		traits = type_traits::get('c');
+		array::content *buf = static_cast<array::content *>(mpt_array_reserve(&a, reserve, traits));
+		if (!buf) {
 			return BadOperation;
 		}
-		memcpy(target, base, len);
+		if (mpt_array_set(&a, traits, len, base, 0) && reserve > len) {
+			mpt_array_set(&a, traits, 1, "", len);
+		}
 		mpt_array_clone(this, &a);
 		return len;
 	}

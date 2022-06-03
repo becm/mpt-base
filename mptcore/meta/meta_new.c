@@ -52,7 +52,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(const MPT_STRUCT(value) *val)
 			errno = EINVAL;
 			return 0;
 		}
-		if (!(dest = mpt_array_reserve(&a, len, traits))) {
+		if (!mpt_array_reserve(&a, len, traits)) {
 			return 0;
 		}
 		/* include termination */

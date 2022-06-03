@@ -35,9 +35,20 @@ void value_store::set_modified(bool set)
 		_flags &= ~ValueChange;
 	}
 }
-void *value_store::reserve(long count, const struct type_traits &traits)
+buffer *value_store::reserve(long count, const struct type_traits &traits)
 {
-	return mpt_array_reserve(&_d, count, &traits);
+	size_t len;
+	if (count < 0) {
+		const array::content *buf = _d.data();
+		len = buf ? buf->length() : 0;
+	} else {
+		len = count * traits.size;
+	}
+	buffer *buf = mpt_array_reserve(&_d, len, &traits);
+	if (!buf || !mpt_array_slice(&_d, 0, len)) {
+		return 0;
+	}
+	return buf;
 }
 void *value_store::set(const struct type_traits &traits, size_t len, const void *data, long pos)
 {

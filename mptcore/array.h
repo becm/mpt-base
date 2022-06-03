@@ -337,7 +337,8 @@ extern int mpt_array_clone(MPT_STRUCT(array) *, const MPT_STRUCT(array) *);
 extern void *mpt_array_append(MPT_STRUCT(array) *, size_t , const void *__MPT_DEFPAR(0));
 extern void *mpt_array_insert(MPT_STRUCT(array) *, size_t , size_t);
 extern void *mpt_array_set(MPT_STRUCT(array) *, const MPT_STRUCT(type_traits) *, size_t , const void *, long __MPT_DEFPAR(0));
-extern void *mpt_array_reserve(MPT_STRUCT(array) *, long , const MPT_STRUCT(type_traits) *);
+/* prime array for data use */
+extern MPT_STRUCT(buffer) *mpt_array_reserve(MPT_STRUCT(array) *, size_t , const MPT_STRUCT(type_traits) *);
 
 /* insert data into buffer */
 extern void *mpt_buffer_insert(MPT_STRUCT(buffer) *, size_t , size_t);
@@ -481,6 +482,10 @@ public:
 	inline iterator end() const
 	{
 		return begin() + length();
+	}
+	inline span<T> data() const
+	{
+		return span<T>(begin(), length());
 	}
 	
 	content<T> *detach(size_t len) __MPT_OVERRIDE = 0;

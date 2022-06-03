@@ -88,10 +88,11 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 		return BadValue;
 	}
 	long off = vd ? vd->offset : 0;
-	double *ptr;
-	if (!(ptr = static_cast<double *>(val->reserve(len + off, *type_properties<double>::traits())))) {
+	const content<double> *buf;
+	if (!(buf = static_cast<content<double>*>(val->reserve(len + off, *type_properties<double>::traits())))) {
 		return BadOperation;
 	}
+	double *ptr = buf->begin() + off;
 	if (!src) {
 		memset(ptr, 0, len * sizeof(double));
 	}

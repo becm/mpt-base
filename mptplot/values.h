@@ -158,7 +158,7 @@ public:
 	};
 	inline value_store() : _type(0), _flags(0)
 	{ }
-	void *reserve(long , const struct type_traits &);
+	buffer *reserve(long , const struct type_traits &);
 	void set_modified(bool mod = true);
 	long element_count() const;
 	
@@ -185,20 +185,24 @@ public:
 		if (ptr) {
 			/* type ID registration may take place during runtime */
 			int type = type_properties<T>::id(false);
-			if (type > 0) {
-				_type = type;
-			}
+			_type = (type > 0) ? type : 0;
 		}
 		return static_cast<T *>(ptr);
 	}
 	template <typename T>
-	T *reserve(long count)
+	content<T> *reserve(long count = 0)
 	{
 		static const struct type_traits *traits = 0;
 		if (!traits && !(traits = type_properties<T>::traits())) {
 			return 0;
 		}
-		return static_cast<T *>(reserve(count, *traits));
+		buffer *buf = reserve(count, *traits);
+		if (buf) {
+			/* type ID registration may take place during runtime */
+			int type = type_properties<T>::id(false);
+			_type = (type > 0) ? type : 0;
+		}
+		return static_cast<content<T>*>(buf);
 	}
 protected:
 	void *set(const struct type_traits &, size_t , const void *, long = 0);
