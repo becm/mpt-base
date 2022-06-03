@@ -199,15 +199,7 @@ const node *object::set(const node *head, property_handler_t proc, void *pdata)
 		}
 		::mpt::property pr(head->ident.name());
 		property(&pr);
-		metatype *mt;
-		if ((mt = head->_meta)) {
-			const char *str = 0;
-			if (mt->convert(type_properties<value>::id(true), &pr.val) < 0
-			 && mt->convert('s', &str) >= 0) {
-				pr.val.set(str);
-			}
-			pr.val.set(TypeConvertablePtr, &head->_meta);
-		}
+		pr.val.set(TypeConvertablePtr, &head->_meta);
 		if (proc(pdata, &pr) < 0) {
 			return head;
 		}

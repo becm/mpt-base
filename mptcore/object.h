@@ -188,6 +188,7 @@ public:
 		return *this;
 	}
 protected:
+	friend class iterator;
 	struct property _prop;
 	object &_obj;
 private:
@@ -209,7 +210,7 @@ public:
 	}
 	inline bool operator ==(const const_iterator &cmp) const
 	{
-		return _pos == cmp._pos;
+		return &_ref == &cmp._ref && _pos == cmp._pos;
 	}
 	inline void clear()
 	{
@@ -226,9 +227,9 @@ public:
 	}
 	bool select(uintptr_t);
 protected:
-	const class object &_ref;
+	struct property _prop;
+	const object &_ref;
 	intptr_t _pos;
-	struct ::mpt::property _prop;
 };
 
 class object::iterator
@@ -239,20 +240,20 @@ public:
 	
 	inline iterator &operator ++()
 	{
-		if (_pos >= 0 && !select(++_pos)) {
+		if (_pos >= 0 && !select(_pos + 1)) {
 			clear();
 		}
 		return *this;
 	}
 	inline bool operator ==(const iterator &cmp) const
 	{
-		return _pos == cmp._pos;
+		return &_attr._obj == &cmp._attr._obj && _pos == cmp._pos;
 	}
 	inline void clear()
 	{
 		_pos = -1;
 	}
-	inline const struct attribute &operator *() const
+	inline const attribute &operator *() const
 	{
 		return _attr;
 	}
@@ -265,7 +266,7 @@ public:
 		return success;
 	}
 protected:
-	struct attribute _attr;
+	attribute _attr;
 	intptr_t _pos;
 };
 
