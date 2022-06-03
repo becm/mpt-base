@@ -23,8 +23,7 @@ struct _mpt_ieee_float80_prefix
 #if __BYTE_ORDER == __BIG_ENDIAN
 	unsigned int negative:1;
 	unsigned int exponent:15;
-#endif
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
 	unsigned int exponent:15;
 	unsigned int negative:1;
 #endif
@@ -35,8 +34,7 @@ struct _mpt_ieee_float80_mantissa
 #if __BYTE_ORDER == __BIG_ENDIAN || __FLOAT_WORD_ORDER == __BIG_ENDIAN
 	unsigned int mantissa0:32;
 	unsigned int mantissa1:32;
-#endif
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
 	unsigned int mantissa1:32;
 	unsigned int mantissa0:32;
 #endif
@@ -81,7 +79,7 @@ extern void mpt_float80_encode(long len, const long double *from, MPT_STRUCT(flo
 {
 	long pos;
 	for (pos = 0; pos < len; pos++) {
-		const union ieee854_long_double *src = (const void *) from++;
+		const union ieee854_long_double *src = (const void *) (from + pos);
 		struct _mpt_ieee_float80_mantissa *m = (void *) &to[pos]._mantissa;
 		struct _mpt_ieee_float80_prefix *p = (void *) &to[pos]._prefix;
 		

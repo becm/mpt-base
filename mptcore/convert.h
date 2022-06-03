@@ -52,11 +52,11 @@ public:
 enum MPT_VALFMT(Flags) {
 	MPT_VALFMT(IntHex)      = 0x1,    /* print hexadecimal */
 	MPT_VALFMT(IntOctal)    = 0x2,    /* print octal integer */
-	MPT_VALFMT(IntFlags)    = 0xf,    /* print hexadecimal */
+	MPT_VALFMT(IntFlags)    = 0xf,    /* integer format mask */
 	MPT_VALFMT(FltHex)      = 0x10,   /* print hexadecimal */
-	MPT_VALFMT(NumberHex)   = MPT_VALFMT(IntHex) | MPT_VALFMT(FltHex),
 	MPT_VALFMT(Scientific)  = 0x20,   /* scientific float notation */
-	MPT_VALFMT(FltFlags)    = 0xf0,   /* print hexadecimal */
+	MPT_VALFMT(FltFlags)    = 0xf0,   /* float format mask */
+	MPT_VALFMT(NumberHex)   = MPT_VALFMT(IntHex) | MPT_VALFMT(FltHex),
 	
 	MPT_VALFMT(Sign)        = 0x100,  /* print sign */
 	MPT_VALFMT(Left)        = 0x200   /* print left bounded */

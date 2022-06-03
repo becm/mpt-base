@@ -111,15 +111,27 @@ static int bufferConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_type_toVector('c'), 0 };
 		if (ptr) {
+			static const uint8_t fmt[] = {
+				MPT_ENUM(TypeIteratorPtr),
+				MPT_ENUM(TypeBufferPtr),
+				MPT_type_toVector('c'),
+				0
+			};
 			*((const uint8_t **) ptr) = fmt;
-			return MPT_ENUM(TypeArray);
 		}
-		return MPT_ENUM(TypeIteratorPtr);
+		return MPT_ENUM(TypeMetaPtr);
+	}
+	if (type == MPT_ENUM(TypeMetaPtr)) {
+		if (ptr) *((const void **) ptr) = &m->_mt;
+		return MPT_ENUM(TypeArray);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = &m->_it;
+		return MPT_ENUM(TypeArray);
+	}
+	if (type == MPT_ENUM(TypeBufferPtr)) {
+		if (ptr) *((const void **) ptr) = m->s._a._buf;
 		return MPT_ENUM(TypeArray);
 	}
 	if (type == MPT_type_toVector('c')
@@ -129,7 +141,7 @@ static int bufferConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 			MPT_STRUCT(buffer) *buf;
 			if ((buf = m->s._a._buf)) {
 				vec->iov_base = buf + 1;
-				vec->iov_len = buf->_used - m->s._off;
+				vec->iov_len = buf->_used;
 			} else {
 				vec->iov_base = 0;
 				vec->iov_len = 0;
@@ -256,33 +268,31 @@ static int bufferConvArgs(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
 		if (ptr) {
+			static const uint8_t fmt[] = {
+				MPT_ENUM(TypeIteratorPtr),
+				's',
+				0
+			};
 			*((const uint8_t **) ptr) = fmt;
-			return MPT_ENUM(TypeArray);
 		}
 		return MPT_ENUM(TypeMetaPtr);
+	}
+	if (type == MPT_ENUM(TypeMetaPtr)) {
+		if (ptr) *((const void **) ptr) = &m->_mt;
+		return MPT_ENUM(TypeArray);
+	}
+	if (type == MPT_ENUM(TypeIteratorPtr)) {
+		if (ptr) *((const void **) ptr) = &m->_it;
+		return MPT_ENUM(TypeArray);
 	}
 	if (type == 's') {
 		if (ptr) {
 			MPT_STRUCT(buffer) *buf = m->s._a._buf;
-			if (buf && m->s._off) {
-				++buf;
-			}
-			*((const void **) ptr) = buf;
+			const void *cmd = (buf && m->s._off) ? buf + 1 : 0;
+			*((const void **) ptr) = cmd;
 		}
 		return MPT_ENUM(TypeIteratorPtr);
-	}
-	if (type == MPT_ENUM(TypeIteratorPtr)) {
-		if (ptr) {
-			MPT_STRUCT(buffer) *buf = m->s._a._buf;
-			if (buf && m->s._off < buf->_used) {
-				*((const void **) ptr) = &m->_it;
-			} else {
-				*((const void **) ptr) = 0;
-			}
-		}
-		return MPT_ENUM(TypeArray);
 	}
 	return MPT_ERROR(BadType);
 }

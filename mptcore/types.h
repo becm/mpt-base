@@ -190,9 +190,11 @@ inline __MPT_CONST_TYPE uint8_t basetype(int org) {
 		? 0
 		: (org <= _TypeDynamicMax)
 			? org
-			: (MPT_type_isMetaPtr(org))
-				? TypeConvertablePtr
-				: 0;
+			: (org == TypeArray)
+				? TypeBufferPtr
+				: (MPT_type_isConvertable(org))
+					? TypeConvertablePtr
+					: 0;
 }
 
 template<typename T>
