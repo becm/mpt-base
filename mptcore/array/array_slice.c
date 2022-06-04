@@ -57,7 +57,7 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *arr, size_t off, size_t len)
 		if (!(elem = traits->size)
 		    || off % elem
 		    || len % elem
-		    || size % elem) {
+		    || used % elem) {
 			return 0;
 		}
 	}

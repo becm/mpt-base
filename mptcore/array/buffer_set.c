@@ -53,52 +53,42 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 		}
 		return 0;
 	}
-	/* reject raw data */
-	if (!src_traits) {
-		return MPT_ERROR(BadArgument);
-	}
-	/* sizes for source and target data must match */
-	elem_size = traits->size;
-	if (!elem_size || (elem_size != src_traits->size)) {
-		return MPT_ERROR(BadType);
-	}
 	/* target area must align with element offsets */
-	if ((pos % elem_size)
-	    || (len % elem_size)) {
-		return MPT_ERROR(BadArgument);
-	}
-	
-	init = traits->init;
+	used = buf->_used;
+	elem_size = 1;
+	/* initialize with new type, remove old (in case of type replace) */
+	init = 0;
 	fini = traits->fini;
-	/* trivial types must match exactly */
-	if (!init) {
-		if (traits != src_traits) {
+	if (src_traits) {
+		elem_size = src_traits->size;
+		if (!elem_size
+		 || (pos % elem_size)
+		 || (len % elem_size)) {
+			return MPT_ERROR(BadArgument);
+		}
+		/* align uninitialized data position */
+		used -= used % elem_size;
+		init = src_traits->init;
+	}
+	if (traits != src_traits) {
+		/* compatible types must share finalizer and size */
+		if (!fini || !src_traits || (fini != src_traits->fini) || (traits->size != elem_size)) {
 			return MPT_ERROR(BadType);
 		}
 	}
-	/* compatible types must share initializer */
-	else if (init != src_traits->init) {
-		return MPT_ERROR(BadType);
-	}
-	used = buf->_used;
-	if (!src_data) {
-		/* block termination of non-trivial content */
-		if (init || fini) {
-			return MPT_ERROR(BadArgument);
+	/* terminate overlapping target data */
+	if (fini) {
+		size_t off;
+		for (off = pos; off < used; off += elem_size) {
+			fini(ptr + off);
 		}
-		if (used < pos) {
-			len += pos - used;
-			pos = used;
-		}
-		buf->_used = pos + len;
-		memset(ptr + pos, 0, len);
-		return len / elem_size;
 	}
 	/* initialize prepending data */
 	if (init) {
-		for (; used < pos; used += elem_size) {
-			if (init(ptr + used, 0) < 0) {
-				buf->_used = used;
+		size_t off;
+		for (off = used; off < pos; off += elem_size) {
+			if (init(ptr + off, 0) < 0) {
+				buf->_used = off;
 				return MPT_ERROR(BadOperation);
 			}
 		}
@@ -106,27 +96,14 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 	else if (used < pos) {
 		memset(ptr + used, 0, pos - used);
 	}
-	/* terminate required target data */
-	if (fini && (pos < used)) {
-		size_t off, clear_end = used - pos;
-		if (clear_end >= len) {
-			clear_end = end;
-		}
-		/* end position exceeds existing data */
-		else {
-			clear_end += pos - (clear_end % elem_size);
-		}
-		for (off = pos; off < clear_end; off += elem_size) {
-			fini(ptr + off);
-		}
-	}
-	
 	/* generic data copy */
 	if (!init) {
-		memcpy(ptr + pos, src_data, len);
-		if (buf->_used < end) {
-			buf->_used = end;
+		if (src_data) {
+			memcpy(ptr + pos, src_data, len);
+		} else {
+			memset(ptr + pos, 0, len);
 		}
+		buf->_used = (used < end) ? end : used;
 		return len / elem_size;
 	}
 	/* prepare target and copy data */
@@ -137,16 +114,14 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 		/* initialize target values from source */
 		while (pos < end) {
 			/* try regular copy-init */
-			if (init(ptr + pos, from) >= 0) {
+			if (src_data && init(ptr + pos, from) >= 0) {
 				count++;
 			}
 			/* fall back to generic init */
 			else if (init(ptr + pos, 0) < 0) {
-				size_t used = buf->_used;
 				/* invalidate remaining data as result of fatal error */
 				buf->_used = pos;
 				if (fini) {
-					used -= used % elem_size;
 					while (pos < used) {
 						fini(ptr + pos);
 						pos += elem_size;
@@ -157,10 +132,9 @@ extern long mpt_buffer_set(MPT_STRUCT(buffer) *buf, const MPT_STRUCT(type_traits
 			pos += elem_size;
 			from += elem_size;
 		}
-		/* grow target size */
-		if (buf->_used < end) {
-			buf->_used = end;
-		}
+		/* update target size */
+		buf->_used = (used < end) ? end : used;
+		
 		return count;
 	}
 }

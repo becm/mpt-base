@@ -310,52 +310,60 @@ int array::set(convertable &src)
 }
 int array::set(const value &val)
 {
-	const char *base;
-	size_t len;
+	const type_traits *traits = 0;
+	size_t len, reserve;
+	int type = val.type_id();
+	const void *ptr = val.data();
+	const char *base = 0;
 	
 	// string data directly
-	if (val.type_id() == 's') {
-		base = val.string();
-		len = base ? strlen(base) + 1 : 0;
-		return set(len, base) ? 0 : BadOperation;
-	}
-	array a;
-	const type_traits *traits;
-	if ((traits = type_traits::get(MPT_type_toScalar(val.type_id())))) {
-		const struct iovec *vec = val.vector(0);
-		len = 0;
-		if (vec) {
-			len = vec->iov_len;
-			if (!mpt_array_reserve(&a, len, traits)) {
-				return BadOperation;
-			}
-			void *target = mpt_array_slice(&a, len, 0);
-			if (target) {
-				if (vec->iov_base) {
-					memcpy(target, vec->iov_base, len);
-				} else {
-					memset(target, 0, len);
-				}
-			}
+	if (type == 's') {
+		ptr = base = val.string();
+		len = reserve = 0;
+		if (base) {
+			len = strlen(base);
+			reserve = len + 1;
 		}
-		mpt_array_clone(this, &a);
-		return len;
-	}
-	const void *ptr = val.data();
-	if ((base = mpt_data_tostring(&ptr, val.type_id(), &len))) {
-		size_t reserve = len && base[len - 1] ? len + 1 : len;
 		traits = type_traits::get('c');
-		array::content *buf = static_cast<array::content *>(mpt_array_reserve(&a, reserve, traits));
-		if (!buf) {
-			return BadOperation;
-		}
-		if (mpt_array_set(&a, traits, len, base, 0) && reserve > len) {
-			mpt_array_set(&a, traits, 1, "", len);
-		}
-		mpt_array_clone(this, &a);
-		return len;
 	}
-	return BadType;
+	// get vector data
+	else if (type == TypeVector || (traits = type_traits::get(MPT_type_toScalar(type)))) {
+		const struct iovec *vec = val.vector(0);
+		if (vec) {
+			ptr = vec->iov_base;
+			len = vec->iov_len;
+		} else {
+			ptr = 0;
+			len = 0;
+		}
+		reserve = len;
+	}
+	// try string extraction
+	else if ((base = mpt_data_tostring(&ptr, type, &len))) {
+		reserve = len && base[len - 1] ? len + 1 : len;
+		ptr = base;
+		traits = type_traits::get('c');
+	}
+	// put scalar entity as single rrray element
+	else if ((traits = type_traits::get(type))) {
+		len = ptr ? traits->size : 0;
+		reserve = len;
+	}
+	else {
+		return BadType;
+	}
+	// reserve typed buffer content
+	buffer *buf = buffer::create(reserve, traits);
+	if (!buf) {
+		return BadOperation;
+	}
+	if (!mpt_buffer_set(buf, traits, len, ptr, 0)
+	 || ((reserve > len) && !mpt_buffer_set(buf, traits, 1, "", len))) {
+		buf->unref();
+		return BadOperation;
+	}
+	_buf.set_instance(static_cast<content *>(buf));
+	return type;
 }
 void *array::append(size_t len, const void *data)
 {

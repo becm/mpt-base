@@ -14,6 +14,7 @@
  * \brief reserve data on array
  * 
  * Prepare elements on array.
+ * Change buffer content type or create new instance if required.
  * 
  * \param arr     array to be updated
  * \param len     number of bytes to reserve
@@ -23,7 +24,9 @@
  */
 extern MPT_STRUCT(buffer) *mpt_array_reserve(MPT_STRUCT(array) *arr, size_t len, const MPT_STRUCT(type_traits) *traits)
 {
+	const MPT_STRUCT(type_traits) *old = 0;
 	MPT_STRUCT(buffer) *buf;
+	int flags = -1;
 	
 	/* check arguments */
 	if (traits) {
@@ -32,40 +35,67 @@ extern MPT_STRUCT(buffer) *mpt_array_reserve(MPT_STRUCT(array) *arr, size_t len,
 			errno = EINVAL;
 			return 0;
 		}
-		/* total data must align with element size */
+		/* total data must align with traits size */
 		if ((align = len % traits->size)) {
 			len += traits->size - align;
 		}
 	}
-	/* existing buffer can be processed normally */
+	/* check compatibility of existing data */
 	if ((buf = arr->_buf)) {
-		const MPT_STRUCT(type_traits) *old = buf->_content_traits;
-		if (traits != old) {
-			void (*fini)(void *) = old ? old->fini : 0;
-			size_t used;
-			if (fini && (used = buf->_used)) {
-				size_t pos, elem_size = old->size;
+		flags = buf->_vptr->get_flags(buf);
+		old = buf->_content_traits;
+	}
+	/* distinct instance is require */
+	if ((flags & MPT_ENUM(BufferShared))
+	 || (flags & MPT_ENUM(BufferImmutable))) {
+		MPT_STRUCT(buffer) *reserve;
+		
+		if (!(reserve = _mpt_buffer_alloc(len, 0))) {
+			return 0;
+		}
+		reserve->_content_traits = traits;
+		if (buf) {
+			size_t used = buf->_used;
+			if (old) {
+				used -= used % old->size;
+			}
+			/* copy compatible content */
+			if ((old == traits)
+			 && !(flags & MPT_ENUM(BufferNoCopy))) {
+				if (used > len) {
+					used = len;
+				}
+				if (used && !mpt_buffer_set(reserve, traits, used, buf + 1, 0)) {
+					reserve->_vptr->unref(reserve);
+					return 0;
+				}
+			}
+			buf->_vptr->unref(buf);
+		}
+		arr->_buf = reserve;
+		return reserve;
+	}
+	/* clear incompatible data on non-shared buffer */
+	if ((old != traits)) {
+		void (*fini)(void *) = 0;
+		if (!old || !(fini = old->fini) || !traits || (fini != traits->fini)) {
+			if (fini) {
+				size_t pos, used = buf->_used, size = old->size;
+				used -= used % size;
 				uint8_t *ptr = (void *) (buf + 1);
-				used -= used % elem_size;
-				for (pos = 0; pos < used; pos += elem_size) {
+				for (pos = 0; pos < used; pos += size) {
 					fini(ptr + pos);
 				}
 			}
 			buf->_used = 0;
-			buf->_content_traits = traits;
 		}
-		return mpt_array_slice(arr, 0, len) ? arr->_buf : 0;
 	}
-	/* create new buffer */
-	if (!(buf = _mpt_buffer_alloc(len, 0))) {
-		return 0;
-	}
-	buf->_content_traits = traits;
-	/* initialize new elements */
-	if (mpt_buffer_set(buf, traits, len, 0, 0) < 0) {
-		buf->_vptr->unref(buf);
-		return 0;
+	/* existing data can be reused */
+	if (!(buf = buf->_vptr->detach(buf, len))) {
+		return buf;
 	}
 	arr->_buf = buf;
+	buf->_content_traits = traits;
+	
 	return buf;
 }

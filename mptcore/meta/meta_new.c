@@ -44,25 +44,23 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(const MPT_STRUCT(value) *val)
 	/* data too big for basic type */
 	if (len >= UINT8_MAX) {
 		MPT_STRUCT(array) a = MPT_ARRAY_INIT;
+		MPT_STRUCT(buffer) *buf;
 		const MPT_STRUCT(type_traits) *traits;
-		char *dest;
 		size_t reserve;
 		
-		if (!(traits = mpt_type_traits('s'))) {
+		if (!(traits = mpt_type_traits('c'))) {
 			errno = EINVAL;
 			return 0;
 		}
-		if (!mpt_array_reserve(&a, len, traits)) {
-			return 0;
-		}
-		/* include termination */
+		/* create new text data array */
 		reserve = (len && text[len - 1]) ? len + 1 : len;
-		if (!(dest = mpt_array_slice(&a, 0, len))) {
+		if (!(buf = mpt_array_reserve(&a, reserve, traits))) {
 			return 0;
 		}
-		memcpy(dest, text, len);
-		if (len < reserve) {
-			dest[len] = 0;
+		if (!mpt_buffer_set(buf, traits, len, text, 0)
+		 || ((reserve > len) && !mpt_buffer_set(buf, traits, 1, "", len))) {
+			mpt_array_clone(&a, 0);
+			return 0;
 		}
 		/* metatype with buffer text store */
 		mt = mpt_meta_buffer(&a);
