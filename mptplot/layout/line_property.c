@@ -141,17 +141,21 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(co
  */
 extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 {
-	static const uint8_t cfmt = MPT_ENUM(TypeColor);
-	static const MPT_STRUCT(property) elem[] = {
-		{"color",  "line color",     MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(line,color)) },
-		{"x1",     "line start",     MPT_VALUE_INIT('f',   (void *) MPT_offset(line,from.x)) },
-		{"x2",     "line end (x)",   MPT_VALUE_INIT('f',   (void *) MPT_offset(line,to.x)) },
-		{"y1",     "line start (y)", MPT_VALUE_INIT('f',   (void *) MPT_offset(line,from.y)) },
-		{"y2",     "line end (y)",   MPT_VALUE_INIT('f',   (void *) MPT_offset(line,to.y)) },
-		{"width",  "line width",     MPT_VALUE_INIT('y',   (void *) MPT_offset(line,attr.width)) }, /* pass line::attr to setter */
-		{"style",  "line style",     MPT_VALUE_INIT('y',   (void *) MPT_offset(line,attr.style)) },
-		{"symbol", "symbol type",    MPT_VALUE_INIT('y',   (void *) MPT_offset(line,attr.symbol)) },
-		{"size",   "symbol size",    MPT_VALUE_INIT('y',   (void *) MPT_offset(line,attr.size)) }
+	static const struct {
+		const char  *name;
+		const char  *desc;
+		const int    type;
+		const size_t off;
+	} elem[] = {
+		{"color",  "line color",     MPT_ENUM(TypeColor), MPT_offset(line,color) },
+		{"x1",     "line start",     'f', MPT_offset(line,from.x) },
+		{"x2",     "line end (x)",   'f', MPT_offset(line,to.x) },
+		{"y1",     "line start (y)", 'f', MPT_offset(line,from.y) },
+		{"y2",     "line end (y)",   'f', MPT_offset(line,to.y) },
+		{"width",  "line width",     'y', MPT_offset(line,attr.width) }, /* pass line::attr to setter */
+		{"style",  "line style",     'y', MPT_offset(line,attr.style) },
+		{"symbol", "symbol type",    'y', MPT_offset(line,attr.symbol) },
+		{"size",   "symbol size",    'y', MPT_offset(line,attr.size) }
 	};
 	static const uint8_t format[] = {
 		MPT_ENUM(TypeColor),
@@ -181,16 +185,22 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 		
 		return li && memcmp(li, &def_line, sizeof(*li)) ? 1 : 0;
 	}
-	else if ((pos = mpt_property_match(pr->name, -1, elem, MPT_arrsize(elem))) < 0) {
-		return pos;
+	else {
+		const char *elem_name[MPT_arrsize(elem)];
+		for (pos = 0; pos < (int) MPT_arrsize(elem); pos++) {
+			elem_name[pos] = elem[pos].name;
+		}
+		if ((pos = mpt_property_match(pr->name, -1, elem_name, pos)) < 0) {
+			return pos;
+		}
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.type = elem[pos].val.type;
-	pr->val.ptr  = ((uint8_t *) li) + (intptr_t) elem[pos].val.ptr;
+	pr->val.type = elem[pos].type;
+	pr->val.ptr  = ((uint8_t *) li) + elem[pos].off;
 	
 	if (!li) {
 		return 0;
 	}
-	return mpt_value_compare(&pr->val, ((uint8_t *) &def_line) + (intptr_t) elem[pos].val.ptr);
+	return mpt_value_compare(&pr->val, ((uint8_t *) &def_line) + elem[pos].off);
 }

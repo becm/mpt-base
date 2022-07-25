@@ -173,15 +173,19 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
  */
 extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 {
-	static const uint8_t cfmt = MPT_ENUM(TypeColor);
-	static const MPT_STRUCT(property) elem[] = {
-		{"color",   "world color",   MPT_VALUE_INIT(cfmt,  (void *) MPT_offset(world,color)) },
-		{"cycles",  "cycle count",   MPT_VALUE_INIT('u',   (void *) MPT_offset(world,cyc)) },
-		{"width",   "line width",    MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.width)) },
-		{"style",   "line style",    MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.style)) },
-		{"symbol",  "symbol type",   MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.symbol)) },
-		{"size",    "symbol size",   MPT_VALUE_INIT('y',   (void *) MPT_offset(world,attr.size)) },
-		{"alias",   "display name",  MPT_VALUE_INIT('s',   (void *) MPT_offset(world,_alias)) },
+	static const struct {
+		const char  *name;
+		const char  *desc;
+		const int    type;
+		const size_t off;
+	} elem[] = {
+		{"color",   "world color",   MPT_ENUM(TypeColor), MPT_offset(world,color) },
+		{"cycles",  "cycle count",   'u', MPT_offset(world,cyc) },
+		{"width",   "line width",    'y', MPT_offset(world,attr.width) },
+		{"style",   "line style",    'y', MPT_offset(world,attr.style) },
+		{"symbol",  "symbol type",   'y', MPT_offset(world,attr.symbol) },
+		{"size",    "symbol size",   'y', MPT_offset(world,attr.size) },
+		{"alias",   "display name",  's', MPT_offset(world,_alias) },
 	};
 	static const uint8_t format[] = {
 		's',
@@ -212,16 +216,22 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 		return wld && memcmp(wld, &def_world, sizeof(*wld)) ? 1 : 0;
 	}
 	/* find property by name */
-	else if ((pos = mpt_property_match(pr->name, 3, elem, MPT_arrsize(elem))) < 0) {
-		return pos;
+	else {
+		const char *elem_name[MPT_arrsize(elem)];
+		for (pos = 0; pos < (int) MPT_arrsize(elem); pos++) {
+			elem_name[pos] = elem[pos].name;
+		}
+		if ((pos = mpt_property_match(pr->name, 3, elem_name, pos)) < 0) {
+			return pos;
+		}
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.type = elem[pos].val.type;
-	pr->val.ptr  = ((uint8_t *) wld) + (intptr_t) elem[pos].val.ptr;
+	pr->val.type = elem[pos].type;
+	pr->val.ptr  = ((uint8_t *) wld) + elem[pos].off;
 	
 	if (!wld) {
 		return 0;
 	}
-	return mpt_value_compare(&pr->val, ((uint8_t *) &def_world) + (intptr_t) elem[pos].val.ptr);
+	return mpt_value_compare(&pr->val, ((uint8_t *) &def_world) + elem[pos].off);
 }

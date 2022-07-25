@@ -135,7 +135,7 @@ extern int mpt_object_set_property(MPT_INTERFACE(object) *, int , const MPT_STRU
 extern int mpt_object_set_nodes(MPT_INTERFACE(object) *, int , const MPT_STRUCT(node) *, MPT_INTERFACE(logger) *__MPT_DEFPAR(0));
 
 /* get matching property by name */
-extern int mpt_property_match(const char *, int , const MPT_STRUCT(property) *, size_t);
+extern int mpt_property_match(const char *, int , const char * const *, size_t);
 /* copy property content */
 extern void mpt_property_copy(MPT_STRUCT(property) *, const MPT_STRUCT(property) *);
 /* process properties according to mask */
