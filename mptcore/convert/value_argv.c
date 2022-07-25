@@ -16,19 +16,18 @@
  * 
  * Set value to next value in arguments.
  * 
- * \param len number of elements
- * \param val start address of data
+ * \param vec target data buffer
+ * \param fmt next element type in arguments
+ * \param va  variadic data
  */
-extern int mpt_value_argv(MPT_STRUCT(value) *val, int fmt, va_list va)
+extern int mpt_value_argv(const struct iovec *vec, int fmt, va_list va)
 {
 	size_t len;
 	if (MPT_type_isVector(fmt)) {
-		if (val->_bufsize < sizeof(struct iovec)) {
+		if (vec->iov_len < sizeof(struct iovec)) {
 			return MPT_ERROR(MissingBuffer);
 		}
-		*((struct iovec *)  val->_buf) = va_arg(va, struct iovec);
-		val->ptr = val->_buf;
-		val->type = fmt;
+		*((struct iovec *)  vec->iov_base) = va_arg(va, struct iovec);
 		return sizeof (struct iovec);
 	}
 	if (fmt == 'l') {
@@ -38,65 +37,95 @@ extern int mpt_value_argv(MPT_STRUCT(value) *val, int fmt, va_list va)
 		/* promoted types */
 		case 'b':
 			len = sizeof(int8_t);
-			*((int8_t *)   val->_buf) = va_arg(va, int);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((int8_t *)   vec->iov_base) = va_arg(va, int);
+			return len;
 		case 'y':
 			len = sizeof(uint8_t);
-			*((uint8_t *)  val->_buf) = va_arg(va, unsigned int);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((uint8_t *)  vec->iov_base) = va_arg(va, unsigned int);
+			return len;
 		case 'n':
 			len = sizeof(int16_t);
-			*((int16_t *)  val->_buf) = va_arg(va, int);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((int16_t *)  vec->iov_base) = va_arg(va, int);
+			return len;
 		case 'q':
 			len = sizeof(int16_t);
-			*((uint16_t *) val->_buf) = va_arg(va, unsigned int);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((uint16_t *) vec->iov_base) = va_arg(va, unsigned int);
+			return len;
 		/* standard integers */
 		case 'i':
 			len = sizeof(int32_t);
-			*((int32_t *)  val->_buf) = va_arg(va, int32_t);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((int32_t *)  vec->iov_base) = va_arg(va, int32_t);
+			return len;
 		case 'u':
 			len = sizeof(uint32_t);
-			*((uint32_t *) val->_buf) = va_arg(va, uint32_t);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((uint32_t *) vec->iov_base) = va_arg(va, uint32_t);
+			return len;
 		case 'x':
 			len = sizeof(int64_t);
-			*((int64_t *)  val->_buf) = va_arg(va, int64_t);
-			break;
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((int64_t *)  vec->iov_base) = va_arg(va, int64_t);
+			return len;
 		case 't':
-			len = sizeof(int16_t);
-			*((uint64_t *) val->_buf) = va_arg(va, uint64_t);
-			break;
+			len = sizeof(int64_t);
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((uint64_t *) vec->iov_base) = va_arg(va, uint64_t);
+			return len;
 		/* promoted floating point */
 		case 'f':
-			len = sizeof(int16_t);
-			*((float *)    val->_buf) = va_arg(va, double);
-			break;
+			len = sizeof(float);
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((float *)    vec->iov_base) = va_arg(va, double);
+			return len;
 		/* standard floating point */
 		case 'd':
-			len = sizeof(int16_t);
-			*((double *)   val->_buf) = va_arg(va, double);
-			break;
+			len = sizeof(double);
+			if (len > vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((double *)   vec->iov_base) = va_arg(va, double);
+			return len;
 #ifdef _MPT_FLOAT_EXTENDED_H
 		/* special floating point */
 		case 'e':
-			if ((len = sizeof(long double)) > val->_bufsize) {
+			len = sizeof(long double);
+			if (len < vec->iov_len) {
 				return MPT_ERROR(MissingBuffer);
 			}
-			*((long double *) val->_buf) = va_arg(va, long double);
-			break;
+			*((long double *) vec->iov_base) = va_arg(va, long double);
+			return len;
 #endif
 		case 's':
 			len = sizeof(const char *);
-			*((const char **) val->_buf) = va_arg(va, void *);
-			break;
+			if (len < vec->iov_len) {
+				return MPT_ERROR(MissingBuffer);
+			}
+			*((const char **) vec->iov_base) = va_arg(va, void *);
+			return len;
 		default:
 			return MPT_ERROR(BadType);
 	}
-	val->domain = 0;
-	val->type = fmt;
-	val->ptr = val->_buf;
-	return len;
 }

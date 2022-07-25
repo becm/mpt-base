@@ -20,7 +20,7 @@ ssize_t out(void *ctx, const char *str, size_t len)
 }
 
 int main() {
-	static const char text[] = "1234567890abcdefghijkl";
+	static const char *text = "1234567890abcdefghijkl";
 	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	struct iovec io;
 	int32_t i = 23;
@@ -30,25 +30,25 @@ int main() {
 	const char *nl = mpt_newline_string(0);
 	int ret = 0;
 	
-	MPT_value_set_string(&val, text);
+	MPT_value_set(&val, 's', &text);
 	ret |= mpt_tostring(&val, out, stdout);
 	fputs(nl, stdout);
 	
-	MPT_value_set_data(&val, 'i', &i);
+	MPT_value_set(&val, 'i', &i);
 	ret |= mpt_tostring(&val, out, stdout);
 	fputs(nl, stdout);
 	
-	MPT_value_set_data(&val, 'd', &d);
+	MPT_value_set(&val, 'd', &d);
 	ret |= mpt_tostring(&val, out, stdout);
 	fputs(nl, stdout);
 	
-	MPT_value_set_data(&val, 'e', &e);
+	MPT_value_set(&val, 'e', &e);
 	ret |= mpt_tostring(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	io.iov_base = &d;
 	io.iov_len  = sizeof(d);
-	MPT_value_set_data(&val, 'D', &io);
+	MPT_value_set(&val, 'D', &io);
 	ret |= mpt_tostring(&val, out, stdout);
 	fputs(nl, stdout);
 	

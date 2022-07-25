@@ -24,13 +24,12 @@
  */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *info)
 {
-	MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 	struct iovec vec;
+	MPT_STRUCT(value) val = MPT_VALUE_INIT(MPT_type_toVector('c'), &vec);
 	
-	if (_mpt_geninfo_conv(info, MPT_type_toVector('c'), &vec) < 0) {
+	if (_mpt_geninfo_conv(info, val.type, &vec) < 0) {
 		errno = EINVAL;
 		return 0;
 	}
-	MPT_value_set_data(&val, MPT_type_toVector('c'), &vec);
 	return mpt_meta_new(&val);
 }

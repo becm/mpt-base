@@ -121,7 +121,7 @@ extern int main(int, char *[])
 	
 	mpt::span<const double> t(&d, 1);
 	std::cout << "span<" << type_id(*t.begin()) <<">(" << type_id(t) << ") = " << t << std::endl;
-	v.set(t);
+	v = t;
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
 	v = r; // auto-convert to native long double
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;

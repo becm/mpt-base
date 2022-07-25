@@ -25,7 +25,6 @@
 extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const char *val, int sep, int end)
 {
 	MPT_STRUCT(path) where = MPT_PATH_INIT;
-	MPT_STRUCT(value) d = MPT_VALUE_INIT(0, 0);
 	
 	if (!conf) {
 		MPT_INTERFACE(metatype) *gl;
@@ -43,7 +42,8 @@ extern int mpt_config_set(MPT_INTERFACE(config) *conf, const char *path, const c
 	if (!val) {
 		return conf->_vptr->remove(conf, &where);
 	}
-	MPT_value_set_string(&d, val);
-	
-	return conf->_vptr->assign(conf, &where, &d);
+	else {
+		MPT_STRUCT(value) d = MPT_VALUE_INIT('s', &val);
+		return conf->_vptr->assign(conf, &where, &d);
+	}
 }

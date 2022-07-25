@@ -24,6 +24,8 @@ MPT_STRUCT(parseIterator) {
 		MPT_STRUCT(value) val;
 	} elem;
 	
+	MPT_INTERFACE(convertable) *conv_ptr;
+	
 	char *val, *end, *restore, save;
 };
 /* iterator interface */
@@ -241,7 +243,6 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char 
 		parseConvertElement
 	};
 	MPT_STRUCT(parseIterator) *it;
-	MPT_INTERFACE(convertable) *conv;
 	size_t slen, vlen;
 	char *dest;
 	
@@ -263,10 +264,9 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *val, const char 
 	it->_mt._vptr = &ctlMeta;
 	it->_it._vptr = &ctlIter;
 	
-	conv = &it->elem._conv;
-	*((uint8_t *) &it->elem.val._bufsize) = sizeof(it->elem.val._buf);
 	it->elem._conv._vptr = &ctlConv;
-	MPT_value_set_data(&it->elem.val, MPT_ENUM(TypeConvertablePtr), &conv);
+	MPT_value_set(&it->elem.val, MPT_ENUM(TypeConvertablePtr), &it->conv_ptr);
+	it->conv_ptr = &it->elem._conv;
 	
 	/* save separator config */
 	dest = (char *) (it + 1);

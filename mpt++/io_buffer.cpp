@@ -29,15 +29,14 @@ const struct value *io::buffer::value()
 		return 0;
 	}
 	span<const uint8_t> d = data();
-	uint8_t *end;
-	if (!(end = (uint8_t *) memchr(d.begin(), 0, d.size()))) {
+	const char *begin = (const char *) d.begin();
+	const char *end;
+	if (!(end = (char *) memchr(begin, 0, d.size()))) {
 		return 0;
 	}
-	struct iovec vec;
-	vec.iov_base = const_cast<uint8_t *>(d.begin());
-	vec.iov_len = end + 1 - d.begin();
-	// struct iovec is copied to local value buffer
-	_value.set(MPT_type_toVector('c'), &vec);
+	// save current delimited data
+	_record = span<const char>(begin, end + 1 - begin);
+	_value = _record;
 	return &_value;
 }
 int io::buffer::advance()

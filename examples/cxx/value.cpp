@@ -28,10 +28,11 @@ extern int main(int , char * const [])
 	
 	value v;
 	
-	v.set(s);
+	v = s;
 	std::cout << v.type_id() << ": " << v << std::endl;
 	
-	v.set("test");
+	const char *tst = "test";
+	v = tst;
 	std::cout << v.type_id() << ": " << v << std::endl;
 	
 	v = 1.0;  std::cout << v.type_id() << ": " << v << std::endl;
@@ -44,10 +45,10 @@ extern int main(int , char * const [])
 	std::cout << std::endl;
 	
 	long l = 12;
-	v.set(l); std::cout << v.type_id() << ": " << v << std::endl;
+	v = l; std::cout << v.type_id() << ": " << v << std::endl;
 	int i;
 	v.get(i);
-	v.set(i + 1); std::cout << v.type_id() << ": " << v << std::endl;
+	v = (i + 1); std::cout << v.type_id() << ": " << v << std::endl;
 	
 	return !(i == l);
 }

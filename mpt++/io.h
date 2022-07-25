@@ -6,7 +6,6 @@
 #ifndef _MPT_IO_H
 #define _MPT_IO_H  @INTERFACE_VERSION@
 
-
 #include "meta.h"
 #include "array.h"
 
@@ -60,6 +59,7 @@ public:
 	span<const uint8_t> peek(size_t) __MPT_OVERRIDE;
 protected:
 	struct value _value;
+	span<const char> _record;
 };
 
 class buffer::metatype : public ::mpt::metatype, public buffer

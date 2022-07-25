@@ -90,14 +90,12 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		
 		pr->name = "format";
 		pr->desc = MPT_tr("history data output format");
-		MPT_value_set_string(&pr->val, 0);
-		pr->val.type = MPT_ENUM(TypeValFmt);
-		pr->val.ptr = 0;
 		if (!(buf = hist->fmt._fmt._buf)
 		    || !(len = buf->_used / sizeof(MPT_STRUCT(value_format)))) {
+			MPT_property_set_string(pr, 0);
 			return 0;
 		}
-		MPT_value_set_data(&pr->val, MPT_ENUM(TypeBufferPtr), &buf);
+		MPT_value_set(&pr->val, MPT_ENUM(TypeBufferPtr), &hist->fmt._fmt);
 		return len;
 	}
 	else {
@@ -109,9 +107,19 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 			pc.name = "file";
 		}
 		if ((len = mpt_logfile_get(&hist->info, &pc)) >= 0) {
+			int ret;
+			/* require plain copy of property buffer */
+			if (pc.val.ptr == pc._buf) {
+				if ((ret = mpt_value_copy(&pc.val, pr->_buf, sizeof(pr->_buf))) < 0) {
+					return ret;
+				}
+				MPT_value_set(&pc.val, pc.val.type, pr->_buf);
+			}
+			else {
+				MPT_value_set(&pr->val, pc.val.type, pc.val.ptr);
+			}
 			pr->name = pc.name;
 			pr->desc = pc.desc;
-			mpt_value_copy(&pr->val, &pc.val);
 		}
 	}
 	return len;

@@ -19,6 +19,7 @@ struct iteratorVararg
 		const char *fmt;
 		va_list arg;
 	} org;
+	uint8_t _buf[16];
 	MPT_STRUCT(value) val;
 };
 
@@ -30,18 +31,23 @@ static const MPT_STRUCT(value) *iteratorVarargValue(MPT_INTERFACE(iterator) *it)
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 {
 	struct iteratorVararg *va = (void *) it;
+	struct iovec vec;
+	int type;
 	int ret;
 	if (!va->fmt) {
 		return MPT_ERROR(MissingData);
 	}
-	if (!(ret = *va->fmt)) {
+	if (!(type = *va->fmt)) {
 		return 0;
 	}
-	if ((ret = mpt_value_argv(&va->val, ret, va->arg)) < 0) {
+	vec.iov_len = sizeof(va->_buf);
+	vec.iov_base = va->_buf;
+	if ((ret = mpt_value_argv(&vec, type, va->arg)) < 0) {
 		return ret;
 	}
+	MPT_value_set(&va->val, type, va->_buf);
 	++va->fmt;
-	return va->val.type;
+	return type;
 }
 static int iteratorVarargReset(MPT_INTERFACE(iterator) *it)
 {
@@ -75,20 +81,24 @@ extern int mpt_process_vararg(const char *fmt, va_list arg, int (*proc)(void *, 
 		iteratorVarargReset
 	};
 	struct iteratorVararg va;
+	struct iovec vec;
+	int type;
 	int ret;
 	
 	if (!proc) {
 		return MPT_ERROR(BadArgument);
 	}
 	va._it._vptr = &ctl;
-	va.val.type = 0;
-	*((uint8_t *) &va.val._bufsize) = sizeof(va.val._buf);
-	if (!(va.fmt = fmt) || !(ret = *fmt)) {
+	if (!(va.fmt = fmt) || !(type = *fmt)) {
+		MPT_value_set(&va.val, 0, 0);
 		return proc(ctx, &va._it);
 	}
 	va_copy(va.arg, arg);
 	va_copy(va.org.arg, arg);
-	if ((ret = mpt_value_argv(&va.val, ret, va.arg)) >= 0) {
+	vec.iov_len = sizeof(va._buf);
+	vec.iov_base = va._buf;
+	if ((ret = mpt_value_argv(&vec, type, va.arg)) >= 0) {
+		MPT_value_set(&va.val, type, va._buf);
 		++va.fmt;
 		ret = proc(ctx, &va._it);
 	}

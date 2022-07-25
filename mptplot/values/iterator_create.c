@@ -57,20 +57,20 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 	val.type = 0;
 	val.ptr = memcpy(buf, conf, len);
 	
+	conf += len;
+	MPT_value_set(&val, 's', &conf);
+	
 	/* create matching iterators */
 	if (!strcasecmp(buf, "linear")
 	 || !strcasecmp(buf, "lin")) {
-		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_linear(&val);
 	}
 	if (!strcasecmp(buf, "factor")
 	 || !strcasecmp(buf, "fact")
 	 || !strcasecmp(buf, "fac")) {
-		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_factor(&val);
 	}
 	if (!strcasecmp(buf, "range")) {
-		MPT_value_set_string(&val, conf + len);
 		return _mpt_iterator_range(&val);
 	}
 	/* unknown value iterator type */

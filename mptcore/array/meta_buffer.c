@@ -26,6 +26,11 @@ MPT_STRUCT(metaBuffer) {
 		MPT_STRUCT(value) val;
 	} entry;
 	
+	union {
+		MPT_INTERFACE(convertable) *conv;
+		struct iovec vec;
+	} storage;
+	
 	MPT_STRUCT(slice) s;
 };
 
@@ -209,7 +214,6 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	};
 	static const MPT_STRUCT(slice) s = MPT_SLICE_INIT;
 	MPT_STRUCT(metaBuffer) *m;
-	MPT_INTERFACE(convertable) *conv;
 	
 	if (!(m = malloc(sizeof(*m)))) {
 		return 0;
@@ -217,12 +221,12 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	m->_mt._vptr = &metaBuffer;
 	m->_it._vptr = &iterBuffer;
 	
-	conv = &m->entry._conv;
 	m->entry._conv._vptr = &convBufferEntry;
 	m->entry.match = 0;
 	m->entry.converter = 0;
-	*((uint8_t *) &m->entry.val._bufsize) = sizeof(m->entry.val._buf);
-	MPT_value_set_data(&m->entry.val, MPT_ENUM(TypeConvertablePtr), &conv);
+	
+	MPT_value_set(&m->entry.val, MPT_ENUM(TypeConvertablePtr), &m->storage.conv);
+	m->storage.conv = &m->entry._conv;
 	
 	m->s = s;
 	if (a) {
@@ -235,15 +239,17 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 static const MPT_STRUCT(value) *bufferValue(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	struct iovec vec;
+	struct iovec *vec = &m->storage.vec;
 	int ret;
-	if ((ret = mpt_slice_get(&m->s, MPT_type_toVector('c'), &vec)) < 0) {
+	if ((ret = mpt_slice_get(&m->s, MPT_type_toVector('c'), vec)) < 0) {
 		return 0;
 	}
-	vec.iov_base = ((char *) (m->s._a._buf + 1)) + m->s._off;
-	vec.iov_len  = m->s._len;
+	vec->iov_base = ((char *) (m->s._a._buf + 1)) + m->s._off;
+	vec->iov_len  = m->s._len;
 	
-	MPT_value_set_data(&m->entry.val, MPT_type_toVector('c'), &vec);
+	m->entry.val.ptr = vec;
+	m->entry.val.type = MPT_type_toVector('c');
+	m->entry.val._namespace = 0;
 	
 	return &m->entry.val;
 }
@@ -337,8 +343,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 	m->entry._conv._vptr = 0;
 	m->entry.match = 0;
 	m->entry.converter = 0;
-	m->entry.val.type = 0;
-	*((uint8_t *) &m->entry.val._bufsize) = sizeof(m->entry.val._buf);
+	MPT_value_set(&m->entry.val, 0, 0);
 	
 	m->s = s;
 	if (a) {

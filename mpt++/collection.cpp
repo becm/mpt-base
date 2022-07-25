@@ -116,15 +116,13 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			}
 			if (from) {
 				value val;
-				const char *data;
 				
 				if (from->get(val)) {
 					if (obj->set(name, val, out)) {
 						continue;
 					}
 				}
-				data = from->string();
-				obj->set(name, data, out);
+				obj->set(name, from->string(), out);
 				continue;
 			}
 		}

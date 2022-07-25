@@ -28,9 +28,14 @@ static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, c
 	if (!(ret = fmt[1])) {
 		/* single value condition */
 		MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
-		if ((ret = mpt_value_argv(&val, *fmt, va)) < 0) {
+		uint8_t buf[32];
+		struct iovec vec;
+		vec.iov_len = sizeof(buf);
+		vec.iov_base = buf;
+		if ((ret = mpt_value_argv(&vec, *fmt, va)) < 0) {
 			return ret;
 		}
+		MPT_value_set(&val, *fmt, buf);
 		return mpt_object_set_value(obj, prop, &val);
 	}
 	op.obj = obj;

@@ -85,9 +85,7 @@ static const MPT_STRUCT(value) *iterBoundaryValue(MPT_INTERFACE(iterator) *it)
 	else {
 		val = &d->right;
 	}
-	d->val.domain = 0;
-	d->val.type = 'd';
-	d->val.ptr = memcpy (d->val._buf, val, sizeof(*val));
+	MPT_value_set(&d->val, 'd', val);
 	
 	return &d->val;
 }
@@ -145,9 +143,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t len, double left,
 	data->_mt._vptr = &boundaryMeta;
 	data->_it._vptr = &boundaryIter;
 	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	data->left = left;
 	data->inter = inter;

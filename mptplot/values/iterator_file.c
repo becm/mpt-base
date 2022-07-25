@@ -26,6 +26,8 @@ MPT_STRUCT(iteratorFile)
 	MPT_INTERFACE(convertable) _conv;
 	MPT_STRUCT(value) value;
 	
+	MPT_INTERFACE(convertable) *conv_ptr;
+	
 	FILE *fd;
 	int type;
 	int count;
@@ -185,7 +187,6 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 		fileGet
 	};
 	MPT_STRUCT(iteratorFile) *data;
-	MPT_INTERFACE(convertable) *conv;
 	FILE *file;
 	
 	if (!(file = fdopen(fd, "r"))) {
@@ -198,9 +199,8 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 	data->_it._vptr = &fileIter;
 	data->_conv._vptr = &fileElem;
 	
-	conv = &data->_conv;
-	*((uint8_t *) &data->value._bufsize) = sizeof(data->value._buf);
-	MPT_value_set_data(&data->value, MPT_ENUM(TypeConvertablePtr), &conv);
+	data->conv_ptr = &data->_conv;
+	MPT_value_set(&data->value, MPT_ENUM(TypeConvertablePtr), &data->conv_ptr);
 	
 	data->fd = file;
 	data->type = 0;

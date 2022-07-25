@@ -74,21 +74,21 @@ int layout::property(struct property *pr) const
 	else if (!*name) {
 		pr->name = "layout";
 		pr->desc = "mpt layout data";
-		pr->val.set(_alias);
+		pr->set(_alias);
 		return 0;
 	}
 	int id = 0;
 	if (name ? (!strcasecmp(name, "alias") || !strcasecmp(name, "name")) : pos == id++) {
 		pr->name = "alias";
 		pr->desc = "layout alias";
-		pr->val.set(_alias);
+		pr->set(_alias);
 		
 		return _alias ? strlen(_alias) : 0;
 	}
 	if (name ? !strcasecmp(name, "font") : pos == id++) {
 		pr->name = "font";
 		pr->desc = "layout default font";
-		pr->val.set(_font);
+		pr->set(_font);
 		
 		return _font ? strlen(_font) : 0;
 	}

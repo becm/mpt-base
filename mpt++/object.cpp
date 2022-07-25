@@ -34,6 +34,12 @@ bool object::const_iterator::select(uintptr_t pos)
 }
 
 // object assignment
+bool object::set(const char *name, const char *val, logger *out)
+{
+	value tmp;
+	tmp = val;
+	return set(name, tmp, out);
+}
 bool object::set(const char *name, const value &val, logger *out)
 {
 	static const char _fname[] = "mpt::object::set";

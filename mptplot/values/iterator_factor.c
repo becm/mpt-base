@@ -81,9 +81,7 @@ static const MPT_STRUCT(value) *iterFactorValue(MPT_INTERFACE(iterator) *it)
 	if (d->data.pos >= d->data.elem) {
 		return 0;
 	}
-	d->val.domain = 0;
-	d->val.type = 'd';
-	d->val.ptr = memcpy(d->val._buf, &d->data.curr, sizeof(d->data.curr));
+	MPT_value_set(&d->val, 'd', &d->data.curr);
 	return &d->val;
 }
 static int iterFactorAdvance(MPT_INTERFACE(iterator) *it)
@@ -241,9 +239,7 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 	data->_mt._vptr = &factorMeta;
 	data->_it._vptr = &factorIter;
 	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	data->data = fd;
 	data->data.curr = data->data.init;

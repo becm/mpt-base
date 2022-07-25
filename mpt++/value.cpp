@@ -3,6 +3,8 @@
  *   type ID classification
  */
 
+#include <limits>
+
 #include "array.h"
 
 #include "convert.h"
@@ -39,26 +41,14 @@ float80::operator long double() const
 	return v;
 }
 
-value::value(const char *val) : domain(0), type(0), _bufsize(sizeof(_buf)), _pad(0), ptr(0)
-{
-	set(val);
-}
-
-value::value(const value &val) : domain(0), type(0), _bufsize(sizeof(_buf)), _pad(0), ptr(0)
-{
-	*this = val;
-}
+value::value(const value &val) : ptr(val.ptr), type(val.type), _namespace(val._namespace)
+{ }
 
 value &value::operator=(const value &val)
 {
-	domain = val.domain;
+	ptr = val.ptr;
 	type = val.type;
-	if (val.ptr != val._buf || val._bufsize > _bufsize) {
-		ptr = val.ptr;
-	}
-	else {
-		ptr = memcpy(_buf, val._buf, val._bufsize);
-	}
+	_namespace = val._namespace;
 	return *this;
 }
 
@@ -67,48 +57,26 @@ int value::convert(int type, void *ptr) const
 	return mpt_value_convert(this, type, ptr);
 }
 
-bool value::set(const char *val)
+bool value::set(int t, const void *d, int ns)
 {
-	if (val) {
-		int len = strlen(val) + 1;
-		if (_bufsize > (sizeof(val) + len)) {
-			val = static_cast<char *>(memcpy(_buf + sizeof(val), val, len));
-		}
-	}
-	if (_bufsize < sizeof(val)) {
+	if (t < 0 || t > std::numeric_limits<decltype(type)>::max()) {
 		return false;
 	}
-	domain = 0;
-	type = 's';
-	ptr = memcpy(_buf, &val, sizeof(val));
-	return true;
-}
-
-bool value::set(int t, const void *d)
-{
-	const type_traits *traits = type_traits::get(t);
-	
-	if (traits && !traits->fini && !traits->init && traits->size && (traits->size <= _bufsize)) {
-		if (d) {
-			ptr = memcpy(_buf, d, traits->size);
-		} else {
-			ptr = memset(_buf, 0, traits->size);
-		}
+	if (ns < 0 || ns > std::numeric_limits<decltype(_namespace)>::max()) {
+		return false;
 	}
-	else {
-		ptr = d;
-	}
-	domain = 0;
+	ptr = d;
 	type = t;
+	_namespace = ns;
 	return true;
 }
 const char *value::string() const
 {
 	if (type == 's') {
-		const char *str = *static_cast<char * const *>(ptr);
-		return str ? str : "";
+		const char *str;
+		return ptr && (str = *static_cast<char * const *>(ptr)) ? str : "";
 	}
-	if (!type) {
+	if (!type || !ptr) {
 		return 0;
 	}
 	const void *str = ptr;
@@ -116,7 +84,7 @@ const char *value::string() const
 }
 const struct iovec *value::vector(int to) const
 {
-	if (domain || !type || !ptr) {
+	if (_namespace || !type || !ptr) {
 		return 0;
 	}
 	const struct iovec *vec = reinterpret_cast<const struct iovec *>(ptr);
@@ -136,7 +104,7 @@ const struct iovec *value::vector(int to) const
 }
 const array *value::array(int to) const
 {
-	if (domain || !type || !ptr) {
+	if (_namespace || !type || !ptr) {
 		return 0;
 	}
 	// invalid source type

@@ -76,9 +76,7 @@ static const MPT_STRUCT(value) *iterValueValue(MPT_INTERFACE(iterator) *it)
 	if (!d->next) {
 		return 0;
 	}
-	d->val.domain = 0;
-	d->val.type = 'd';
-	d->val.ptr = memcpy(d->val._buf, &d->curr, sizeof(d->curr));
+	MPT_value_set(&d->val, 'd', &d->curr);
 	
 	return &d->val;
 }
@@ -160,9 +158,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *val)
 	data->_mt._vptr = &valueMeta;
 	data->_it._vptr = &valueIter;
 	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	val = memcpy(data + 1, val, len);
 	data->next = val + adv;

@@ -210,11 +210,11 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->desc = "interface to output data";
 		/* socket is active */
 		if (MPT_socket_active(&con->out.sock)) {
-			MPT_value_set_data(&pr->val, MPT_ENUM(TypeUnixSocket), &con->out.sock);
+			MPT_property_set_data(pr, MPT_ENUM(TypeUnixSocket), &con->out.sock);
 			return 1;
 		}
 		if (con->out.buf._buf) {
-			MPT_value_set_data(&pr->val, MPT_ENUM(TypeBufferPtr), &con->out.buf._buf);
+			MPT_property_set_data(pr, MPT_ENUM(TypeBufferPtr), &con->out.buf._buf);
 			return 1;
 		}
 		return 0;
@@ -224,10 +224,10 @@ extern int mpt_connection_get(const MPT_STRUCT(connection) *con, MPT_STRUCT(prop
 		pr->name = "color";
 		pr->desc = MPT_tr("colorized message output");
 		if (con->out.state & MPT_OUTFLAG(PrintColor)) {
-			MPT_value_set_string(&pr->val, "true");
+			MPT_property_set_string(pr, "true");
 			return 1;
 		} else {
-			MPT_value_set_string(&pr->val, "false");
+			MPT_property_set_string(pr, "false");
 			return 0;
 		}
 	}

@@ -333,14 +333,13 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.type = elem[pos].type;
-	pr->val.ptr  = ((uint8_t *) gr) + elem[pos].off;
+	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) gr) + elem[pos].off);
 	
 	if (!gr) {
 		return 0;
 	}
 	if (!strcmp(pr->name, "clip") && gr->clip < 8) {
-		MPT_value_set_string(&pr->val, axes_clip[gr->clip]);
+		MPT_property_set_string(pr, axes_clip[gr->clip]);
 	}
 	return mpt_value_compare(&pr->val, ((uint8_t *) &def_graph) + elem[pos].off);
 }

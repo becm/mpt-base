@@ -104,7 +104,8 @@ bool config::set(const char *p, const char *val, int sep)
 	if (!val) {
 		return (remove(&where) < 0) ? false : true;
 	}
-	value tmp(val);
+	value tmp;
+	tmp = val;
 	return assign(&where, &tmp) < 0 ? false : true;
 }
 convertable *config::get(const char *base, int sep, int len) const

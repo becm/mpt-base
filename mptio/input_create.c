@@ -65,7 +65,7 @@ extern MPT_INTERFACE(input) *mpt_input_create(char const *ctl)
 		MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
 		MPT_INTERFACE(object) *obj = 0;
 		
-		MPT_value_set_string(&val, ctl);
+		MPT_value_set(&val, 's', &ctl);
 		
 		if (in->_vptr->meta.convertable.convert((void *) in, MPT_ENUM(TypeObjectPtr), &obj) < 0
 		    || !obj

@@ -57,10 +57,8 @@ int mpt_convertable_info(MPT_INTERFACE(convertable) *val, MPT_STRUCT(property) *
 		pr->desc = 0;
 	}
 	/* generic value data */
-	pr->val.domain = 0;
-	pr->val.type = 0;
 	if (val->_vptr->convert(val, MPT_ENUM(TypeValue), &pr->val) < 0) {
-		MPT_value_set_data(&pr->val, 's', &desc);
+		MPT_property_set_string(pr, desc);
 	}
 	return code;
 }

@@ -9,33 +9,38 @@
 
 /*!
  * \ingroup mptTypes
- * \brief copy value data
+ * \brief copy basic value data
  * 
- * Copy settings to target value.
+ * Copy value data to target.
  * 
- * \param dest  target value address
  * \param src   source value data
+ * \param dest  target data address
+ * \param max   maximum allowd data size
  * 
- * \return number of copied local bytes
+ * \return number of copied bytes
  */
-extern int mpt_value_copy(MPT_STRUCT(value) *dest, const MPT_STRUCT(value) *src)
+extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *src, void *dest, size_t max)
 {
-	int ret = 0;
-	if (src->ptr == src->_buf) {
-		ret = dest->_bufsize;
-		if (src->_bufsize > ret) {
-			return MPT_ERROR(MissingBuffer);
-		}
-		if (src->_bufsize < ret) {
-			ret = src->_bufsize;
-		}
-		dest->ptr = memcpy(dest->_buf, src->_buf, ret);
-	}
-	else {
-		dest->ptr = src->ptr;
-	}
-	dest->domain = src->domain;
-	dest->type = src->type;
+	const MPT_STRUCT(type_traits) *traits;
 	
-	return ret;
+	/* only allow global types */
+	if (src->_namespace || !(traits = mpt_type_traits(src->type))) {
+		return MPT_ERROR(BadArgument);
+	}
+	/* copy only valid for non-complex types */
+	if (traits->init || traits->fini) {
+		return MPT_ERROR(BadType);
+	}
+	if (traits->size > max) {
+		return MPT_ERROR(MissingBuffer);
+	}
+	if (dest) {
+		if (src->ptr) {
+			memcpy(dest, src->ptr, traits->size);
+		}
+		else {
+			memset(dest, 0, traits->size);
+		}
+	}
+	return traits->size;
 }

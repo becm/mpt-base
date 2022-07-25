@@ -33,8 +33,8 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 	int curr, adv;
 	char buf[256];
 	
-	/* only default domain is supported */
-	if (val->domain) {
+	/* only default namespace is supported */
+	if (val->_namespace) {
 		return MPT_ERROR(BadType);
 	}
 	/* data is direct text representation */

@@ -21,7 +21,8 @@ MPT_STRUCT(iteratorLinear)
 	MPT_STRUCT(value) val;
 	
 	double   base,  /* current/base value */
-	         step;  /* advance step size */
+	         step,  /* advance step size */
+	         curr;  /* current value */
 	uint32_t elem,  /* number of elements */
 	         pos;
 };
@@ -75,15 +76,11 @@ static MPT_INTERFACE(metatype) *iterClone(const MPT_INTERFACE(metatype) *mt)
 static const MPT_STRUCT(value) *iterValue(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, it, _it);
-	double val;
 	if (d->pos >= d->elem) {
 		return 0;
 	}
-	val = d->base + d->pos * d->step;
-	
-	d->val.domain = 0;
-	d->val.type = 'd';
-	d->val.ptr = memcpy(d->val._buf, &val, sizeof(val));
+	d->curr = d->base + d->pos * d->step;
+	MPT_value_set(&d->val, 'd', &d->curr);
 	
 	return &d->val;
 }
@@ -155,10 +152,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_linear(uint32_t len, double start, 
 	data->_mt._vptr = &_vptr_linear_meta;
 	data->_it._vptr = &_vptr_linear_iter;
 	
-	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	data->base = start;
 	data->step = (end - start) / (len - 1);
@@ -293,9 +287,7 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 	data->_mt._vptr = &_vptr_linear_meta;
 	data->_it._vptr = &_vptr_linear_iter;
 	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	data->base = r.min;
 	data->step = step;

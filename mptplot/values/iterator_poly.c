@@ -22,7 +22,9 @@ MPT_STRUCT(iteratorPolynom)
 {
 	MPT_INTERFACE(metatype) _mt;
 	MPT_INTERFACE(iterator) _it;
+	
 	MPT_STRUCT(value) val;
+	double curr;
 	
 	_MPT_ARRAY_TYPE(double) grid;
 	long pos;
@@ -111,9 +113,8 @@ static const MPT_STRUCT(value) *iterPolyValue(MPT_INTERFACE(iterator) *it)
 		}
 	}
 	/* assign new value */
-	d->val.domain = 0;
-	d->val.type = 'd';
-	d->val.ptr = memcpy(d->val._buf, &sum, sizeof(sum));
+	d->curr = sum;
+	MPT_value_set(&d->val, 'd', &d->curr);
 	
 	return &d->val;
 }
@@ -233,9 +234,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *desc, const _MPT_A
 	data->_mt._vptr = &polyMeta;
 	data->_it._vptr = &polyIter;
 	
-	data->val.domain = 0;
-	data->val.type = 0;
-	*((uint8_t *) &data->val._bufsize) = sizeof(data->val._buf);
+	MPT_value_set(&data->val, 0, 0);
 	
 	data->grid._buf = buf;
 	data->pos = 0;

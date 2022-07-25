@@ -289,17 +289,15 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	pr->desc = elem[pos].desc;
 	
 	if (!ax) {
-		pr->val.type = elem[pos].type;
-		pr->val.ptr  = (void *) elem[pos].off;
+		MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) ax) + elem[pos].off);
 		return pos;
 	}
 	
 	if ((pos == 5) && (ax->format & MPT_ENUM(TransformLg))) {
 		static const char desc[] = "log\0";
-		MPT_value_set_string(&pr->val, desc);
+		MPT_property_set_string(pr, desc);
 	} else {
-		pr->val.type = elem[pos].type;
-		pr->val.ptr  = ((uint8_t *) ax) + elem[pos].off;
+		MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) ax) + elem[pos].off);
 	}
 	return mpt_value_compare(&pr->val, ((uint8_t *) &def_axis) + elem[pos].off);
 }

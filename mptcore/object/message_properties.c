@@ -50,7 +50,7 @@ extern int mpt_message_property(MPT_STRUCT(message) *msg, int sep, MPT_TYPE(prop
 	*pos = 0;
 	
 	prop.name = buf;
-	MPT_value_set_string(&prop.val, ++pos);
+	MPT_property_set_string(&prop, ++pos);
 	
 	len = part - (pos - buf);
 	
@@ -63,7 +63,7 @@ extern int mpt_message_property(MPT_STRUCT(message) *msg, int sep, MPT_TYPE(prop
 	else if (*pos == '\'' || *pos == '"') {
 		if (*pos == pos[len - 1]) {
 			pos[len - 1] = '\0';
-			MPT_value_set_string(&prop.val, ++pos);
+			MPT_property_set_string(&prop, ++pos);
 		}
 	}
 	if ((part = sfcn(spar, &prop)) < 0) {

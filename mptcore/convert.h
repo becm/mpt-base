@@ -102,7 +102,7 @@ extern void mpt_bswap_32(long , uint32_t *);
 extern void mpt_bswap_16(long , uint16_t *);
 
 /* set value to next argument */
-extern int mpt_value_argv(MPT_STRUCT(value) *, int , va_list);
+extern int mpt_value_argv(const struct iovec *, int , va_list);
 
 /* get data from pointer and description */
 extern int mpt_value_convert(const MPT_STRUCT(value) *, int , void *);

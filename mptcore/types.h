@@ -177,7 +177,7 @@ extern int mpt_type_basic_add(size_t);
 extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
 
 /* copy value content */
-extern int mpt_value_copy(MPT_STRUCT(value) *, const MPT_STRUCT(value) *);
+extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *, void *, size_t);
 /* compare data types */
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
 
@@ -445,45 +445,39 @@ template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits(
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
-	inline value() : domain(0), type(0), _bufsize(sizeof(_buf)), _pad(0), ptr(0)
+	inline value() : ptr(0), type(0), _namespace(0)
 	{ }
 	value(const value &from);
-	value(const char *v);
 	
 	value &operator=(const value &);
 	
-	inline value &operator =(const long double &v) { set(v); return *this; }
-	inline value &operator =(const double   &v) { set(v); return *this; }
-	inline value &operator =(const float    &v) { set(v); return *this; }
-	inline value &operator =(const int64_t  &v) { set(v); return *this; }
-	inline value &operator =(const uint64_t &v) { set(v); return *this; }
-	inline value &operator =(const int32_t  &v) { set(v); return *this; }
-	inline value &operator =(const uint32_t &v) { set(v); return *this; }
-	
 	int convert(int , void *) const;
+	bool set(int , const void *, int = 0);
+	void clear();
+	
 	
 	inline int type_id() const
 	{
-		return domain ? static_cast<int>(BadType) : type;
+		return _namespace ? static_cast<int>(BadType) : type;
 	}
 	inline const void *data(int id = 0) const
 	{
-		return (!domain && (!id || (id == type))) ? ptr : 0;
+		return (!_namespace && (!id || (id == type))) ? ptr : 0;
 	}
 	
-	void clear();
-	bool set(const char *);
-	bool set(int , const void *);
-	
 	template <typename T>
-	bool set(const T &val)
+	value &operator=(const T &val)
 	{
-		return set(type_properties<T>::id(true), &val);
+		if (!set(type_properties<T>::id(true), &val)) {
+			ptr = 0;
+			type = 0;
+		}
+		return *this;
 	}
 	template <typename T>
 	bool get(T &val) const
 	{
-		return convert(type_properties<T>::id(true), &val);
+		return convert(type_properties<T>::id(true), &val) >= 0;
 	}
 	
 	const char *string() const;
@@ -491,22 +485,15 @@ MPT_STRUCT(value)
 	const struct array *array(int = 0) const;
 protected:
 #else
-# define MPT_VALUE_INIT(t, p) { 0, (t), (8 + sizeof(void *)), 0, (p), { 0 } }
-# define MPT_value_set_string(v, s) ( \
-	(v)->domain = 0, \
-	(v)->type = 's', \
-	(v)->ptr = (sizeof(void *) > (v)->_bufsize) ? 0 : (*((const char **) (v)->_buf) = (s), (v)->_buf))
-# define MPT_value_set_data(v, t, d) ( \
-	(v)->domain = 0, \
+# define MPT_VALUE_INIT(t, p) { (p), (t), 0 }
+# define MPT_value_set(v, t, p) ( \
+	(v)->ptr = (p), \
 	(v)->type = (t), \
-	(v)->ptr = (sizeof(*(d)) > (v)->_bufsize) ? 0 : memcpy((v)->_buf, (d), sizeof(*(d))))
+	(v)->_namespace = 0)
 #endif
-	uint32_t domain;         /* type domain */
-	uint16_t type;           /* type identifier in domain */
-	const uint8_t _bufsize;  /* actual size of buffer area */
-	const uint8_t _pad;      /* padding */
 	const void *ptr;         /* formated data */
-	uint8_t _buf[8 + sizeof(void *)];
+	uint16_t type;           /* type identifier (in namespace) */
+	uint16_t _namespace;     /* type namespace */
 };
 
 __MPT_NAMESPACE_END

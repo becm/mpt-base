@@ -26,20 +26,43 @@ MPT_STRUCT(property)
 {
 #ifdef __cplusplus
 public:
-	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0), val(v)
-	{ }
+	inline property(const char *n = 0, const char *v = 0) : name(n), desc(0)
+	{
+		set(v);
+	}
 	inline property(const char *n, int t, const void *d) : name(n), desc(0)
 	{
-		val.set(t, d);
+		set(t, d);
 	}
 	inline property(size_t pos) : name(0), desc((char *) pos)
 	{ }
+	
+	bool set(const char *);
+	int set(int , const void *);
+	
+	template <typename T>
+	bool set(const T &val)
+	{
+		return set(type_properties<T>::id(true), &val);
+	}
 #else
-# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT(0, 0) }
+# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT(0, 0), { 0 }, { 0 } }
+# define MPT_property_set_string(p, s) ( \
+	(p)->val._namespace = 0, \
+	(p)->val.type = 's', \
+	(p)->val.ptr = (*((const char **) (p)->_buf) = (s), (p)->_buf))
+# define MPT_property_set_data(p, t, d) ( \
+	(p)->val._namespace = 0, \
+	(p)->val.type = (t), \
+	(p)->val.ptr = (sizeof(*(d)) > sizeof((p)->_buf)) ? 0 : memcpy((p)->_buf, (d), sizeof(*(d))))
 #endif
 	const char *name;      /* property name */
 	const char *desc;      /* property [index->]description */
 	MPT_STRUCT(value) val; /* element value */
+	
+	/* compile-time detection of (sizeof(mpt::value) % sizeof(void *)) */
+	uint8_t _pad[UINTPTR_MAX > UINT32_MAX ? sizeof(uint32_t) : 0];
+	uint8_t _buf[(UINTPTR_MAX <= UINT32_MAX ? sizeof(uint32_t) : 0) + 2 * sizeof(void*)];
 };
 #ifdef __cplusplus
 template<> inline __MPT_CONST_TYPE int type_properties<property>::id(bool) {
@@ -70,6 +93,7 @@ public:
 	const_iterator begin() const;
 	const_iterator end() const;
 	
+	bool set(const char *, const char *, logger * = logger::default_instance());
 	bool set(const char *, const value &, logger * = logger::default_instance());
 	bool set(const object &, logger * = logger::default_instance());
 	

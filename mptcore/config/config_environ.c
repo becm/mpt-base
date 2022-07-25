@@ -49,7 +49,7 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 	while ((var = *(env++))) {
 		MPT_STRUCT(path) path;
 		char *end, *pos, tmp[1024];
-		MPT_STRUCT(value) d;
+		MPT_STRUCT(value) d = MPT_VALUE_INIT('s', 0);
 		
 		if (!(end = strchr(var, '='))) {
 			continue;
@@ -83,7 +83,8 @@ extern int mpt_config_environ(MPT_INTERFACE(config) *conf, const char *pattern, 
 		var++;
 		accept++;
 		
-		MPT_value_set_string(&d, end + 1);
+		end++;
+		d.ptr = &end;
 		
 		if (conf->_vptr->assign(conf, &path, &d) < 0) {
 			errno = EINVAL;

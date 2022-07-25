@@ -57,7 +57,7 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
 			vec.iov_base = buf;
 			vec.iov_len  = sizeof(buf) - vec.iov_len;
 			buf[vec.iov_len++] = 0;
-			MPT_value_set_data(&pr.val, MPT_type_toVector('c'), &vec);
+			MPT_property_set_data(&pr, MPT_type_toVector('c'), &vec);
 			return par->h(par->p, &pr);
 		}
 	}

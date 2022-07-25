@@ -56,10 +56,10 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 			}
 			/* set non-assign options to default value */
 			if (!(str = strchr(str, '='))) {
-				MPT_value_set_string(&pr.val, 0);
+				MPT_property_set_string(&pr, 0);
 			} else {
 				size_t len;
-				MPT_value_set_string(&pr.val, str + 1);
+				MPT_property_set_string(&pr, str + 1);
 				len = str - pr.name;
 				if (len >= sizeof(name)) {
 					return count ? count : MPT_ERROR(MissingBuffer);

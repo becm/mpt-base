@@ -104,7 +104,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			}
 			p.assign = '=';
 			mpt_path_set(&p, pr.name, end - pr.name);
-			MPT_value_set_string(&pr.val, end + 1);
+			MPT_property_set_string(&pr, end + 1);
 		}
 		/* no top level assign */
 		if (!pr.name) {

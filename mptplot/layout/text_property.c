@@ -274,8 +274,7 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	pr->val.type = elem[pos].type;
-	pr->val.ptr  = ((uint8_t *) tx) + elem[pos].off;
+	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) tx) + elem[pos].off);
 	
 	if (!tx) {
 		return 0;
