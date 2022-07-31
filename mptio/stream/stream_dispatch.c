@@ -54,7 +54,7 @@ extern int mpt_stream_dispatch(MPT_STRUCT(stream) *srm, int (*cmd)(void *, const
 		ret &= MPT_EVENTFLAG(Flags);
 	}
 	/* further message on queue */
-	if (mpt_queue_recv(&srm->_rd) >= 0) {
+	if (mpt_queue_recv(&srm->_rd) > 0) {
 		ret |= MPT_EVENTFLAG(Retry);
 	}
 	return ret;
