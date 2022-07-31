@@ -1,5 +1,5 @@
 # mpt-base/mptio/meson.build
-# build definition for mptcore library
+# build definition for mpt I/O library
 
 # collect source files
 io_src = files(

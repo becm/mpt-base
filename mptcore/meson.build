@@ -1,5 +1,5 @@
 # mpt-base/mptcore/meson.build
-# build definition for mptcore library
+# build definition for mpt core library
 
 # top level source files
 core_src = []

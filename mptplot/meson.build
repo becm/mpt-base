@@ -1,5 +1,5 @@
-# mpt-base/mptcore/meson.build
-# build definition for mptcore library
+# mpt-base/mptplot/meson.build
+# build definition for mpt plot library
 
 # collect source files
 plot_src = files(

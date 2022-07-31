@@ -1,5 +1,5 @@
 # mpt-base/mptloader/meson.build
-# create loader library
+# build definition for mpt loader library
 
 load_src = files(
   'library_bind.c',

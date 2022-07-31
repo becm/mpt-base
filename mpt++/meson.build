@@ -23,6 +23,7 @@ cxx_src = files(
   'object.cpp',
   'output.cpp',
   'parse.cpp',
+  'property.cpp',
   'queue.cpp',
   'refcount_wrap.cpp',
   'std_cout.cpp',
