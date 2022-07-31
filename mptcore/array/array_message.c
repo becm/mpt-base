@@ -4,6 +4,7 @@
  */
 
 #include "message.h"
+#include "types.h"
 
 #include "array.h"
 
@@ -61,6 +62,7 @@ extern int mpt_array_message(MPT_STRUCT(array) *arr, const MPT_STRUCT(message) *
 		/* skip argument separation */
 		mpt_message_read(&msg, 1, 0);
 	}
+	a._buf->_content_traits = mpt_type_traits('c');
 	mpt_array_clone(arr, &a);
 	mpt_array_clone(&a, 0);
 	return narg;

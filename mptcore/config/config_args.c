@@ -87,8 +87,8 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 		}
 		else if (!(pr.name = mpt_data_tostring(&ptr, val->type, 0))) {
 			if (info) {
-				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d",
-				        MPT_tr("bad string value"), ++count);
+				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d (%d)",
+				        MPT_tr("bad string value"), ++count, val->type);
 			}
 			continue;
 		}

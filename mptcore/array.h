@@ -355,8 +355,8 @@ extern void *mpt_array_slice(MPT_STRUCT(array) *, size_t , size_t);
 /* write data to slice */
 extern ssize_t mpt_slice_write(MPT_STRUCT(slice) *, size_t , const void *, size_t);
 
-/* get string elements from slice */
-extern int mpt_slice_get(MPT_STRUCT(slice) *, int , void *);
+/* advance slice element */
+extern int mpt_slice_next(MPT_STRUCT(slice) *);
 
 /* snprintf to to array */
 extern int mpt_printf(MPT_STRUCT(array) *, const char *, ... );

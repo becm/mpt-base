@@ -30,6 +30,7 @@ MPT_STRUCT(metaBuffer) {
 		MPT_INTERFACE(convertable) *conv;
 		struct iovec vec;
 	} storage;
+	const char *str;
 	
 	MPT_STRUCT(slice) s;
 };
@@ -39,76 +40,78 @@ static int bufferConvertEntry(MPT_INTERFACE(convertable) *conv, int type, void *
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, conv, entry._conv);
 	const MPT_STRUCT(buffer) *buf;
-	const MPT_STRUCT(type_traits) *traits;
+	uint8_t *base;
 	
-	if (!(buf = m->s._a._buf)) {
+	if (!(buf = m->s._a._buf) || !m->s._len) {
 		return MPT_ERROR(MissingData);
-	}
-	if (!(traits = buf->_content_traits)) {
-		return MPT_ERROR(BadType);
 	}
 	if (buf != m->entry.match) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (m->entry.converter) {
-		const uint8_t *data = (void *) (buf + 1);
-		return m->entry.converter(data + m->s._off, type, ptr);
-	}
-	return mpt_slice_get(&m->s, type, ptr);
+	base = (void *) (buf + 1);
+	
+	return m->entry.converter(base + m->s._off, type, ptr);
 }
 /* iterator interface */
 static const MPT_STRUCT(value) *bufferGet(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
+	const MPT_STRUCT(buffer) *buf;
+	
+	if (!(buf = m->s._a._buf) || !m->s._len) {
+		return 0;
+	}
+	if (buf != m->entry.match) {
+		return 0;
+	}
+	if (!m->str) {
+		uint8_t *data = (void *) (buf + 1);
+		m->storage.vec.iov_base = data + m->s._off;
+		m->storage.vec.iov_len  = m->s._len;
+		MPT_value_set(&m->entry.val, MPT_type_toVector('c'), &m->storage.vec);
+	}
+	else if (m->entry.converter) {
+		m->storage.conv = &m->entry._conv;
+		MPT_value_set(&m->entry.val, MPT_ENUM(TypeConvertablePtr), &m->storage.conv);
+	}
+	else {
+		MPT_value_set(&m->entry.val, 's', &m->str);
+	}
+	
 	return &m->entry.val;
 }
 static int bufferAdvance(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	const MPT_STRUCT(buffer) *buf = m->s._a._buf;
-	const MPT_STRUCT(type_traits) *traits;
+	const MPT_STRUCT(buffer) *buf;
+	int type;
 	
-	if (!buf) {
+	m->str = 0;
+	if (!(buf = m->s._a._buf)) {
 		return MPT_ERROR(MissingData);
 	}
 	if (buf != m->entry.match) {
 		return MPT_ERROR(BadOperation);
 	}
-	if (!(traits = buf->_content_traits)) {
-		return MPT_ERROR(BadOperation);
+	if ((type = mpt_slice_next(&m->s)) <= 0) {
+		return type;
 	}
-	if (traits != mpt_type_traits(MPT_type_toVector('c'))) {
-		if (!traits->size) {
-			return MPT_ERROR(BadValue);
-		}
-		m->s._off += m->s._len;
-		m->s._len = traits->size;
-		return buf->_used > m->s._off;
+	if (type == 's') {
+		char *data = (void *) (buf + 1);
+		m->str = data + m->s._off;
 	}
-	if (!m->s._len) {
-		int type = mpt_slice_get(&m->s, MPT_ENUM(TypeVector), 0);
-		if (type < 0) {
-			return type;
-		}
-		if (!m->s._len) {
-			return 0;
-		}
-	}
-	m->s._off += m->s._len;
-	m->s._len = 0;
-	return buf->_used > m->s._off ? 's' : 0;
+	return type;
 }
 static int bufferReset(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	const MPT_STRUCT(buffer) *buf = m->s._a._buf;
-	const MPT_STRUCT(type_traits) *traits = buf ? buf->_content_traits : 0;
+	int type;
 	
-	m->entry.match = buf;
-	
+	m->entry.match = m->s._a._buf;
 	m->s._off = 0;
-	m->s._len = buf ? buf->_used : 0;
-	return traits && (traits == mpt_type_traits('c')) ? 1 : 0;
+	m->s._len = 0;
+	type = bufferAdvance(&m->_it);
+	return (type < 0) ? 0 : type;
 }
 /* convertable interface */
 static int bufferConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
@@ -231,43 +234,25 @@ extern MPT_INTERFACE(metatype) *mpt_meta_buffer(const MPT_STRUCT(array) *a)
 	m->s = s;
 	if (a) {
 		mpt_array_clone(&m->s._a, a);
+		if (bufferReset(&m->_it) < 0) {
+			bufferUnref(&m->_mt);
+			errno = EINVAL;
+			return 0;
+		}
 	}
 	m->entry.match = m->s._a._buf;
 	return &m->_mt;
 }
-/* return first argument as string content */
-static const MPT_STRUCT(value) *bufferValue(MPT_INTERFACE(iterator) *it)
-{
-	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	struct iovec *vec = &m->storage.vec;
-	int ret;
-	if ((ret = mpt_slice_get(&m->s, MPT_type_toVector('c'), vec)) < 0) {
-		return 0;
-	}
-	vec->iov_base = ((char *) (m->s._a._buf + 1)) + m->s._off;
-	vec->iov_len  = m->s._len;
-	
-	m->entry.val.ptr = vec;
-	m->entry.val.type = MPT_type_toVector('c');
-	m->entry.val._namespace = 0;
-	
-	return &m->entry.val;
-}
-/* return first argument as string content */
+/* skip first argument (convert to string content) */
 static int bufferResetArgs(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, it, _it);
-	struct iovec vec;
 	int ret;
-	if ((ret = bufferReset(it)) <= 0) {
+	if ((ret = bufferReset(&m->_it)) <= 0) {
 		return ret;
 	}
-	if ((ret = mpt_slice_get(&m->s, MPT_ENUM(TypeVector), &vec)) < 0) {
-		return ret;
-	}
-	m->s._off += m->s._len;
-	m->s._len = 0;
-	return (m->s._a._buf->_used > m->s._off) ? 1 : 0;
+	/* consume first argument of iterator */
+	return bufferAdvance(&m->_it);
 }
 static int bufferConvArgs(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 {
@@ -327,7 +312,7 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 		bufferCloneArgs
 	};
 	static const MPT_INTERFACE_VPTR(iterator) iterBuffer = {
-		bufferValue,
+		bufferGet,
 		bufferAdvance,
 		bufferResetArgs
 	};
@@ -353,8 +338,6 @@ extern MPT_INTERFACE(metatype) *mpt_meta_arguments(const MPT_STRUCT(array) *a)
 			errno = EINVAL;
 			return 0;
 		}
-		m->s._off += m->s._len;
-		m->s._len = 0;
 	}
 	
 	return &m->_mt;
