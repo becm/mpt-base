@@ -196,17 +196,23 @@ public:
 	attribute & operator= (convertable &meta);
 	attribute & operator= (const struct property &);
 	
+	inline attribute & operator= (char *v)
+	{
+		return operator=(static_cast<const char *>(v));
+	}
 	inline attribute & operator= (const value &v)
 	{
-		if (!set(v)) _prop.name = 0;
+		if (!set(v)) {
+			_prop.name = 0;
+		}
 		return *this;
 	}
 	template <typename T>
 	attribute & operator= (const T &v)
 	{
+		int type = type_properties<T>::id(true);
 		value val;
-		val.set(type_properties<T>::id(true), &v);
-		if (!set(val)) {
+		if (!val.set(type, &v) || !set(val)) {
 			_prop.name = 0;
 		}
 		return *this;
