@@ -3,8 +3,29 @@
 #include <string.h>
 
 #include "meta.h"
+#include "types.h"
 
 #include "layout.h"
+
+/*!
+ * \ingroup mptPlot
+ * \brief get or register color type
+ * 
+ * Allocate basic type for color (is used in format specs).
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_color_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		if ((type = mpt_type_basic_add(sizeof(MPT_STRUCT(color)))) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
 
 /*!
  * \ingroup mptPlot
@@ -62,6 +83,7 @@ extern int mpt_color_setalpha(MPT_STRUCT(color) *col, int alpha)
 extern int mpt_color_pset(MPT_STRUCT(color) *col, MPT_INTERFACE(convertable) *src)
 {
 	const char *txt;
+	int type;
 	int len;
 	
 	if (!src) {
@@ -69,7 +91,8 @@ extern int mpt_color_pset(MPT_STRUCT(color) *col, MPT_INTERFACE(convertable) *sr
 		static const MPT_STRUCT(color) tcol = MPT_COLOR_INIT;
 		return memcmp(&tcol, col, sizeof(*col)) ? 1 : 0;
 	}
-	if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), col)) >= 0) {
+	if ((type = mpt_color_typeid()) > 0
+	 && (len = src->_vptr->convert(src, type, col)) >= 0) {
 		return 0;
 	}
 	/* parse color name/format  */

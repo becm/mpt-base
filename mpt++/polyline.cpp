@@ -14,11 +14,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-template <> const struct type_traits *type_properties<point<double> >::traits() {
-	static const struct type_traits traits(sizeof(point<double>));
-	return &traits;
-}
-
 int apply_data(point<double> *dest, const span<const linepart> &pts, const transform &tr, span<const value_store> st)
 {
 	int dim, proc = 0;

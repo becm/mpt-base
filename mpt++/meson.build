@@ -23,6 +23,7 @@ cxx_src = files(
   'object.cpp',
   'output.cpp',
   'parse.cpp',
+  'point.cpp',
   'property.cpp',
   'queue.cpp',
   'refcount_wrap.cpp',
@@ -40,6 +41,7 @@ cxx = [ core ]
 
 if with_plot
   cxx_src += files(
+    'color.cpp',
     'cycle.cpp',
     'destination.cpp',
     'graph.cpp',

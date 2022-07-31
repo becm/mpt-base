@@ -47,20 +47,6 @@ enum MPT_ENUM(TextFlags) {
 	MPT_ENUM(TextBold)    = 0x2
 };
 
-enum MPT_ENUM(LayoutTypes) {
-	/* layout data types */
-	MPT_ENUM(TypeColor)       = 0x10,  /* DLE */
-	MPT_ENUM(TypeLineAttr)    = 0x11,  /* DC1 */
-	MPT_ENUM(TypeFloatPoint)  = 0x12,  /* DC2 */
-	MPT_ENUM(TypeLine)        = 0x13,  /* DC3 */
-	
-	/* layout pointer types */
-	MPT_ENUM(TypeTextPtr)   = 0x14,  /* DC4 */
-	MPT_ENUM(TypeAxisPtr)   = 0x15,  /* NAK */
-	MPT_ENUM(TypeWorldPtr)  = 0x16,  /* SYN */
-	MPT_ENUM(TypeGraphPtr)  = 0x17   /* ETB */
-};
-
 /* argb standard color */
 MPT_STRUCT(color)
 {
@@ -237,6 +223,7 @@ MPT_STRUCT(text)
 __MPT_EXTDECL_BEGIN
 
 /* color assignments */
+extern int mpt_color_typeid(void);
 extern int mpt_color_parse(MPT_STRUCT(color) *, const char *);
 extern int mpt_color_html (MPT_STRUCT(color) *, const char *);
 extern int mpt_color_pset (MPT_STRUCT(color) *, MPT_INTERFACE(convertable) *);
@@ -244,25 +231,30 @@ extern int mpt_color_set(MPT_STRUCT(color) *, int , int , int);
 extern int mpt_color_setalpha(MPT_STRUCT(color) *, int);
 
 /* operations on layout elements */
+extern int  mpt_line_typeid(void);
 extern void mpt_line_init(MPT_STRUCT(line) *);
 extern int  mpt_line_get (const MPT_STRUCT(line) *, MPT_STRUCT(property) *);
 extern int  mpt_line_set (MPT_STRUCT(line) *, const char *, MPT_INTERFACE(convertable) *);
 
+extern int  mpt_graph_pointer_typeid(void);
 extern void mpt_graph_init(MPT_STRUCT(graph) *, const MPT_STRUCT(graph) *__MPT_DEFPAR(0));
 extern void mpt_graph_fini(MPT_STRUCT(graph) *);
 extern int  mpt_graph_get (const MPT_STRUCT(graph) *, MPT_STRUCT(property) *);
 extern int  mpt_graph_set (MPT_STRUCT(graph) *, const char *, MPT_INTERFACE(convertable) *);
 
+extern int  mpt_axis_pointer_typeid(void);
 extern void mpt_axis_init(MPT_STRUCT(axis) *, const MPT_STRUCT(axis) *__MPT_DEFPAR(0));
 extern void mpt_axis_fini(MPT_STRUCT(axis) *);
 extern int  mpt_axis_get (const MPT_STRUCT(axis) *, MPT_STRUCT(property) *);
 extern int  mpt_axis_set (MPT_STRUCT(axis) *, const char *, MPT_INTERFACE(convertable) *);
 
+extern int  mpt_world_pointer_typeid(void);
 extern void mpt_world_init(MPT_STRUCT(world) *, const MPT_STRUCT(world) *__MPT_DEFPAR(0));
 extern void mpt_world_fini(MPT_STRUCT(world) *);
 extern int  mpt_world_get (const MPT_STRUCT(world) *, MPT_STRUCT(property) *);
 extern int  mpt_world_set (MPT_STRUCT(world) *, const char *, MPT_INTERFACE(convertable) *);
 
+extern int  mpt_text_pointer_typeid(void);
 extern void mpt_text_init(MPT_STRUCT(text) *, const MPT_STRUCT(text) *__MPT_DEFPAR(0));
 extern void mpt_text_fini(MPT_STRUCT(text) *);
 extern int  mpt_text_get (const MPT_STRUCT(text) *, MPT_STRUCT(property) *);
@@ -274,6 +266,7 @@ extern void mpt_axis_sety(MPT_STRUCT(axis) *, double);
 extern void mpt_axis_setz(MPT_STRUCT(axis) *, double);
 
 /* assign line attributes */
+extern int mpt_lattr_typeid(void);
 extern int mpt_lattr_style (MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
 extern int mpt_lattr_width (MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
 extern int mpt_lattr_symbol(MPT_STRUCT(lineattr) *, MPT_INTERFACE(convertable) *);
@@ -293,51 +286,32 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 class parser;
 
-template <> inline __MPT_CONST_TYPE int type_properties<color>::id(bool) {
-	return TypeColor;
-}
+template <> int type_properties<color>::id(bool);
 template <> inline const struct type_traits *type_properties<color>::traits() {
 	return type_traits::get(id(true));
 }
-
-template <> inline __MPT_CONST_TYPE int type_properties<lineattr>::id(bool) {
-	return TypeLineAttr;
-}
+template <> int type_properties<lineattr>::id(bool);
 template <> inline const struct type_traits *type_properties<lineattr>::traits() {
 	return type_traits::get(id(true));
 }
-
-template <> inline __MPT_CONST_TYPE int type_properties<line>::id(bool) {
-	return TypeLine;
-}
-template <> inline const struct type_traits *type_properties<line *>::traits() {
+template <> int type_properties<line>::id(bool);
+template <> inline const struct type_traits *type_properties<line>::traits() {
 	return type_traits::get(id(true));
 }
 
-template <> inline __MPT_CONST_TYPE int type_properties<axis *>::id(bool) {
-	return TypeAxisPtr;
-}
+template <> int type_properties<axis *>::id(bool);
 template <> inline const struct type_traits *type_properties<axis *>::traits() {
 	return type_traits::get(id(true));
 }
-
-template <> inline __MPT_CONST_TYPE int type_properties<world *>::id(bool) {
-	return TypeWorldPtr;
-}
+template <> int type_properties<world *>::id(bool);
 template <> inline const struct type_traits *type_properties<world *>::traits() {
 	return type_traits::get(id(true));
 }
-
-template <> inline __MPT_CONST_TYPE int type_properties<graph *>::id(bool) {
-	return TypeGraphPtr;
-}
+template <> int type_properties<graph *>::id(bool);
 template <> inline const struct type_traits *type_properties<graph *>::traits() {
 	return type_traits::get(id(true));
 }
-
-template <> inline __MPT_CONST_TYPE int type_properties<text *>::id(bool) {
-	return TypeTextPtr;
-}
+template <> int type_properties<text *>::id(bool);
 template <> inline const struct type_traits *type_properties<text *>::traits() {
 	return type_traits::get(id(true));
 }
@@ -579,9 +553,13 @@ public:
 	int set_property(const char *, convertable *) __MPT_OVERRIDE;
 };
 
-#endif
+#endif /* __cplusplus */
 
 __MPT_NAMESPACE_END
+
+#ifdef __cplusplus
+std::ostream &operator<<(std::ostream &, const mpt::color &);
+#endif /* __cplusplus */
 
 #endif /* _MPT_LAYOUT_H */
 

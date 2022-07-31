@@ -28,6 +28,27 @@ static const MPT_STRUCT(axis) def_axis = {
 
 /*!
  * \ingroup mptPlot
+ * \brief get or register axis pointer type
+ * 
+ * Allocate type for axis pointer.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_axis_pointer_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(void *));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
+
+/*!
+ * \ingroup mptPlot
  * \brief finalize axis
  * 
  * Clear resources of axis data.
@@ -105,11 +126,13 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(co
 	/* auto-select matching property */
 	if (!name) {
 		const MPT_STRUCT(axis) *from;
+		int type;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeAxisPtr), &from)) >= 0) {
+		if ((type = mpt_axis_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;
@@ -122,12 +145,14 @@ extern int mpt_axis_set(MPT_STRUCT(axis) *ax, const char *name, MPT_INTERFACE(co
 	/* copy from sibling */
 	if (!*name) {
 		const MPT_STRUCT(axis) *from;
+		int type;
 		
 		if (!src) {
 			mpt_axis_fini(ax);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeAxisPtr), &from)) >= 0) {
+		if ((type = mpt_axis_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_axis_fini(ax);
 			mpt_axis_init(ax, len ? from : 0);
 			return 0;
@@ -257,7 +282,7 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeAxisPtr);
+		return mpt_axis_pointer_typeid();
 	}
 	/* property by position */
 	if (!pr->name) {

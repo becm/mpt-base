@@ -57,11 +57,27 @@ struct point
 	
 	T x, y;
 };
+template<> int type_properties<point<float> >::id(bool);
+template<> const MPT_STRUCT(type_traits) *type_properties<point<float> >::traits();
+
 template<> int type_properties<point<double> >::id(bool);
 template<> const MPT_STRUCT(type_traits) *type_properties<point<double> >::traits();
 
 struct dpoint : public point<double>{ dpoint(double _x = 0, double _y = 0) : point(_x, _y) {} };
 struct fpoint : public point<float> { fpoint(float  _x = 0, float  _y = 0) : point(_x, _y) {} };
+
+template<> inline int type_properties<fpoint>::id(bool require) {
+	return type_properties<point<float> >::id(require);
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<fpoint>::traits() {
+	return type_properties<point<float> >::traits();
+}
+template<> inline int type_properties<dpoint>::id(bool require) {
+	return type_properties<point<double> >::id(require);
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<dpoint>::traits() {
+	return type_properties<point<double> >::traits();
+}
 #else
 MPT_STRUCT(dpoint) { double x, y; };
 MPT_STRUCT(fpoint) { float x, y; };
@@ -384,7 +400,8 @@ extern MPT_STRUCT(linepart) *mpt_linepart_join(MPT_STRUCT(linepart) *, const MPT
 /* initialize transform dimension */
 extern void mpt_value_apply_init(MPT_STRUCT(value_apply) *, int __MPT_DEFPAR(-1));
 
-/* set point data */
+/* process point data */
+extern int mpt_fpoint_typeid(void);
 extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *, MPT_INTERFACE(convertable) *, const MPT_STRUCT(range) *__MPT_DEFPAR(0));
 
 /* consume range data */

@@ -2,7 +2,7 @@
  * set line attributes.
  */
 
-#include "meta.h"
+#include "types.h"
 
 #include "layout.h"
 
@@ -10,6 +10,27 @@
 #define MPT_LineWidthMax   10
 #define MPT_SymbolTypeMax  8
 #define MPT_SymbolSizeMax  20
+
+
+/*!
+ * \ingroup mptPlot
+ * \brief get or register line attributes type
+ * 
+ * Allocate basic type for line attributes (is used in format specs).
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_lattr_typeid()
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		if ((type = mpt_type_basic_add(sizeof(MPT_STRUCT(lineattr)))) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
 
 /*!
  * \ingroup mptPlot

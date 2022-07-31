@@ -4,9 +4,29 @@
 
 #include "meta.h"
 #include "types.h"
-#include "convert.h"
 
-#include "layout.h"
+#include "values.h"
+
+/*!
+ * \ingroup mptPlot
+ * \brief get or register float 2D point type
+ * 
+ * Allocate type for float 2D point.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_fpoint_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(MPT_STRUCT(fpoint)));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
 
 /*!
  * \ingroup mptPlot
@@ -30,7 +50,8 @@ extern int mpt_fpoint_set(MPT_STRUCT(fpoint) *pt, MPT_INTERFACE(convertable) *sr
 	}
 	it = 0;
 	if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeIteratorPtr), &it)) < 0) {
-		if ((ret = src->_vptr->convert(src, MPT_ENUM(TypeFloatPoint), &tmp)) < 0) {
+		int type = mpt_fpoint_typeid();
+		if (type <= 0 || (ret = src->_vptr->convert(src, type, &tmp)) < 0) {
 			return MPT_ERROR(BadType);
 		}
 	}

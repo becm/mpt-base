@@ -42,21 +42,6 @@ extern int mpt_tostring(const MPT_STRUCT(value) *val, ssize_t (*save)(void *, co
 	if ((text = mpt_data_tostring(&ptr, val->type, &len))) {
 		return save(dest, text, len);
 	}
-	/* represent color data */
-	if (val->type == MPT_ENUM(TypeColor)) {
-		const MPT_STRUCT(color) *c;
-		if (!(c = val->ptr)) {
-			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", 0, 0, 0);
-		} else if (c->alpha != 0xff) {
-			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x", c->red, c->green, c->blue, c->alpha);
-		} else {
-			adv = snprintf(buf, sizeof(buf), "#%02x%02x%02x", c->red, c->green, c->blue);
-		}
-		if (adv < 0) {
-			return adv;
-		}
-		return save(dest, buf, adv);
-	}
 	if (val->type == MPT_ENUM(TypeObjectPtr)) {
 		const MPT_INTERFACE(object) *obj = *((void * const *) ptr);
 		MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;

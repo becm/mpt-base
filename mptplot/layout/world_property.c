@@ -20,6 +20,28 @@ static const MPT_STRUCT(world) def_world = {
 	MPT_LINEATTR_INIT,  /* attr */
 	0                   /* cyc */
 };
+
+/*!
+ * \ingroup mptPlot
+ * \brief get or register world pointer type
+ * 
+ * Allocate type for world pointer.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_world_pointer_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(void *));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
+
 /*!
  * \ingroup mptPlot
  * \brief initialize world structure
@@ -71,11 +93,13 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 	
 	if (!name) {
 		const MPT_STRUCT(world) *from;
+		int type;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeWorldPtr), &from)) >= 0) {
+		if ((type = mpt_world_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -83,11 +107,13 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 		if ((len = mpt_string_pset(&wld->_alias, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &wld->color)) >= 0) {
+		if ((type = mpt_color_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &wld->color)) >= 0) {
 			if (!len) wld->color = def_world.color;
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLineAttr), &wld->attr)) >= 0) {
+		if ((type = mpt_lattr_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &wld->attr)) >= 0) {
 			if (!len) wld->attr = def_world.attr;
 			return 0;
 		}
@@ -96,12 +122,14 @@ extern int mpt_world_set(MPT_STRUCT(world) *wld, const char *name, MPT_INTERFACE
 	/* copy from sibling */
 	if (!*name) {
 		const MPT_STRUCT(world) *from;
+		int type;
 		
 		if (!src) {
 			mpt_world_fini(wld);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeWorldPtr), &from)) >= 0) {
+		if ((type = mpt_world_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_world_fini(wld);
 			mpt_world_init(wld, len ? from : 0);
 			return 0;
@@ -179,7 +207,7 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 		const int    type;
 		const size_t off;
 	} elem[] = {
-		{"color",   "world color",   MPT_ENUM(TypeColor), MPT_offset(world,color) },
+		{"color",   "world color",   -1,  MPT_offset(world,color) },
 		{"cycles",  "cycle count",   'u', MPT_offset(world,cyc) },
 		{"width",   "line width",    'y', MPT_offset(world,attr.width) },
 		{"style",   "line style",    'y', MPT_offset(world,attr.style) },
@@ -187,17 +215,18 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 		{"size",    "symbol size",   'y', MPT_offset(world,attr.size) },
 		{"alias",   "display name",  's', MPT_offset(world,_alias) },
 	};
-	static const uint8_t format[] = {
+	static uint8_t format[] = {
 		's',
-		MPT_ENUM(TypeColor),
-		MPT_ENUM(TypeLineAttr),
+		0,  /* placeholder for dynamic color ID */
+		0,  /* placeholder for dynamic line attribute ID */
 		'u',
 		0
 	};
+	int type;
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeWorldPtr);
+		return mpt_world_pointer_typeid();
 	}
 	/* property by position */
 	if (!pr->name) {
@@ -213,6 +242,13 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 		pr->val.type = 0;
 		pr->val.ptr  = format;
 		
+		if (!format[1] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
+			format[1] = type;
+		}
+		if (!format[2] && (type = mpt_lattr_typeid()) > 0 && type <= UINT8_MAX) {
+			format[2] = type;
+		}
+		
 		return wld && memcmp(wld, &def_world, sizeof(*wld)) ? 1 : 0;
 	}
 	/* find property by name */
@@ -225,9 +261,20 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 			return pos;
 		}
 	}
+	
+	if ((type = elem[pos].type) < 0) {
+		if (type == -1) {
+			if ((type = mpt_color_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else {
+			return MPT_ERROR(BadArgument);
+		}
+	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) wld) + elem[pos].off);
+	MPT_value_set(&pr->val, type, ((uint8_t *) wld) + elem[pos].off);
 	
 	if (!wld) {
 		return 0;

@@ -29,6 +29,27 @@ static const MPT_STRUCT(text) def_text = {
 
 /*!
  * \ingroup mptPlot
+ * \brief get or register text pointer type
+ * 
+ * Allocate type for text pointer.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_text_pointer_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(void *));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
+
+/*!
+ * \ingroup mptPlot
  * \brief finalize text
  * 
  * Clear resources of text data.
@@ -80,11 +101,13 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
 	/* auto-select matching property */
 	if (!name) {
 		const MPT_STRUCT(text) *from;
+		int type;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeTextPtr), &from)) >= 0) {
+		if ((type = mpt_text_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, len ? from : 0);
 			return 0;
@@ -92,7 +115,8 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
 		if ((len = mpt_string_pset(&tx->_value, src)) >= 0) {
 			return len;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &tx->color)) >= 0) {
+		if ((type = mpt_color_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &tx->color)) >= 0) {
 			if (!len) tx->color = def_text.color;
 			return 0;
 		}
@@ -101,12 +125,14 @@ extern int mpt_text_set(MPT_STRUCT(text) *tx, const char *name, MPT_INTERFACE(co
 	/* copy from sibling */
 	if (!*name) {
 		const MPT_STRUCT(text) *from;
+		int type;
 		
 		if (!src) {
 			mpt_text_fini(tx);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeTextPtr), &from)) >= 0) {
+		if ((type = mpt_text_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_text_fini(tx);
 			mpt_text_init(tx, from);
 			return 0;
@@ -196,9 +222,9 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 		const int    type;
 		const size_t off;
 	} elem[] = {
-		{"color",  "text color",     MPT_ENUM(TypeColor),  MPT_offset(text,color) },
+		{"color",  "text color",     -1,  MPT_offset(text,color) },
 		
-		{"pos",    "text position",  MPT_ENUM(TypeFloatPoint), MPT_offset(text, pos) },
+		{"pos",    "text position",  -2,  MPT_offset(text, pos) },
 		
 		{"size",   "text size",      'y', MPT_offset(text,size) },
 		{"align",  "text alignment", 'c', MPT_offset(text,align) },
@@ -211,19 +237,20 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 		{"y", "y start position", 'f',  MPT_offset(text, pos.y) }
 	},
 	*from;
-	static const uint8_t format[] = {
+	static uint8_t format[] = {
 		's', 's',       /* value, font */
-		MPT_ENUM(TypeColor),
+		0,              /* placeholder for dynamic color ID */
 		'y', 'y', 'y',  /* font style, weight, size, */
 		'c',            /* text alignment */
 		'f', 'f',       /* position */
 		'd',            /* angle */
 		0
 	};
+	int type;
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeTextPtr);
+		return mpt_text_pointer_typeid();
 	}
 	/* property by position */
 	if (!pr->name) {
@@ -239,6 +266,9 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 		pr->val.type = 0;
 		pr->val.ptr  = format;
 		
+		if (!format[2] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
+			format[2] = type;
+		}
 		return tx && memcmp(tx, &def_text, sizeof(*tx)) ? 1 : 0;
 	}
 	/* set position independently */
@@ -272,9 +302,26 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 			return pos;
 		}
 	}
+	if ((type = elem[pos].type) < 0) {
+		int type = elem[pos].type;
+		if (type == -1) {
+			if ((type = mpt_color_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else if (type == -2) {
+			if ((type = mpt_fpoint_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else {
+			return MPT_ERROR(BadArgument);
+		}
+	}
+	
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) tx) + elem[pos].off);
+	MPT_value_set(&pr->val, type, ((uint8_t *) tx) + elem[pos].off);
 	
 	if (!tx) {
 		return 0;

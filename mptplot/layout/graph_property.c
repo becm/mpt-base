@@ -37,6 +37,26 @@ static const char axes_clip[][4] = {
 	"z" "xz", "yz", "xyz"
 };
 
+/*!
+ * \ingroup mptPlot
+ * \brief get or register graph pointer type
+ * 
+ * Allocate type for graph pointer.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_graph_pointer_typeid(void)
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(void *));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
 
 /*!
  * \ingroup mptPlot
@@ -93,16 +113,19 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 	/* auto-select matching property */
 	if (!name) {
 		const MPT_STRUCT(graph) *from;
+		int type;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeGraphPtr), &from)) >= 0) {
+		if ((type = mpt_graph_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, len ? from : 0);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &gr->fg)) >= 0) {
+		if ((type = mpt_color_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &gr->fg)) >= 0) {
 			if (!len) gr->fg = def_graph.fg;
 			return 0;
 		}
@@ -111,12 +134,14 @@ extern int mpt_graph_set(MPT_STRUCT(graph) *gr, const char *name, MPT_INTERFACE(
 	/* copy from sibling */
 	if (!*name) {
 		const MPT_STRUCT(graph) *from;
+		int type;
 		
 		if (!src) {
 			mpt_graph_fini(gr);
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeGraphPtr), &from)) >= 0) {
+		if ((type = mpt_graph_pointer_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &from)) >= 0) {
 			mpt_graph_fini(gr);
 			mpt_graph_init(gr, from);
 			return len <= 0 ? len : 1;
@@ -270,11 +295,11 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		{"axes",       "axis names to bind",  's', MPT_offset(graph,_axes) },
 		{"worlds",     "world names to bind", 's', MPT_offset(graph,_worlds) },
 		
-		{"foreground", "foreground color",    MPT_ENUM(TypeColor), MPT_offset(graph,fg) },
-		{"background", "background color",    MPT_ENUM(TypeColor), MPT_offset(graph,bg) },
+		{"foreground", "foreground color",    -1,  MPT_offset(graph,fg) },
+		{"background", "background color",    -1,  MPT_offset(graph,bg) },
 		
-		{"pos",        "origin point",        MPT_ENUM(TypeFloatPoint), MPT_offset(graph,pos) },
-		{"scale",      "scale factor",        MPT_ENUM(TypeFloatPoint), MPT_offset(graph,scale) },
+		{"pos",        "origin point",        -2,  MPT_offset(graph,pos) },
+		{"scale",      "scale factor",        -2,  MPT_offset(graph,scale) },
 		
 		{"grid",       "grid type",           'y', MPT_offset(graph,grid) },
 		{"align",      "axis alignment",      'y', MPT_offset(graph,align) },
@@ -282,10 +307,10 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		
 		{"lpos",       "legend position",     'c', MPT_offset(graph,lpos) }
 	};
-	static const uint8_t format[] = {
+	static uint8_t format[] = {
 		's', 's',
-		MPT_ENUM(TypeColor),
-		MPT_ENUM(TypeColor),
+		0,        /* placeholders for dynamic color ID */
+		0,
 		'f', 'f', /* position */
 		'f', 'f', /* scaling */
 		'y',      /* grid type */
@@ -295,10 +320,11 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		'c',      /* legend alignment */
 		0
 	};
+	int type;
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeGraphPtr);
+		return mpt_graph_pointer_typeid();
 	}
 	/* property by position */
 	if (!pr->name) {
@@ -314,6 +340,11 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 		pr->val.type = 0;
 		pr->val.ptr  = format;
 		
+		if (!format[2] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
+			format[2] = type;
+			format[3] = type;
+		}
+		
 		return gr && memcmp(gr, &def_graph, sizeof(*gr)) ? 1 : 0;
 	}
 	/* find property by name */
@@ -326,14 +357,25 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 			return pos;
 		}
 	}
-	if (!gr) {
-		pr->val.type = elem[pos].type;
-		pr->val.ptr  = (void *) elem[pos].off;
-		return pos;
+	if ((type = elem[pos].type) < 0) {
+		if (type == -1) {
+			if ((type = mpt_color_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else if (type == -2) {
+			if ((type = mpt_fpoint_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else {
+			return MPT_ERROR(BadArgument);
+		}
 	}
+	
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) gr) + elem[pos].off);
+	MPT_value_set(&pr->val, type, ((uint8_t *) gr) + elem[pos].off);
 	
 	if (!gr) {
 		return 0;

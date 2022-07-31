@@ -14,8 +14,6 @@
 #include "array.h"
 #include "event.h"
 
-#include "mptplot/layout.h"
-
 #include "types.h"
 
 #define basic_type(t, s) { sizeof(s), (t) }
@@ -35,17 +33,6 @@ core_sizes[] = {
 	/* basic pointer types (0x8 - 0xf) */
 	pointer_type(MPT_ENUM(TypeNodePtr)),
 	pointer_type(MPT_ENUM(TypeReplyDataPtr)),
-	
-	/* layout value types (0x10 - 0x13) */
-	basic_type(MPT_ENUM(TypeColor),    MPT_STRUCT(color)),
-	basic_type(MPT_ENUM(TypeLineAttr), MPT_STRUCT(lineattr)),
-	basic_type(MPT_ENUM(TypeLine),     MPT_STRUCT(line)),
-	
-	/* layout value types (0x14 - 0x17) */
-	pointer_type(MPT_ENUM(TypeAxisPtr)),
-	pointer_type(MPT_ENUM(TypeTextPtr)),
-	pointer_type(MPT_ENUM(TypeWorldPtr)),
-	pointer_type(MPT_ENUM(TypeGraphPtr)),
 	
 	/* basic value types (0x18 - 0x1f) */
 	basic_type(MPT_ENUM(TypeValFmt),    MPT_STRUCT(value_format)),

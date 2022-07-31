@@ -293,7 +293,6 @@ int layout::line::convert(int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			TypeObjectPtr,
-			TypeLine, TypeColor, TypeLineAttr,
 			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
@@ -301,16 +300,19 @@ int layout::line::convert(int type, void *ptr)
 	}
 	
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		return TypeLine;
+		int li = type_properties<::mpt::line>::id(true);
+		return li > 0 ? li : me;
 	}
 	if (assign(static_cast< ::mpt::line>(*this), type, ptr)) {
 		return TypeObjectPtr;
 	}
 	if (assign(&color, type, ptr)) {
-		return me;
+		int la = type_properties<::mpt::lineattr>::id(true);
+		return la > 0 ? la : me;
 	}
 	if (assign(&attr, type, ptr)) {
-		return me;
+		int col = type_properties<::mpt::color>::id(true);
+		return col > 0 ? col : me;
 	}
 	return BadType;
 }
@@ -383,14 +385,14 @@ int layout::text::convert(int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			TypeObjectPtr,
-			TypeTextPtr, TypeColor,
 			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		return TypeTextPtr;
+		int tx = type_properties<::mpt::text *>::id(true);
+		return tx > 0 ? tx : me;
 	}
 	if (assign(static_cast< ::mpt::text *>(this), type, ptr)) {
 		return TypeObjectPtr;

@@ -20,6 +20,38 @@ template class reference<layout::graph::world>;
 template class reference<layout::graph::data>;
 template class reference<class layout::graph::transform3>;
 
+
+template <> int type_properties<lineattr>::id(bool)
+{
+	return mpt_lattr_typeid();
+}
+
+template <> int type_properties<line>::id(bool)
+{
+	return mpt_line_typeid();
+}
+
+
+template <> int type_properties<graph *>::id(bool)
+{
+	return mpt_graph_pointer_typeid();
+}
+
+template <> int type_properties<axis *>::id(bool)
+{
+	return mpt_axis_pointer_typeid();
+}
+
+template <> int type_properties<text *>::id(bool)
+{
+	return mpt_axis_pointer_typeid();
+}
+
+template <> int type_properties<world *>::id(bool)
+{
+	return mpt_world_pointer_typeid();
+}
+
 template <> int type_properties<layout::graph *>::id(bool obtain)
 {
 	static const named_traits *traits = 0;
@@ -83,14 +115,14 @@ int layout::graph::convert(int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			TypeObjectPtr,
-			TypeGraphPtr, TypeColor,
 			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		return TypeGraphPtr;
+		int gr = type_properties<::mpt::graph *>::id(true);
+		return gr > 0 ? gr : me;
 	}
 	if (assign(static_cast< ::mpt::graph *>(this), type, ptr)) {
 		return TypeObjectPtr;
@@ -525,7 +557,6 @@ int layout::graph::axis::convert(int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			TypeObjectPtr,
-			TypeAxisPtr, TypeColor,
 			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
@@ -535,7 +566,8 @@ int layout::graph::axis::convert(int type, void *ptr)
 		return me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		return TypeAxisPtr;
+		int ax = type_properties<::mpt::axis *>::id(true);
+		return ax > 0 ? ax : me;
 	}
 	if (assign(static_cast< ::mpt::axis *>(this), type, ptr)) {
 		return TypeObjectPtr;
@@ -606,7 +638,6 @@ int layout::graph::world::convert(int type, void *ptr)
 	if (!type) {
 		static const uint8_t fmt[] = {
 			TypeObjectPtr,
-			TypeWorldPtr, TypeColor,
 			0
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
@@ -616,7 +647,8 @@ int layout::graph::world::convert(int type, void *ptr)
 		return me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
-		return TypeWorldPtr;
+		int wld = type_properties<::mpt::world *>::id(true);
+		return wld > 0 ? wld : me;
 	}
 	if (assign(static_cast< ::mpt::world *>(this), type, ptr)) {
 		return TypeObjectPtr;

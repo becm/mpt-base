@@ -37,6 +37,7 @@ set(headers)
 
 if(MPT_WITH_PLOT)
   set(sources ${sources}
+    color.cpp
     cycle.cpp
     destination.cpp
     graph.cpp
@@ -45,6 +46,7 @@ if(MPT_WITH_PLOT)
     linepart.cpp
     layout.cpp
     mapping.cpp
+    point.cpp
     polyline.cpp
     transform.cpp
     value_store.cpp

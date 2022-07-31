@@ -20,6 +20,27 @@ static const MPT_STRUCT(line) def_line = {
 
 /*!
  * \ingroup mptPlot
+ * \brief get or register line type
+ * 
+ * Allocate type for line.
+ * 
+ * \return ID for type in default namespace
+ */
+extern int mpt_line_typeid()
+{
+	static int ptype = 0;
+	int type;
+	if (!(type = ptype)) {
+		static const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(sizeof(def_line));
+		if ((type = mpt_type_add(&traits)) > 0) {
+			ptype = type;
+		}
+	}
+	return type;
+}
+
+/*!
+ * \ingroup mptPlot
  * \brief initialize line structure
  * 
  * Set default values for line members.
@@ -69,20 +90,23 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(co
 	
 	/* auto-select matching property */
 	if (!name) {
-		const MPT_STRUCT(line) *from;
+		int type;
 		
 		if (!src) {
 			return MPT_ERROR(BadOperation);
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLine), &from)) >= 0) {
-			*li = from ? *from : def_line;
+		if ((type = mpt_line_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, li)) >= 0) {
+			if (!len) *li = def_line;
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeColor), &li->color)) >= 0) {
+		if ((type = mpt_color_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &li->color)) >= 0) {
 			if (!len) li->color = def_line.color;
 			return 0;
 		}
-		if ((len = src->_vptr->convert(src, MPT_ENUM(TypeLineAttr), &li->attr)) >= 0) {
+		if ((type = mpt_lattr_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, &li->attr)) >= 0) {
 			if (!len) li->attr = def_line.attr;
 			return 0;
 		}
@@ -90,11 +114,13 @@ extern int mpt_line_set(MPT_STRUCT(line) *li, const char *name, MPT_INTERFACE(co
 	}
 	/* copy from sibling */
 	if (!*name) {
-		if (!src || !(len = src->_vptr->convert(src, MPT_ENUM(TypeLine), li))) {
+		int type;
+		if (!src) {
 			*li = def_line;
 			return 0;
 		}
-		if (len) {
+		if ((type = mpt_color_typeid()) > 0
+		 && (len = src->_vptr->convert(src, type, li)) > 0) {
 			return 0;
 		}
 		return MPT_ERROR(BadType);
@@ -147,7 +173,7 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 		const int    type;
 		const size_t off;
 	} elem[] = {
-		{"color",  "line color",     MPT_ENUM(TypeColor), MPT_offset(line,color) },
+		{"color",  "line color",     -1,  MPT_offset(line,color) },
 		{"x1",     "line start",     'f', MPT_offset(line,from.x) },
 		{"x2",     "line end (x)",   'f', MPT_offset(line,to.x) },
 		{"y1",     "line start (y)", 'f', MPT_offset(line,from.y) },
@@ -157,17 +183,18 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 		{"symbol", "symbol type",    'y', MPT_offset(line,attr.symbol) },
 		{"size",   "symbol size",    'y', MPT_offset(line,attr.size) }
 	};
-	static const uint8_t format[] = {
-		MPT_ENUM(TypeColor),
-		MPT_ENUM(TypeLineAttr),
+	static uint8_t format[] = {
+		0,  /* placeholder for dynamic color ID */
+		0,  /* placeholder for dynamic line attribute ID */
 		'f', 'f', /* line start */
 		'f', 'f', /* line end */
 		0
 	};
+	int type;
 	int pos;
 	
 	if (!pr) {
-		return MPT_ENUM(TypeLine);
+		return mpt_line_typeid();
 	}
 	/* property by position */
 	if (!pr->name) {
@@ -183,6 +210,13 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 		pr->val.type = 0;
 		pr->val.ptr  = format;
 		
+		if (!format[0] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
+			format[0] = type;
+		}
+		if (!format[1] && (type = mpt_lattr_typeid()) > 0 && type <= UINT8_MAX) {
+			format[1] = type;
+		}
+		
 		return li && memcmp(li, &def_line, sizeof(*li)) ? 1 : 0;
 	}
 	else {
@@ -194,9 +228,19 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 			return pos;
 		}
 	}
+	if ((type = elem[pos].type) < 0) {
+		if (type == -1) {
+			if ((type = mpt_color_typeid()) <= 0) {
+				return MPT_ERROR(BadOperation);
+			}
+		}
+		else {
+			return MPT_ERROR(BadType);
+		}
+	}
 	pr->name = elem[pos].name;
 	pr->desc = elem[pos].desc;
-	MPT_value_set(&pr->val, elem[pos].type, ((uint8_t *) li) + elem[pos].off);
+	MPT_value_set(&pr->val, type, ((uint8_t *) li) + elem[pos].off);
 	
 	if (!li) {
 		return 0;

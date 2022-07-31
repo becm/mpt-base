@@ -6,6 +6,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
+#include <cassert>
 #include <iostream>
 
 #include MPT_INCLUDE(layout.h)
@@ -50,6 +51,14 @@ int main(int argc, char * const argv[])
 	mpt::collection_relation rel(g, &top);
 	g.bind(&rel);
 	
+	int fid = mpt::type_properties<mpt::fpoint>::id(true);
+	int did = mpt::type_properties<mpt::dpoint>::id(true);
+	std::cout << "fpoint type: " << fid << std::endl;
+	std::cout << "dpoint type: " << did << std::endl;
+	
+	assert(fid == mpt::type_properties<mpt::point<float>>::id(true));
+	assert(did == mpt::type_properties<mpt::point<double>>::id(true));
+	
 	// add additional world element
 	mpt::item<mpt::layout::graph::data> *d = g.add_world(0, "w3");
 	mpt::mpt_color_parse(&d->instance()->world.instance()->color, "cyan");
@@ -57,7 +66,10 @@ int main(int argc, char * const argv[])
 	// print world elements
 	for (auto &w : g.worlds()) {
 		mpt::object &o = *w.instance()->world.instance();
-		std::cout << w.name() << ": " << o["color"] << std::endl;
+		mpt::color col;
+		const mpt::value &val = o["color"];
+		val.get(col);
+		std::cout << w.name() << ": " << col << std::endl;
 	}
 	for (auto &a : g.axes()) {
 		mpt::object &o = *a.instance();

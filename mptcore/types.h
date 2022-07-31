@@ -25,8 +25,6 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeNodePtr)        = 0x9,   /* HT' */
 	MPT_ENUM(TypeBufferPtr)      = 0xb,   /* ENQ */
 	
-	/* reserve 0x10..0x17 for layout types */
-	
 	/* format types (scalar) */
 	MPT_ENUM(TypeValFmt)         = 0x18,  /* CAN */
 	MPT_ENUM(TypeValue)          = 0x19,  /* EM  */
@@ -167,7 +165,6 @@ extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *, int);
 extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int);
 extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int);
 /* register additional types */
-extern int mpt_type_basic_add(size_t);
 extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *);
 extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *);
 extern int mpt_type_add(const MPT_STRUCT(type_traits) *);
@@ -531,6 +528,6 @@ template <> inline const char *&operator&=(const char *&to, mpt::convertable &fr
 	to = from.string();
 	return to;
 }
-#endif
+#endif /* __cplusplus */
 
 #endif /* _MPT_TYPES_H */
