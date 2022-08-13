@@ -23,7 +23,6 @@ cxx_src = files(
   'object.cpp',
   'output.cpp',
   'parse.cpp',
-  'point.cpp',
   'property.cpp',
   'queue.cpp',
   'refcount_wrap.cpp',
@@ -50,6 +49,7 @@ if with_plot
     'layout.cpp',
     'linepart.cpp',
     'mapping.cpp',
+    'point.cpp',
     'polyline.cpp',
     'transform.cpp',
     'value_store.cpp'
