@@ -43,7 +43,7 @@ client::client()
 	mpt::mpt_convertable_info(mt, &pr);
 	mpt::debug(__func__, "%s: %s", pr.name, pr.desc);
 	mpt::object *o;
-	if (mt && (o &= *mt)) {
+	if (mt && (o = *mt)) {
 		o->set(0, "w:client.out");
 	}
 	_mt.set_instance(mt);
@@ -55,7 +55,7 @@ int client::convert(int type, void *ptr)
 	if ((mt = _mt.instance()) && (ret = mt->convert(type, ptr)) > 0) {
 		return mpt::type_properties<mpt::client *>::id(true);
 	}
-	return client::convert(type, ptr);
+	return ::mpt::client::convert(type, ptr);
 }
 void client::unref()
 {
@@ -108,9 +108,9 @@ int main(int argc, char * const argv[])
 	mpt::config *cfg;
 	mpt::convertable *val;
 	mpt::iterator *it;
-	if ((cfg &= *mpt::config::global())
+	if ((cfg = *mpt::config::global())
 	 && (val = cfg->get("mpt.args"))
-	 && (it &= *val)) {
+	 && (it = *val)) {
 		const char *arg;
 		while (it->get(arg)) {
 			std::cerr << arg << std::endl;

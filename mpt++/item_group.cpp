@@ -145,7 +145,7 @@ int item_group::bind(const relation *from, logger *out)
 	for (auto &it : _items) {
 		metatype *curr;
 		group *g;
-		if (!(curr = it.instance()) || !(g &= *curr)) {
+		if (!(curr = it.instance()) || !(g = *curr)) {
 			continue;
 		}
 		int ret;

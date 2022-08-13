@@ -16,9 +16,9 @@ LINK = ${CXX} ${CXXFLAGS}
 LDLIBS = -lmptplot -lmptio -lmptcore -lm
 #
 # special C++ features for compilation
-NEED_CXX_AUTO = collection.o graph.o item_group.o layout.o linepart.o mapping.o
-NEED_CXX_DECL = value.o
-NEED_CXX_FREACH = item_group.o
+NEED_CXX_AUTO = graph.o item_group.o layout.o linepart.o mapping.o
+NEED_CXX_DECLTYPE = value.o
+NEED_CXX_FOREACH = item_group.o
 NEED_CXX_VA_COPY = logger.o
 #
 # source summary
@@ -31,7 +31,7 @@ DIR_INC = ${DIR_TOP}/include/mpt
 include ../mpt.lib.mk
 #
 CXXFLAGS += -std=c++98
-${NEED_CXX_AUTO} ${NEED_CXX_VA_COPY} ${NEED_CXX_DECL} : CXXFLAGS+=-std=c++11
+${NEED_CXX_AUTO} ${NEED_CXX_VA_COPY} ${NEED_CXX_DECLTYPE} : CXXFLAGS+=-std=c++11
 #
 # additional dependencies
 graphic.o mapping.o : graphic.h

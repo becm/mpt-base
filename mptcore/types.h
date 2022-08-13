@@ -514,19 +514,15 @@ std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
 template <> std::ostream &operator<<(std::ostream &, mpt::span<char>);
 template <> std::ostream &operator<<(std::ostream &, mpt::span<const char>);
 
-template <typename T>
-T *&operator&=(T *&val, mpt::convertable &from)
+template<typename T>
+mpt::convertable::operator T *()
 {
 	int type = mpt::type_properties<T *>::id(true);
-	if ((type <= 0) || (from.convert(type, &val) < 0)) {
-		val = 0;
+	T *ptr = 0;
+	if ((type <= 0) || (convert(type, &ptr) < 0)) {
+		return 0;
 	}
-	return val;
-}
-template <> inline const char *&operator&=(const char *&to, mpt::convertable &from)
-{
-	to = from.string();
-	return to;
+	return ptr;
 }
 #endif /* __cplusplus */
 

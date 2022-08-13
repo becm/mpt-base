@@ -217,14 +217,14 @@ int io::stream::dispatch::process(const struct message *msg) const
 			warning(_func, "%s", MPT_tr("no reply context"));
 			break;
 		}
-		if (!(rd &= *ctx)) {
+		if (!(rd = *ctx)) {
 			break;
 		}
 		if (!rd->set(idlen, id)) {
 			error(_func, "%s", MPT_tr("reply context unusable"));
 			return BadOperation;
 		}
-		rc &= *ctx;
+		rc = *ctx;
 		break;
 	}
 	ev.reply = rc;

@@ -26,7 +26,7 @@ extern int main(int , char * const [])
 	iterator *it;
 	double val;
 	
-	if (it &= *m) {
+	if ((it = *m)) {
 		while (it->get(val)) {
 			std::cout << val << std::endl;
 			it->advance();

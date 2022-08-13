@@ -72,11 +72,9 @@ template <> const struct type_traits *type_properties<group *>::traits()
 bool add_items(metatype &to, const node *head, const relation *relation, logger *out)
 {
 	const char _func[] = "mpt::add_items";
-	group *grp;
-	object *obj;
+	group *grp = to;
+	object *obj = to;
 	
-	grp &= to;
-	obj &= to;
 	// no assignable target
 	if (!grp && !obj) {
 		return true;
@@ -189,7 +187,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 				return false;
 			}
 			object *obj, *src;
-			if ((src &= *curr) && (obj &= *from)) {
+			if ((src = *curr) && (obj = *from)) {
 				obj->set(*src, out);
 				continue;
 			}
@@ -222,16 +220,15 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			continue;
 		}
 		// process child items
-		group *ig;
 		object *curr;
-		ig &= *from;
-		if (!(curr &= *from)) {
+		if (!(curr = *from)) {
 			if (out) {
 				out->message(_func, out->Warning, "%s (%p): %s",
 				             name, from, MPT_tr("element not an object"));
 			}
 		}
-		if (!relation || !ig) {
+		group *ig;
+		if (!relation || !(ig = *from)) {
 			if (!(add_items(*from, head->children, 0, out))) {
 				return false;
 			}
@@ -276,7 +273,7 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const collec
 		return 0;
 	}
 	if (!sub && mt) {
-		sub &= *mt;
+		sub = *mt;
 	}
 	if (!ctx->left) {
 		ctx->mt = mt;

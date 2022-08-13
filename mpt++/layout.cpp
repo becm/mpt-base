@@ -139,7 +139,7 @@ int layout::bind(const relation *rel, logger *out)
 	for (auto &it : _items) {
 		metatype *mt;
 		graph *g;
-		if (!(mt = it.instance()) || !(g &= *mt)) {
+		if (!(mt = it.instance()) || !(g = *mt)) {
 			continue;
 		}
 		const char *name = it.name();
@@ -147,7 +147,7 @@ int layout::bind(const relation *rel, logger *out)
 			static const char _func[] = "mpt::layout::bind\0";
 			::mpt::graph *d;
 			object *o = 0;
-			if (!(d &= *mt) || !(o &= *mt)) {
+			if (!(d = *mt) || !(o = *mt)) {
 				const char *msg = MPT_tr("unable to get graph information");
 				if (out) {
 					if (!name || !*name) {

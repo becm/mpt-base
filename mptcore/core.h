@@ -205,6 +205,9 @@ public:
 		return convert(0, 0);
 	}
 	
+	template<typename T>
+	operator T *();
+	
 	virtual int convert(int , void *) = 0;
 	
 	static const struct named_traits *pointer_traits();
