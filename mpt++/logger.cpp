@@ -269,7 +269,7 @@ int message_store::log(const char *from, int type, const char *fmt, va_list arg)
 		va_list tmp;
 		// use copy to keep data for storage operation
 		va_copy(tmp, arg);
-		ret = mpt_convertable_vlog(mt, from, type, fmt, arg);
+		ret = mpt_convertable_vlog(mt, from, type, fmt, tmp);
 		va_end(tmp);
 	}
 	entry m;
