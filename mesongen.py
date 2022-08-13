@@ -4,15 +4,15 @@ import os
 from fnmatch import fnmatch
 from re import compile
 # marker to process file
-marker = b'meson.build.gen'
+marker = 'meson.build.gen'
 buildfile = 'meson.build'
 newline = os.linesep.encode('utf-8')
-matchexp = compile(b'#\s*' + marker + b'\s*')
+matchexp = compile(r'#\s*%s\s*' % marker)
 
 
 def isgenerated(hdr):
     ''' get end of header marker '''
-    match = matchexp.match(hdr)
+    match = matchexp.match(hdr.decode('utf-8'))
     return match if match is None else match.end()
 
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         update_recursive('.')
     elif argv[1] == 'clean':
         if len(argv) < 3:
-                update_recursive('.', clear=True)
+            update_recursive('.', clear=True)
         else:
             for d in argv[2:]:
                 if not update(d, clear=True):

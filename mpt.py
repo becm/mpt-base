@@ -59,7 +59,7 @@ def encode_command(msg):
     try:
         msg.index(b"\x00")
         raise ValueError("inline zero byte")
-    except:
+    except Exception:
         pass
     
     return msg + b"\x00"
@@ -281,7 +281,7 @@ class Graphic(Output):
         if exe[0] != '/':
             try:
                 exe = os.path.join(os.environ['MPT_PREFIX'], 'bin', exe)
-            except:
+            except KeyError:
                 exe = which(exe)
         
         # create graphic process arguments
@@ -549,7 +549,7 @@ class Shell(cmd.Cmd):
                 m = m + d
             c.write(encode_cobs(m))
             c.flush()
-        except:
+        except Exception:
             c.close()
     
     def error(self, *args):
@@ -603,7 +603,7 @@ class Shell(cmd.Cmd):
                 self.intro = ' '
             except SystemExit:
                 break
-            except:
+            except Exception:
                 # avoid graphic close on error
                 if hasattr(self, 'graphic'):
                     if hasattr(self.graphic, 'process'):
@@ -618,7 +618,7 @@ class Shell(cmd.Cmd):
             return
         try:
             os.rmdir(wpath)
-        except:
+        except OSError:
             pass
 
 
@@ -688,7 +688,7 @@ if __name__ == '__main__':
     else:
         if len(sys.argv) < 2:
             name = os.path.basename(sys.argv[0])
-            raise SystemExit(sys.argv[0] + ": missing arguments" +
-                             os.linesep + "  " + name +
-                             " <client1> [<clientN>]")
+            raise SystemExit(sys.argv[0] + ": missing arguments"
+                             + os.linesep + "  " + name    # noqa: W503
+                             + " <client1> [<clientN>]")   # noqa: W503
         run(sys.argv[1:])
