@@ -8,6 +8,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "types.h"
+
 #include "convert.h"
 /*!
  * \ingroup mptConvert

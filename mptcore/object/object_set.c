@@ -1,11 +1,16 @@
 /*!
- * set object data from arguments.
+ * MPT core library
+ *   set object data from arguments.
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
+
+#include <sys/uio.h>
 
 #include "meta.h"
 #include "convert.h"
+#include "types.h"
 
 #include "object.h"
 

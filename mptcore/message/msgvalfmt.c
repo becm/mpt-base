@@ -2,9 +2,9 @@
  * message value parameters
  */
 
-#include "message.h"
+#include "types.h"
 
-#include "convert.h"
+#include "message.h"
 
 /*!
  * \ingroup mptMessage

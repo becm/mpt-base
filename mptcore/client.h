@@ -13,6 +13,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(event);
 MPT_STRUCT(message);
+MPT_INTERFACE(iterator);
 
 #ifdef __cplusplus
 MPT_INTERFACE(client) : public metatype

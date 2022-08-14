@@ -2,7 +2,6 @@
  * config assignment from arguments
  */
 
-#include "meta.h"
 #include "output.h"
 #include "types.h"
 #include "convert.h"

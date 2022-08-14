@@ -8,13 +8,13 @@
 
 #include <sys/uio.h>
 
+#include "types.h"
+
 #include "convert.h"
 #include "meta.h"
 #include "object.h"
 #include "array.h"
 #include "event.h"
-
-#include "types.h"
 
 #define basic_type(t, s) { sizeof(s), (t) }
 #define pointer_type(t)  { sizeof(void *), (t) }

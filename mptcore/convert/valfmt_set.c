@@ -3,7 +3,6 @@
  *   create value format data
  */
 
-#include "meta.h"
 #include "array.h"
 #include "types.h"
 

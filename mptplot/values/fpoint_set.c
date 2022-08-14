@@ -2,7 +2,6 @@
  * set point data from metatype.
  */
 
-#include "meta.h"
 #include "types.h"
 
 #include "values.h"

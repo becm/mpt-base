@@ -5,8 +5,8 @@
 
 #include <string.h>
 
-#include "object.h"
 #include "types.h"
+#include "object.h"
 
 #include "connection.h"
 

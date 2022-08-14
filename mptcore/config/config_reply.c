@@ -6,7 +6,6 @@
 
 #include <sys/uio.h>
 
-#include "meta.h"
 #include "event.h"
 #include "message.h"
 #include "output.h"

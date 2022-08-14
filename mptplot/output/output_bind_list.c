@@ -9,7 +9,6 @@
 #include <sys/uio.h>
 
 #include "node.h"
-#include "meta.h"
 #include "message.h"
 
 #include "output.h"

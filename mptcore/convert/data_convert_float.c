@@ -6,6 +6,8 @@
 #include <string.h>
 #include <float.h>
 
+#include <sys/uio.h>
+
 #include "types.h"
 
 #include "convert.h"

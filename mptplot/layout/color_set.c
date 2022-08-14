@@ -2,7 +2,6 @@
 #include <limits.h>
 #include <string.h>
 
-#include "meta.h"
 #include "types.h"
 
 #include "layout.h"

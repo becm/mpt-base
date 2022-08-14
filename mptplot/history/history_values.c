@@ -7,7 +7,6 @@
 
 #include "message.h"
 #include "convert.h"
-#include "meta.h"
 
 #include "history.h"
 

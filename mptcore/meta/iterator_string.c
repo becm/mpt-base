@@ -8,12 +8,10 @@
 
 #include <sys/uio.h>
 
-#include "meta.h"
 #include "convert.h"
 #include "types.h"
 
-#include "object.h"
-
+#include "meta.h"
 
 MPT_STRUCT(parseIterator) {
 	MPT_INTERFACE(metatype) _mt;

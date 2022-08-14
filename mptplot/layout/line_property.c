@@ -5,8 +5,8 @@
 #include <string.h>
 #include <strings.h> /* for strcasecmp() */
 
-#include "meta.h"
 #include "types.h"
+
 #include "object.h"
 
 #include "layout.h"

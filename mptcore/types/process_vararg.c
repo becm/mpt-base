@@ -5,10 +5,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "types.h"
-#include "convert.h"
+#include <sys/uio.h>
 
-#include "meta.h"
+#include "types.h"
 
 struct iteratorVararg
 {

@@ -4,7 +4,6 @@
 
 #include <sys/uio.h>
 
-#include "meta.h"
 #include "types.h"
 
 #include "values.h"

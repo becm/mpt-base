@@ -5,7 +5,7 @@
 #include "convert.h"
 
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief id for integer
  * 
  * Integer type ID for specified byte size.
@@ -23,7 +23,7 @@ extern char mpt_type_int(size_t len)
 	}
 }
 /*!
- * \ingroup mptConvert
+ * \ingroup mptTypes
  * \brief id for unsigned
  * 
  * Unsigned integer type ID for specified byte size.

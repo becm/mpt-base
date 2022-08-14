@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <sys/uio.h>
+
 #include "types.h"
 
 #include "convert.h"

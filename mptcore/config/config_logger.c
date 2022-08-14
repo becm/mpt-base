@@ -4,7 +4,6 @@
  *   get suitable logger from configuration
  */
 
-#include "meta.h"
 #include "types.h"
 
 #include "config.h"

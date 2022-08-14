@@ -3,17 +3,11 @@
  *   convert between MPT (base) type data
  */
 
-#include <ctype.h>
 #include <string.h>
-#include <float.h>
 
 #include <sys/uio.h>
 
-#include "array.h"
-#include "object.h"
 #include "types.h"
-
-#include "meta.h"
 
 #include "convert.h"
 

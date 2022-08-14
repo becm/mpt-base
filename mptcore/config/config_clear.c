@@ -2,7 +2,6 @@
  * execute solver step
  */
 
-#include "meta.h"
 #include "types.h"
 #include "convert.h"
 #include "output.h"
@@ -13,10 +12,11 @@
  * \ingroup mptClient
  * \brief config clear
  * 
- * Remove elements of config.
+ * Remove elements from config.
  * 
  * \param cl  config descriptor
  * \param it  event data
+ * \param log logging target
  * 
  * \return hint to event controller (stop/continue/error)
  */

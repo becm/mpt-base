@@ -4,8 +4,6 @@
 
 #include <string.h>
 
-#include "meta.h"
-
 #include "object.h"
 
 /*!

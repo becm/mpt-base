@@ -5,10 +5,9 @@
 #include <stdarg.h>
 #include <inttypes.h>
 
-#include "convert.h"
-#include "types.h"
+#include <sys/uio.h>
 
-#include "meta.h"
+#include "types.h"
 
 /*!
  * \ingroup mptConvert

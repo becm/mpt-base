@@ -27,11 +27,9 @@ src = files(
   'number_print.c',
   'string_dest.c',
   'tostring.c',
-  'type_int.c',
   'valfmt_add.c',
   'valfmt_get.c',
   'valfmt_parse.c',
   'valfmt_set.c',
-  'value_argv.c',
   'value_convert.c',
 )

@@ -7,11 +7,11 @@
 
 #include <unistd.h>
 
-#include "meta.h"
 #include "array.h"
-#include "output.h"
-#include "client.h"
 #include "convert.h"
+#include "meta.h"
+
+#include "output.h"
 
 __MPT_NAMESPACE_BEGIN
 

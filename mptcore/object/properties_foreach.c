@@ -1,6 +1,9 @@
 /*!
- * call function for all object/metatype properties
+ * MPT core library
+ *   call function for all object/metatype properties
  */
+
+#include "types.h"
 
 #include "object.h"
 

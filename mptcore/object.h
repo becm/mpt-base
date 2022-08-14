@@ -11,18 +11,20 @@
 #ifdef __cplusplus
 # include "output.h"
 #else
-# include "types.h"
+# include "core.h"
 #endif
 
 __MPT_NAMESPACE_BEGIN
 
 MPT_STRUCT(node);
 MPT_STRUCT(message);
+MPT_STRUCT(value);
 
 MPT_INTERFACE(iterator);
 
 /*! single property information */
 MPT_STRUCT(property)
+#ifdef _MPT_TYPES_H
 {
 #ifdef __cplusplus
 public:
@@ -63,7 +65,9 @@ public:
 	/* compile-time detection of (sizeof(mpt::value) % sizeof(void *)) */
 	uint8_t _pad[UINTPTR_MAX > UINT32_MAX ? sizeof(uint32_t) : 0];
 	uint8_t _buf[(UINTPTR_MAX <= UINT32_MAX ? sizeof(uint32_t) : 0) + 2 * sizeof(void*)];
-};
+}
+#endif /* _MPT_TYPES_H */
+;
 #ifdef __cplusplus
 template<> inline __MPT_CONST_TYPE int type_properties<property>::id(bool) {
 	return TypeProperty;

@@ -1,5 +1,6 @@
 /*!
- * set specific solver parameter from configuration list.
+ * MPT core library
+ *   set specific solver parameter from configuration list.
  */
 
 #include <string.h>
@@ -11,6 +12,7 @@
 #include "meta.h"
 #include "node.h"
 #include "output.h"
+#include "types.h"
 
 #include "object.h"
 

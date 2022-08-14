@@ -10,8 +10,8 @@
 #include "core.h"
 
 /*!
- * \ingroup mptMeta
- * \brief get metatype data
+ * \ingroup mptCore
+ * \brief get string from convertable data
  * 
  * Try to get text data from metatype via
  *  1) character vector (if len pointer supplied)

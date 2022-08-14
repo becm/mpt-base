@@ -13,8 +13,9 @@
 
 #include "meta.h"
 #include "message.h"
-#include "object.h"
 #include "types.h"
+
+#include "object.h"
 
 #include "output.h"
 

@@ -172,6 +172,9 @@ extern int mpt_type_basic_add(size_t);
 
 /* type alias for symbol description */
 extern int mpt_alias_typeid(const char *, const char **__MPT_DEFPAR(0));
+/* type identifier for (unsigned) integer types */
+extern char mpt_type_int(size_t);
+extern char mpt_type_uint(size_t);
 
 /* copy value content */
 extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *, void *, size_t);
@@ -492,6 +495,122 @@ protected:
 	uint16_t type;           /* type identifier (in namespace) */
 	uint16_t _namespace;     /* type namespace */
 };
+
+/*! generic iterator interface */
+#ifdef __cplusplus
+MPT_INTERFACE(iterator)
+{
+protected:
+	inline ~iterator() {}
+public:
+	virtual const struct value *value() = 0;
+	virtual int advance();
+	virtual int reset();
+	
+	static const struct named_traits *pointer_traits();
+	
+	template <typename T>
+	bool get(T &val)
+	{
+		const struct value *src = value();
+		return src ? src->get(val) : false;
+	}
+};
+template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
+	return TypeIteratorPtr;
+}
+template <> inline const struct type_traits *type_properties<iterator *>::traits() {
+	return type_traits::get(id(true));
+}
+inline int iterator::advance() {
+	return MissingData;
+}
+inline int iterator::reset() {
+	return BadOperation;
+}
+#else
+MPT_INTERFACE(iterator);
+MPT_INTERFACE_VPTR(iterator)
+{
+	const MPT_STRUCT(value) *(*value)(MPT_INTERFACE(iterator) *);
+	int (*advance)(MPT_INTERFACE(iterator) *);
+	int (*reset)(MPT_INTERFACE(iterator) *);
+}; MPT_INTERFACE(iterator) {
+	const MPT_INTERFACE_VPTR(iterator) *_vptr;
+};
+#endif
+
+__MPT_EXTDECL_BEGIN
+
+#ifdef _VA_LIST
+extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
+extern int mpt_value_argv(const struct iovec *, int , va_list);
+#endif /* _VA_LIST */
+
+/* get value from iterator and advance */
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
+
+__MPT_EXTDECL_END
+
+/*! generic source for values */
+#ifdef __cplusplus
+template <typename T>
+class source : public iterator
+{
+public:
+	source(const T *val, long len = 1, int step = 1) : _d(val, len), _step(step)
+	{
+		int type = type_properties<T>::id(true);
+		_type = type < 0 ? 0 : type;
+		_pos = (step < 0) ? len - 1 : 0;
+	}
+	virtual ~source()
+	{ }
+	const struct value *value() __MPT_OVERRIDE
+	{
+		const T *val;
+		if (_pos < 0 || !(val = _d.nth(_pos))) {
+			return 0;
+		}
+		return _val.set(_type, val) ? &_val : 0;
+	}
+	int advance() __MPT_OVERRIDE
+	{
+		if (_pos < 0 || _pos >= _d.size()) {
+			return MissingData;
+		}
+		_pos += _step;
+		if (_pos < 0 || _pos >= _d.size()) {
+			return 0;
+		}
+		return _type ? _type : type_properties<struct value>::id(true);
+	}
+	int reset() __MPT_OVERRIDE
+	{
+		_pos = (_step < 0) ? _d.size() - 1 : 0;
+		return _d.size();
+	}
+protected:
+	span<const T> _d;
+	long _pos;
+	struct value _val;
+	int _step;
+	int _type;
+};
+template <typename T>
+class type_properties<source<T> *>
+{
+protected:
+	type_properties();
+public:
+	static inline __MPT_CONST_EXPR int id(bool) {
+		return TypeIteratorPtr;
+	}
+	static inline const struct type_traits *traits(void) {
+		return type_traits::get(id(true));
+	}
+};
+#endif
 
 __MPT_NAMESPACE_END
 

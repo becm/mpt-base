@@ -6,14 +6,13 @@
 #ifndef _MPT_CONVERT_H
 #define _MPT_CONVERT_H  @INTERFACE_VERSION@
 
-#include <sys/uio.h>
-#include <stdarg.h>
-
 #ifdef __cplusplus
-# include "output.h"
+# include "types.h"
 #else
 # include "core.h"
 #endif
+
+struct iovec;
 
 #if _XOPEN_SOURCE >= 600 || __STDC_VERSION__ >= 199901L || _POSIX_C_SOURCE >= 200112L
 # define _MPT_FLOAT_EXTENDED_H
@@ -100,9 +99,6 @@ extern void mpt_bswap_80(long , MPT_STRUCT(float80) *);
 extern void mpt_bswap_64(long , uint64_t *);
 extern void mpt_bswap_32(long , uint32_t *);
 extern void mpt_bswap_16(long , uint16_t *);
-
-/* set value to next argument */
-extern int mpt_value_argv(const struct iovec *, int , va_list);
 
 /* get data from pointer and description */
 extern int mpt_value_convert(const MPT_STRUCT(value) *, int , void *);
@@ -209,10 +205,6 @@ extern int mpt_valfmt_add(_MPT_ARRAY_TYPE(value_format) *, MPT_STRUCT(value_form
 
 /* parse character separated values */
 extern int mpt_string_dest(MPT_STRUCT(strdest) *, int , const char *);
-
-/* type identifier for (unsigned) integer types */
-extern char mpt_type_int(size_t);
-extern char mpt_type_uint(size_t);
 
 /* line end separator */
 extern const char *mpt_newline_string(int);

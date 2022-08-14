@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "types.h"
+
 #include "convert.h"
 
 /*!

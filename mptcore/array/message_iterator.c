@@ -3,7 +3,6 @@
  * control handler for buffer storage.
  */
 
-#include "meta.h"
 #include "message.h"
 
 #include "array.h"

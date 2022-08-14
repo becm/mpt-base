@@ -1,6 +1,5 @@
 # meson.build.gen: *.c
 src = files(
-  'iterator_consume.c',
   'iterator_string.c',
   'meta_geninfo.c',
   'meta_new.c',

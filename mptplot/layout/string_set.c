@@ -7,7 +7,6 @@
 
 #include <sys/uio.h>
 
-#include "meta.h"
 #include "types.h"
 
 #include "layout.h"

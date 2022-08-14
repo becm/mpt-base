@@ -9,8 +9,9 @@
 
 #include "array.h"
 #include "convert.h"
-#include "object.h"
 #include "types.h"
+
+#include "object.h"
 
 #include "values.h"
 

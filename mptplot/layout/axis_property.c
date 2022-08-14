@@ -8,8 +8,8 @@
 #include <strings.h> /* for strcasecmp() */
 #include <stdlib.h>
 
-#include "meta.h"
 #include "types.h"
+
 #include "object.h"
 
 #include "layout.h"

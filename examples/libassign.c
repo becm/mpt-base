@@ -7,8 +7,9 @@
 #endif
 
 #include MPT_INCLUDE(meta.h)
-#include MPT_INCLUDE(object.h)
 #include MPT_INCLUDE(types.h)
+
+#include MPT_INCLUDE(object.h)
 
 #include MPT_INCLUDE(loader.h)
 

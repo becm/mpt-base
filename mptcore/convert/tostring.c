@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/uio.h>
+
 #include "types.h"
 #include "object.h"
-
-#include "../mptplot/layout.h"
 
 #include "convert.h"
 

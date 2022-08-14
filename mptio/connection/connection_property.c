@@ -10,12 +10,13 @@
 #include <ctype.h> /* for isupper() */
 
 #include "meta.h"
-#include "object.h"
 #include "output.h"
 #include "convert.h"
 #include "message.h"
 #include "event.h"
 #include "types.h"
+
+#include "object.h"
 
 #include "stream.h"
 

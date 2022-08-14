@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "meta.h"
 #include "convert.h"
 
 #include "connection.h"

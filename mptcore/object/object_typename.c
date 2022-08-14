@@ -1,17 +1,23 @@
+/*!
+ * MPT core library
+ *   treat default property name as object type.
+ */
 
+#include "types.h"
 
 #include "object.h"
 
 /* get metatype name */
 /*!
  * \ingroup mptObject
- * \brief metatype name
+ * \brief object name
  * 
- * Get type name for metatype.
+ * Get name of default property.
+ * This should be equivalent to the type represented by an object.
  * 
- * \param mt  MPT metatype pointer
+ * \param mt  MPT object interface pointer
  * 
- * \return name of metatype
+ * \return name of object type
  */
 extern const char *mpt_object_typename(MPT_INTERFACE(object) *mt)
 {

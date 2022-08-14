@@ -4,11 +4,10 @@
 
 #include <string.h>
 
-#include "object.h"
 #include "convert.h"
 #include "types.h"
 
-#include "meta.h"
+#include "object.h"
 
 static int valueConvert(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
 {

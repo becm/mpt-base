@@ -1,11 +1,13 @@
 /*!
- * argument to property conversion
+ * MPT core library
+ *   argument to property conversion
  */
 
 #include <errno.h>
 
 #include <string.h>
 
+#include "types.h"
 #include "message.h"
 
 #include "object.h"

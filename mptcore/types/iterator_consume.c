@@ -2,10 +2,9 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "types.h"
 #include "convert.h"
 
-#include "meta.h"
+#include "types.h"
 
 /*!
  * \ingroup mptMeta

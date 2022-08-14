@@ -7,8 +7,9 @@
 #include <string.h>
 
 #include "meta.h"
-#include "object.h"
 #include "types.h"
+
+#include "object.h"
 
 #include "history.h"
 

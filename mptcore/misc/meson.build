@@ -10,8 +10,6 @@ src = files(
   'identifier.c',
   'init.c',
   'mode_parse.c',
-  'process_vararg.c',
   'refcount.c',
   'string_nextvis.c',
-  'value_copy.c',
 )

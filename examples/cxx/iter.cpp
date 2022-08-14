@@ -7,8 +7,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(meta.h)
-#include MPT_INCLUDE(values.h)
+#include MPT_INCLUDE(types.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -16,29 +15,24 @@
 # define mtrace()
 #endif
 
-using namespace mpt;
-
 extern int main(int , char * const [])
 {
+	float val;
 	mtrace();
 	
-	metatype *m = mpt_iterator_create("1 2 3");
-	iterator *it;
-	double val;
+	const double d[] = { 1, -4, 78 };
+	mpt::source<double> sd(d, 3);
 	
-	if ((it = *m)) {
+	const int i[] = { 1, 2, 3, 4, 5 };
+	mpt::source<int> si(i, 5, -2);
+	
+	mpt::iterator *src[] = { &sd, &si };
+	
+	for (mpt::iterator *it : src) {
 		while (it->get(val)) {
 			std::cout << val << std::endl;
 			it->advance();
 		}
-	}
-	m->unref();
-	
-	double vals[] = { 1, 2, 3 };
-	source<double> s(vals, 3);
-	while (s.get(val)) {
-		std::cout << val << std::endl;
-		s.advance();
 	}
 	
 	return 0;

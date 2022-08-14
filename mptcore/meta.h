@@ -6,8 +6,6 @@
 #ifndef _MPT_META_H
 #define _MPT_META_H  @INTERFACE_VERSION@
 
-#include <stdarg.h>
-
 #ifdef __cplusplus
 # include "types.h"
 #else
@@ -19,6 +17,7 @@
 #endif
 
 __MPT_NAMESPACE_BEGIN
+
 
 /*! generic metatype interface */
 #ifdef __cplusplus
@@ -60,11 +59,14 @@ template <> inline const struct type_traits *type_properties<reference<metatype>
 	return type_traits::get(id(true));
 }
 
-inline uintptr_t metatype::addref()
-{
+inline uintptr_t metatype::addref() {
+	return 0;
+}
+inline metatype *metatype::clone() const {
 	return 0;
 }
 #else
+MPT_STRUCT(value);
 MPT_INTERFACE(metatype);
 MPT_INTERFACE_VPTR(metatype)
 {
@@ -77,58 +79,7 @@ MPT_INTERFACE_VPTR(metatype)
 };
 #endif
 
-/*! generic iterator interface */
 #ifdef __cplusplus
-MPT_INTERFACE(iterator)
-{
-protected:
-	inline ~iterator() {}
-public:
-	virtual const struct value *value() = 0;
-	virtual int advance();
-	virtual int reset();
-	
-	static const struct named_traits *pointer_traits();
-	
-	template <typename T>
-	bool get(T &val)
-	{
-		const struct value *src = value();
-		return src ? src->get(val) : false;
-	}
-};
-template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
-	return TypeIteratorPtr;
-}
-template <> inline const struct type_traits *type_properties<iterator *>::traits() {
-	return type_traits::get(id(true));
-}
-#else
-MPT_INTERFACE(iterator);
-MPT_INTERFACE_VPTR(iterator)
-{
-	const MPT_STRUCT(value) *(*value)(MPT_INTERFACE(iterator) *);
-	int (*advance)(MPT_INTERFACE(iterator) *);
-	int (*reset)(MPT_INTERFACE(iterator) *);
-}; MPT_INTERFACE(iterator) {
-	const MPT_INTERFACE_VPTR(iterator) *_vptr;
-};
-#endif
-
-#ifdef __cplusplus
-inline metatype *metatype::clone() const
-{
-	return 0;
-}
-inline int iterator::advance()
-{
-	return MissingData;
-}
-inline int iterator::reset()
-{
-	return BadOperation;
-}
-
 /* basic metatype to support typeinfo */
 class metatype::basic_instance : public metatype
 {
@@ -234,63 +185,6 @@ public:
 		return type_traits::get(id());
 	}
 };
-
-template <typename T>
-class source : public iterator
-{
-public:
-	source(const T *val, long len = 1) : _d(val, len), _pos(0)
-	{ }
-	virtual ~source()
-	{ }
-	const struct value *value() __MPT_OVERRIDE
-	{
-		static int type = 0;
-		if (type <= 0 && (type = type_properties<T>::id(true)) <= 0) {
-			return 0;
-		}
-		const T *val = _d.nth(_pos);
-		return (val && _val.set(type, val)) ? &_val : 0;
-	}
-	int advance() __MPT_OVERRIDE
-	{
-		int pos = _pos + 1;
-		if (pos > _d.size()) {
-			return MissingData;
-		}
-		_pos = pos;
-		if (pos == _d.size()) {
-			return 0;
-		}
-		static int type = 0;
-		if (type <= 0 && (type = type_properties<T>::id(true)) <= 0) {
-			return BadType;
-		}
-		return type;
-	}
-	int reset() __MPT_OVERRIDE
-	{
-		_pos = 0;
-		return _d.size();
-	}	
-protected:
-	span<const T> _d;
-	struct value _val;
-	int _pos;
-};
-template <typename T>
-class type_properties<source<T> *>
-{
-protected:
-	type_properties();
-public:
-	static inline __MPT_CONST_EXPR int id(bool) {
-		return TypeIteratorPtr;
-	}
-	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id(true));
-	}
-};
 #endif
 
 __MPT_EXTDECL_BEGIN
@@ -309,6 +203,9 @@ extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_metatype_default();
 
+/* assign to value via iterator */
+extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
+
 /* initialize geninfo data */
 extern int _mpt_geninfo_size(size_t);
 extern int _mpt_geninfo_init(void *, size_t);
@@ -318,14 +215,6 @@ extern int _mpt_geninfo_flags(const void *, int);
 extern int _mpt_geninfo_conv(const void *, int , void *);
 /* clone geninfo content */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
-
-/* assign to value via iterator */
-extern int mpt_process_value(MPT_STRUCT(value) *, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern MPT_INTERFACE(metatype) *mpt_iterator_string(const char *, const char *__MPT_DEFPAR(0));
-
-/* get value from iterator and advance */
-extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
 
 
 __MPT_EXTDECL_END
