@@ -23,12 +23,14 @@ MPT_STRUCT(iteratorFile)
 {
 	MPT_INTERFACE(metatype) _mt;
 	MPT_INTERFACE(iterator) _it;
+	MPT_STRUCT(refcount)    _ref;
+	
 	MPT_INTERFACE(convertable) _conv;
+	MPT_INTERFACE(convertable) *conv_ptr;
 	MPT_STRUCT(value) value;
 	
-	MPT_INTERFACE(convertable) *conv_ptr;
-	
 	FILE *fd;
+	const char *name;
 	int type;
 	int count;
 	uint8_t val[16];
@@ -69,18 +71,27 @@ static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 static void fileUnref(MPT_INTERFACE(metatype) *mt)
 {
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
+	if (mpt_refcount_lower(&d->_ref)) {
+		return;
+	}
 	fclose(d->fd);
 	free(mt);
 }
 static uintptr_t fileRef(MPT_INTERFACE(metatype) *mt)
 {
-	(void) mt;
-	return 0;
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
+	return mpt_refcount_raise(&d->_ref);
 }
 static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
 {
-	(void) mt;
-	return 0;
+	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
+	
+	if (d->name) {
+		/* can NOT create a distinct filedescriptor with inedpendent offset
+		 * requires variant with filename to create distinct access */
+		return 0;
+	}
+	return mpt_iterator_filename(d->name);
 }
 /* element convertable interface */
 static int fileGet(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
@@ -90,12 +101,11 @@ static int fileGet(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
 	int ret;
 	
 	if (!type) {
-		static const uint8_t fmt[] = "dftxuiqnybc";
 		if (ptr) {
+			static const uint8_t fmt[] = "dftxuiqnybc";
 			*((const uint8_t **) ptr) = fmt;
-			return d->type;
 		}
-		return d->count;
+		return d->type;
 	}
 	if (!d->type) {
 		size_t len;
@@ -168,17 +178,7 @@ static int fileReset(MPT_INTERFACE(iterator) *it)
 	return 0;
 }
 
-/*!
- * \ingroup mptValues
- * \brief create file iterator
- * 
- * Create iterator with file descriptor source.
- * 
- * \param fd  file id
- * 
- * \return file iterator
- */
-extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
+static void fileInit(MPT_STRUCT(iteratorFile) *it)
 {
 	static const MPT_INTERFACE_VPTR(metatype) fileMeta = {
 		{ fileConv },
@@ -194,6 +194,32 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 	static const MPT_INTERFACE_VPTR(convertable) fileElem = {
 		fileGet
 	};
+	it->_mt._vptr = &fileMeta;
+	it->_it._vptr = &fileIter;
+	it->_ref._val = 1;
+	
+	it->_conv._vptr = &fileElem;
+	it->conv_ptr = &it->_conv;
+	MPT_value_set(&it->value, MPT_ENUM(TypeConvertablePtr), &it->conv_ptr);
+	
+	it->fd = 0;
+	it->name = 0;
+	it->type = 0;
+	it->count = 0;
+}
+
+/*!
+ * \ingroup mptValues
+ * \brief create file iterator
+ * 
+ * Create iterator with file descriptor source.
+ * 
+ * \param fd  file id
+ * 
+ * \return file iterator
+ */
+extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
+{
 	MPT_STRUCT(iteratorFile) *data;
 	FILE *file;
 	
@@ -203,17 +229,41 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_file(int fd)
 	if (!(data = malloc(sizeof(*data)))) {
 		return 0;
 	}
-	data->_mt._vptr = &fileMeta;
-	data->_it._vptr = &fileIter;
-	data->_conv._vptr = &fileElem;
-	
-	data->conv_ptr = &data->_conv;
-	MPT_value_set(&data->value, MPT_ENUM(TypeConvertablePtr), &data->conv_ptr);
-	
+	fileInit(data);
 	data->fd = file;
-	data->type = 0;
-	data->count = 0;
 	
 	return &data->_mt;
 }
 
+/*!
+ * \ingroup mptValues
+ * \brief create file iterator
+ * 
+ * Create iterator with file source.
+ * 
+ * \param name  filename
+ * 
+ * \return file iterator
+ */
+extern MPT_INTERFACE(metatype) *mpt_iterator_filename(const char *name)
+{
+	MPT_STRUCT(iteratorFile) *data;
+	FILE *file;
+	int len;
+	
+	if (!name || !(len = strlen(name))) {
+		errno = EINVAL;
+		return 0;
+	}
+	if (!(file = fopen(name, "r"))) {
+		return 0;
+	}
+	if (!(data = malloc(sizeof(*data) + len + 1))) {
+		return 0;
+	}
+	fileInit(data);
+	data->fd = file;
+	data->name = memcpy(data + 1, name, len + 1);
+	
+	return &data->_mt;
+}

@@ -363,6 +363,7 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_linear(uint32_t , double , double);
 extern MPT_INTERFACE(metatype) *mpt_iterator_boundary(uint32_t , double , double , double);
 extern MPT_INTERFACE(metatype) *mpt_iterator_poly(const char *, const _MPT_ARRAY_TYPE(double) *);
 extern MPT_INTERFACE(metatype) *mpt_iterator_file(int);
+extern MPT_INTERFACE(metatype) *mpt_iterator_filename(const char *);
 extern MPT_INTERFACE(metatype) *mpt_iterator_values(const char *);
 
 /* create iterator (descr. includes type info) */
