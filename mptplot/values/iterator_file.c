@@ -40,12 +40,20 @@ static int fileConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, val, _mt);
 	
 	if (!type) {
-		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), MPT_ENUM(TypeFilePtr) };
 		if (ptr) {
+			static const uint8_t fmt[] = {
+				MPT_ENUM(TypeIteratorPtr),
+				MPT_ENUM(TypeFilePtr),
+				0
+			};
 			*((const uint8_t **) ptr) = fmt;
-			return 0;
+			return MPT_ENUM(TypeMetaPtr);
 		}
 		return MPT_ENUM(TypeIteratorPtr);
+	}
+	if (type == MPT_ENUM(TypeMetaPtr)) {
+		if (ptr) *((const void **) ptr) = &d->_mt;
+		return MPT_ENUM(TypeFilePtr);
 	}
 	if (type == MPT_ENUM(TypeIteratorPtr)) {
 		if (ptr) *((const void **) ptr) = &d->_it;
