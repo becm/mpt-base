@@ -28,23 +28,7 @@ static int process_object_args(void *ptr, MPT_INTERFACE(iterator) *it)
 /* set object property to arguments */
 static int process_object_format(MPT_INTERFACE(object) *obj, const char *prop, const char *fmt, va_list va)
 {
-	struct object_property op;
-	int ret;
-	if (!(ret = fmt[1])) {
-		/* single value condition */
-		MPT_STRUCT(value) val = MPT_VALUE_INIT(0, 0);
-		uint8_t buf[32];
-		struct iovec vec;
-		vec.iov_len = sizeof(buf);
-		vec.iov_base = buf;
-		if ((ret = mpt_value_argv(&vec, *fmt, va)) < 0) {
-			return ret;
-		}
-		MPT_value_set(&val, *fmt, buf);
-		return mpt_object_set_value(obj, prop, &val);
-	}
-	op.obj = obj;
-	op.prop = prop;
+	struct object_property op = { obj, prop };
 	return mpt_process_vararg(fmt, va, process_object_args, &op);
 }
 /*!

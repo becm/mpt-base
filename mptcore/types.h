@@ -544,7 +544,7 @@ __MPT_EXTDECL_BEGIN
 
 #ifdef _VA_LIST
 extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern int mpt_value_argv(const struct iovec *, int , va_list);
+extern int mpt_value_argv(void *, size_t , int , va_list);
 #endif /* _VA_LIST */
 
 /* get value from iterator and advance */

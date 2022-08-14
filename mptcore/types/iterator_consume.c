@@ -7,7 +7,7 @@
 #include "types.h"
 
 /*!
- * \ingroup mptMeta
+ * \ingroup mptTypes
  * \brief consume iterator data
  * 
  * Get data from iterator, convert type and advance iterator.
@@ -64,11 +64,13 @@ extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *des
 	if ((ret = mpt_value_convert(val, type, dest ? tmp : 0)) < 0) {
 		return ret;
 	}
+	/* save origin type, iterator advance invalidates value pointer */
+	type = val->type;
 	if ((ret = it->_vptr->advance(it) < 0)) {
 		return ret;
 	}
 	if (dest) {
 		memcpy(dest, tmp, len);
 	}
-	return val->type;
+	return type;
 }

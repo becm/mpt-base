@@ -14,14 +14,14 @@
 
 struct wrapIter
 {
-	MPT_INTERFACE(metatype) _ctl;
+	MPT_INTERFACE(convertable) _ctl;
 	MPT_INTERFACE(metatype) *src;
 	const char *val, *sep;
 };
 
-static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
+static int iterConv(MPT_INTERFACE(convertable) *conv, int type, void *dest)
 {
-	struct wrapIter *it = (void *) mt;
+	struct wrapIter *it = (void *) conv;
 	if (!type) {
 		static const uint8_t fmt[] = { MPT_ENUM(TypeIteratorPtr), 's', 0 };
 		if (dest) {
@@ -30,7 +30,7 @@ static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 		}
 		return MPT_ENUM(TypeIteratorPtr);
 	}
-	if (type == MPT_ENUM(TypeIteratorPtr)) {
+	if (type == MPT_ENUM(TypeIteratorPtr) || type == MPT_ENUM(TypeMetaPtr)) {
 		if (dest) {
 			MPT_INTERFACE(metatype) *src;
 			if (!it->val || !*it->val) {
@@ -42,7 +42,7 @@ static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 				}
 				it->src = src;
 			}
-			return MPT_metatype_convert(src, MPT_ENUM(TypeIteratorPtr), dest);
+			return MPT_metatype_convert(src, type, dest);
 		}
 		return 's';
 	}
@@ -69,20 +69,6 @@ static int metaIterConv(MPT_INTERFACE(convertable) *mt, int type, void *dest)
 	}
 	return 0;
 }
-static void metaIterUnref(MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
-}
-static uintptr_t metaIterRef(MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
-	return 0;
-}
-static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
-{
-	(void) mt;
-	return 0;
-}
 
 /*!
  * \ingroup mptObject
@@ -97,22 +83,19 @@ static MPT_INTERFACE(metatype) *metaIterClone(const MPT_INTERFACE(metatype) *mt)
  */
 extern int mpt_object_set_string(MPT_INTERFACE(object) *obj, const char *name, const char *val, const char *sep)
 {
-	static const MPT_INTERFACE_VPTR(metatype) ctl = {
-		{ metaIterConv },
-		metaIterUnref,
-		metaIterRef,
-		metaIterClone
+	static const MPT_INTERFACE_VPTR(convertable) ctl = {
+		iterConv
 	};
 	MPT_INTERFACE(metatype) *src;
-	struct wrapIter mt;
+	struct wrapIter it;
 	int ret;
 	
-	mt._ctl._vptr = &ctl;
-	mt.src = 0;
-	mt.val = val;
-	mt.sep = sep;
-	ret = obj->_vptr->set_property(obj, name, (MPT_INTERFACE(convertable) *) &mt._ctl);
-	if ((src = mt.src)) {
+	it._ctl._vptr = &ctl;
+	it.src = 0;
+	it.val = val;
+	it.sep = sep;
+	ret = obj->_vptr->set_property(obj, name, &it._ctl);
+	if ((src = it.src)) {
 		src->_vptr->unref(src);
 	}
 	return ret;
