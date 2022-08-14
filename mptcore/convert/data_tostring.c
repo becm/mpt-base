@@ -62,7 +62,7 @@ extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
 			return 0;
 		}
 		/* initialize traits binding */
-		if (!traits || (!(traits = mpt_type_traits('c')))) {
+		if (!traits && (!(traits = mpt_type_traits('c')))) {
 			errno = ENOTSUP;
 			return 0;
 		}
