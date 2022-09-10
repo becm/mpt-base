@@ -23,7 +23,7 @@ __MPT_NAMESPACE_BEGIN
  * 
  * \return new metatype
  */
-metatype *metatype::create(const value &val)
+metatype *metatype::create(const ::mpt::value &val)
 {
 	const void *ptr = val.data();
 	const char *src;
@@ -38,19 +38,40 @@ metatype *metatype::create(const value &val)
 	// extended text format
 	else if (!(src = mpt_data_tostring(&ptr, type, &len))) {
 		// dispatch to typed metatype creator
-		return generic_instance::create(type, ptr);
+		return generic::create(type, ptr);
+	}
+	return metatype::create(src, len);
+}
+
+
+/*!
+ * \ingroup mptMeta
+ * \brief create metatype
+ * 
+ * Create and initialize string metatype.
+ * 
+ * \param val  character data
+ * \param len  string length
+ * 
+ * \return new metatype
+ */
+metatype *metatype::create(const char *val, int len)
+{
+	if (len < 0) {
+		len = val ? strlen(val) : 0;
 	}
 	// compatible small generic metatype
-	if (len < std::numeric_limits<uint8_t>::max()) {
-		metatype *m = metatype::basic_instance::create(src, len);
+	if (val && len < std::numeric_limits<uint8_t>::max()) {
+		metatype *m = metatype::basic::create(val, len);
 		if (m) {
 			return m;
 		}
 	}
 	// create buffer-backed text metatype
 	io::buffer::metatype *b;
-	if ((b = mpt::io::buffer::metatype::create(0))) {
-		if (b->push(len, src) < 0) {
+	if ((b = mpt::io::buffer::metatype::create(0))
+	 && val) {
+		if (len && b->push(len, val) < 0) {
 			b->unref();
 			return 0;
 		}

@@ -6,6 +6,7 @@ TESTS = \
 	array \
 	buffer \
 	iter \
+	meta \
 	output \
 	queue \
 	types \
@@ -16,7 +17,7 @@ PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
 INC = '${DIR_BASE}mptcore'
 
-cxx_inc = buffer output queue
+cxx_inc = buffer output meta queue
 io_inc = buffer comp output queue
 plot_inc = iter layout map object value_store
 

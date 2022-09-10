@@ -34,7 +34,7 @@ extern int main(int , char * const [])
 	typed_array<reference<metatype> > a;
 	unique_array<metatype *> u;
 	
-	a.insert(1, new reference<meta_value<double> >::type());
+	a.insert(1, new reference<metatype::value<double> >::type());
 	p.insert(0, a.get(1));
 	u.insert(4, a.get(1)->instance());
 	

@@ -450,4 +450,8 @@ __MPT_EXTDECL_END
 
 __MPT_NAMESPACE_END
 
+#ifdef __cplusplus
+std::ostream &operator<<(std::ostream &, mpt::convertable &);
+#endif
+
 #endif /* _MPT_CORE_H */

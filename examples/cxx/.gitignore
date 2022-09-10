@@ -5,6 +5,7 @@ comp
 config
 layout
 map
+meta
 object
 output
 queue

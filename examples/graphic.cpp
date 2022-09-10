@@ -48,7 +48,7 @@ int main()
 	graphic g;
 	
 	mpt::layout *l = g.create_layout();
-	mpt::meta_value<int> m(0);
+	mpt::metatype::value<int> m(0);
 	
 	l->set("name", "lay");
 	

@@ -27,10 +27,14 @@ protected:
 	inline ~metatype()
 	{ }
 public:
-	class basic_instance;
-	class generic_instance;
+	class basic;
+	class generic;
 	
-	static metatype *create(const value &);
+	template <typename T>
+	class value;
+	
+	static metatype *create(const ::mpt::value &);
+	static metatype *create(const char *, int = -1);
 	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
@@ -81,53 +85,53 @@ MPT_INTERFACE_VPTR(metatype)
 
 #ifdef __cplusplus
 /* basic metatype to support typeinfo */
-class metatype::basic_instance : public metatype
+class metatype::basic : public metatype
 {
 protected:
-	inline ~basic_instance()
+	inline ~basic()
 	{ }
-	basic_instance(size_t post);
+	basic(size_t post);
 public:
 	int convert(int , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
-	basic_instance *clone() const __MPT_OVERRIDE;
+	basic *clone() const __MPT_OVERRIDE;
 	
 	bool set(const char *, int);
 	
-	static basic_instance *create(const char *, int);
+	static basic *create(const char *, int = -1);
 };
 /* data metatype with typed content */
-class metatype::generic_instance : public metatype
+class metatype::generic : public metatype
 {
 public:
-	static generic_instance *create(int, const void *);
+	static generic *create(int, const void *);
 	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
 	uintptr_t addref() __MPT_OVERRIDE;
 	void unref() __MPT_OVERRIDE;
-	generic_instance *clone() const __MPT_OVERRIDE;
+	generic *clone() const __MPT_OVERRIDE;
 private:
 	refcount _ref;
 protected:
-	generic_instance(const type_traits *, int );
-	static generic_instance *create(int, const type_traits *, const void *);
-	virtual ~generic_instance();
+	generic(const type_traits *, int );
+	static generic *create(int, const type_traits *, const void *);
+	virtual ~generic();
 	void *_val;
 	const type_traits *_traits;
 	unsigned int _valtype;
 };
 /* generic implementation for metatype */
 template <typename T>
-class meta_value : public metatype
+class metatype::value : public metatype
 {
 public:
-	inline meta_value(const T *val = 0) : _val(val ? *val : 0)
+	inline value(const T *val = 0) : _val(val ? *val : 0)
 	{ }
-	inline meta_value(const T &val) : _val(val)
+	inline value(const T &val) : _val(val)
 	{ }
-	virtual ~meta_value()
+	virtual ~value()
 	{ }
 	void unref() __MPT_OVERRIDE
 	{
@@ -154,9 +158,9 @@ public:
 		}
 		return me;
 	}
-	metatype *clone() const __MPT_OVERRIDE
+	value *clone() const __MPT_OVERRIDE
 	{
-		return new meta_value(_val);
+		return new value(_val);
 	}
 	static int value_id() {
 		static int _valtype = 0;
@@ -173,7 +177,7 @@ protected:
 	T _val;
 };
 template<typename T>
-class type_properties<meta_value<T> *>
+class type_properties<metatype::value<T> *>
 {
 protected:
 	type_properties();
@@ -194,8 +198,12 @@ extern const MPT_STRUCT(type_traits) *mpt_meta_reference_traits(void);
 
 /* create meta type element */
 extern MPT_INTERFACE(metatype) *mpt_meta_new(const MPT_STRUCT(value) *);
-/* set (zero-terminated string) node data */
+/* set metatype reference */
+#ifdef __cplusplus
+extern int mpt_meta_set(reference<metatype> &, const MPT_STRUCT(value) *);
+#else
 extern int mpt_meta_set(MPT_INTERFACE(metatype) **, const MPT_STRUCT(value) *);
+#endif
 
 /* creat basic text small metatype */
 extern MPT_INTERFACE(metatype) *mpt_meta_geninfo(size_t);

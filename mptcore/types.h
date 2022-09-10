@@ -10,8 +10,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_STRUCT(value);
-
 enum MPT_ENUM(Types)
 {
 	/* system types */
@@ -149,6 +147,92 @@ MPT_STRUCT(named_traits)
 	const uintptr_t type;
 };
 
+/*! generic data type and offset */
+MPT_STRUCT(value)
+{
+#ifdef __cplusplus
+	inline value() : ptr(0), type(0), _namespace(0)
+	{ }
+	value(const value &);
+	
+	value &operator=(const value &);
+	
+	template <typename T>
+	value &operator=(const T &);
+	
+	template <typename T>
+	bool get(T &) const;
+	
+	template<typename T>
+	operator T *() const;
+	
+	int convert(int , void *) const;
+	bool set(int , const void *, int = 0);
+	void clear();
+	
+	inline int type_id() const
+	{
+		return _namespace ? static_cast<int>(BadType) : type;
+	}
+	inline const void *data(int id = 0) const
+	{
+		return (!_namespace && (!id || (id == type))) ? ptr : 0;
+	}
+	
+	const char *string() const;
+	const struct iovec *vector(int = 0) const;
+	const struct array *array(int = 0) const;
+protected:
+#else
+# define MPT_VALUE_INIT(t, p) { (p), (t), 0 }
+# define MPT_value_set(v, t, p) ( \
+	(v)->ptr = (p), \
+	(v)->type = (t), \
+	(v)->_namespace = 0)
+#endif
+	const void *ptr;         /* formated data */
+	uint16_t type;           /* type identifier (in namespace) */
+	uint16_t _namespace;     /* type namespace */
+};
+
+/*! generic iterator interface */
+#ifdef __cplusplus
+MPT_INTERFACE(iterator)
+{
+protected:
+	inline ~iterator() {}
+public:
+	virtual const struct value *value() = 0;
+	virtual int advance();
+	virtual int reset();
+	
+	static const struct named_traits *pointer_traits();
+	
+	template <typename T>
+	bool get(T &val)
+	{
+		const struct value *src = value();
+		return src ? src->get(val) : false;
+	}
+};
+inline int iterator::advance() {
+	return MissingData;
+}
+inline int iterator::reset() {
+	return BadOperation;
+}
+#else
+MPT_INTERFACE(iterator);
+MPT_INTERFACE_VPTR(iterator)
+{
+	const MPT_STRUCT(value) *(*value)(MPT_INTERFACE(iterator) *);
+	int (*advance)(MPT_INTERFACE(iterator) *);
+	int (*reset)(MPT_INTERFACE(iterator) *);
+}; MPT_INTERFACE(iterator) {
+	const MPT_INTERFACE_VPTR(iterator) *_vptr;
+};
+#endif
+
 
 __MPT_EXTDECL_BEGIN
 
@@ -181,6 +265,15 @@ extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *, void *, size_t);
 /* compare data types */
 extern int mpt_value_compare(const MPT_STRUCT(value) *, const void *);
 
+#ifdef _VA_LIST
+/* put va_list entries into value(s) */
+extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
+extern int mpt_value_argv(void *, size_t , int , va_list);
+#endif /* _VA_LIST */
+
+/* get value from iterator and advance */
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
+
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
@@ -195,6 +288,9 @@ inline __MPT_CONST_TYPE uint8_t basetype(int org) {
 				: (MPT_type_isConvertable(org))
 					? TypeConvertablePtr
 					: 0;
+}
+inline uint8_t basetype(const value &val) {
+	return basetype(val.type_id());
 }
 
 template<typename T>
@@ -233,7 +329,15 @@ private:
 	}
 };
 
-/*! type properties for generic type (fallback) */
+/*! type properties for already defined types */
+template<> inline __MPT_CONST_TYPE int type_properties<value>::id(bool) {
+	return TypeValue;
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits() {
+	return type_traits::get(id(true));
+}
+
+/*! type properties for pointer type (fallback) */
 template<typename T>
 class type_properties<T *>
 {
@@ -257,6 +361,35 @@ private:
 	type_properties();
 };
 
+/* type properties for interface pointer types */
+template<> inline __MPT_CONST_TYPE int type_properties<convertable *>::id(bool) {
+	return TypeConvertablePtr;
+}
+template<> inline const MPT_STRUCT(type_traits) *type_properties<convertable *>::traits() {
+	return type_traits::get(id(true));
+}
+template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
+	return TypeIteratorPtr;
+}
+template <> inline const struct type_traits *type_properties<iterator *>::traits() {
+	return type_traits::get(id(true));
+}
+
+/* definition with type property dependencies */
+template <typename T>
+value &value::operator=(const T &val)
+{
+	if (!set(type_properties<T>::id(true), &val)) {
+		ptr = 0;
+		type = 0;
+	}
+	return *this;
+}
+template <typename T>
+bool value::get(T &val) const
+{
+	return convert(type_properties<T>::id(true), &val) >= 0;
+}
 
 /*! vector data compatible to `struct iovec` memory */
 template <typename T>
@@ -431,129 +564,7 @@ template<> inline const MPT_STRUCT(type_traits) *type_properties<uint64_t>::trai
 template<> inline const MPT_STRUCT(type_traits) *type_properties<char>::traits() { return type_traits::get(id(true)); }
 template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::traits() { return type_traits::get(id(true)); }
 
-
-template<> inline __MPT_CONST_TYPE int type_properties<value>::id(bool) {
-	return TypeValue;
-}
-template<> inline const MPT_STRUCT(type_traits) *type_properties<value>::traits() {
-	return type_traits::get(id(true));
-}
-
-#endif /* __cplusplus */
-
-/*! generic data type and offset */
-MPT_STRUCT(value)
-{
-#ifdef __cplusplus
-	inline value() : ptr(0), type(0), _namespace(0)
-	{ }
-	value(const value &from);
-	
-	value &operator=(const value &);
-	
-	int convert(int , void *) const;
-	bool set(int , const void *, int = 0);
-	void clear();
-	
-	
-	inline int type_id() const
-	{
-		return _namespace ? static_cast<int>(BadType) : type;
-	}
-	inline const void *data(int id = 0) const
-	{
-		return (!_namespace && (!id || (id == type))) ? ptr : 0;
-	}
-	
-	template <typename T>
-	value &operator=(const T &val)
-	{
-		if (!set(type_properties<T>::id(true), &val)) {
-			ptr = 0;
-			type = 0;
-		}
-		return *this;
-	}
-	template <typename T>
-	bool get(T &val) const
-	{
-		return convert(type_properties<T>::id(true), &val) >= 0;
-	}
-	
-	const char *string() const;
-	const struct iovec *vector(int = 0) const;
-	const struct array *array(int = 0) const;
-protected:
-#else
-# define MPT_VALUE_INIT(t, p) { (p), (t), 0 }
-# define MPT_value_set(v, t, p) ( \
-	(v)->ptr = (p), \
-	(v)->type = (t), \
-	(v)->_namespace = 0)
-#endif
-	const void *ptr;         /* formated data */
-	uint16_t type;           /* type identifier (in namespace) */
-	uint16_t _namespace;     /* type namespace */
-};
-
-/*! generic iterator interface */
-#ifdef __cplusplus
-MPT_INTERFACE(iterator)
-{
-protected:
-	inline ~iterator() {}
-public:
-	virtual const struct value *value() = 0;
-	virtual int advance();
-	virtual int reset();
-	
-	static const struct named_traits *pointer_traits();
-	
-	template <typename T>
-	bool get(T &val)
-	{
-		const struct value *src = value();
-		return src ? src->get(val) : false;
-	}
-};
-template <> inline __MPT_CONST_TYPE int type_properties<iterator *>::id(bool) {
-	return TypeIteratorPtr;
-}
-template <> inline const struct type_traits *type_properties<iterator *>::traits() {
-	return type_traits::get(id(true));
-}
-inline int iterator::advance() {
-	return MissingData;
-}
-inline int iterator::reset() {
-	return BadOperation;
-}
-#else
-MPT_INTERFACE(iterator);
-MPT_INTERFACE_VPTR(iterator)
-{
-	const MPT_STRUCT(value) *(*value)(MPT_INTERFACE(iterator) *);
-	int (*advance)(MPT_INTERFACE(iterator) *);
-	int (*reset)(MPT_INTERFACE(iterator) *);
-}; MPT_INTERFACE(iterator) {
-	const MPT_INTERFACE_VPTR(iterator) *_vptr;
-};
-#endif
-
-__MPT_EXTDECL_BEGIN
-
-#ifdef _VA_LIST
-extern int mpt_process_vararg(const char *, va_list, int (*)(void *, MPT_INTERFACE(iterator) *), void *);
-extern int mpt_value_argv(void *, size_t , int , va_list);
-#endif /* _VA_LIST */
-
-/* get value from iterator and advance */
-extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
-
-__MPT_EXTDECL_END
-
 /*! generic source for values */
-#ifdef __cplusplus
 template <typename T>
 class source : public iterator
 {
@@ -618,7 +629,7 @@ __MPT_NAMESPACE_END
 std::ostream &operator<<(std::ostream &, const mpt::value &);
 
 template <typename T>
-std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
+std::ostream &operator<<(std::ostream &o, const mpt::span<T> &d)
 {
 	typename mpt::span<T>::iterator begin = d.begin(), end = d.end();
 	if (begin == end) {
@@ -630,8 +641,8 @@ std::ostream &operator<<(std::ostream &o, mpt::span<T> d)
 	}
 	return o;
 }
-template <> std::ostream &operator<<(std::ostream &, mpt::span<char>);
-template <> std::ostream &operator<<(std::ostream &, mpt::span<const char>);
+template <> std::ostream &operator<<(std::ostream &, const mpt::span<char> &);
+template <> std::ostream &operator<<(std::ostream &, const mpt::span<const char> &);
 
 template<typename T>
 mpt::convertable::operator T *()
@@ -642,6 +653,25 @@ mpt::convertable::operator T *()
 		return 0;
 	}
 	return ptr;
+}
+template<typename T>
+mpt::value::operator T *() const
+{
+	int totype = mpt::type_properties<T *>::id(true);
+	if (totype < 0 || type == 0 || !ptr) {
+		return 0;
+	}
+	if (type == totype) {
+		return *static_cast<T * const *>(ptr);
+	}
+	T *toptr = 0;
+	if (type == type_properties<mpt::convertable *>::id(true)) {
+		mpt::convertable *conv = *static_cast<mpt::convertable * const *>(ptr);
+		if (!conv || conv->convert(totype, &toptr) < 0) {
+			return 0;
+		}
+	}
+	return toptr;
 }
 #endif /* __cplusplus */
 

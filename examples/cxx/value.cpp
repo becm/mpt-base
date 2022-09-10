@@ -10,6 +10,7 @@
 #endif
 
 #include MPT_INCLUDE(types.h)
+#include MPT_INCLUDE(meta.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -28,27 +29,34 @@ extern int main(int , char * const [])
 	
 	value v;
 	
-	v = s;
-	std::cout << v.type_id() << ": " << v << std::endl;
+	std::cout << basetype(v = s) << ": " << v << std::endl;
 	
 	const char *tst = "test";
-	v = tst;
-	std::cout << v.type_id() << ": " << v << std::endl;
+	std::cout << basetype(v = tst) << ": " << v << std::endl;
+	mpt::reference<mpt::metatype> r(mpt::metatype::create(v));
+	const char *other = *r.instance();
+	std::cout << other << std::endl;
+	//std::cout << *r.instance() << std::endl;
 	
-	v = 1.0;  std::cout << v.type_id() << ": " << v << std::endl;
-	v = 2.0L; std::cout << v.type_id() << ": " << v << std::endl;
-	v = 3.0f; std::cout << v.type_id() << ": " << v << std::endl;
+	std::cout << basetype(v = 1.1 ) << ": " << v << std::endl;
+	std::cout << basetype(v = 2.2L) << ": " << v << std::endl;
+	std::cout << basetype(v = 3.3f) << ": " << v << std::endl;
 	std::cout << std::endl;
 	
-	v = 10;  std::cout << v.type_id() << ": " << v << std::endl;
-	v = 11L; std::cout << v.type_id() << ": " << v << std::endl;
+	std::cout << basetype(v = 10  ) << ": " << v << std::endl;
+	std::cout << basetype(v = 11L ) << ": " << v << std::endl;
+	std::cout << std::endl;
+	
+	std::cout << basetype(v = 10u ) << ": " << v << std::endl;
+	std::cout << basetype(v = 11uL) << ": " << v << std::endl;
 	std::cout << std::endl;
 	
 	long l = 12;
-	v = l; std::cout << v.type_id() << ": " << v << std::endl;
-	int i;
+	std::cout << basetype(v = l) << ": " << v << std::endl;
+	short i;
 	v.get(i);
-	v = (i + 1); std::cout << v.type_id() << ": " << v << std::endl;
+	std::cout << basetype(v = i) << ": " << v << std::endl;
+	std::cout << basetype(v = i - 13) << ": " << v << std::endl;
 	
 	return !(i == l);
 }
