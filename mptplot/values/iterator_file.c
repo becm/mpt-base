@@ -84,14 +84,26 @@ static uintptr_t fileRef(MPT_INTERFACE(metatype) *mt)
 }
 static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
 {
-	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
+	const MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, mt, _mt);
+	MPT_STRUCT(iteratorFile) *c;
+	fpos_t pos;
 	
-	if (d->name) {
-		/* can NOT create a distinct filedescriptor with inedpendent offset
+	if (!d->name) {
+		/* can NOT create a distinct descriptor with independent offset
 		 * requires variant with filename to create distinct access */
 		return 0;
 	}
-	return mpt_iterator_filename(d->name);
+	/* try to copy file position */
+	c = (MPT_STRUCT(iteratorFile) *) mpt_iterator_filename(d->name);
+	if (c
+	 && fgetpos(d->fd, &pos) >= 0
+	 && fsetpos(c->fd, &pos) >= 0) {
+		/* copy value state */
+		c->type  = d->type;
+		c->count = d->count;
+		memcpy(c->val, d->val, sizeof(c->val));
+	}
+	return &c->_mt;
 }
 /* element convertable interface */
 static int fileGet(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
@@ -213,6 +225,8 @@ static void fileInit(MPT_STRUCT(iteratorFile) *it)
  * \brief create file iterator
  * 
  * Create iterator with file descriptor source.
+ * The metatype takes ownership of the passed in file descriptor
+ * (see `fdopen()`).
  * 
  * \param fd  file id
  * 
