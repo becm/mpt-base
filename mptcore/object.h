@@ -6,8 +6,6 @@
 #ifndef _MPT_OBJECT_H
 #define _MPT_OBJECT_H  @INTERFACE_VERSION@
 
-#include <stdarg.h>
-
 #ifdef __cplusplus
 # include "output.h"
 #else
@@ -152,7 +150,9 @@ extern int mpt_object_foreach(const MPT_INTERFACE(object) *, MPT_TYPE(property_h
 extern int mpt_object_set_iterator(MPT_INTERFACE(object) *, const char *, MPT_INTERFACE(iterator) *);
 extern int mpt_object_set_string(MPT_INTERFACE(object) *, const char *, const char *, const char * __MPT_DEFPAR(0));
 extern int mpt_object_set_value(MPT_INTERFACE(object) *, const char *, const MPT_STRUCT(value) *);
+#ifdef _STDARG_H
 extern int mpt_object_vset(MPT_INTERFACE(object) *, const char *, const char *, va_list);
+#endif
 extern int mpt_object_set (MPT_INTERFACE(object) *, const char *, const char *, ... );
 
 /* set properties from iterator elements */
