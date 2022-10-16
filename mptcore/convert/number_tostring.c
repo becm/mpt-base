@@ -15,19 +15,28 @@
  * \ingroup mptConvert
  * \brief print data element
  * 
- * Print single data element to string.
+ * Print single number to string.
  * 
+ * \param  val  value with number data
+ * \param  fmt  number format spec
  * \param  dest target string
  * \param  left max target size
- * \param  type data type
- * \param  ptr  address of current data element
  * 
  * \return consumed buffer size
  */
-extern int mpt_number_print(char *dest, size_t left, MPT_STRUCT(value_format) fmt, int type, const void *arg)
+extern int mpt_number_tostring(const MPT_STRUCT(value) *val, MPT_STRUCT(value_format) fmt, char *dest, size_t left)
 {
-	int flg, sgn, len, dec;
+	const void *arg;
+	int type, flg, sgn, len, dec;
 	uint8_t wd;
+	
+	if (val->_namespace) {
+		return MPT_ERROR(BadArgument);
+	}
+	if (!(type = val->type)) {
+		return MPT_ERROR(BadType);
+	}
+	arg = val->ptr;
 	
 	flg = fmt.flags & 0xff;
 	sgn = fmt.flags & MPT_VALFMT(Sign);

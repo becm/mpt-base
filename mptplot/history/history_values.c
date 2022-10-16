@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "types.h"
 #include "message.h"
 #include "convert.h"
 
@@ -125,7 +126,8 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 	while (len) {
 		char buf[256];
 		const char *curr = src;
-		MPT_STRUCT(value_format) val = MPT_VALFMT_INIT;
+		MPT_STRUCT(value_format) valfmt = MPT_VALFMT_INIT;
+		MPT_STRUCT(value) val;
 		int adv, conv;
 		uint16_t pos;
 		char cfmt = hist->fmt.fmt;
@@ -170,15 +172,16 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 		/* determine output format */
 		if (!(hist->info.mode & 0x80)) {
 			if (hist->fmt.pos < flen) {
-				val = fmt[hist->fmt.pos];
+				valfmt = fmt[hist->fmt.pos];
 			}
 			/* reuse last format */
 			else if (flen) {
-				val = fmt[flen-1];
+				valfmt = fmt[flen-1];
 			}
 		}
 		/* print number to buffer */
-		if ((conv = mpt_number_print(buf, sizeof(buf), val, cfmt, curr)) < 0) {
+		MPT_value_set(&val, cfmt, curr);
+		if ((conv = mpt_number_tostring(&val, valfmt, buf, sizeof(buf))) < 0) {
 			return done ? done : conv;
 		}
 		/* consume format information */
@@ -186,8 +189,8 @@ extern ssize_t mpt_history_values(MPT_STRUCT(history) *hist, size_t len, const v
 			hist->fmt.fmt = 0;
 		}
 		/* stretch field size */
-		if (conv < val.width) {
-			conv = val.width;
+		if (conv < valfmt.width) {
+			conv = valfmt.width;
 		}
 		/* field separation */
 		if ((pos = hist->fmt.pos++)) {

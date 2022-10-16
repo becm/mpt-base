@@ -21,6 +21,8 @@ struct iovec;
 __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(metatype);
+MPT_INTERFACE(object);
+
 MPT_STRUCT(array);
 MPT_STRUCT(value);
 MPT_STRUCT(float80);
@@ -191,9 +193,11 @@ extern int mpt_decode_command(MPT_STRUCT(decode_state) *, const struct iovec *, 
 
 
 /* convert structured data to string */
-extern int mpt_number_print(char *, size_t , MPT_STRUCT(value_format) , int , const void *);
+extern int mpt_number_tostring(const MPT_STRUCT(value) *, MPT_STRUCT(value_format) , char *, size_t);
 /* output data */
-extern int mpt_tostring(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
+extern int mpt_print_value(const MPT_STRUCT(value) *, ssize_t (*)(void *, const char *, size_t), void *);
+extern int mpt_print_object(const MPT_INTERFACE(object) *, ssize_t (*)(void *, const char *, size_t), void *);
+extern int mpt_print_convertable(MPT_INTERFACE(convertable) *, ssize_t (*)(void *, const char *, size_t), void *);
 
 /* parse/create terminal output format */
 extern int mpt_valfmt_get(MPT_STRUCT(value_format) *, const char *);

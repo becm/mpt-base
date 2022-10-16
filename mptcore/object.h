@@ -338,6 +338,8 @@ inline object::const_iterator object::end() const
 __MPT_NAMESPACE_END
 
 #ifdef __cplusplus
+std::ostream &operator<<(std::ostream &, const mpt::object &);
+
 inline bool operator !=(const mpt::object::iterator &i1, const mpt::object::iterator &i2)
 {
 	return !(i1 == i2);

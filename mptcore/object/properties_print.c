@@ -50,7 +50,7 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
 		vec.iov_len  = sizeof(buf);
 		*buf = 0;
 		
-		if ((len = mpt_tostring(&prop->val, saveString, &vec)) >= 0) {
+		if ((len = mpt_print_value(&prop->val, saveString, &vec)) >= 0) {
 			MPT_STRUCT(property) pr = MPT_PROPERTY_INIT;
 			pr.name = prop->name;
 			pr.desc = prop->desc;

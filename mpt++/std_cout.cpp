@@ -3,6 +3,8 @@
  *   interfaces to output stream
  */
 
+#include "object.h"
+
 #include "convert.h"
 
 static ssize_t writeOutStream(void *p, const char *str, size_t len)
@@ -11,23 +13,31 @@ static ssize_t writeOutStream(void *p, const char *str, size_t len)
 	return len;
 }
 
-std::ostream &operator<<(std::ostream &o, const mpt::value &v)
+std::ostream &operator<<(std::ostream &o, const mpt::value &val)
 {
-	if (v.type_id() == 's') {
-		const char *str = v.string();
-		if (str) o << str;
+	// skip output for unset/empty value
+	if (val.type_id() <= 0 || !val.data()) {
 		return o;
 	}
-	if (!v.type_id() || mpt_tostring(&v, writeOutStream, &o) < 0) {
+	// print value content, invalidate stream on unsupported data
+	if (mpt_print_value(&val, writeOutStream, &o) < 0) {
+		o.setstate(std::ios::badbit | std::ios::failbit);
+	}
+	return o;
+}
+std::ostream &operator<<(std::ostream &o, const mpt::object &obj)
+{
+	if (mpt_print_object(&obj, writeOutStream, &o) < 0) {
 		o.setstate(std::ios::badbit | std::ios::failbit);
 	}
 	return o;
 }
 std::ostream &operator<<(std::ostream &o, mpt::convertable &conv)
 {
-	mpt::value v;
-	v = &conv;
-	return o << v;
+	if (mpt_print_convertable(&conv, writeOutStream, &o) < 0) {
+		o.setstate(std::ios::badbit | std::ios::failbit);
+	}
+	return o;
 }
 template <> std::ostream &operator<< <char>(std::ostream &o, const mpt::span<char> &p)
 {

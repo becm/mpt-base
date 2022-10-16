@@ -31,25 +31,25 @@ int main() {
 	int ret = 0;
 	
 	MPT_value_set(&val, 's', &text);
-	ret |= mpt_tostring(&val, out, stdout);
+	ret |= mpt_print_value(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	MPT_value_set(&val, 'i', &i);
-	ret |= mpt_tostring(&val, out, stdout);
+	ret |= mpt_print_value(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	MPT_value_set(&val, 'd', &d);
-	ret |= mpt_tostring(&val, out, stdout);
+	ret |= mpt_print_value(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	MPT_value_set(&val, 'e', &e);
-	ret |= mpt_tostring(&val, out, stdout);
+	ret |= mpt_print_value(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	io.iov_base = &d;
 	io.iov_len  = sizeof(d);
 	MPT_value_set(&val, 'D', &io);
-	ret |= mpt_tostring(&val, out, stdout);
+	ret |= mpt_print_value(&val, out, stdout);
 	fputs(nl, stdout);
 	
 	return ret < 0;
