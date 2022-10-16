@@ -196,9 +196,7 @@ public:
 	bool set(convertable &);
 	bool set(const value &);
 	
-	attribute & operator= (const char *val);
-	attribute & operator= (convertable &meta);
-	attribute & operator= (const struct property &);
+	attribute & operator= (const char *);
 	
 	inline attribute & operator= (char *v)
 	{
@@ -207,6 +205,13 @@ public:
 	inline attribute & operator= (const value &v)
 	{
 		if (!set(v)) {
+			_prop.name = 0;
+		}
+		return *this;
+	}
+	inline attribute & operator= (convertable &c)
+	{
+		if (!set(c)) {
 			_prop.name = 0;
 		}
 		return *this;
@@ -237,7 +242,7 @@ public:
 	
 	inline const_iterator &operator ++()
 	{
-		if (_pos >= 0 && !select(++_pos)) {
+		if (_pos >= 0 && !select(_pos + 1)) {
 			clear();
 		}
 		return *this;

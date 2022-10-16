@@ -127,8 +127,10 @@ template <typename T>
 class metatype::value : public metatype
 {
 public:
-	inline value(const T *val = 0) : _val(val ? *val : 0)
-	{ }
+	inline value(const T *val = 0)
+	{
+		if (val) _val = (*val);
+	}
 	inline value(const T &val) : _val(val)
 	{ }
 	virtual ~value()
@@ -139,18 +141,21 @@ public:
 	}
 	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
-		int me = value_id();
+		int me = type_properties<T>::id(true);
+		if (me < 0) {
+			me = type_properties<metatype *>::id(true);
+		}
 		if (!type) {
 			if (dest) {
 				*static_cast<const uint8_t **>(dest) = 0;
 			}
 			return me;
 		}
-		if (type == TypeMetaPtr) {
+		if (type == type_properties<metatype *>::id(true)) {
 			*static_cast<metatype **>(dest) = this;
 			return me;
 		}
-		if (type != me) {
+		if (me < 0 || type != me) {
 			return BadType;
 		}
 		if (dest) {
@@ -161,17 +166,6 @@ public:
 	value *clone() const __MPT_OVERRIDE
 	{
 		return new value(_val);
-	}
-	static int value_id() {
-		static int _valtype = 0;
-		if (_valtype > 0) {
-			return _valtype;
-		}
-		int type = type_properties<T>::id(true);
-		if (type < 0) {
-			type = TypeMetaPtr;
-		}
-		return _valtype = type;
 	}
 protected:
 	T _val;

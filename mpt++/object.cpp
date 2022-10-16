@@ -88,7 +88,7 @@ bool object::set(const char *name, const value &val, logger *out)
 			}
 		}
 		else {
-			int type = val.type_id();
+			int type = val.id();
 			if (name) {
 				out->message(_fname, out->Error, "%s: %s.%s = <%d>", err, pr.name, name, type);
 			} else {
@@ -116,14 +116,6 @@ bool object::set(const object &from, logger *out)
 // class extension for basic property
 object::attribute::attribute(object &obj) : _obj(obj)
 { }
-// assignment operation for metatypes
-object::attribute & object::attribute::operator= (convertable &val)
-{
-	if (_prop.name && !set(val)) {
-		_prop.name = 0;
-	}
-	return *this;
-}
 object::attribute & object::attribute::operator= (const char *val)
 {
 	if (_prop.name && mpt_object_set_string(&_obj, _prop.name, val, 0) < 0) {
@@ -161,20 +153,23 @@ bool object::attribute::set(convertable &val)
 	if (_obj.set_property(_prop.name, &val) < 0) {
 		return false;
 	}
-	if (_obj.property(&_prop) < 0) _prop.name = 0;
+	if (_obj.property(&_prop) < 0) {
+		_prop.name = 0;
+	}
 	return false;
 }
 bool object::attribute::set(const value &val)
 {
-    if (!_prop.name) {
-	    return false;
-    }
-    ::mpt::value tmp = val;
-    if (mpt_object_set_value(&_obj, _prop.name, &tmp) < 0) {
-	    return false;
-    }
-    if (_obj.property(&_prop) < 0) _prop.name = 0;
-    return true;
+	if (!_prop.name) {
+		return false;
+	}
+	if (mpt_object_set_value(&_obj, _prop.name, &val) < 0) {
+		return false;
+	}
+	if (_obj.property(&_prop) < 0) {
+		_prop.name = 0;
+	}
+	return true;
 }
 // get property by name/position
 object::attribute object::operator [](const char *name)

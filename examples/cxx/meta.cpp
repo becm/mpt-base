@@ -33,6 +33,11 @@ extern int main(int , char * const [])
 	metatype *m = new mpt::metatype::value<span<const double> >(s);
 	m->get(sp);
 	std::cout << sp << std::endl;
+	// C++ downcast and mpt::convertable print
+	convertable *c = m;
+	std::cout << *c <<std::endl;
+	// conversion to metatype pointer is self-reference
+	m = *c;
 	m->unref();
 	
 	// create (small) string container

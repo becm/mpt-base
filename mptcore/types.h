@@ -170,7 +170,7 @@ MPT_STRUCT(value)
 	bool set(int , const void *, int = 0);
 	void clear();
 	
-	inline int type_id() const
+	inline int id() const
 	{
 		return _namespace ? static_cast<int>(BadType) : type;
 	}
@@ -290,7 +290,7 @@ inline __MPT_CONST_TYPE uint8_t basetype(int org) {
 					: 0;
 }
 inline uint8_t basetype(const value &val) {
-	return basetype(val.type_id());
+	return basetype(val.id());
 }
 
 template<typename T>
