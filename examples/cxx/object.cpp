@@ -97,7 +97,12 @@ extern int main(int , char * const [])
 	
 	for (const auto &i : *li) {
 		const mpt::property &p = i;
-		std::cout << "  " << p.name << " = " << p.val << std::endl;
+		mpt::color col;
+		if (p.val.get(col)) {
+			std::cout << "  " << p.name << " = " << col << std::endl;
+		} else {
+			std::cout << "  " << p.name << " = " << p.val << std::endl;
+		}
 	}
 	
 	mpt::object *obj;

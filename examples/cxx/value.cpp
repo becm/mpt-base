@@ -10,7 +10,6 @@
 #endif
 
 #include MPT_INCLUDE(types.h)
-#include MPT_INCLUDE(meta.h)
 
 #ifdef __GLIBC__
 # include <mcheck.h>
@@ -32,11 +31,7 @@ extern int main(int , char * const [])
 	std::cout << basetype(v = s) << ": " << v << std::endl;
 	
 	const char *tst = "test";
-	std::cout << basetype(v = tst) << ": " << v << std::endl;
-	mpt::reference<mpt::metatype> r(mpt::metatype::create(v));
-	const char *other = *r.instance();
-	std::cout << other << std::endl;
-	//std::cout << *r.instance() << std::endl;
+	std::cout << basetype(v = tst ) << ": " << v << std::endl;
 	
 	std::cout << basetype(v = 1.1 ) << ": " << v << std::endl;
 	std::cout << basetype(v = 2.2L) << ": " << v << std::endl;

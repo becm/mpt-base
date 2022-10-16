@@ -182,11 +182,11 @@ class type_properties<metatype::value<T> *>
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id() {
+	static inline __MPT_CONST_EXPR int id(bool) {
 		return TypeMetaPtr;
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id());
+		return type_traits::get(id(true));
 	}
 };
 #endif

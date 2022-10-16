@@ -38,6 +38,16 @@ extern int main(int argc, char *argv[])
 		std::cout << g.name() << " {" << std::endl;
 		const mpt::object &o = *g.instance();
 		for (const mpt::property &p : o) {
+			mpt::color col;
+			if (p.val.get(col)) {
+				std::cout << "  " << p.name << " = " << col << std::endl;
+				continue;
+			}
+			mpt::fpoint fp;
+			if (p.val.get(fp)) {
+				std::cout << "  " << p.name << " = [" << fp.span() << ']' << std::endl;
+				continue;
+			}
 			std::cout << "  " << p.name << " = " << p.val << std::endl;
 		}
 		std::cout << "}" << std::endl;

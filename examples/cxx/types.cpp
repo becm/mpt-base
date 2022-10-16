@@ -54,7 +54,7 @@ extern int main(int, char *[])
 	print<mpt::array>();
 	print<mpt::unique_array<double>>();
 	print<mpt::typed_array<double>>();
-	//print<mpt::metatype>();
+	print<mpt::metatype::value<double> *>();
 	print<mpt::metatype *>();
 	print<int *>();
 	print<mpt::reference<mpt::metatype> >();
@@ -123,7 +123,7 @@ extern int main(int, char *[])
 	std::cout << "span<" << type_id(*t.begin()) <<">(" << type_id(t) << ") = " << t << std::endl;
 	v = t;
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
-	v = r; // auto-convert to native long double
+	v = static_cast<long double>(r); // convert to native format
 	std::cout << "value(<" << v.type_id() << ">) = " << v << std::endl;
 	
 	return !(r == -e);

@@ -54,6 +54,10 @@ struct point
 		y -= p.y;
 		return *this;
 	}
+	inline ::mpt::span<const T> span() const
+	{
+		return ::mpt::span<const T>(&x, 2);
+	}
 	
 	T x, y;
 };
