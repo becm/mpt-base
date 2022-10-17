@@ -377,12 +377,19 @@ template <> inline const struct type_traits *type_properties<iterator *>::traits
 
 /* definition with type property dependencies */
 template <typename T>
-value &value::operator=(const T &val)
+inline value &value::operator=(const T &val)
 {
-	if (!set(type_properties<T>::id(true), &val)) {
-		ptr = 0;
+	const int t = type_properties<T>::id(true);
+	if (t <= 0) {
+		ptr  = 0;
 		type = 0;
 	}
+	else {
+		ptr  = &val;
+		type = t;
+	}
+	_namespace = 0;
+	
 	return *this;
 }
 template <typename T>
