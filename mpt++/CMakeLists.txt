@@ -16,9 +16,9 @@ set(sources
   message.cpp
   meta_buffer.cpp
   meta_new.cpp
-  metatype_basic_instance.cpp
+  metatype_basic.cpp
   metatype_create.cpp
-  metatype_generic_instance.cpp
+  metatype_generic.cpp
   node.cpp
   node_new.cpp
   object.cpp
