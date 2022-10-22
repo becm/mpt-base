@@ -104,11 +104,11 @@ extern int main(int, char *[])
 	
 	long l = -1;
 	v = l;
-	std::cout << "long(" << v.id() << ") = " << v << std::endl;
+	std::cout << "long(" << v.type() << ") = " << v << std::endl;
 	
 	unsigned long u = 1;
 	v = u;
-	std::cout << "ulong(" << v.id() << ") = " << v << std::endl;
+	std::cout << "ulong(" << v.type() << ") = " << v << std::endl;
 	
 	float f(1.0f / 3);
 	std::cout << "float(" << type_id(f) << ") = " << f << std::endl;
@@ -122,9 +122,9 @@ extern int main(int, char *[])
 	mpt::span<const double> t(&d, 1);
 	std::cout << "span<" << type_id(*t.begin()) <<">(" << type_id(t) << ") = " << t << std::endl;
 	v = t;
-	std::cout << "value(<" << v.id() << ">) = " << v << std::endl;
+	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 	v = static_cast<long double>(r); // convert to native format
-	std::cout << "value(<" << v.id() << ">) = " << v << std::endl;
+	std::cout << "value(<" << v.type() << ">) = " << v << std::endl;
 	
 	return !(r == -e);
 }

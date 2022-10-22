@@ -14,9 +14,9 @@
 
 static int printm(void *out, const struct mpt_property *prop)
 {
-	const void *ptr = prop->val.ptr;
-	const char *str = mpt_data_tostring(&ptr, prop->val.type, 0);
-	if (!str) return fprintf(out, "%s: <%d> %p\n", prop->name, prop->val.type, prop->val.ptr);
+	const void *ptr = prop->val._addr;
+	const char *str = mpt_data_tostring(&ptr, prop->val._type, 0);
+	if (!str) return fprintf(out, "%s: <%d> %p\n", prop->name, prop->val._type, prop->val._addr);
 	return fprintf(out, "%s = %s;\n", prop->name, str);
 }
 static int getter(void *addr, struct mpt_property *pr)

@@ -337,8 +337,7 @@ extern int mpt_graph_get(const MPT_STRUCT(graph) *gr, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "graph";
 		pr->desc = "mpt graph data";
-		pr->val.type = 0;
-		pr->val.ptr  = format;
+		MPT_value_set(&pr->val, 0, format);
 		
 		if (!format[2] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
 			format[2] = type;

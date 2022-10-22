@@ -119,7 +119,7 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
 	vec.iov_base = (char *) p.base + p.off + p.len;
 	vec.iov_len  = all - p.off - p.len;
 	
-	val.ptr = &vec;
+	val._addr = &vec;
 	
 	ret = proc(ctx, &p, &val);
 	

@@ -6,6 +6,7 @@
 # define _POSIX_C_SOURCE 1
 #endif
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -167,24 +168,41 @@ static const MPT_STRUCT(value) *fileValue(MPT_INTERFACE(iterator) *it)
 static int fileAdvance(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, it, _it);
+	int len;
 	if (d->type < 0) {
 		return MPT_ERROR(MissingData);
 	}
-	if (!d->type) {
+	/* consume trailing data on incomplete value read */
+	len = d->type ? 1 : 0;
+	while (1) {
 		int ret;
-		if ((ret = fileGet(&d->_conv, 'd', 0)) < 0) {
-			return ret;
+		/* end of file reached */
+		if ((ret = fgetc(d->fd)) < 0) {
+			d->type = ret;
+			return 0;
 		}
-		++d->count;
-		return 0;
+		/* data field found/continued */
+		if (!isspace(ret)) {
+			++len;
+			continue;
+		}
+		/* value data consumed */
+		if (len) {
+			break;
+		}
 	}
+	++d->count;
 	d->type = 0;
 	return MPT_ENUM(TypeFilePtr);
 }
 static int fileReset(MPT_INTERFACE(iterator) *it)
 {
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, it, _it);
-	rewind(d->fd);
+	int ret;
+	if ((ret = fseek(d->fd, 0, SEEK_SET) < 0)) {
+		return ret;
+	}
+	clearerr(d->fd);
 	d->type = 0;
 	d->count = 0;
 	return 0;

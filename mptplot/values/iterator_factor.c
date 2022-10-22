@@ -142,8 +142,14 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 	
 	if (val) {
 		uint32_t iter;
-		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
-			MPT_INTERFACE(iterator) *it = *((MPT_INTERFACE(iterator) * const *) val->ptr);
+		
+		if (!MPT_value_isBaseType(val)) {
+			errno = EINVAL;
+			return 0;
+		}
+		
+		if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
+			MPT_INTERFACE(iterator) *it = *((MPT_INTERFACE(iterator) * const *) val->_addr);
 			int cont = 0, ret;
 			
 			if ((ret = mpt_iterator_consume(it, 'u', &iter)) < 0) {
@@ -174,8 +180,8 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 			}
 			fd.elem = iter + 1;
 		}
-		else if (val->type == 's') {
-			const char *str = *((const char **) val->ptr);
+		else if (val->_type == 's') {
+			const char *str = *((const char **) val->_addr);
 			int c;
 			if ((c = mpt_string_nextvis(&str)) != '(') {
 				errno = EINVAL;

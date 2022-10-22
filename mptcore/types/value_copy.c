@@ -24,7 +24,7 @@ extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *src, void *dest, size_t m
 	const MPT_STRUCT(type_traits) *traits;
 	
 	/* only allow global types */
-	if (src->_namespace || !(traits = mpt_type_traits(src->type))) {
+	if (!MPT_value_isBaseType(src) || !(traits = mpt_type_traits(src->_type))) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* copy only valid for non-complex types */
@@ -35,8 +35,8 @@ extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *src, void *dest, size_t m
 		return MPT_ERROR(MissingBuffer);
 	}
 	if (dest) {
-		if (src->ptr) {
-			memcpy(dest, src->ptr, traits->size);
+		if (src->_addr) {
+			memcpy(dest, src->_addr, traits->size);
 		}
 		else {
 			memset(dest, 0, traits->size);

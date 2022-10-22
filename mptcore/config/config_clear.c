@@ -35,13 +35,19 @@ extern int mpt_config_clear(MPT_INTERFACE(config) *cl, MPT_INTERFACE(iterator) *
 		
 		if (!val) {
 			if (log) {
-				mpt_log(log, __func__, MPT_LOG(Info), "%s: %s",
-				        MPT_tr("no config element"), arg);
+				mpt_log(log, __func__, MPT_LOG(Info), "%s",
+				        MPT_tr("no config element"));
 			}
 			continue;
 		}
-		ptr = val->ptr;
-		if (MPT_type_isConvertable(val->type)) {
+		if (!(ptr = val->_addr)) {
+			if (log) {
+				mpt_log(log, __func__, MPT_LOG(Info), "%s",
+				        MPT_tr("missing config value data"));
+			}
+			continue;
+		}
+		if (MPT_type_isConvertable(val->_type)) {
 			MPT_INTERFACE(convertable) *conv = *((void * const *) ptr);
 			
 			if (!conv || (ret = conv->_vptr->convert(conv, 's', &arg)) < 0) {
@@ -52,7 +58,7 @@ extern int mpt_config_clear(MPT_INTERFACE(config) *cl, MPT_INTERFACE(iterator) *
 				continue;
 			}
 		}
-		else if (!(arg = mpt_data_tostring(&ptr, val->type, 0))) {
+		else if (!(arg = mpt_data_tostring(&ptr, val->_type, 0))) {
 			if (log) {
 				mpt_log(log, __func__, MPT_LOG(Info), "%s: %s",
 				        MPT_tr("no config element"), arg);

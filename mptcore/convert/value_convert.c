@@ -33,20 +33,24 @@
 extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
 {
 	MPT_TYPE(data_converter) conv;
-	const void *src = val->ptr;
+	const void *src = val->_addr;
 	int ret;
 	
-	if (type <= 0 || !val->type) {
+	if (type <= 0) {
 		return MPT_ERROR(BadArgument);
 	}
+	/* type must be generic */
+	if (!MPT_value_isBaseType(val)) {
+		return MPT_ERROR(BadType);
+	}
 	/* try specialized converter for type */
-	if ((conv = mpt_data_converter(val->type))) {
+	if ((conv = mpt_data_converter(val->_type))) {
 		if ((ret = conv(src, type, dest)) >= 0) {
-			return val->type == type ? 0 : 3;
+			return val->_type == type ? 0 : 3;
 		}
 	}
 	/* exact primitive type match */
-	if (val->type == type) {
+	if (val->_type == type) {
 		const MPT_STRUCT(type_traits) *traits;
 		if (!(traits = mpt_type_traits(type))) {
 			return MPT_ERROR(BadArgument);
@@ -62,7 +66,7 @@ extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
 	}
 	/* vector source and genric target */
 	if (type == MPT_ENUM(TypeVector)
-	 && ((ret = MPT_type_toScalar(val->type)) > 0)) {
+	 && ((ret = MPT_type_toScalar(val->_type)) > 0)) {
 		const MPT_STRUCT(type_traits) *traits;
 		if (!(traits = mpt_type_traits(ret))) {
 			return MPT_ERROR(BadArgument);
@@ -77,10 +81,10 @@ extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
 		return 1;
 	}
 	/* map to vector of same type with single element */
-	if (type == MPT_type_toVector(val->type)) {
+	if (type == MPT_type_toVector(val->_type)) {
 		const MPT_STRUCT(type_traits) *traits;
 		struct iovec *vec;
-		if (!(traits = mpt_type_traits(val->type))) {
+		if (!(traits = mpt_type_traits(val->_type))) {
 			return MPT_ERROR(BadArgument);
 		}
 		/* convert from scalar */

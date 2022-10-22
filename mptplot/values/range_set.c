@@ -19,11 +19,14 @@
  */
 extern int mpt_range_set(MPT_STRUCT(range) *r, const MPT_STRUCT(value) *val)
 {
-	if (val->type == 's') {
+	if (!MPT_value_isBaseType(val)) {
+		return MPT_ERROR(BadArgument);
+	}
+	if (val->_type == 's') {
 		
 	}
-	if (val->type == MPT_ENUM(TypeIteratorPtr)) {
-		MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
+	if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
+		MPT_INTERFACE(iterator) *it = *((void * const *) val->_addr);
 		if (it) {
 			double min = 0.0, max = 1.0;
 			int len;
@@ -33,7 +36,7 @@ extern int mpt_range_set(MPT_STRUCT(range) *r, const MPT_STRUCT(value) *val)
 			if (!len) {
 				return MPT_ERROR(MissingData);
 			}
-			if ((len = mpt_iterator_consume(it, 'd', &min)) < 0) {
+			if ((len = mpt_iterator_consume(it, 'd', &max)) < 0) {
 				return len;
 			}
 			r->min = min;
@@ -44,8 +47,8 @@ extern int mpt_range_set(MPT_STRUCT(range) *r, const MPT_STRUCT(value) *val)
 		r->max = 1.0;
 		return 0;
 	}
-	if (val->type == MPT_type_toVector('d')) {
-		const struct iovec *vec = val->ptr;
+	if (val->_type == MPT_type_toVector('d')) {
+		const struct iovec *vec = val->_addr;
 		if (vec && (vec->iov_len / sizeof(double) == 2)) {
 			const double *ptr;
 			if ((ptr = vec->iov_base)) {

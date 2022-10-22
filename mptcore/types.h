@@ -151,7 +151,7 @@ MPT_STRUCT(named_traits)
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
-	inline value() : ptr(0), type(0), _namespace(0)
+	inline value() : _addr(0), _type(0), _namespace(0)
 	{ }
 	value(const value &);
 	
@@ -170,13 +170,13 @@ MPT_STRUCT(value)
 	bool set(int , const void *, int = 0);
 	void clear();
 	
-	inline int id() const
+	inline int type() const
 	{
-		return _namespace ? static_cast<int>(BadType) : type;
+		return _namespace ? static_cast<int>(BadType) : _type;
 	}
-	inline const void *data(int id = 0) const
+	inline const void *data(int type = 0) const
 	{
-		return (!_namespace && (!id || (id == type))) ? ptr : 0;
+		return (!_namespace && (!type || (type == _type))) ? _addr : 0;
 	}
 	
 	const char *string() const;
@@ -186,13 +186,14 @@ protected:
 #else
 # define MPT_VALUE_INIT(t, p) { (p), (t), 0 }
 # define MPT_value_set(v, t, p) ( \
-	(v)->ptr = (p), \
-	(v)->type = (t), \
+	(v)->_addr = (p), \
+	(v)->_type = (t), \
 	(v)->_namespace = 0)
+# define MPT_value_isBaseType(v) ((v)->_type && !((v)->_namespace))
 #endif
-	const void *ptr;         /* formated data */
-	uint16_t type;           /* type identifier (in namespace) */
-	uint16_t _namespace;     /* type namespace */
+	const void *_addr;    /* address of value data */
+	uint16_t _type;       /* type identifier (in namespace) */
+	uint16_t _namespace;  /* type namespace */
 };
 
 /*! generic iterator interface */
@@ -290,7 +291,7 @@ inline __MPT_CONST_TYPE uint8_t basetype(int org) {
 					: 0;
 }
 inline uint8_t basetype(const value &val) {
-	return basetype(val.id());
+	return basetype(val.type());
 }
 
 template<typename T>
@@ -381,12 +382,12 @@ inline value &value::operator=(const T &val)
 {
 	const int t = type_properties<T>::id(true);
 	if (t <= 0) {
-		ptr  = 0;
-		type = 0;
+		_addr = 0;
+		_type = 0;
 	}
 	else {
-		ptr  = &val;
-		type = t;
+		_addr = &val;
+		_type = t;
 	}
 	_namespace = 0;
 	
@@ -665,15 +666,15 @@ template<typename T>
 mpt::value::operator T *() const
 {
 	int totype = mpt::type_properties<T *>::id(true);
-	if (totype < 0 || type == 0 || !ptr) {
+	if (totype < 0 || _type == 0 || !_addr) {
 		return 0;
 	}
-	if (type == totype) {
-		return *static_cast<T * const *>(ptr);
+	if (_type == totype) {
+		return *static_cast<T * const *>(_addr);
 	}
 	T *toptr = 0;
-	if (type == type_properties<mpt::convertable *>::id(true)) {
-		mpt::convertable *conv = *static_cast<mpt::convertable * const *>(ptr);
+	if (MPT_type_isConvertable(_type)) {
+		mpt::convertable *conv = *static_cast<mpt::convertable * const *>(_addr);
 		if (!conv || conv->convert(totype, &toptr) < 0) {
 			return 0;
 		}

@@ -66,14 +66,14 @@ extern int mpt_valfmt_set(MPT_STRUCT(array) *arr, MPT_INTERFACE(convertable) *sr
 				break;
 			}
 			fmt = def;
-			if (MPT_type_isConvertable(val->type)) {
+			if (MPT_type_isConvertable(val->_type)) {
 				MPT_INTERFACE(convertable) *elem;
-				if ((elem = *((void * const *) val->ptr))) {
+				if ((elem = *((void * const *) val->_addr))) {
 					elem->_vptr->convert(elem, MPT_ENUM(TypeValFmt), &fmt);
 				}
 			}
-			else if (val->type == MPT_ENUM(TypeValFmt) && val->ptr) {
-				fmt = *((const MPT_STRUCT(value_format) *) val->ptr);
+			else if (val->_type == MPT_ENUM(TypeValFmt) && val->_addr) {
+				fmt = *((const MPT_STRUCT(value_format) *) val->_addr);
 			}
 			if ((curr = mpt_valfmt_add(&tmp, fmt) < 0)) {
 				return curr;

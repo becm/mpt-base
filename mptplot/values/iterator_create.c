@@ -52,10 +52,9 @@ extern MPT_INTERFACE(metatype) *mpt_iterator_create(const char *conf)
 	if (!len--) {
 		return mpt_iterator_values(conf);
 	}
-	buf[len] = 0;
 	
-	val.type = 0;
-	val.ptr = memcpy(buf, conf, len);
+	memcpy(buf, conf, len);
+	buf[len] = 0;
 	
 	conf += len;
 	MPT_value_set(&val, 's', &conf);

@@ -88,7 +88,7 @@ bool object::set(const char *name, const value &val, logger *out)
 			}
 		}
 		else {
-			int type = val.id();
+			const int type = val.type();
 			if (name) {
 				out->message(_fname, out->Error, "%s: %s.%s = <%d>", err, pr.name, name, type);
 			} else {

@@ -262,8 +262,7 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "text";
 		pr->desc = "mpt text data";
-		pr->val.type = 0;
-		pr->val.ptr  = format;
+		MPT_value_set(&pr->val, 0, format);
 		
 		if (!format[2] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
 			format[2] = type;
@@ -286,8 +285,8 @@ extern int mpt_text_get(const MPT_STRUCT(text) *tx, MPT_STRUCT(property) *pr)
 		
 		pr->name = from->name;
 		pr->desc = from->desc;
-		pr->val.type = from->type;
-		pr->val.ptr  = ((uint8_t *) tx) + from->off;
+		
+		MPT_value_set(&pr->val, from->type, ((uint8_t *) tx) + from->off);
 		
 		return pos;
 	}

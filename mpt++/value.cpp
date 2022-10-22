@@ -41,13 +41,13 @@ float80::operator long double() const
 	return v;
 }
 
-value::value(const value &val) : ptr(val.ptr), type(val.type), _namespace(val._namespace)
+value::value(const value &val) : _addr(val._addr), _type(val._type), _namespace(val._namespace)
 { }
 
 value &value::operator=(const value &val)
 {
-	ptr = val.ptr;
-	type = val.type;
+	_addr = val._addr;
+	_type = val._type;
 	_namespace = val._namespace;
 	return *this;
 }
@@ -59,59 +59,59 @@ int value::convert(int type, void *ptr) const
 
 bool value::set(int t, const void *d, int ns)
 {
-	if (t < 0 || t > std::numeric_limits<decltype(type)>::max()) {
+	if (t < 0 || t > std::numeric_limits<decltype(_type)>::max()) {
 		return false;
 	}
 	if (ns < 0 || ns > std::numeric_limits<decltype(_namespace)>::max()) {
 		return false;
 	}
-	ptr = d;
-	type = t;
+	_addr = d;
+	_type = t;
 	_namespace = ns;
 	return true;
 }
 const char *value::string() const
 {
-	if (type == 's') {
+	if (_type == 's') {
 		const char *str;
-		return ptr && (str = *static_cast<char * const *>(ptr)) ? str : "";
+		return _addr && (str = *static_cast<char * const *>(_addr)) ? str : "";
 	}
-	if (!type || !ptr) {
+	if (!_type || !_addr) {
 		return 0;
 	}
-	const void *str = ptr;
-	return mpt_data_tostring(&str, type, 0);
+	const void *ptr = _addr;
+	return mpt_data_tostring(&ptr, _type, 0);
 }
 const struct iovec *value::vector(int to) const
 {
-	if (_namespace || !type || !ptr) {
+	if (_namespace || !_type || !_addr) {
 		return 0;
 	}
-	const struct iovec *vec = reinterpret_cast<const struct iovec *>(ptr);
+	const struct iovec *vec = reinterpret_cast<const struct iovec *>(_addr);
 	if (!vec) {
 		return 0;
 	}
 	// accept all vector types
 	if (to < 0) {
-		return MPT_type_isVector(type) ? vec : 0;
+		return MPT_type_isVector(_type) ? vec : 0;
 	}
 	// raw data only
 	if (to == 0) {
-		return (type == TypeVector) ? vec : 0;
+		return (_type == TypeVector) ? vec : 0;
 	}
 	// content must match specific type
-	return (type == MPT_type_toVector(to)) ? vec : 0;
+	return (_type == MPT_type_toVector(to)) ? vec : 0;
 }
 const array *value::array(int to) const
 {
-	if (_namespace || !type || !ptr) {
+	if (_namespace || !_type || !_addr) {
 		return 0;
 	}
 	// invalid source type
-	if (type != MPT_ENUM(TypeArray)) {
+	if (_type != MPT_ENUM(TypeArray)) {
 		return 0;
 	}
-	const mpt::array *arr = reinterpret_cast<const mpt::array *>(ptr);
+	const mpt::array *arr = reinterpret_cast<const mpt::array *>(_addr);
 	if (to < 0 || !arr) {
 		return arr;
 	}

@@ -27,7 +27,7 @@ extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *info)
 	struct iovec vec;
 	MPT_STRUCT(value) val = MPT_VALUE_INIT(MPT_type_toVector('c'), &vec);
 	
-	if (_mpt_geninfo_conv(info, val.type, &vec) < 0) {
+	if (_mpt_geninfo_conv(info, val._type, &vec) < 0) {
 		errno = EINVAL;
 		return 0;
 	}

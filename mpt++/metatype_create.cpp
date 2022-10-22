@@ -27,7 +27,7 @@ metatype *metatype::create(const ::mpt::value &val)
 {
 	const void *ptr = val.data();
 	const char *src;
-	int type = val.id();
+	const int type = val.type();
 	size_t len;
 	
 	// generic text data

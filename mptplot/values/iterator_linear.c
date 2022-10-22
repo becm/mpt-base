@@ -181,20 +181,21 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 	if (!val) {
 		iv = 10;
 	}
-	else if (val->type == MPT_ENUM(TypeIteratorPtr)) {
-		MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
-		const MPT_STRUCT(value) *val = it->_vptr->value(it);
-		MPT_TYPE(data_converter) conv;
+	else if (val->_namespace) {
+		errno = EINVAL;
+		return 0;
+	}
+	else if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
+		MPT_INTERFACE(iterator) *it = *((void * const *) val->_addr);
 		
-		if (!(conv = mpt_data_converter(val->type))
-		 || (ret = conv(val->ptr, 'u', &iv)) < 0
+		if ((ret = mpt_iterator_consume(it, 'u', &iv)) < 0
 		 || (ret = mpt_range_set(&r, val)) < 0) {
 			errno = EINVAL;
 			return 0;
 		}
 	}
-	else if (val->type == 's') {
-		const char *str = *((char * const *) val->ptr);;
+	else if (val->_type == 's') {
+		const char *str = *((char * const *) val->_addr);
 		if ((ret = mpt_string_nextvis(&str)) < 0
 		 || (ret != '(')
 		 || (ret = mpt_cuint32(&iv, str + 1, 0, 0)) < 1) {
@@ -237,8 +238,14 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 	if (val) {
 		const char *str;
 		int ret;
-		if (val->type == MPT_ENUM(TypeIteratorPtr)) {
-			MPT_INTERFACE(iterator) *it = *((void * const *) val->ptr);
+		
+		if (!MPT_value_isBaseType(val)) {
+			errno = EINVAL;
+			return 0;
+		}
+		
+		if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
+			MPT_INTERFACE(iterator) *it = *((void * const *) val->_addr);
 			
 			if ((ret = mpt_range_set(&r, val)) < 0) {
 				errno = EINVAL;
@@ -250,7 +257,7 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 				return 0;
 			}
 		}
-		else if ((val->type == 's') && (str = *((const char **) val->ptr))) {
+		else if ((val->_type == 's') && (str = *((const char **) val->_addr))) {
 			if ((ret = mpt_string_nextvis(&str)) < 0
 			 || (ret != '(')) {
 				errno = EINVAL;

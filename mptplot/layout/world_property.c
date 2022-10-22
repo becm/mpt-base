@@ -239,8 +239,7 @@ extern int mpt_world_get(const MPT_STRUCT(world) *wld, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "world";
 		pr->desc = "mpt world data";
-		pr->val.type = 0;
-		pr->val.ptr  = format;
+		MPT_value_set(&pr->val, 0, format);
 		
 		if (!format[1] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
 			format[1] = type;

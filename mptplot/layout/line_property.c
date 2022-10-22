@@ -207,8 +207,7 @@ extern int mpt_line_get(const MPT_STRUCT(line) *li, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "line";
 		pr->desc = "mpt line data";
-		pr->val.type = 0;
-		pr->val.ptr  = format;
+		MPT_value_set(&pr->val, 0, format);
 		
 		if (!format[0] && (type = mpt_color_typeid()) > 0 && type <= UINT8_MAX) {
 			format[0] = type;

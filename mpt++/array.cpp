@@ -309,7 +309,7 @@ int array::set(const value &val)
 {
 	const type_traits *traits = 0;
 	size_t len, reserve;
-	int type = val.id();
+	const int type = val.type();
 	const void *ptr = val.data();
 	const char *base = 0;
 	

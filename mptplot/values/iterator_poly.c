@@ -90,7 +90,7 @@ static const MPT_STRUCT(value) *iterPolyValue(MPT_INTERFACE(iterator) *it)
 		val = d->pos;
 	}
 	/* reuse calculations of previous call */
-	if (d->val.type) {
+	if (d->val._type) {
 		return &d->val;
 	}
 	/* no coefficients */
@@ -128,7 +128,7 @@ static int iterPolyAdvance(MPT_INTERFACE(iterator) *it)
 		if (d->pos >= max) {
 			return MPT_ERROR(BadOperation);
 		}
-		d->val.type = 0;
+		d->val._type = 0;
 		if (++d->pos == max) {
 			return 0;
 		}
@@ -137,7 +137,7 @@ static int iterPolyAdvance(MPT_INTERFACE(iterator) *it)
 	if (d->pos >= UINT_MAX) {
 		return MPT_ERROR(MissingData);
 	}
-	d->val.type = 0;
+	d->val._type = 0;
 	if (++d->pos == UINT_MAX) {
 		return 0;
 	}

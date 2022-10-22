@@ -47,14 +47,14 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 		const void *ptr;
 		const char *end;
 		
-		if (!val || !(ptr = val->ptr)) {
+		if (!val || !(ptr = val->_addr)) {
 			if (info) {
 				mpt_log(info, __func__, MPT_LOG(Error), "%s",
 				        MPT_tr("unable to set default config"));
 			}
 			continue;
 		}
-		if (MPT_type_isConvertable(val->type)) {
+		if (MPT_type_isConvertable(val->_type)) {
 			MPT_INTERFACE(convertable) *conv;
 			
 			if (!(conv = *((void * const *) ptr))) {
@@ -65,7 +65,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 				continue;
 			}
 			/* get assign target */
-			else if ((res = conv->_vptr->convert(conv, MPT_ENUM(TypeProperty), &pr)) >= 0 && pr.val.type) {
+			else if ((res = conv->_vptr->convert(conv, MPT_ENUM(TypeProperty), &pr)) >= 0 && pr.val._type) {
 				p.assign = 0;
 				mpt_path_set(&p, pr.name, -1);
 			}
@@ -84,15 +84,15 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 				continue;
 			}
 		}
-		else if (!(pr.name = mpt_data_tostring(&ptr, val->type, 0))) {
+		else if (!(pr.name = mpt_data_tostring(&ptr, val->_type, 0))) {
 			if (info) {
 				mpt_log(info, __func__, MPT_LOG(Warning), "%s: %d (%d)",
-				        MPT_tr("bad string value"), ++count, val->type);
+				        MPT_tr("bad string value"), ++count, val->_type);
 			}
 			continue;
 		}
 		/* no property type assigned */
-		if (!pr.val.type) {
+		if (!pr.val._type) {
 			if (!(end = strchr(pr.name, '='))) {
 				++err;
 				if (info) {
@@ -119,7 +119,7 @@ extern int mpt_config_args(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(iterator) *
 			++err;
 			if (info) {
 				mpt_log(info, __func__, MPT_LOG(Error), "%s (%d): %d",
-				        MPT_tr("config assign error"), val->type, ++count);
+				        MPT_tr("config assign error"), val->_type, ++count);
 				continue;
 			}
 			return count ? count : MPT_ERROR(BadValue);

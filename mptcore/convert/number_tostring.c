@@ -33,10 +33,10 @@ extern int mpt_number_tostring(const MPT_STRUCT(value) *val, MPT_STRUCT(value_fo
 	if (val->_namespace) {
 		return MPT_ERROR(BadArgument);
 	}
-	if (!(type = val->type)) {
+	if (!(type = val->_type)) {
 		return MPT_ERROR(BadType);
 	}
-	arg = val->ptr;
+	arg = val->_addr;
 	
 	flg = fmt.flags & 0xff;
 	sgn = fmt.flags & MPT_VALFMT(Sign);

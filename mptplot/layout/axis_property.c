@@ -295,8 +295,7 @@ extern int mpt_axis_get(const MPT_STRUCT(axis) *ax, MPT_STRUCT(property) *pr)
 	else if (!*pr->name) {
 		pr->name = "axis";
 		pr->desc = "mpt axis data";
-		pr->val.type = 0;
-		pr->val.ptr  = format;
+		MPT_value_set(&pr->val, 0, format);
 		
 		return ax && memcmp(ax, &def_axis, sizeof(*ax)) ? 1 : 0;
 	}

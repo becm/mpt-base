@@ -35,22 +35,22 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 			break;
 		}
 		pr.name = 0;
-		pr.val.type = 0;
-		ptr = val->ptr;
-		if (MPT_type_isConvertable(val->type)) {
+		pr.val._type = 0;
+		ptr = val->_addr;
+		if (MPT_type_isConvertable(val->_type)) {
 			MPT_INTERFACE(convertable) *conv = *((void * const *) ptr);
 			
 			if (conv->_vptr->convert(conv, MPT_ENUM(TypeProperty), &pr) < 0
 			 || mpt_object_set_value(obj, pr.name, &pr.val) < 0) {
-				pr.val.type = 0;
+				pr.val._type = 0;
 				conv->_vptr->convert(conv, 's', &pr.name);
 			}
 		}
 		/* value is not assigned via property */
-		if (!pr.val.type) {
+		if (!pr.val._type) {
 			char name[256];
 			const char *str;
-			if (!pr.name && !(pr.name = mpt_data_tostring(&ptr, val->type, 0))) {
+			if (!pr.name && !(pr.name = mpt_data_tostring(&ptr, val->_type, 0))) {
 				return count ? count : MPT_ERROR(BadValue);
 			}
 			/* set non-assign options to default value */

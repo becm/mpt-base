@@ -110,14 +110,14 @@ extern int mpt_history_get(const MPT_STRUCT(history) *hist, MPT_STRUCT(property)
 		if ((len = mpt_logfile_get(&hist->info, &pc)) >= 0) {
 			int ret;
 			/* require plain copy of property buffer */
-			if (pc.val.ptr == pc._buf) {
+			if (pc.val._addr == pc._buf) {
 				if ((ret = mpt_value_copy(&pc.val, pr->_buf, sizeof(pr->_buf))) < 0) {
 					return ret;
 				}
-				MPT_value_set(&pc.val, pc.val.type, pr->_buf);
+				MPT_value_set(&pc.val, pc.val._type, pr->_buf);
 			}
 			else {
-				MPT_value_set(&pr->val, pc.val.type, pc.val.ptr);
+				MPT_value_set(&pr->val, pc.val._type, pc.val._addr);
 			}
 			pr->name = pc.name;
 			pr->desc = pc.desc;

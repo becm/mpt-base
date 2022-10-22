@@ -33,19 +33,16 @@ extern int mpt_print_value(const MPT_STRUCT(value) *val, ssize_t (*save)(void *,
 	int type, curr, adv;
 	char buf[256];
 	
-	/* only default namespace is supported */
-	if (val->_namespace) {
-		return MPT_ERROR(BadArgument);
-	}
-	/* undefined type */
-	if (!(type = val->type)) {
+	/* only base types allowed */
+	if (!MPT_value_isBaseType(val)) {
 		return MPT_ERROR(BadType);
 	}
 	/* missing content */
-	if (!(ptr = val->ptr)) {
+	if (!(ptr = val->_addr)) {
 		return MPT_ERROR(BadValue);
 	}
 	/* object type */
+	type = val->_type;
 	if (type == MPT_ENUM(TypeObjectPtr)) {
 		const MPT_INTERFACE(object) *obj = *(const void **) ptr;
 		return obj ? mpt_print_object(obj, save, dest) : 0;

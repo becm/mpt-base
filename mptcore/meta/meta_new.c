@@ -31,12 +31,12 @@ extern MPT_INTERFACE(metatype) *mpt_meta_new(const MPT_STRUCT(value) *val)
 	const char *text;
 	size_t len;
 	
-	if (!val->type) {
+	if (!MPT_value_isBaseType(val)) {
 		errno = EINVAL;
 		return 0;
 	}
-	src = val->ptr;
-	if (!(text = mpt_data_tostring(&src, val->type, &len))) {
+	src = val->_addr;
+	if (!(text = mpt_data_tostring(&src, val->_type, &len))) {
 		/* TODO generic type representation */
 		errno = EINVAL;
 		return 0;

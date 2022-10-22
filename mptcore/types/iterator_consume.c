@@ -29,7 +29,7 @@ extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *des
 	/* skip current value */
 	if (!type) {
 		if (val && !val->_namespace) {
-			type = val->type;
+			type = val->_type;
 		}
 		if ((ret = it->_vptr->advance(it)) < 0) {
 			return ret;
@@ -65,7 +65,7 @@ extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *des
 		return ret;
 	}
 	/* save origin type, iterator advance invalidates value pointer */
-	type = val->type;
+	type = val->_type;
 	if ((ret = it->_vptr->advance(it) < 0)) {
 		return ret;
 	}
