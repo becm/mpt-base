@@ -30,6 +30,7 @@ static int _iteratorVarargNext(struct iteratorVararg *va)
 		return MPT_ERROR(MissingData);
 	}
 	if (!(type = *va->fmt)) {
+		va->fmt = 0;
 		return 0;
 	}
 	/* try pure vararg type */
@@ -55,7 +56,7 @@ static int _iteratorVarargNext(struct iteratorVararg *va)
 static const MPT_STRUCT(value) *iteratorVarargValue(MPT_INTERFACE(iterator) *it)
 {
 	const struct iteratorVararg *va = (void *) it;
-	return &va->val;
+	return va->fmt ? &va->val : 0;
 }
 static int iteratorVarargAdvance(MPT_INTERFACE(iterator) *it)
 {
