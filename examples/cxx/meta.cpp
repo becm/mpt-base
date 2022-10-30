@@ -20,50 +20,58 @@
 # define mtrace()
 #endif
 
-using namespace mpt;
-
 extern int main(int , char * const [])
 {
 	mtrace();
 	
 	double d[] = { 1.0, 2.0, 3.0, 4.0 };
-	span<const double> s(d, 4), sp;
+	mpt::span<const double> s(d, 4), sp;
 	
 	// templated metatype
-	metatype *m = new mpt::metatype::value<span<const double> >(s);
+	mpt::metatype *m = mpt::metatype::create(s);
 	m->get(sp);
 	std::cout << sp << std::endl;
-	// C++ downcast and mpt::convertable print
-	convertable *c = m;
-	std::cout << *c <<std::endl;
-	// conversion to metatype pointer is self-reference
-	m = *c;
+	// printed via mpt::convertable
+	std::cout << *m <<std::endl;
+	// metatype pointer query yields self-reference
+	m = *m;
 	m->unref();
 	
 	// create (small) string container
 	m = mpt::metatype::create("hallo");
-	const char *txt = *m;
-	std::cout << txt << std::endl;
-	m->unref();
+	std::cout << *m << std::endl;
+	mpt::metatype::basic *mb = *m;
+	mb->unref();
 	
-	// metatype backed by character buffer
+	// metatype with character I/O
 	m = mpt::metatype::create(0, 6);
-	io::interface *b = *m;
-	b->write(4, "str");
-	txt = *m;
-	std::cout << txt << std::endl;
+	mpt::io::interface *b = *m;
+	b->write(3, "mys");
+	b->write(5, "tring");
+	std::cout << *m;
+	b->seek(2);
+	std::cout << " -> [2,]=(" << b->peek(0) << ')' << std::endl;
 	m->unref();
 	
-	// create metatype from generic value
+	// create metatype via value template
 	mpt::typed_array<double> a;
 	a.insert(0, 6.6);
 	a.insert(1, 1.2345);
+	m = mpt::metatype::create(a);
+	m->get(sp);
+	std::cout << sp << std::endl;
+	mpt::metatype::value<mpt::typed_array<double> > *ma = *m;
+	ma->unref();
+	
+	// create metatype from generic value
+	a.insert(1, -78);
 	mpt::value v;
 	v = a;
 	m = mpt::metatype::create(v);
 	m->get(sp);
 	std::cout << sp << std::endl;
-	m->unref();
+	mpt::metatype::generic *mg = *m;
+	mg->unref();
 	
 	return 0;
 }

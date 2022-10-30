@@ -206,6 +206,9 @@ public:
 	}
 	
 	template<typename T>
+	bool get(T &val);
+	
+	template<typename T>
 	operator T *();
 	
 	virtual int convert(int , void *) = 0;

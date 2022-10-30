@@ -652,6 +652,12 @@ std::ostream &operator<<(std::ostream &o, const mpt::span<T> &d)
 template <> std::ostream &operator<<(std::ostream &, const mpt::span<char> &);
 template <> std::ostream &operator<<(std::ostream &, const mpt::span<const char> &);
 
+template <typename T>
+bool mpt::convertable::get(T &val)
+{
+	int type = type_properties<T>::id(true);
+	return (type > 0) && (convert(type, &val) >= 0);
+}
 template<typename T>
 mpt::convertable::operator T *()
 {
@@ -662,24 +668,25 @@ mpt::convertable::operator T *()
 	}
 	return ptr;
 }
+
 template<typename T>
 mpt::value::operator T *() const
 {
-	int totype = mpt::type_properties<T *>::id(true);
-	if (totype < 0 || _type == 0 || !_addr) {
+	int type = mpt::type_properties<T *>::id(true);
+	if (type < 0 || _namespace || !_type || !_addr) {
 		return 0;
 	}
-	if (_type == totype) {
+	if (_type == type) {
 		return *static_cast<T * const *>(_addr);
 	}
-	T *toptr = 0;
+	T *ptr = 0;
 	if (MPT_type_isConvertable(_type)) {
 		mpt::convertable *conv = *static_cast<mpt::convertable * const *>(_addr);
-		if (!conv || conv->convert(totype, &toptr) < 0) {
+		if (!conv || conv->convert(type, &ptr) < 0) {
 			return 0;
 		}
 	}
-	return toptr;
+	return ptr;
 }
 #endif /* __cplusplus */
 

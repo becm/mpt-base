@@ -21,11 +21,13 @@ int metatype::convert(int type, void *ptr)
 {
 	void **dest = (void **) ptr;
 	
+	/* identify as metatype */
 	if (!type) {
-		static const char types[] = { 0 };
+		static const uint8_t types[] = { TypeConvertablePtr, 0 };
 		if (dest) *dest = (void *) types;
 		return 0;
 	}
+	/* support (up-)cast to metatype pointer */
 	if (assign(this, type, ptr)) {
 		return type;
 	}
@@ -43,6 +45,23 @@ void metatype::basic::unref()
 }
 int metatype::basic::convert(int type, void *ptr)
 {
+	if (!type) {
+		metatype::convert(type, ptr);
+		return _mpt_geninfo_conv(this + 1, 0, 0);
+	}
+	int me = mpt::type_properties<basic *>::id(true);
+	if (type == TypeMetaPtr) {
+		if (ptr) {
+			*static_cast<metatype **>(ptr) = this;
+		}
+		return me > 0 ? me : static_cast<int>(TypeMetaPtr);
+	}
+	if (me > 0 && type == me) {
+		if (ptr) {
+			*static_cast<basic **>(ptr) = this;
+		}
+		return static_cast<int>(TypeMetaPtr);
+	}
 	return _mpt_geninfo_conv(this + 1, type, ptr);
 }
 metatype::basic *metatype::basic::clone() const
@@ -87,6 +106,25 @@ metatype::basic *metatype::basic::create(const char *src, int len)
 	m = new (ptr) basic(post);
 	m->set(src, len);
 	return m;
+}
+
+/*!
+ * \ingroup mptMeta
+ * \brief query traits for basic metatype
+ * 
+ * Query and register named traits for specialized metatype pointer.
+ * 
+ * \param val  initial metatype value
+ * 
+ * \return new metatype
+ */
+const struct named_traits *metatype::basic::traits(bool obtain)
+{
+	static const struct named_traits *traits = 0;
+	if (traits || !obtain) {
+		return traits;
+	}
+	return traits = type_traits::add_metatype("basic");
 }
 
 __MPT_NAMESPACE_END

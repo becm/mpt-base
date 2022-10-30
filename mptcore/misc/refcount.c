@@ -30,6 +30,6 @@ extern uintptr_t mpt_refcount_raise(MPT_STRUCT(refcount) *ref)
  */
 extern uintptr_t mpt_refcount_lower(MPT_STRUCT(refcount) *ref)
 {
-	if (!ref->_val) return 1;
+	if (!ref->_val) return -1;
 	return --ref->_val;
 }

@@ -30,15 +30,19 @@ metatype::generic::~generic()
 int metatype::generic::convert(int type, void *ptr)
 {
 	if (!type) {
-		if (ptr) {
-			static const uint8_t desc[] = { TypeConvertablePtr, 0 };
-			ptr = const_cast<uint8_t *>(desc);
-		}
-		return TypeMetaPtr;
+		metatype::convert(type, ptr);
+		return _valtype ? _valtype : mpt::type_properties< ::mpt::value>::id(true);
 	}
 	if (type == TypeMetaPtr) {
 		if (ptr) {
 			*static_cast<metatype **>(ptr) = this;
+		}
+		return _valtype ? _valtype : static_cast<int>(TypeMetaPtr);
+	}
+	int me = mpt::type_properties<generic *>::id(true);
+	if (me > 0 && type == me) {
+		if (ptr) {
+			*static_cast<generic **>(ptr) = this;
 		}
 		return _valtype ? _valtype : static_cast<int>(TypeMetaPtr);
 	}
@@ -115,6 +119,25 @@ metatype::generic *metatype::generic::create(int type, const type_traits *traits
 metatype::generic *metatype::generic::create(int type, const void *ptr)
 {
 	return create(type, type_traits::get(type), ptr);
+}
+
+/*!
+ * \ingroup mptMeta
+ * \brief query traits for generic metatype
+ * 
+ * Query and register named traits for specialized metatype pointer.
+ * 
+ * \param val  initial metatype value
+ * 
+ * \return new metatype
+ */
+const struct named_traits *metatype::generic::traits(bool obtain)
+{
+	static const struct named_traits *traits = 0;
+	if (traits || !obtain) {
+		return traits;
+	}
+	return traits = type_traits::add_metatype("generic");
 }
 
 __MPT_NAMESPACE_END

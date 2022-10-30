@@ -36,18 +36,14 @@ public:
 	static metatype *create(const ::mpt::value &);
 	static metatype *create(const char *, int = -1);
 	
+	template <typename T>
+	static metatype *create(const T &);
+	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
 	virtual void unref() = 0;
 	virtual uintptr_t addref();
 	virtual metatype *clone() const = 0;
-	
-	template <typename T>
-	bool get(T &val)
-	{
-		int type = type_properties<T>::id(true);
-		return (type > 0) && (convert(type, &val) >= 0);
-	}
 };
 template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id(bool) {
 	return TypeMetaPtr;
@@ -84,7 +80,7 @@ MPT_INTERFACE_VPTR(metatype)
 #endif
 
 #ifdef __cplusplus
-/* basic metatype to support typeinfo */
+/* basic metatype with string data */
 class metatype::basic : public metatype
 {
 protected:
@@ -100,12 +96,30 @@ public:
 	bool set(const char *, int);
 	
 	static basic *create(const char *, int = -1);
+	static const named_traits *traits(bool = false);
 };
+template <>
+class type_properties<metatype::basic *>
+{
+protected:
+	type_properties();
+public:
+	static inline int id(bool obtain = true) {
+		const named_traits *t = metatype::basic::traits(obtain);
+		return t ? t->type : static_cast<int>(BadOperation);
+	}
+	static inline const struct type_traits *traits(void) {
+		const named_traits *t = metatype::basic::traits(true);
+		return t ? &t->traits : 0;
+	}
+};
+
 /* data metatype with typed content */
 class metatype::generic : public metatype
 {
 public:
 	static generic *create(int, const void *);
+	static const named_traits *traits(bool = false);
 	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
@@ -122,7 +136,23 @@ protected:
 	const type_traits *_traits;
 	unsigned int _valtype;
 };
-/* generic implementation for metatype */
+template <>
+class type_properties<metatype::generic *>
+{
+protected:
+	type_properties();
+public:
+	static inline int id(bool obtain = true) {
+		const named_traits *t = metatype::generic::traits(obtain);
+		return t ? t->type : static_cast<int>(BadOperation);
+	}
+	static inline const struct type_traits *traits(void) {
+		const named_traits *t = metatype::generic::traits(true);
+		return t ? &t->traits : 0;
+	}
+};
+
+/* metatype for generic content */
 template <typename T>
 class metatype::value : public metatype
 {
@@ -141,48 +171,76 @@ public:
 	}
 	int convert(int type, void *dest) __MPT_OVERRIDE
 	{
-		int me = type_properties<T>::id(true);
-		if (me < 0) {
-			me = type_properties<metatype *>::id(true);
-		}
+		int type_val = type_properties<T>::id(true);
 		if (!type) {
+			int ret = metatype::convert(0, dest);
+			return type_val > 0 ? type_val : ret;
+		}
+		int type_meta = type_properties<value<T> *>::id(false);
+		if (type == TypeMetaPtr) {
 			if (dest) {
-				*static_cast<const uint8_t **>(dest) = 0;
+				*static_cast<metatype **>(dest) = this;
 			}
-			return me;
+			return type_meta > 0 ? type_meta : static_cast<int>(TypeMetaPtr);
 		}
-		if (type == type_properties<metatype *>::id(true)) {
-			*static_cast<metatype **>(dest) = this;
-			return me;
+		if (type_meta > 0 && type == type_meta) {
+			if (dest) {
+				*static_cast<metatype **>(dest) = this;
+			}
+			return type_val > 0 ? type_val : static_cast<int>(TypeMetaPtr);
 		}
-		if (me < 0 || type != me) {
-			return BadType;
+		if (type_val > 0) {
+			if (type == type_val) {
+				if (dest) {
+					*static_cast<T *>(dest) = _val;
+				}
+				return type_meta > 0 ? type_meta : static_cast<int>(TypeMetaPtr);
+			}
+			::mpt::value val;
+			if (!val.set(type_val, &_val)) {
+				return BadType;
+			}
+			return val.convert(type, dest);
 		}
-		if (dest) {
-			*static_cast<T *>(dest) = _val;
-		}
-		return me;
+		return BadType;
 	}
 	value *clone() const __MPT_OVERRIDE
 	{
 		return new value(_val);
 	}
+	
+	static const named_traits *traits(bool obtain = false)
+	{
+		static const struct named_traits *traits = 0;
+		if (traits || !obtain) {
+			return traits;
+		}
+		return traits = type_traits::add_metatype();
+	}
 protected:
 	T _val;
 };
-template<typename T>
+template <typename T>
 class type_properties<metatype::value<T> *>
 {
 protected:
 	type_properties();
 public:
-	static inline __MPT_CONST_EXPR int id(bool) {
-		return TypeMetaPtr;
+	static inline int id(bool obtain = true) {
+		const named_traits *t = metatype::value<T>::traits(obtain);
+		return t ? t->type : static_cast<int>(BadOperation);
 	}
 	static inline const struct type_traits *traits(void) {
-		return type_traits::get(id(true));
+		const named_traits *t = metatype::value<T>::traits(true);
+		return t ? &t->traits : 0;
 	}
 };
+
+template <typename T>
+metatype *metatype::create(const T&val)
+{
+	return new metatype::value<T>(val);
+}
 #endif
 
 __MPT_EXTDECL_BEGIN
