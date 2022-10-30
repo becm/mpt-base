@@ -2,7 +2,7 @@
 LIB = mptloader
 #
 # additional header directories
-INC = .. ../mptcore
+INC = ../mptcore
 #
 # header to export
 HEADER = loader.h

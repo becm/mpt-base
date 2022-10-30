@@ -2,8 +2,8 @@
  * MPT plotting library description
  */
 
-#include "version.h"
-#include "libinfo.h"
+#include "../version.h"
+#include "../libinfo.h"
 
 extern void _start(void)
 {

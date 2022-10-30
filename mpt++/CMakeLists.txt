@@ -70,7 +70,7 @@ endif(MPT_WITH_IO)
 
 add_library(mpt++ SHARED ${sources} ${shared} libinfo.c)
 set_target_properties(mpt++ PROPERTIES VERSION 1.0.0 SOVERSION 1)
-target_include_directories(mpt++ PRIVATE .. ${includedirs})
+target_include_directories(mpt++ PRIVATE ${includedirs})
 target_link_libraries(mpt++ ${linklibs})
 
 if (${CMAKE_VERSION} VERSION_LESS 3.1)

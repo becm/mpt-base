@@ -19,7 +19,7 @@ endif()
 
 add_library(mptloader SHARED ${sources} libinfo.c)
 set_target_properties(mptloader PROPERTIES VERSION 1.0.0 SOVERSION 1)
-target_include_directories(mptloader PRIVATE .. ${Mpt_CORE_INCLUDE_DIRS})
+target_include_directories(mptloader PRIVATE ${Mpt_CORE_INCLUDE_DIRS})
 target_link_libraries(mptloader ${linklibs})
 
 install(TARGETS mptloader EXPORT mpt-targets DESTINATION ${MPT_INSTALL_LIB})

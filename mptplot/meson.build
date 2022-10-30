@@ -21,7 +21,6 @@ plot = include_directories('.')
 if with_shared
   plot_lib = shared_library('mptplot', plot_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
-    include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : core,
     install : with_plot)

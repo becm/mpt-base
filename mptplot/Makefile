@@ -2,7 +2,7 @@
 LIB = mptplot
 #
 # additional header directories
-INC = . .. ../mptcore
+INC = . ../mptcore
 #
 # header to export
 HEADER = layout.h values.h

@@ -2,7 +2,7 @@
 LIB = mptcore
 #
 # additional header directories
-INC = . ..
+INC = .
 #
 # header to export
 HEADER =\

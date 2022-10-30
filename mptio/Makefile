@@ -2,7 +2,7 @@
 LIB = mptio
 #
 # additional header directories
-INC = . .. ../mptcore
+INC = . ../mptcore
 #
 # header to export
 HEADER = connection.h notify.h stream.h

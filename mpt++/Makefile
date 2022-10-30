@@ -2,7 +2,7 @@
 LIB = mpt++
 #
 # additional header directories
-INC = .. ../mptcore ../mptplot ../mptio
+INC = ../mptcore ../mptplot ../mptio
 #
 # header to export
 HEADER = graphic.h io.h

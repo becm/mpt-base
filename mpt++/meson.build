@@ -73,7 +73,6 @@ endif
 
 if with_shared
   cxx_lib = shared_library('mpt++', cxx_src, 'libinfo.c',
-    include_directories : include_directories('..'),
     install_rpath : '$ORIGIN',
     dependencies : cxx,
     version : '1.0.0', soversion : '1',

@@ -42,7 +42,6 @@ core = include_directories('.')
 if with_shared
   core_lib = shared_library('mptcore', core_src, 'libinfo.c',
     version : '1.0.0', soversion : '1',
-    include_directories : include_directories('..'),
     install : with_core)
 
   if with_core
