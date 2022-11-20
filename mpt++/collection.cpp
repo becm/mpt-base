@@ -172,7 +172,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 		
 		// find dependant items
 		while ((name = mpt_convert_key(&pos, 0, &len))) {
-			metatype *curr;
+			convertable *curr;
 			if (relation) {
 				curr = relation->find(from->type(), name, len);
 			} else {
@@ -245,7 +245,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 // Relation search operations
 struct item_match
 {
-	metatype *mt;
+	convertable *conv;
 	const char *ident;
 	size_t curr;
 	size_t left;
@@ -265,16 +265,13 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 		if (!conv) {
 			return TraverseLeafs;
 		}
-		int val = conv->type();
-		if (!ctx->type) {
-			if (!val) {
+		if (ctx->type) {
+			int val = conv->type();
+			if (val != ctx->type && (val = conv->convert(ctx->type, 0)) < 0) {
 				return TraverseLeafs;
 			}
 		}
-		else if (val != ctx->type && (val = conv->convert(ctx->type, 0)) < 0) {
-			return TraverseLeafs;
-		}
-		ctx->mt = conv ? *conv : static_cast<metatype *>(0);
+		ctx->conv = conv;
 		return TraverseStop | TraverseLeafs;
 	}
 	if (!sub || !ctx->sep) {
@@ -296,19 +293,19 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 	if (ret < 0) {
 		return ret;
 	}
-	ctx->mt = tmp.mt;
+	ctx->conv = tmp.conv;
 	ret |= TraverseNonLeafs;
 	return ret;
 }
 
-metatype *collection::relation::find(int type, const char *name, int nlen) const
+convertable *collection::relation::find(int type, const char *name, int nlen) const
 {
 	struct item_match m;
 	const char *sep;
 	
 	if (nlen < 0) nlen = name ? strlen(name) : 0;
 	
-	m.mt = 0;
+	m.conv = 0;
 	m.ident = name;
 	m.curr = nlen;
 	m.left = 0;
@@ -320,13 +317,13 @@ metatype *collection::relation::find(int type, const char *name, int nlen) const
 	m.type = type;
 	m.sep = _sep;
 	
-	if (_curr.each(find_item, &m) >= 0 && m.mt) {
-		return m.mt;
+	if (_curr.each(find_item, &m) >= 0 && m.conv) {
+		return m.conv;
 	}
 	return _parent ? _parent->find(type, name, nlen) : 0;
 }
 
-metatype *node_relation::find(int type, const char *name, int nlen) const
+convertable *node_relation::find(int type, const char *name, int nlen) const
 {
 	if (!_curr) {
 		return 0;

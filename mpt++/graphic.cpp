@@ -405,7 +405,7 @@ int graphic::target(laydest &old, message &msg, size_t len) const
 	
 	return match;
 }
-metatype *graphic::get_item(message &msg, size_t len) const
+convertable *graphic::get_item(message &msg, size_t len) const
 {
 	message tmp = msg;
 	ssize_t part;
@@ -452,7 +452,7 @@ metatype *graphic::get_item(message &msg, size_t len) const
 			continue;
 		}
 		group *g = l;
-		metatype *m = l;
+		convertable *target = l;
 		
 		while (!term) {
 			// get next part
@@ -475,8 +475,7 @@ metatype *graphic::get_item(message &msg, size_t len) const
 				type = 0;
 			}
 			// find element by type and name
-			metatype *m;
-			if (!(m = collection::relation(*g, 0).find(type, buf, part))) {
+			if (!(target = collection::relation(*g, 0).find(type, buf, part))) {
 				return 0;
 			}
 			// last name part
@@ -484,13 +483,13 @@ metatype *graphic::get_item(message &msg, size_t len) const
 				break;
 			}
 			// need group for next path element
-			if (m->convert(type, &g) < 0
+			if (target->convert(type, &g) < 0
 			 || !g) {
 				return 0;
 			}
 		}
 		msg = tmp;
-		return m;
+		return target;
 	}
 	return 0;
 }

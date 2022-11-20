@@ -8,6 +8,7 @@
 
 #ifdef __cplusplus
 # include "output.h"
+# include "meta.h"
 #else
 # include "core.h"
 #endif
@@ -67,7 +68,7 @@ public:
 	{ }
 	virtual ~relation()
 	{ }
-	metatype *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
+	convertable *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
 protected:
 	const ::mpt::relation *_parent;
 	const collection &_curr;
@@ -81,7 +82,7 @@ class node_relation : public relation
 public:
 	inline node_relation(const node *n, const relation *p = 0) : _parent(p), _curr(n)
 	{ }
-	metatype *find(int type, const char *, int = -1) const;
+	convertable *find(int type, const char *, int = -1) const;
 protected:
 	const relation *_parent;
 	const node *_curr;

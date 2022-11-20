@@ -46,7 +46,7 @@ public:
 	
 	// mapping helpers
 	int target(laydest &, message &, size_t = 0) const;
-	metatype *get_item(message &, size_t = 0) const;
+	convertable *get_item(message &, size_t = 0) const;
 	
 	// untracked instance to shedule update
 	virtual bool register_update(const convertable *, hint = hint());

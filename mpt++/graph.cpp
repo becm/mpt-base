@@ -162,14 +162,14 @@ int layout::graph::set_property(const char *prop, convertable *src)
 	return ret;
 }
 // graph group interface
-static layout::graph::axis *make_axis(metatype &mt, logger *out, const char *_func, const char *name, int len)
+static layout::graph::axis *make_axis(convertable &from, logger *out, const char *_func, const char *name, int len)
 {
 	::mpt::axis *d;
-	if ((d = mt)) {
+	if ((d = from)) {
 		return new layout::graph::axis(d);
 	}
 	object *o;
-	if ((o = mt)) {
+	if ((o = from)) {
 		layout::graph::axis *a = new layout::graph::axis;
 		if (a->set(*o, out)) {
 			return a;
@@ -188,14 +188,14 @@ static layout::graph::axis *make_axis(metatype &mt, logger *out, const char *_fu
 	}
 	return 0;
 }
-static layout::graph::world *make_world(metatype &mt, logger *out, const char *_func, const char *name, int len)
+static layout::graph::world *make_world(convertable &from, logger *out, const char *_func, const char *name, int len)
 {
 	::mpt::world *d;
-	if ((d = mt)) {
+	if ((d = from)) {
 		return new layout::graph::world(d);
 	}
 	object *o;
-	if ((o = mt)) {
+	if ((o = from)) {
 		layout::graph::world *w = new layout::graph::world;
 		if (w->set(*o, out)) {
 			return w;
@@ -217,7 +217,7 @@ static layout::graph::world *make_world(metatype &mt, logger *out, const char *_
 int layout::graph::bind(const relation *rel, logger *out)
 {
 	static const char _func[] = "mpt::layout::graph::bind";
-	metatype *mt;
+	convertable *from;
 	const char *names, *curr;
 	size_t len;
 	int ret = 0;
@@ -231,7 +231,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	if (!(names = ::mpt::graph::axes())) {
 		for (auto &it : _items) {
 			axis *a;
-			if (!(mt = it.instance()) || !(a = *mt)) {
+			if (!(from = it.instance()) || !(a = *from)) {
 				continue;
 			}
 			curr = it.name();
@@ -253,7 +253,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
 		int id = type_properties< ::mpt::axis *>::id(true);
-		if (!(mt = rel->find(id, curr, len))) {
+		if (!(from = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not find axis"), std::string(curr, len).c_str());
@@ -266,7 +266,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 			len -= (sep - curr) + 1;
 			curr = sep + 1;
 		}
-		axis *a = make_axis(*mt, out, _func, curr, len);
+		axis *a = make_axis(*from, out, _func, curr, len);
 		if (a && !add_axis(a, curr, len)) {
 			a->unref();
 			_axes = oldaxes;
@@ -284,7 +284,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	if (!(names = ::mpt::graph::worlds())) {
 		for (auto &it : _items) {
 			world *w;
-			if (!(mt = it.instance()) || !(w = *mt)) {
+			if (!(from = it.instance()) || !(w = *from)) {
 				continue;
 			}
 			curr = it.name();
@@ -311,7 +311,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	}
 	else while ((curr = mpt_convert_key(&names, 0, &len))) {
 		int id = type_properties< ::mpt::world *>::id(true);
-		if (!(mt = rel->find(id, curr, len))) {
+		if (!(from = rel->find(id, curr, len))) {
 			if (out) {
 				out->message(_func, out->Error, "%s: %s",
 				             MPT_tr("could not find world"), std::string(curr, len).c_str());
@@ -325,7 +325,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 			len -= (sep - curr) + 1;
 			curr = sep + 1;
 		}
-		world *w = make_world(*mt, out, _func, curr, len);
+		world *w = make_world(*from, out, _func, curr, len);
 		if (w && !add_world(w, curr, len)) {
 			w->unref();
 			_axes = oldaxes;
@@ -339,7 +339,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	}
 	for (auto &it : _items) {
 		group *g;
-		if (!(mt = it.instance()) || !(g = *mt)) {
+		if (!(from = it.instance()) || !(g = *from)) {
 			continue;
 		}
 		collection::relation cr(*g, rel);

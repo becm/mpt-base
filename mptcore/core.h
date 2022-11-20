@@ -391,7 +391,7 @@ protected:
 class relation
 {
 public:
-	virtual metatype *find(int , const char *, int = -1) const = 0;
+	virtual convertable *find(int , const char *, int = -1) const = 0;
 protected:
 	inline relation() {}
 	virtual ~relation() {}
