@@ -28,6 +28,7 @@
  * \retval 1                simple cast conversion
  * \retval 2                scalar to vector
  * \retval 3                use of special converter
+ * \retval 4                value has compatible string data
  */
 
 extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
@@ -93,6 +94,16 @@ extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
 			vec->iov_len = traits->size;
 		}
 		return 2;
+	}
+	/* value represents valid string data */
+	if (type == 's') {
+		const char *str;
+		if ((str = mpt_data_tostring(&src, val->_type, 0))) {
+			if (dest) {
+				*((const char **) dest) = str;
+			}
+			return 4;
+		}
 	}
 	return MPT_ERROR(BadType);
 }
