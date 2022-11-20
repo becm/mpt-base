@@ -47,12 +47,12 @@ int main(int argc, char * const argv[])
 		g["axes"] = argv[2];
 	}
 	// bind graph elements
-	mpt::collection_relation top(other);
-	mpt::collection_relation rel(g, &top);
+	mpt::collection::relation top(other);
+	mpt::collection::relation rel(g, &top);
 	g.bind(&rel);
 	
-	int fid = mpt::type_properties<mpt::fpoint>::id(true);
-	int did = mpt::type_properties<mpt::dpoint>::id(true);
+	int fid = mpt::type_properties<mpt::fpoint>::id();
+	int did = mpt::type_properties<mpt::dpoint>::id();
 	std::cout << "fpoint type: " << fid << std::endl;
 	std::cout << "dpoint type: " << did << std::endl;
 	

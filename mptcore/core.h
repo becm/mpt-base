@@ -391,17 +391,11 @@ protected:
 class relation
 {
 public:
-	inline relation(const relation *p = 0) : _parent(p)
-	{ }
-	virtual metatype *find(int , const char *, int = -1) const;
+	virtual metatype *find(int , const char *, int = -1) const = 0;
 protected:
+	inline relation() {}
 	virtual ~relation() {}
-	const relation *_parent;
 };
-inline metatype *relation::find(int type, const char *name, int nlen) const
-{
-	return _parent ? _parent->find(type, name, nlen) : 0;
-}
 #endif /* C++ */
 
 MPT_STRUCT(fdmode)

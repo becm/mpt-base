@@ -156,7 +156,7 @@ bool object::attribute::set(convertable &val)
 	if (_obj.property(&_prop) < 0) {
 		_prop.name = 0;
 	}
-	return false;
+	return true;
 }
 bool object::attribute::set(const value &val)
 {

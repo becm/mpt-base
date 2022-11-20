@@ -225,7 +225,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 	item_array<axis> oldaxes = _axes;
 	_axes = item_array< axis>();
 	
-	const collection_relation grel(*this);
+	const collection::relation grel(*this);
 	if (!rel) rel = &grel;
 	
 	if (!(names = ::mpt::graph::axes())) {
@@ -342,7 +342,7 @@ int layout::graph::bind(const relation *rel, logger *out)
 		if (!(mt = it.instance()) || !(g = *mt)) {
 			continue;
 		}
-		collection_relation cr(*g, rel);
+		collection::relation cr(*g, rel);
 		int curr;
 		if ((curr = g->bind(&cr, out)) < 0) {
 			_axes = oldaxes;
@@ -563,7 +563,8 @@ int layout::graph::axis::convert(int type, void *ptr)
 		return me;
 	}
 	if (assign(static_cast<metatype *>(this), type, ptr)) {
-		return me;
+		int ax = type_properties<::mpt::axis *>::id(true);
+		return ax > 0 ? ax : me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
 		int ax = type_properties<::mpt::axis *>::id(true);
@@ -644,7 +645,8 @@ int layout::graph::world::convert(int type, void *ptr)
 		return me;
 	}
 	if (assign(static_cast<metatype *>(this), type, ptr)) {
-		return me;
+		int wld = type_properties<::mpt::world *>::id(true);
+		return wld > 0 ? wld : me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
 		int wld = type_properties<::mpt::world *>::id(true);

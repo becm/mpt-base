@@ -14,12 +14,8 @@
 
 __MPT_NAMESPACE_BEGIN
 
-MPT_INTERFACE(metatype);
-
-MPT_STRUCT(node);
-
 MPT_INTERFACE(collection);
-typedef int MPT_TYPE(item_handler)(void *, const MPT_STRUCT(identifier) *, MPT_INTERFACE(metatype) *, const MPT_INTERFACE(collection) *);
+typedef int MPT_TYPE(item_handler)(void *, const MPT_STRUCT(identifier) *, MPT_INTERFACE(convertable) *, const MPT_INTERFACE(collection) *);
 
 #ifdef __cplusplus
 MPT_INTERFACE(collection)
@@ -28,7 +24,8 @@ protected:
 	inline ~collection() { }
 public:
 	virtual int each(item_handler_t *, void *) const = 0;
-	virtual unsigned long clear(const metatype * = 0) = 0;
+	
+	class relation;
 	
 	static const struct named_traits *pointer_traits();
 };
@@ -42,7 +39,6 @@ template <> inline const struct type_traits *type_properties<collection *>::trai
 #else
 MPT_INTERFACE_VPTR(collection) {
 	int (*each)(const MPT_INTERFACE(collection) *, MPT_TYPE(item_handler), void *);
-	unsigned long (*clear)(MPT_INTERFACE(collection) *, const MPT_INTERFACE(metatype) *);
 }; MPT_INTERFACE(collection) {
 	const MPT_INTERFACE_VPTR(collection) *_vptr;
 };
@@ -55,6 +51,7 @@ class group : public collection
 protected:
 	inline ~group() {}
 public:
+	virtual unsigned long clear(const metatype * = 0) = 0;
 	virtual int append(const identifier *, metatype *) = 0;
 	virtual metatype *create(const char *, int = -1) = 0;
 	virtual int bind(const relation *, logger * = logger::default_instance()) = 0;
@@ -63,28 +60,31 @@ public:
 };
 
 /*! Relation implemetation using Group as current element */
-class collection_relation : public relation
+class collection::relation : public ::mpt::relation
 {
 public:
-	inline collection_relation(const collection &c, const relation *p = 0, char sep = '.') : relation(p), _curr(c), _sep(sep)
+	inline relation(const collection &c, const ::mpt::relation *p = 0, char sep = '.') : _parent(p), _curr(c), _sep(sep)
 	{ }
-	virtual ~collection_relation()
+	virtual ~relation()
 	{ }
 	metatype *find(int type, const char *, int = -1) const __MPT_OVERRIDE;
 protected:
+	const ::mpt::relation *_parent;
 	const collection &_curr;
 	char _sep;
 };
 
 /*! Relation implemetation using node as current element */
+class node;
 class node_relation : public relation
 {
 public:
-    inline node_relation(const node *n, const relation *p = 0) : relation(p), _curr(n)
-    { }
-    metatype *find(int type, const char *, int = -1) const;
+	inline node_relation(const node *n, const relation *p = 0) : _parent(p), _curr(n)
+	{ }
+	metatype *find(int type, const char *, int = -1) const;
 protected:
-    const node *_curr;
+	const relation *_parent;
+	const node *_curr;
 };
 
 bool add_items(metatype &, const node *head, const relation *from = 0, logger * = logger::default_instance());

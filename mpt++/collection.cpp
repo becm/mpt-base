@@ -159,7 +159,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			continue;
 		}
 		// name conflict on same level
-		if (collection_relation(*grp).find(from->type(), name, len)) {
+		if (collection::relation(*grp).find(from->type(), name, len)) {
 			if (out) {
 				out->message(_func, out->Warning, "%s: %s",
 				             MPT_tr("conflicting item name"), std::string(name, len).c_str());
@@ -176,7 +176,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			if (relation) {
 				curr = relation->find(from->type(), name, len);
 			} else {
-				curr = collection_relation(*grp).find(from->type(), name, len);
+				curr = collection::relation(*grp).find(from->type(), name, len);
 			}
 			if (!curr) {
 				if (out) {
@@ -234,7 +234,7 @@ bool add_items(metatype &to, const node *head, const relation *relation, logger 
 			}
 			continue;
 		}
-		collection_relation rel(*ig, relation);
+		collection::relation rel(*ig, relation);
 		if (!(add_items(*from, head->children, &rel, out))) {
 			return false;
 		}
@@ -252,35 +252,33 @@ struct item_match
 	int type;
 	char sep;
 };
-static int find_item(void *ptr, const identifier *id, metatype *mt, const collection *sub)
+static int find_item(void *ptr, const identifier *id, convertable *conv, const collection *sub)
 {
 	struct item_match *ctx = static_cast<item_match *>(ptr);
 	if (!id) {
 		return 0;
 	}
-	if (mt && !ctx->left && ctx->type >= 0) {
-		int val = mt->type();
-		if (!ctx->type) {
-			if (!val) {
-				return 0;
-			}
-		}
-		if (val != ctx->type && (val = mt->convert(ctx->type, 0)) < 0) {
-			return 0;
-		}
-	}
 	if (!id->equal(ctx->ident, ctx->curr)) {
 		return 0;
 	}
-	if (!sub && mt) {
-		sub = *mt;
-	}
 	if (!ctx->left) {
-		ctx->mt = mt;
-		return TraverseStop | (sub ? TraverseLeafs : TraverseNonLeafs);
+		if (!conv) {
+			return TraverseLeafs;
+		}
+		int val = conv->type();
+		if (!ctx->type) {
+			if (!val) {
+				return TraverseLeafs;
+			}
+		}
+		else if (val != ctx->type && (val = conv->convert(ctx->type, 0)) < 0) {
+			return TraverseLeafs;
+		}
+		ctx->mt = conv ? *conv : static_cast<metatype *>(0);
+		return TraverseStop | TraverseLeafs;
 	}
-	if (!sub) {
-		return TraverseLeafs;
+	if (!sub || !ctx->sep) {
+		return 0;
 	}
 	struct item_match tmp = *ctx;
 	
@@ -298,11 +296,12 @@ static int find_item(void *ptr, const identifier *id, metatype *mt, const collec
 	if (ret < 0) {
 		return ret;
 	}
+	ctx->mt = tmp.mt;
 	ret |= TraverseNonLeafs;
 	return ret;
 }
-    
-metatype *collection_relation::find(int type, const char *name, int nlen) const
+
+metatype *collection::relation::find(int type, const char *name, int nlen) const
 {
 	struct item_match m;
 	const char *sep;

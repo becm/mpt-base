@@ -149,7 +149,7 @@ int item_group::bind(const relation *from, logger *out)
 			continue;
 		}
 		int ret;
-		collection_relation rel(*g, from);
+		collection::relation rel(*g, from);
 		if ((ret = g->bind(&rel, out)) < 0) {
 			return ret;
 		}

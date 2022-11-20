@@ -303,7 +303,7 @@ public:
 		return &traits;
 	}
 	
-	static int id(bool obtain) {
+	static int id(bool obtain = false) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
@@ -348,7 +348,7 @@ public:
 		return &traits;
 	}
 	
-	static int id(bool obtain) {
+	static int id(bool obtain = false) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
@@ -477,7 +477,7 @@ public:
 		return traits;
 	}
 	
-	static int id(bool obtain) {
+	static int id(bool obtain = false) {
 		static int _valtype = 0;
 		if (_valtype > 0) {
 			return _valtype;
@@ -574,10 +574,10 @@ template<> inline const MPT_STRUCT(type_traits) *type_properties<const char *>::
 
 /*! generic source for values */
 template <typename T>
-class source : public iterator
+class source : public iterator, public span<const T>
 {
 public:
-	source(const T *val, long len = 1, int step = 1) : _d(val, len), _step(step)
+	source(const T *val, long len = 1, int step = 1) : span<const T>(val, len), _step(step)
 	{
 		int type = type_properties<T>::id(true);
 		_type = type < 0 ? 0 : type;
@@ -588,29 +588,28 @@ public:
 	const struct value *value() __MPT_OVERRIDE
 	{
 		const T *val;
-		if (_pos < 0 || !(val = _d.nth(_pos))) {
+		if (_pos < 0 || !(val = span<const T>::nth(_pos))) {
 			return 0;
 		}
 		return _val.set(_type, val) ? &_val : 0;
 	}
 	int advance() __MPT_OVERRIDE
 	{
-		if (_pos < 0 || _pos >= _d.size()) {
+		if (_pos < 0 || _pos >= span<const T>::size()) {
 			return MissingData;
 		}
 		_pos += _step;
-		if (_pos < 0 || _pos >= _d.size()) {
+		if (_pos < 0 || _pos >= span<const T>::size()) {
 			return 0;
 		}
 		return _type ? _type : type_properties<struct value>::id(true);
 	}
 	int reset() __MPT_OVERRIDE
 	{
-		_pos = (_step < 0) ? _d.size() - 1 : 0;
-		return _d.size();
+		_pos = (_step < 0) ? span<const T>::size() - 1 : 0;
+		return span<const T>::size();
 	}
 protected:
-	span<const T> _d;
 	long _pos;
 	struct value _val;
 	int _step;

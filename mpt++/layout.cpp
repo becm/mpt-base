@@ -126,7 +126,7 @@ int layout::bind(const relation *rel, logger *out)
 	int ret = 0;
 	
 	if (!rel) {
-		collection_relation me(*this);
+		collection::relation me(*this);
 		ret = item_group::bind(&me, out);
 	} else {
 		ret = item_group::bind(rel, out);
@@ -202,7 +202,7 @@ bool layout::load(logger *out)
 		}
 	}
 	// add items
-	collection_relation self(*this);
+	collection::relation self(*this);
 	clear();
 	// add items to layout
 	if (!add_items(*this, conf, &self, out)) {
@@ -299,6 +299,10 @@ int layout::line::convert(int type, void *ptr)
 		return me;
 	}
 	
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
+		int li = type_properties<::mpt::line>::id(true);
+		return li > 0 ? li : me;
+	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
 		int li = type_properties<::mpt::line>::id(true);
 		return li > 0 ? li : me;
@@ -389,6 +393,10 @@ int layout::text::convert(int type, void *ptr)
 		};
 		if (ptr) *static_cast<const uint8_t **>(ptr) = fmt;
 		return me;
+	}
+	if (assign(static_cast<metatype *>(this), type, ptr)) {
+		int tx = type_properties<::mpt::text *>::id(true);
+		return tx > 0 ? tx : me;
 	}
 	if (assign(static_cast<object *>(this), type, ptr)) {
 		int tx = type_properties<::mpt::text *>::id(true);
