@@ -258,13 +258,16 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 	if (!id) {
 		return 0;
 	}
+	// identifier must match current element
 	if (!id->equal(ctx->ident, ctx->curr)) {
 		return 0;
 	}
+	// top level entry
 	if (!ctx->left) {
 		if (!conv) {
 			return TraverseLeafs;
 		}
+		// check for type compatibility
 		if (ctx->type) {
 			int val = conv->type();
 			if (val != ctx->type && (val = conv->convert(ctx->type, 0)) < 0) {
@@ -274,21 +277,24 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 		ctx->conv = conv;
 		return TraverseStop | TraverseLeafs;
 	}
-	if (!sub || !ctx->sep) {
+	// no nested data
+	if (!sub) {
 		return 0;
 	}
-	struct item_match tmp = *ctx;
-	
-	const char *next = ctx->ident + ctx->left;
+	// advance to nested element name
+	const char *next = ctx->ident + ctx->curr + 1;
 	const char *sep = (char *) memchr(next, ctx->sep, ctx->left);
-	
-	if (!sep) {
-		return BadValue;
+	struct item_match tmp = *ctx;
+	if (sep) {
+		tmp.curr = sep - next;
+		tmp.left -= (tmp.curr + 1);
+	} else {
+		tmp.curr = tmp.left;
+		tmp.left = 0;
 	}
-	tmp.curr = sep - next;
-	tmp.left -= (tmp.curr + 1);
 	tmp.ident = next;
 	
+	// find nested element
 	int ret = sub->each(find_item, &tmp);
 	if (ret < 0) {
 		return ret;
