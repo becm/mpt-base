@@ -4,4 +4,4 @@
 *~
 
 # exclude internal build destination
-/build/
+/build

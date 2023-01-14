@@ -1,38 +1,50 @@
 # Message Passing Toolkit
 
-A collection of interfaces and routines
-to transfer opaque binary messages via stream connections
-and processing of received data.
+A collection of interfaces and routines for C-based generic types,
+config abstraction and message encoding.
 
-Extended funtionality includes configuration handling
-and simple buffer/queue implementations.
+Extended functionality includes graphic primitives and simple buffer/queue
+implementations.
+
+## Build
+
+Running `make` will create a local environment in the `build` subdirectory.
+The target location can be changed by setting a different `PREFIX` variable.
+
+Includes configurations for alternative (real out-of-tree) build systems:
+- [meson](https://mesonbuild.com)
+- [CMake](https://cmake.org)
+
+The `examples` directory contains many small programs demonstrating
+usage of various interfaces and routines.
+Most of them will be run during `make test` and are also used in test
+definitions for alternative build environments.
+
+## C library components
 
 To maximize reusability and minimize dependencies, functionality
 is split into multiple (shared) libraries.
 
-A fast start on a Linux system with `Lua` development files
-can be achieved by setting environment variable `MPT_PREFIX` to a writable
-target directory and run `make install LUA=5.2`.
-The `examples` directory contains many small programs demonstrating
-usage of various interfaces and routines.
-
-## Core
+### Core
 Most interface definitions and in-memory operations.
+
+Dynamic type registry, basic conversion routines and generic shared COW array
+with pluggable init/fini operations for each element.
 
 Implementation of message coding, data buffers and event processing.
 
 Definitions and operations for generic file parsing
 and configuration interface.
 
-## Plot
+### Plot
 Types and operations for data plotting.
 
 Definitions for generic graphic objects.
 
-Additional operations for data output,
-value source and profile generation.
+Additional operations for data output, value sources and
+generators for various types of initial data.
 
-## Input/Output
+### Input/Output
 Socket operations and input loop.
 
 Buffered data stream with integrated
@@ -44,7 +56,7 @@ on MPT message type.
 
 Notification system for registering and waiting for multiple inputs.
 
-## Loader
+### Loader
 Wrappers to load functionality from shared libraries.
 
 Provide abstration for line input from user.
