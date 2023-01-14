@@ -29,7 +29,7 @@ LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS}
 LINK ?= ${CC} ${CFLAGS}
 #
 # library targets
-LIB_FULLNAME ?= ${DIR_LIB}/lib${LIB}
+LIB_FULLNAME ?= ${DIR_LIB}lib${LIB}
 LIB_STATIC = ${LIB_FULLNAME}.a
 LIB_SHARED = ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 #
