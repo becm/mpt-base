@@ -11,7 +11,6 @@ LDLIBS = -lmptio
 INC = '${DIR_BASE}mptio' '${DIR_BASE}mptcore'
 
 # general targets and definitions
-DIR_TOP = ${MPT_PREFIX}
 include ../../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 

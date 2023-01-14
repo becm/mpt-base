@@ -20,13 +20,12 @@ SHLIB_TEENY = 0
 SHLIB_OBJS = libinfo.o ${OBJS}
 #
 # import library creation settings
-DIR_TOP = ${MPT_PREFIX}
-DIR_INC = ${DIR_TOP}/include/mpt
+DIR_INC ?= ${PREFIX}/include/mpt
 LDFLAGS = '-hlib${LIB}.so.${SHLIB_MAJOR}'
 include ../mpt.lib.mk
 #
 # dynamic loader is extra library
-ifeq (${ARCH_OS},linux)
+ifeq ($(shell uname),Linux)
 	LDLIBS = -ldl
 endif
 #

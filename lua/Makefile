@@ -19,7 +19,6 @@ SHLIB_MAJOR = 1
 SHLIB_MINOR = 0
 SHLIB_TEENY = 0
 LDLIBS = -lmptio
-DIR_TOP = ${MPT_PREFIX}
 include ../mpt.lib.mk
 #
 SHARE = mpt.lua

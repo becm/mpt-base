@@ -29,10 +29,17 @@ CLEAN_FILES ?= ${OBJS}
 all : sub_all ${PROGS}
 test : sub_test $(TESTS:%=test_%)
 
-test_% : %
-	@prog=$(@:test_%=%) ; \
-	printf "\033[01;34m%s\033[0m " "./$${prog}" 1>&2; echo "${ARGS}" 1>&2; \
-	"./$${prog}" ${ARGS} < /dev/null && printf "\n"
+test_% : % ${PREFIX}/etc/mpt.conf
+	@printf "\033[01;34m%s\033[0m " "./$(@:test_%=%)" 1>&2; echo "${ARGS}" 1>&2; \
+	env MPT_PREFIX="${PREFIX}" MPT_PREFIX_LIB="${DIR_LIB}" "./$(@:test_%=%)" ${ARGS} < /dev/null && printf "\n"
+
+${PREFIX}/etc/mpt.conf :
+	mkdir -p "${@D}"
+	echo "# mpt build config\n\
+	prefix {\n\
+	  lib = ${DIR_LIB}\n\
+	}\n\
+	" > ${@}
 
 clear : sub_clear
 	${RM} ${CLEAR_FILES}

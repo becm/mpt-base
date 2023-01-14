@@ -16,7 +16,6 @@ INC = '${DIR_BASE}mptcore'
 
 client_static : CC=${CXX}
 
-DIR_TOP = ${MPT_PREFIX}
 include ../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
@@ -58,4 +57,3 @@ test_client :    ARGS=-vv
 test_gen :       ARGS=9 'poly 1 0 0 : -4' 'bound 1 0 2' 'lin 1 0'
 test_iter :      ARGS='fac(8:1:.5:2)' '1 6 8' 'lin(20:0 180)'
 test_libassign : ARGS='mpt_output_remote@libmptio.so.1'
-

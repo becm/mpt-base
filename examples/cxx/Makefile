@@ -25,7 +25,6 @@ plot_inc = iter layout map object value_store
 ${PROGS} $(PROGS:%=%_static) : CC=${CXX}
 
 # general targets and definitions
-DIR_TOP = ${MPT_PREFIX}
 include ../../mpt.example.mk
 CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 
@@ -43,7 +42,7 @@ $(io_inc:%=%) $(io_inc:%=%_static) : INC+='${DIR_BASE}mptio'
 $(plot_inc:%=%) $(plot_inc:%=%_static) : INC+='${DIR_BASE}mptplot'
 #
 # special test arguments
-test_config : ARGS=${MPT_PREFIX}
+test_config : ARGS=${PREFIX}
 test_layout : ARGS=layout.lay
 test_buffer : ARGS=1 2 3
 

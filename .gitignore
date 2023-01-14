@@ -2,3 +2,6 @@
 *.[oa]
 *.py[co]
 *~
+
+# exclude internal build destination
+/build/

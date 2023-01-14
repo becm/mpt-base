@@ -22,8 +22,7 @@ SHLIB_OBJS = libinfo.o ${OBJS}
 LDLIBS = -lmptcore
 #
 # import library creation settings
-DIR_TOP = ${MPT_PREFIX}
-DIR_INC = ${DIR_TOP}/include/mpt
+DIR_INC ?= ${PREFIX}/include/mpt
 include ../mpt.lib.mk
 #
 # additional dependencies

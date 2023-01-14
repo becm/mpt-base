@@ -3,7 +3,6 @@ MERGE = mptcore mptplot mptio mptloader
 MODULES = ${MERGE} mpt++
 SUB = ${MODULES} lua
 
-DIR_TOP ?= ${MPT_PREFIX}
 include mpt.config.mk
 #
 # creation targets
@@ -20,7 +19,7 @@ mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
 lua : mptio
 #
-CLEAR_FILES += ${DIR_LIB}/libmpt.a
+CLEAR_FILES += ${DIR_LIB}/libmpt.a ${PREFIX}/etc/mpt.conf
 CLEAN_FILES += module_value.o module_generic_conv.o
 # dispatch target to subdirectories
 sub_% :
@@ -39,7 +38,7 @@ examples_% :
 	${MAKE} -C examples $(@:examples_%=%)
 #
 clear :
-	${RM} "${CLEAR_FILES}"
+	${RM} ${CLEAR_FILES}
 
 # combined static library
 "${DIR_LIB}/libmpt.a" :

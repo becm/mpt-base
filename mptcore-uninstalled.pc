@@ -1,13 +1,14 @@
 # mpt core package configuration
-version=2015.02
-prefix=${pc_top_builddir}
-arch=x86_64
-sys=linux-gnu
-libdir=${prefix}/lib/${arch}-${sys}
-includedir=${prefix}/include
+version=2023.01
+libname=mptcore
+description=Message Passing Toolkit core library
 
-Name: mptcore
-Description: Message Passing Toolkit core library
+# define lib and include relative to source
+libdir=${pcfiledir}/build/lib
+includedir=${pcfiledir}/build/include
+
+Name: ${libname}
+Description: ${description}
 Version: ${version}
-Libs: -L${libdir} -lmptcore
+Libs: -L${libdir} -l${libname}
 Cflags: -I${includedir}

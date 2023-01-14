@@ -4,7 +4,6 @@
 LUA = 5.3
 #
 # import MPT config
-DIR_TOP ?= ${MPT_PREFIX}
 include ../../mpt.config.mk
 
 # include lua and MPT core header
@@ -41,9 +40,9 @@ ${PROG}_static : ${SRCS}
 # service targets
 .PHONY : clear clean test all
 test : ${PROG}
-	env LUA_PATH='?.lua;${DIR_TOP}/share/lua/${LUA}/?.lua' \
+	LUA_PATH='?.lua;${PREFIX}/share/lua/${LUA}/?.lua' \
 		lua${LUA} -l test -e 'print(testmpt()); testmath([[user.lua]])'
-	./${PROG} 'user.lua'
+	MPT_PREFIX="${PREFIX}" ./${PROG} 'user.lua'
 
 static : ${PROG}_static
 
