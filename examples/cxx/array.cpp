@@ -35,10 +35,14 @@ extern int main(int , char * const [])
 	unique_array<metatype *> u;
 	
 	a.insert(1, new reference<metatype::value<double> >::type());
-	p.insert(0, a.get(1));
-	u.insert(4, a.get(1)->instance());
+	p.insert(3, a.get(1));
+	*u.insert(4) = a.get(1)->instance();
 	
 	d = p;
+	std::cout << "pos entry: " << p.offset(a.get(1)) << std::endl;
+	p.compact();
+	std::cout << "pos comp:  " << p.offset(a.get(1)) << std::endl;
+	std::cout << "pos typed: " << d.offset(a.get(1)) << std::endl;
 	
 	typed_array<double> v;
 	v.insert(3, 4);

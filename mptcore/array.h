@@ -63,16 +63,16 @@ public:
 	{
 		return _content_traits;
 	}
-	inline int shared() {
-		return get_flags() & BufferShared;
+	inline bool shared() {
+		return (get_flags() & BufferShared) != 0;
 	}
-	inline int immutable() {
-		return get_flags() & BufferImmutable;
+	inline bool immutable() {
+		return (get_flags() & BufferImmutable) != 0;
 	}
 	static buffer *create(size_t , const struct type_traits * = 0);
 	static buffer *create_unique(size_t , const struct type_traits * = 0);
 protected:
-	inline buffer() : _content_traits(0), _size(0), _used(0)
+	inline buffer(size_t size = 0) : _content_traits(0), _size(size), _used(0)
 	{ }
 	inline ~buffer()
 	{ }
@@ -89,7 +89,7 @@ MPT_INTERFACE_VPTR(buffer)
 	const MPT_INTERFACE_VPTR(buffer) *_vptr;
 #endif
 	const MPT_STRUCT(type_traits) *_content_traits;
-	size_t _size;
+	const size_t _size;
 	size_t _used;
 };
 
@@ -445,10 +445,34 @@ inline span<const uint8_t> slice::data() const
 	buffer *b = _buf.instance();
 	return span<const uint8_t>(b ? ((uint8_t *) (b + 1)) + _off : 0, _len);
 }
+
 long compact(span<void *>);
 long unused(span<void *>);
-bool swap(span<void *>, long , long);
-long offset(span<void *>, const void *);
+template <typename T>
+bool swap(span<T> s, long p1, long p2)
+{
+	long len = s.size();
+	if (p1 > len || p2 > len) {
+		return false;
+	}
+	T *b = s.begin();
+	T t = b[p1];
+	b[p1] = b[p2];
+	b[p2] = t;
+	return true;
+}
+template <typename T>
+long offset(const span<T> &s, const T &ref)
+{
+	long pos = 0;
+	for (const T *c = s.begin(), *e = s.end(); c != e; c++) {
+		if (*c == ref) {
+			return pos;
+		}
+		++pos;
+	}
+	return -1;
+}
 
 template <typename T>
 void move(T *v, long from, long to)
@@ -511,7 +535,7 @@ public:
 		uint8_t *ptr = static_cast<uint8_t *>(buffer::insert(set, 0));
 		return ptr ? true : false;
 	}
-	bool insert(long pos, const T &val)
+	void *insert(long pos)
 	{
 		if (pos < 0) {
 			pos += _used / sizeof(T);
@@ -520,25 +544,16 @@ public:
 			}
 		}
 		/* inserted data is NOT initialized */
-		void *ptr = buffer::insert(pos * sizeof(T), sizeof(T));
-		if (!ptr) {
-			return false;
-		}
-		const struct type_traits *traits = content_traits();
-		if (traits && traits->init) {
-			return traits->init(ptr, &val) >= 0;
-		}
-		new (ptr) T(val);
-		return true;
+		return buffer::insert(pos * sizeof(T), sizeof(T));
 	}
 	static content<T> *create(long len)
 	{
 		return static_cast<content<T> *>(buffer::create(len * sizeof(T), type_properties<T>::traits()));
 	}
 protected:
-	inline content()
+	inline content(unsigned int len, const type_traits &traits = *type_properties<T>::traits()) : buffer(len * sizeof(T))
 	{
-		_content_traits = type_properties<T>::traits();
+		_content_traits = &traits;
 	}
 	inline ~content()
 	{ }
@@ -555,34 +570,11 @@ public:
 	{
 		_ref = a._ref;
 	}
-	unique_array(long len = 0)
+	unique_array(long len = -1)
 	{
-		class dummy : public content<T>
-		{
-		public:
-			inline dummy()
-			{ }
-			uint32_t get_flags() const __MPT_OVERRIDE
-			{
-				return BufferImmutable | BufferShared | BufferNoCopy;
-			}
-			void unref() __MPT_OVERRIDE
-			{ }
-			uintptr_t addref() __MPT_OVERRIDE
-			{
-				return 1;
-			}
-			content<T> *detach(size_t len) __MPT_OVERRIDE
-			{
-				size_t align = len % sizeof(T);
-				return static_cast<content<T> *>(buffer::create_unique(len - align, this->content_traits()));
-			}
-			virtual ~dummy()
-			{ }
-		};
-		static dummy _dummy;
+		static default_data _dummy;
 		content<T> *data = &_dummy;
-		if (len > 0) data = data->detach(len * sizeof(T));
+		if (len >= 0) data = data->detach(len * sizeof(T));
 		_ref.set_instance(data ? data : &_dummy);
 	}
 	inline iterator begin() const
@@ -605,6 +597,11 @@ public:
 		this->_ref = v;
 		return *this;
 	}
+	long offset(const T &ref) const
+	{
+		content<T> *data = _ref.instance();
+		return data ? ::mpt::offset(data->data(), ref) : -1;
+	}
 	bool set(long pos, T const &v)
 	{
 		if (pos < 0) {
@@ -622,23 +619,6 @@ public:
 		t[pos] = v;
 		return true;
 	}
-	bool insert(long pos, const T &val)
-	{
-		long len = length();
-		if (pos < 0) {
-			if ((pos += len) < 0) {
-				return 0;
-			}
-		}
-		else if (pos > len) {
-			len = pos;
-		}
-		if (!reserve(len + 1)) {
-			return 0;
-		}
-		content<T> *d = _ref.instance();
-		return d->insert(pos, val);
-	}
 	T *insert(long pos)
 	{
 		long len = length();
@@ -655,7 +635,7 @@ public:
 		}
 		content<T> *d = _ref.instance();
 		/* inserted raw data is NOT initialized */
-		void *ptr = d->buffer::insert(pos * sizeof(T), sizeof(T));
+		void *ptr = d->insert(pos);
 		if (!ptr) {
 			return 0;
 		}
@@ -731,6 +711,27 @@ public:
 		return true;
 	}
 protected:
+	class default_data : public content<T>
+	{
+	public:
+		inline default_data(const type_traits &traits = *type_properties<T>::traits()) : content<T>(0, traits)
+		{ }
+		uint32_t get_flags() const __MPT_OVERRIDE
+		{
+			return BufferImmutable | BufferShared | BufferNoCopy;
+		}
+		void unref() __MPT_OVERRIDE
+		{ }
+		uintptr_t addref() __MPT_OVERRIDE
+		{
+			return 1;
+		}
+		content<T> *detach(size_t len) __MPT_OVERRIDE
+		{
+			size_t align = len % sizeof(T);
+			return static_cast<content<T> *>(buffer::create_unique(len - align, this->content_traits()));
+		}
+	};
 	inline unique_array(content<T> *ref) : _ref(ref)
 	{ }
 	reference<content<T> > _ref;
@@ -755,41 +756,49 @@ class typed_array : public unique_array<T>
 public:
 	typed_array(const typed_array &a) : unique_array<T>(a)
 	{ }
-	typed_array(long len = 0) : unique_array<T>(static_cast<content<T> *>(0))
+	typed_array(long len = -1) : unique_array<T>(static_cast<content<T> *>(0))
 	{
-		class dummy : public content<T>
-		{
-		public:
-			inline dummy()
-			{ }
-			uint32_t get_flags() const __MPT_OVERRIDE
-			{
-				return BufferImmutable | BufferShared;
-			}
-			void unref() __MPT_OVERRIDE
-			{ }
-			uintptr_t addref() __MPT_OVERRIDE
-			{
-				return 1;
-			}
-			content<T> *detach(size_t len) __MPT_OVERRIDE
-			{
-				size_t align = len % sizeof(T);
-				return static_cast<content<T> *>(buffer::create(len - align, this->content_traits()));
-			}
-			virtual ~dummy()
-			{ }
-		};
-		static dummy _dummy;
+		static default_data _dummy;
 		content<T> *data = &_dummy;
-		if (len > 0) data = data->detach(len * sizeof(T));
+		if (len >= 0) data = data->detach(len * sizeof(T));
 		this->_ref.set_instance(data ? data : &_dummy);
+	}
+	bool insert(long pos, const T &val)
+	{
+		long len = this->length();
+		if (pos < 0) {
+			if ((pos += len) < 0) {
+				return 0;
+			}
+		}
+		else if (pos > len) {
+			len = pos;
+		}
+		if (!this->reserve(len + 1)) {
+			return 0;
+		}
+		void *d = this->_ref.instance()->insert(pos);
+		if (d) {
+			new (d) T(val);
+			return true;
+		}
+		return false;
 	}
 	inline typed_array & operator=(const typed_array &a)
 	{
 		this->_ref = a._ref;
 		return *this;
 	}
+protected:
+	class default_data : public unique_array<T>::default_data
+	{
+	public:
+		content<T> *detach(size_t len) __MPT_OVERRIDE
+		{
+			size_t align = len % sizeof(T);
+			return static_cast<content<T> *>(buffer::create(len - align, this->content_traits()));
+		}
+	};
 };
 template<typename T>
 class type_properties<typed_array<T> >
@@ -811,7 +820,7 @@ template <typename T>
 class item_array : public unique_array<item<T> >
 {
 public:
-	inline item_array(size_t len = 0) : unique_array<item<T> >(len)
+	inline item_array(int len = -1) : unique_array<item<T> >(len)
 	{ }
 	inline item_array(const item_array &a) : unique_array<item<T> >(a)
 	{ }
@@ -895,29 +904,43 @@ public:
 	{ }
 	inline pointer_array &operator =(typed_array<T *> &from)
 	{
-		this->_ref = static_cast<pointer_array<T> &>(from)._ref;
+		this->_ref = from._ref;
 		return *this;
+	}
+	inline span<void *> generic() const
+	{
+		T **data = this->begin();
+		return span<void *>((void **) data, this->length());
 	}
 	inline void compact()
 	{
-		compact(generic());
+		content<T *> *data = this->_ref.instance();
+		if (data && !data->immutable()) {
+			if (!data->shared()) {
+				T **begin = data->begin();
+				long length = ::mpt::compact(span<void *>((void **) begin, this->length()));
+				data->set_length(length);
+			}
+			else {
+				long length = this->length() - this->unused();
+				content<T *> *next = content<T *>::create(length);
+				for (T **b = data->begin(), **e = data->end(); b < e; ++b) {
+					void *dest;
+					if (*b && (dest = next->insert(next->length()))) {
+						*static_cast<T **>(dest) = *b;
+					}
+				}
+				this->_ref.set_instance(next);
+			}
+		}
 	}
 	inline long unused() const
 	{
-		return unused(generic());
-	}
-	inline long offset(const T *ref) const
-	{
-		return offset(generic(), ref);
+		return ::mpt::unused(generic());
 	}
 	inline bool swap(long p1, long p2) const
 	{
-		return swap(generic(), p1, p2);
-	}
-protected:
-	inline span<void *> generic() const
-	{
-		return span<void *>(this->begin(), this->length());
+		return ::mpt::swap(generic(), p1, p2);
 	}
 };
 template<typename T>
@@ -941,8 +964,13 @@ class reference_array : public unique_array<reference<T> >
 public:
 	typedef reference<T>* iterator;
 	
-	inline reference_array(size_t len = 0) : unique_array<reference<T> >(len)
-	{ }
+	inline reference_array(int len = -1) : unique_array<reference<T> >(static_cast<content<reference<T> > *>(0))
+	{
+		static class unique_array<reference<T> >::default_data _dummy(content_traits());
+		content<reference<T> > *data = &_dummy;
+		if (len >= 0) data = data->detach(len * sizeof(T));
+		this->_ref.set_instance(data ? data : &_dummy);
+	}
 	bool insert(long pos, T *ref)
 	{
 		reference<T> *ptr = unique_array<reference<T> >::insert(pos);
@@ -987,6 +1015,15 @@ public:
 	void compact()
 	{
 		::mpt::compact(span<void *>(reinterpret_cast<void **>(this->begin()), this->length()));
+	}
+protected:
+	static const type_traits &content_traits() {
+		static type_traits traits(sizeof(T), _unref_reference, 0);
+		return traits;
+	}
+	static void _unref_reference(void *ptr)
+	{
+		static_cast<reference<T> *>(ptr)->set_instance(0);
 	}
 };
 template<typename T>

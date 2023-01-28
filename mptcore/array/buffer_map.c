@@ -44,7 +44,7 @@ MPT_STRUCT(bufferData)
 	           - sizeof(int)
 	           - sizeof(MPT_STRUCT(buffer))];
 	
-	MPT_STRUCT(buffer) _buf;
+	MPT_STRUCT(buffer) buf;
 };
 
 /*!
@@ -88,69 +88,69 @@ extern void *_mpt_memmap(size_t len, void *base)
 /* reference interface */
 static void _mpt_buffer_map_unref(MPT_INTERFACE(buffer) *ref)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
+	MPT_STRUCT(bufferData) *b = MPT_baseaddr(bufferData, ref, buf);
 	const MPT_STRUCT(type_traits) *traits;
 	void (*fini)(void *);
 	size_t size;
-	if (mpt_refcount_lower(&buf->_ref)) {
+	if (mpt_refcount_lower(&b->_ref)) {
 		return;
 	}
-	if ((traits = buf->_buf._content_traits)
+	if ((traits = b->buf._content_traits)
 	    && (fini = traits->fini)
 	    && (size = traits->size)) {
-		size_t len = buf->_buf._size;
+		size_t len = b->buf._size;
 		len -= len % size;
-		uint8_t *ptr = (void *) (buf + 1);
+		uint8_t *ptr = (void *) (b + 1);
 		size_t pos;
 		for (pos = 0; pos < len; pos += size) {
 			fini(ptr + pos);
 		}
 	}
-	munmap(buf, buf->_total);
+	munmap(b, b->_total);
 }
 static uintptr_t _mpt_buffer_map_ref(MPT_INTERFACE(buffer) *ref)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ref, _buf);
-	return mpt_refcount_raise(&buf->_ref);
+	MPT_STRUCT(bufferData) *b = MPT_baseaddr(bufferData, ref, buf);
+	return mpt_refcount_raise(&b->_ref);
 }
 static MPT_STRUCT(buffer) *_mpt_buffer_map_detach(MPT_STRUCT(buffer) *ptr, size_t len)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, _buf);
+	MPT_STRUCT(bufferData) *b = MPT_baseaddr(bufferData, ptr, buf);
 	MPT_STRUCT(buffer) *next;
 	size_t old;
 	
-	if (buf->_ref._val == 1
-	 && !(buf->_flags & MPT_ENUM(BufferImmutable))) {
-		return &buf->_buf;
+	if (b->_ref._val == 1
+	 && !(b->_flags & MPT_ENUM(BufferImmutable))) {
+		return &b->buf;
 	}
 	/* only detach raw buffer */
-	if (buf->_buf._content_traits) {
+	if (b->buf._content_traits) {
 		errno = ENOTSUP;
 		return 0;
 	}
 	/* remuve immutability flag on clone */
-	if (!(next = _mpt_buffer_map(len, buf->_flags & ~MPT_ENUM(BufferImmutable)))) {
+	if (!(next = _mpt_buffer_map(len, b->_flags & ~MPT_ENUM(BufferImmutable)))) {
 		return 0;
 	}
 	
-	old = buf->_buf._used;
+	old = b->buf._used;
 	if (old > len) {
 		old = len;
 	}
 	if (old) {
-		memcpy(next + 1, buf + 1, old);
+		memcpy(next + 1, b + 1, old);
 		next->_used = old;
 	}
 	
-	_mpt_buffer_map_unref((void *) &buf->_buf);
+	_mpt_buffer_map_unref((void *) &b->buf);
 	
 	return next;
 }
 static uint32_t _mpt_buffer_map_flags(const MPT_STRUCT(buffer) *ptr)
 {
-	MPT_STRUCT(bufferData) *buf = MPT_baseaddr(bufferData, ptr, _buf);
-	int flags = buf->_ref._val > 1 ? MPT_ENUM(BufferShared) : 0;
-	return flags | buf->_flags | MPT_ENUM(BufferMapped);
+	MPT_STRUCT(bufferData) *b = MPT_baseaddr(bufferData, ptr, buf);
+	int flags = b->_ref._val > 1 ? MPT_ENUM(BufferShared) : 0;
+	return flags | b->_flags | MPT_ENUM(BufferMapped);
 }
 /*!
  * \ingroup mptArray
@@ -170,7 +170,7 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len, int flags)
 		_mpt_buffer_map_ref,
 		_mpt_buffer_map_detach
 	};
-	MPT_STRUCT(bufferData) *buf;
+	MPT_STRUCT(bufferData) *b;
 	size_t align;
 	
 	/* get page table size & check range */
@@ -178,27 +178,27 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_map(size_t len, int flags)
 	    || (_mpt_buffer_map_psize = sysconf(_SC_PAGESIZE)) < 1) {
 		return 0;
 	}
-	if (SIZE_MAX - sizeof(*buf) - _mpt_buffer_map_psize < len) {
+	if ((SIZE_MAX - sizeof(*b) - _mpt_buffer_map_psize) < len) {
 		errno = ERANGE;
 		return 0;
 	}
-	len += sizeof(*buf);
+	len += sizeof(*b);
 	
 	if ((align = len % _mpt_buffer_map_psize)) {
 		len  += _mpt_buffer_map_psize - align;
 	}
-	if (!(buf = _mpt_memmap(len, 0))) {
+	if (!(b = _mpt_memmap(len, 0))) {
 		return 0;
 	}
-	buf->_ref._val = 1;
-	buf->_align = _mpt_buffer_map_psize;
-	buf->_total = len;
-	buf->_flags = flags & MPT_ENUM(BufferFlagsUser);
+	b->_ref._val = 1;
+	b->_align = _mpt_buffer_map_psize;
+	b->_total = len;
+	b->_flags = flags & MPT_ENUM(BufferFlagsUser);
 	
-	buf->_buf._vptr = &_mpt_buffer_map_vptr;
-	buf->_buf._content_traits = 0;
-	buf->_buf._size = len - sizeof(*buf);
-	buf->_buf._used = 0;
+	b->buf._vptr = &_mpt_buffer_map_vptr;
+	b->buf._content_traits = 0;
+	*((size_t *) &b->buf._size) = len - sizeof(*b);
+	b->buf._used = 0;
 	
-	return &buf->_buf;
+	return &b->buf;
 }

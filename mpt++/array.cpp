@@ -46,18 +46,6 @@ long unused(span<void *> s)
 	}
 	return u;
 }
-bool swap(span<void *> s, long p1, long p2)
-{
-	long len = s.size();
-	if (p1 > len || p2 > len) {
-		return false;
-	}
-	void *t, **b = s.begin();
-	t = b[p1];
-	b[p1] = b[p2];
-	b[p2] = t;
-	return true;
-}
 // buffer storage implementation
 buffer *buffer::create(size_t len, const struct type_traits *traits)
 {
@@ -112,7 +100,7 @@ bool buffer::copy(const buffer &from)
 	}
 	return true;
 }
-    
+
 bool buffer::skip(size_t len)
 {
 	if (_used < len) {

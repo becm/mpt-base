@@ -203,7 +203,7 @@ extern MPT_STRUCT(buffer) *_mpt_buffer_alloc(size_t len, int flags)
 	
 	b->buf._vptr = &_mpt_buffer_vptr;
 	b->buf._content_traits = 0;
-	b->buf._size = len - sizeof(*b);
+	*((size_t *) &b->buf._size) = len - sizeof(*b);
 	b->buf._used = 0;
 	
 	return &b->buf;

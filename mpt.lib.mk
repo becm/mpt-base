@@ -64,7 +64,7 @@ CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
 .PHONY: header
 header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})
 clear_header = $(notdir ${HEADER})
-CLEAR_FILES += $(clear_header:%.h=${DIR_INC}/%.h)
+CLEAR_FILES += $(clear_header:%.h=${DIR_INC}%.h)
 #
 # maintenance targets
 .PHONY: clear clean distclean uninstall
