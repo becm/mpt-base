@@ -17,7 +17,7 @@ CLEAN_FILES += ${CLEAR_FILES} $(PROGS:%=%.o)
 test_ident : ARGS=28 29 252 253
 test_environ : ARGS='mpt_*'
 test_coding : ARGS=cobs
-test_config : ARGS=prefix.lib
+test_config : ARGS=prefix.lib dir.include
 
 parse_tests = online layout_1 layout_2 subsect config
 .PHONY : $(parse_tests:%=test_parse_%)

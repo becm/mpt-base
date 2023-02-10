@@ -194,7 +194,7 @@ extern int mpt_init(int argc, char * const argv[])
 	MPT_metatype_convert(top, MPT_ENUM(TypeConfigPtr), &cfg);
 	
 	/* load configs in `etc` subdirectory */
-	mpt_config_load(cfg, getenv("MPT_PREFIX"), mpt_log_default());
+	mpt_config_load(cfg, getenv("MPT_PREFIX_ETC"), mpt_log_default());
 	
 	/* additional flags from enfironment */
 	if ((flags = getenv("MPT_FLAGS"))) {

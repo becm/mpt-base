@@ -3,6 +3,8 @@
  *   demonstrate config loading
  */
 
+#include <stdlib.h>
+
 #include "table_print.c"
 
 #include MPT_INCLUDE(output.h)
@@ -13,6 +15,7 @@ extern int main(int argc, char *argv[])
 {
 	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(config) *cfg;
+	MPT_INTERFACE(logger) *log = mpt_log_default();
 	MPT_STRUCT(node) *n;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	int ret = 0, i;
@@ -21,8 +24,12 @@ extern int main(int argc, char *argv[])
 	mt = mpt_config_global(&p);
 	MPT_metatype_convert(mt, MPT_ENUM(TypeConfigPtr), &cfg);
 	
-	if ((i = mpt_config_load(cfg, 0, mpt_log_default())) < 0) {
-		return 1;
+	/* load global MPT configuration */
+	i = mpt_config_load(cfg, getenv("MPT_PREFIX_ETC"), log);
+	
+	/* load config from local directory */
+	if ((i = mpt_config_load(cfg, ".", log)) < 0) {
+		return 2;
 	}
 	if (argc < 2) {
 		MPT_metatype_convert(mt, MPT_ENUM(TypeNodePtr), &n);
