@@ -53,7 +53,8 @@ graphic graphic_static : CC=${CXX}
 # special test arguments
 test_axis :      ARGS=title='my axis' intervals=3 tpos=Up
 test_graph :     ARGS='w1 w2' 'ax'
-test_client :    ARGS=-vv
+test_client :    MPT_FLAGS=vv
+test_client :    ARGS=1 2 3
 test_gen :       ARGS=9 'poly 1 0 0 : -4' 'bound 1 0 2' 'lin 1 0'
 test_iter :      ARGS='fac(8:1:.5:2)' '1 6 8' 'lin(20:0 180)'
 test_libassign : ARGS='mpt_output_remote@libmptio.so.1'

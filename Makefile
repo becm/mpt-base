@@ -19,7 +19,7 @@ mpt++ mptplot mptio : mptcore
 mpt++ : mptplot mptio
 lua : mptio
 #
-CLEAR_FILES += ${DIR_LIB}libmpt.a ${PREFIX}/etc/mpt.conf
+CLEAR_FILES += ${DIR_LIB}libmpt.a
 CLEAN_FILES += module_value.o module_generic_conv.o
 # dispatch target to subdirectories
 sub_% :

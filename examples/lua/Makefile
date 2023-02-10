@@ -31,11 +31,8 @@ LDLIBS = -llua${LUA}
 ${PROG} : ${OBJS}
 	${CC} ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS}
 
-${PROG}_static : ${SRCS}
-	${CC} -static -D_STATIC ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} -o ${@} ${SRCS} ${LDLIBS} -lmpt -ldl -lm
-
-%_lua${LUA}.o : %.c
-	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
+${PROG}_static : ${OBJS}
+	${CC} -static ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS} -ldl -lm
 #
 # service targets
 .PHONY : clear clean test all

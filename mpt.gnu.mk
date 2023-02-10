@@ -1,5 +1,4 @@
 # mpt.gnu.mk: use GNU extensions
-DIR_BASE ?= $(dir $(lastword $(MAKEFILE_LIST)))
 #
 # ISO format date
 ISODATE ?= $(shell date +%F)

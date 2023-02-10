@@ -31,7 +31,7 @@ test : sub_test $(TESTS:%=test_%)
 
 test_% : %
 	@printf "\033[01;34m%s\033[0m " "./$(@:test_%=%)" 1>&2; echo "${ARGS}" 1>&2; \
-	env MPT_PREFIX="${PREFIX}" MPT_PREFIX_LIB="${DIR_LIB}" "./$(@:test_%=%)" ${ARGS} < /dev/null && printf "\n"
+	env MPT_PREFIX="${PREFIX}" MPT_FLAGS="${MPT_FLAGS}" MPT_PREFIX_LIB="${DIR_LIB}" "./$(@:test_%=%)" ${ARGS} < /dev/null && printf "\n"
 
 clear : sub_clear
 	${RM} ${CLEAR_FILES}

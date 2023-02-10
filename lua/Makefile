@@ -8,7 +8,7 @@ LIB = lua${LUA}-mpt
 #
 # include lua and MPT core header
 INC_LUA = /usr/include/lua${LUA}
-INC = '${INC_LUA}' '${DIR_BASE}mptcore' '${DIR_BASE}mptio'
+INC = '${INC_LUA}' ../mptcore ../mptio
 #
 # library sources
 SRCS = mpt.c
@@ -22,7 +22,7 @@ LDLIBS = -lmptio
 include ../mpt.lib.mk
 #
 SHARE = mpt.lua
-LUA_SHARE = ${DIR_SHARE}/lua/${LUA}
+LUA_SHARE = ${DIR_SHARE}lua/${LUA}
 CLEAN_FILES += ${CLEAR_FILES}
 CLEAR_FILES += $(SHARE:%=${LUA_SHARE}/%)
 #
