@@ -24,6 +24,7 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 	MPT_INTERFACE(convertable) *args;
 	MPT_INTERFACE(iterator) *it;
 	const MPT_STRUCT(value) *val;
+	const void *ptr;
 	const char *str;
 	int ret;
 	
@@ -37,10 +38,10 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 	if (!(val = it->_vptr->value(it))) {
 		mpt_log(info, __func__, MPT_LOG(Info), "%s",
 		        MPT_tr("no client config filename"));
-		return ret;
+		return 0;
 	}
-	str = 0;
-	if ((ret = mpt_value_convert(val, 's', &str)) < 0 || !str) {
+	ptr = val->_addr;
+	if (!(str = mpt_data_tostring(&ptr, val->_type, 0))) {
 		mpt_log(info, __func__, MPT_LOG(Error), "%s",
 		        MPT_tr("bad client config filename"));
 		return ret;
