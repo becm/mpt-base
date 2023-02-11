@@ -6,7 +6,7 @@ ifeq (${LIB},)
 endif
 #
 # include global configuration
-include $(dir $(lastword $(MAKEFILE_LIST)))mpt.gnu.mk
+include $(dir $(lastword $(MAKEFILE_LIST)))mpt.tag.mk
 include $(dir $(lastword $(MAKEFILE_LIST)))mpt.config.mk
 #
 # default object creation/removal
@@ -23,13 +23,13 @@ SHLIB_OBJS  ?= ${OBJS}
 STATIC_OBJS ?= ${OBJS}
 #
 # linker and link options
-LDDIRS ?= '${DIR_LIB}'
+LDDIRS ?= '${PREFIX_LIB}'
 LDFLAGS ?= '-hlib${LIB}.so.${SHLIB_MAJOR}' -zorigin -rpath=\$$ORIGIN $(LDDIRS:%=-L%)
 LINK_FLAGS ?= -shared $(LDFLAGS:%=-Wl,%) ${LDLIBS}
 LINK ?= ${CC} ${CFLAGS}
 #
 # library targets
-LIB_FULLNAME ?= ${DIR_LIB}lib${LIB}
+LIB_FULLNAME ?= ${PREFIX_LIB}/lib${LIB}
 LIB_STATIC = ${LIB_FULLNAME}.a
 LIB_SHARED = ${LIB_FULLNAME}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 #
@@ -62,9 +62,9 @@ CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
 #
 # header export
 .PHONY: header
-header : ${HEADER}; $(call install_files,${DIR_INC},${HEADER})
+header : ${HEADER}; $(call install_files,${PREFIX_INC},${HEADER})
 clear_header = $(notdir ${HEADER})
-CLEAR_FILES += $(clear_header:%.h=${DIR_INC}%.h)
+CLEAR_FILES += $(clear_header:%.h=${PREFIX_INC}/%.h)
 #
 # maintenance targets
 .PHONY: clear clean distclean uninstall

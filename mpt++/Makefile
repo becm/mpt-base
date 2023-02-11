@@ -26,7 +26,7 @@ SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:%.cpp=%.o)
 #
 # import library creation settings
-DIR_INC ?= ${PREFIX}/include/mpt/
+PREFIX_INC ?= ${PREFIX}/include/mpt/
 include ../mpt.lib.mk
 #
 CXXFLAGS += -std=c++98

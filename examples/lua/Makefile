@@ -24,7 +24,7 @@ CLEAR_FILES = ${PROG} ${PROG}_static
 CLEAN_FILES = ${CLEAR_FILES} ${OBJS}
 #
 # link flags and libraries
-LDFLAGS = -L'${DIR_LIB}' -Wl,-R,'${DIR_LIB}'
+#LDFLAGS = -L'${PREFIX_LIB}' -Wl,-R,'${PREFIX_LIB}'
 LDLIBS = -llua${LUA}
 #
 # file creation
@@ -33,6 +33,9 @@ ${PROG} : ${OBJS}
 
 ${PROG}_static : ${OBJS}
 	${CC} -static ${LDFLAGS} -o ${@} ${OBJS} ${LDLIBS} -ldl -lm
+
+%_lua${LUA}.o : %.c
+	${CC} ${CPPFLAGS} ${CFLAGS} -c -o ${@} ${<}
 #
 # service targets
 .PHONY : clear clean test all

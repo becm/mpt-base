@@ -1,4 +1,4 @@
-# mpt.gnu.mk: use GNU extensions
+# mpt.tag.mk: determine build tag
 #
 # ISO format date
 ISODATE ?= $(shell date +%F)

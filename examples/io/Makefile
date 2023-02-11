@@ -8,7 +8,7 @@ PROGS = \
 	${TESTS}
 
 LDLIBS = -lmptio
-INC = '${DIR_BASE}mptio' '${DIR_BASE}mptcore'
+INC = '${MPT_BASE}/mptio' '${MPT_BASE}/mptcore'
 
 # general targets and definitions
 include ../../mpt.example.mk

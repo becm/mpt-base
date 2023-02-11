@@ -22,7 +22,7 @@ LDLIBS = -lmptio
 include ../mpt.lib.mk
 #
 SHARE = mpt.lua
-LUA_SHARE = ${DIR_SHARE}lua/${LUA}
+LUA_SHARE = ${PREFIX_SHARE}/lua/${LUA}
 CLEAN_FILES += ${CLEAR_FILES}
 CLEAR_FILES += $(SHARE:%=${LUA_SHARE}/%)
 #

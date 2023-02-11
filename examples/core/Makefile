@@ -4,7 +4,7 @@ TESTS = coding config ident environ value
 PROGS = parse ${TESTS}
 
 LDLIBS = -lmptcore
-INC = '${DIR_BASE}mptcore'
+INC = '${MPT_BASE}/mptcore'
 
 # general targets and definitions
 include ../../mpt.example.mk

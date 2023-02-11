@@ -12,7 +12,7 @@ io_inc = client
 loader_inc = libassign readline
 plot_inc = axis gen graph graphic iter
 
-INC = '${DIR_BASE}mptcore'
+INC = '${MPT_BASE}/mptcore'
 
 client_static : CC=${CXX}
 
@@ -35,10 +35,10 @@ readline_static : LDLIBS=-lmpt -ldl
 graphic : LDLIBS=-lmpt++
 #
 # additional includes
-$(cxx_inc:%=%) $(cxx_inc:=%_static) : INC+='${DIR_BASE}mpt++'
-$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${DIR_BASE}mptio'
-$(loader_inc:%=%) $(loader_inc:=%_static) : INC+='${DIR_BASE}mptloader'
-$(plot_inc:%=%) $(plot_inc:=%_static) : INC+='${DIR_BASE}mptplot'
+$(cxx_inc:%=%) $(cxx_inc:=%_static) : INC+='${MPT_BASE}/mpt++'
+$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${MPT_BASE}/mptio'
+$(loader_inc:%=%) $(loader_inc:=%_static) : INC+='${MPT_BASE}/mptloader'
+$(plot_inc:%=%) $(plot_inc:=%_static) : INC+='${MPT_BASE}/mptplot'
 #
 # C++ perror() visibility
 client client_static : CXXFLAGS+=-std=c++11

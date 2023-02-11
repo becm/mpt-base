@@ -28,7 +28,7 @@ SHLIB_OBJS = libinfo.o ${OBJS}
 LDFLAGS = '-hlib${LIB}.so.${SHLIB_MAJOR}'
 #
 # import library creation settings
-DIR_INC ?= ${PREFIX}/include/mpt/
+PREFIX_INC ?= ${PREFIX}/include/mpt
 include ../mpt.lib.mk
 #
 # additional dependencies

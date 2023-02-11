@@ -15,7 +15,7 @@ TESTS = \
 
 PROGS = comp ${TESTS}
 LDLIBS = -lmpt++
-INC = '${DIR_BASE}mptcore'
+INC = '${MPT_BASE}/mptcore'
 
 cxx_inc = buffer output meta queue
 io_inc = buffer comp output queue
@@ -37,9 +37,9 @@ comp : LDLIBS+=-lmptio
 %_static : CPPFLAGS+=-D_STATIC
 #
 # additional includes
-$(cxx_inc:%=%) $(cxx_inc:%=%_static) : INC+='${DIR_BASE}mpt++'
-$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${DIR_BASE}mptio'
-$(plot_inc:%=%) $(plot_inc:%=%_static) : INC+='${DIR_BASE}mptplot'
+$(cxx_inc:%=%) $(cxx_inc:%=%_static) : INC+='${MPT_BASE}/mpt++'
+$(io_inc:%=%) $(io_inc:%=%_static) : INC+='${MPT_BASE}/mptio'
+$(plot_inc:%=%) $(plot_inc:%=%_static) : INC+='${MPT_BASE}/mptplot'
 #
 # special test arguments
 test_config : ARGS=${PREFIX}
