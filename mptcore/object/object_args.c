@@ -54,7 +54,7 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 				return count ? count : MPT_ERROR(BadValue);
 			}
 			/* set non-assign options to default value */
-			if (!(str = strchr(str, '='))) {
+			if (!(str = strchr(pr.name, '='))) {
 				MPT_property_set_string(&pr, 0);
 			} else {
 				size_t len;
@@ -63,8 +63,8 @@ extern int mpt_object_args(MPT_INTERFACE(object) *obj, MPT_INTERFACE(iterator) *
 				if (len >= sizeof(name)) {
 					return count ? count : MPT_ERROR(MissingBuffer);
 				}
-				name[len++] = 0;
 				pr.name = memcpy(name, pr.name, len);
+				name[len++] = 0;
 			}
 			/* assign config */
 			if (mpt_object_set_value(obj, pr.name, &pr.val) < 0) {

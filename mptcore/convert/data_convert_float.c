@@ -118,7 +118,7 @@ extern int mpt_data_convert_float64(const double *from, int type, void *dest)
  */
 extern int mpt_data_convert_exflt(const long double *from, int type, void *dest)
 {
-	long double val;
+	long double val = 0.0L;
 	if (from) {
 		val = *from;
 	}
