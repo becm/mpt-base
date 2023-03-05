@@ -18,27 +18,21 @@ template class reference<layout>;
 template class reference<layout::line>;
 template class reference<layout::text>;
 
-template <> int type_properties<layout *>::id(bool obtain)
+/*!
+ * \ingroup mptLayout
+ * \brief get layout interface traits
+ * 
+ * Get named traits for layout pointer data.
+ * 
+ * \param obtain  trigger type registration
+ * 
+ * \return named traits for layout pointer
+ */
+const struct named_traits *layout::pointer_traits(bool obtain)
 {
-	const named_traits *traits = 0;
-	if (traits) {
-		return traits->type;
-	}
-	if (!obtain) {
-		return BadType;
-	}
-	if ((traits = mpt_type_metatype_add("mpt.layout"))) {
-		return traits->type;
-	}
-	return BadOperation;
-}
-
-template <> const struct type_traits *type_properties<layout *>::traits()
-{
-	static const struct type_traits *traits = 0;
-	if (!traits && !(traits = type_traits::get(id(true)))) {
-		static const struct type_traits fallback(sizeof(layout *));
-		traits = &fallback;
+	static const struct named_traits *traits = 0;
+	if (!traits && obtain && !(traits = type_traits::add_metatype("mpt.layout"))) {
+		traits = type_traits::add_metatype();
 	}
 	return traits;
 }
@@ -285,8 +279,7 @@ int layout::line::convert(int type, void *ptr)
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
-	else if (type == me) {
-		if (ptr) *static_cast<const line **>(ptr) = this;
+	else if (assign(this, type, ptr)) {
 		return me;
 	}
 	
@@ -383,7 +376,7 @@ int layout::text::convert(int type, void *ptr)
 	if (me < 0) {
 		me = TypeMetaPtr;
 	}
-	else if (assign(static_cast<text *>(this), type, ptr)) {
+	else if (assign(this, type, ptr)) {
 		return me;
 	}
 	if (!type) {

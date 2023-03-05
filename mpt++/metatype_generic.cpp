@@ -131,13 +131,13 @@ metatype::generic *metatype::generic::create(int type, const void *ptr)
  * 
  * \return new metatype
  */
-const struct named_traits *metatype::generic::traits(bool obtain)
+const struct named_traits *metatype::generic::pointer_traits(bool obtain)
 {
 	static const struct named_traits *traits = 0;
-	if (traits || !obtain) {
-		return traits;
+	if (!traits && obtain && !(traits = type_traits::add_metatype("generic"))) {
+		traits = type_traits::add_metatype();
 	}
-	return traits = type_traits::add_metatype("generic");
+	return traits;
 }
 
 __MPT_NAMESPACE_END

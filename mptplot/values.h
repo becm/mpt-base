@@ -127,6 +127,9 @@ MPT_STRUCT(laydest)
 	        wld,  /* target world */
 	        dim;  /* target dimension */
 };
+#ifdef __cplusplus
+template <> const struct type_traits *type_properties<laydest>::traits();
+#endif
 
 /*! value destination */
 MPT_STRUCT(valdest)
@@ -234,7 +237,7 @@ protected:
 	uint8_t  _flags;
 };
 #ifdef __cplusplus
-template<> const MPT_STRUCT(type_traits) *type_properties<value_store>::traits();
+template <> const MPT_STRUCT(type_traits) *type_properties<value_store>::traits();
 #endif
 
 MPT_STRUCT(rawdata_stage)
@@ -316,6 +319,9 @@ MPT_STRUCT(linepart)
 	        _cut,
 	        _trim;  /* remove fraction from line start/end */
 };
+#ifdef __cplusplus
+template <> const struct type_traits *type_properties<linepart>::traits();
+#endif
 
 MPT_STRUCT(value_apply)
 {
@@ -531,7 +537,10 @@ protected:
 };
 
 # if __cplusplus < 201103L
-template<> inline const MPT_STRUCT(type_traits) *type_properties<polyline::point>::traits() {
+template <> inline int type_properties<polyline::point>::id(bool require) {
+	return type_properties<point<double> >::id(require);
+}
+template <> inline const MPT_STRUCT(type_traits) *type_properties<polyline::point>::traits() {
 	return type_properties<point<double> >::traits();
 }
 # endif

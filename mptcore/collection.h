@@ -30,7 +30,7 @@ public:
 	
 	static const struct named_traits *pointer_traits();
 };
-template<> inline __MPT_CONST_TYPE int type_properties<collection *>::id(bool) {
+template <> inline __MPT_CONST_TYPE int type_properties<collection *>::id(bool) {
 	return TypeCollectionPtr;
 }
 template <> inline const struct type_traits *type_properties<collection *>::traits() {
@@ -57,8 +57,19 @@ public:
 	virtual metatype *create(const char *, int = -1) = 0;
 	virtual int bind(const relation *, logger * = logger::default_instance()) = 0;
 	
-	static const struct named_traits *pointer_traits();
+	static const struct named_traits *pointer_traits(bool = true);
 };
+template <> inline int type_properties<group *>::id(bool obtain) {
+	const named_traits *nt = group::pointer_traits(obtain);
+	if (!nt) {
+		return obtain ? BadOperation : BadType;
+	}
+	return nt->type;
+}
+template <> inline const struct type_traits *type_properties<group *>::traits() {
+	const named_traits *nt = group::pointer_traits(true);
+	return nt ? &nt->traits : 0;
+}
 
 /*! Relation implemetation using Group as current element */
 class collection::relation : public ::mpt::relation

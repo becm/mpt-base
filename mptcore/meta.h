@@ -96,7 +96,7 @@ public:
 	bool set(const char *, int);
 	
 	static basic *create(const char *, int = -1);
-	static const named_traits *traits(bool = false);
+	static const named_traits *pointer_traits(bool = true);
 };
 template <>
 class type_properties<metatype::basic *>
@@ -105,11 +105,14 @@ protected:
 	type_properties();
 public:
 	static inline int id(bool obtain = true) {
-		const named_traits *t = metatype::basic::traits(obtain);
-		return t ? t->type : static_cast<int>(BadOperation);
+		const named_traits *t = metatype::basic::pointer_traits(obtain);
+		if (t) {
+			return t->type;
+		}
+		return obtain ? BadOperation : BadType;
 	}
 	static inline const struct type_traits *traits(void) {
-		const named_traits *t = metatype::basic::traits(true);
+		const named_traits *t = metatype::basic::pointer_traits(true);
 		return t ? &t->traits : 0;
 	}
 };
@@ -119,7 +122,7 @@ class metatype::generic : public metatype
 {
 public:
 	static generic *create(int, const void *);
-	static const named_traits *traits(bool = false);
+	static const named_traits *pointer_traits(bool = true);
 	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
@@ -143,11 +146,15 @@ protected:
 	type_properties();
 public:
 	static inline int id(bool obtain = true) {
-		const named_traits *t = metatype::generic::traits(obtain);
-		return t ? t->type : static_cast<int>(BadOperation);
+		const named_traits *t = metatype::generic::pointer_traits(obtain);
+		if (t) {
+			return t->type;
+		}
+		return obtain ? BadOperation : BadType;
+		
 	}
 	static inline const struct type_traits *traits(void) {
-		const named_traits *t = metatype::generic::traits(true);
+		const named_traits *t = metatype::generic::pointer_traits();
 		return t ? &t->traits : 0;
 	}
 };
@@ -209,13 +216,13 @@ public:
 		return new value(_val);
 	}
 	
-	static const named_traits *traits(bool obtain = false)
+	static const named_traits *pointer_traits(bool obtain = true)
 	{
 		static const struct named_traits *traits = 0;
-		if (traits || !obtain) {
-			return traits;
+		if (!traits && obtain) {
+			traits = type_traits::add_metatype();
 		}
-		return traits = type_traits::add_metatype();
+		return traits;
 	}
 protected:
 	T _val;
@@ -226,12 +233,15 @@ class type_properties<metatype::value<T> *>
 protected:
 	type_properties();
 public:
-	static inline int id(bool obtain = true) {
-		const named_traits *t = metatype::value<T>::traits(obtain);
-		return t ? t->type : static_cast<int>(BadOperation);
+	static inline int id(bool obtain = false) {
+		const named_traits *t = metatype::value<T>::pointer_traits(obtain);
+		if (t) {
+			return t->type;
+		}
+		return obtain ? BadOperation : BadType;
 	}
 	static inline const struct type_traits *traits(void) {
-		const named_traits *t = metatype::value<T>::traits(true);
+		const named_traits *t = metatype::value<T>::pointer_traits(true);
 		return t ? &t->traits : 0;
 	}
 };

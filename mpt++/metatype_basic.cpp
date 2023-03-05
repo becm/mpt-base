@@ -118,13 +118,13 @@ metatype::basic *metatype::basic::create(const char *src, int len)
  * 
  * \return new metatype
  */
-const struct named_traits *metatype::basic::traits(bool obtain)
+const struct named_traits *metatype::basic::pointer_traits(bool obtain)
 {
 	static const struct named_traits *traits = 0;
-	if (traits || !obtain) {
-		return traits;
+	if (!traits && obtain && !(traits = type_traits::add_metatype("basic"))) {
+		traits = type_traits::add_metatype();
 	}
-	return traits = type_traits::add_metatype("basic");
+	return traits;
 }
 
 __MPT_NAMESPACE_END

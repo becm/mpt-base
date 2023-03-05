@@ -396,6 +396,8 @@ public:
 		return _font;
 	}
 	
+	static const named_traits *pointer_traits(bool = true);
+	
 	static const char *file_format();
 	
 	fpoint minimal_scale() const;
@@ -405,6 +407,19 @@ protected:
 	char *_alias;
 	char *_font;
 };
+template <> inline int type_properties<layout *>::id(bool obtain)
+{
+	const named_traits *n = layout::pointer_traits();
+	if (!n) {
+		return obtain ? BadOperation : BadType;
+	}
+	return n->type;
+}
+template <> inline const struct type_traits *type_properties<layout *>::traits()
+{
+	const named_traits *n = layout::pointer_traits();
+	return n ? &n->traits : 0;
+}
 
 class layout::line : public metatype, public object, public ::mpt::line
 {
@@ -496,6 +511,8 @@ protected:
 	item_array<axis> _axes;
 	item_array<data> _worlds;
 };
+template <> int type_properties<layout::graph *>::id(bool);
+template <> const struct type_traits *type_properties<layout::graph *>::traits();
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
 class layout::graph::transform3 : public reference< ::mpt::transform>::type

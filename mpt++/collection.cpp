@@ -31,40 +31,15 @@ const named_traits *collection::pointer_traits()
  * 
  * Get named traits for group pointer data.
  * 
+ * \param obtain  trigger type registration
+ * 
  * \return named traits for group pointer
  */
-const named_traits *group::pointer_traits()
+const named_traits *group::pointer_traits(bool obtain)
 {
 	static const named_traits *traits = 0;
-	if (!traits && !(traits = mpt_type_interface_add("mpt.group"))) {
+	if (!traits && obtain && !(traits = mpt_type_interface_add("mpt.group"))) {
 		traits = mpt_type_interface_add(0);
-	}
-	return traits;
-}
-
-template <> int type_properties<group *>::id(bool obtain) {
-	static const named_traits *traits = 0;
-	if (traits) {
-		return traits->type;
-	}
-	if (obtain && !(traits = group::pointer_traits())) {
-		return BadOperation;
-	}
-	return traits ? traits->type : static_cast<int>(BadType);
-}
-
-template <> const struct type_traits *type_properties<group *>::traits()
-{
-	static const struct type_traits *traits = 0;
-	if (!traits) {
-		const named_traits *nt = group::pointer_traits();
-		if (nt) {
-			traits = &nt->traits;
-		}
-		else {
-			static const struct type_traits fallback(sizeof(group *));
-			traits = &fallback;
-		}
 	}
 	return traits;
 }
