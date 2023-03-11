@@ -3,8 +3,6 @@
  *   type ID classification
  */
 
-#include <limits>
-
 #include "array.h"
 
 #include "convert.h"
@@ -41,14 +39,13 @@ float80::operator long double() const
 	return v;
 }
 
-value::value(const value &val) : _addr(val._addr), _type(val._type), _namespace(val._namespace)
+value::value(const value &val) : _addr(val._addr), _type(val._type)
 { }
 
 value &value::operator=(const value &val)
 {
 	_addr = val._addr;
 	_type = val._type;
-	_namespace = val._namespace;
 	return *this;
 }
 
@@ -57,17 +54,13 @@ int value::convert(int type, void *ptr) const
 	return mpt_value_convert(this, type, ptr);
 }
 
-bool value::set(int t, const void *d, int ns)
+bool value::set(int t, const void *d)
 {
-	if (t < 0 || t > std::numeric_limits<decltype(_type)>::max()) {
-		return false;
-	}
-	if (ns < 0 || ns > std::numeric_limits<decltype(_namespace)>::max()) {
+	if (t < 0 || t > _TypeValueMax) {
 		return false;
 	}
 	_addr = d;
 	_type = t;
-	_namespace = ns;
 	return true;
 }
 const char *value::string() const
@@ -84,13 +77,10 @@ const char *value::string() const
 }
 const struct iovec *value::vector(int to) const
 {
-	if (_namespace || !_type || !_addr) {
+	if (!_type || !_addr) {
 		return 0;
 	}
 	const struct iovec *vec = reinterpret_cast<const struct iovec *>(_addr);
-	if (!vec) {
-		return 0;
-	}
 	// accept all vector types
 	if (to < 0) {
 		return MPT_type_isVector(_type) ? vec : 0;
@@ -99,12 +89,16 @@ const struct iovec *value::vector(int to) const
 	if (to == 0) {
 		return (_type == TypeVector) ? vec : 0;
 	}
+	int type = MPT_type_toVector(to);
+	if (type <= 0) {
+		return 0;
+	}
 	// content must match specific type
-	return (_type == MPT_type_toVector(to)) ? vec : 0;
+	return (_type == static_cast<uintptr_t>(type)) ? vec : 0;
 }
 const array *value::array(int to) const
 {
-	if (_namespace || !_type || !_addr) {
+	if (!_type || !_addr) {
 		return 0;
 	}
 	// invalid source type

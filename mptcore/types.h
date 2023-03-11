@@ -36,14 +36,14 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeVectorSize)    = 0x20,
 #define MPT_type_isVector(v)      ((v) >= MPT_ENUM(_TypeVectorBase) && (v) < MPT_ENUM(_TypeVectorMax))
 #define MPT_type_toVector(v)      (MPT_type_isScalar(v) \
-		? (v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
+		? ((int)(v)) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
 		: MPT_ERROR(BadType))
 	MPT_ENUM(_TypeScalarBase)    = 0x60,
 	MPT_ENUM(_TypeScalarMax)     = 0x7a,
 	MPT_ENUM(_TypeScalarSize)    = 0x20,
 #define MPT_type_isScalar(v)      ((v) >= MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax))
 #define MPT_type_toScalar(v)      (MPT_type_isVector(v) \
-		? (v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
+		? ((int)(v)) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
 		: MPT_ERROR(BadType))
 	
 	/* vector types ('@'..'Z') */
@@ -68,31 +68,37 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeInterfaceBase) = 0x80,
 	MPT_ENUM(_TypeInterfaceAdd)  = MPT_ENUM(_TypeInterfaceBase) + 0x10,
 	MPT_ENUM(_TypeInterfaceMax)  = MPT_ENUM(_TypeInterfaceBase) + 0x3f,
-	MPT_ENUM(_TypeInterfaceSize) = 0x40,
 #define MPT_type_isInterface(v)   ((v) >= MPT_ENUM(_TypeInterfaceBase) && (v) <= MPT_ENUM(_TypeInterfaceMax))
 	
-	MPT_ENUM(_TypeDynamicBase)   = MPT_ENUM(_TypeInterfaceBase) + MPT_ENUM(_TypeInterfaceSize),
+	MPT_ENUM(_TypeDynamicBase)   = MPT_ENUM(_TypeInterfaceMax) + 1,
 	MPT_ENUM(_TypeDynamicMax)    = 0xff,
-	MPT_ENUM(_TypeDynamicSize)   = 0x100 - MPT_ENUM(_TypeDynamicBase),
 #define MPT_type_isDynamic(v)     ((v) >= MPT_ENUM(_TypeDynamicBase) && (v) <= MPT_ENUM(_TypeDynamicMax))
 	
 	MPT_ENUM(_TypeMetaPtrBase)   = 0x100,
-	MPT_ENUM(_TypeMetaPtrMax)    = 0xfff,
-	MPT_ENUM(_TypeMetaPtrSize)   = 0xf00,
+	MPT_ENUM(_TypeMetaPtrMax)    = 0x7ff,
 #define MPT_type_isMetaPtr(v)     ((v) >= MPT_ENUM(_TypeMetaPtrBase) && (v) <= MPT_ENUM(_TypeMetaPtrMax))
 	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaPtrBase),
 #define MPT_type_isConvertable(v) ((v) == MPT_ENUM(TypeConvertablePtr) || (v) == MPT_ENUM(TypeMetaRef) || MPT_type_isMetaPtr(v))
 	
 	/* generic complex types */
-	MPT_ENUM(_TypeValueBase)     = 0x1000,
-	/* static types with non-trivial content */
-	MPT_ENUM(TypeIdentifier)     = 0x1000,
-	MPT_ENUM(TypeMetaRef)        = 0x1001,
-	MPT_ENUM(TypeArray)          = 0x1002,
-	/* dynamic types with non-trivial content */
-	MPT_ENUM(_TypeValueAdd)      = 0x1100,
-	MPT_ENUM(_TypeValueMax)      = 0x3fff,
-	MPT_ENUM(_TypeValueSize)     = 0x3000
+	MPT_ENUM(_TypeValueBase)     = 0x800,
+	/* static types with managed content */
+	MPT_ENUM(TypeIdentifier)     = 0x800,
+	MPT_ENUM(TypeMetaRef)        = 0x801,
+	MPT_ENUM(TypeArray)          = 0x802,
+	/* dynamic types with managed content */
+	MPT_ENUM(_TypeValueAdd)      = 0x900,
+	MPT_ENUM(_TypeValueMax)      = 0xfff
+	
+	/* Higher type IDs (4096+) correspond to private/local types.
+	 * 
+	 * Must be set to a unique runtime-dependend address:
+	 *  - a function or its string alias (value._type = __func__)
+	 *  - address of a static variable
+	 * 
+	 * This assumption should ONLY be a problem on broken systems where
+	 * data or code mappings in the NULL page (0..4095) are valid!
+	 */
 };
 
 MPT_STRUCT(float80)
@@ -151,7 +157,7 @@ MPT_STRUCT(named_traits)
 MPT_STRUCT(value)
 {
 #ifdef __cplusplus
-	inline value() : _addr(0), _type(0), _namespace(0)
+	inline value() : _addr(0), _type(0)
 	{ }
 	value(const value &);
 	
@@ -167,16 +173,25 @@ MPT_STRUCT(value)
 	operator T *() const;
 	
 	int convert(int , void *) const;
-	bool set(int , const void *, int = 0);
-	void clear();
+	bool set(int , const void *);
 	
+	inline void clear()
+	{
+		_addr = 0;
+		_type = 0;
+	}
+	inline void set(const char *id, const void *ptr)
+	{
+		_addr = ptr;
+		_type = reinterpret_cast<uintptr_t>(id);
+	}
 	inline int type() const
 	{
-		return _namespace ? static_cast<int>(BadType) : _type;
+		return _type > _TypeValueMax ? static_cast<int>(BadType) : _type;
 	}
-	inline const void *data(int type = 0) const
+	inline const void *data() const
 	{
-		return (!_namespace && (!type || (type == _type))) ? _addr : 0;
+		return _type > _TypeValueMax ? 0 : _addr;
 	}
 	
 	const char *string() const;
@@ -184,16 +199,14 @@ MPT_STRUCT(value)
 	const struct array *array(int = 0) const;
 protected:
 #else
-# define MPT_VALUE_INIT(t, p) { (p), (t), 0 }
+# define MPT_VALUE_INIT(t, p) { (p), (t) }
 # define MPT_value_set(v, t, p) ( \
 	(v)->_addr = (p), \
-	(v)->_type = (t), \
-	(v)->_namespace = 0)
-# define MPT_value_isBaseType(v) ((v)->_type && !((v)->_namespace))
+	(v)->_type = (t))
+# define MPT_value_isBaseType(v) ((v)->_type && ((v)->_type <= MPT_ENUM(_TypeValueMax)))
 #endif
 	const void *_addr;    /* address of value data */
-	uint16_t _type;       /* type identifier (in namespace) */
-	uint16_t _namespace;  /* type namespace */
+	uintptr_t   _type;    /* type identifier */
 };
 
 /*! generic iterator interface */
@@ -389,8 +402,6 @@ inline value &value::operator=(const T &val)
 		_addr = &val;
 		_type = t;
 	}
-	_namespace = 0;
-	
 	return *this;
 }
 template <typename T>
@@ -672,7 +683,7 @@ template<typename T>
 mpt::value::operator T *() const
 {
 	int type = mpt::type_properties<T *>::id(true);
-	if (type < 0 || _namespace || !_type || !_addr) {
+	if (type < 0 || !_type || !_addr) {
 		return 0;
 	}
 	if (_type == type) {

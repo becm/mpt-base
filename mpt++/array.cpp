@@ -329,7 +329,7 @@ int array::set(const value &val)
 		ptr = base;
 		traits = type_traits::get('c');
 	}
-	// put scalar entity as single rrray element
+	// put scalar entity as single array element
 	else if ((traits = type_traits::get(type))) {
 		len = ptr ? traits->size : 0;
 		reserve = len;

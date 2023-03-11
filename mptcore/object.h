@@ -46,13 +46,11 @@ public:
 		return set(type_properties<T>::id(true), &val);
 	}
 #else
-# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT(0, 0), { 0 }, { 0 } }
+# define MPT_PROPERTY_INIT { 0, 0, MPT_VALUE_INIT(0, 0), { 0 } }
 # define MPT_property_set_string(p, s) ( \
-	(p)->val._namespace = 0, \
 	(p)->val._type = 's', \
 	(p)->val._addr = (*((const char **) (p)->_buf) = (s), (p)->_buf))
 # define MPT_property_set_data(p, t, d) ( \
-	(p)->val._namespace = 0, \
 	(p)->val._type = (t), \
 	(p)->val._addr = (sizeof(*(d)) > sizeof((p)->_buf)) ? 0 : memcpy((p)->_buf, (d), sizeof(*(d))))
 #endif
@@ -62,9 +60,8 @@ public:
 #ifdef __cplusplus
 private:
 #endif
-	/* compile-time detection of (sizeof(mpt::value) % sizeof(void *)) */
-	uint8_t _pad[UINTPTR_MAX > UINT32_MAX ? sizeof(uint32_t) : 0];
-	uint8_t _buf[(UINTPTR_MAX <= UINT32_MAX ? sizeof(uint32_t) : 0) + 2 * sizeof(void*)];
+	/* compile-time detection of sizeof(void *) */
+	uint8_t _buf[UINTPTR_MAX <= UINT32_MAX ? 4 * sizeof(uint32_t) : 2 * sizeof(void*)];
 }
 #endif /* _MPT_TYPES_H */
 ;

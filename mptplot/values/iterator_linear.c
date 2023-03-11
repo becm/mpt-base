@@ -181,10 +181,6 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 	if (!val) {
 		iv = 10;
 	}
-	else if (val->_namespace) {
-		errno = EINVAL;
-		return 0;
-	}
 	else if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
 		MPT_INTERFACE(iterator) *it = *((void * const *) val->_addr);
 		

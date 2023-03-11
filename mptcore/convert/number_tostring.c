@@ -27,12 +27,10 @@
 extern int mpt_number_tostring(const MPT_STRUCT(value) *val, MPT_STRUCT(value_format) fmt, char *dest, size_t left)
 {
 	const void *arg;
-	int type, flg, sgn, len, dec;
+	uintptr_t type;
+	int flg, sgn, len, dec;
 	uint8_t wd;
 	
-	if (val->_namespace) {
-		return MPT_ERROR(BadArgument);
-	}
 	if (!(type = val->_type)) {
 		return MPT_ERROR(BadType);
 	}

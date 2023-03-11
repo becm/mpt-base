@@ -28,7 +28,7 @@ extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *des
 	
 	/* skip current value */
 	if (!type) {
-		if (val && !val->_namespace) {
+		if (val && (val->_type <= MPT_ENUM(_TypeValueMax))) {
 			type = val->_type;
 		}
 		if ((ret = it->_vptr->advance(it)) < 0) {

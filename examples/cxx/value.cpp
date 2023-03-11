@@ -53,5 +53,7 @@ extern int main(int , char * const [])
 	std::cout << basetype(v = i) << ": " << v << std::endl;
 	std::cout << basetype(v = i - 13) << ": " << v << std::endl;
 	
+	v.set("self", &v);
+	
 	return !(i == l);
 }

@@ -16,7 +16,7 @@ static ssize_t writeOutStream(void *p, const char *str, size_t len)
 std::ostream &operator<<(std::ostream &o, const mpt::value &val)
 {
 	// skip output for unset/empty value
-	if (val.type() <= 0 || !val.data()) {
+	if (val.type() == 0 || !val.data()) {
 		return o;
 	}
 	// print value content, invalidate stream on unsupported data

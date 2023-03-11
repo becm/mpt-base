@@ -19,6 +19,12 @@
 #define basic_type(t, s) { sizeof(s), (t) }
 #define pointer_type(t)  { sizeof(void *), (t) }
 
+static const int TypeInterfaceSize = 
+	MPT_ENUM(_TypeInterfaceMax) - MPT_ENUM(_TypeInterfaceBase) + 1;
+
+static const int TypeDynamicSize = 
+	MPT_ENUM(_TypeInterfaceMax) - MPT_ENUM(_TypeInterfaceBase) + 1;
+
 static const struct {
 	const uint8_t size, type;
 }
@@ -209,7 +215,7 @@ static void _interfaces_fini(void) {
 }
 static void _interfaces_init(void) {
 	size_t i;
-	if (!(interface_types = calloc(MPT_ENUM(_TypeInterfaceSize), sizeof(*interface_types)))) {
+	if (!(interface_types = calloc(TypeInterfaceSize, sizeof(*interface_types)))) {
 		return;
 	}
 	for (i = 0; i < MPT_arrsize(core_interfaces); i++) {
@@ -556,13 +562,13 @@ extern int mpt_type_basic_add(size_t size)
 		size = sizeof(void *);
 	}
 	if (!dynamic_types) {
-		dynamic_types = calloc(MPT_ENUM(_TypeDynamicSize), sizeof(*dynamic_types));
+		dynamic_types = calloc(TypeDynamicSize, sizeof(*dynamic_types));
 		if (!dynamic_types) {
 			return MPT_ERROR(BadOperation);
 		}
 		atexit(_dynamic_fini);
 	}
-	if (dynamic_pos < MPT_ENUM(_TypeDynamicSize)) {
+	if (dynamic_pos < TypeDynamicSize) {
 		const MPT_STRUCT(type_traits) traits = MPT_TYPETRAIT_INIT(size);
 		memcpy(&dynamic_types[dynamic_pos], &traits, sizeof(*dynamic_types));
 		return MPT_ENUM(_TypeDynamicBase) + dynamic_pos++;
@@ -661,7 +667,7 @@ extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *name)
 	MPT_STRUCT(named_traits) *elem;
 	MPT_STRUCT(type_traits) *traits;
 	size_t nlen = 0;
-	if (interface_pos >= (MPT_ENUM(_TypeInterfaceSize))) {
+	if (interface_pos >= TypeInterfaceSize) {
 		errno = ENOMEM;
 		return 0;
 	}

@@ -121,23 +121,24 @@ public:
 class metatype::generic : public metatype
 {
 public:
-	static generic *create(int, const void *);
-	static const named_traits *pointer_traits(bool = true);
-	
 	int convert(int , void *) __MPT_OVERRIDE;
 	
 	uintptr_t addref() __MPT_OVERRIDE;
 	void unref() __MPT_OVERRIDE;
 	generic *clone() const __MPT_OVERRIDE;
+	
+	static generic *create(int, const void *);
+	static const named_traits *pointer_traits(bool = true);
 private:
 	refcount _ref;
 protected:
-	generic(const type_traits *, int );
-	static generic *create(int, const type_traits *, const void *);
+	static generic *create(uintptr_t , const void *, const type_traits &);
+	
+	generic();
 	virtual ~generic();
-	void *_val;
 	const type_traits *_traits;
-	unsigned int _valtype;
+	void *_val;
+	uintptr_t _type;
 };
 template <>
 class type_properties<metatype::generic *>
@@ -154,7 +155,7 @@ public:
 		
 	}
 	static inline const struct type_traits *traits(void) {
-		const named_traits *t = metatype::generic::pointer_traits();
+		const named_traits *t = metatype::generic::pointer_traits(true);
 		return t ? &t->traits : 0;
 	}
 };

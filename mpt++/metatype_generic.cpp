@@ -13,40 +13,45 @@
 
 __MPT_NAMESPACE_BEGIN
 
-metatype::generic::generic(const type_traits *traits, int type) :
-	_val(0),
-	_traits(traits)
-{
-	_valtype = type > 0 ? type : 0;
-}
+metatype::generic::generic() : _traits(0), _val(0), _type(0)
+{ }
 
 metatype::generic::~generic()
 {
-	if (_traits && _traits->fini) {
+	if (_val && _traits && _traits->fini) {
 		_traits->fini(_val);
 	}
+	_val = 0;
 }
 
 int metatype::generic::convert(int type, void *ptr)
 {
+	int valtype = mpt::type_properties< ::mpt::value>::id(true);
+	
 	if (!type) {
 		metatype::convert(type, ptr);
-		return _valtype ? _valtype : mpt::type_properties< ::mpt::value>::id(true);
+		return _type ? _type : valtype;
 	}
 	if (type == TypeMetaPtr) {
 		if (ptr) {
 			*static_cast<metatype **>(ptr) = this;
 		}
-		return _valtype ? _valtype : static_cast<int>(TypeMetaPtr);
+		return _type ? _type : static_cast<int>(TypeMetaPtr);
 	}
 	int me = mpt::type_properties<generic *>::id(true);
 	if (me > 0 && type == me) {
 		if (ptr) {
 			*static_cast<generic **>(ptr) = this;
 		}
-		return _valtype ? _valtype : static_cast<int>(TypeMetaPtr);
+		return _type ? _type : static_cast<int>(TypeMetaPtr);
 	}
-	data_converter_t conv = mpt_data_converter(_valtype);
+	if (valtype > 0 && type == valtype) {
+		if (ptr) {
+			static_cast< ::mpt::value *>(ptr)->set(_type, _val);
+		}
+		return me > 0 ? me : mpt::type_properties< ::mpt::metatype *>::id(true);
+	}
+	data_converter_t conv = mpt_data_converter(_type);
 	if (conv && (type = conv(_val, type, ptr)) >= 0) {
 		return type;
 	}
@@ -61,45 +66,44 @@ uintptr_t metatype::generic::addref()
 void metatype::generic::unref()
 {
 	if (!_ref.lower()) {
-		if (_traits && _traits->fini) {
-			_traits->fini(_val);
-		}
 		delete this;
 	}
 }
 
 metatype::generic *metatype::generic::clone() const
 {
-	return create(_valtype, _traits, _val);
+	return create(_type, _val, *_traits);
 }
 
-metatype::generic *metatype::generic::create(int type, const type_traits *traits, const void *ptr)
+metatype::generic *metatype::generic::create(uintptr_t type, const void *ptr, const type_traits &traits)
 {
-	if (!traits || !traits->size) {
+	if (!traits.size) {
 		errno = EINVAL;
 		return 0;
 	}
 	metatype::generic *mt;
-	void *data = malloc(sizeof(*mt) + traits->size);
+	void *data = malloc(sizeof(*mt) + traits.size);
 	if (!data) {
 		return 0;
 	}
 	void *val = static_cast<metatype::generic *>(data) + 1;
-	if (!traits->init) {
+	if (!traits.init) {
 		if (ptr) {
-			memcpy(val, ptr, traits->size);
+			memcpy(val, ptr, traits.size);
 		}
 		else {
-			memset(val, 0, traits->size);
+			memset(val, 0, traits.size);
 		}
 	}
-	else if (traits->init(val, ptr) < 0) {
+	else if (traits.init(val, ptr) < 0) {
 		free(data);
 		return 0;
 	}
 	
-	mt = new (data) metatype::generic(traits, type);
+	mt = new (data) metatype::generic();
+	mt->_traits = &traits;
 	mt->_val = val;
+	mt->_type = type;
 	
 	return mt;
 }
@@ -118,7 +122,11 @@ metatype::generic *metatype::generic::create(int type, const type_traits *traits
  */
 metatype::generic *metatype::generic::create(int type, const void *ptr)
 {
-	return create(type, type_traits::get(type), ptr);
+	const type_traits *tt = type_traits::get(type);
+	if (!tt) {
+		return 0;
+	}
+	return create(type, ptr, *tt);
 }
 
 /*!
