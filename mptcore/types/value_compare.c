@@ -23,7 +23,7 @@ extern int mpt_value_compare(const MPT_STRUCT(value) *val, const void *cmp)
 	const MPT_STRUCT(type_traits) *traits;
 	int pos;
 	
-	if (!MPT_value_isBaseType(val) || !(traits = mpt_type_traits(val->_type))) {
+	if (!(traits = mpt_type_traits(val->_type))) {
 		return MPT_ERROR(BadType);
 	}
 	if (!(pos = traits->size)) {

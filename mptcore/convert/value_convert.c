@@ -40,10 +40,6 @@ extern int mpt_value_convert(const MPT_STRUCT(value) *val, int type, void *dest)
 	if (type <= 0) {
 		return MPT_ERROR(BadArgument);
 	}
-	/* type must be generic */
-	if (!MPT_value_isBaseType(val)) {
-		return MPT_ERROR(BadType);
-	}
 	/* try specialized converter for type */
 	if ((conv = mpt_data_converter(val->_type))) {
 		if ((ret = conv(src, type, dest)) >= 0) {

@@ -19,9 +19,6 @@
  */
 extern int mpt_range_set(MPT_STRUCT(range) *r, const MPT_STRUCT(value) *val)
 {
-	if (!MPT_value_isBaseType(val)) {
-		return MPT_ERROR(BadArgument);
-	}
 	if (val->_type == 's') {
 		
 	}

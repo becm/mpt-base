@@ -41,7 +41,6 @@ static int mprint(void *data, const MPT_STRUCT(property) *prop)
 	
 	if (prop 
 	 && (ptr = prop->val._addr)
-	 && MPT_value_isBaseType(&prop->val)
 	 && !(text = mpt_data_tostring(&ptr, prop->val._type, &avail))) {
 		char buf[1024];
 		struct iovec vec;

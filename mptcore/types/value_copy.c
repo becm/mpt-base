@@ -23,8 +23,8 @@ extern ssize_t mpt_value_copy(const MPT_STRUCT(value) *src, void *dest, size_t m
 {
 	const MPT_STRUCT(type_traits) *traits;
 	
-	/* only allow global types */
-	if (!MPT_value_isBaseType(src) || !(traits = mpt_type_traits(src->_type))) {
+	/* only allow types with known traits */
+	if (!(traits = mpt_type_traits(src->_type))) {
 		return MPT_ERROR(BadArgument);
 	}
 	/* copy only valid for non-complex types */

@@ -59,8 +59,9 @@ extern int mpt_notify_change(MPT_STRUCT(notify) *no, MPT_INTERFACE(input) *next,
 	/* assign new target */
 	if (!val) {
 		ret = obj->_vptr->set_property(obj, 0, 0);
-	} else if (MPT_value_isBaseType(val) && val->_type == 's') {
+	} else if (val->_addr && val->_type == 's') {
 		const char *str = *((char * const *) val->_addr);
+		/* enable string conversion and iterator */
 		ret = mpt_object_set_string(obj, 0, str, 0);
 	} else {
 		ret = mpt_object_set_value(obj, 0, val);

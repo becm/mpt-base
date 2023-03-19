@@ -89,15 +89,22 @@ enum MPT_ENUM(Types)
 	/* dynamic types with managed content */
 	MPT_ENUM(_TypeValueAdd)      = 0x900,
 	MPT_ENUM(_TypeValueMax)      = 0xfff
+# define MPT_type_isShared(v) ((v) > 0 && ((v) <= MPT_ENUM(_TypeValueMax)))
 	
 	/* Higher type IDs (4096+) correspond to private/local types.
 	 * 
-	 * Must be set to a unique runtime-dependend address:
-	 *  - a function or its string alias (value._type = __func__)
-	 *  - address of a static variable
+	 * Can be any kind of valid guaranteed unique but fixed runtime value:
+	 *  - a function address or its string alias (value._type = __func__)
+	 *  - address of a (*static* or otherwise) *global* variable
+	 *  - dlopen()/dlsym() return values
 	 * 
-	 * This assumption should ONLY be a problem on broken systems where
-	 * data or code mappings in the NULL page (0..4095) are valid!
+	 * This assumption should generally ONLY be a problem on broken systems
+	 * where data or code mappings in the NULL page (0..4095) are valid!
+	 * 
+	 * It could also lead to potential type confusions on atypical uses of
+	 * `dlclose()`, especially on non-ASLR platforms.
+	 * Normally, this type of reference would not exceed the lifetime of the
+	 * corresponding code mapping it was created in and can be used with.
 	 */
 };
 
@@ -203,7 +210,6 @@ protected:
 # define MPT_value_set(v, t, p) ( \
 	(v)->_addr = (p), \
 	(v)->_type = (t))
-# define MPT_value_isBaseType(v) ((v)->_type && ((v)->_type <= MPT_ENUM(_TypeValueMax)))
 #endif
 	const void *_addr;    /* address of value data */
 	uintptr_t   _type;    /* type identifier */

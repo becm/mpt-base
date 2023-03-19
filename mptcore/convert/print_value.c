@@ -33,10 +33,6 @@ extern int mpt_print_value(const MPT_STRUCT(value) *val, ssize_t (*save)(void *,
 	int type, curr, adv;
 	char buf[256];
 	
-	/* only base types allowed */
-	if (!MPT_value_isBaseType(val)) {
-		return MPT_ERROR(BadType);
-	}
 	/* missing content */
 	if (!(ptr = val->_addr)) {
 		return MPT_ERROR(BadValue);
