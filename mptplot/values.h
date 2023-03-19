@@ -268,19 +268,36 @@ MPT_STRUCT(rawdata_stage)
 MPT_INTERFACE(rawdata)
 {
 public:
-	virtual int modify(unsigned , int , const void *, size_t , const valdest * = 0) = 0;
+	virtual int modify(unsigned , const value &, const valdest * = 0) = 0;
 	virtual int advance() = 0;
 	
 	virtual const MPT_STRUCT(value_store) *values(unsigned , int = -1) const = 0;
 	virtual long dimension_count(int = -1) const = 0;
 	virtual long stage_count() const = 0;
+	
+	template<typename T>
+	int set_data(unsigned dim, const T *data, unsigned count = 1)
+	{
+		int type = type_properties<T>::id();
+		if (type < 0) {
+			return type;
+		}
+		value v;
+		if (count == 1) {
+			v.set(type, data);
+			return modify(dim, v);
+		}
+		span<const T> d(data, count);
+		v = d;
+		return modify(dim, v);
+	}
 protected:
 	inline ~rawdata() { }
 };
 #else
 MPT_INTERFACE(rawdata);
 MPT_INTERFACE_VPTR(rawdata) {
-	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , int , const void *, size_t , const MPT_STRUCT(valdest) *);
+	int (*modify)(MPT_INTERFACE(rawdata) *, unsigned , const MPT_STRUCT(value) *, const MPT_STRUCT(valdest) *);
 	int (*advance)(MPT_INTERFACE(rawdata) *);
 	
 	const MPT_STRUCT(value_store) *(*values)(const MPT_INTERFACE(rawdata) *, unsigned , int);
@@ -441,16 +458,6 @@ __MPT_EXTDECL_END
 #ifdef __cplusplus
 long maxsize(span<const value_store>, const struct type_traits * = 0);
 
-template <typename T>
-inline int modify(rawdata &rd, unsigned dim, const span<const T> &data, const valdest * dest = 0)
-{
-	static int type = 0;
-	if (type <= 0 && ((type = type_properties<T>::id(true)) < 0)) {
-		return BadValue;
-	}
-	return rd.modify(dim, type, data.begin(), data.size() * sizeof(T), dest);
-}
-
 inline linepart::linepart(int usr, int raw) : raw(raw >= 0 ? raw : usr), usr(usr), _cut(0), _trim(0)
 { }
 
@@ -574,7 +581,7 @@ public:
 	cycle *clone() const __MPT_OVERRIDE;
 	
 	/* basic raw data interface */
-	int modify(unsigned , int , const void *, size_t , const valdest * = 0) __MPT_OVERRIDE;
+	int modify(unsigned , const ::mpt::value &, const valdest * = 0) __MPT_OVERRIDE;
 	int advance() __MPT_OVERRIDE;
 	
 	const MPT_STRUCT(value_store) *values(unsigned , int = -1) const __MPT_OVERRIDE;

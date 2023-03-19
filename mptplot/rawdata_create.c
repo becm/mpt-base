@@ -78,19 +78,35 @@ static MPT_INTERFACE(metatype) *rd_clone(const MPT_INTERFACE(metatype) *mt)
 	return 0;
 }
 /* raw data interface */
-static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const void *src, size_t len, const MPT_STRUCT(valdest) *vd)
+static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, const MPT_STRUCT(value) *val, const MPT_STRUCT(valdest) *vd)
 {
 	const MPT_STRUCT(type_traits) *traits, *stage_traits;
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, ptr, _rd);
 	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(rawdata_stage) *st;
-	MPT_STRUCT(value_store) *val;
+	MPT_STRUCT(value_store) *store;
 	void *dest;
+	const void *src;
+	size_t len = 0;
+	uintptr_t type;
 	uint32_t nc = 0, cycles;
 	
+	
+	if ((type = MPT_type_toScalar(val->_type)) > 0) {
+		const struct iovec *vec = val->_addr;
+		src = vec->iov_base;
+		len = vec->iov_len;
+	}
+	else {
+		type = val->_type;
+		src  = val->_addr;
+	}
 	/* get traits for data type */
 	if (!(traits = mpt_type_traits(type))) {
 		return MPT_ERROR(BadType);
+	}
+	if (type == val->_type) {
+		len = traits->size;
 	}
 	if (!(stage_traits = mpt_stage_traits())) {
 		return MPT_ERROR(BadOperation);
@@ -126,14 +142,14 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, int type, const 
 		return MPT_ERROR(BadOperation);
 	}
 	/* get value store for dimension */
-	if (!(val = mpt_stage_data(st, dim))) {
+	if (!(store = mpt_stage_data(st, dim))) {
 		return MPT_ERROR(BadOperation);
 	}
 	/* assign new data */
-	if (!(dest = mpt_array_set(&val->_d, traits, len, src, vd ? vd->offset : 0))) {
+	if (!(dest = mpt_array_set(&store->_d, traits, len, src, vd ? vd->offset : 0))) {
 		return MPT_ERROR(BadOperation);
 	}
-	return val->_flags;
+	return store->_flags;
 }
 static int rd_advance(MPT_INTERFACE(rawdata) *ptr)
 {

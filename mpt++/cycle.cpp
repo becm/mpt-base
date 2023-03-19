@@ -52,16 +52,37 @@ cycle *cycle::clone() const
 	return ret;
 }
 
-int cycle::modify(unsigned dim, int type, const void *src, size_t len, const valdest *vd)
+int cycle::modify(unsigned dim, const ::mpt::value &val, const valdest *vd)
 {
 	if (_max_dimensions && dim >= _max_dimensions) {
 		return BadArgument;
 	}
+	int valtype;
+	
+	if ((valtype = val.type()) < 0) {
+		return valtype;
+	}
+	
 	const struct type_traits *source_traits;
+	int type;
+	const void *src;
+	size_t len;
+	if ((type = MPT_type_toScalar(valtype)) > 0) {
+		const struct iovec *vec = val.vector(type);
+		src = vec->iov_base;
+		len = vec->iov_len;
+	}
+	else {
+		type = valtype;
+		src  = val.data();
+	}
 	if (!(source_traits = type_traits::get(type))) {
 		return BadType;
 	}
-	if (len % source_traits->size) {
+	if (type == valtype) {
+		len = source_traits->size;
+	}
+	else if (len % source_traits->size) {
 		return MissingData;
 	}
 	len /= source_traits->size;
@@ -83,13 +104,13 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 			return BadOperation;
 		}
 	}
-	value_store *val = st->rawdata_stage::values(dim);
-	if (!val) {
+	value_store *store = st->rawdata_stage::values(dim);
+	if (!store) {
 		return BadValue;
 	}
 	long off = vd ? vd->offset : 0;
 	const content<double> *buf;
-	if (!(buf = static_cast<content<double>*>(val->reserve(len + off, *type_properties<double>::traits())))) {
+	if (!(buf = static_cast<content<double>*>(store->reserve(len + off, *type_properties<double>::traits())))) {
 		return BadOperation;
 	}
 	double *ptr = buf->begin() + off;
@@ -137,9 +158,9 @@ int cycle::modify(unsigned dim, int type, const void *src, size_t len, const val
 		return BadType;
 	}
 	// update dimension and invalidate view
-	val->set_modified();
+	store->set_modified();
 	st->invalidate();
-	return val->flags();
+	return store->flags();
 }
 const MPT_STRUCT(value_store) *cycle::values(unsigned dim, int nc) const
 {

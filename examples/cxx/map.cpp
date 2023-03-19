@@ -35,10 +35,12 @@ extern int main(int , char * const [])
 	}
 	
 	double data[] = { 1, 2, 3 };
-	c.instance()->modify(1, 'd', data, sizeof(data));
+	value v;
+	v = data[0];
+	c.instance()->modify(1, v);
 	c.instance()->advance();
-	modify(*c.instance(), 0, span<const double>(data + 1, 2));
-	modify(*c.instance(), 1, span<const double>(data + 2, 1));
+	c.instance()->set_data(0, data + 1, 2);
+	c.instance()->set_data(1, data + 2, 1);
 	
 	typed_array<reference<cycle>> r = p.values();
 	
