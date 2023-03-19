@@ -143,11 +143,6 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 	if (val) {
 		uint32_t iter;
 		
-		if (!MPT_value_isBaseType(val)) {
-			errno = EINVAL;
-			return 0;
-		}
-		
 		if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
 			MPT_INTERFACE(iterator) *it = *((MPT_INTERFACE(iterator) * const *) val->_addr);
 			int cont = 0, ret;
@@ -237,6 +232,10 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_factor(MPT_STRUCT(value) *val)
 				errno = EINVAL;
 				return 0;
 			}
+		}
+		else {
+			errno = EINVAL;
+			return 0;
 		}
 	}
 	if (!(data = malloc(sizeof(*data)))) {

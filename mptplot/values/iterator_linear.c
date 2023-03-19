@@ -211,6 +211,10 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_linear(MPT_STRUCT(value) *val)
 			return 0;
 		}
 	}
+	else {
+		errno = EINVAL;
+		return 0;
+	}
 	return mpt_iterator_linear(iv + 1, r.min, r.max);
 }
 
@@ -234,11 +238,6 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 	if (val) {
 		const char *str;
 		int ret;
-		
-		if (!MPT_value_isBaseType(val)) {
-			errno = EINVAL;
-			return 0;
-		}
 		
 		if (val->_type == MPT_ENUM(TypeIteratorPtr)) {
 			MPT_INTERFACE(iterator) *it = *((void * const *) val->_addr);
@@ -277,6 +276,11 @@ extern MPT_INTERFACE(metatype) *_mpt_iterator_range(MPT_STRUCT(value) *val)
 				return 0;
 			}
 		}
+		else {
+			errno = EINVAL;
+			return 0;
+		}
+		
 		if (step > (r.max - r.min)
 		  || step < (r.max - r.min) * 1e-6) {
 			errno = ERANGE;
