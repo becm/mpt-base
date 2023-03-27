@@ -20,7 +20,7 @@ MPT_INTERFACE(client) : public metatype
 {
 public:
 	/* metatype interface */
-	int convert(int , void *) __MPT_OVERRIDE;
+	int convert(value_t , void *) __MPT_OVERRIDE;
 	
 	/* client extensions */
 	virtual int dispatch(event * = 0);

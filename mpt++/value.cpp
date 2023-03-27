@@ -49,20 +49,11 @@ value &value::operator=(const value &val)
 	return *this;
 }
 
-int value::convert(int type, void *ptr) const
+int value::convert(value_t type, void *ptr) const
 {
 	return mpt_value_convert(this, type, ptr);
 }
 
-bool value::set(int t, const void *d)
-{
-	if (t < 0 || t > _TypeValueMax) {
-		return false;
-	}
-	_addr = d;
-	_type = t;
-	return true;
-}
 const char *value::string() const
 {
 	if (_type == 's') {
@@ -75,28 +66,24 @@ const char *value::string() const
 	const void *ptr = _addr;
 	return mpt_data_tostring(&ptr, _type, 0);
 }
-const struct iovec *value::vector(int to) const
+const struct iovec *value::vector(value_t to) const
 {
 	if (!_type || !_addr) {
 		return 0;
 	}
 	const struct iovec *vec = reinterpret_cast<const struct iovec *>(_addr);
 	// accept all vector types
-	if (to < 0) {
+	if (!to) {
 		return MPT_type_isVector(_type) ? vec : 0;
 	}
-	// raw data only
-	if (to == 0) {
-		return (_type == TypeVector) ? vec : 0;
-	}
-	int type = MPT_type_toVector(to);
-	if (type <= 0) {
+	value_t type = MPT_type_toVector(to);
+	if (!type) {
 		return 0;
 	}
 	// content must match specific type
-	return (_type == static_cast<uintptr_t>(type)) ? vec : 0;
+	return (_type == type) ? vec : 0;
 }
-const array *value::array(int to) const
+const array *value::array(value_t to) const
 {
 	if (!_type || !_addr) {
 		return 0;
@@ -106,7 +93,7 @@ const array *value::array(int to) const
 		return 0;
 	}
 	const mpt::array *arr = reinterpret_cast<const mpt::array *>(_addr);
-	if (to < 0 || !arr) {
+	if (!to || !arr) {
 		return arr;
 	}
 	const array::content *d = arr->data();

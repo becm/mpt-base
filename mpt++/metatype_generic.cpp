@@ -24,7 +24,7 @@ metatype::generic::~generic()
 	_val = 0;
 }
 
-int metatype::generic::convert(int type, void *ptr)
+int metatype::generic::convert(value_t type, void *ptr)
 {
 	int valtype = mpt::type_properties< ::mpt::value>::id(true);
 	
@@ -39,21 +39,22 @@ int metatype::generic::convert(int type, void *ptr)
 		return _type ? _type : static_cast<int>(TypeMetaPtr);
 	}
 	int me = mpt::type_properties<generic *>::id(true);
-	if (me > 0 && type == me) {
+	if (me > 0 && type == static_cast<value_t>(me)) {
 		if (ptr) {
 			*static_cast<generic **>(ptr) = this;
 		}
 		return _type ? _type : static_cast<int>(TypeMetaPtr);
 	}
-	if (valtype > 0 && type == valtype) {
+	if (valtype > 0 && type == static_cast<value_t>(valtype)) {
 		if (ptr) {
 			static_cast< ::mpt::value *>(ptr)->set(_type, _val);
 		}
 		return me > 0 ? me : mpt::type_properties< ::mpt::metatype *>::id(true);
 	}
 	data_converter_t conv = mpt_data_converter(_type);
-	if (conv && (type = conv(_val, type, ptr)) >= 0) {
-		return type;
+	int ret;
+	if (conv && (ret = conv(_val, type, ptr)) >= 0) {
+		return ret;
 	}
 	return BadType;
 }
@@ -75,7 +76,7 @@ metatype::generic *metatype::generic::clone() const
 	return create(_type, _val, *_traits);
 }
 
-metatype::generic *metatype::generic::create(uintptr_t type, const void *ptr, const type_traits &traits)
+metatype::generic *metatype::generic::create(value_t type, const void *ptr, const type_traits &traits)
 {
 	if (!traits.size) {
 		errno = EINVAL;
@@ -120,7 +121,7 @@ metatype::generic *metatype::generic::create(uintptr_t type, const void *ptr, co
  * 
  * \return new metatype
  */
-metatype::generic *metatype::generic::create(int type, const void *ptr)
+metatype::generic *metatype::generic::create(value_t type, const void *ptr)
 {
 	const type_traits *tt = type_traits::get(type);
 	if (!tt) {

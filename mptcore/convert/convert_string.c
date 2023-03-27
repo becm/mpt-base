@@ -24,7 +24,7 @@
  * 
  * \return length of converted type
  */
-extern int mpt_convert_string(const char *from, int type, void *dest)
+extern int mpt_convert_string(const char *from, MPT_TYPE(value) type, void *dest)
 {
 	int len = 0;
 	

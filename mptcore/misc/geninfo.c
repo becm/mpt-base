@@ -119,7 +119,7 @@ extern int _mpt_geninfo_init(void *raw, size_t dlen)
  * 
  * \return >= 0 on success
  */
-extern int _mpt_geninfo_conv(const void *raw, int type, void *ptr)
+extern int _mpt_geninfo_conv(const void *raw, MPT_TYPE(value) type, void *ptr)
 {
 	const struct metaInfo *info = raw;
 	void **dest = ptr;

@@ -224,7 +224,7 @@ struct item_match
 	const char *ident;
 	size_t curr;
 	size_t left;
-	int type;
+	value_t type;
 	char sep;
 };
 static int find_item(void *ptr, const identifier *id, convertable *conv, const collection *sub)
@@ -244,8 +244,7 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 		}
 		// check for type compatibility
 		if (ctx->type) {
-			int val = conv->type();
-			if (val != ctx->type && (val = conv->convert(ctx->type, 0)) < 0) {
+			if (conv->convert(ctx->type, 0) < 0) {
 				return TraverseLeafs;
 			}
 		}
@@ -279,7 +278,7 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 	return ret;
 }
 
-convertable *collection::relation::find(int type, const char *name, int nlen) const
+convertable *collection::relation::find(value_t type, const char *name, int nlen) const
 {
 	struct item_match m;
 	const char *sep;
@@ -304,7 +303,7 @@ convertable *collection::relation::find(int type, const char *name, int nlen) co
 	return _parent ? _parent->find(type, name, nlen) : 0;
 }
 
-convertable *node_relation::find(int type, const char *name, int nlen) const
+convertable *node_relation::find(value_t type, const char *name, int nlen) const
 {
 	if (!_curr) {
 		return 0;
@@ -319,19 +318,8 @@ convertable *node_relation::find(int type, const char *name, int nlen) const
 		if (name && !c->ident.equal(name, nlen)) {
 			continue;
 		}
-		if (type < 0) {
-			return m;
-		}
-		int val;
-		if ((val = m->type()) < 0) {
-			continue;
-		}
-		if (type) {
-			if (type != val && (val = m->convert(type, 0)) < 0) {
-				continue;
-			}
-		}
-		else if (!val) {
+		// optional type restriction
+		if (type && m->convert(type, 0) < 0) {
 			continue;
 		}
 		return m;

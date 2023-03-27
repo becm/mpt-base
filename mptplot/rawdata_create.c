@@ -27,11 +27,11 @@ MPT_STRUCT(RawData) {
 };
 
 /* convertable interface */
-static int rd_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int rd_conv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	MPT_STRUCT(RawData) *rd = MPT_baseaddr(RawData, val, _mt);
 	const MPT_STRUCT(named_traits) *traits = mpt_rawdata_type_traits();
-	int me;
+	MPT_TYPE(value) me;
 	
 	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);
@@ -88,7 +88,7 @@ static int rd_modify(MPT_INTERFACE(rawdata) *ptr, unsigned dim, const MPT_STRUCT
 	void *dest;
 	const void *src;
 	size_t len = 0;
-	uintptr_t type;
+	MPT_TYPE(value) type;
 	uint32_t nc = 0, cycles;
 	
 	

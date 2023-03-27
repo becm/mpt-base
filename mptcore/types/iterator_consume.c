@@ -19,7 +19,7 @@
  * 
  * \return length of converted type
  */
-extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, int type, void *dest)
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *it, MPT_TYPE(value) type, void *dest)
 {
 	const MPT_STRUCT(value) *val = it->_vptr->value(it);
 	uint8_t tmp[32];

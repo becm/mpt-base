@@ -19,7 +19,7 @@ struct wrapIter
 	const char *val, *sep;
 };
 
-static int iterConv(MPT_INTERFACE(convertable) *conv, int type, void *dest)
+static int iterConv(MPT_INTERFACE(convertable) *conv, MPT_TYPE(value) type, void *dest)
 {
 	struct wrapIter *it = (void *) conv;
 	if (!type) {

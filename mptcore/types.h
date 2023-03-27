@@ -36,15 +36,15 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(_TypeVectorSize)    = 0x20,
 #define MPT_type_isVector(v)      ((v) >= MPT_ENUM(_TypeVectorBase) && (v) < MPT_ENUM(_TypeVectorMax))
 #define MPT_type_toVector(v)      (MPT_type_isScalar(v) \
-		? ((int)(v)) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase) \
-		: MPT_ERROR(BadType))
+		? (uint8_t)((v) - MPT_ENUM(_TypeScalarBase) + MPT_ENUM(_TypeVectorBase)) \
+		: 0)
 	MPT_ENUM(_TypeScalarBase)    = 0x60,
 	MPT_ENUM(_TypeScalarMax)     = 0x7a,
 	MPT_ENUM(_TypeScalarSize)    = 0x20,
 #define MPT_type_isScalar(v)      ((v) >= MPT_ENUM(_TypeScalarBase) && (v) <= MPT_ENUM(_TypeScalarMax))
 #define MPT_type_toScalar(v)      (MPT_type_isVector(v) \
-		? ((int)(v)) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase) \
-		: MPT_ERROR(BadType))
+		? (uint8_t)((v) - MPT_ENUM(_TypeVectorBase) + MPT_ENUM(_TypeScalarBase)) \
+		: 0)
 	
 	/* vector types ('@'..'Z') */
 	MPT_ENUM(TypeVector)         = '@',   /* 0x40: generic data */
@@ -157,7 +157,7 @@ MPT_STRUCT(named_traits)
 	const MPT_STRUCT(type_traits) * const traits;
 #endif
 	const char * const name;
-	const uintptr_t type;
+	const MPT_TYPE(value) type;
 };
 
 /*! generic data type and offset */
@@ -179,31 +179,44 @@ MPT_STRUCT(value)
 	template<typename T>
 	operator T *() const;
 	
-	int convert(int , void *) const;
-	bool set(int , const void *);
+	int convert(value_t , void *) const;
 	
 	inline void clear()
 	{
 		_addr = 0;
 		_type = 0;
 	}
-	inline void set(const char *id, const void *ptr)
+	inline bool set(int type, const void *ptr)
 	{
+		if (type <= 0 || type > _TypeValueMax) {
+			return false;
+		}
 		_addr = ptr;
-		_type = reinterpret_cast<uintptr_t>(id);
+		_type = type;
+		return true;
 	}
-	inline int type() const
+	inline bool set(const char *id, const void *ptr)
 	{
-		return _type > _TypeValueMax ? static_cast<int>(BadType) : _type;
+		value_t type = reinterpret_cast<value_t>(id);
+		if (type <= _TypeValueMax) {
+			return false;
+		}
+		_addr = ptr;
+		_type = type;
+		return true;
+	}
+	inline value_t type() const
+	{
+		return _type;
 	}
 	inline const void *data() const
 	{
-		return _type > _TypeValueMax ? 0 : _addr;
+		return _addr;
 	}
 	
 	const char *string() const;
-	const struct iovec *vector(int = 0) const;
-	const struct array *array(int = 0) const;
+	const struct iovec *vector(value_t = 0) const;
+	const struct array *array(value_t = 0) const;
 protected:
 #else
 # define MPT_VALUE_INIT(t, p) { (p), (t) }
@@ -211,8 +224,8 @@ protected:
 	(v)->_addr = (p), \
 	(v)->_type = (t))
 #endif
-	const void *_addr;    /* address of value data */
-	uintptr_t   _type;    /* type identifier */
+	const void     *_addr;  /* address of value data */
+	MPT_TYPE(value) _type;  /* value type identifier */
 };
 
 /*! generic iterator interface */
@@ -262,12 +275,12 @@ extern void mpt_float80_encode(long , const long double *, MPT_STRUCT(float80) *
 extern int mpt_float80_compare(const MPT_STRUCT(float80) *, const MPT_STRUCT(float80) *);
 
 /* query type mappings */
-extern const MPT_STRUCT(type_traits) *mpt_type_traits(int);
+extern const MPT_STRUCT(type_traits) *mpt_type_traits(MPT_TYPE(value));
 
 /* traits for registered named types */
 extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *, int);
-extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int);
-extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int);
+extern const MPT_STRUCT(named_traits) *mpt_interface_traits(MPT_TYPE(value));
+extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(MPT_TYPE(value));
 /* register additional types */
 extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *);
 extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *);
@@ -292,14 +305,14 @@ extern int mpt_value_argv(void *, size_t , int , va_list);
 #endif /* _VA_LIST */
 
 /* get value from iterator and advance */
-extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, int , void *);
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, MPT_TYPE(value) , void *);
 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 
-inline __MPT_CONST_TYPE uint8_t basetype(int org) {
-	return (org < 0)
+inline __MPT_CONST_TYPE uint8_t basetype(MPT_TYPE(value) org) {
+	return (org == 0)
 		? 0
 		: (org <= _TypeDynamicMax)
 			? org

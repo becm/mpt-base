@@ -17,7 +17,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // default conversion
-int metatype::convert(int type, void *ptr)
+int metatype::convert(value_t type, void *ptr)
 {
 	void **dest = (void **) ptr;
 	
@@ -43,7 +43,7 @@ void metatype::basic::unref()
 {
 	free(this);
 }
-int metatype::basic::convert(int type, void *ptr)
+int metatype::basic::convert(value_t type, void *ptr)
 {
 	if (!type) {
 		metatype::convert(type, ptr);
@@ -56,7 +56,7 @@ int metatype::basic::convert(int type, void *ptr)
 		}
 		return me > 0 ? me : static_cast<int>(TypeMetaPtr);
 	}
-	if (me > 0 && type == me) {
+	if (me > 0 && type == static_cast<value_t>(me)) {
 		if (ptr) {
 			*static_cast<basic **>(ptr) = this;
 		}

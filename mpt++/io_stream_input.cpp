@@ -36,7 +36,7 @@ io::stream::input *io::stream::input::create(const streaminfo *info)
 	return new stream_input(info);
 }
 // convertable interface
-int io::stream::input::convert(int type, void *ptr)
+int io::stream::input::convert(value_t type, void *ptr)
 {
 	int me = type_properties<io::interface *>::id(true);
 	

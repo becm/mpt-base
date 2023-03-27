@@ -52,7 +52,7 @@ metatype *item_group::create(const char *type, int nl)
 }
 
 // group storing elements in item array
-int item_group::convert(int type, void *ptr)
+int item_group::convert(value_t type, void *ptr)
 {
 	int me = type_properties<group *>::id(true);
 	

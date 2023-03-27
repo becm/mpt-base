@@ -25,7 +25,7 @@ static int getter(void *addr, struct mpt_property *pr)
 	return mpt_axis_get(addr, pr);
 }
 
-static int convert(MPT_INTERFACE(convertable) *src, int type, void *dest)
+static int convert(MPT_INTERFACE(convertable) *src, mpt_value_t type, void *dest)
 {
 	return mpt_convert_string(*((char **) (src + 1)), type, dest);
 }

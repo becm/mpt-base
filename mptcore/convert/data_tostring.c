@@ -27,7 +27,7 @@
  * 
  * \return length of converted type
  */
-extern const char *mpt_data_tostring(const void **from, int type, size_t *len)
+extern const char *mpt_data_tostring(const void **from, MPT_TYPE(value) type, size_t *len)
 {
 	static const char def[] = "\0";
 	const char *base;

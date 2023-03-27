@@ -9,7 +9,7 @@
 
 #include "object.h"
 
-static int valueConvert(MPT_INTERFACE(convertable) *conv, int type, void *ptr)
+static int valueConvert(MPT_INTERFACE(convertable) *conv, MPT_TYPE(value) type, void *ptr)
 {
 	const MPT_STRUCT(value) *val = *((void **) (conv + 1));
 	

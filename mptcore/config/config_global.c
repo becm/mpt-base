@@ -76,7 +76,7 @@ static uintptr_t configTopRef(MPT_INTERFACE(metatype) *mt)
 	return 1;
 }
 /* metatype interface */
-static int configConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int configConv(MPT_INTERFACE(convertable) *val, uintptr_t type, void *ptr)
 {
 	const MPT_STRUCT(configRoot) *c = (void *) val;
 	if (!type) {

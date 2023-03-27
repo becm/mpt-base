@@ -39,7 +39,7 @@ public:
 	template <typename T>
 	static metatype *create(const T &);
 	
-	int convert(int , void *) __MPT_OVERRIDE;
+	int convert(value_t , void *) __MPT_OVERRIDE;
 	
 	virtual void unref() = 0;
 	virtual uintptr_t addref();
@@ -88,7 +88,7 @@ protected:
 	{ }
 	basic(size_t post);
 public:
-	int convert(int , void *) __MPT_OVERRIDE;
+	int convert(value_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	basic *clone() const __MPT_OVERRIDE;
@@ -121,24 +121,24 @@ public:
 class metatype::generic : public metatype
 {
 public:
-	int convert(int , void *) __MPT_OVERRIDE;
+	int convert(value_t , void *) __MPT_OVERRIDE;
 	
 	uintptr_t addref() __MPT_OVERRIDE;
 	void unref() __MPT_OVERRIDE;
 	generic *clone() const __MPT_OVERRIDE;
 	
-	static generic *create(int, const void *);
+	static generic *create(value_t, const void *);
 	static const named_traits *pointer_traits(bool = true);
 private:
 	refcount _ref;
 protected:
-	static generic *create(uintptr_t , const void *, const type_traits &);
+	static generic *create(value_t , const void *, const type_traits &);
 	
 	generic();
 	virtual ~generic();
 	const type_traits *_traits;
 	void *_val;
-	uintptr_t _type;
+	value_t _type;
 };
 template <>
 class type_properties<metatype::generic *>
@@ -177,7 +177,7 @@ public:
 	{
 		delete this;
 	}
-	int convert(int type, void *dest) __MPT_OVERRIDE
+	int convert(value_t type, void *dest) __MPT_OVERRIDE
 	{
 		int type_val = type_properties<T>::id(true);
 		if (!type) {
@@ -191,14 +191,14 @@ public:
 			}
 			return type_meta > 0 ? type_meta : static_cast<int>(TypeMetaPtr);
 		}
-		if (type_meta > 0 && type == type_meta) {
+		if (type_meta > 0 && type == static_cast<value_t>(type_meta)) {
 			if (dest) {
 				*static_cast<metatype **>(dest) = this;
 			}
 			return type_val > 0 ? type_val : static_cast<int>(TypeMetaPtr);
 		}
 		if (type_val > 0) {
-			if (type == type_val) {
+			if (type == static_cast<value_t>(type_val)) {
 				if (dest) {
 					*static_cast<T *>(dest) = _val;
 				}
@@ -283,7 +283,7 @@ extern int _mpt_geninfo_init(void *, size_t);
 /* operations on geninfo data */
 extern int _mpt_geninfo_set(void *, const char *, int __MPT_DEFPAR(-1));
 extern int _mpt_geninfo_flags(const void *, int);
-extern int _mpt_geninfo_conv(const void *, int , void *);
+extern int _mpt_geninfo_conv(const void *, MPT_TYPE(value) , void *);
 /* clone geninfo content */
 extern MPT_INTERFACE(metatype) *_mpt_geninfo_clone(const void *);
 

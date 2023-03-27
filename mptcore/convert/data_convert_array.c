@@ -27,7 +27,7 @@
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destination data size
  */
-extern int mpt_data_convert_array(const MPT_STRUCT(array) *from, int type, void *dest)
+extern int mpt_data_convert_array(const MPT_STRUCT(array) *from, MPT_TYPE(value) type, void *dest)
 {
 	const MPT_STRUCT(array) *arr = (void *) from;
 	const MPT_STRUCT(type_traits) *traits;

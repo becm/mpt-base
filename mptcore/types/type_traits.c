@@ -197,7 +197,7 @@ static void _meta_init(void) {
 	}
 	*((const void **) &base->traits) = memcpy(base + 1, &pointer_traits, sizeof(pointer_traits));
 	*((const char **) &base->name) = "metatype";
-	*((uintptr_t *) &base->type) = MPT_ENUM(_TypeMetaPtrBase);
+	*((MPT_TYPE(value) *) &base->type) = MPT_ENUM(_TypeMetaPtrBase);
 	
 	meta_types->traits[0] = base;
 	meta_types->next = 0;
@@ -226,7 +226,7 @@ static void _interfaces_init(void) {
 		}
 		*((const void **) &elem->traits) = memcpy(elem + 1, &pointer_traits, sizeof(elem->traits));
 		*((const char **) &elem->name) = core_interfaces[i].name;
-		*((uintptr_t *) &elem->type) = core_interfaces[i].type;
+		*((MPT_TYPE(value) *) &elem->type) = core_interfaces[i].type;
 		
 		interface_types[i] = elem;
 	}
@@ -256,12 +256,12 @@ static void _generic_types_fini()
  * 
  * \return traits for registered type
  */
-extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
+extern const MPT_STRUCT(type_traits) *mpt_type_traits(MPT_TYPE(value) type)
 {
 	const struct generic_traits_chunk *group;
 	
 	/* bad type value */
-	if (type < 0) {
+	if (!type) {
 		return 0;
 	}
 	/* builtin scalar types */
@@ -335,25 +335,26 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(int type)
  * 
  * \return name for interface ID
  */
-extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int type)
+extern const MPT_STRUCT(named_traits) *mpt_interface_traits(MPT_TYPE(value) type)
 {
 	const MPT_STRUCT(named_traits) *elem;
+	int pos;
 	
 	if (type > MPT_ENUM(_TypeInterfaceMax)
-	    || type < MPT_ENUM(_TypeInterfaceBase)) {
+	 || type < MPT_ENUM(_TypeInterfaceBase)) {
 		errno = EINVAL;
 		return 0;
 	}
 	if (!interface_types) {
 		_interfaces_init();
 	}
-	type -= MPT_ENUM(_TypeInterfaceBase);
+	pos = type - MPT_ENUM(_TypeInterfaceBase);
 	
-	if (type > interface_pos) {
+	if (pos > interface_pos) {
 		errno = EAGAIN;
 		return 0;
 	}
-	if ((elem = interface_types[type])) {
+	if ((elem = interface_types[pos])) {
 		return elem;
 	}
 	errno = EAGAIN;
@@ -368,9 +369,10 @@ extern const MPT_STRUCT(named_traits) *mpt_interface_traits(int type)
  * 
  * \return name for interface ID
  */
-extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int type)
+extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(MPT_TYPE(value) type)
 {
 	const struct named_traits_chunk *ext;
+	int pos;
 	
 	if (type > MPT_ENUM(_TypeMetaPtrMax)
 	 || type < MPT_ENUM(_TypeMetaPtrBase)) {
@@ -380,18 +382,18 @@ extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(int type)
 	if (!meta_types) {
 		_meta_init();
 	}
-	type -= MPT_ENUM(_TypeMetaPtrBase);
+	pos = type - MPT_ENUM(_TypeMetaPtrBase);
 	
 	ext = meta_types;
 	while (ext) {
-		if (type < ext->used) {
-			const MPT_STRUCT(named_traits) *elem = (void *) ext->traits[type];
+		if (pos < ext->used) {
+			const MPT_STRUCT(named_traits) *elem = (void *) ext->traits[pos];
 			if (!elem) {
 				errno = EINVAL;
 			}
 			return elem;
 		}
-		type -= MPT_arrsize(ext->traits);
+		pos -= MPT_arrsize(ext->traits);
 		ext = ext->next;
 	}
 	errno = EAGAIN;
@@ -647,7 +649,7 @@ extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *name)
 	traits = memcpy(elem + 1, &pointer_traits, sizeof(pointer_traits));
 	*((const void **) &elem->traits) = traits;
 	*((const char **) &elem->name) = nlen ? memcpy(traits + 1, name, nlen) : 0;
-	*((uintptr_t *) &elem->type) = pos;
+	*((MPT_TYPE(value) *) &elem->type) = pos;
 	
 	ext->traits[ext->used++] = elem;
 	
@@ -697,7 +699,7 @@ extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *name)
 	traits = memcpy(elem + 1, &pointer_traits, sizeof(pointer_traits));
 	*((const void **) &elem->traits) = traits;
 	*((const char **) &elem->name) = nlen ? memcpy(traits + 1, name, nlen) : 0;
-	*((uintptr_t*) &elem->type) = MPT_ENUM(_TypeInterfaceBase) + interface_pos;
+	*((MPT_TYPE(value) *) &elem->type) = MPT_ENUM(_TypeInterfaceBase) + interface_pos;
 	
 	interface_types[interface_pos++] = elem;
 	

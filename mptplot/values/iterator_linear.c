@@ -28,7 +28,7 @@ MPT_STRUCT(iteratorLinear)
 };
 
 /* convertable interface */
-static int iterConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int iterConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	MPT_STRUCT(iteratorLinear) *d = MPT_baseaddr(iteratorLinear, val, _mt);
 	

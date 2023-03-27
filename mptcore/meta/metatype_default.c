@@ -9,7 +9,7 @@
 
 #include "meta.h"
 
-static int genMetaConv(MPT_INTERFACE(convertable) *meta, int type, void *ptr)
+static int genMetaConv(MPT_INTERFACE(convertable) *meta, MPT_TYPE(value) type, void *ptr)
 {
 	void **dest = ptr;
 	

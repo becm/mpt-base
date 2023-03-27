@@ -26,7 +26,7 @@ struct _mpt_metaProxy
 };
 
 /* convertable interface */
-static int _proxy_conv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int _proxy_conv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	const struct _mpt_metaProxy *mp = (void *) val;
 	int mt = mp->sym.type;

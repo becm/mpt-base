@@ -81,7 +81,7 @@ static config *clientConfig()
  * 
  * \return conversion result
  */
-int client::convert(int type, void *ptr)
+int client::convert(value_t type, void *ptr)
 {
 	int me = type_properties<client *>::id(true);
 	if (me < 0) {
@@ -96,7 +96,7 @@ int client::convert(int type, void *ptr)
 		return me;
 	}
 	int cfg = type_properties<class config *>::id(true);
-	if ((cfg > 0) && (type == cfg)) {
+	if ((cfg > 0) && (type == static_cast<value_t>(cfg))) {
 		if (ptr) *static_cast<class config **>(ptr) = clientConfig();
 		return me;
 	}

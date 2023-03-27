@@ -28,7 +28,7 @@ MPT_STRUCT(iteratorBoundary)
 };
 
 /* convertable interface */
-static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int iterBoundaryConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	MPT_STRUCT(iteratorBoundary) *d = MPT_baseaddr(iteratorBoundary, val, _mt);
 	if (!type) {

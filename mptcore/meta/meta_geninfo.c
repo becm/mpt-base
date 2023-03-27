@@ -10,7 +10,7 @@
 #include "meta.h"
 
 /* metatype interface */
-static int metaConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int metaConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	const void *info = val + 1;
 	void **dest = ptr;

@@ -32,7 +32,7 @@ MPT_STRUCT(iteratorPolynom)
 };
 
 /* convertable interface */
-static int iterPolyConv(MPT_INTERFACE(convertable) *val, int type, void *ptr)
+static int iterPolyConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
 {
 	MPT_STRUCT(iteratorPolynom) *d = MPT_baseaddr(iteratorPolynom, val, _mt);
 	if (!type) {

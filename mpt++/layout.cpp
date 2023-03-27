@@ -46,7 +46,7 @@ layout::~layout()
 	delete _parse;
 }
 // metatype interface
-int layout::convert(int type, void *ptr)
+int layout::convert(value_t type, void *ptr)
 {
 	if (assign(static_cast<object *>(this), type, ptr)) {
 		int type = type_properties<group *>::id(true);
@@ -273,7 +273,7 @@ layout::line::line(const ::mpt::line *from)
 }
 layout::line::~line()
 { }
-int layout::line::convert(int type, void *ptr)
+int layout::line::convert(value_t type, void *ptr)
 {
 	int me = type_properties<line *>::id(true);
 	if (me < 0) {
@@ -370,7 +370,7 @@ layout::text::text(const ::mpt::text *from)
 }
 layout::text::~text()
 { }
-int layout::text::convert(int type, void *ptr)
+int layout::text::convert(value_t type, void *ptr)
 {
 	int me = type_properties<text *>::id(true);
 	if (me < 0) {

@@ -33,9 +33,9 @@ MPT_STRUCT(libsymbol)
 #else
 # define MPT_LIBSYMBOL_INIT { 0, 0, 0 }
 #endif
-	MPT_STRUCT(libhandle) *lib;
-	void *addr;   /* symbol address */
-	int   type;   /* symbol type */
+	MPT_STRUCT(libhandle) *lib;     /* origin handle for symbol */
+	void                  *addr;    /* symbol address */
+	MPT_TYPE(value)        type;    /* symbol type */
 };
 
 __MPT_EXTDECL_BEGIN
