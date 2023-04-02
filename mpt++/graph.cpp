@@ -52,25 +52,23 @@ template <> int type_properties<world *>::id(bool)
 	return mpt_world_pointer_typeid();
 }
 
-template <> int type_properties<layout::graph *>::id(bool obtain)
+/*!
+ * \ingroup mptLayout
+ * \brief get layout graph interface traits
+ * 
+ * Get named traits for layout graph pointer data.
+ * 
+ * \param obtain  trigger type registration
+ * 
+ * \return named traits for layout graph pointer
+ */
+const struct named_traits *layout::graph::pointer_traits(bool obtain)
 {
-	static const named_traits *traits = 0;
-	if (traits) {
-		return traits->type;
+	static const struct named_traits *traits = 0;
+	if (!traits && obtain && !(traits = type_traits::add_metatype("mpt.graph"))) {
+		traits = type_traits::add_metatype();
 	}
-	if (!obtain) {
-		return BadType;
-	}
-	if ((traits = mpt_type_metatype_add("mpt.graph"))) {
-		return traits->type;
-	}
-	if ((traits = mpt_type_metatype_add(0))) {
-		return traits->type;
-	}
-	return BadOperation;
-}
-template <> const struct type_traits *type_properties<layout::graph *>::traits() {
-	return type_traits::get(id(true));
+	return traits;
 }
 
 // graph data operations

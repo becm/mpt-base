@@ -396,11 +396,11 @@ public:
 		return _font;
 	}
 	
+	fpoint minimal_scale() const;
+	
 	static const named_traits *pointer_traits(bool = true);
 	
 	static const char *file_format();
-	
-	fpoint minimal_scale() const;
 protected:
 	item_array<graph> _graphs;
 	parser *_parse;
@@ -506,13 +506,25 @@ public:
 	
 	bool update_transform(int dim = -1);
 	
+	static const named_traits *pointer_traits(bool = true);
 protected:
 	reference<class transform3> _gtr;
 	item_array<axis> _axes;
 	item_array<data> _worlds;
 };
-template <> int type_properties<layout::graph *>::id(bool);
-template <> const struct type_traits *type_properties<layout::graph *>::traits();
+template <> inline int type_properties<layout::graph *>::id(bool obtain)
+{
+	const named_traits *n = layout::graph::pointer_traits();
+	if (!n) {
+		return obtain ? BadOperation : BadType;
+	}
+	return n->type;
+}
+template <> inline const struct type_traits *type_properties<layout::graph *>::traits()
+{
+	const named_traits *n = layout::graph::pointer_traits();
+	return n ? &n->traits : 0;
+}
 
 /*! Transformation parameters/interface for (up to) 3 dimensions */
 class layout::graph::transform3 : public reference< ::mpt::transform>::type
