@@ -26,51 +26,63 @@ To maximize reusability and minimize dependencies, functionality
 is split into multiple (shared) libraries.
 
 ### Core
-Most interface definitions and in-memory operations.
+Supplies implementation of most standard data types and shared functionality for
+general in-memory operations. To guarantee consistent runtime behaviour,
+the base library also hosts the dynamic type registry (single source of truth).
 
-Dynamic type registry, basic conversion routines and generic shared COW array
-with pluggable init/fini operations for each element.
+Most provided data types have interfaces for reference counting and are often
+used along with the built-in generic copy-on-write array implementation.
 
-Implementation of message coding, data buffers and event processing.
+Buffers and data streams support on-the-fly message coding and decoding.
+The same messages spec is also used in the included event processing.
 
-Definitions and operations for generic file parsing
-and configuration interface.
+A configurable streaming parser for structured text does emit `path/value` pairs
+and is used by default to feed the built-in configuration framework.
 
 ### Plot
-Types and operations for data plotting.
+Types and operations for data plotting and definitions of basic graphic objects.
 
-Definitions for generic graphic objects.
-
-Additional operations for data output, value sources and
-generators for various types of initial data.
+Sets of numeric data can be read from different sources, split up and formatted
+as text output.
+Generators for various types of initial data are also included for convenience.
 
 ### Input/Output
 Socket operations and input loop.
 
-Buffered data stream with integrated
-data encoding/decoding and message send/receive.
+The implementation of a buffered I/O file data stream can also be used for
+sending and receiving of messages if the configured methods for inline data
+encoding and decoding support delimiter recognition and insertion.
 
-Implementation of output interface with channel selection
-(stdout/stderr, history file, remote process) depending
-on MPT message type.
+Output objects may select channels (stdout/stderr, history file, remote process)
+depending on passed MPT message type.
 
-Notification system for registering and waiting for multiple inputs.
+A notification sytem is used to register multiple inputs for event dispatching.
+Abstractions are used to decouple data and dispatch layers, so it should also
+be possible to use a different 3rd party notification solution to feed the
+internal event framework.
 
 ### Loader
 Wrappers to load functionality from shared libraries.
 
-Provide abstration for line input from user.
+Also provides abstration for line input from user. Behaviour and features might
+differ depending on the detected `readline` implementation and setup.
 
 ## C++
-Implementation and extensions of basic (core, plot, I/O) elements.
+While most `C++` data types and template definitions are defined in headers,
+more complex operations may still require methods from this library.
 
-Generic graphic display implementation.
+Doing generic metatype representation for graphic objects and large portions of
+plotting transformations has far less boilerplate compared to pure `C`.
+Most types however can be passed freely between both layers due to compatible
+memory layout definitions.
 
 ## LUA bindings
-Interface to use MPT stream and COBS encoding.
+To use MPT stream and COBS encoding of the core I/O library a generic 3rd party
+library loader and some additional wrappers as supplied as a combination of
+native and LUA code.
 
-LUA implementation to load binary module.
-Controller for client application.
+A basic implementation for controlling a MPT client application can be extended
+by adding furter user command handlers to the created LUA object.
 
 ## Python interface
-Pure Python implemetation to interact with client and plot programs.
+Pure Python implemetation to start and interact with client and plot programs.
