@@ -162,9 +162,8 @@ static int saveArgs(MPT_INTERFACE(metatype) *top, int argc, char * const argv[])
  * \ingroup mptNotify
  * \brief initialize MPT environment
  * 
- * Set notification inputs and config file.
+ * Load configuration and set notification source.
  * 
- * \param no   notification descriptor
  * \param argc argument count
  * \param argv command line arguments
  */
@@ -279,4 +278,3 @@ extern int mpt_init(int argc, char * const argv[])
 	
 	return ret < 0 ? ret : optind;
 }
-

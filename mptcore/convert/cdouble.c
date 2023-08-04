@@ -17,7 +17,7 @@
  * 
  * \return consumed length
  */
-extern int mpt_cdouble(double *val, const char *src, const double *range)
+extern int mpt_cdouble(double *val, const char *src, const double range[2])
 {
 	double tmp;
 	char *end;

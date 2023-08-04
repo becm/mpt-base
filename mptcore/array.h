@@ -311,9 +311,9 @@ __MPT_EXTDECL_BEGIN
 extern const MPT_STRUCT(type_traits) *mpt_array_traits(void);
 
 /* get range of array */
-extern void mpt_drange(double  *, int , const double  *, int);
-extern void mpt_frange(float   *, int , const float   *, int);
-extern void mpt_irange(int32_t *, int , const int32_t *, int);
+extern void mpt_drange(double  [2], int , const double  *, int);
+extern void mpt_frange(float   [2], int , const float   *, int);
+extern void mpt_irange(int32_t [2], int , const int32_t *, int);
 
 /* copy/convert operations with leading dimension */
 #if !defined(MPT_COPY_ST) && !defined(MPT_COPY_DT)

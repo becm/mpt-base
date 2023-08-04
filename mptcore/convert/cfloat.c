@@ -18,7 +18,7 @@
  * 
  * \return consumed length
  */
-extern int mpt_cfloat(float *val, const char *src, const float *range)
+extern int mpt_cfloat(float *val, const char *src, const float range[2])
 {
 #if _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 	float tmp;
