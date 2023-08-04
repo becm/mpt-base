@@ -9,9 +9,9 @@
 #ifdef __cplusplus
 # include "config.h"
 # include "object.h"
+# include "collection.h"
 #endif
 
-#include "collection.h"
 #include "values.h"
 
 struct iovec;

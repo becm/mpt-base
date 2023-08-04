@@ -32,9 +32,10 @@ static const MPT_STRUCT(graph) def_graph = {
 	
 	0   /* lpos */
 };
+/* aliases for clip strategies, offset aligns with respective bitmask! */
 static const char axes_clip[][4] = {
 	"", "x", "y", "xy",
-	"z" "xz", "yz", "xyz"
+	"z", "xz", "yz", "xyz"
 };
 
 /*!
