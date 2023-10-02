@@ -104,9 +104,7 @@ class Output(object):
     def __init__(self, name=None):
         """ append data to output """
         self._encode = Output._encode
-        if name is None:
-            return
-        self._chan = open(name, 'wb')
+        self._chan = None if name is None else open(name, 'wb')
     
     def push(self, msg):
         """ send data to output """
@@ -129,20 +127,17 @@ class Output(object):
         if not self._chan or self._buf is None:
             return
         
-        if self._encode:
-            self._buf = self._encode(self._buf)
+        buf = self._buf if self._encode is None else self._encode(self._buf)
         
-        if not len(self._buf):
-            self._buf = None
-            return
-        
-        if hasattr(self._chan, 'sendall'):
-            ret = self._chan.sendall(self._buf)
-        else:
-            ret = self._chan.write(self._buf)
-        
-        if hasattr(self._chan, 'flush'):
-            self._chan.flush()
+        ret = 0
+        if len(buf):
+            if hasattr(self._chan, 'sendall'):
+                ret = self._chan.sendall(buf)
+            else:
+                ret = self._chan.write(buf)
+            
+            if hasattr(self._chan, 'flush'):
+                self._chan.flush()
         
         self._buf = None
         return ret
