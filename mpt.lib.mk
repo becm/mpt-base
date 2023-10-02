@@ -60,6 +60,11 @@ ${LIB_SHARED} : ${SHLIB_OBJS}
 extensions = a so so.${SHLIB_MAJOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR} so.${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 CLEAR_FILES += $(extensions:%=${LIB_FULLNAME}.%)
 #
+# installation shortcut
+define install_files
+  $(if $(strip ${2}),@install -d '${1}' && install -C -m 644 ${2} '${1}' && printf 'install(%s): %s\n' '${1}' '${2}')
+endef
+#
 # header export
 .PHONY: header
 header : ${HEADER}; $(call install_files,${PREFIX_INC},${HEADER})
