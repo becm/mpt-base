@@ -46,7 +46,7 @@ MPT_INTERFACE_VPTR(collection) {
 #endif
 
 #ifdef __cplusplus
-/*! interface to generic groups of metatypes elements */
+/*! interface to generic groups of metatype elements */
 class group : public collection
 {
 protected:

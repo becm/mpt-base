@@ -103,7 +103,7 @@ enum MPT_ENUM(TraverseFlags) {
 	MPT_ENUM(TraverseStop)        = 0x00000100
 };
 
-enum MPT_ENUM(TypeErrors) {
+enum MPT_ENUM(Errors) {
 	MPT_ERROR(BadArgument)    = -0x1,
 	MPT_ERROR(BadValue)       = -0x2,
 	MPT_ERROR(BadType)        = -0x3,

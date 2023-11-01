@@ -640,8 +640,8 @@ public:
 		return span<const T>::size();
 	}
 protected:
-	long _pos;
 	struct value _val;
+	long _pos;
 	int _step;
 	int _type;
 };

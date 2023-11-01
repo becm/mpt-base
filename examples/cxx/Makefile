@@ -42,7 +42,7 @@ $(io_inc:%=%) $(io_inc:%=%_static) : INC+='${MPT_BASE}/mptio'
 $(plot_inc:%=%) $(plot_inc:%=%_static) : INC+='${MPT_BASE}/mptplot'
 #
 # special test arguments
-test_config : ARGS=${PREFIX}
+test_config : ARGS="${PREFIX}/etc"
 test_layout : ARGS=layout.lay
 test_buffer : ARGS=1 2 3
 
