@@ -15,24 +15,57 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(node.h)
 #include MPT_INCLUDE(meta.h)
+#include MPT_INCLUDE(collection.h)
 #include MPT_INCLUDE(convert.h)
 
-extern int table_print(struct mpt_node *node, void *file, size_t depth)
+struct print_context
 {
-	struct mpt_metatype *mt;
-	const char *id = mpt_node_ident(node);
+	struct print_context *parent;
+	FILE *out;
+};
+
+extern int table_print_level(void *cptr, const MPT_STRUCT(identifier) *id, MPT_INTERFACE(convertable) *conv, const MPT_INTERFACE(collection) *sub)
+{
 	
-	while (depth--) fputc('.', file);
-	if (id) fputs(id, file);
+	const struct print_context *ctx = cptr, *parent;
+	FILE *file = ctx->out;
 	
-	if ((mt = node->_meta)) {
+	/* print leading dots to indicate element depth */
+	while ((parent = ctx->parent)) {
+		fputc('.', file);
+		ctx = parent;
+	}
+	
+	/* current identifier and value */
+	if (id) {
+		const char *str = mpt_identifier_data(id);
+		fputs(str, file);
+	}
+	if (conv) {
+		const char *str = 0;
 		fputc('=', file);
-		if (MPT_metatype_convert(mt, 's', &id) >= 0 && id) {
-			fputs(id, file);
+		if (conv->_vptr->convert(conv, 's', &str) >= 0 && str) {
+			fputs(str, file);
 		}
 	}
 	fputs(mpt_newline_string(0), file);
+	
+	/* process subtree with increased depth */
+	if (sub) {
+		struct print_context next = { cptr, file };
+		int ret = sub->_vptr->each(sub, table_print_level, &next);
+		
+		if (ret < 0) {
+			return ret;
+		}
+	}
+	
 	return 0;
+}
+
+extern int table_print(void *fd, const MPT_INTERFACE(collection) *col)
+{
+	struct print_context ctx = { 0, fd };
+	return col->_vptr->each(col, table_print_level, &ctx);
 }

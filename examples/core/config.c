@@ -16,7 +16,6 @@ extern int main(int argc, char *argv[])
 	MPT_INTERFACE(metatype) *mt;
 	MPT_INTERFACE(config) *cfg;
 	MPT_INTERFACE(logger) *log = mpt_log_default();
-	MPT_STRUCT(node) *n;
 	MPT_STRUCT(path) p = MPT_PATH_INIT;
 	int ret = 0, i;
 	
@@ -32,8 +31,7 @@ extern int main(int argc, char *argv[])
 		return 2;
 	}
 	if (argc < 2) {
-		MPT_metatype_convert(mt, MPT_ENUM(TypeNodePtr), &n);
-		mpt_gnode_traverse(n, MPT_ENUM(TraversePreOrder) | MPT_ENUM(TraverseAll), table_print, stdout);
+		cfg->_vptr->process(cfg, 0, table_print, stdout);
 	}
 	for (i = 1; i < argc; ++i) {
 		MPT_INTERFACE(convertable) *elem;

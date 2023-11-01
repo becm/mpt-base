@@ -4,7 +4,7 @@
 
 #include <sys/uio.h>
 
-#include "node.h"
+#include "collection.h"
 
 #include "config.h"
 
@@ -205,6 +205,23 @@ int config::root::remove(const path *dest)
 	
 	return 0;
 }
+int config::root::process(const path *dest, int (*handler)(void *, const collection *), void *ctx) const
+{
+	// use top level elements
+	if (!dest) {
+		subtree top(items());
+		return handler(ctx, &top);
+	}
+	// look for subtree elements
+	path p = *dest;
+	config::item *curr;
+	if ((curr = ::mpt::query(_sub, p))) {
+		subtree sub(curr->elements());
+		return handler(ctx, &sub);
+	}
+	// requested element not found
+	return BadOperation;
+}
 
 // configuration element access
 config::item *query(const unique_array<config::item> &arr, path &p)
@@ -215,7 +232,7 @@ config::item *query(const unique_array<config::item> &arr, path &p)
 	if ((len = mpt_path_next(&p)) < 0) {
 		return 0;
 	}
-	for (config::item *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+	for (config::item *e = arr.begin(), *to = arr.end(); e != to; ++e) {
 		if (e->unused() || !e->equal(name.begin(), len)) {
 			continue;
 		}
@@ -235,7 +252,7 @@ config::item *reserve(unique_array<config::item> &arr, path &p)
 		return 0;
 	}
 	config::item *unused = 0;
-	for (config::item *e = arr.begin(), *to = arr.end(); e < to; ++e) {
+	for (config::item *e = arr.begin(), *to = arr.end(); e != to; ++e) {
 		if (e->unused()) {
 			if (!unused) unused = e;
 			continue;

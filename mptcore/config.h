@@ -21,6 +21,7 @@ MPT_STRUCT(value);
 MPT_STRUCT(message);
 
 MPT_INTERFACE(iterator);
+MPT_INTERFACE(collection);
 MPT_INTERFACE(reply_context);
 
 /*! (un)structured element path */
@@ -91,9 +92,11 @@ public:
 	virtual convertable *query(const path *) const = 0;
 	virtual int assign(const path *, const value * = 0) = 0;
 	virtual int remove(const path *) = 0;
+	virtual int process(const path *, int (*)(void *, const MPT_INTERFACE(collection) *), void *) const = 0;
 	
 	class root;
 	class item;
+	class subtree;
 };
 template<> inline __MPT_CONST_TYPE int type_properties<config *>::id(bool) {
 	return TypeConfigPtr;
@@ -108,6 +111,7 @@ MPT_INTERFACE_VPTR(config) {
 	MPT_INTERFACE(convertable) *(*query)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
 	int (*assign)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 	int (*remove)(MPT_INTERFACE(config) *, const MPT_STRUCT(path) *);
+	int (*process)(const MPT_INTERFACE(config) *, const MPT_STRUCT(path) *, int (*)(void *, const MPT_INTERFACE(collection) *), void *);
 }; MPT_INTERFACE(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
 };
@@ -202,6 +206,7 @@ public:
 	convertable *query(const path *) const __MPT_OVERRIDE;
 	int assign(const path *, const value * = 0) __MPT_OVERRIDE;
 	int remove(const path *) __MPT_OVERRIDE;
+	int process(const path *, int (*)(void *, const collection *), void *) const __MPT_OVERRIDE;
 	
 	inline span<const item> items() const
 	{
@@ -222,6 +227,28 @@ public:
 		return _len == 0;
 	}
 };
+
+# if defined(_MPT_COLLECTION_H)
+class config::subtree : public collection
+{
+public:
+	subtree(const span<const item> &v) : _elem(v)
+	{ }
+	int each(item_handler_t handler, void *ctx) const __MPT_OVERRIDE
+	{
+		for (const item *e = _elem.begin(), *to = _elem.end(); e != to; ++e) {
+			subtree sub(e->elements());
+			int ret = handler(ctx, e, e->instance(), &sub);
+			if (ret < 0) {
+				return ret;
+			}
+		}
+		return 0;
+	}
+private:
+	const span<const item> _elem;
+};
+# endif
 #endif
 
 __MPT_NAMESPACE_END

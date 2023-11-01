@@ -8,7 +8,7 @@
 # define MPT_INCLUDE(x) <mpt/x>
 #endif
 
-#include MPT_INCLUDE(node.h)
+#include MPT_INCLUDE(collection.h)
 #include MPT_INCLUDE(config.h)
 
 #ifdef __GLIBC__
@@ -17,41 +17,53 @@
 # define mtrace()
 #endif
 
-static void printCfg(int depth, const mpt::span<const mpt::config::item> list)
+static int printCfg(void *ctx, const mpt::identifier *id, mpt::convertable *val, const mpt::collection *sub)
 {
-	for (auto &a : list) {
-		for (int i = 0; i < depth; ++i) std::cout << '.';
-		std::cout << a.name();
-		mpt::metatype *mt = a.instance();
-		if (mt) {
-			std::cout << " = ";
-			const char *content = mt->string();
-			if (content) std::cout << content;
-		}
-		std::cout << std::endl;
-		printCfg(depth + 1, a.elements());
+	// indicate depth with leading dots
+	int depth = *static_cast<const int *>(ctx);
+	for (int i = 0; i < depth; ++i) {
+		std::cout << '.';
 	}
+	// output name and value of element
+	std::cout << id->name();
+	if (val) {
+		std::cout << " = ";
+		const char *content = val->string();
+		if (content) std::cout << content;
+	}
+	std::cout << std::endl;
+	
+	// process subtree data at increased depth level
+	if (sub) {
+		depth++;
+		sub->each(printCfg, &depth);
+	}
+	return 0;
+}
+
+static int printAll(void *ctx, const mpt::collection *sub)
+{
+	return sub->each(printCfg, ctx);
 }
 
 extern int main(int argc, char * const argv[])
 {
 	mpt::config::root conf;
 	mpt::convertable *val;
-	const char *name;
 	
 	mtrace();
 	
 	if (conf.set("a.value.text", "Der täĸẞŦ")
 	    && (val = conf.get("a.value.text"))) {
-		name = val->string();
-		std::cout << typeid(*val).name() << " -> " << name << std::endl;
+		std::cout << typeid(*val).name() << " -> " << val->string() << std::endl;
 	}
 	for (int i = 1; i < argc; ++i) {
 		mpt::mpt_config_load(&conf, argv[i]);
 	}
 	conf.set("a*value*text", "anderer", '*');
 	
-	printCfg(0, conf.items());
+	int depth = 0;
+	conf.process(0, printAll, &depth);
 	
 	return 0;
 }

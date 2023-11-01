@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "collection.h"
 #include "node.h"
 #include "meta.h"
 #include "object.h"
@@ -105,6 +106,7 @@ static int configConv(MPT_INTERFACE(convertable) *val, uintptr_t type, void *ptr
 static MPT_INTERFACE(metatype) *configClone(const MPT_INTERFACE(metatype) *mt)
 {
 	MPT_STRUCT(configRoot) *c = (void *) mt;
+	
 	return mpt_config_global(&c->base);
 }
 /* config interface */
@@ -124,7 +126,7 @@ static MPT_INTERFACE(convertable) *configQuery(const MPT_INTERFACE(config) *cfg,
 	if (c->base.len) {
 		MPT_STRUCT(path) p = c->base;
 		if (!(n = mpt_node_query(n, &p))
-		    || p.len) {
+		 || p.len) {
 			return 0;
 		}
 		mt = n->_meta;
@@ -133,12 +135,64 @@ static MPT_INTERFACE(convertable) *configQuery(const MPT_INTERFACE(config) *cfg,
 	if (path->len) {
 		MPT_STRUCT(path) p = *path;
 		if (!(n = mpt_node_query(n, &p))
-		    || p.len) {
+		 || p.len) {
 			return 0;
 		}
 		mt = n->_meta;
 	}
 	return (MPT_INTERFACE(convertable) *) (mt ? mt : mpt_metatype_default());
+}
+static int collectionEach(const MPT_INTERFACE(collection) *c, MPT_TYPE(item_handler) handler, void *ctx)
+{
+	MPT_STRUCT(node) **nptr = (void *) (c + 1);
+	MPT_STRUCT(node) *n;
+	const MPT_INTERFACE_VPTR(collection) cvptr = { collectionEach };
+	
+	if (!(n = (*nptr)) || !(n = n->children)) {
+		return 0;
+	}
+	while (n) {
+		struct colli {
+			MPT_INTERFACE(collection) col;
+			MPT_STRUCT(node) *n;
+		};
+		struct colli col = { { &cvptr }, n };
+		int ret = handler(ctx, &n->ident, (MPT_INTERFACE(convertable) *) n->_meta, &col.col);
+		if (ret < 0) {
+			return ret;
+		}
+		n = n->next;
+	}
+	return 0;
+}
+static int configProcess(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, int (*handler)(void *, const MPT_INTERFACE(collection) *), void *ctx)
+{
+	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
+	struct colli {
+		MPT_INTERFACE(collection) col;
+		MPT_STRUCT(node) *n;
+	};
+	const MPT_INTERFACE_VPTR(collection) cvptr = { collectionEach };
+	struct colli col = { { &cvptr }, 0 };
+	
+	if (!(col.n = nodeGlobal)) {
+		return 0;
+	}
+	if (c->base.len) {
+		MPT_STRUCT(path) p = c->base;
+		col.n = mpt_node_query(col.n, &p);
+	}
+	if (path) {
+		if (col.n && path->len) {
+			MPT_STRUCT(path) p = *path;
+			col.n = mpt_node_query(col.n, &p);
+		}
+	}
+	if (!col.n) {
+		return handler(ctx, 0);
+	}
+	
+	return handler(ctx, &col.col);
 }
 static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
@@ -255,10 +309,10 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	static const MPT_INTERFACE_VPTR(config) configCfg = {
 		configQuery,
 		configAssign,
-		configRemove
+		configRemove,
+		configProcess
 	};
 	MPT_STRUCT(configRoot) *c;
-	MPT_STRUCT(path) p;
 	
 	if (!path) {
 		static const MPT_INTERFACE_VPTR(metatype) configMeta = {
@@ -279,22 +333,19 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 		errno = EINVAL;
 		return 0;
 	}
-	p = *path;
-	p.flags &= ~MPT_PATHFLAG(HasArray);
 	
 	/* new global config target */
 	if (!(c = malloc(sizeof(*c) + path->len))) {
 		return 0;
 	}
-	p = *path;
-	p.flags &= ~MPT_PATHFLAG(HasArray);
-	p.base += p.off;
-	p.off = 0;
 	
 	c->_mt._vptr  = &configMeta;
 	c->_cfg._vptr = &configCfg;
-	c->base = p;
-	c->base.base = memcpy(c + 1, p.base, p.len);
+	
+	c->base = *path;
+	c->base.flags &= ~MPT_PATHFLAG(HasArray);
+	c->base.base = memcpy(c + 1, path->base + path->off, path->len);
+	c->base.off = 0;
 	
 	return &c->_mt;
 }
