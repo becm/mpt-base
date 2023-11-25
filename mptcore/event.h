@@ -164,6 +164,14 @@ public:
 	int      (*cmd)(void *, void *);
 	void      *arg; /* handler and user supplied data */
 };
+#ifdef __cplusplus
+template <> inline __MPT_CONST_TYPE int type_properties<command>::id(bool) {
+	return TypeCommand;
+}
+template <> inline const struct type_traits *type_properties<command>::traits() {
+	return type_traits::get(id(true));
+}
+#endif
 
 /* command dispatcher */
 #ifdef __cplusplus
@@ -187,7 +195,7 @@ MPT_STRUCT(dispatch)
 # define MPT_DISPATCH_LOG_STATUS MPT_LOG(Debug2)
 # define MPT_DISPATCH_LOG_ACTION MPT_LOG(Info)
 # define MPT_DISPATCH_INIT { MPT_ARRAY_INIT, 0, { 0, 0 }, 0 }
-	_MPT_ARRAY_TYPE(command) _d;  /* available commands for event */
+	_MPT_UARRAY_TYPE(command) _d;  /* available commands for event */
 #endif
 	uintptr_t _def; /* default command id */
 	struct {
@@ -204,8 +212,11 @@ __MPT_EXTDECL_BEGIN
 /* reply with message */
 extern int mpt_context_reply(MPT_INTERFACE(reply_context) *, int , const char *, ...);
 
+/* command type information */
+extern const MPT_STRUCT(type_traits) *mpt_command_traits();
+
 /* get/set event command */
-extern int mpt_command_set(_MPT_UARRAY_TYPE(command) *, const MPT_STRUCT(command) *);
+extern int mpt_command_set(_MPT_UARRAY_TYPE(command) *, uintptr_t, int (*)(void *, void *), void *);
 extern MPT_STRUCT(command) *mpt_command_get(const _MPT_UARRAY_TYPE(command) *, uintptr_t);
 extern void mpt_command_clear(const _MPT_UARRAY_TYPE(command) *);
 
@@ -243,24 +254,6 @@ extern int mpt_reply_set(MPT_STRUCT(reply_data) *, size_t, const void *);
 extern MPT_INTERFACE(metatype) *mpt_event_command(const MPT_STRUCT(event) *);
 
 __MPT_EXTDECL_END
-
-#ifdef __cplusplus
-template<> inline __MPT_CONST_TYPE int type_properties<command>::id(bool) {
-	return TypeCommand;
-}
-template <> inline const struct type_traits *type_properties<command>::traits() {
-	return type_traits::get(id(true));
-}
-
-class MessageSource : public reply_context
-{
-public:
-	virtual ~MessageSource()
-	{ }
-	virtual const struct message *current_message(bool align = false) = 0;
-	virtual long pending(int wait = 0) = 0;
-};
-#endif
 
 __MPT_NAMESPACE_END
 

@@ -70,8 +70,6 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(logger);
 
-MPT_INTERFACE(metatype);
-
 typedef uintptr_t MPT_TYPE(value);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
@@ -440,6 +438,7 @@ extern int mpt_identifier_inequal(const MPT_STRUCT(identifier) *, const MPT_STRU
 extern void mpt_identifier_init(MPT_STRUCT(identifier) *, size_t);
 extern void *mpt_identifier_set(MPT_STRUCT(identifier) *, const char *, int);
 extern void *mpt_identifier_copy(MPT_STRUCT(identifier) *, const MPT_STRUCT(identifier) *);
+extern const MPT_STRUCT(type_traits) *mpt_identifier_traits();
 
 
 /* write error message and abort program */

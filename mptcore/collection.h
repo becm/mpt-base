@@ -87,7 +87,7 @@ protected:
 };
 
 /*! Relation implemetation using node as current element */
-class node;
+struct node;
 class node_relation : public relation
 {
 public:

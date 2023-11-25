@@ -44,19 +44,24 @@ public:
 	virtual void unref() = 0;
 	virtual uintptr_t addref();
 	virtual metatype *clone() const = 0;
+	
+	static const struct named_traits *pointer_traits(void);
+	static const struct type_traits *reference_traits(void);
 };
 template <> inline __MPT_CONST_TYPE int type_properties<metatype *>::id(bool) {
 	return TypeMetaPtr;
 }
 template <> inline const struct type_traits *type_properties<metatype *>::traits() {
-	return type_traits::get(id(true));
+	static const struct named_traits *nt = metatype::pointer_traits();
+	return &nt->traits;
 }
 
 template <> inline __MPT_CONST_TYPE int type_properties<reference<metatype> >::id(bool) {
 	return TypeMetaRef;
 }
 template <> inline const struct type_traits *type_properties<reference<metatype> >::traits() {
-	return type_traits::get(id(true));
+	static const struct type_traits *t = metatype::reference_traits();
+	return t;
 }
 
 inline uintptr_t metatype::addref() {

@@ -16,24 +16,6 @@
 
 __MPT_NAMESPACE_BEGIN
 
-// default conversion
-int metatype::convert(value_t type, void *ptr)
-{
-	void **dest = (void **) ptr;
-	
-	/* identify as metatype */
-	if (!type) {
-		static const uint8_t types[] = { TypeConvertablePtr, 0 };
-		if (dest) *dest = (void *) types;
-		return 0;
-	}
-	/* support (up-)cast to metatype pointer */
-	if (assign(this, type, ptr)) {
-		return type;
-	}
-	return BadType;
-}
-
 // basic metatype
 metatype::basic::basic(size_t post)
 {

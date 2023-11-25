@@ -10,7 +10,6 @@
  * \brief register command
  * 
  * Set command with matching id or add new one.
- * Command id of zero (un)sets default command.
  * 
  * \param disp dispatch descriptor
  * \param id   id for command
@@ -40,13 +39,5 @@ extern int mpt_dispatch_set(MPT_STRUCT(dispatch) *disp, uintptr_t id, MPT_TYPE(e
 		return MPT_ERROR(BadArgument);
 	}
 	/* register command */
-	else {
-		MPT_STRUCT(command) reg;
-		
-		reg.id  = id;
-		reg.cmd = (int (*)()) cmd;
-		reg.arg = arg;
-		
-		return mpt_command_set(&disp->_d, &reg);
-	}
+	return mpt_command_set(&disp->_d, id, (int (*)()) cmd, arg);
 }

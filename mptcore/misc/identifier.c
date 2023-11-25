@@ -6,12 +6,51 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "types.h"
+
 #include "core.h"
 
 #define MPT_IDENT_HSZE 4
 #define MPT_IDENT_VSZE (MPT_IDENT_HSZE + 4 + sizeof(void *))
 #define MPT_IDENT_MAX  (0x100 - MPT_IDENT_HSZE)
 #define MPT_IDENT_BSZE (sizeof(MPT_STRUCT(identifier)) - MPT_IDENT_HSZE)
+
+
+static void _identifier_fini(void *ptr)
+{
+	MPT_STRUCT(identifier) *ident = ptr;
+	if (ident->_len > ident->_max) {
+		free(ident->_base);
+		memset(ident->_val, 0, ident->_max);
+	}
+}
+static int _identifier_init(void *ptr, const void *src)
+{
+	MPT_STRUCT(identifier) *c = ptr;
+	mpt_identifier_init(c, sizeof(*c));
+	if (src && mpt_identifier_copy(c, src)) {
+		return MPT_ERROR(BadOperation);
+	}
+	return c ? 1 : 0;
+}
+
+/*!
+ * \ingroup mptCore
+ * \brief get identifier traits
+ * 
+ * Get identifier operations and size.
+ * 
+ * \return identifier type traits
+ */
+extern const MPT_STRUCT(type_traits) *mpt_identifier_traits()
+{
+	static const MPT_STRUCT(type_traits) traits = {
+		_identifier_init,
+		_identifier_fini,
+		sizeof(MPT_STRUCT(identifier))
+	};
+	return &traits;
+}
 
 /*!
  * \ingroup mptCore

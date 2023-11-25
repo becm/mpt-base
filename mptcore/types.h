@@ -27,7 +27,6 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeValFmt)         = 0x18,  /* CAN */
 	MPT_ENUM(TypeValue)          = 0x19,  /* EM  */
 	MPT_ENUM(TypeProperty)       = 0x1a,  /* SUB */
-	MPT_ENUM(TypeCommand)        = 0x1b,  /* ESC */
 	MPT_ENUM(_TypeCoreSize)      = 0x20,
 	
 	/* range for generic base types */
@@ -80,12 +79,11 @@ enum MPT_ENUM(Types)
 	MPT_ENUM(TypeMetaPtr)        = MPT_ENUM(_TypeMetaPtrBase),
 #define MPT_type_isConvertable(v) ((v) == MPT_ENUM(TypeConvertablePtr) || (v) == MPT_ENUM(TypeMetaRef) || MPT_type_isMetaPtr(v))
 	
-	/* generic complex types */
-	MPT_ENUM(_TypeValueBase)     = 0x800,
 	/* static types with managed content */
 	MPT_ENUM(TypeIdentifier)     = 0x800,
 	MPT_ENUM(TypeMetaRef)        = 0x801,
 	MPT_ENUM(TypeArray)          = 0x802,
+	MPT_ENUM(TypeCommand)        = 0x803,
 	/* dynamic types with managed content */
 	MPT_ENUM(_TypeValueAdd)      = 0x900,
 	MPT_ENUM(_TypeValueMax)      = 0xfff
@@ -426,7 +424,8 @@ inline value &value::operator=(const T &val)
 template <typename T>
 bool value::get(T &val) const
 {
-	return convert(type_properties<T>::id(true), &val) >= 0;
+	int t = type_properties<T>::id(true);
+	return t > 0 && convert(t, &val) >= 0;
 }
 
 /*! vector data compatible to `struct iovec` memory */
@@ -705,7 +704,7 @@ mpt::value::operator T *() const
 	if (type < 0 || !_type || !_addr) {
 		return 0;
 	}
-	if (_type == type) {
+	if (_type == (value_t) type) {
 		return *static_cast<T * const *>(_addr);
 	}
 	T *ptr = 0;

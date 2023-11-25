@@ -16,6 +16,7 @@ cxx_src = files(
   'logger.cpp',
   'message.cpp',
   'meta_buffer.cpp',
+  'metatype.cpp',
   'metatype_create.cpp',
   'metatype_basic.cpp',
   'metatype_generic.cpp',

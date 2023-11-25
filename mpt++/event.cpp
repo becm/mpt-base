@@ -73,7 +73,7 @@ bool dispatch::set_default(uintptr_t id)
 	_def = id;
 	return true;
 }
-void dispatch::set_error(int (*cmd)(void *, event *), void *arg)
+void dispatch::set_error(event_handler_t cmd, void *arg)
 {
 	if (_err.cmd) {
 		_err.cmd(_err.arg, 0);

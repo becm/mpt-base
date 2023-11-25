@@ -43,8 +43,7 @@ core_sizes[] = {
 	/* basic value types (0x18 - 0x1f) */
 	basic_type(MPT_ENUM(TypeValFmt),    MPT_STRUCT(value_format)),
 	basic_type(MPT_ENUM(TypeValue),     MPT_STRUCT(value)),
-	basic_type(MPT_ENUM(TypeProperty),  MPT_STRUCT(property)),
-	basic_type(MPT_ENUM(TypeCommand),   MPT_STRUCT(command))
+	basic_type(MPT_ENUM(TypeProperty),  MPT_STRUCT(property))
 },
 scalar_sizes[] = {
 	/* basic printable types */
@@ -302,10 +301,14 @@ extern const MPT_STRUCT(type_traits) *mpt_type_traits(MPT_TYPE(value) type)
 	}
 	
 	switch (type) {
+		case MPT_ENUM(TypeIdentifier):
+			return mpt_identifier_traits();
 		case MPT_ENUM(TypeArray):
 			return mpt_array_traits();
 		case MPT_ENUM(TypeMetaRef):
 			return mpt_meta_reference_traits();
+		case MPT_ENUM(TypeCommand):
+			return mpt_command_traits();
 		default:;
 	}
 	
