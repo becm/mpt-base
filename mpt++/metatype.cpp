@@ -7,7 +7,7 @@
 __MPT_NAMESPACE_BEGIN
 
 // default conversion
-int metatype::convert(value_t type, void *ptr)
+int metatype::convert(type_t type, void *ptr)
 {
 	void **dest = (void **) ptr;
 	

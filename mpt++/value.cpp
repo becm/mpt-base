@@ -49,7 +49,7 @@ value &value::operator=(const value &val)
 	return *this;
 }
 
-int value::convert(value_t type, void *ptr) const
+int value::convert(type_t type, void *ptr) const
 {
 	return mpt_value_convert(this, type, ptr);
 }
@@ -66,7 +66,7 @@ const char *value::string() const
 	const void *ptr = _addr;
 	return mpt_data_tostring(&ptr, _type, 0);
 }
-const struct iovec *value::vector(value_t to) const
+const struct iovec *value::vector(type_t to) const
 {
 	if (!_type || !_addr) {
 		return 0;
@@ -76,14 +76,14 @@ const struct iovec *value::vector(value_t to) const
 	if (!to) {
 		return MPT_type_isVector(_type) ? vec : 0;
 	}
-	value_t type = MPT_type_toVector(to);
+	type_t type = MPT_type_toVector(to);
 	if (!type) {
 		return 0;
 	}
 	// content must match specific type
 	return (_type == type) ? vec : 0;
 }
-const array *value::array(value_t to) const
+const array *value::array(type_t to) const
 {
 	if (!_type || !_addr) {
 		return 0;

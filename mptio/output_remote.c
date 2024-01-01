@@ -50,11 +50,11 @@ static int remote_infile(const MPT_STRUCT(out_data) *od)
 	return _mpt_stream_fread(&srm->_info);
 }
 /* convertable interface */
-static int remoteConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int remoteConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	const MPT_STRUCT(out_data) *od = MPT_baseaddr(out_data, val, _in);
 	const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
-	MPT_TYPE(value) me;
+	MPT_TYPE(type) me;
 	
 	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);

@@ -27,7 +27,7 @@ MPT_STRUCT(parseIterator) {
 	char *val, *end, *restore, save;
 };
 /* iterator interface */
-static int parseConvertElement(MPT_INTERFACE(convertable) *conv, MPT_TYPE(value) type, void *dest)
+static int parseConvertElement(MPT_INTERFACE(convertable) *conv, MPT_TYPE(type) type, void *dest)
 {
 	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, conv, elem._conv);
 	const char *txt;
@@ -155,7 +155,7 @@ static int parseReset(MPT_INTERFACE(iterator) *ptr)
 	return 1;
 }
 /* convertable interface */
-static int parseConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *dest)
+static int parseConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *dest)
 {
 	MPT_STRUCT(parseIterator) *it = MPT_baseaddr(parseIterator, val, _mt);
 	

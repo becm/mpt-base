@@ -38,7 +38,7 @@ MPT_STRUCT(iteratorFile)
 };
 
 /* convertable interface */
-static int fileConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int fileConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, val, _mt);
 	
@@ -107,7 +107,7 @@ static MPT_INTERFACE(metatype) *fileClone(const MPT_INTERFACE(metatype) *mt)
 	return &c->_mt;
 }
 /* element convertable interface */
-static int fileGet(MPT_INTERFACE(convertable) *conv, MPT_TYPE(value) type, void *ptr)
+static int fileGet(MPT_INTERFACE(convertable) *conv, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(iteratorFile) *d = MPT_baseaddr(iteratorFile, conv, _conv);
 	MPT_TYPE(data_converter) converter;

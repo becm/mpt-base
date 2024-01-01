@@ -101,7 +101,7 @@ layout::graph::graph(const ::mpt::graph *from)
 layout::graph::~graph()
 { }
 // convertable interface
-int layout::graph::convert(value_t type, void *ptr)
+int layout::graph::convert(type_t type, void *ptr)
 {
 	int me = type_properties<graph *>::id(true);
 	if (me < 0) {
@@ -543,7 +543,7 @@ layout::graph::axis::axis(AxisFlags type) : ::mpt::axis(type)
 { }
 layout::graph::axis::~axis()
 { }
-int layout::graph::axis::convert(value_t type, void *ptr)
+int layout::graph::axis::convert(type_t type, void *ptr)
 {
 	int me = type_properties<axis *>::id(true);
 	if (me < 0) {
@@ -625,7 +625,7 @@ layout::graph::world::world(int c)
 }
 layout::graph::world::~world()
 { }
-int layout::graph::world::convert(value_t type, void *ptr)
+int layout::graph::world::convert(type_t type, void *ptr)
 {
 	int me = type_properties<world *>::id(true);
 	if (me < 0) {

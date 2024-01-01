@@ -31,7 +31,7 @@
  * \retval 4                value has compatible string data
  */
 
-extern int mpt_value_convert(const MPT_STRUCT(value) *val, MPT_TYPE(value) type, void *dest)
+extern int mpt_value_convert(const MPT_STRUCT(value) *val, MPT_TYPE(type) type, void *dest)
 {
 	MPT_TYPE(data_converter) conv;
 	const void *src = val->_addr;

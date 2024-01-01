@@ -67,7 +67,7 @@ class buffer::metatype : public ::mpt::metatype, public buffer
 public:
 	static metatype *create(const array *);
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	metatype *clone() const __MPT_OVERRIDE;
 protected:
 	metatype(const array &);
@@ -125,7 +125,7 @@ class stream::input : public ::mpt::input, public stream
 public:
 	static input *create(const streaminfo * = 0);
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	::mpt::input *clone() const __MPT_OVERRIDE;
 	
 	int next(int) __MPT_OVERRIDE;

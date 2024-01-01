@@ -27,7 +27,7 @@
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_float32(const float *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_float32(const float *from, MPT_TYPE(type) type, void *dest)
 {
 	float val = 0.0;
 	if (from) {
@@ -71,7 +71,7 @@ extern int mpt_data_convert_float32(const float *from, MPT_TYPE(value) type, voi
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_float64(const double *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_float64(const double *from, MPT_TYPE(type) type, void *dest)
 {
 	double val = 0.0;
 	if (from) {
@@ -116,7 +116,7 @@ extern int mpt_data_convert_float64(const double *from, MPT_TYPE(value) type, vo
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_exflt(const long double *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_exflt(const long double *from, MPT_TYPE(type) type, void *dest)
 {
 	long double val = 0.0L;
 	if (from) {

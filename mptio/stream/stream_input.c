@@ -61,11 +61,11 @@ static MPT_INTERFACE(reply_context_detached) *streamDefer(MPT_INTERFACE(reply_co
 	return 0;
 }
 /* convertable interface */
-static int streamConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int streamConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(streamInput) *srm = (void *) val;
 	const MPT_STRUCT(named_traits) *traits = mpt_input_type_traits();
-	MPT_TYPE(value) me;
+	MPT_TYPE(type) me;
 	
 	if (!traits) {
 		me = MPT_ENUM(TypeMetaPtr);

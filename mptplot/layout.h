@@ -338,7 +338,7 @@ class item_group : public metatype, public group
 public:
 	virtual ~item_group();
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	item_group *clone() const __MPT_OVERRIDE;
@@ -370,7 +370,7 @@ public:
 	layout();
 	~layout() __MPT_OVERRIDE;
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	int property(struct property *) const __MPT_OVERRIDE;
 	int set_property(const char *, convertable *) __MPT_OVERRIDE;
@@ -427,7 +427,7 @@ public:
 	line(const ::mpt::line *from = 0);
 	virtual ~line();
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	line *clone() const __MPT_OVERRIDE;
@@ -442,7 +442,7 @@ public:
 	text(const ::mpt::text *from = 0);
 	virtual ~text();
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	text *clone() const __MPT_OVERRIDE;
@@ -477,7 +477,7 @@ public:
 	graph(const ::mpt::graph * = 0);
 	~graph() __MPT_OVERRIDE;
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	graph *clone() const __MPT_OVERRIDE;
 	
@@ -557,7 +557,7 @@ public:
 	axis(AxisFlags type);
 	virtual ~axis();
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	axis *clone() const __MPT_OVERRIDE;
@@ -573,7 +573,7 @@ public:
 	world(const ::mpt::world *);
 	virtual ~world();
 	
-	int convert(value_t , void *) __MPT_OVERRIDE;
+	int convert(type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	world *clone() const __MPT_OVERRIDE;

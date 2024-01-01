@@ -27,7 +27,7 @@
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_int8(const int8_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_int8(const int8_t *from, MPT_TYPE(type) type, void *dest)
 {
 	int8_t val = 0;
 	if (from) {
@@ -106,7 +106,7 @@ extern int mpt_data_convert_int8(const int8_t *from, MPT_TYPE(value) type, void 
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_uint8(const uint8_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_uint8(const uint8_t *from, MPT_TYPE(type) type, void *dest)
 {
 	uint8_t val = 0;
 	if (from) {
@@ -179,7 +179,7 @@ extern int mpt_data_convert_uint8(const uint8_t *from, MPT_TYPE(value) type, voi
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_int16(const int16_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_int16(const int16_t *from, MPT_TYPE(type) type, void *dest)
 {
 	int16_t val = 0;
 	if (from) {
@@ -257,7 +257,7 @@ extern int mpt_data_convert_int16(const int16_t *from, MPT_TYPE(value) type, voi
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_uint16(const uint16_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_uint16(const uint16_t *from, MPT_TYPE(type) type, void *dest)
 {
 	uint16_t val = 0;
 	if (from) {
@@ -333,7 +333,7 @@ extern int mpt_data_convert_uint16(const uint16_t *from, MPT_TYPE(value) type, v
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_int32(const int32_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_int32(const int32_t *from, MPT_TYPE(type) type, void *dest)
 {
 	int32_t val = 0;
 	if (from) {
@@ -415,7 +415,7 @@ extern int mpt_data_convert_int32(const int32_t *from, MPT_TYPE(value) type, voi
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_uint32(const uint32_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_uint32(const uint32_t *from, MPT_TYPE(type) type, void *dest)
 {
 	uint32_t val = 0;
 	if (from) {
@@ -496,7 +496,7 @@ extern int mpt_data_convert_uint32(const uint32_t *from, MPT_TYPE(value) type, v
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_int64(const int64_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_int64(const int64_t *from, MPT_TYPE(type) type, void *dest)
 {
 	int64_t val = 0;
 	if (from) {
@@ -581,7 +581,7 @@ extern int mpt_data_convert_int64(const int64_t *from, MPT_TYPE(value) type, voi
  * \retval mpt::BadType     unknown conversion
  * \retval >0               destiantion data size
  */
-extern int mpt_data_convert_uint64(const uint64_t *from, MPT_TYPE(value) type, void *dest)
+extern int mpt_data_convert_uint64(const uint64_t *from, MPT_TYPE(type) type, void *dest)
 {
 	uint64_t val = 0;
 	if (from) {

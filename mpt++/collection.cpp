@@ -224,7 +224,7 @@ struct item_match
 	const char *ident;
 	size_t curr;
 	size_t left;
-	value_t type;
+	type_t type;
 	char sep;
 };
 static int find_item(void *ptr, const identifier *id, convertable *conv, const collection *sub)
@@ -278,7 +278,7 @@ static int find_item(void *ptr, const identifier *id, convertable *conv, const c
 	return ret;
 }
 
-convertable *collection::relation::find(value_t type, const char *name, int nlen) const
+convertable *collection::relation::find(type_t type, const char *name, int nlen) const
 {
 	struct item_match m;
 	const char *sep;
@@ -303,7 +303,7 @@ convertable *collection::relation::find(value_t type, const char *name, int nlen
 	return _parent ? _parent->find(type, name, nlen) : 0;
 }
 
-convertable *node_relation::find(value_t type, const char *name, int nlen) const
+convertable *node_relation::find(type_t type, const char *name, int nlen) const
 {
 	if (!_curr) {
 		return 0;

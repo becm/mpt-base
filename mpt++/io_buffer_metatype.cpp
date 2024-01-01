@@ -36,7 +36,7 @@ io::buffer::metatype *io::buffer::metatype::create(const array *arr)
 	return arr ? new meta_buffer(*arr) : new meta_buffer(array(0));
 }
 // convertable interface
-int io::buffer::metatype::convert(value_t type, void *ptr)
+int io::buffer::metatype::convert(type_t type, void *ptr)
 {
 	int me = type_properties<io::interface *>::id(true);
 	if (me < 0) {

@@ -35,7 +35,7 @@ MPT_STRUCT(libsymbol)
 #endif
 	MPT_STRUCT(libhandle) *lib;     /* origin handle for symbol */
 	void                  *addr;    /* symbol address */
-	MPT_TYPE(value)        type;    /* symbol type */
+	MPT_TYPE(type)         type;    /* symbol type */
 };
 
 __MPT_EXTDECL_BEGIN

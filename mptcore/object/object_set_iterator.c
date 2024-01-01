@@ -12,7 +12,7 @@ struct convIter
 	MPT_INTERFACE(iterator) *it;
 };
 
-static int iteratorConv(MPT_INTERFACE(convertable) *mt, MPT_TYPE(value) type, void *dest)
+static int iteratorConv(MPT_INTERFACE(convertable) *mt, MPT_TYPE(type) type, void *dest)
 {
 	const struct convIter *wr = (void *) mt;
 	

@@ -155,7 +155,7 @@ MPT_STRUCT(named_traits)
 	const MPT_STRUCT(type_traits) * const traits;
 #endif
 	const char * const name;
-	const MPT_TYPE(value) type;
+	const MPT_TYPE(type) type;
 };
 
 /*! generic data type and offset */
@@ -177,7 +177,7 @@ MPT_STRUCT(value)
 	template<typename T>
 	operator T *() const;
 	
-	int convert(value_t , void *) const;
+	int convert(type_t , void *) const;
 	
 	inline void clear()
 	{
@@ -195,7 +195,7 @@ MPT_STRUCT(value)
 	}
 	inline bool set(const char *id, const void *ptr)
 	{
-		value_t type = reinterpret_cast<value_t>(id);
+		type_t type = reinterpret_cast<type_t>(id);
 		if (type <= _TypeValueMax) {
 			return false;
 		}
@@ -203,7 +203,7 @@ MPT_STRUCT(value)
 		_type = type;
 		return true;
 	}
-	inline value_t type() const
+	inline type_t type() const
 	{
 		return _type;
 	}
@@ -213,8 +213,8 @@ MPT_STRUCT(value)
 	}
 	
 	const char *string() const;
-	const struct iovec *vector(value_t = 0) const;
-	const struct array *array(value_t = 0) const;
+	const struct iovec *vector(type_t = 0) const;
+	const struct array *array(type_t = 0) const;
 protected:
 #else
 # define MPT_VALUE_INIT(t, p) { (p), (t) }
@@ -222,8 +222,8 @@ protected:
 	(v)->_addr = (p), \
 	(v)->_type = (t))
 #endif
-	const void     *_addr;  /* address of value data */
-	MPT_TYPE(value) _type;  /* value type identifier */
+	const void    *_addr;   /* address of value data */
+	MPT_TYPE(type) _type;  	/* value type identifier */
 };
 
 /*! generic iterator interface */
@@ -273,12 +273,12 @@ extern void mpt_float80_encode(long , const long double *, MPT_STRUCT(float80) *
 extern int mpt_float80_compare(const MPT_STRUCT(float80) *, const MPT_STRUCT(float80) *);
 
 /* query type mappings */
-extern const MPT_STRUCT(type_traits) *mpt_type_traits(MPT_TYPE(value));
+extern const MPT_STRUCT(type_traits) *mpt_type_traits(MPT_TYPE(type));
 
 /* traits for registered named types */
 extern const MPT_STRUCT(named_traits) *mpt_named_traits(const char *, int);
-extern const MPT_STRUCT(named_traits) *mpt_interface_traits(MPT_TYPE(value));
-extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(MPT_TYPE(value));
+extern const MPT_STRUCT(named_traits) *mpt_interface_traits(MPT_TYPE(type));
+extern const MPT_STRUCT(named_traits) *mpt_metatype_traits(MPT_TYPE(type));
 /* register additional types */
 extern const MPT_STRUCT(named_traits) *mpt_type_interface_add(const char *);
 extern const MPT_STRUCT(named_traits) *mpt_type_metatype_add(const char *);
@@ -303,13 +303,13 @@ extern int mpt_value_argv(void *, size_t , int , va_list);
 #endif /* _VA_LIST */
 
 /* get value from iterator and advance */
-extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, MPT_TYPE(value) , void *);
+extern int mpt_iterator_consume(MPT_INTERFACE(iterator) *, MPT_TYPE(type) , void *);
 
 __MPT_EXTDECL_END
 
 #ifdef __cplusplus
 
-inline __MPT_CONST_TYPE uint8_t basetype(MPT_TYPE(value) org) {
+inline __MPT_CONST_TYPE uint8_t basetype(MPT_TYPE(type) org) {
 	return (org == 0)
 		? 0
 		: (org <= _TypeDynamicMax)
@@ -704,7 +704,7 @@ mpt::value::operator T *() const
 	if (type < 0 || !_type || !_addr) {
 		return 0;
 	}
-	if (_type == (value_t) type) {
+	if (_type == (type_t) type) {
 		return *static_cast<T * const *>(_addr);
 	}
 	T *ptr = 0;

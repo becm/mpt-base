@@ -10,7 +10,7 @@
 
 #include "convert.h"
 
-static int _mpt_convertable_wrap(const void *from, MPT_TYPE(value) type, void *dest)
+static int _mpt_convertable_wrap(const void *from, MPT_TYPE(type) type, void *dest)
 {
 	MPT_INTERFACE(convertable) *src;
 	
@@ -20,7 +20,7 @@ static int _mpt_convertable_wrap(const void *from, MPT_TYPE(value) type, void *d
 	return src->_vptr->convert(src, type, dest);
 }
 
-static int _mpt_metatype_wrap(const void *from, MPT_TYPE(value) type, void *dest)
+static int _mpt_metatype_wrap(const void *from, MPT_TYPE(type) type, void *dest)
 {
 	MPT_INTERFACE(metatype) *mt;
 	
@@ -62,7 +62,7 @@ static int _mpt_metatype_wrap(const void *from, MPT_TYPE(value) type, void *dest
  * \return converte function for data type
  */
 
-extern MPT_TYPE(data_converter) mpt_data_converter(MPT_TYPE(value) type)
+extern MPT_TYPE(data_converter) mpt_data_converter(MPT_TYPE(type) type)
 {
 	/* interfaces with builtin conversion */
 	if (type == MPT_ENUM(TypeConvertablePtr)) {

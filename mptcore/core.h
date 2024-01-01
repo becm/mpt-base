@@ -70,7 +70,7 @@ __MPT_NAMESPACE_BEGIN
 
 MPT_INTERFACE(logger);
 
-typedef uintptr_t MPT_TYPE(value);
+typedef uintptr_t MPT_TYPE(type);
 
 #define MPT_arrsize(a)        (sizeof(a) / sizeof(*(a)))
 #define MPT_align(x)          ((x) + ((sizeof(void *))-1) - (((x)-1)&((sizeof(void *))-1)))
@@ -211,7 +211,7 @@ public:
 	template<typename T>
 	operator T *();
 	
-	virtual int convert(value_t , void *) = 0;
+	virtual int convert(type_t , void *) = 0;
 	
 	static const struct named_traits *pointer_traits();
 };
@@ -220,7 +220,7 @@ public:
 MPT_INTERFACE(convertable);
 MPT_INTERFACE_VPTR(convertable)
 {
-	int (*convert)(MPT_INTERFACE(convertable) *, MPT_TYPE(value) , void *);
+	int (*convert)(MPT_INTERFACE(convertable) *, MPT_TYPE(type) , void *);
 }; MPT_INTERFACE(convertable) {
 	const MPT_INTERFACE_VPTR(convertable) *_vptr;
 };
@@ -391,7 +391,7 @@ protected:
 class relation
 {
 public:
-	virtual convertable *find(value_t , const char *, int = -1) const = 0;
+	virtual convertable *find(type_t , const char *, int = -1) const = 0;
 protected:
 	inline relation() {}
 	virtual ~relation() {}

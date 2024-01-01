@@ -27,7 +27,7 @@ public:
 	client();
 	virtual ~client() { }
 	
-	int convert(mpt::value_t , void *) __MPT_OVERRIDE;
+	int convert(mpt::type_t , void *) __MPT_OVERRIDE;
 	
 	void unref() __MPT_OVERRIDE;
 	client *clone() const __MPT_OVERRIDE;
@@ -48,7 +48,7 @@ client::client()
 	}
 	_mt.set_instance(mt);
 }
-int client::convert(mpt::value_t type, void *ptr)
+int client::convert(mpt::type_t type, void *ptr)
 {
 	metatype *mt;
 	int ret;

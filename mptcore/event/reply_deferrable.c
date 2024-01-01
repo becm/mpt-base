@@ -92,7 +92,7 @@ static uintptr_t contextRef(MPT_INTERFACE(metatype) *mt)
 	return mpt_refcount_raise(&ctx->ref);
 }
 /* metatype interface */
-static int contextConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int contextConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(reply_context_defer) *ctx = MPT_baseaddr(reply_context_defer, val, _mt);
 	

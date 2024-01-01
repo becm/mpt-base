@@ -36,7 +36,7 @@ MPT_STRUCT(metaBuffer) {
 };
 
 /* element convertable interface */
-static int bufferConvertEntry(MPT_INTERFACE(convertable) *conv, MPT_TYPE(value) type, void *ptr)
+static int bufferConvertEntry(MPT_INTERFACE(convertable) *conv, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(metaBuffer) *m = MPT_baseaddr(metaBuffer, conv, entry._conv);
 	const MPT_STRUCT(buffer) *buf;
@@ -114,7 +114,7 @@ static int bufferReset(MPT_INTERFACE(iterator) *it)
 	return (type < 0) ? 0 : type;
 }
 /* convertable interface */
-static int bufferConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int bufferConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	
@@ -254,7 +254,7 @@ static int bufferResetArgs(MPT_INTERFACE(iterator) *it)
 	/* consume first argument of iterator */
 	return bufferAdvance(&m->_it);
 }
-static int bufferConvArgs(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int bufferConvArgs(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	const MPT_STRUCT(metaBuffer) *m = (void *) val;
 	

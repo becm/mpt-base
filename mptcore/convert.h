@@ -79,7 +79,7 @@ MPT_STRUCT(strdest)
 	        val[7];  /* values before/after reading */
 };
 
-typedef int (*MPT_TYPE(data_converter))(const void *, MPT_TYPE(value) , void *);
+typedef int (*MPT_TYPE(data_converter))(const void *, MPT_TYPE(type) , void *);
 
 #ifdef __cplusplus
 template<> inline __MPT_CONST_TYPE int type_properties<value_format>::id(bool) {
@@ -103,16 +103,16 @@ extern void mpt_bswap_32(long , uint32_t *);
 extern void mpt_bswap_16(long , uint16_t *);
 
 /* get data from pointer and description */
-extern int mpt_value_convert(const MPT_STRUCT(value) *, MPT_TYPE(value) , void *);
+extern int mpt_value_convert(const MPT_STRUCT(value) *, MPT_TYPE(type) , void *);
 /* get string data */
-extern const char *mpt_data_tostring(const void **, MPT_TYPE(value) , size_t *);
+extern const char *mpt_data_tostring(const void **, MPT_TYPE(type) , size_t *);
 
 /* get number type from string */
 extern int mpt_convert_number(const char *, int , void *);
 
 /* get keyword/type from text */
 extern const char *mpt_convert_key(const char **, const char *, size_t *);
-extern int mpt_convert_string(const char *, MPT_TYPE(value) , void *);
+extern int mpt_convert_string(const char *, MPT_TYPE(type) , void *);
 
 /* string conversions */
 extern int _mpt_convert_int(void *, size_t , const char *, int);
@@ -144,25 +144,25 @@ extern int mpt_culong(unsigned long *, const char *, int , const unsigned long [
 extern int mpt_cutf8(const char **, size_t);
 
 /* integer converters */
-extern int mpt_data_convert_int8 (const int8_t  *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_int16(const int16_t *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_int32(const int32_t *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_int64(const int64_t *, MPT_TYPE(value) , void *);
+extern int mpt_data_convert_int8 (const int8_t  *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_int16(const int16_t *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_int32(const int32_t *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_int64(const int64_t *, MPT_TYPE(type) , void *);
 /* unsigned integer converters */
-extern int mpt_data_convert_uint8 (const uint8_t  *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_uint16(const uint16_t *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_uint32(const uint32_t *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_uint64(const uint64_t *, MPT_TYPE(value) , void *);
+extern int mpt_data_convert_uint8 (const uint8_t  *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_uint16(const uint16_t *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_uint32(const uint32_t *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_uint64(const uint64_t *, MPT_TYPE(type) , void *);
 /* floating point converters */
-extern int mpt_data_convert_float32(const float  *, MPT_TYPE(value) , void *);
-extern int mpt_data_convert_float64(const double *, MPT_TYPE(value) , void *);
+extern int mpt_data_convert_float32(const float  *, MPT_TYPE(type) , void *);
+extern int mpt_data_convert_float64(const double *, MPT_TYPE(type) , void *);
 #ifdef _MPT_FLOAT_EXTENDED_H
-extern int mpt_data_convert_exflt(const long double *, MPT_TYPE(value) , void *);
+extern int mpt_data_convert_exflt(const long double *, MPT_TYPE(type) , void *);
 #endif
-extern int mpt_data_convert_array(const MPT_STRUCT(array) *, MPT_TYPE(value) , void *);
+extern int mpt_data_convert_array(const MPT_STRUCT(array) *, MPT_TYPE(type) , void *);
 
 /* data converter resolution */
-MPT_TYPE(data_converter) mpt_data_converter(MPT_TYPE(value));
+MPT_TYPE(data_converter) mpt_data_converter(MPT_TYPE(type));
 
 
 /* en/decoder selection */

@@ -38,7 +38,7 @@ inline static MPT_INTERFACE(output) *localPassOutput(const MPT_STRUCT(local_outp
 	return out;
 }
 /* convertable interface */
-static int localConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(value) type, void *ptr)
+static int localConv(MPT_INTERFACE(convertable) *val, MPT_TYPE(type) type, void *ptr)
 {
 	MPT_STRUCT(local_output) *lo = (void *) val;
 	
