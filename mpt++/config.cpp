@@ -11,7 +11,31 @@
 __MPT_NAMESPACE_BEGIN
 
 template class type_properties<config::root>;
-template class type_properties<config::item>;
+
+template<>
+int type_properties<config_item>::id(bool)
+{
+	static int type = 0;
+	static const type_traits *traits = 0;
+	
+	if (type != 0) {
+		return type;
+	}
+	if (!traits && !(traits = type_properties<config_item>::traits())) {
+		return BadOperation;
+	}
+	int t = type_traits::add(*traits);
+	if (t < 0) {
+		return t;
+	}
+	return type = t;
+}
+
+template<>
+const type_traits* type_properties<config_item>::traits()
+{
+	return mpt_config_item_traits();
+}
 
 // non-trivial path operations
 array::content *path::array_content() const
@@ -144,10 +168,10 @@ int config::root::assign(const path *dest, const value *val)
 	// find existing
 	path p = *dest;
 	metatype *m;
-	item *curr;
+	config_item *curr;
 	
 	if (!val) {
-		if (!(curr = ::mpt::query(_sub, p))) {
+		if (!(curr = mpt_config_item_query(&_sub, &p))) {
 			return 0;
 		}
 		int type = 0;
@@ -160,7 +184,7 @@ int config::root::assign(const path *dest, const value *val)
 	if (!(m = metatype::create(*val))) {
 		return BadType;
 	}
-	if (!(curr = reserve(_sub, p))) {
+	if (!(curr = mpt_config_item_reserve(&_sub, &p))) {
 		m->unref();
 		return BadOperation;
 	}
@@ -175,9 +199,9 @@ convertable *config::root::query(const path *dest) const
 	}
 	// find existing
 	path p = *dest;
-	item *curr;
+	config_item *curr;
 	
-	if (!(curr = ::mpt::query(_sub, p))) {
+	if (!(curr = mpt_config_item_query(&_sub, &p))) {
 		return 0;
 	}
 	return curr->instance();
@@ -194,9 +218,9 @@ int config::root::remove(const path *dest)
 		return 0;
 	}
 	path p = *dest;
-	item *curr;
+	config_item *curr;
 	// requested element not found
-	if (!(curr = ::mpt::query(_sub, p))) {
+	if (!(curr = mpt_config_item_query(&_sub, &p))) {
 		return BadOperation;
 	}
 	curr->resize(0); // remove childen from element
@@ -209,74 +233,18 @@ int config::root::process(const path *dest, int (*handler)(void *, const collect
 {
 	// use top level elements
 	if (!dest) {
-		subtree top(items());
+		config_item::subtree top(items());
 		return handler(ctx, &top);
 	}
 	// look for subtree elements
 	path p = *dest;
-	config::item *curr;
-	if ((curr = ::mpt::query(_sub, p))) {
-		subtree sub(curr->elements());
+	config_item *curr;
+	if ((curr = mpt_config_item_query(&_sub, &p))) {
+		config_item::subtree sub(curr->elements());
 		return handler(ctx, &sub);
 	}
 	// requested element not found
 	return BadOperation;
-}
-
-// configuration element access
-config::item *query(const unique_array<config::item> &arr, path &p)
-{
-	const span<const char> name = p.value();
-	int len;
-	
-	if ((len = mpt_path_next(&p)) < 0) {
-		return 0;
-	}
-	for (config::item *e = arr.begin(), *to = arr.end(); e != to; ++e) {
-		if (e->unused() || !e->equal(name.begin(), len)) {
-			continue;
-		}
-		if (!p.empty()) {
-			return query(*e, p);
-		}
-		return e;
-	}
-	return 0;
-}
-config::item *reserve(unique_array<config::item> &arr, path &p)
-{
-	const span<const char> name = p.value();
-	int len;
-	
-	if ((len = mpt_path_next(&p)) < 0) {
-		return 0;
-	}
-	config::item *unused = 0;
-	for (config::item *e = arr.begin(), *to = arr.end(); e != to; ++e) {
-		if (e->unused()) {
-			if (!unused) unused = e;
-			continue;
-		}
-		if (!e->equal(name.begin(), len)) {
-			continue;
-		}
-		if (!p.empty()) {
-			return reserve(*e, p);
-		}
-		return e;
-	}
-	if (!unused) {
-		if (!(unused = arr.insert(arr.length()))) {
-			return 0;
-		}
-	}
-	else {
-		unused->resize(0);
-		unused->set_instance(0);
-	}
-	unused->set_name(name.begin(), len);
-	
-	return p.empty() ? unused : reserve(*unused, p);
 }
 
 __MPT_NAMESPACE_END

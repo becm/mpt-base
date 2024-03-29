@@ -95,8 +95,6 @@ public:
 	virtual int process(const path *, int (*)(void *, const MPT_INTERFACE(collection) *), void *) const = 0;
 	
 	class root;
-	class item;
-	class subtree;
 };
 template<> inline __MPT_CONST_TYPE int type_properties<config *>::id(bool) {
 	return TypeConfigPtr;
@@ -116,6 +114,32 @@ MPT_INTERFACE_VPTR(config) {
 	const MPT_INTERFACE_VPTR(config) *_vptr;
 };
 #endif
+
+#if defined(__cplusplus)
+MPT_STRUCT(config_item) : public unique_array<config_item>, public reference<metatype>, public identifier
+{
+public:
+	class subtree;
+	inline bool unused()
+	{
+		return _len == 0;
+	}
+};
+/* type properties explicitly defined by C/C++ library methods */
+template<> inline __MPT_CONST_TYPE int type_properties<config_item>::id(bool);
+template <> inline const struct type_traits *type_properties<config_item>::traits();
+#else
+MPT_STRUCT(config_item)
+# ifdef _MPT_ARRAY_H
+{
+	_MPT_UARRAY_TYPE(MPT_STRUCT(config_item)) elements;
+	MPT_INTERFACE(metatype) *value;
+	MPT_STRUCT(identifier) identifier;
+}
+# endif /* _MPT_ARRAY_H */
+;
+#endif /* __cplusplus */
+
 
 __MPT_EXTDECL_BEGIN
 
@@ -182,6 +206,15 @@ extern MPT_INTERFACE(convertable) *mpt_config_message_next(const MPT_INTERFACE(c
 /* query config data */
 extern int mpt_config_reply(MPT_INTERFACE(reply_context) *, const MPT_INTERFACE(config) *, int , const MPT_STRUCT(message) *);
 
+/* type traits for config item */
+extern const MPT_STRUCT(type_traits) *mpt_config_item_traits();
+#ifdef _MPT_ARRAY_H
+/* get config item for path */
+extern MPT_STRUCT(config_item) *mpt_config_item_query(const _MPT_UARRAY_TYPE(MPT_STRUCT(config_item)) *, MPT_STRUCT(path) *);
+/* reserve config item for path */
+extern MPT_STRUCT(config_item) *mpt_config_item_reserve(_MPT_UARRAY_TYPE(MPT_STRUCT(config_item)) *, MPT_STRUCT(path) *);
+#endif
+
 /* assign value in node tree (top level is list) */
 extern MPT_STRUCT(node) *mpt_node_assign(MPT_STRUCT(node) **, const MPT_STRUCT(path) *, const MPT_STRUCT(value) *);
 
@@ -208,35 +241,23 @@ public:
 	int remove(const path *) __MPT_OVERRIDE;
 	int process(const path *, int (*)(void *, const collection *), void *) const __MPT_OVERRIDE;
 	
-	inline span<const item> items() const
+	inline span<const config_item> items() const
 	{
 		return _sub.elements();
 	}
 protected:
-	unique_array<item> _sub;
-};
-
-extern config::item *query(const unique_array<config::item> &, path &);
-extern config::item *reserve(unique_array<config::item> &, path &);
-
-class config::item : public unique_array<config::item>, public reference<metatype>, public identifier
-{
-public:
-	inline bool unused()
-	{
-		return _len == 0;
-	}
+	unique_array<config_item> _sub;
 };
 
 # if defined(_MPT_COLLECTION_H)
-class config::subtree : public collection
+class config_item::subtree : public collection
 {
 public:
-	subtree(const span<const item> &v) : _elem(v)
+	subtree(const span<const config_item> &v) : _elem(v)
 	{ }
 	int each(item_handler_t handler, void *ctx) const __MPT_OVERRIDE
 	{
-		for (const item *e = _elem.begin(), *to = _elem.end(); e != to; ++e) {
+		for (const config_item *e = _elem.begin(), *to = _elem.end(); e != to; ++e) {
 			subtree sub(e->elements());
 			int ret = handler(ctx, e, e->instance(), &sub);
 			if (ret < 0) {
@@ -246,7 +267,7 @@ public:
 		return 0;
 	}
 private:
-	const span<const item> _elem;
+	const span<const config_item> _elem;
 };
 # endif
 #endif
