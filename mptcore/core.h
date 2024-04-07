@@ -323,15 +323,6 @@ public:
 	bool set_name(const char *, int = -1);
 	
 	identifier &operator =(const identifier &);
-	
-	static inline __MPT_CONST_EXPR size_t minimalLength()
-	{
-		return 4 + sizeof(char *);
-	}
-	inline size_t totalSize() const
-	{
-		return 4 + _max;
-	}
 # define MPT_CHARSET(x)  x
 #else
 # define MPT_CHARSET(x)  MPT_ENUM(Charset##x)
@@ -361,8 +352,7 @@ protected:
 #else
 MPT_STRUCT(identifier)
 {
-# define MPT_IDENTIFIER_INIT   { 0, 0, 0, { 0 }, 0 }
-# define MPT_IDENTIFIER_HSIZE  4
+# define MPT_IDENTIFIER_INIT   { 0, 0, (4 + sizeof(char *)), { 0 }, 0 }
 #endif
 	uint16_t _len;
 	uint8_t  _charset;
