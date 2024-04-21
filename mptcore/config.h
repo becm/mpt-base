@@ -126,7 +126,7 @@ public:
 	}
 };
 /* type properties explicitly defined by C/C++ library methods */
-template<> inline __MPT_CONST_TYPE int type_properties<config_item>::id(bool);
+template<> inline int type_properties<config_item>::id(bool);
 template <> inline const struct type_traits *type_properties<config_item>::traits();
 #else
 MPT_STRUCT(config_item)
