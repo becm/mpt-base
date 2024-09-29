@@ -16,9 +16,10 @@
  * 
  * \return number of path elements
  */
-extern size_t mpt_path_set(MPT_STRUCT(path) *path, const char *val, int len)
+extern int mpt_path_set(MPT_STRUCT(path) *path, const char *val, int len)
 {
-	size_t vlen, plen = 0, elem = 0, first = 0, add = 1;
+	size_t vlen, plen = 0, first = 0, add = 1;
+	int elem = 0;
 	char sep, assign;
 	
 	sep = path->sep;

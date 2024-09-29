@@ -126,7 +126,7 @@ static int condConfig(void *ptr, const MPT_STRUCT(path) *p, const MPT_STRUCT(val
 	MPT_INTERFACE(config) *cfg = ptr;
 	int ret;
 	
-	if (cfg->_vptr->query(cfg, p)) {
+	if (cfg->_vptr->query(cfg, p, 0, 0) >= 0) {
 		return 0;
 	}
 	ret = cfg->_vptr->assign(cfg, p, val);

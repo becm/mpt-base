@@ -132,11 +132,9 @@ bool config::set(const char *p, const char *val, int sep)
 	tmp = val;
 	return assign(&where, &tmp) < 0 ? false : true;
 }
-convertable *config::get(const char *base, int sep, int len) const
+int config::get(const path &base, type_t type, void *ptr) const
 {
-	path to;
-	to.set(base, len, sep, 0);
-	return query(&to);
+	return mpt_config_getp(this, &base, type, ptr);
 }
 void config::del(const char *p, int sep, int len)
 {
@@ -191,21 +189,6 @@ int config::root::assign(const path *dest, const value *val)
 	curr->set_instance(m);
 	return m->type();
 }
-convertable *config::root::query(const path *dest) const
-{
-	// no 'self' element(s)
-	if (!dest || dest->empty()) {
-		return 0;
-	}
-	// find existing
-	path p = *dest;
-	config_item *curr;
-	
-	if (!(curr = mpt_config_item_query(&_sub, &p))) {
-		return 0;
-	}
-	return curr->instance();
-}
 int config::root::remove(const path *dest)
 {
 	// clear root element
@@ -229,22 +212,32 @@ int config::root::remove(const path *dest)
 	
 	return 0;
 }
-int config::root::process(const path *dest, int (*handler)(void *, const collection *), void *ctx) const
+int config::root::query(const path *dest, config_handler_t handler, void *ctx) const
 {
 	// use top level elements
 	if (!dest) {
 		config_item::subtree top(items());
-		return handler(ctx, &top);
+		
+		// no 'self' entry
+		return handler ? handler(ctx, 0, &top) : 0;
 	}
 	// look for subtree elements
 	path p = *dest;
 	config_item *curr;
 	if ((curr = mpt_config_item_query(&_sub, &p))) {
-		config_item::subtree sub(curr->elements());
-		return handler(ctx, &sub);
+		if (!handler) {
+			return 0;
+		}
+		if (curr->length()) {
+			config_item::subtree sub(curr->elements());
+			return handler(ctx, curr->instance(), &sub);
+		}
+		else {
+			return handler(ctx, curr->instance(), 0);
+		}
 	}
 	// requested element not found
-	return BadOperation;
+	return MissingData;
 }
 
 __MPT_NAMESPACE_END

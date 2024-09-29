@@ -39,7 +39,7 @@ static int notSpace(int c, void *con)
  * \brief get next argument
  * 
  * Parse message for next argument end.
- * If separator is pace character
+ * If separator is space character
  * leading whitespace is consumed.
  * 
  * \param msg	message data

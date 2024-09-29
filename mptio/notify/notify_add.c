@@ -20,6 +20,28 @@
 # include <sys/epoll.h>
 #endif
 
+static int _notify_set_epoll(void *ctx, MPT_INTERFACE(convertable) *val, const MPT_INTERFACE(collection) *sub)
+{
+	(void) sub;
+	
+	if (!val) {
+		return 0;
+	}
+	if (val->_vptr->convert(val, 'i', &ctx) >= 0) {
+		return 1;
+	}
+	else {
+		const char *choice = 0;
+		if (val->_vptr->convert(val, 'i', &choice) >= 0
+		 && choice
+		 && !strcmp(choice, "false")) {
+			*((int32_t *) ctx) = 0;
+		}
+		return 2;
+	}
+	return MPT_ERROR(BadType);
+}
+
 /*!
  * \ingroup mptNotify
  * \brief add input to notifier
@@ -75,18 +97,13 @@ extern int mpt_notify_add(MPT_STRUCT(notify) *no, int mode, MPT_INTERFACE(input)
 	}
 #if defined(__linux__)
 	if (no->_sysfd < 0 && !no->_fdused) {
-		MPT_INTERFACE(convertable) *val;
-		const char *choice = 0;
+		MPT_STRUCT(path) p = MPT_PATH_INIT;
 		int32_t flg = 1;
-		if (!(val = mpt_config_get(0, "mpt.notify.epoll", '.', 0))) {
-			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
-		}
-		else if (val->_vptr->convert(val, 'i', &flg) > 0) {
-			if (flg) no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
-		}
-		else if (val->_vptr->convert(val, 's', &choice) < 0
-		         || !choice
-		         || strcmp(choice, "false")) {
+		
+		mpt_path_set(&p, "mpt.notify.epoll", -1);
+		mpt_config_query(0, &p, _notify_set_epoll, &flg);
+		mpt_path_set(&p, 0, 0);
+		if (flg) {
 			no->_sysfd = epoll_create1(EPOLL_CLOEXEC);
 		}
 	}

@@ -6,6 +6,7 @@
 
 #include <sys/uio.h>
 
+#include "array.h"
 #include "meta.h"
 #include "message.h"
 #include "output.h"
@@ -142,29 +143,12 @@ extern int mpt_message_assign(const MPT_STRUCT(message) *msg, int len, int (*pro
  * 
  * \return number of processed path elements
  */
-extern MPT_INTERFACE(convertable) *mpt_config_message_next(const MPT_INTERFACE(config) *cfg, int sep, MPT_STRUCT(message) *msg)
+extern int mpt_config_message_next(MPT_STRUCT(path) *path, int sep, MPT_STRUCT(message) *msg)
 {
-	MPT_INTERFACE(metatype) *glob;
-	MPT_INTERFACE(convertable) *val;
-	MPT_STRUCT(path) p = MPT_PATH_INIT;
+	MPT_STRUCT(buffer) *buf;
 	MPT_STRUCT(message) tmp;
-	char buf[1024];
+	char *addr;
 	int len;
-	
-	glob = 0;
-	if (!cfg
-	    && !(cfg = getGlobal(&glob, __func__))) {
-		return 0;
-	}
-	if (!msg) {
-		val = cfg->_vptr->query(cfg, 0);
-		if (glob) {
-			glob->_vptr->unref(glob);
-		}
-		return val;
-	}
-	p.base = buf;
-	p.sep  = sep;
 	tmp = *msg;
 	
 	/* consume header argument */
@@ -174,57 +158,33 @@ extern MPT_INTERFACE(convertable) *mpt_config_message_next(const MPT_INTERFACE(c
 		len = mpt_message_read(&tmp, sizeof(arg), &arg);
 		
 		if (!len) {
-			p.len = 0;
-			val = cfg->_vptr->query(cfg, 0);
-			if (glob) {
-				glob->_vptr->unref(glob);
-			}
-			if (val) {
-				*msg = tmp;
-			}
-			return val;
+			mpt_path_set(path, 0, 0);
+			return 0;
 		}
 		sep = arg;
 	}
-	if (!sep) {
-		len = mpt_message_read(&tmp, sizeof(buf), buf);
-		if (len >= (int) sizeof(buf)) {
-			val = 0;
-		}
-		else {
-			if (!len) {
-				p.len = len;
-			} else {
-				buf[len] = 0;
-				p.len = len + 1;
-			}
-			val = cfg->_vptr->query(cfg, &p);
-		}
-	}
-	else if ((len = mpt_message_argv(&tmp, 0)) < 0) {
+	else if ((len = mpt_message_argv(&tmp, sep)) < 0) {
 		mpt_log(0, __func__, MPT_LOG(Info), "%s",
 		        MPT_tr("no arguments path info in message"));
-		val = 0;
+		return MPT_ERROR(MissingData);
 	}
-	else if (len >= (int) sizeof(buf)) {
+	if (!(buf = _mpt_buffer_alloc(len + 1, 0))) {
 		int max = sizeof(buf) - 1;
 		mpt_log(0, __func__, MPT_LOG(Error), "%s (%d < %d)",
 		        MPT_tr("path buffer too small"), max, len);
-		val = 0;
+		return MPT_ERROR(MissingBuffer);
 	}
+	addr = (char *) (buf + 1);
+	addr[len] = 0;
+	mpt_path_fini(path);
+	path->base = addr;
+	path->flags |= MPT_PATHFLAG(HasArray);
+	
 	/* consume path and separator */
-	else {
-		len = mpt_message_read(&tmp, len, buf);
-		buf[len] = 0;
-		p.len = len + 1;
-		val = cfg->_vptr->query(cfg, &p);
-		len = mpt_message_read(&tmp, 1, buf);
+	len = mpt_message_read(&tmp, len, addr);
+	if (sep >= 0) {
+		mpt_message_read(&tmp, 1, 0);
 	}
-	if (glob) {
-		glob->_vptr->unref(glob);
-	}
-	if (val) {
-		*msg = tmp;
-	}
-	return val;
+	*msg = tmp;
+	return len ? len : 1;
 }

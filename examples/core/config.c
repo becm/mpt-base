@@ -31,15 +31,15 @@ extern int main(int argc, char *argv[])
 		return 2;
 	}
 	if (argc < 2) {
-		cfg->_vptr->process(cfg, 0, table_print, stdout);
+		mpt_path_set(&p, 0, 0);
+		cfg->_vptr->query(cfg, &p, table_print, stdout);
 	}
 	for (i = 1; i < argc; ++i) {
-		MPT_INTERFACE(convertable) *elem;
-		if (!(elem = mpt_config_get(cfg, argv[i], '.', 0))) {
+		const char *val = 0;
+		if (mpt_config_get(cfg, argv[i], 's', &val) < 0) {
 			fprintf(stderr, "%s: %s\n", "missing element", argv[i]);
 			++ret;
 		} else {
-			const char *val = mpt_convertable_data(elem, 0);
 			fprintf(stdout, "%s: %s\n", argv[i], val);
 		}
 	}

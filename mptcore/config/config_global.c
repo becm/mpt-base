@@ -110,53 +110,21 @@ static MPT_INTERFACE(metatype) *configClone(const MPT_INTERFACE(metatype) *mt)
 	return mpt_config_global(&c->base);
 }
 /* config interface */
-static MPT_INTERFACE(convertable) *configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path)
-{
-	const MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
-	MPT_INTERFACE(metatype) *mt;
+struct _node_collection {
+	MPT_INTERFACE(collection) col;
 	MPT_STRUCT(node) *n;
-	
-	if (!path) {
-		return (MPT_INTERFACE(convertable) *) &c->_mt;
-	}
-	if (!(n = nodeGlobal)) {
-		return 0;
-	}
-	mt = 0;
-	if (c->base.len) {
-		MPT_STRUCT(path) p = c->base;
-		if (!(n = mpt_node_query(n, &p))
-		 || p.len) {
-			return 0;
-		}
-		mt = n->_meta;
-		n = n->children;
-	}
-	if (path->len) {
-		MPT_STRUCT(path) p = *path;
-		if (!(n = mpt_node_query(n, &p))
-		 || p.len) {
-			return 0;
-		}
-		mt = n->_meta;
-	}
-	return (MPT_INTERFACE(convertable) *) (mt ? mt : mpt_metatype_default());
-}
+};
 static int collectionEach(const MPT_INTERFACE(collection) *c, MPT_TYPE(item_handler) handler, void *ctx)
 {
-	MPT_STRUCT(node) **nptr = (void *) (c + 1);
+	struct _node_collection *col = (void *) c;
 	MPT_STRUCT(node) *n;
 	const MPT_INTERFACE_VPTR(collection) cvptr = { collectionEach };
 	
-	if (!(n = (*nptr)) || !(n = n->children)) {
+	if (!(n = col->n)) {
 		return 0;
 	}
 	while (n) {
-		struct colli {
-			MPT_INTERFACE(collection) col;
-			MPT_STRUCT(node) *n;
-		};
-		struct colli col = { { &cvptr }, n };
+		struct _node_collection col = { { &cvptr }, n->children };
 		int ret = handler(ctx, &n->ident, (MPT_INTERFACE(convertable) *) n->_meta, &col.col);
 		if (ret < 0) {
 			return ret;
@@ -165,34 +133,44 @@ static int collectionEach(const MPT_INTERFACE(collection) *c, MPT_TYPE(item_hand
 	}
 	return 0;
 }
-static int configProcess(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, int (*handler)(void *, const MPT_INTERFACE(collection) *), void *ctx)
+static int configQuery(const MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, MPT_TYPE(config_handler) fcn, void *ctx)
 {
+	static const MPT_INTERFACE_VPTR(collection) cvptr = { collectionEach };
 	MPT_STRUCT(configRoot) *c = MPT_baseaddr(configRoot, cfg, _cfg);
-	struct colli {
-		MPT_INTERFACE(collection) col;
-		MPT_STRUCT(node) *n;
-	};
-	const MPT_INTERFACE_VPTR(collection) cvptr = { collectionEach };
-	struct colli col = { { &cvptr }, 0 };
+	MPT_STRUCT(node) *n = nodeGlobal;
+	MPT_INTERFACE(metatype) *mt;
 	
-	if (!(col.n = nodeGlobal)) {
-		return 0;
+	if (!path) {
+		return fcn ? fcn(ctx, (MPT_INTERFACE(convertable) *) &c->_mt, 0) : 0;
 	}
+	mt = 0;
 	if (c->base.len) {
 		MPT_STRUCT(path) p = c->base;
-		col.n = mpt_node_query(col.n, &p);
-	}
-	if (path) {
-		if (col.n && path->len) {
-			MPT_STRUCT(path) p = *path;
-			col.n = mpt_node_query(col.n, &p);
+		if (!(n = mpt_node_query(n, &p))
+		 || p.len) {
+			return MPT_ERROR(MissingData);
 		}
+		mt = n->_meta;
+		n = n->children;
 	}
-	if (!col.n) {
-		return handler(ctx, 0);
+	if (path->len) {
+		MPT_STRUCT(path) p = *path;
+		if (!(n = mpt_node_query(n, &p))
+		 || p.len) {
+			return MPT_ERROR(MissingData);
+		}
+		mt = n->_meta;
+		n = n->children;
 	}
-	
-	return handler(ctx, &col.col);
+	/* existence is verified */
+	if (!fcn) {
+		return 0;
+	}
+	if (n) {
+		struct _node_collection col = { { &cvptr }, n };
+		return fcn(ctx, (MPT_INTERFACE(convertable) *) mt, &col.col);
+	}
+	return fcn(ctx, (MPT_INTERFACE(convertable) *) mt, 0);
 }
 static int configAssign(MPT_INTERFACE(config) *cfg, const MPT_STRUCT(path) *path, const MPT_STRUCT(value) *val)
 {
@@ -309,8 +287,7 @@ extern MPT_INTERFACE(metatype) *mpt_config_global(const MPT_STRUCT(path) *path)
 	static const MPT_INTERFACE_VPTR(config) configCfg = {
 		configQuery,
 		configAssign,
-		configRemove,
-		configProcess
+		configRemove
 	};
 	MPT_STRUCT(configRoot) *c;
 	

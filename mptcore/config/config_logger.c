@@ -20,37 +20,29 @@
  */
 extern MPT_INTERFACE(logger) *mpt_config_logger(const MPT_INTERFACE(config) *cfg)
 {
-	MPT_INTERFACE(convertable) *val;
 	MPT_INTERFACE(logger) *info = 0;
 	
 	if (!cfg) {
 		/* search global logger */
-		if ((val = mpt_config_get(0, "mpt.logger", '.', 0))
-		    && val->_vptr->convert(val, MPT_ENUM(TypeLoggerPtr), &info) >= 0
+		if ((mpt_config_get(0, "mpt.logger", MPT_ENUM(TypeLoggerPtr), &info)) >= 0
 		    && info) {
 			return info;
 		}
 		/* fallback to compatible 'output' */
-		if ((val = mpt_config_get(0, "mpt.output", '.', 0))) {
-			val->_vptr->convert(val, MPT_ENUM(TypeLoggerPtr), &info);
-		}
+		mpt_config_get(0, "mpt.output", MPT_ENUM(TypeLoggerPtr), &info);
 		return info;
 	}
 	/* try direct interface */
-	if ((val = cfg->_vptr->query(cfg, 0))
-	    && val->_vptr->convert(val, MPT_ENUM(TypeLoggerPtr), &info) >= 0
+	if ((mpt_config_getp(cfg, 0, MPT_ENUM(TypeLoggerPtr), &info)) >= 0
 	    && info) {
 		return info;
 	}
 	/* search local logger */
-	if ((val = mpt_config_get(cfg, "logger", 0, 0))
-	    && val->_vptr->convert(val, MPT_ENUM(TypeLoggerPtr), &info) >= 0
+	if ((mpt_config_get(cfg, "logger", MPT_ENUM(TypeLoggerPtr), &info)) >= 0
 	    && info) {
 		return info;
 	}
 	/* fallback to compatible 'output' */
-	if ((val = mpt_config_get(cfg, "output", 0, 0))) {
-		val->_vptr->convert(val, MPT_ENUM(TypeLoggerPtr), &info);
-	}
+	mpt_config_get(cfg, "output", MPT_ENUM(TypeLoggerPtr), &info);
 	return info;
 }

@@ -41,7 +41,7 @@ static int printCfg(void *ctx, const mpt::identifier *id, mpt::convertable *val,
 	return 0;
 }
 
-static int printAll(void *ctx, const mpt::collection *sub)
+static int printAll(void *ctx, mpt::convertable *, const mpt::collection *sub)
 {
 	return sub->each(printCfg, ctx);
 }
@@ -54,7 +54,7 @@ extern int main(int argc, char * const argv[])
 	mtrace();
 	
 	if (conf.set("a.value.text", "Der täĸẞŦ")
-	    && (val = conf.get("a.value.text"))) {
+	 && conf.get("a.value.text", val)) {
 		std::cout << typeid(*val).name() << " -> " << val->string() << std::endl;
 	}
 	for (int i = 1; i < argc; ++i) {
@@ -63,7 +63,7 @@ extern int main(int argc, char * const argv[])
 	conf.set("a*value*text", "anderer", '*');
 	
 	int depth = 0;
-	conf.process(0, printAll, &depth);
+	conf.query(0, printAll, &depth);
 	
 	return 0;
 }

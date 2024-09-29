@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	}
 	mpt_config_set(cfg, "ls.colors", 0, '.', 0);
 	
-	cfg->_vptr->process(cfg, 0, table_print, stdout);
+	cfg->_vptr->query(cfg, 0, table_print, stdout);
 	
 	mt->_vptr->unref(mt);
 	return 0;

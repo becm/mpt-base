@@ -8,9 +8,58 @@
 
 #include "event.h"
 #include "message.h"
+#include "meta.h"
 #include "output.h"
+#include "types.h"
 
 #include "config.h"
+
+static int _add_reply(void *ctx, MPT_INTERFACE(convertable) *val, const MPT_INTERFACE(collection) *col)
+{
+	static const char *_func = "mpt_config_reply";
+	MPT_STRUCT(array) *arr = ctx;
+	const char *txt = mpt_convertable_data(val, 0);
+	int len;
+	
+	(void) col;
+	
+	if (!arr) {
+		int type = val->_vptr->convert(val, 0, 0);
+		if (txt) {
+			mpt_log(0, _func, MPT_LOG(Debug), "%s (%d): %s",
+			        MPT_tr("config value"), type, txt);
+		} else {
+			mpt_log(0, _func, MPT_LOG(Debug), "%s: %d",
+			        MPT_tr("config type"), type);
+		}
+		return 0;
+	}
+	len = strlen(txt);
+	
+	if (!arr->_buf || !arr->_buf->_used) {
+		MPT_STRUCT(msgtype) hdr;
+		hdr.cmd = MPT_MESGTYPE(ParamGet);
+		hdr.arg = 0;
+		if (!mpt_array_append(arr, sizeof(hdr), &hdr)) {
+			mpt_log(0, _func, MPT_LOG(Error), "%s",
+			        MPT_tr("failed to add header"));
+			return MPT_ERROR(MissingBuffer);
+		}
+	}
+	else if (!mpt_array_append(arr, 1, "")) {
+		mpt_log(0, _func, MPT_LOG(Error), "%s",
+		        MPT_tr("failed to add value separator"));
+		return MPT_ERROR(MissingBuffer);
+	}
+	if (txt
+	    && (len = strlen(txt))
+	    && !mpt_array_append(arr, len, txt)) {
+		mpt_log(0, _func, MPT_LOG(Error), "%s",
+		        MPT_tr("failed to add value"));
+		return MPT_ERROR(MissingBuffer);
+	}
+	return 0;
+}
 
 /*!
  * \ingroup mptConfig
@@ -28,9 +77,20 @@
 extern int mpt_config_reply(MPT_INTERFACE(reply_context) *rc, const MPT_INTERFACE(config) *cfg, int sep, const MPT_STRUCT(message) *msg)
 {
 	MPT_STRUCT(array) arr = MPT_ARRAY_INIT;
-	MPT_INTERFACE(convertable) *val;
+	MPT_STRUCT(path) path = MPT_PATH_INIT;
+	MPT_INTERFACE(metatype) *global = 0;
 	MPT_STRUCT(message) tmp;
 	int ret;
+	
+	if (msg && !cfg) {
+		global = mpt_config_global(0);
+		if (!global
+		  || (MPT_metatype_convert(global, MPT_ENUM(TypeConfigPtr), &cfg) < 0)
+		  || !cfg) {
+			global->_vptr->unref(global);
+			msg = 0;
+		}
+	}
 	
 	/* status reply */
 	if (!msg) {
@@ -45,50 +105,21 @@ extern int mpt_config_reply(MPT_INTERFACE(reply_context) *rc, const MPT_INTERFAC
 		tmp.clen = 0;
 		return rc->_vptr->reply(rc, &tmp);
 	}
+	
 	tmp = *msg;
 	ret = 0;
-	while ((val = mpt_config_message_next(cfg, sep, &tmp))) {
-		const char *txt;
-		size_t len;
-		
-		txt = mpt_convertable_data(val, 0);
-		
-		if (!rc) {
-			int type = val->_vptr->convert(val, 0, 0);
-			if (txt) {
-				mpt_log(0, __func__, MPT_LOG(Debug), "%s (%d): %s",
-				        MPT_tr("config value"), type, txt);
-			} else {
-				mpt_log(0, __func__, MPT_LOG(Debug), "%s: %d",
-				        MPT_tr("config type"), type);
+	while (mpt_config_message_next(&path, sep, &tmp) > 0) {
+		int r = cfg->_vptr->query(cfg, &path, _add_reply, rc ? &arr : 0);
+		if (r < 0) {
+			if (!ret) {
+				ret = r;
 			}
-			++ret;
-			continue;
-		}
-		len = strlen(txt);
-		if (!ret) {
-			MPT_STRUCT(msgtype) hdr;
-			hdr.cmd = MPT_MESGTYPE(ParamGet);
-			hdr.arg = 0;
-			if (!mpt_array_append(&arr, sizeof(hdr), &hdr)) {
-				mpt_log(0, __func__, MPT_LOG(Error), "%s",
-				        MPT_tr("failed to add header"));
-				break;
-			}
-		}
-		else if (!mpt_array_append(&arr, 1, "")) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s",
-			        MPT_tr("failed to add value separator"));
-			break;
-		}
-		if (txt
-		    && (len = strlen(txt))
-		    && !mpt_array_append(&arr, len, txt)) {
-			mpt_log(0, __func__, MPT_LOG(Error), "%s",
-			        MPT_tr("failed to add value"));
 			break;
 		}
 		++ret;
+	}
+	if (global) {
+		global->_vptr->unref(global);
 	}
 	if (!rc) {
 		return ret;

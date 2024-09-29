@@ -67,6 +67,15 @@ private:
 	{ return false; }
 };
 
+static int _print_type(void *, mpt::convertable *c, const mpt::collection *)
+{
+	if (c) {
+		std::cout << "next type: " << typeid(*c).name() << std::endl;
+		return 0;
+	}
+	return mpt::BadValue;
+}
+
 extern int main(int , char * const [])
 {
 	mtrace();
@@ -79,14 +88,10 @@ extern int main(int , char * const [])
 	std::cout << d.f0() << std::endl;
 	
 	mpt::config::root config;
-	mpt::convertable *val;
-	if ((val = config.get(0))) {
-		std::cout << "base type: " << typeid(*val).name() << std::endl;
-	}
+	config.query(0, _print_type, 0);
+	mpt::path p("next");
 	config.set("next", "val");
-	if ((val = config.get("next"))) {
-		std::cout << "next type: " << typeid(*val).name() << std::endl;
-	}
+	config.query(&p, _print_type, 0);
 	mpt::layout::line *li = new mpt::reference<mpt::layout::line>::type;
 	
 	

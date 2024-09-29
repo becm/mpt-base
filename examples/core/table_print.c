@@ -64,8 +64,9 @@ extern int table_print_level(void *cptr, const MPT_STRUCT(identifier) *id, MPT_I
 	return 0;
 }
 
-extern int table_print(void *fd, const MPT_INTERFACE(collection) *col)
+extern int table_print(void *fd, MPT_INTERFACE(convertable) *val, const MPT_INTERFACE(collection) *col)
 {
 	struct print_context ctx = { 0, fd };
-	return col->_vptr->each(col, table_print_level, &ctx);
+	(void) val;
+	return col ? col->_vptr->each(col, table_print_level, &ctx) : 0;
 }

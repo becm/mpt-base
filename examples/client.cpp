@@ -82,6 +82,7 @@ static int do_command(void *ptr, mpt::event *ev)
 	std::cout << ev->msg->length() << std::endl;
 	return 0;
 }
+
 int main(int argc, char * const argv[])
 {
 	mtrace();
@@ -106,11 +107,9 @@ int main(int argc, char * const argv[])
 	mpt::log(&c, __func__, mpt::logger::Debug, "%s = %i", "value", 5);
 	
 	mpt::config *cfg;
-	mpt::convertable *val;
-	mpt::iterator *it;
+	mpt::iterator *it = 0;
 	if ((cfg = *mpt::config::global())
-	 && (val = cfg->get("mpt.args"))
-	 && (it = *val)) {
+	 && cfg->get("mpt.args", it)) {
 		const char *arg;
 		while (it->get(arg)) {
 			std::cerr << arg << std::endl;

@@ -21,7 +21,6 @@
  */
 extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *info)
 {
-	MPT_INTERFACE(convertable) *args;
 	MPT_INTERFACE(iterator) *it;
 	const MPT_STRUCT(value) *val;
 	const void *ptr;
@@ -29,8 +28,7 @@ extern int mpt_client_config(MPT_INTERFACE(config) *cfg, MPT_INTERFACE(logger) *
 	int ret;
 	
 	it = 0;
-	if (!(args = mpt_config_get(0, "mpt.args", '.', 0))
-	    || (ret = args->_vptr->convert(args, MPT_ENUM(TypeIteratorPtr), &it)) <= 0
+	if ((ret = mpt_config_get(0, "mpt.args", MPT_ENUM(TypeIteratorPtr), &it)) <= 0
 	    || !it) {
 		return 0;
 	}
